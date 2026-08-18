@@ -28,10 +28,10 @@ export function gardenCameraForWidth(widthPx: number): GardenCameraConfig {
   if (widthPx < 600) {
     return {
       alpha: GARDEN_CAMERA_ALPHA,
-      beta: 1.4,
+      beta: 1.25,
       radius: 37,
       fov: 0.86,
-      target: [4.8, 1.5, -4],
+      target: [4.8, 1.1, -4],
     };
   }
   return {

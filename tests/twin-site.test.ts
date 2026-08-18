@@ -114,10 +114,10 @@ describe("site evidence seed", () => {
     expect(gardenCameraForWidth(600)).toEqual(gardenCameraForWidth(1600));
     expect(gardenCameraForWidth(390)).toEqual({
       alpha: GARDEN_CAMERA_ALPHA,
-      beta: 1.4,
+      beta: 1.25,
       radius: 37,
       fov: 0.86,
-      target: [4.8, 1.5, -4],
+      target: [4.8, 1.1, -4],
     });
     expect(gardenCameraForWidth(599)).toEqual(gardenCameraForWidth(390));
     expect(gardenCameraForWidth(1600).radius).toBeLessThan(
@@ -128,10 +128,34 @@ describe("site evidence seed", () => {
   it("keeps the hero facade and PV layout source-driven", () => {
     expect(HOUSE.facades.garden.faceYmm).toBe(11_200);
     expect(HOUSE.facades.garden.openings).toEqual([
-      { id: "GARDEN-01", startXmm: 7_440, widthMm: 3_200, heightMm: 2_400, sillMm: 0 },
-      { id: "GARDEN-02", startXmm: 11_840, widthMm: 2_500, heightMm: 2_400, sillMm: 0 },
-      { id: "GARDEN-03", startXmm: 15_840, widthMm: 2_000, heightMm: 2_400, sillMm: 0 },
+      {
+        id: "GARDEN-01",
+        startXmm: 9_290,
+        widthMm: 1_250,
+        heightMm: 2_400,
+        sillMm: 0,
+      },
+      {
+        id: "GARDEN-02",
+        startXmm: 11_840,
+        widthMm: 2_500,
+        heightMm: 2_400,
+        sillMm: 0,
+      },
+      {
+        id: "GARDEN-03",
+        startXmm: 15_840,
+        widthMm: 2_000,
+        heightMm: 2_400,
+        sillMm: 0,
+      },
     ]);
+    expect(HOUSE.facades.garden.larchFeature).toEqual({
+      startXmm: 7_440,
+      widthMm: 1_850,
+      heightMm: 2_400,
+      certainty: "INFERRED_FROM_LATER_PLAN",
+    });
     expect(HOUSE.facades.wingEnd).toMatchObject({
       faceYmm: 22_035,
       startXmm: 21_040,
@@ -143,6 +167,38 @@ describe("site evidence seed", () => {
       wattsPerModule: 405,
       roofFace: "LOCAL_Y_MIN",
     });
+    expect(HOUSE.facades.front.openings.slice(0, 2)).toEqual([
+      {
+        id: "FRONT-01",
+        startXmm: 8_490,
+        widthMm: 1_250,
+        heightMm: 750,
+        sillMm: 1_750,
+      },
+      {
+        id: "FRONT-02",
+        startXmm: 11_715,
+        widthMm: 1_250,
+        heightMm: 750,
+        sillMm: 1_750,
+      },
+    ]);
+    expect(HOUSE.rainwaterDownpipes).toEqual([
+      {
+        id: "DS-01",
+        xMm: 7_600,
+        faceYmm: 11_200,
+        sourceRouteId: "UTIL-RAIN-SOUTH",
+        certainty: "VISUAL_INFERENCE",
+      },
+      {
+        id: "DS-02",
+        xMm: 26_300,
+        faceYmm: 22_035,
+        sourceRouteId: "UTIL-RAIN-NORTH",
+        certainty: "VISUAL_INFERENCE",
+      },
+    ]);
     expect(DEFAULT_LAYER_VISIBILITY.foundations).toBe(false);
     expect(DEFAULT_LAYER_VISIBILITY.contextNetworks).toBe(false);
   });
@@ -187,9 +243,9 @@ describe("data to geometry contract", () => {
     }));
     const segments = segmentFacadeMm(6_440, 21_040, 3_125, openings);
     expect(segments).toEqual([
-      { startMm: 6_440, endMm: 7_440, bottomMm: 0, topMm: 3_125 },
-      { startMm: 7_440, endMm: 10_640, bottomMm: 2_400, topMm: 3_125 },
-      { startMm: 10_640, endMm: 11_840, bottomMm: 0, topMm: 3_125 },
+      { startMm: 6_440, endMm: 9_290, bottomMm: 0, topMm: 3_125 },
+      { startMm: 9_290, endMm: 10_540, bottomMm: 2_400, topMm: 3_125 },
+      { startMm: 10_540, endMm: 11_840, bottomMm: 0, topMm: 3_125 },
       { startMm: 11_840, endMm: 14_340, bottomMm: 2_400, topMm: 3_125 },
       { startMm: 14_340, endMm: 15_840, bottomMm: 0, topMm: 3_125 },
       { startMm: 15_840, endMm: 17_840, bottomMm: 2_400, topMm: 3_125 },
@@ -202,7 +258,7 @@ describe("data to geometry contract", () => {
           (segment.topMm - segment.bottomMm),
       0,
     );
-    expect(solidAreaMm2).toBe(27_145_000);
+    expect(solidAreaMm2).toBe(31_825_000);
   });
 
   it("uses the rough wing opening while preserving the 2 400 mm clear frame", () => {

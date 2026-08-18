@@ -368,13 +368,108 @@ export const HOUSE = Object.freeze({
     wingPitchDeg: 34,
   },
   facades: {
+    front: {
+      faceYmm: 3000,
+      finish: "OFF_WHITE_ETICS",
+      openings: [
+        {
+          id: "FRONT-01",
+          startXmm: 8490,
+          widthMm: 1250,
+          heightMm: 750,
+          sillMm: 1750,
+        },
+        {
+          id: "FRONT-02",
+          startXmm: 11715,
+          widthMm: 1250,
+          heightMm: 750,
+          sillMm: 1750,
+        },
+        {
+          id: "FRONT-03",
+          startXmm: 14965,
+          widthMm: 750,
+          heightMm: 750,
+          sillMm: 1750,
+        },
+        {
+          id: "FRONT-04",
+          startXmm: 17140,
+          widthMm: 800,
+          heightMm: 1600,
+          sillMm: 900,
+        },
+        {
+          id: "FRONT-05",
+          startXmm: 19740,
+          widthMm: 800,
+          heightMm: 1600,
+          sillMm: 900,
+        },
+        {
+          id: "FRONT-ENTRY",
+          startXmm: 21540,
+          widthMm: 1250,
+          heightMm: 2250,
+          sillMm: 0,
+        },
+        {
+          id: "FRONT-07",
+          startXmm: 24790,
+          widthMm: 2000,
+          heightMm: 1600,
+          sillMm: 900,
+        },
+      ],
+    },
     garden: {
       faceYmm: 11200,
-      cladding: "NATURAL_VERTICAL_LARCH",
+      cladding: "OFF_WHITE_ETICS_WITH_LOCAL_LARCH_FEATURE",
+      larchFeature: {
+        startXmm: 7440,
+        widthMm: 1850,
+        heightMm: 2400,
+        certainty: "INFERRED_FROM_LATER_PLAN",
+      },
       openings: [
-        { id: "GARDEN-01", startXmm: 7440, widthMm: 3200, heightMm: 2400, sillMm: 0 },
+        { id: "GARDEN-01", startXmm: 9290, widthMm: 1250, heightMm: 2400, sillMm: 0 },
         { id: "GARDEN-02", startXmm: 11840, widthMm: 2500, heightMm: 2400, sillMm: 0 },
         { id: "GARDEN-03", startXmm: 15840, widthMm: 2000, heightMm: 2400, sillMm: 0 },
+      ],
+    },
+    east: {
+      faceXmm: 28040,
+      finish: "OFF_WHITE_ETICS",
+      openings: [
+        {
+          id: "EAST-01",
+          startYmm: 5025,
+          widthMm: 1000,
+          heightMm: 1600,
+          sillMm: 900,
+        },
+        {
+          id: "EAST-02",
+          startYmm: 6600,
+          widthMm: 600,
+          heightMm: 750,
+          sillMm: 1750,
+        },
+        {
+          id: "EAST-03",
+          startYmm: 9650,
+          widthMm: 1000,
+          heightMm: 2250,
+          sillMm: 0,
+        },
+        {
+          id: "EAST-04",
+          startYmm: 12700,
+          widthMm: 1000,
+          heightMm: 1600,
+          sillMm: 900,
+        },
       ],
     },
     wingEnd: {
@@ -399,6 +494,22 @@ export const HOUSE = Object.freeze({
     layout: "2x3_VISUAL_INFERENCE",
     roofFace: "LOCAL_Y_MIN",
   },
+  rainwaterDownpipes: [
+    {
+      id: "DS-01",
+      xMm: 7600,
+      faceYmm: 11200,
+      sourceRouteId: "UTIL-RAIN-SOUTH",
+      certainty: "VISUAL_INFERENCE",
+    },
+    {
+      id: "DS-02",
+      xMm: 26300,
+      faceYmm: 22035,
+      sourceRouteId: "UTIL-RAIN-NORTH",
+      certainty: "VISUAL_INFERENCE",
+    },
+  ],
   datumElevationM: 184,
   orientation: {
     sourceId: SOURCES.floorPlan.id,

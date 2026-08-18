@@ -72,6 +72,8 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     ["../public/assets/environment/overcast-garden.jpg", "ffd8ff"],
     ["../public/assets/textures/lawn-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/larch-cladding-v2.jpg", "ffd8ff"],
+    ["../public/assets/textures/stucco-warm-v1.jpg", "ffd8ff"],
+    ["../public/assets/textures/deck-larch-v1.jpg", "ffd8ff"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/perennial-cluster-card.png", "89504e470d0a1a0a"],
   ];

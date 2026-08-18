@@ -14,7 +14,9 @@ Režim **Realita** používa projektové rozmery a materiály D1. Vegetácia, n�
 a panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 Lokálne panoramatické pozadie `public/assets/environment/overcast-garden.jpg`,
 textúra trávnika `public/assets/textures/lawn-albedo.jpg`, vizualizačný obklad
-`public/assets/textures/larch-cladding-v2.jpg` a botanické karty
+`public/assets/textures/larch-cladding-v2.jpg`, teplá fasádna omietka
+`public/assets/textures/stucco-warm-v1.jpg`, terasové drevo
+`public/assets/textures/deck-larch-v1.jpg` a botanické karty
 `public/assets/vegetation/ornamental-grass-card.png` a
 `public/assets/vegetation/perennial-cluster-card.png` boli pre tento prototyp
 vygenerované pomocou OpenAI imagegen. Nereprezentujú skutočný stav parcely, jej
