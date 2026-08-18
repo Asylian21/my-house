@@ -11,11 +11,14 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 - skutočné geodetické zameranie prípojok nie je dostupné a aplikácia nič z návrhu neoznačuje ako as-built.
 
 Režim **Realita** používa projektové rozmery a materiály D1. Vegetácia, nábytok
-a panoramatická atmosféra sú zámerne označený ilustračný záhradný koncept.
-Lokálne panoramatické pozadie `public/assets/environment/overcast-garden.jpg`
-a textúra trávnika `public/assets/textures/lawn-albedo.jpg` boli pre tento
-prototyp vygenerované pomocou OpenAI imagegen; nereprezentujú skutočný stav
-parcely ani jej susedov.
+a panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
+Lokálne panoramatické pozadie `public/assets/environment/overcast-garden.jpg`,
+textúra trávnika `public/assets/textures/lawn-albedo.jpg`, vizualizačný obklad
+`public/assets/textures/larch-cladding-v2.jpg` a botanické karty
+`public/assets/vegetation/ornamental-grass-card.png` a
+`public/assets/vegetation/perennial-cluster-card.png` boli pre tento prototyp
+vygenerované pomocou OpenAI imagegen. Nereprezentujú skutočný stav parcely, jej
+susedov ani konkrétny dodaný výrobok či realizačný výber výsadby.
 
 Zdrojové PDF a presné projektové podklady zostávajú lokálne v `arch-docs/`; tento adresár je zámerne ignorovaný Gitom a nič z neho sa nekopíruje do `public/`.
 
@@ -40,6 +43,7 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 
 - `lib/twin-domain.ts` — engine-free doména, presný lokálny S-JTSK rám, proveniencia a nemenná história úprav,
 - `lib/twin-site.ts` — projektové revízie, vrstvy, zdroje a parametrické základy,
+- `lib/twin-facade.ts` — čisté delenie fasádneho plášťa okolo zdrojovaných otvorov,
 - `lib/babylon-scene.ts` — jediná hranica medzi milimetrami domény a metrami Babylon scény,
 - `app/twin-studio.tsx` — prístupný DOM prieskumník, inspector a stav pracovného priestoru,
 - `app/babylon-viewport.tsx` — client-only životný cyklus WebGL canvasu.

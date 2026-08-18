@@ -13,8 +13,35 @@ export const SCENE_CENTER_MM = Object.freeze({ x: 15_200, y: 10_800 });
 export const TOP_CAMERA_ALPHA = Math.PI / 2;
 export const STREET_CAMERA_ALPHA = Math.PI / 2;
 export const AXONOMETRIC_CAMERA_ALPHA = Math.PI * 0.72;
-export const GARDEN_CAMERA_ALPHA = -Math.PI * 0.6;
-export const GARDEN_CAMERA_BETA = 1.48;
+export const GARDEN_CAMERA_ALPHA = -Math.PI * 0.44;
+export const GARDEN_CAMERA_BETA = 1.43;
+
+export interface GardenCameraConfig {
+  readonly alpha: number;
+  readonly beta: number;
+  readonly radius: number;
+  readonly fov: number;
+  readonly target: readonly [number, number, number];
+}
+
+export function gardenCameraForWidth(widthPx: number): GardenCameraConfig {
+  if (widthPx < 600) {
+    return {
+      alpha: GARDEN_CAMERA_ALPHA,
+      beta: 1.4,
+      radius: 37,
+      fov: 0.86,
+      target: [4.8, 1.5, -4],
+    };
+  }
+  return {
+    alpha: GARDEN_CAMERA_ALPHA,
+    beta: GARDEN_CAMERA_BETA,
+    radius: 28,
+    fov: 0.58,
+    target: [2.5, 1.4, -2],
+  };
+}
 
 export interface PlanPointMm {
   readonly x: number;

@@ -17,11 +17,13 @@ import {
   GARDEN_CAMERA_ALPHA,
   GARDEN_CAMERA_BETA,
   TOP_CAMERA_ALPHA,
+  gardenCameraForWidth,
   sceneDeltaForPlanSegment,
   sceneXM,
   sceneYawForPlanSegment,
   sceneZM,
 } from "../lib/twin-render-frame";
+import { segmentFacadeMm } from "../lib/twin-facade";
 
 describe("site evidence seed", () => {
   it("projects official GP points into the road-aligned local frame", () => {
@@ -95,9 +97,32 @@ describe("site evidence seed", () => {
       sceneYawForPlanSegment({ x: 0, y: 0 }, { x: 1000, y: 0 }),
     ).toBeCloseTo(0, 12);
     expect(TOP_CAMERA_ALPHA).toBe(Math.PI / 2);
-    expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
+    expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-Math.PI * 0.44, 12);
+    expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeGreaterThan(0);
     expect(Math.sin(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
-    expect(GARDEN_CAMERA_BETA).toBeGreaterThan(1.4);
+    expect(GARDEN_CAMERA_BETA).toBeCloseTo(1.43, 12);
+  });
+
+  it("keeps the approved Realita camera deterministic on desktop and mobile", () => {
+    expect(gardenCameraForWidth(1600)).toEqual({
+      alpha: GARDEN_CAMERA_ALPHA,
+      beta: GARDEN_CAMERA_BETA,
+      radius: 28,
+      fov: 0.58,
+      target: [2.5, 1.4, -2],
+    });
+    expect(gardenCameraForWidth(600)).toEqual(gardenCameraForWidth(1600));
+    expect(gardenCameraForWidth(390)).toEqual({
+      alpha: GARDEN_CAMERA_ALPHA,
+      beta: 1.4,
+      radius: 37,
+      fov: 0.86,
+      target: [4.8, 1.5, -4],
+    });
+    expect(gardenCameraForWidth(599)).toEqual(gardenCameraForWidth(390));
+    expect(gardenCameraForWidth(1600).radius).toBeLessThan(
+      gardenCameraForWidth(390).radius,
+    );
   });
 
   it("keeps the hero facade and PV layout source-driven", () => {
@@ -152,6 +177,69 @@ describe("site evidence seed", () => {
 });
 
 describe("data to geometry contract", () => {
+  it("cuts the documented garden glazing out of the realistic shell", () => {
+    const openings = HOUSE.facades.garden.openings.map((opening) => ({
+      id: opening.id,
+      startMm: opening.startXmm,
+      widthMm: opening.widthMm,
+      heightMm: opening.heightMm,
+      sillMm: opening.sillMm,
+    }));
+    const segments = segmentFacadeMm(6_440, 21_040, 3_125, openings);
+    expect(segments).toEqual([
+      { startMm: 6_440, endMm: 7_440, bottomMm: 0, topMm: 3_125 },
+      { startMm: 7_440, endMm: 10_640, bottomMm: 2_400, topMm: 3_125 },
+      { startMm: 10_640, endMm: 11_840, bottomMm: 0, topMm: 3_125 },
+      { startMm: 11_840, endMm: 14_340, bottomMm: 2_400, topMm: 3_125 },
+      { startMm: 14_340, endMm: 15_840, bottomMm: 0, topMm: 3_125 },
+      { startMm: 15_840, endMm: 17_840, bottomMm: 2_400, topMm: 3_125 },
+      { startMm: 17_840, endMm: 21_040, bottomMm: 0, topMm: 3_125 },
+    ]);
+    const solidAreaMm2 = segments.reduce(
+      (sum, segment) =>
+        sum +
+        (segment.endMm - segment.startMm) *
+          (segment.topMm - segment.bottomMm),
+      0,
+    );
+    expect(solidAreaMm2).toBe(27_145_000);
+  });
+
+  it("uses the rough wing opening while preserving the 2 400 mm clear frame", () => {
+    const opening = HOUSE.facades.wingEnd.opening;
+    const segments = segmentFacadeMm(21_040, 28_040, 3_125, [
+      {
+        id: opening.id,
+        startMm: opening.roughOpeningStartXmm,
+        widthMm: opening.roughOpeningWidthMm,
+        heightMm: opening.heightMm,
+        sillMm: opening.sillMm,
+      },
+    ]);
+    expect(segments).toEqual([
+      { startMm: 21_040, endMm: 21_540, bottomMm: 0, topMm: 3_125 },
+      { startMm: 21_540, endMm: 24_040, bottomMm: 2_400, topMm: 3_125 },
+      { startMm: 24_040, endMm: 28_040, bottomMm: 0, topMm: 3_125 },
+    ]);
+    expect(opening.startXmm - opening.roughOpeningStartXmm).toBe(50);
+    expect(opening.widthMm).toBe(2_400);
+    expect(
+      segments.reduce(
+        (sum, segment) =>
+          sum +
+          (segment.endMm - segment.startMm) *
+            (segment.topMm - segment.bottomMm),
+        0,
+      ),
+    ).toBe(15_875_000);
+    expect(() =>
+      segmentFacadeMm(0, 1_000, 3_000, [
+        { id: "A", startMm: 100, widthMm: 600, heightMm: 2_000, sillMm: 0 },
+        { id: "B", startMm: 650, widthMm: 200, heightMm: 2_000, sillMm: 0 },
+      ]),
+    ).toThrow(/B/);
+  });
+
   it("changes width and volume immutably for the selected strip", () => {
     const source = FOUNDATIONS[0];
     const before = foundationVolumeM3(source);

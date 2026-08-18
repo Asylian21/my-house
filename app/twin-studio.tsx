@@ -361,6 +361,7 @@ export function TwinStudio() {
   const [draftWidth, setDraftWidth] = useState("");
   const [inputError, setInputError] = useState("");
   const [history, setHistory] = useState<readonly HistoryItem[]>([]);
+  const useOverlayPanels = isCompact || viewMode === "realistic";
 
   const detail = useMemo(
     () => getEntityDetail(selectionId, foundations),
@@ -428,12 +429,12 @@ export function TwinStudio() {
   };
 
   const select = (id: string) => {
-    const selectedFromExplorer = isCompact && explorerOpen;
+    const selectedFromExplorer = useOverlayPanels && explorerOpen;
     setSelectionId(id);
     const selectedFoundation = foundations.find((foundation) => foundation.id === id);
     setDraftWidth(selectedFoundation?.widthMm.toString() ?? "");
     setInputError("");
-    if (isCompact) setExplorerOpen(false);
+    if (useOverlayPanels) setExplorerOpen(false);
     setInspectorOpen(true);
     if (selectedFromExplorer) {
       requestAnimationFrame(() => inspectorPanelRef.current?.focus());
@@ -495,7 +496,7 @@ export function TwinStudio() {
   );
 
   return (
-    <main className="twin-shell">
+    <main className={`twin-shell ${viewMode === "realistic" ? "is-presentation" : ""}`}>
       <a className="skip-link" href="#scene-explorer">Preskočiť na prieskumník modelu</a>
       <header className="top-rail">
         <div className="top-rail-start">
@@ -555,8 +556,8 @@ export function TwinStudio() {
         id="scene-explorer"
         className={`scene-panel ${explorerOpen ? "panel-open" : ""}`}
         aria-label="Prieskumník digitálneho dvojčaťa"
-        aria-hidden={isCompact ? !explorerOpen : undefined}
-        inert={isCompact && !explorerOpen}
+        aria-hidden={useOverlayPanels ? !explorerOpen : undefined}
+        inert={useOverlayPanels && !explorerOpen}
       >
         <div className="panel-header">
           <div><span className="micro-label">SCÉNA / 9 VRSTIEV</span><h1>Živý výkres</h1></div>
@@ -702,12 +703,16 @@ export function TwinStudio() {
         <div className="view-mode" role="group" aria-label="Režim zobrazenia">
           <button className={viewMode === "technical" ? "active" : ""} aria-pressed={viewMode === "technical"} onClick={() => {
             setViewMode("technical");
+            setExplorerOpen(false);
+            setInspectorOpen(false);
             requestAnimationFrame(() => viewportRef.current?.setCameraPreset("axonometric"));
           }}>
             <SlidersHorizontal size={15} /> Technický
           </button>
           <button className={viewMode === "realistic" ? "active" : ""} aria-pressed={viewMode === "realistic"} onClick={() => {
             setViewMode("realistic");
+            setExplorerOpen(false);
+            setInspectorOpen(false);
             requestAnimationFrame(() => viewportRef.current?.setCameraPreset("garden"));
           }}>
             <House size={15} /> Realita
@@ -750,8 +755,8 @@ export function TwinStudio() {
         ref={inspectorPanelRef}
         className={`inspector ${inspectorOpen ? "panel-open" : ""}`}
         aria-label="Detail vybraného objektu"
-        aria-hidden={isCompact ? !inspectorOpen : undefined}
-        inert={isCompact && !inspectorOpen}
+        aria-hidden={useOverlayPanels ? !inspectorOpen : undefined}
+        inert={useOverlayPanels && !inspectorOpen}
         tabIndex={-1}
       >
         <div className="inspector-hero">
