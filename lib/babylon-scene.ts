@@ -11,7 +11,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { EquiRectangularCubeTexture } from "@babylonjs/core/Materials/Textures/equiRectangularCubeTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3, Vector4 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
@@ -26,6 +26,10 @@ import { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
+import { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
+import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
+import "@babylonjs/core/Rendering/depthRendererSceneComponent";
+import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/edgesRenderer";
 import "@babylonjs/core/Culling/ray";
 import { Scene } from "@babylonjs/core/scene";
@@ -37,11 +41,13 @@ import {
   LAYERS,
   ROAD_CONTEXT,
   SITE_SURFACES,
+  TERRACE_ZONES_D1,
   UTILITY_ROUTES,
   sjtskToLocalMm,
   type FoundationStrip,
   type LayerId,
   type Point2Mm,
+  type TerraceZoneD1,
   type ViewMode,
 } from "./twin-site";
 import {
@@ -60,6 +66,13 @@ import {
   sceneYawForPlanSegment,
   sceneZM as zM,
 } from "./twin-render-frame";
+import {
+  deriveJoinedRoofGeometry,
+  mainFrontRoofHeightMm,
+  type JoinedRoofGeometry,
+  type RoofPointMm,
+  type RoofVertexMm,
+} from "./twin-roof";
 
 export type CameraPreset = "garden" | "axonometric" | "top" | "street" | "focus";
 
@@ -72,6 +85,7 @@ export interface SceneSnapshot {
 
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
+const EAVES_M = HOUSE.eavesElevationMm * MM_TO_M;
 const point3 = (point: Point2Mm, elevationM = GROUND_Y) =>
   new Vector3(xM(point.x), elevationM, zM(point.y));
 
@@ -125,6 +139,13 @@ function createVerticalTriangle(
   data.indices = [0, 2, 1];
   data.normals = [0, 0, 0, 0, 0, 0, 0, 0, 0];
   VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+  const ys = points.map((point) => point.y);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  data.uvs = points.flatMap((point) => [
+    (point.x + point.z) * 0.35,
+    (point.y - minY) / Math.max(0.001, maxY - minY),
+  ]);
   data.applyToMesh(mesh);
   return mesh;
 }
@@ -171,6 +192,41 @@ function createFlatPolygon(
   return mesh;
 }
 
+function createRoofFace(
+  scene: Scene,
+  name: string,
+  vertices: readonly RoofVertexMm[],
+) {
+  const mesh = new Mesh(name, scene);
+  const positions = vertices.flatMap((point) => [
+    xM(point.xMm),
+    point.elevationMm * MM_TO_M,
+    zM(point.yMm),
+  ]);
+  const indices = [0, 1, 2, 0, 2, 3];
+  const normals = vertices.flatMap(() => [0, 0, 0]);
+  VertexData.ComputeNormals(positions, indices, normals);
+  // The roof must always be lit from above: flip winding if the computed
+  // plane normal points below the horizon.
+  if (normals[1] < 0) {
+    indices.reverse();
+    for (let index = 0; index < normals.length; index += 1) normals[index] *= -1;
+  }
+  const minX = Math.min(...vertices.map(({ xMm }) => xMm));
+  const minY = Math.min(...vertices.map(({ yMm }) => yMm));
+  const uvs = vertices.flatMap(({ xMm, yMm }) => [
+    (xMm - minX) / 1000 / 1.08,
+    (yMm - minY) / 1000 / 1.08,
+  ]);
+  const data = new VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.normals = normals;
+  data.uvs = uvs;
+  data.applyToMesh(mesh);
+  return mesh;
+}
+
 function boxAtPlan(
   scene: Scene,
   name: string,
@@ -202,6 +258,7 @@ export class TwinSceneController {
   private readonly foundationMeshes = new Map<string, Mesh>();
   private readonly materials: Record<string, StandardMaterial>;
   private readonly realisticMaterials: Record<string, PBRMaterial>;
+  private readonly larchClones = new Map<string, PBRMaterial>();
   private readonly appearances = new Map<
     AbstractMesh,
     { technical: Material; realistic: Material }
@@ -235,17 +292,20 @@ export class TwinSceneController {
     );
     this.scene = new Scene(this.engine);
     this.scene.useRightHandedSystem = true;
-    this.scene.clearColor = Color4.FromHexString("#aebfbdff");
-    this.scene.ambientColor = Color3.FromHexString("#59615f");
+    this.scene.clearColor = Color4.FromHexString("#c6cfd2ff");
+    this.scene.ambientColor = Color3.FromHexString("#5d6462");
+
+    // Image-based lighting comes from a generated partly-cloudy sky so glass,
+    // metal roofing and white plaster pick up believable reflections.
     const environment = new EquiRectangularCubeTexture(
-      "/assets/environment/overcast-garden.jpg",
+      "/assets/environment/sky-partly-cloudy.jpg",
       this.scene,
       canvas.clientWidth < 700 ? 128 : 256,
       false,
       false,
       () => {
         this.scene.environmentTexture = environment;
-        this.scene.environmentIntensity = 0.88;
+        this.scene.environmentIntensity = 0.95;
       },
     );
     const sky = new PhotoDome(
@@ -262,7 +322,7 @@ export class TwinSceneController {
     this.scene.imageProcessingConfiguration.toneMappingType =
       ImageProcessingConfiguration.TONEMAPPING_ACES;
     this.scene.imageProcessingConfiguration.exposure = 1.08;
-    this.scene.imageProcessingConfiguration.contrast = 1.13;
+    this.scene.imageProcessingConfiguration.contrast = 1.12;
     this.scene.imageProcessingConfiguration.vignetteEnabled = false;
     this.scene.imageProcessingConfiguration.vignetteWeight = 0.72;
     this.scene.imageProcessingConfiguration.vignetteColor =
@@ -277,7 +337,7 @@ export class TwinSceneController {
       new Vector3(...gardenCamera.target),
       this.scene,
     );
-    this.camera.lowerRadiusLimit = 7;
+    this.camera.lowerRadiusLimit = 6;
     this.camera.upperRadiusLimit = 86;
     this.camera.lowerBetaLimit = 0.06;
     this.camera.upperBetaLimit = Math.PI / 2.02;
@@ -290,34 +350,36 @@ export class TwinSceneController {
 
     const ambient = new HemisphericLight(
       "ambient-light",
-      new Vector3(0.3, 1, 0.08),
+      new Vector3(0.25, 1, -0.12),
       this.scene,
     );
-    ambient.intensity = 0.72;
-    ambient.diffuse = Color3.FromHexString("#eef5f2");
-    ambient.groundColor = Color3.FromHexString("#61705f");
+    ambient.intensity = 0.22;
+    ambient.diffuse = Color3.FromHexString("#eef4f6");
+    ambient.groundColor = Color3.FromHexString("#6a755f");
+    // Soft high sun angled so the garden facade and porch corner read like the
+    // approved reference photograph (bright overcast with gentle shadows).
     const sun = new DirectionalLight(
       "architectural-sun",
-      new Vector3(-0.56, -1, 0.34),
+      new Vector3(0.42, -1, 0.35),
       this.scene,
     );
-    sun.position = new Vector3(28, 42, -24);
-    sun.intensity = 1.32;
-    sun.diffuse = Color3.FromHexString("#fff4dc");
-    sun.specular = Color3.FromHexString("#fff8e9");
+    sun.position = new Vector3(-26, 46, -26);
+    sun.intensity = 1.4;
+    sun.diffuse = Color3.FromHexString("#fff6e6");
+    sun.specular = Color3.FromHexString("#fff9ef");
     const highQuality =
       canvas.clientWidth >= 760 && !window.matchMedia("(pointer: coarse)").matches;
     this.shadowGenerator = new ShadowGenerator(
       canvas.clientWidth < 700 ? 1024 : 2048,
       sun,
     );
-    this.shadowGenerator.usePercentageCloserFiltering = !highQuality;
-    this.shadowGenerator.useContactHardeningShadow = highQuality;
-    this.shadowGenerator.contactHardeningLightSizeUVRatio = 0.1;
-    this.shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM;
-    this.shadowGenerator.bias = 0.0005;
-    this.shadowGenerator.normalBias = 0.012;
-    this.shadowGenerator.setDarkness(0.22);
+    this.shadowGenerator.usePercentageCloserFiltering = true;
+    this.shadowGenerator.filteringQuality = highQuality
+      ? ShadowGenerator.QUALITY_HIGH
+      : ShadowGenerator.QUALITY_MEDIUM;
+    this.shadowGenerator.bias = 0.0008;
+    this.shadowGenerator.normalBias = 0.016;
+    this.shadowGenerator.setDarkness(0.25);
 
     const post = new DefaultRenderingPipeline(
       "architectural-photo-pipeline",
@@ -331,6 +393,26 @@ export class TwinSceneController {
     post.fxaaEnabled = !highQuality;
     post.bloomEnabled = false;
     post.imageProcessingEnabled = true;
+    if (highQuality) {
+      post.sharpenEnabled = true;
+      post.sharpen.edgeAmount = 0.12;
+      post.sharpen.colorAmount = 1;
+      try {
+        const ssao = new SSAO2RenderingPipeline(
+          "architectural-ssao",
+          this.scene,
+          { ssaoRatio: 0.75, blurRatio: 0.75 },
+          [this.camera],
+          false,
+        );
+        ssao.radius = 0.9;
+        ssao.totalStrength = 0.9;
+        ssao.samples = 12;
+        ssao.expensiveBlur = false;
+      } catch {
+        // SSAO is a progressive enhancement; WebGL fallbacks skip it.
+      }
+    }
 
     this.materials = {
       terrain: surfaceMaterial(this.scene, "terrain", "#171d1b", 1),
@@ -353,107 +435,62 @@ export class TwinSceneController {
     this.materials.selection.emissiveColor = Color3.FromHexString("#58180f");
 
     this.realisticMaterials = {
-      terrain: pbrMaterial(this.scene, "real-terrain", "#c9d2c2", 0.98),
-      grass: pbrMaterial(this.scene, "real-grass", "#d9e3d3", 0.94),
-      road: pbrMaterial(this.scene, "real-road", "#606768", 0.92),
-      paving: pbrMaterial(this.scene, "real-paving", "#a5a9a4", 0.84),
-      timber: pbrMaterial(this.scene, "real-timber", "#a46b38", 0.72),
-      timberDark: pbrMaterial(this.scene, "real-timber-dark", "#70401f", 0.8),
-      deck: pbrMaterial(this.scene, "real-deck", "#d2c5b5", 0.78),
-      wall: pbrMaterial(this.scene, "real-wall", "#fffdf7", 0.9),
-      roof: pbrMaterial(this.scene, "real-roof", "#151c20", 0.27, 0.82),
-      roofEdge: pbrMaterial(this.scene, "real-roof-edge", "#161b1d", 0.28, 0.76),
-      glass: pbrMaterial(this.scene, "real-glass", "#31474a", 0.1, 0, 0.3),
-      glassFrame: pbrMaterial(this.scene, "real-glass-frame", "#171d1f", 0.25, 0.76),
-      solar: pbrMaterial(this.scene, "real-solar", "#102b3d", 0.18, 0.54),
-      solarGrid: pbrMaterial(this.scene, "real-solar-grid", "#b6c2c5", 0.22, 0.76),
-      chimney: pbrMaterial(this.scene, "real-chimney", "#6d7474", 0.3, 0.72),
-      mulch: pbrMaterial(this.scene, "real-mulch", "#2b251c", 0.98),
-      stone: pbrMaterial(this.scene, "real-stone", "#d2cec2", 0.9),
-      fabric: pbrMaterial(this.scene, "real-fabric", "#d8d2c5", 0.96),
+      terrain: pbrMaterial(this.scene, "real-terrain", "#ffffff", 0.97),
+      grass: pbrMaterial(this.scene, "real-grass", "#ffffff", 0.95),
+      road: pbrMaterial(this.scene, "real-road", "#7c8283", 0.94),
+      paving: pbrMaterial(this.scene, "real-paving", "#c9cbc6", 0.88),
+      gravel: pbrMaterial(this.scene, "real-gravel", "#ffffff", 0.96),
+      timber: pbrMaterial(this.scene, "real-timber", "#ffffff", 0.68),
+      timberDark: pbrMaterial(this.scene, "real-timber-dark", "#8a5c30", 0.74),
+      deck: pbrMaterial(this.scene, "real-deck", "#ffffff", 0.74),
+      wall: pbrMaterial(this.scene, "real-wall", "#ffffff", 0.92),
+      soffit: pbrMaterial(this.scene, "real-soffit", "#f4f2ec", 0.9),
+      concrete: pbrMaterial(this.scene, "real-concrete", "#ffffff", 0.86),
+      roof: pbrMaterial(this.scene, "real-roof", "#ffffff", 0.72, 0),
+      roofEdge: pbrMaterial(this.scene, "real-roof-edge", "#282d31", 0.6, 0),
+      glass: pbrMaterial(this.scene, "real-glass", "#36494d", 0.07, 0, 0.3),
+      glassFrame: pbrMaterial(this.scene, "real-glass-frame", "#26292b", 0.34, 0.55),
+      glassFrameWood: pbrMaterial(this.scene, "real-glass-frame-wood", "#77522c", 0.5),
+      solar: pbrMaterial(this.scene, "real-solar", "#0b1824", 0.12, 0.45),
+      solarGrid: pbrMaterial(this.scene, "real-solar-grid", "#aeb6ba", 0.3, 0.8),
+      chimney: pbrMaterial(this.scene, "real-chimney", "#787f7f", 0.32, 0.75),
+      mulch: pbrMaterial(this.scene, "real-mulch", "#2e2317", 1),
+      stone: pbrMaterial(this.scene, "real-stone", "#d6d2c6", 0.9),
+      fabric: pbrMaterial(this.scene, "real-fabric", "#e6e2d8", 0.95),
       upholsteryDark: pbrMaterial(this.scene, "real-upholstery-dark", "#22292a", 0.94),
-      curtain: pbrMaterial(this.scene, "real-curtain", "#d8d7cf", 0.96, 0, 0.64),
-      interiorDark: pbrMaterial(this.scene, "real-interior-dark", "#091112", 0.72),
+      curtain: pbrMaterial(this.scene, "real-curtain", "#e8e6df", 0.96, 0, 0.85),
+      interiorDark: pbrMaterial(this.scene, "real-interior-dark", "#1a2325", 0.75),
       warmInterior: pbrMaterial(this.scene, "real-interior", "#d5a76a", 0.82),
       plantGrass: pbrMaterial(this.scene, "real-plant-grass", "#ffffff", 0.9),
       plantPerennial: pbrMaterial(this.scene, "real-plant-perennial", "#ffffff", 0.9),
     };
     this.realisticMaterials.glass.indexOfRefraction = 1.5;
-    this.realisticMaterials.glass.metallicF0Factor = 0.04;
-    this.realisticMaterials.glass.environmentIntensity = 1.2;
-    this.realisticMaterials.glass.refractionTexture = environment;
-    this.realisticMaterials.glass.linkRefractionWithTransparency = true;
+    this.realisticMaterials.glass.metallicF0Factor = 0.06;
+    this.realisticMaterials.glass.environmentIntensity = 1.6;
     this.realisticMaterials.glass.useSpecularOverAlpha = true;
     this.realisticMaterials.glass.backFaceCulling = true;
     this.realisticMaterials.glass.needDepthPrePass = true;
     this.realisticMaterials.warmInterior.emissiveColor =
-      Color3.FromHexString("#624524");
-    const lawnTexture = new Texture(
-      "/assets/textures/lawn-albedo.jpg",
-      this.scene,
-      false,
-      false,
-      Texture.TRILINEAR_SAMPLINGMODE,
+      Color3.FromHexString("#4b3418");
+
+    this.applyTexture(this.realisticMaterials.grass, "lawn-albedo", 12, 10, "lawn-normal", 0.4);
+    this.applyTexture(
+      this.realisticMaterials.terrain,
+      "lawn-albedo",
+      46,
+      40,
+      "lawn-normal",
+      0.3,
     );
-    lawnTexture.uScale = 12;
-    lawnTexture.vScale = 10;
-    lawnTexture.anisotropicFilteringLevel = 8;
-    this.realisticMaterials.grass.albedoTexture = lawnTexture;
-    const terrainLawnTexture = lawnTexture.clone();
-    terrainLawnTexture.uScale = 48;
-    terrainLawnTexture.vScale = 42;
-    this.realisticMaterials.terrain.albedoTexture = terrainLawnTexture;
-    const larchTexture = new Texture(
-      "/assets/textures/larch-cladding-v2.jpg",
-      this.scene,
-      false,
-      false,
-      Texture.TRILINEAR_SAMPLINGMODE,
-    );
-    larchTexture.uScale = 1.2;
-    larchTexture.vScale = 1;
-    larchTexture.anisotropicFilteringLevel = 8;
-    this.realisticMaterials.timber.albedoTexture = larchTexture;
-    const larchBumpTexture = larchTexture.clone();
-    if (larchBumpTexture) {
-      larchBumpTexture.level = 0.07;
-      this.realisticMaterials.timber.bumpTexture = larchBumpTexture;
-      this.realisticMaterials.timber.forceIrradianceInFragment = true;
-    }
-    const stuccoTexture = new Texture(
-      "/assets/textures/stucco-warm-v1.jpg",
-      this.scene,
-      false,
-      false,
-      Texture.TRILINEAR_SAMPLINGMODE,
-    );
-    stuccoTexture.uScale = 4;
-    stuccoTexture.vScale = 3;
-    stuccoTexture.anisotropicFilteringLevel = 8;
-    this.realisticMaterials.wall.albedoTexture = stuccoTexture;
-    const stuccoBumpTexture = stuccoTexture.clone();
-    if (stuccoBumpTexture) {
-      stuccoBumpTexture.level = 0.1;
-      this.realisticMaterials.wall.bumpTexture = stuccoBumpTexture;
-      this.realisticMaterials.wall.forceIrradianceInFragment = true;
-    }
-    const deckTexture = new Texture(
-      "/assets/textures/deck-larch-v1.jpg",
-      this.scene,
-      false,
-      false,
-      Texture.TRILINEAR_SAMPLINGMODE,
-    );
-    deckTexture.uScale = 4;
-    deckTexture.vScale = 1.4;
-    deckTexture.anisotropicFilteringLevel = 8;
-    this.realisticMaterials.deck.albedoTexture = deckTexture;
-    const deckBumpTexture = deckTexture.clone();
-    if (deckBumpTexture) {
-      deckBumpTexture.level = 0.08;
-      this.realisticMaterials.deck.bumpTexture = deckBumpTexture;
-      this.realisticMaterials.deck.forceIrradianceInFragment = true;
-    }
+    this.applyTexture(this.realisticMaterials.wall, "plaster-white-albedo", 3.2, 1.4, "plaster-white-normal", 0.55);
+    this.applyTexture(this.realisticMaterials.timber, "larch-albedo", 1.15, 1, "larch-normal", 0.85);
+    this.applyTexture(this.realisticMaterials.deck, "deck-plank-albedo", 2.4, 1, "deck-plank-normal", 0.7);
+    this.applyTexture(this.realisticMaterials.roof, "metal-anthracite-albedo", 7, 5, "metal-anthracite-normal", 0.3);
+    this.realisticMaterials.roof.environmentIntensity = 0.35;
+    this.realisticMaterials.roofEdge.environmentIntensity = 0.4;
+    this.applyTexture(this.realisticMaterials.gravel, "gravel-albedo", 6, 1.1, "gravel-normal", 0.9);
+    this.applyTexture(this.realisticMaterials.concrete, "concrete-albedo", 2.2, 2.2, "concrete-normal", 0.5);
+    this.applyTexture(this.realisticMaterials.paving, "concrete-albedo", 5, 2.5, "concrete-normal", 0.45);
     this.configurePlantCardMaterial(
       this.realisticMaterials.plantGrass,
       "/assets/vegetation/ornamental-grass-card.png",
@@ -483,6 +520,69 @@ export class TwinSceneController {
       else this.engine.runRenderLoop(render);
     };
     document.addEventListener("visibilitychange", this.onVisibilityChange);
+  }
+
+  private applyTexture(
+    material: PBRMaterial,
+    albedoName: string,
+    uScale: number,
+    vScale: number,
+    normalName?: string,
+    bumpLevel = 0.6,
+  ) {
+    const albedo = new Texture(
+      `/assets/textures/${albedoName}.jpg`,
+      this.scene,
+      false,
+      false,
+      Texture.TRILINEAR_SAMPLINGMODE,
+    );
+    albedo.uScale = uScale;
+    albedo.vScale = vScale;
+    albedo.anisotropicFilteringLevel = 8;
+    material.albedoTexture = albedo;
+    if (normalName) {
+      const bump = new Texture(
+        `/assets/textures/${normalName}.jpg`,
+        this.scene,
+        false,
+        false,
+        Texture.TRILINEAR_SAMPLINGMODE,
+      );
+      bump.uScale = uScale;
+      bump.vScale = vScale;
+      bump.level = bumpLevel;
+      bump.anisotropicFilteringLevel = 8;
+      material.bumpTexture = bump;
+      material.forceIrradianceInFragment = true;
+    }
+    return albedo;
+  }
+
+  /** Larch cladding whose 50 mm boards keep true scale on any element. */
+  private larchFor(widthM: number, heightM: number, tag: string) {
+    const key = `${tag}:${widthM.toFixed(2)}x${heightM.toFixed(2)}`;
+    const existing = this.larchClones.get(key);
+    if (existing) return existing;
+    const clone = this.realisticMaterials.timber.clone(`real-larch-${key}`) as PBRMaterial;
+    const baseAlbedo = this.realisticMaterials.timber.albedoTexture as Texture | null;
+    const baseBump = this.realisticMaterials.timber.bumpTexture as Texture | null;
+    if (baseAlbedo) {
+      const albedo = baseAlbedo.clone() as Texture;
+      albedo.uScale = Math.max(0.35, widthM);
+      albedo.vScale = Math.max(0.5, heightM / 2.75);
+      albedo.uOffset = (this.larchClones.size * 0.23) % 1;
+      clone.albedoTexture = albedo;
+      if (baseBump) {
+        const bump = baseBump.clone() as Texture;
+        bump.uScale = albedo.uScale;
+        bump.vScale = albedo.vScale;
+        bump.uOffset = albedo.uOffset;
+        clone.bumpTexture = bump;
+      }
+    }
+    this.larchClones.set(key, clone);
+    return clone;
   }
 
   private configurePlantCardMaterial(material: PBRMaterial, url: string) {
@@ -666,7 +766,7 @@ export class TwinSceneController {
         0.14,
         -0.04,
       );
-      this.appearance(curb, this.materials.paving, this.realisticMaterials.paving);
+      this.appearance(curb, this.materials.paving, this.realisticMaterials.concrete);
       curb.receiveShadows = true;
       curb.isPickable = false;
       this.register(curb, "street");
@@ -689,7 +789,7 @@ export class TwinSceneController {
 
     const deck = createFlatPolygon(
       this.scene,
-      "Navrhnutá drevená terasa · 53 m²",
+      "Navrhnutá drevená terasa · 53 m² · staršia C3 revízia",
       SITE_SURFACES.timberTerrace.polygonMm,
       0.035,
     );
@@ -756,124 +856,17 @@ export class TwinSceneController {
 
     this.buildGables();
     this.buildRealisticHouseShell();
-
-    const slopeLength = HOUSE.roof.mainSlopeLengthMm * MM_TO_M;
-    const pitch = (HOUSE.roofPitchDeg * Math.PI) / 180;
-    let solarRoof: Mesh | null = null;
-    for (const side of [-1, 1]) {
-      const panel = CreateBox(
-        `Strecha hlavného traktu ${side}`,
-        {
-          width: HOUSE.roof.mainPlanLengthMm * MM_TO_M,
-          depth: slopeLength,
-          height: 0.14,
-        },
-        this.scene,
-      );
-      panel.position.set(
-        xM(HOUSE.originMm.x + HOUSE.lowerBar.widthMm / 2),
-        (HOUSE.eavesElevationMm + 1217.5) * MM_TO_M,
-        zM(HOUSE.originMm.y + HOUSE.lowerBar.depthMm / 2 + side * 2050),
-      );
-      panel.rotation.x = -side * pitch;
-      this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
-      panel.receiveShadows = true;
-      this.castShadow(panel);
-      panel.enableEdgesRendering();
-      panel.edgesColor = Color4.FromHexString("#aeb8bb66");
-      this.register(panel, "building", HOUSE.id);
-      if (side === -1) solarRoof = panel;
-
-      for (
-        let offsetMm = -HOUSE.roof.mainPlanLengthMm / 2 + 360;
-        offsetMm < HOUSE.roof.mainPlanLengthMm / 2;
-        offsetMm += 760
-      ) {
-        const seam = CreateBox(
-          `Falc hlavnej strechy ${side} · ${offsetMm}`,
-          { width: 0.026, depth: slopeLength, height: 0.028 },
-          this.scene,
-        );
-        seam.position.copyFrom(panel.position);
-        seam.position.x += offsetMm * MM_TO_M;
-        seam.position.y += 0.085;
-        seam.rotation.x = panel.rotation.x;
-        seam.material = this.realisticMaterials.roofEdge;
-        seam.isPickable = false;
-        this.realisticOnly(seam);
-        this.register(seam, "building");
-      }
-    }
-
-    const wingPitch = (HOUSE.roof.wingPitchDeg * Math.PI) / 180;
-    const wingSlopeLength =
-      (HOUSE.roof.wingHalfSpanMm * MM_TO_M) / Math.cos(wingPitch);
-    for (const side of [-1, 1]) {
-      const panel = CreateBox(
-        `Strecha krídla ${side}`,
-        {
-          width: wingSlopeLength,
-          depth: HOUSE.roof.wingPlanLengthMm * MM_TO_M,
-          height: 0.14,
-        },
-        this.scene,
-      );
-      panel.position.set(
-        xM(
-          HOUSE.originMm.x +
-            HOUSE.wing.xMm +
-            HOUSE.roof.wingHalfSpanMm +
-            side * (HOUSE.roof.wingHalfSpanMm / 2),
-        ),
-        ((HOUSE.eavesElevationMm + HOUSE.ridgeElevationMm) / 2) * MM_TO_M,
-        zM(
-          HOUSE.originMm.y +
-            HOUSE.wing.yMm +
-            HOUSE.roof.wingPlanLengthMm / 2,
-        ),
-      );
-      panel.rotation.z = -side * wingPitch;
-      this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
-      panel.receiveShadows = true;
-      this.castShadow(panel);
-      panel.enableEdgesRendering();
-      panel.edgesColor = Color4.FromHexString("#aeb8bb66");
-      this.register(panel, "building", HOUSE.id);
-
-      for (
-        let offsetMm = -HOUSE.roof.wingPlanLengthMm / 2 + 300;
-        offsetMm < HOUSE.roof.wingPlanLengthMm / 2;
-        offsetMm += 720
-      ) {
-        const seam = CreateBox(
-          `Falc strechy krídla ${side} · ${offsetMm}`,
-          { width: wingSlopeLength, depth: 0.026, height: 0.028 },
-          this.scene,
-        );
-        seam.position.copyFrom(panel.position);
-        seam.position.z -= offsetMm * MM_TO_M;
-        seam.position.y += 0.085;
-        seam.rotation.z = panel.rotation.z;
-        seam.material = this.realisticMaterials.roofEdge;
-        seam.isPickable = false;
-        this.realisticOnly(seam);
-        this.register(seam, "building");
-      }
-    }
-
-    if (solarRoof) this.buildSolarArray(solarRoof);
-
-    this.buildRoofEdges();
+    this.buildJoinedRoof();
 
     const garageDoor = boxAtPlan(
       this.scene,
-      "Garážová brána · 3 300 × 2 400 mm",
+      "Garážová brána · 3 300 × 2 400 mm · RAL 7016",
       {
         x: HOUSE.originMm.x - 36,
-        y: HOUSE.originMm.y + 675 + 1650,
+        y: HOUSE.facades.west.garageDoor.startYmm + HOUSE.facades.west.garageDoor.widthMm / 2,
       },
       80,
-      3300,
+      HOUSE.facades.west.garageDoor.widthMm,
       2.4,
       0,
     );
@@ -890,9 +883,12 @@ export class TwinSceneController {
       const joint = boxAtPlan(
         this.scene,
         `Horizontálna škára garážovej brány ${levelM.toFixed(1)}`,
-        { x: HOUSE.originMm.x - 82, y: HOUSE.originMm.y + 2325 },
+        {
+          x: HOUSE.originMm.x - 82,
+          y: HOUSE.facades.west.garageDoor.startYmm + HOUSE.facades.west.garageDoor.widthMm / 2,
+        },
         34,
-        3240,
+        HOUSE.facades.west.garageDoor.widthMm - 60,
         0.018,
         levelM,
       );
@@ -960,30 +956,92 @@ export class TwinSceneController {
     }
   }
 
+  private buildJoinedRoof() {
+    const roof = deriveJoinedRoofGeometry();
+
+    for (const face of roof.faces) {
+      const panel = createRoofFace(
+        this.scene,
+        `Spojená strešná rovina · ${face.id}`,
+        face.vertexIndices.map((index) => roof.vertices[index]),
+      );
+      this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
+      panel.receiveShadows = false;
+      this.castShadow(panel);
+      panel.enableEdgesRendering();
+      panel.edgesColor = Color4.FromHexString("#aeb8bb66");
+      panel.edgesWidth = 0.65;
+      this.register(panel, "building", HOUSE.id);
+    }
+
+    for (const seamSegment of roof.seamSegments) {
+      const seam = this.createRoofLine(
+        `Orezaný falc · ${seamSegment.id}`,
+        seamSegment.start,
+        seamSegment.end,
+        0.008,
+        0.016,
+      );
+      seam.material = this.realisticMaterials.roofEdge;
+      seam.isPickable = false;
+      this.realisticOnly(seam);
+      this.register(seam, "building");
+    }
+
+    this.buildRoofEdges(roof);
+    this.buildSolarArray();
+  }
+
+  private createRoofLine(
+    name: string,
+    start: RoofPointMm,
+    end: RoofPointMm,
+    radiusM: number,
+    elevationOffsetM = 0,
+  ) {
+    return CreateTube(
+      name,
+      {
+        path: [start, end].map(
+          (point) =>
+            new Vector3(
+              xM(point.xMm),
+              point.elevationMm * MM_TO_M + elevationOffsetM,
+              zM(point.yMm),
+            ),
+        ),
+        radius: radiusM,
+        tessellation: 6,
+        cap: Mesh.CAP_ALL,
+      },
+      this.scene,
+    );
+  }
+
   private buildGables() {
     const eave = HOUSE.eavesElevationMm * MM_TO_M;
     const ridge = HOUSE.ridgeElevationMm * MM_TO_M;
     const mainMidY = HOUSE.originMm.y + HOUSE.lowerBar.depthMm / 2;
-    for (const [name, xMm] of [
-      ["Garážový štít", HOUSE.originMm.x - 45],
-      ["Východný štít", HOUSE.originMm.x + HOUSE.lowerBar.widthMm + 45],
-    ] as const) {
-      const triangle = createVerticalTriangle(this.scene, name, [
-        new Vector3(xM(xMm), eave, zM(HOUSE.originMm.y)),
-        new Vector3(
-          xM(xMm),
-          eave,
-          zM(HOUSE.originMm.y + HOUSE.lowerBar.depthMm),
-        ),
-        new Vector3(xM(xMm), ridge, zM(mainMidY)),
-      ]);
-      this.appearance(triangle, this.materials.wall, this.realisticMaterials.wall);
-      triangle.receiveShadows = true;
-      this.castShadow(triangle);
-      this.register(triangle, "building", HOUSE.id);
-    }
+    const garageGableX = HOUSE.originMm.x - 8;
+    const garageGable = createVerticalTriangle(this.scene, "Garážový štít", [
+      new Vector3(xM(garageGableX), eave, zM(HOUSE.originMm.y)),
+      new Vector3(
+        xM(garageGableX),
+        eave,
+        zM(HOUSE.originMm.y + HOUSE.lowerBar.depthMm),
+      ),
+      new Vector3(xM(garageGableX), ridge, zM(mainMidY)),
+    ]);
+    this.appearance(
+      garageGable,
+      this.materials.wall,
+      this.realisticMaterials.wall,
+    );
+    garageGable.receiveShadows = true;
+    this.castShadow(garageGable);
+    this.register(garageGable, "building", HOUSE.id);
 
-    const wingEndY = HOUSE.originMm.y + HOUSE.maximumDepthMm + 45;
+    const wingEndY = HOUSE.originMm.y + HOUSE.maximumDepthMm + 8;
     const wingLeftX = HOUSE.originMm.x + HOUSE.wing.xMm;
     const wingRightX = wingLeftX + HOUSE.wing.widthMm;
     const wingGable = createVerticalTriangle(this.scene, "Drevený záhradný štít", [
@@ -994,7 +1052,7 @@ export class TwinSceneController {
     this.appearance(
       wingGable,
       this.materials.wall,
-      this.realisticMaterials.timber,
+      this.larchFor(7, 2.45, "wing-gable"),
     );
     this.castShadow(wingGable);
     this.register(wingGable, "building", HOUSE.id);
@@ -1046,43 +1104,44 @@ export class TwinSceneController {
     }
   }
 
-  private buildRoofEdges() {
+  private buildRoofEdges(roof: JoinedRoofGeometry) {
+    const { parameters } = roof;
     const specs = [
       {
         name: "Predný krytý žľab · vizualizačný profil",
         center: {
-          x: HOUSE.originMm.x + HOUSE.lowerBar.widthMm / 2,
-          y: HOUSE.originMm.y - 130,
+          x: (parameters.minXmm + parameters.maxXmm) / 2,
+          y: parameters.frontEaveYmm - 60,
         },
-        widthMm: HOUSE.lowerBar.widthMm + 260,
+        widthMm: parameters.maxXmm - parameters.minXmm + 120,
         depthMm: 105,
       },
       {
         name: "Záhradný krytý žľab · vizualizačný profil",
         center: {
-          x: HOUSE.originMm.x + HOUSE.wing.xMm / 2,
-          y: HOUSE.originMm.y + HOUSE.lowerBar.depthMm + 130,
+          x: (parameters.minXmm + parameters.wingInnerEaveXmm) / 2,
+          y: parameters.gardenEaveYmm + 60,
         },
-        widthMm: HOUSE.wing.xMm + 260,
+        widthMm: parameters.wingInnerEaveXmm - parameters.minXmm + 120,
         depthMm: 105,
       },
       {
         name: "Vnútorná okapová hrana krídla · vizualizačný profil",
         center: {
-          x: HOUSE.originMm.x + HOUSE.wing.xMm - 130,
-          y: HOUSE.originMm.y + HOUSE.wing.yMm + HOUSE.wing.depthMm / 2,
+          x: parameters.wingInnerEaveXmm - 60,
+          y: (parameters.gardenEaveYmm + parameters.wingEndYmm) / 2,
         },
         widthMm: 105,
-        depthMm: HOUSE.wing.depthMm + 260,
+        depthMm: parameters.wingEndYmm - parameters.gardenEaveYmm + 120,
       },
       {
         name: "Vonkajšia okapová hrana krídla · vizualizačný profil",
         center: {
-          x: HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.wing.widthMm + 130,
-          y: HOUSE.originMm.y + HOUSE.wing.yMm + HOUSE.wing.depthMm / 2,
+          x: parameters.maxXmm + 60,
+          y: (parameters.frontEaveYmm + parameters.wingEndYmm) / 2,
         },
         widthMm: 105,
-        depthMm: HOUSE.wing.depthMm + 260,
+        depthMm: parameters.wingEndYmm - parameters.frontEaveYmm + 120,
       },
     ];
     for (const spec of specs) {
@@ -1106,26 +1165,20 @@ export class TwinSceneController {
       {
         name: "Hrebeňový profil hlavného traktu",
         center: {
-          x: HOUSE.originMm.x + HOUSE.lowerBar.widthMm / 2,
-          y: HOUSE.originMm.y + HOUSE.lowerBar.depthMm / 2,
+          x: (parameters.minXmm + parameters.wingRidgeXmm) / 2,
+          y: parameters.mainRidgeYmm,
         },
-        widthMm: HOUSE.roof.mainPlanLengthMm + 100,
+        widthMm: parameters.wingRidgeXmm - parameters.minXmm + 100,
         depthMm: 125,
       },
       {
         name: "Hrebeňový profil krídla",
         center: {
-          x:
-            HOUSE.originMm.x +
-            HOUSE.wing.xMm +
-            HOUSE.roof.wingHalfSpanMm,
-          y:
-            HOUSE.originMm.y +
-            HOUSE.wing.yMm +
-            HOUSE.roof.wingPlanLengthMm / 2,
+          x: parameters.wingRidgeXmm,
+          y: (parameters.mainRidgeYmm + parameters.wingEndYmm) / 2,
         },
         widthMm: 125,
-        depthMm: HOUSE.roof.wingPlanLengthMm + 100,
+        depthMm: parameters.wingEndYmm - parameters.mainRidgeYmm + 100,
       },
     ]) {
       const cap = boxAtPlan(
@@ -1134,8 +1187,8 @@ export class TwinSceneController {
         ridge.center,
         ridge.widthMm,
         ridge.depthMm,
-        0.05,
-        HOUSE.ridgeElevationMm * MM_TO_M - 0.05,
+        0.06,
+        HOUSE.ridgeElevationMm * MM_TO_M - 0.015,
       );
       cap.material = this.realisticMaterials.roofEdge;
       cap.isPickable = false;
@@ -1143,20 +1196,72 @@ export class TwinSceneController {
       this.castShadow(cap);
       this.register(cap, "building");
     }
+
+    for (const feature of [roof.valley, roof.hip]) {
+      const profile = this.createRoofLine(
+        feature.kind === "VALLEY"
+          ? "Úžľabný lem · D1.1.004"
+          : "Nárožný lem · D1.1.004",
+        roof.vertices[feature.startVertexIndex],
+        roof.vertices[feature.endVertexIndex],
+        feature.kind === "VALLEY" ? 0.024 : 0.046,
+        feature.kind === "VALLEY" ? 0.008 : 0.024,
+      );
+      profile.material = this.realisticMaterials.roofEdge;
+      profile.isPickable = false;
+      this.realisticOnly(profile);
+      this.castShadow(profile);
+      this.register(profile, "building");
+    }
+
+    for (const gable of roof.gables) {
+      const [leftIndex, ridgeIndex, rightIndex] = gable.vertexIndices;
+      for (const [segmentIndex, [startIndex, endIndex]] of [
+        [0, [leftIndex, ridgeIndex]],
+        [1, [ridgeIndex, rightIndex]],
+      ] as const) {
+        const rake = this.createRoofLine(
+          `${gable.id} · strešná hrana ${segmentIndex + 1}`,
+          roof.vertices[startIndex],
+          roof.vertices[endIndex],
+          0.038,
+          0.008,
+        );
+        rake.material = this.realisticMaterials.roofEdge;
+        rake.isPickable = false;
+        this.realisticOnly(rake);
+        this.castShadow(rake);
+        this.register(rake, "building");
+      }
+    }
   }
 
-  private buildSolarArray(roof: Mesh) {
+  private buildSolarArray() {
+    const roof = deriveJoinedRoofGeometry();
+    const { parameters } = roof;
+    const actualPitch = Math.atan2(
+      parameters.ridgeElevationMm - parameters.eavesElevationMm,
+      parameters.mainRidgeYmm - parameters.frontEaveYmm,
+    );
     const rows = 2;
     const columns = HOUSE.photovoltaics.moduleCount / rows;
     for (let column = 0; column < columns; column += 1) {
       for (let row = 0; row < rows; row += 1) {
+        const centerXmm = parameters.minXmm + 12_450 + column * 1_080;
+        const centerYmm = parameters.frontEaveYmm + 1_280 + row * 1_560;
+        const surfaceElevationM =
+          mainFrontRoofHeightMm(centerYmm, parameters) * MM_TO_M;
         const panel = CreateBox(
           `Fotovoltický panel ${column + 1}.${row + 1} · vizualizačná referencia`,
-          { width: 1.02, depth: 1.72, height: 0.045 },
+          { width: 1.02, depth: 1.72, height: 0.035 },
           this.scene,
         );
-        panel.parent = roof;
-        panel.position.set(1.65 + column * 1.08, 0.12, -0.92 + row * 1.82);
+        panel.position.set(
+          xM(centerXmm),
+          surfaceElevationM + 0.05,
+          zM(centerYmm),
+        );
+        panel.rotation.x = actualPitch;
         panel.material = this.realisticMaterials.solar;
         panel.isPickable = false;
         this.realisticOnly(panel);
@@ -1165,11 +1270,15 @@ export class TwinSceneController {
 
         const frame = CreateBox(
           `Rám FV ${column + 1}.${row + 1}`,
-          { width: 1.06, depth: 1.76, height: 0.018 },
+          { width: 1.06, depth: 1.76, height: 0.016 },
           this.scene,
         );
-        frame.parent = roof;
-        frame.position.set(1.65 + column * 1.08, 0.09, -0.92 + row * 1.82);
+        frame.position.set(
+          xM(centerXmm),
+          surfaceElevationM + 0.03,
+          zM(centerYmm),
+        );
+        frame.rotation.x = actualPitch;
         frame.material = this.realisticMaterials.solarGrid;
         frame.isPickable = false;
         this.realisticOnly(frame);
@@ -1180,6 +1289,9 @@ export class TwinSceneController {
 
   private buildRealisticHouseShell() {
     const heightMm = HOUSE.eavesElevationMm;
+    const porch = HOUSE.porches.wingEnd;
+    const loggia = HOUSE.porches.gardenLoggia;
+
     const frontOpenings: readonly FacadeOpeningMm[] =
       HOUSE.facades.front.openings.map((opening) => ({
         id: opening.id,
@@ -1196,31 +1308,60 @@ export class TwinSceneController {
         heightMm: opening.heightMm,
         sillMm: opening.sillMm,
       }));
-    const gardenOpenings: readonly FacadeOpeningMm[] = HOUSE.facades.garden.openings.map(
-      (opening) => ({
-        id: opening.id,
-        startMm: opening.startXmm,
-        widthMm: opening.widthMm,
-        heightMm: opening.heightMm,
-        sillMm: opening.sillMm,
-      }),
-    );
-    const wingOpening: FacadeOpeningMm = {
-      id: HOUSE.facades.wingEnd.opening.id,
-      startMm: HOUSE.facades.wingEnd.opening.roughOpeningStartXmm,
-      widthMm: HOUSE.facades.wingEnd.opening.roughOpeningWidthMm,
-      frameStartMm: HOUSE.facades.wingEnd.opening.startXmm,
-      frameWidthMm: HOUSE.facades.wingEnd.opening.widthMm,
-      heightMm: HOUSE.facades.wingEnd.opening.heightMm,
-      sillMm: HOUSE.facades.wingEnd.opening.sillMm,
-    };
-    const garageOpening: FacadeOpeningMm = {
-      id: "GARAGE-DOOR",
-      startMm: HOUSE.originMm.y + 675,
-      widthMm: 3300,
-      heightMm: 2400,
-      sillMm: 0,
-    };
+    // Garden facade: two flush glazed openings plus the open loggia bay taken
+    // straight from D1.1.002 (P01 beam over a 3 200 mm opening).
+    const gardenOpenings: readonly FacadeOpeningMm[] = [
+      {
+        id: loggia.id,
+        startMm: loggia.openingStartXmm,
+        widthMm: loggia.openingEndXmm - loggia.openingStartXmm,
+        heightMm: 2400,
+        sillMm: 0,
+      },
+      ...HOUSE.facades.garden.openings
+        .filter((opening) => opening.id !== "GARDEN-01")
+        .map((opening) => ({
+          id: opening.id,
+          startMm: opening.startXmm,
+          widthMm: opening.widthMm,
+          heightMm: opening.heightMm,
+          sillMm: opening.sillMm,
+        })),
+    ];
+    const westOpenings: readonly FacadeOpeningMm[] = [
+      {
+        id: HOUSE.facades.west.garageDoor.id,
+        startMm: HOUSE.facades.west.garageDoor.startYmm,
+        widthMm: HOUSE.facades.west.garageDoor.widthMm,
+        heightMm: HOUSE.facades.west.garageDoor.heightMm,
+        sillMm: HOUSE.facades.west.garageDoor.sillMm,
+      },
+      {
+        id: HOUSE.facades.west.loggiaOpening.id,
+        startMm: HOUSE.facades.west.loggiaOpening.startYmm,
+        widthMm: HOUSE.facades.west.loggiaOpening.widthMm,
+        heightMm: HOUSE.facades.west.loggiaOpening.heightMm,
+        sillMm: HOUSE.facades.west.loggiaOpening.sillMm,
+      },
+    ];
+    // Wing west wall ends at 19 535; beyond it the porch is open with the
+    // 500 × 500 corner pillar carrying the P03 beam.
+    const wingWestOpenings: readonly FacadeOpeningMm[] = [
+      {
+        id: HOUSE.facades.wingWest.opening.id,
+        startMm: HOUSE.facades.wingWest.opening.startYmm,
+        widthMm: HOUSE.facades.wingWest.opening.widthMm,
+        heightMm: HOUSE.facades.wingWest.opening.heightMm,
+        sillMm: HOUSE.facades.wingWest.opening.sillMm,
+      },
+      {
+        id: "PORCH-WEST-OPEN",
+        startMm: porch.westOpening.startYmm,
+        widthMm: porch.westOpening.endYmm - porch.westOpening.startYmm,
+        heightMm: porch.westOpening.heightMm,
+        sillMm: 0,
+      },
+    ];
 
     this.buildRealisticZFacade(
       "Južná fasáda",
@@ -1242,40 +1383,11 @@ export class TwinSceneController {
       gardenOpenings,
       this.realisticMaterials.wall,
     );
-    const gardenLarch = HOUSE.facades.garden.larchFeature;
-    const gardenLarchFeature = boxAtPlan(
-      this.scene,
-      "Lokálny modřínový prvok záhradnej fasády · odvodenie D1.1.002/006",
-      {
-        x: gardenLarch.startXmm + gardenLarch.widthMm / 2,
-        y: HOUSE.facades.garden.faceYmm + 24,
-      },
-      gardenLarch.widthMm,
-      48,
-      gardenLarch.heightMm * MM_TO_M,
-      0,
-    );
-    gardenLarchFeature.material = this.realisticMaterials.timber;
-    gardenLarchFeature.receiveShadows = true;
-    gardenLarchFeature.isPickable = false;
-    this.realisticOnly(gardenLarchFeature);
-    this.castShadow(gardenLarchFeature);
-    this.register(gardenLarchFeature, "building", HOUSE.id);
-    this.buildRealisticZFacade(
-      "Koncová fasáda krídla",
-      HOUSE.facades.wingEnd.faceYmm,
-      HOUSE.facades.wingEnd.startXmm,
-      HOUSE.facades.wingEnd.startXmm + HOUSE.facades.wingEnd.widthMm,
-      1,
-      heightMm,
-      [wingOpening],
-      this.realisticMaterials.timber,
-    );
     this.buildRealisticXFacade(
       "Východná fasáda",
       HOUSE.facades.east.faceXmm,
       HOUSE.originMm.y,
-      HOUSE.originMm.y + HOUSE.maximumDepthMm - 320,
+      HOUSE.originMm.y + HOUSE.maximumDepthMm,
       1,
       heightMm,
       eastOpenings,
@@ -1283,24 +1395,54 @@ export class TwinSceneController {
     );
     this.buildRealisticXFacade(
       "Garážový štít",
-      HOUSE.originMm.x,
+      HOUSE.facades.west.faceXmm,
       HOUSE.originMm.y,
       HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
       -1,
       heightMm,
-      [garageOpening],
+      westOpenings,
       this.realisticMaterials.wall,
     );
     this.buildRealisticXFacade(
-      "Vnútorná fasáda krídla",
-      HOUSE.originMm.x + HOUSE.wing.xMm,
-      HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
-      HOUSE.originMm.y + HOUSE.maximumDepthMm - 320,
+      "Západná stena krídla",
+      HOUSE.facades.wingWest.faceXmm,
+      HOUSE.facades.wingWest.wallStartYmm,
+      porch.frontYmm,
       -1,
       heightMm,
-      [],
+      wingWestOpenings,
       this.realisticMaterials.wall,
+      500,
     );
+
+    this.buildGardenLoggia();
+    this.buildWingPorch();
+
+    // Larch cladding fields between the flush garden windows (reference look).
+    for (const [index, span] of [
+      { startXmm: 10640, endXmm: 11840 },
+      { startXmm: 14340, endXmm: 15840 },
+    ].entries()) {
+      const widthM = (span.endXmm - span.startXmm) * MM_TO_M;
+      const field = boxAtPlan(
+        this.scene,
+        `Modřínové pole záhradnej fasády ${index + 1}`,
+        {
+          x: (span.startXmm + span.endXmm) / 2,
+          y: HOUSE.facades.garden.faceYmm + 20,
+        },
+        span.endXmm - span.startXmm,
+        40,
+        2.75,
+        0,
+      );
+      field.material = this.larchFor(widthM, 2.75, `garden-field-${index}`);
+      field.receiveShadows = true;
+      field.isPickable = false;
+      this.realisticOnly(field);
+      this.castShadow(field);
+      this.register(field, "building", HOUSE.id);
+    }
 
     for (const opening of frontOpenings) {
       this.buildWindowOnZFace(
@@ -1312,33 +1454,23 @@ export class TwinSceneController {
         opening.sillMm,
         -1,
         this.realisticMaterials.wall,
+        this.realisticMaterials.glassFrame,
       );
     }
-    for (const opening of gardenOpenings) {
+    for (const opening of HOUSE.facades.garden.openings) {
+      if (opening.id === "GARDEN-01") continue;
       this.buildWindowOnZFace(
         `Terasové presklenie ${opening.widthMm} · D1.1.002`,
-        opening.startMm + opening.widthMm / 2,
+        opening.startXmm + opening.widthMm / 2,
         HOUSE.facades.garden.faceYmm,
         opening.widthMm,
         opening.heightMm,
         opening.sillMm,
         1,
-        opening.id === "GARDEN-01"
-          ? this.realisticMaterials.timber
-          : this.realisticMaterials.wall,
+        this.realisticMaterials.wall,
+        this.realisticMaterials.glassFrameWood,
       );
     }
-    this.buildWindowOnZFace(
-      "Severné terasové presklenie 2 400 · D1.1.002",
-      (wingOpening.frameStartMm ?? wingOpening.startMm) +
-        (wingOpening.frameWidthMm ?? wingOpening.widthMm) / 2,
-      HOUSE.facades.wingEnd.faceYmm,
-      wingOpening.frameWidthMm ?? wingOpening.widthMm,
-      wingOpening.heightMm,
-      wingOpening.sillMm,
-      1,
-      this.realisticMaterials.timber,
-    );
     for (const opening of eastOpenings) {
       this.buildWindowOnXFace(
         `Bočná výplň otvoru ${opening.id} · D1.1.002`,
@@ -1349,7 +1481,292 @@ export class TwinSceneController {
         opening.sillMm,
         1,
         this.realisticMaterials.wall,
+        this.realisticMaterials.glassFrame,
       );
+    }
+    // Wing west sliding glazing onto the terrace walkway.
+    this.buildWindowOnXFace(
+      "Terasové posuvné presklenie 2 250 · D1.1.002",
+      HOUSE.facades.wingWest.faceXmm,
+      HOUSE.facades.wingWest.opening.startYmm + HOUSE.facades.wingWest.opening.widthMm / 2,
+      HOUSE.facades.wingWest.opening.widthMm,
+      HOUSE.facades.wingWest.opening.heightMm,
+      HOUSE.facades.wingWest.opening.sillMm,
+      -1,
+      this.realisticMaterials.wall,
+      this.realisticMaterials.glassFrameWood,
+    );
+  }
+
+  /** Garden loggia recessed 2 953 mm behind the garden facade (D1.1.002). */
+  private buildGardenLoggia() {
+    const loggia = HOUSE.porches.gardenLoggia;
+    const soffitM = loggia.soffitElevationMm * MM_TO_M;
+
+    const backOpenings: readonly FacadeOpeningMm[] = [
+      {
+        id: loggia.backDoor.id,
+        startMm: loggia.backDoor.startXmm,
+        widthMm: loggia.backDoor.widthMm,
+        heightMm: loggia.backDoor.heightMm,
+        sillMm: loggia.backDoor.sillMm,
+      },
+    ];
+    for (const [index, segment] of segmentFacadeMm(
+      loggia.cornerPier.startXmm + 500,
+      loggia.eastInnerXmm,
+      loggia.soffitElevationMm,
+      backOpenings,
+    ).entries()) {
+      const mesh = boxAtPlan(
+        this.scene,
+        `Lodžia · zadná stena ${index + 1}`,
+        {
+          x: (segment.startMm + segment.endMm) / 2,
+          y: loggia.backFaceYmm - 250,
+        },
+        segment.endMm - segment.startMm,
+        500,
+        (segment.topMm - segment.bottomMm) * MM_TO_M,
+        segment.bottomMm * MM_TO_M,
+      );
+      mesh.material = this.realisticMaterials.wall;
+      mesh.receiveShadows = true;
+      this.realisticOnly(mesh);
+      this.register(mesh, "building", HOUSE.id);
+    }
+    // Larch cladding band on the back wall (7 236 – 9 086 per plan).
+    const larchWidthM = (loggia.backLarch.endXmm - loggia.backLarch.startXmm) * MM_TO_M;
+    const backLarch = boxAtPlan(
+      this.scene,
+      "Lodžia · modřínový obklad zadnej steny",
+      {
+        x: (loggia.backLarch.startXmm + loggia.backLarch.endXmm) / 2,
+        y: loggia.backFaceYmm + 18,
+      },
+      loggia.backLarch.endXmm - loggia.backLarch.startXmm,
+      36,
+      soffitM,
+      0,
+    );
+    backLarch.material = this.larchFor(larchWidthM, soffitM, "loggia-back");
+    backLarch.receiveShadows = true;
+    backLarch.isPickable = false;
+    this.realisticOnly(backLarch);
+    this.register(backLarch, "building", HOUSE.id);
+
+    this.buildWindowOnZFace(
+      "Lodžia · presklené dvere 1 250 · D1.1.002",
+      loggia.backDoor.startXmm + loggia.backDoor.widthMm / 2,
+      loggia.backFaceYmm,
+      loggia.backDoor.widthMm,
+      loggia.backDoor.heightMm,
+      loggia.backDoor.sillMm,
+      1,
+      this.realisticMaterials.wall,
+      this.realisticMaterials.glassFrameWood,
+    );
+
+    // East inner cheek of the loggia (room 1.10 west wall).
+    const cheek = boxAtPlan(
+      this.scene,
+      "Lodžia · východná bočná stena",
+      { x: loggia.eastInnerXmm + 200, y: (loggia.backFaceYmm + loggia.faceYmm) / 2 },
+      400,
+      loggia.faceYmm - loggia.backFaceYmm,
+      EAVES_M,
+      0,
+    );
+    cheek.material = this.realisticMaterials.wall;
+    cheek.receiveShadows = true;
+    this.realisticOnly(cheek);
+    this.castShadow(cheek);
+    this.register(cheek, "building", HOUSE.id);
+
+    // Flat white soffit over the loggia.
+    const soffit = boxAtPlan(
+      this.scene,
+      "Lodžia · podhľad +2,750",
+      {
+        x: (loggia.cornerPier.startXmm + loggia.eastInnerXmm) / 2,
+        y: (loggia.backFaceYmm + loggia.faceYmm) / 2,
+      },
+      loggia.eastInnerXmm - loggia.cornerPier.startXmm,
+      loggia.faceYmm - loggia.backFaceYmm,
+      0.06,
+      soffitM,
+    );
+    soffit.material = this.realisticMaterials.soffit;
+    soffit.isPickable = false;
+    this.realisticOnly(soffit);
+    this.register(soffit, "building", HOUSE.id);
+  }
+
+  /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
+  private buildWingPorch() {
+    const porch = HOUSE.porches.wingEnd;
+    const soffitM = porch.soffitElevationMm * MM_TO_M;
+
+    const backSegments = segmentFacadeMm(
+      porch.glazing.startXmm,
+      porch.backWall.endXmm,
+      porch.soffitElevationMm,
+      [
+        {
+          id: "PORCH-GLAZING",
+          startMm: porch.glazing.startXmm,
+          widthMm: porch.glazing.widthMm,
+          heightMm: porch.glazing.heightMm,
+          sillMm: porch.glazing.sillMm,
+        },
+      ],
+    );
+    for (const [index, segment] of backSegments.entries()) {
+      const mesh = boxAtPlan(
+        this.scene,
+        `Krytá terasa · zadná stena ${index + 1}`,
+        {
+          x: (segment.startMm + segment.endMm) / 2,
+          y: porch.glazingFaceYmm - 250,
+        },
+        segment.endMm - segment.startMm,
+        500,
+        (segment.topMm - segment.bottomMm) * MM_TO_M,
+        segment.bottomMm * MM_TO_M,
+      );
+      mesh.material = this.realisticMaterials.wall;
+      mesh.receiveShadows = true;
+      this.realisticOnly(mesh);
+      this.register(mesh, "building", HOUSE.id);
+    }
+    // Larch cladding on the recessed masonry (24 040 – 27 540).
+    const backLarchWidthM = (porch.backWall.endXmm - porch.backWall.startXmm) * MM_TO_M;
+    const backLarch = boxAtPlan(
+      this.scene,
+      "Krytá terasa · modřínový obklad zadnej steny",
+      {
+        x: (porch.backWall.startXmm + porch.backWall.endXmm) / 2,
+        y: porch.glazingFaceYmm + 18,
+      },
+      porch.backWall.endXmm - porch.backWall.startXmm,
+      36,
+      soffitM,
+      0,
+    );
+    backLarch.material = this.larchFor(backLarchWidthM, soffitM, "porch-back");
+    backLarch.receiveShadows = true;
+    backLarch.isPickable = false;
+    this.realisticOnly(backLarch);
+    this.register(backLarch, "building", HOUSE.id);
+
+    // Recessed glazed wall (fixed pane + door per the drawing dashes).
+    this.buildWindowOnZFace(
+      "Krytá terasa · presklená stena 2 500 · D1.1.002",
+      porch.glazing.startXmm + porch.glazing.widthMm / 2,
+      porch.glazingFaceYmm,
+      porch.glazing.widthMm,
+      porch.glazing.heightMm,
+      porch.glazing.sillMm,
+      1,
+      this.realisticMaterials.wall,
+      this.realisticMaterials.glassFrameWood,
+    );
+
+    // Larch lining on the east porch cheek (inner face of the east wall).
+    const cheekDepthM = (porch.frontYmm - porch.glazingFaceYmm) * MM_TO_M;
+    const eastLining = boxAtPlan(
+      this.scene,
+      "Krytá terasa · modřínový obklad východnej steny",
+      {
+        x: porch.eastWallInnerXmm + 18,
+        y: (porch.glazingFaceYmm + porch.frontYmm) / 2,
+      },
+      36,
+      porch.frontYmm - porch.glazingFaceYmm,
+      soffitM,
+      0,
+    );
+    eastLining.material = this.larchFor(cheekDepthM, soffitM, "porch-cheek");
+    eastLining.receiveShadows = true;
+    eastLining.isPickable = false;
+    this.realisticOnly(eastLining);
+    this.register(eastLining, "building", HOUSE.id);
+
+    // White beam band over the open gable front (HEA160 portal, P04).
+    const band = boxAtPlan(
+      this.scene,
+      "Krytá terasa · nosný rám štítu HEA160 · P04",
+      {
+        x: (HOUSE.facades.wingEnd.startXmm + porch.backWall.endXmm) / 2,
+        y: porch.frontYmm - 150,
+      },
+      porch.backWall.endXmm - HOUSE.facades.wingEnd.startXmm,
+      300,
+      (HOUSE.eavesElevationMm - 2400) * MM_TO_M,
+      2.4,
+    );
+    band.material = this.realisticMaterials.wall;
+    band.receiveShadows = true;
+    this.realisticOnly(band);
+    this.castShadow(band);
+    this.register(band, "building", HOUSE.id);
+
+    // White beam band over the west porch opening (P03).
+    const westBand = boxAtPlan(
+      this.scene,
+      "Krytá terasa · preklad západného otvoru · P03",
+      {
+        x: HOUSE.facades.wingWest.faceXmm + 250,
+        y: (porch.westOpening.startYmm + porch.westOpening.endYmm) / 2,
+      },
+      500,
+      porch.westOpening.endYmm - porch.westOpening.startYmm,
+      (HOUSE.eavesElevationMm - 2400) * MM_TO_M,
+      2.4,
+    );
+    westBand.material = this.realisticMaterials.wall;
+    westBand.receiveShadows = true;
+    this.realisticOnly(westBand);
+    this.castShadow(westBand);
+    this.register(westBand, "building", HOUSE.id);
+
+    // Flat soffit over the whole covered porch.
+    const soffit = boxAtPlan(
+      this.scene,
+      "Krytá terasa · podhľad +2,750",
+      {
+        x: (porch.cornerPillar.startXmm + porch.eastWallInnerXmm) / 2,
+        y: (porch.glazingFaceYmm + porch.frontYmm) / 2,
+      },
+      porch.eastWallInnerXmm - porch.cornerPillar.startXmm,
+      porch.frontYmm - porch.glazingFaceYmm,
+      0.06,
+      soffitM,
+    );
+    soffit.material = this.realisticMaterials.soffit;
+    soffit.isPickable = false;
+    this.realisticOnly(soffit);
+    this.register(soffit, "building", HOUSE.id);
+
+    // Two concrete entry steps down to the lawn (reference photograph).
+    for (const [index, step] of [
+      { y0: porch.frontYmm, y1: porch.frontYmm + 380, top: -0.04 },
+      { y0: porch.frontYmm + 380, y1: porch.frontYmm + 760, top: -0.095 },
+    ].entries()) {
+      const stepMesh = boxAtPlan(
+        this.scene,
+        `Krytá terasa · betónový stupeň ${index + 1}`,
+        { x: 24540, y: (step.y0 + step.y1) / 2 },
+        2400,
+        step.y1 - step.y0,
+        0.07,
+        step.top - 0.07,
+      );
+      stepMesh.material = this.realisticMaterials.concrete;
+      stepMesh.receiveShadows = true;
+      stepMesh.isPickable = false;
+      this.realisticOnly(stepMesh);
+      this.register(stepMesh, "building");
     }
   }
 
@@ -1362,9 +1779,9 @@ export class TwinSceneController {
     heightMm: number,
     openings: readonly FacadeOpeningMm[],
     finish: PBRMaterial,
+    thicknessMmOverride?: number,
   ) {
-    const thicknessMm =
-      finish === this.realisticMaterials.timber ? 580 : 530;
+    const thicknessMm = thicknessMmOverride ?? 530;
     for (const [index, segment] of segmentFacadeMm(startXmm, endXmm, heightMm, openings).entries()) {
       const mesh = boxAtPlan(
         this.scene,
@@ -1395,9 +1812,9 @@ export class TwinSceneController {
     heightMm: number,
     openings: readonly FacadeOpeningMm[],
     finish: PBRMaterial,
+    thicknessMmOverride?: number,
   ) {
-    const thicknessMm =
-      finish === this.realisticMaterials.timber ? 580 : 530;
+    const thicknessMm = thicknessMmOverride ?? 530;
     for (const [index, segment] of segmentFacadeMm(startYmm, endYmm, heightMm, openings).entries()) {
       const mesh = boxAtPlan(
         this.scene,
@@ -1428,7 +1845,9 @@ export class TwinSceneController {
     sillMm: number,
     outwardY: -1 | 1,
     revealMaterial: PBRMaterial,
+    frameMaterial?: PBRMaterial,
   ) {
+    const frameMat = frameMaterial ?? this.realisticMaterials.glassFrame;
     const recess = boxAtPlan(
       this.scene,
       `${name} · interiérová hĺbka`,
@@ -1436,7 +1855,7 @@ export class TwinSceneController {
       widthMm + 120,
       26,
       (heightMm + 120) * MM_TO_M,
-      (sillMm - 60) * MM_TO_M,
+      Math.max(0, sillMm - 60) * MM_TO_M,
     );
     recess.material = this.realisticMaterials.interiorDark;
     recess.isPickable = false;
@@ -1511,6 +1930,7 @@ export class TwinSceneController {
       widthMm,
       heightMm,
       sillMm,
+      frameMat,
     );
   }
 
@@ -1633,11 +2053,13 @@ export class TwinSceneController {
     widthMm: number,
     heightMm: number,
     sillMm: number,
+    frameMaterial?: PBRMaterial,
   ) {
+    const material = frameMaterial ?? this.realisticMaterials.glassFrame;
     const frame = 58;
     const horizontal = [sillMm, sillMm + heightMm];
     const vertical = [centerXmm - widthMm / 2, centerXmm + widthMm / 2];
-    if (widthMm >= 1800) vertical.push(centerXmm);
+    if (widthMm >= 1800) vertical.push(centerXmm + widthMm * 0.08);
     for (const xMm of vertical) {
       const bar = boxAtPlan(
         this.scene,
@@ -1648,7 +2070,7 @@ export class TwinSceneController {
         heightMm * MM_TO_M + 0.06,
         sillMm * MM_TO_M - 0.03,
       );
-      bar.material = this.realisticMaterials.glassFrame;
+      bar.material = material;
       bar.isPickable = false;
       this.realisticOnly(bar);
       this.register(bar, "building");
@@ -1663,7 +2085,7 @@ export class TwinSceneController {
         0.058,
         levelMm * MM_TO_M - 0.029,
       );
-      bar.material = this.realisticMaterials.glassFrame;
+      bar.material = material;
       bar.isPickable = false;
       this.realisticOnly(bar);
       this.register(bar, "building");
@@ -1679,7 +2101,9 @@ export class TwinSceneController {
     sillMm: number,
     outwardX: -1 | 1,
     revealMaterial: PBRMaterial,
+    frameMaterial?: PBRMaterial,
   ) {
+    const frameMat = frameMaterial ?? this.realisticMaterials.glassFrame;
     const recess = boxAtPlan(
       this.scene,
       `${name} · interiérová hĺbka`,
@@ -1687,7 +2111,7 @@ export class TwinSceneController {
       26,
       widthMm + 120,
       (heightMm + 120) * MM_TO_M,
-      (sillMm - 60) * MM_TO_M,
+      Math.max(0, sillMm - 60) * MM_TO_M,
     );
     recess.material = this.realisticMaterials.interiorDark;
     recess.isPickable = false;
@@ -1759,7 +2183,7 @@ export class TwinSceneController {
     const frame = 58;
     const horizontal = [sillMm, sillMm + heightMm];
     const vertical = [centerYmm - widthMm / 2, centerYmm + widthMm / 2];
-    if (widthMm >= 1800) vertical.push(centerYmm);
+    if (widthMm >= 1800) vertical.push(centerYmm + widthMm * 0.08);
     for (const yMm of vertical) {
       const bar = boxAtPlan(
         this.scene,
@@ -1770,7 +2194,7 @@ export class TwinSceneController {
         heightMm * MM_TO_M + 0.06,
         sillMm * MM_TO_M - 0.03,
       );
-      bar.material = this.realisticMaterials.glassFrame;
+      bar.material = frameMat;
       bar.isPickable = false;
       this.realisticOnly(bar);
       this.register(bar, "building");
@@ -1785,81 +2209,117 @@ export class TwinSceneController {
         0.058,
         levelMm * MM_TO_M - 0.029,
       );
-      bar.material = this.realisticMaterials.glassFrame;
+      bar.material = frameMat;
       bar.isPickable = false;
       this.realisticOnly(bar);
       this.register(bar, "building");
     }
   }
 
-  private createDeckMaterial(
-    name: string,
-    widthMm: number,
-    depthMm: number,
-  ) {
+  /** Real board-by-board decking for one documented D1 terrace zone. */
+  private buildDeckZone(zone: TerraceZoneD1) {
+    const plankMm = 145;
+    const gapMm = 8;
+    const stepMm = plankMm + gapMm;
+    const thicknessM = 0.028;
+    const topM = 0.02;
     const material = this.realisticMaterials.deck.clone(
-      `${name} · PBR materiál`,
+      `${zone.id} · PBR materiál`,
     ) as PBRMaterial;
-    const albedo = new Texture(
-      "/assets/textures/deck-larch-v1.jpg",
-      this.scene,
-      false,
-      false,
-      Texture.TRILINEAR_SAMPLINGMODE,
-    );
-    albedo.uScale = Math.max(1, widthMm / 1680);
-    albedo.vScale = Math.max(0.75, depthMm / 4200);
-    albedo.anisotropicFilteringLevel = 8;
-    material.albedoTexture = albedo;
-    const bump = albedo.clone();
-    if (bump) {
-      bump.level = 0.08;
+    const baseAlbedo = this.realisticMaterials.deck.albedoTexture as Texture | null;
+    if (baseAlbedo) {
+      const albedo = baseAlbedo.clone() as Texture;
+      albedo.uScale = 1;
+      albedo.vScale = 1;
+      material.albedoTexture = albedo;
+    }
+    const baseBump = this.realisticMaterials.deck.bumpTexture as Texture | null;
+    if (baseBump) {
+      const bump = baseBump.clone() as Texture;
+      bump.uScale = 1;
+      bump.vScale = 1;
       material.bumpTexture = bump;
     }
-    material.forceIrradianceInFragment = true;
-    return material;
+
+    const planks: Mesh[] = [];
+    let rowIndex = 0;
+    for (const rect of zone.rectsMm) {
+      for (let y = rect.y0 + gapMm; y < rect.y1 - 40; y += stepMm) {
+        const y1 = Math.min(y + plankMm, rect.y1);
+        const lengthM = (rect.x1 - rect.x0) * MM_TO_M;
+        const u0 = (rowIndex * 0.317) % 0.8;
+        const uSpan = Math.min(0.98 - u0, Math.max(0.25, lengthM / 4.6));
+        const v0 = (rowIndex % 4) * 0.25;
+        const faceUV: Vector4[] = [];
+        for (let face = 0; face < 6; face += 1) {
+          faceUV.push(new Vector4(u0, v0, u0 + uSpan, v0 + 0.24));
+        }
+        const plank = CreateBox(
+          `${zone.label} · doska ${rowIndex + 1}`,
+          {
+            width: lengthM - 0.012,
+            depth: (y1 - y) * MM_TO_M,
+            height: thicknessM,
+            faceUV,
+            wrap: true,
+          },
+          this.scene,
+        );
+        plank.position.set(
+          xM((rect.x0 + rect.x1) / 2),
+          topM - thicknessM / 2,
+          zM((y + y1) / 2),
+        );
+        planks.push(plank);
+        rowIndex += 1;
+      }
+    }
+    if (planks.length === 0) return;
+    const merged = Mesh.MergeMeshes(planks, true, true, undefined, false, false);
+    if (!merged) return;
+    merged.name = zone.label;
+    merged.material = material;
+    merged.receiveShadows = true;
+    merged.isPickable = false;
+    this.realisticOnly(merged);
+    this.register(merged, "street", zone.id);
   }
 
   private buildLandscape() {
-    const deckZones = [
-      {
-        name: "Terasa D1 · záhradná časť · vizualizačný rozsah",
-        center: { x: 13740, y: 12850 },
-        widthMm: 14100,
-        depthMm: 3300,
-      },
-      {
-        name: "Terasa D1 · vnútorné rameno · vizualizačný rozsah",
-        center: { x: 19540, y: 17750 },
-        widthMm: 3000,
-        depthMm: 6500,
-      },
-      {
-        name: "Terasa D1 · koncová časť 16,45 m²",
-        center: { x: 24540, y: 23210 },
-        widthMm: 7000,
-        depthMm: 2350,
-      },
-    ] as const;
-    for (const zone of deckZones) {
-      const deck = boxAtPlan(
+    for (const zone of TERRACE_ZONES_D1) {
+      this.buildDeckZone(zone);
+    }
+
+    // Gravel maintenance strip along the plastered facades.
+    for (const strip of [
+      { name: "Kačírek · južná fasáda", x0: 6440, x1: 21040, y0: 2550, y1: 3000 },
+      { name: "Kačírek · východná fasáda", x0: 28040, x1: 28490, y0: 3000, y1: 22035 },
+      { name: "Kačírek · severný štít", x0: 21040, x1: 28040, y0: 22035, y1: 22485 },
+    ]) {
+      const gravel = boxAtPlan(
         this.scene,
-        zone.name,
-        zone.center,
-        zone.widthMm,
-        zone.depthMm,
-        0.075,
-        0.012,
+        strip.name,
+        { x: (strip.x0 + strip.x1) / 2, y: (strip.y0 + strip.y1) / 2 },
+        strip.x1 - strip.x0,
+        strip.y1 - strip.y0,
+        0.03,
+        -0.075,
       );
-      deck.material = this.createDeckMaterial(
-        zone.name,
-        zone.widthMm,
-        zone.depthMm,
-      );
-      deck.receiveShadows = true;
-      deck.isPickable = false;
-      this.realisticOnly(deck);
-      this.register(deck, "street");
+      const gravelMaterial = this.realisticMaterials.gravel.clone(
+        `${strip.name} · PBR`,
+      ) as PBRMaterial;
+      const baseGravel = this.realisticMaterials.gravel.albedoTexture as Texture | null;
+      if (baseGravel) {
+        const gravelAlbedo = baseGravel.clone() as Texture;
+        gravelAlbedo.uScale = Math.max(1, ((strip.x1 - strip.x0) * MM_TO_M) / 0.9);
+        gravelAlbedo.vScale = Math.max(0.5, ((strip.y1 - strip.y0) * MM_TO_M) / 0.9);
+        gravelMaterial.albedoTexture = gravelAlbedo;
+      }
+      gravel.material = gravelMaterial;
+      gravel.receiveShadows = true;
+      gravel.isPickable = false;
+      this.realisticOnly(gravel);
+      this.register(gravel, "street");
     }
 
     for (const stone of [
@@ -1890,22 +2350,22 @@ export class TwinSceneController {
         { x: 3600, y: 14200 },
         { x: 7100, y: 14700 },
         { x: 10500, y: 15600 },
-        { x: 15100, y: 16400 },
-        { x: 19700, y: 18500 },
-        { x: 20200, y: 21100 },
-        { x: 18100, y: 20100 },
-        { x: 14400, y: 18100 },
+        { x: 14400, y: 16400 },
+        { x: 17400, y: 18100 },
+        { x: 17600, y: 20600 },
+        { x: 15800, y: 19900 },
+        { x: 13000, y: 17900 },
         { x: 9800, y: 17100 },
         { x: 5400, y: 16000 },
         { x: 3600, y: 14200 },
       ],
       [
-        { x: 27900, y: 15100 },
+        { x: 28700, y: 15100 },
         { x: 30500, y: 15800 },
         { x: 30600, y: 22500 },
-        { x: 28200, y: 22900 },
-        { x: 28500, y: 19600 },
-        { x: 27900, y: 15100 },
+        { x: 28800, y: 22900 },
+        { x: 29000, y: 19600 },
+        { x: 28700, y: 15100 },
       ],
     ] as const;
     for (const [index, ring] of plantingBeds.entries()) {
@@ -1928,11 +2388,11 @@ export class TwinSceneController {
       { x: 8700, y: 16400, s: 1.25 },
       { x: 10500, y: 16550, s: 0.92 },
       { x: 12600, y: 16900, s: 1.18 },
-      { x: 15000, y: 17500, s: 1.05 },
-      { x: 17500, y: 19000, s: 1.3 },
-      { x: 19200, y: 21600, s: 1.08 },
-      { x: 28600, y: 18800, s: 1.25 },
-      { x: 29400, y: 20500, s: 0.94 },
+      { x: 14800, y: 17400, s: 1.05 },
+      { x: 16700, y: 18800, s: 1.3 },
+      { x: 17100, y: 20300, s: 1.08 },
+      { x: 29200, y: 18800, s: 1.25 },
+      { x: 29800, y: 20500, s: 0.94 },
       { x: 4200, y: 7100, s: 1.1 },
     ] as const;
     for (const [index, shrub] of shrubs.entries()) {
@@ -1949,10 +2409,12 @@ export class TwinSceneController {
       { x: 4700, y: 15100, s: 1.05 },
       { x: 7600, y: 16800, s: 1.18 },
       { x: 11200, y: 17450, s: 0.94 },
-      { x: 14300, y: 18100, s: 1.12 },
-      { x: 17800, y: 20500, s: 1.2 },
-      { x: 28900, y: 17100, s: 1.08 },
-      { x: 29600, y: 22100, s: 1.16 },
+      { x: 13900, y: 18000, s: 1.12 },
+      { x: 16400, y: 20100, s: 1.2 },
+      { x: 22300, y: 23300, s: 1.24 },
+      { x: 27400, y: 23050, s: 1.02 },
+      { x: 29100, y: 17100, s: 1.08 },
+      { x: 29900, y: 22100, s: 1.16 },
     ].entries()) {
       this.buildGrassCluster(
         `Okrasná tráva ${index + 1} · ilustračný koncept`,
@@ -2014,7 +2476,7 @@ export class TwinSceneController {
       { width: widthM, height: heightM },
       this.scene,
     );
-    plane.position.set(xM(xMm), heightM * 0.48, zM(yMm));
+    plane.position.set(xM(xMm), heightM * 0.48 - 0.06, zM(yMm));
     plane.billboardMode = Mesh.BILLBOARDMODE_Y;
     plane.scaling.x = Math.sin(rotation) < 0 ? -1 : 1;
     plane.material = material;
@@ -2024,41 +2486,19 @@ export class TwinSceneController {
   }
 
   private buildGardenFurniture() {
-    const table = CreateCylinder(
-      "Terasový stolík · ilustračný koncept",
-      { height: 0.08, diameter: 0.88, tessellation: 24 },
-      this.scene,
-    );
-    table.position.set(xM(17900), 0.42, zM(13350));
-    table.material = this.realisticMaterials.roofEdge;
-    table.isPickable = false;
-    this.realisticOnly(table);
-    this.castShadow(table);
-    this.register(table, "street");
-    const leg = CreateCylinder(
-      "Noha terasového stolíka",
-      { height: 0.42, diameter: 0.12, tessellation: 12 },
-      this.scene,
-    );
-    leg.position.set(xM(17900), 0.2, zM(13350));
-    leg.material = this.realisticMaterials.roofEdge;
-    leg.isPickable = false;
-    this.realisticOnly(leg);
-    this.castShadow(leg);
-    this.register(leg, "street");
-
+    // Two light garden chairs on the loggia deck (reference photograph).
     for (const [index, center] of [
-      { x: 16450, y: 13400, r: -0.14 },
-      { x: 19050, y: 14000, r: 0.18 },
+      { x: 8300, y: 12150, r: -0.12 },
+      { x: 9500, y: 12250, r: 0.16 },
     ].entries()) {
       const seat = boxAtPlan(
         this.scene,
-        `Terasové kreslo ${index + 1} · ilustračný koncept`,
+        `Záhradné kreslo ${index + 1} · ilustračný koncept`,
         center,
-        950,
-        900,
-        0.22,
-        0.18,
+        620,
+        700,
+        0.1,
+        0.32,
       );
       seat.rotation.y = center.r;
       seat.material = this.realisticMaterials.fabric;
@@ -2068,67 +2508,143 @@ export class TwinSceneController {
       this.register(seat, "street");
       const back = boxAtPlan(
         this.scene,
-        `Operadlo kresla ${index + 1}`,
-        { x: center.x, y: center.y + 360 },
-        950,
-        140,
-        0.62,
-        0.34,
+        `Operadlo záhradného kresla ${index + 1}`,
+        { x: center.x, y: center.y + 300 },
+        620,
+        90,
+        0.52,
+        0.3,
       );
       back.rotation.y = center.r;
+      back.rotation.x = -0.32;
       back.material = this.realisticMaterials.fabric;
       back.isPickable = false;
       this.realisticOnly(back);
       this.castShadow(back);
       this.register(back, "street");
+      for (const legOffset of [
+        { dx: -250, dy: -280 },
+        { dx: 250, dy: -280 },
+        { dx: -250, dy: 280 },
+        { dx: 250, dy: 280 },
+      ]) {
+        const leg = boxAtPlan(
+          this.scene,
+          `Noha kresla ${index + 1}`,
+          { x: center.x + legOffset.dx, y: center.y + legOffset.dy },
+          40,
+          40,
+          0.3,
+          0.02,
+        );
+        leg.material = this.realisticMaterials.glassFrame;
+        leg.isPickable = false;
+        this.realisticOnly(leg);
+        this.register(leg, "street");
+      }
     }
 
-    for (const [index, xMm] of [23600, 25250].entries()) {
-      const seat = boxAtPlan(
-        this.scene,
-        `Grafitové lounge kreslo ${index + 1} · ilustračný koncept`,
-        { x: xMm, y: 23150 },
-        980,
-        820,
-        0.16,
-        0.22,
-      );
-      seat.material = this.realisticMaterials.upholsteryDark;
-      seat.isPickable = false;
-      this.realisticOnly(seat);
-      this.castShadow(seat);
-      this.register(seat, "street");
+    // Graphite lounge set inside the covered porch (reference photograph).
+    const sofaSeat = boxAtPlan(
+      this.scene,
+      "Lounge pohovka · sedák · ilustračný koncept",
+      { x: 26650, y: 20500 },
+      1800,
+      850,
+      0.24,
+      0.2,
+    );
+    sofaSeat.material = this.realisticMaterials.upholsteryDark;
+    sofaSeat.isPickable = false;
+    this.realisticOnly(sofaSeat);
+    this.castShadow(sofaSeat);
+    this.register(sofaSeat, "street");
+    const sofaBase = boxAtPlan(
+      this.scene,
+      "Lounge pohovka · podnož",
+      { x: 26650, y: 20500 },
+      1900,
+      900,
+      0.16,
+      0.04,
+    );
+    sofaBase.material = this.realisticMaterials.fabric;
+    sofaBase.isPickable = false;
+    this.realisticOnly(sofaBase);
+    this.register(sofaBase, "street");
+    const sofaBack = boxAtPlan(
+      this.scene,
+      "Lounge pohovka · operadlo",
+      { x: 26650, y: 20870 },
+      1800,
+      160,
+      0.4,
+      0.36,
+    );
+    sofaBack.material = this.realisticMaterials.upholsteryDark;
+    sofaBack.isPickable = false;
+    this.realisticOnly(sofaBack);
+    this.castShadow(sofaBack);
+    this.register(sofaBack, "street");
 
-      const back = boxAtPlan(
-        this.scene,
-        `Grafitové lounge operadlo ${index + 1}`,
-        { x: xMm, y: 22820 },
-        980,
-        120,
-        0.48,
-        0.34,
-      );
-      back.material = this.realisticMaterials.upholsteryDark;
-      back.isPickable = false;
-      this.realisticOnly(back);
-      this.castShadow(back);
-      this.register(back, "street");
-    }
+    const chaise = boxAtPlan(
+      this.scene,
+      "Lounge ležadlo · ilustračný koncept",
+      { x: 22750, y: 20500 },
+      750,
+      1650,
+      0.22,
+      0.16,
+    );
+    chaise.rotation.y = 0.08;
+    chaise.material = this.realisticMaterials.upholsteryDark;
+    chaise.isPickable = false;
+    this.realisticOnly(chaise);
+    this.castShadow(chaise);
+    this.register(chaise, "street");
+    const chaiseBack = boxAtPlan(
+      this.scene,
+      "Lounge ležadlo · opierka",
+      { x: 22750, y: 19980 },
+      750,
+      420,
+      0.1,
+      0.36,
+    );
+    chaiseBack.rotation.y = 0.08;
+    chaiseBack.rotation.x = 0.62;
+    chaiseBack.material = this.realisticMaterials.upholsteryDark;
+    chaiseBack.isPickable = false;
+    this.realisticOnly(chaiseBack);
+    this.register(chaiseBack, "street");
 
     const loungeTable = boxAtPlan(
       this.scene,
-      "Nízky stolík pri lounge · ilustračný koncept",
-      { x: 24425, y: 23900 },
+      "Nízky stolík · doska · ilustračný koncept",
+      { x: 24800, y: 20650 },
       900,
       520,
-      0.09,
-      0.24,
+      0.05,
+      0.3,
     );
-    loungeTable.material = this.realisticMaterials.roofEdge;
+    loungeTable.material = this.larchFor(0.9, 0.55, "table");
     loungeTable.isPickable = false;
     this.realisticOnly(loungeTable);
     this.castShadow(loungeTable);
     this.register(loungeTable, "street");
+    const loungeTableBase = boxAtPlan(
+      this.scene,
+      "Nízky stolík · podnož",
+      { x: 24800, y: 20650 },
+      820,
+      440,
+      0.28,
+      0.02,
+    );
+    loungeTableBase.material = this.realisticMaterials.fabric;
+    loungeTableBase.isPickable = false;
+    this.realisticOnly(loungeTableBase);
+    this.register(loungeTableBase, "street");
   }
 
   private utilityMaterial(routeId: string, layer: LayerId) {
@@ -2313,14 +2829,15 @@ export class TwinSceneController {
   private applyViewMode(mode: ViewMode) {
     const realistic = mode === "realistic";
     this.scene.clearColor = Color4.FromHexString(
-      realistic ? "#b8c9c6ff" : "#101313ff",
+      realistic ? "#c6cfd2ff" : "#101313ff",
     );
-    this.scene.imageProcessingConfiguration.exposure = realistic ? 1.12 : 1;
-    this.scene.imageProcessingConfiguration.contrast = realistic ? 1.13 : 1.04;
-    this.scene.imageProcessingConfiguration.vignetteEnabled = false;
+    this.scene.imageProcessingConfiguration.exposure = realistic ? 1.02 : 1;
+    this.scene.imageProcessingConfiguration.contrast = realistic ? 1.08 : 1.04;
+    this.scene.imageProcessingConfiguration.vignetteEnabled = realistic;
+    this.scene.imageProcessingConfiguration.vignetteWeight = 0.32;
     this.scene.fogMode = realistic ? Scene.FOGMODE_EXP2 : Scene.FOGMODE_NONE;
-    this.scene.fogDensity = 0.0032;
-    this.scene.fogColor = Color3.FromHexString("#b8c9c6");
+    this.scene.fogDensity = 0.0026;
+    this.scene.fogColor = Color3.FromHexString("#c2cccc");
 
     for (const [mesh, appearance] of this.appearances) {
       if (!mesh.isDisposed()) {

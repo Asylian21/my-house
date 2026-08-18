@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   CADASTRAL_PARCELS,
+  TERRACE_ZONES_D1,
+  terraceZoneAreaM2,
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
   HOUSE,
@@ -51,7 +53,15 @@ describe("site evidence seed", () => {
       wingSide: "LOCAL_X_MAX",
     });
     expect(HOUSE.roof.mainPlanLengthMm).toBe(HOUSE.lowerBar.widthMm);
-    expect(HOUSE.roof.wingPlanLengthMm).toBe(HOUSE.wing.depthMm);
+    expect(HOUSE.roof).toMatchObject({
+      sourceId: SOURCES.roofPlan.id,
+      topology: "JOINED_CROSS_GABLE",
+      mainHalfSpanMm: 4_100,
+      wingOverallPlanLengthMm: HOUSE.maximumDepthMm,
+      wingExtensionPlanLengthMm: HOUSE.wing.depthMm,
+      documentedWingRoofOverallLengthMm: 19_085,
+      wingEndOverhangMm: 50,
+    });
     expect(HOUSE.footprintMm).toEqual([
       { x: 6_440, y: 3_000 },
       { x: 28_040, y: 3_000 },
@@ -97,27 +107,29 @@ describe("site evidence seed", () => {
       sceneYawForPlanSegment({ x: 0, y: 0 }, { x: 1000, y: 0 }),
     ).toBeCloseTo(0, 12);
     expect(TOP_CAMERA_ALPHA).toBe(Math.PI / 2);
-    expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-Math.PI * 0.44, 12);
-    expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeGreaterThan(0);
+    // The hero camera sits north-west of the house and looks back at the
+    // covered gable porch, matching the approved reference framing.
+    expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-2.03, 12);
+    expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
     expect(Math.sin(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
-    expect(GARDEN_CAMERA_BETA).toBeCloseTo(1.43, 12);
+    expect(GARDEN_CAMERA_BETA).toBeCloseTo(1.3, 12);
   });
 
   it("keeps the approved Realita camera deterministic on desktop and mobile", () => {
     expect(gardenCameraForWidth(1600)).toEqual({
       alpha: GARDEN_CAMERA_ALPHA,
       beta: GARDEN_CAMERA_BETA,
-      radius: 28,
-      fov: 0.58,
-      target: [2.5, 1.4, -2],
+      radius: 30,
+      fov: 0.55,
+      target: [3.2, 1.6, -3],
     });
     expect(gardenCameraForWidth(600)).toEqual(gardenCameraForWidth(1600));
     expect(gardenCameraForWidth(390)).toEqual({
       alpha: GARDEN_CAMERA_ALPHA,
-      beta: 1.25,
-      radius: 37,
-      fov: 0.86,
-      target: [4.8, 1.1, -4],
+      beta: 1.22,
+      radius: 38,
+      fov: 0.8,
+      target: [2.8, 1.4, -3.2],
     });
     expect(gardenCameraForWidth(599)).toEqual(gardenCameraForWidth(390));
     expect(gardenCameraForWidth(1600).radius).toBeLessThan(
@@ -311,5 +323,59 @@ describe("data to geometry contract", () => {
 
   it.each([Number.NaN, 0, -1, 450.5])("rejects an invalid width: %s", (width) => {
     expect(() => updateFoundationWidth(FOUNDATIONS, "F-01", width)).toThrow();
+  });
+});
+
+
+describe("documented D1 covered porches and terrace zones", () => {
+  it("keeps the wing porch recessed 2 500 mm behind the gable plane", () => {
+    const porch = HOUSE.porches.wingEnd;
+    expect(porch.frontYmm).toBe(HOUSE.facades.wingEnd.faceYmm);
+    expect(porch.frontYmm - porch.glazingFaceYmm).toBe(porch.clearDepthMm);
+    expect(porch.glazing.startXmm).toBe(
+      HOUSE.facades.wingEnd.opening.roughOpeningStartXmm,
+    );
+    expect(porch.glazing.widthMm).toBe(
+      HOUSE.facades.wingEnd.opening.roughOpeningWidthMm,
+    );
+    expect(porch.backWall.startXmm).toBe(
+      porch.glazing.startXmm + porch.glazing.widthMm,
+    );
+    expect(porch.cornerPillar.sizeMm).toBe(500);
+    expect(porch.westOpening.endYmm - porch.westOpening.startYmm).toBe(2_000);
+    expect(HOUSE.facades.wingWest.wallEndYmm).toBe(porch.westOpening.startYmm);
+  });
+
+  it("keeps the garden loggia recess consistent with the facade opening", () => {
+    const loggia = HOUSE.porches.gardenLoggia;
+    expect(loggia.faceYmm).toBe(HOUSE.facades.garden.faceYmm);
+    expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(3_200);
+    expect(loggia.backDoor.widthMm).toBe(1_250);
+    expect(loggia.backLarch.endXmm).toBe(loggia.backDoor.startXmm);
+    expect(loggia.faceYmm - loggia.backFaceYmm).toBe(2_953);
+    expect(HOUSE.facades.west.loggiaOpening.startYmm).toBeGreaterThan(
+      loggia.backFaceYmm,
+    );
+    expect(
+      HOUSE.facades.west.loggiaOpening.startYmm +
+        HOUSE.facades.west.loggiaOpening.widthMm,
+    ).toBeLessThan(loggia.faceYmm);
+  });
+
+  it("matches the documented 84,35 m² terrace total within drawing tolerance", () => {
+    const documented = TERRACE_ZONES_D1.reduce(
+      (sum, zone) => sum + zone.documentedAreaM2,
+      0,
+    );
+    expect(documented).toBeCloseTo(84.35, 10);
+    for (const zone of TERRACE_ZONES_D1) {
+      const derived = terraceZoneAreaM2(zone);
+      expect(
+        Math.abs(derived - zone.documentedAreaM2),
+        zone.id,
+      ).toBeLessThan(0.75);
+    }
+    const porchZone = TERRACE_ZONES_D1.find((zone) => zone.covered);
+    expect(porchZone?.id).toBe("TERR-D1-PORCH");
   });
 });

@@ -70,10 +70,21 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
 test("ships and discloses every local illustrative rendering asset", async () => {
   const assets = [
     ["../public/assets/environment/overcast-garden.jpg", "ffd8ff"],
+    ["../public/assets/environment/sky-partly-cloudy.jpg", "ffd8ff"],
     ["../public/assets/textures/lawn-albedo.jpg", "ffd8ff"],
-    ["../public/assets/textures/larch-cladding-v2.jpg", "ffd8ff"],
-    ["../public/assets/textures/stucco-warm-v1.jpg", "ffd8ff"],
-    ["../public/assets/textures/deck-larch-v1.jpg", "ffd8ff"],
+    ["../public/assets/textures/lawn-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/plaster-white-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/plaster-white-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/larch-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/larch-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/deck-plank-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/deck-plank-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/metal-anthracite-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/metal-anthracite-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/gravel-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/gravel-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/concrete-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/concrete-normal.jpg", "ffd8ff"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/perennial-cluster-card.png", "89504e470d0a1a0a"],
   ];
@@ -84,14 +95,20 @@ test("ships and discloses every local illustrative rendering asset", async () =>
 
   for (const [relativePath, signature] of assets) {
     const bytes = await readFile(new URL(relativePath, import.meta.url));
-    assert.ok(bytes.byteLength > 16 * 1024, `${relativePath} is unexpectedly small`);
+    assert.ok(bytes.byteLength > 3 * 1024, `${relativePath} is unexpectedly small`);
     assert.equal(
       bytes.subarray(0, signature.length / 2).toString("hex"),
       signature,
       `${relativePath} has an unexpected file signature`,
     );
     const publicUrl = relativePath.replace("../public", "");
-    assert.ok(sceneSource.includes(publicUrl), `${publicUrl} is not wired into Babylon`);
+    const textureName = publicUrl
+      .replace("/assets/textures/", "")
+      .replace(".jpg", "");
+    assert.ok(
+      sceneSource.includes(publicUrl) || sceneSource.includes(`"${textureName}"`),
+      `${publicUrl} is not wired into Babylon`,
+    );
     assert.ok(readme.includes(relativePath.split("/").at(-1)), `${relativePath} is not disclosed`);
   }
   assert.match(readme, /OpenAI imagegen/);

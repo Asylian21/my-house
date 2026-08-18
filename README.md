@@ -10,17 +10,27 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 - verejný vodovod a splašková stoka pri parcele sú len kontext z verejnej DMVS,
 - skutočné geodetické zameranie prípojok nie je dostupné a aplikácia nič z návrhu neoznačuje ako as-built.
 
-Režim **Realita** používa projektové rozmery a materiály D1. Vegetácia, nábytok
-a panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
-Lokálne panoramatické pozadie `public/assets/environment/overcast-garden.jpg`,
-textúra trávnika `public/assets/textures/lawn-albedo.jpg`, vizualizačný obklad
-`public/assets/textures/larch-cladding-v2.jpg`, teplá fasádna omietka
-`public/assets/textures/stucco-warm-v1.jpg`, terasové drevo
-`public/assets/textures/deck-larch-v1.jpg` a botanické karty
-`public/assets/vegetation/ornamental-grass-card.png` a
-`public/assets/vegetation/perennial-cluster-card.png` boli pre tento prototyp
-vygenerované pomocou OpenAI imagegen. Nereprezentujú skutočný stav parcely, jej
-susedov ani konkrétny dodaný výrobok či realizačný výber výsadby.
+Režim **Realita** používa projektové rozmery a materiály D1 vrátane oboch
+krytých terás odčítaných z vektorov výkresu D1.1.002: zapustenej presklenej
+steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (súčasť TERASY
+34,80 m²). Tri drevené terasové zóny (34,80 + 33,10 + 16,45 = 84,35 m²) sa
+generujú doska po doske z `TERRACE_ZONES_D1`. Vegetácia, nábytok a
+panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
+
+Lokálne panoramatické pozadie `overcast-garden.jpg`, textúra trávnika
+`lawn-albedo.jpg` a botanické karty `ornamental-grass-card.png`
+a `perennial-cluster-card.png` boli pre tento prototyp vygenerované pomocou
+OpenAI imagegen. PBR sady v `public/assets/textures` — omietka
+(`plaster-white-albedo.jpg`, `plaster-white-normal.jpg`), modřín
+(`larch-albedo.jpg`, `larch-normal.jpg`), terasové dosky
+(`deck-plank-albedo.jpg`, `deck-plank-normal.jpg`), falcovaný plech
+(`metal-anthracite-albedo.jpg`, `metal-anthracite-normal.jpg`), kačírek
+(`gravel-albedo.jpg`, `gravel-normal.jpg`), betón (`concrete-albedo.jpg`,
+`concrete-normal.jpg`) a normálová mapa trávnika (`lawn-normal.jpg`) — spolu s
+IBL oblohou `sky-partly-cloudy.jpg` sú procedurálne vygenerované v tomto
+repozitári (deterministický generátor, žiadne externé licencie).
+Nereprezentujú skutočný stav parcely, jej susedov ani konkrétny dodaný výrobok
+či realizačný výber výsadby.
 
 Zdrojové PDF a presné projektové podklady zostávajú lokálne v `arch-docs/`; tento adresár je zámerne ignorovaný Gitom a nič z neho sa nekopíruje do `public/`.
 

@@ -13,8 +13,11 @@ export const SCENE_CENTER_MM = Object.freeze({ x: 15_200, y: 10_800 });
 export const TOP_CAMERA_ALPHA = Math.PI / 2;
 export const STREET_CAMERA_ALPHA = Math.PI / 2;
 export const AXONOMETRIC_CAMERA_ALPHA = Math.PI * 0.72;
-export const GARDEN_CAMERA_ALPHA = -Math.PI * 0.44;
-export const GARDEN_CAMERA_BETA = 1.43;
+// Hero garden view framed on the covered gable porch, matching the approved
+// reference photograph: camera to the north-west of the house, slightly
+// elevated, looking back at the garden facade and the porch corner.
+export const GARDEN_CAMERA_ALPHA = -2.03;
+export const GARDEN_CAMERA_BETA = 1.3;
 
 export interface GardenCameraConfig {
   readonly alpha: number;
@@ -28,18 +31,18 @@ export function gardenCameraForWidth(widthPx: number): GardenCameraConfig {
   if (widthPx < 600) {
     return {
       alpha: GARDEN_CAMERA_ALPHA,
-      beta: 1.25,
-      radius: 37,
-      fov: 0.86,
-      target: [4.8, 1.1, -4],
+      beta: 1.22,
+      radius: 38,
+      fov: 0.8,
+      target: [2.8, 1.4, -3.2],
     };
   }
   return {
     alpha: GARDEN_CAMERA_ALPHA,
     beta: GARDEN_CAMERA_BETA,
-    radius: 28,
-    fov: 0.58,
-    target: [2.5, 1.4, -2],
+    radius: 30,
+    fov: 0.55,
+    target: [3.2, 1.6, -3],
   };
 }
 

@@ -114,6 +114,16 @@ export const SOURCES = {
     scale: "1:100",
     kind: "PROJECT_DESIGN",
   },
+  roofPlan: {
+    id: "SRC-D11004",
+    title: "D1.1.004 · Pôdorys strechy",
+    detail:
+      "Spojená sedlová strecha · spoločný uzol, úžľabie a nárožie · menovité sklony 30°/34°",
+    date: "výkres 28. 4. 2026 · PDF 1. 5. 2026",
+    page: 1,
+    scale: "1:100",
+    kind: "PROJECT_DESIGN",
+  },
   section: {
     id: "SRC-D11005",
     title: "D1.1.005 · Rez A–A",
@@ -361,9 +371,15 @@ export const HOUSE = Object.freeze({
   chimneyElevationMm: 6160,
   roofPitchDeg: 30,
   roof: {
+    sourceId: SOURCES.roofPlan.id,
+    topology: "JOINED_CROSS_GABLE",
     mainPlanLengthMm: 21600,
+    mainHalfSpanMm: 4100,
     mainSlopeLengthMm: 4735,
-    wingPlanLengthMm: 10835,
+    wingOverallPlanLengthMm: 19035,
+    wingExtensionPlanLengthMm: 10835,
+    documentedWingRoofOverallLengthMm: 19085,
+    wingEndOverhangMm: 50,
     wingHalfSpanMm: 3500,
     wingPitchDeg: 34,
   },
@@ -487,6 +503,70 @@ export const HOUSE = Object.freeze({
         roughOpeningWidthMm: 2500,
       },
     },
+    west: {
+      faceXmm: 6440,
+      finish: "OFF_WHITE_ETICS",
+      garageDoor: {
+        id: "GARAGE-DOOR",
+        startYmm: 3675,
+        widthMm: 3300,
+        heightMm: 2400,
+        sillMm: 0,
+      },
+      loggiaOpening: {
+        id: "WEST-01",
+        startYmm: 9300,
+        widthMm: 1400,
+        heightMm: 2400,
+        sillMm: 0,
+      },
+    },
+    wingWest: {
+      faceXmm: 21040,
+      finish: "OFF_WHITE_ETICS",
+      wallStartYmm: 11200,
+      wallEndYmm: 19535,
+      opening: {
+        id: "WING-WEST-01",
+        startYmm: 11550,
+        widthMm: 2250,
+        heightMm: 2400,
+        sillMm: 0,
+      },
+    },
+  },
+  // Both covered porches come straight from the D1.1.002 vector geometry: the
+  // wing gable porch (TERASA 16,45 m²) has its glazed wall recessed 2 500 mm
+  // behind the gable plane, and the garden loggia (part of TERASA 34,80 m²)
+  // sits 2 953 mm behind the garden facade line.
+  porches: {
+    wingEnd: {
+      id: "PORCH-WING-END",
+      areaM2: 16.45,
+      frontYmm: 22035,
+      glazingFaceYmm: 19535,
+      clearDepthMm: 2500,
+      glazing: { startXmm: 21540, widthMm: 2500, heightMm: 2400, sillMm: 0 },
+      backWall: { startXmm: 24040, endXmm: 27540, cladding: "LARCH" },
+      eastWallInnerXmm: 27540,
+      cornerPillar: { startXmm: 21040, startYmm: 21535, sizeMm: 500 },
+      westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 2400 },
+      soffitElevationMm: 2750,
+      portal: "P04 · ocelový rám krovu HEA160",
+    },
+    gardenLoggia: {
+      id: "PORCH-GARDEN-LOGGIA",
+      faceYmm: 11200,
+      backFaceYmm: 8247,
+      openingStartXmm: 7440,
+      openingEndXmm: 10640,
+      cornerPier: { startXmm: 6440, endXmm: 7440, startYmm: 10700, endYmm: 11200 },
+      backLarch: { startXmm: 7236, endXmm: 9086 },
+      backDoor: { id: "LOGGIA-DOOR", startXmm: 9086, widthMm: 1250, heightMm: 2400, sillMm: 0 },
+      eastInnerXmm: 10640,
+      soffitElevationMm: 2750,
+      beam: "P01 · ŽB věnec / 2×I180",
+    },
   },
   photovoltaics: {
     moduleCount: 6,
@@ -534,7 +614,12 @@ export const HOUSE = Object.freeze({
     placementStatus: "INFERRED_ALIGNMENT",
     alignmentNote: "Bez zrkadlenia zarovnané na pravú hranu, zalomenie a hornú hranu C3; garážový koniec sa predlžuje o 800 mm.",
   },
-  sourceIds: [SOURCES.floorPlan.id, SOURCES.coordination.id, SOURCES.section.id],
+  sourceIds: [
+    SOURCES.floorPlan.id,
+    SOURCES.roofPlan.id,
+    SOURCES.coordination.id,
+    SOURCES.section.id,
+  ],
 });
 
 // The subject is the end/corner parcel: road parcel 6012/1 meets both its
@@ -666,6 +751,71 @@ export const SITE_SURFACES = Object.freeze({
     ] as const satisfies readonly Point2Mm[],
   },
 });
+
+export interface TerraceZoneRectMm {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+export interface TerraceZoneD1 {
+  readonly id: string;
+  readonly label: string;
+  readonly documentedAreaM2: number;
+  readonly covered: boolean;
+  /** Axis-aligned rectangles in plan millimetres; boards run along X. */
+  readonly rectsMm: readonly TerraceZoneRectMm[];
+  readonly sourceId: string;
+}
+
+/**
+ * The three documented D1.1.002 timber terrace zones (34,80 + 33,10 + 16,45 =
+ * 84,35 m² per the room legend). They supersede the older C3 53 m² surface,
+ * which is kept above as provenance. Rectangles are traced from the deck
+ * hatch vectors of the drawing.
+ */
+export const TERRACE_ZONES_D1: readonly TerraceZoneD1[] = [
+  {
+    id: "TERR-D1-GARDEN",
+    label: "Terasa D1 · záhradná časť s lodžiou · 34,80 m²",
+    documentedAreaM2: 34.8,
+    covered: false,
+    rectsMm: [
+      { x0: 6440, y0: 8247, x1: 10640, y1: 11200 },
+      { x0: 6440, y0: 11200, x1: 18040, y1: 13100 },
+    ],
+    sourceId: SOURCES.floorPlan.id,
+  },
+  {
+    id: "TERR-D1-WING",
+    label: "Terasa D1 · západné rameno krídla · 33,10 m²",
+    documentedAreaM2: 33.1,
+    covered: false,
+    rectsMm: [{ x0: 18040, y0: 11200, x1: 21040, y1: 22035 }],
+    sourceId: SOURCES.floorPlan.id,
+  },
+  {
+    id: "TERR-D1-PORCH",
+    label: "Terasa D1 · krytá terasa pod štítom · 16,45 m²",
+    documentedAreaM2: 16.45,
+    covered: true,
+    rectsMm: [
+      { x0: 21040, y0: 19535, x1: 21540, y1: 21535 },
+      { x0: 21540, y0: 19535, x1: 27540, y1: 22035 },
+    ],
+    sourceId: SOURCES.floorPlan.id,
+  },
+] as const;
+
+export function terraceZoneAreaM2(zone: TerraceZoneD1): number {
+  return (
+    zone.rectsMm.reduce(
+      (sum, rect) => sum + (rect.x1 - rect.x0) * (rect.y1 - rect.y0),
+      0,
+    ) / 1_000_000
+  );
+}
 
 const route = (
   id: string,
