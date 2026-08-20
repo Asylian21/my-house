@@ -132,13 +132,22 @@ function createVerticalTriangle(
   scene: Scene,
   name: string,
   points: readonly [Vector3, Vector3, Vector3],
+  outward: Vector3,
 ) {
   const mesh = new Mesh(name, scene);
   const data = new VertexData();
   data.positions = points.flatMap((point) => [point.x, point.y, point.z]);
-  data.indices = [0, 2, 1];
-  data.normals = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-  VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+  const indices = [0, 2, 1];
+  const normals = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  VertexData.ComputeNormals(data.positions, indices, normals);
+  // Gable planes must be lit from their exterior side: flip the winding if
+  // the computed normal points into the house.
+  if (normals[0] * outward.x + normals[1] * outward.y + normals[2] * outward.z < 0) {
+    indices.reverse();
+    for (let index = 0; index < normals.length; index += 1) normals[index] *= -1;
+  }
+  data.indices = indices;
+  data.normals = normals;
   const ys = points.map((point) => point.y);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
@@ -360,7 +369,7 @@ export class TwinSceneController {
     // approved reference photograph (bright overcast with gentle shadows).
     const sun = new DirectionalLight(
       "architectural-sun",
-      new Vector3(0.42, -1, 0.35),
+      new Vector3(0.18, -1, 0.52),
       this.scene,
     );
     sun.position = new Vector3(-26, 46, -26);
@@ -484,7 +493,7 @@ export class TwinSceneController {
     );
     this.applyTexture(this.realisticMaterials.wall, "plaster-white-albedo", 3.2, 1.4, "plaster-white-normal", 0.55);
     this.applyTexture(this.realisticMaterials.timber, "larch-albedo", 1.15, 1, "larch-normal", 0.85);
-    this.applyTexture(this.realisticMaterials.deck, "deck-plank-albedo", 2.4, 1, "deck-plank-normal", 0.7);
+    this.applyTexture(this.realisticMaterials.deck, "deck-plank-albedo", 2.4, 1, "deck-plank-normal", 0.35);
     this.applyTexture(this.realisticMaterials.roof, "metal-anthracite-albedo", 7, 5, "metal-anthracite-normal", 0.3);
     this.realisticMaterials.roof.environmentIntensity = 0.35;
     this.realisticMaterials.roofEdge.environmentIntensity = 0.4;
@@ -938,13 +947,21 @@ export class TwinSceneController {
 
     for (const downpipe of HOUSE.rainwaterDownpipes) {
       const heightM = HOUSE.eavesElevationMm * MM_TO_M - 0.03;
+      const porch = HOUSE.porches.wingEnd;
+      // The IO01 route stays authoritative; only the visual pipe steps aside
+      // when it would cross the open porch front.
+      const insidePorchFront =
+        downpipe.faceYmm === porch.frontYmm &&
+        downpipe.xMm > porch.glazing.startXmm &&
+        downpipe.xMm < porch.backWall.endXmm;
+      const visualXmm = insidePorchFront ? porch.backWall.endXmm + 380 : downpipe.xMm;
       const pipe = CreateCylinder(
         `${downpipe.id} · dažďový zvod · vizualizačný detail IO01`,
         { height: heightM, diameter: 0.1, tessellation: 16 },
         this.scene,
       );
       pipe.position.set(
-        xM(downpipe.xMm),
+        xM(visualXmm),
         0.03 + heightM / 2,
         zM(downpipe.faceYmm + 65),
       );
@@ -1023,62 +1040,68 @@ export class TwinSceneController {
     const ridge = HOUSE.ridgeElevationMm * MM_TO_M;
     const mainMidY = HOUSE.originMm.y + HOUSE.lowerBar.depthMm / 2;
     const garageGableX = HOUSE.originMm.x - 8;
-    const garageGable = createVerticalTriangle(this.scene, "Garážový štít", [
-      new Vector3(xM(garageGableX), eave, zM(HOUSE.originMm.y)),
-      new Vector3(
-        xM(garageGableX),
-        eave,
-        zM(HOUSE.originMm.y + HOUSE.lowerBar.depthMm),
-      ),
-      new Vector3(xM(garageGableX), ridge, zM(mainMidY)),
-    ]);
+    const garageGable = createVerticalTriangle(
+      this.scene,
+      "Garážový štít",
+      [
+        new Vector3(xM(garageGableX), eave, zM(HOUSE.originMm.y)),
+        new Vector3(
+          xM(garageGableX),
+          eave,
+          zM(HOUSE.originMm.y + HOUSE.lowerBar.depthMm),
+        ),
+        new Vector3(xM(garageGableX), ridge, zM(mainMidY)),
+      ],
+      new Vector3(-1, 0, 0),
+    );
     this.appearance(
       garageGable,
       this.materials.wall,
       this.realisticMaterials.wall,
     );
-    garageGable.receiveShadows = true;
-    this.castShadow(garageGable);
+    garageGable.receiveShadows = false;
     this.register(garageGable, "building", HOUSE.id);
 
     const wingEndY = HOUSE.originMm.y + HOUSE.maximumDepthMm + 8;
     const wingLeftX = HOUSE.originMm.x + HOUSE.wing.xMm;
     const wingRightX = wingLeftX + HOUSE.wing.widthMm;
-    const wingGable = createVerticalTriangle(this.scene, "Drevený záhradný štít", [
-      new Vector3(xM(wingLeftX), eave, zM(wingEndY)),
-      new Vector3(xM(wingRightX), eave, zM(wingEndY)),
-      new Vector3(xM((wingLeftX + wingRightX) / 2), ridge, zM(wingEndY)),
-    ]);
+    const wingGable = createVerticalTriangle(
+      this.scene,
+      "Drevený záhradný štít",
+      [
+        new Vector3(xM(wingLeftX), eave, zM(wingEndY)),
+        new Vector3(xM(wingRightX), eave, zM(wingEndY)),
+        new Vector3(xM((wingLeftX + wingRightX) / 2), ridge, zM(wingEndY)),
+      ],
+      new Vector3(0, 0, -1),
+    );
+    // 7 m gable ÷ 50 mm boards = 140 boards; the tile carries 20 boards and
+    // the triangle's planar UVs span 2.45, hence uScale 7 / 2.45.
     this.appearance(
       wingGable,
       this.materials.wall,
-      this.larchFor(7, 2.45, "wing-gable"),
+      this.larchFor(2.86, 2.44, "wing-gable"),
     );
-    this.castShadow(wingGable);
     this.register(wingGable, "building", HOUSE.id);
 
-    const wingMidX = (wingLeftX + wingRightX) / 2;
     const gableRise = ridge - eave;
-    for (let xMm = wingLeftX + 180; xMm < wingRightX; xMm += 280) {
-      const normalizedDistance =
-        Math.abs(xMm - wingMidX) / (HOUSE.wing.widthMm / 2);
-      const battenHeight = Math.max(
-        0.08,
-        gableRise * (1 - normalizedDistance),
-      );
-      const batten = boxAtPlan(
+    for (const [index, lamp] of [
+      { x: 22600, elevationM: 3.5 },
+      { x: 26400, elevationM: 3.5 },
+    ].entries()) {
+      const fixture = boxAtPlan(
         this.scene,
-        `Zvislá lamela záhradného štítu ${xMm}`,
-        { x: xMm, y: wingEndY + 18 },
-        18,
-        42,
-        battenHeight,
-        eave,
+        `Nástenné svietidlo štítu ${index + 1} · ilustračný koncept`,
+        { x: lamp.x, y: wingEndY - 30 },
+        95,
+        70,
+        0.17,
+        lamp.elevationM,
       );
-      batten.material = this.realisticMaterials.timberDark;
-      batten.isPickable = false;
-      this.realisticOnly(batten);
-      this.register(batten, "building");
+      fixture.material = this.realisticMaterials.glassFrame;
+      fixture.isPickable = false;
+      this.realisticOnly(fixture);
+      this.register(fixture, "building");
     }
 
     const halfSpanM = (HOUSE.wing.widthMm * MM_TO_M) / 2;
@@ -1087,11 +1110,11 @@ export class TwinSceneController {
     for (const side of [-1, 1]) {
       const edge = CreateBox(
         `Biely rám záhradného štítu ${side}`,
-        { width: gableEdgeLength, depth: 0.1, height: 0.09 },
+        { width: gableEdgeLength, depth: 0.12, height: 0.16 },
         this.scene,
       );
       edge.position.set(
-        xM(wingMidX + side * HOUSE.wing.widthMm / 4),
+        xM(wingLeftX + HOUSE.wing.widthMm / 2 + side * HOUSE.wing.widthMm / 4),
         eave + gableRise / 2,
         zM(wingEndY + 72),
       );
@@ -1692,44 +1715,6 @@ export class TwinSceneController {
     this.realisticOnly(eastLining);
     this.register(eastLining, "building", HOUSE.id);
 
-    // White beam band over the open gable front (HEA160 portal, P04).
-    const band = boxAtPlan(
-      this.scene,
-      "Krytá terasa · nosný rám štítu HEA160 · P04",
-      {
-        x: (HOUSE.facades.wingEnd.startXmm + porch.backWall.endXmm) / 2,
-        y: porch.frontYmm - 150,
-      },
-      porch.backWall.endXmm - HOUSE.facades.wingEnd.startXmm,
-      300,
-      (HOUSE.eavesElevationMm - 2400) * MM_TO_M,
-      2.4,
-    );
-    band.material = this.realisticMaterials.wall;
-    band.receiveShadows = true;
-    this.realisticOnly(band);
-    this.castShadow(band);
-    this.register(band, "building", HOUSE.id);
-
-    // White beam band over the west porch opening (P03).
-    const westBand = boxAtPlan(
-      this.scene,
-      "Krytá terasa · preklad západného otvoru · P03",
-      {
-        x: HOUSE.facades.wingWest.faceXmm + 250,
-        y: (porch.westOpening.startYmm + porch.westOpening.endYmm) / 2,
-      },
-      500,
-      porch.westOpening.endYmm - porch.westOpening.startYmm,
-      (HOUSE.eavesElevationMm - 2400) * MM_TO_M,
-      2.4,
-    );
-    westBand.material = this.realisticMaterials.wall;
-    westBand.receiveShadows = true;
-    this.realisticOnly(westBand);
-    this.castShadow(westBand);
-    this.register(westBand, "building", HOUSE.id);
-
     // Flat soffit over the whole covered porch.
     const soffit = boxAtPlan(
       this.scene,
@@ -1740,7 +1725,7 @@ export class TwinSceneController {
       },
       porch.eastWallInnerXmm - porch.cornerPillar.startXmm,
       porch.frontYmm - porch.glazingFaceYmm,
-      0.06,
+      0.035,
       soffitM,
     );
     soffit.material = this.realisticMaterials.soffit;
@@ -2241,6 +2226,22 @@ export class TwinSceneController {
       material.bumpTexture = bump;
     }
 
+    for (const rect of zone.rectsMm) {
+      const underlay = boxAtPlan(
+        this.scene,
+        `${zone.label} · podkladový rošt`,
+        { x: (rect.x0 + rect.x1) / 2, y: (rect.y0 + rect.y1) / 2 },
+        rect.x1 - rect.x0,
+        rect.y1 - rect.y0,
+        0.02,
+        topM - thicknessM - 0.021,
+      );
+      underlay.material = this.realisticMaterials.interiorDark;
+      underlay.isPickable = false;
+      this.realisticOnly(underlay);
+      this.register(underlay, "street", zone.id);
+    }
+
     const planks: Mesh[] = [];
     let rowIndex = 0;
     for (const rect of zone.rectsMm) {
@@ -2563,10 +2564,10 @@ export class TwinSceneController {
       this.scene,
       "Lounge pohovka · podnož",
       { x: 26650, y: 20500 },
-      1900,
-      900,
-      0.16,
-      0.04,
+      1850,
+      870,
+      0.05,
+      0.13,
     );
     sofaBase.material = this.realisticMaterials.fabric;
     sofaBase.isPickable = false;

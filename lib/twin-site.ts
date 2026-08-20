@@ -550,8 +550,8 @@ export const HOUSE = Object.freeze({
       backWall: { startXmm: 24040, endXmm: 27540, cladding: "LARCH" },
       eastWallInnerXmm: 27540,
       cornerPillar: { startXmm: 21040, startYmm: 21535, sizeMm: 500 },
-      westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 2400 },
-      soffitElevationMm: 2750,
+      westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 3125 },
+      soffitElevationMm: 3090,
       portal: "P04 · ocelový rám krovu HEA160",
     },
     gardenLoggia: {
