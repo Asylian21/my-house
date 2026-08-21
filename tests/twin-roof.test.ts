@@ -26,14 +26,14 @@ describe("joined roof topology", () => {
       {
         id: "WING_END_INNER_EAVE",
         xMm: 21_040,
-        yMm: 22_035,
+        yMm: 22_085,
         elevationMm: 3_125,
       },
-      { id: "WING_END_RIDGE", xMm: 24_540, yMm: 22_035, elevationMm: 5_560 },
+      { id: "WING_END_RIDGE", xMm: 24_540, yMm: 22_085, elevationMm: 5_560 },
       {
         id: "WING_END_OUTER_EAVE",
         xMm: 28_040,
-        yMm: 22_035,
+        yMm: 22_085,
         elevationMm: 3_125,
       },
     ]);
@@ -77,16 +77,16 @@ describe("joined roof topology", () => {
       minXmm: 6_440,
       maxXmm: 28_040,
       minYmm: 3_000,
-      maxYmm: 22_035,
+      maxYmm: 22_085,
       minElevationMm: 3_125,
       maxElevationMm: 5_560,
     });
   });
 
-  it("partitions the active L footprint without a projected hole or overlap", () => {
-    expect(roof.projectedAreaMm2).toBe(252_965_000);
-    expect(roof.projectedAreaMm2 / 1_000_000).toBe(252.965);
-    expect(roof.surfaceAreaMm2 / 1_000_000).toBeCloseTo(299.979126571, 9);
+  it("partitions the active L roof envelope including the 50 mm end overhang", () => {
+    expect(roof.projectedAreaMm2).toBe(253_315_000);
+    expect(roof.projectedAreaMm2 / 1_000_000).toBe(253.315);
+    expect(roof.surfaceAreaMm2 / 1_000_000).toBeCloseTo(300.405497595, 9);
   });
 
   it("keeps every non-boundary triangle edge paired", () => {
@@ -150,12 +150,12 @@ describe("joined roof architectural edges", () => {
     expect(roof.gutters.map((gutter) => lineLengthMm(gutter, roof.vertices))).toEqual([
       21_600,
       14_600,
-      10_835,
-      19_035,
+      10_885,
+      19_085,
     ]);
   });
 
-  it("has only the west and active 22035 mm end gables", () => {
+  it("has only the west and active 22085 mm roof-end gables", () => {
     expect(roof.gables).toEqual([
       {
         id: "MAIN_WEST_GABLE",
@@ -165,7 +165,7 @@ describe("joined roof architectural edges", () => {
       {
         id: "WING_END_GABLE",
         vertexIndices: [6, 7, 8],
-        plane: { axis: "Y", coordinateMm: 22_035 },
+        plane: { axis: "Y", coordinateMm: 22_085 },
       },
     ]);
     expect(
@@ -173,7 +173,7 @@ describe("joined roof architectural edges", () => {
         ({ plane }) => plane.axis === "X" && plane.coordinateMm === 28_040,
       ),
     ).toBe(false);
-    expect(ACTIVE_JOINED_ROOF_PARAMETERS.wingEndYmm).toBe(22_035);
+    expect(ACTIVE_JOINED_ROOF_PARAMETERS.wingEndYmm).toBe(22_085);
   });
 });
 

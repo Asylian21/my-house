@@ -24,11 +24,14 @@ import {
   GARDEN_CAMERA_ALPHA,
   GARDEN_CAMERA_BETA,
   TOP_CAMERA_ALPHA,
+  arcRotateCameraHeightM,
+  focusRadiusForBoundingSphere,
   gardenCameraForWidth,
   sceneDeltaForPlanSegment,
   sceneXM,
   sceneYawForPlanSegment,
   sceneZM,
+  streetCameraForWidth,
 } from "../lib/twin-render-frame";
 import { segmentFacadeMm } from "../lib/twin-facade";
 import { slatCenterDistancesMm } from "../lib/twin-fence";
@@ -115,34 +118,58 @@ describe("site evidence seed", () => {
       sceneYawForPlanSegment({ x: 0, y: 0 }, { x: 1000, y: 0 }),
     ).toBeCloseTo(0, 12);
     expect(TOP_CAMERA_ALPHA).toBe(Math.PI / 2);
-    // The hero camera sits north-west of the house and looks back at the
-    // covered gable porch, matching the approved reference framing.
-    expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-2.03, 12);
+    // The hero camera sits inside the rear hedge and looks back at both legs
+    // of the garden facade from a natural standing/elevated eye height.
+    expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-2.38, 12);
     expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
     expect(Math.sin(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
-    expect(GARDEN_CAMERA_BETA).toBeCloseTo(1.3, 12);
+    expect(GARDEN_CAMERA_BETA).toBeGreaterThan(1.44);
+    expect(GARDEN_CAMERA_BETA).toBeLessThan(1.47);
   });
 
   it("keeps the approved Realita camera deterministic on desktop and mobile", () => {
     expect(gardenCameraForWidth(1600)).toEqual({
       alpha: GARDEN_CAMERA_ALPHA,
       beta: GARDEN_CAMERA_BETA,
-      radius: 30,
-      fov: 0.55,
-      target: [3.2, 1.6, -3],
+      radius: 14.4,
+      fov: 0.72,
+      target: [1.8, 1.35, -0.7],
     });
     expect(gardenCameraForWidth(600)).toEqual(gardenCameraForWidth(1600));
-    expect(gardenCameraForWidth(390)).toEqual({
+    expect(gardenCameraForWidth(390)).toMatchObject({
       alpha: GARDEN_CAMERA_ALPHA,
-      beta: 1.22,
-      radius: 38,
-      fov: 0.8,
-      target: [2.8, 1.4, -3.2],
+      radius: 15.8,
+      fov: 0.94,
+      target: [2, 1.4, -0.8],
     });
     expect(gardenCameraForWidth(599)).toEqual(gardenCameraForWidth(390));
     expect(gardenCameraForWidth(1600).radius).toBeLessThan(
       gardenCameraForWidth(390).radius,
     );
+    expect(arcRotateCameraHeightM(gardenCameraForWidth(1600))).toBeCloseTo(
+      3.05,
+      10,
+    );
+    expect(arcRotateCameraHeightM(gardenCameraForWidth(390))).toBeCloseTo(
+      3.2,
+      10,
+    );
+    expect(arcRotateCameraHeightM(streetCameraForWidth(1600))).toBeCloseTo(
+      1.85,
+      10,
+    );
+    expect(arcRotateCameraHeightM(streetCameraForWidth(390))).toBeCloseTo(
+      2,
+      10,
+    );
+    expect(streetCameraForWidth(390).radius).toBeGreaterThan(
+      streetCameraForWidth(1600).radius,
+    );
+    expect(focusRadiusForBoundingSphere(4, 0.68, 16 / 9)).toBeLessThan(
+      focusRadiusForBoundingSphere(4, 0.68, 9 / 16),
+    );
+    expect(focusRadiusForBoundingSphere(0, 0, 0)).toBe(4.5);
+    expect(focusRadiusForBoundingSphere(100, 0.68, 16 / 9)).toBe(64);
   });
 
   it("keeps the hero facade and PV layout source-driven", () => {
@@ -862,6 +889,7 @@ describe("data to geometry contract", () => {
       waterWidthMm: 2_500,
       waterAreaM2: 10,
       copingWidthMm: 300,
+      proposedWaterDepthMm: 1_400,
       placementStatus:
         "DESIGN_PROPOSAL_REQUIRES_COORDINATION_AND_CLIENT_CONFIRMATION",
     });

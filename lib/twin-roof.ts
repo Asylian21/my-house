@@ -113,7 +113,10 @@ export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze
   wingInnerEaveXmm: HOUSE.originMm.x + HOUSE.wing.xMm,
   wingRidgeXmm:
     HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.roof.wingHalfSpanMm,
-  wingEndYmm: HOUSE.originMm.y + HOUSE.roof.wingOverallPlanLengthMm,
+  wingEndYmm:
+    HOUSE.originMm.y +
+    HOUSE.roof.wingOverallPlanLengthMm +
+    HOUSE.roof.wingEndOverhangMm,
   eavesElevationMm: HOUSE.eavesElevationMm,
   ridgeElevationMm: HOUSE.ridgeElevationMm,
   mainSeamInsetMm: 360,

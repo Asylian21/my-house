@@ -29,7 +29,7 @@ describe("Retina render quality contract", () => {
       fxaaEnabled: false,
       ssaoEnabled: true,
       ssaoRatio: 1,
-      shadowMapSize: 4096,
+      shadowMapSize: 2048,
       environmentTextureSize: 512,
       anisotropy: 16,
     });
@@ -98,7 +98,7 @@ describe("Retina render quality contract", () => {
         Math.round(600 * profile.pixelRatio),
       );
       expect(profile.msaaSamples).toBe(1);
-      expect(profile.fxaaEnabled).toBe(false);
+      expect(profile.fxaaEnabled).toBe(true);
     }
   });
 });

@@ -275,6 +275,7 @@ function getEntityDetail(
         { label: "Vodná plocha", value: `${fmt(GARDEN_POOL.waterLengthMm)} × ${fmt(GARDEN_POOL.waterWidthMm)}`, unit: "mm" },
         { label: "Plocha vody", value: fmt(GARDEN_POOL.waterAreaM2), unit: "m²" },
         { label: "Svetlý lem", value: fmt(GARDEN_POOL.copingWidthMm), unit: "mm" },
+        { label: "Navrhovaná hĺbka", value: fmt(GARDEN_POOL.proposedWaterDepthMm), unit: "mm" },
         { label: "Odstup od hlavnej terasy", value: fmt(GARDEN_POOL.modelledClearancesMm.mainTerrace), unit: "mm" },
         { label: "Najmenší modelový odstup od dažďovej vody", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },

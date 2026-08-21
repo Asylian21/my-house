@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -41,6 +41,13 @@ export const metadata: Metadata = {
     description: "Parametrický 3D model s transparentnou dôkazovou stopou.",
     images: ["/og-digital-twin.png"],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#111713",
 };
 
 export default function RootLayout({

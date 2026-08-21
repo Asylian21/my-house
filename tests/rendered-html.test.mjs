@@ -77,6 +77,13 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /adaptToDeviceRatio: false/);
   assert.match(scene, /setHardwareScalingLevel\(/);
   assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
+  assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
+  assert.match(scene, /subSurface\.isRefractionEnabled = true/);
+  assert.match(scene, /pool-water-normal\.png/);
+  assert.match(scene, /hedge-privet-albedo\.png/);
+  assert.match(scene, /krížená botanická karta/);
+  assert.doesNotMatch(scene, /BILLBOARDMODE_Y/);
+  assert.doesNotMatch(scene, /material\.unlit = true/);
   assert.match(scene, /return this\.scene\.whenReadyAsync\(\)/);
   assert.match(page, /<TwinStudio \/>/);
   assert.match(layout, /lang="sk"/);
@@ -105,6 +112,8 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     ["../public/assets/textures/gravel-normal.jpg", "ffd8ff"],
     ["../public/assets/textures/concrete-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/concrete-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/hedge-privet-albedo.png", "89504e470d0a1a0a"],
+    ["../public/assets/textures/pool-water-normal.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/perennial-cluster-card.png", "89504e470d0a1a0a"],
   ];

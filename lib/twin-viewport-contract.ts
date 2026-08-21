@@ -93,11 +93,13 @@ export function deriveRenderQualityProfile({
     msaaSamples,
     // FXAA is a fallback only. At Retina density it softens fine facade and
     // fence edges more than it helps them.
-    fxaaEnabled: msaaSamples < 2 && pixelRatio < MIN_SUPERSAMPLED_RATIO,
-    sharpenEdgeAmount: tier === "ULTRA" ? 0.18 : 0.12,
+    fxaaEnabled: msaaSamples < 2 && pixelRatio <= MIN_SUPERSAMPLED_RATIO,
+    sharpenEdgeAmount: tier === "ULTRA" ? 0.12 : 0.08,
     ssaoEnabled: tier === "ULTRA",
     ssaoRatio: tier === "ULTRA" ? 1 : 0,
-    shadowMapSize: tier === "ULTRA" ? 4096 : 2048,
+    // Four stabilized cascades provide materially more useful texel density
+    // than one oversized map. 2K/1K per cascade also keeps GPU memory bounded.
+    shadowMapSize: tier === "ULTRA" ? 2048 : 1024,
     // The reflection cube is created once, so keep this invariant across
     // responsive tier changes. A dedicated 2K source keeps conversion memory
     // bounded while preserving the full 512 px cube on every display.

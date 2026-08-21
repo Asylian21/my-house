@@ -26,7 +26,8 @@ Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové la
 hustý živý plot. Do otvoreného L-dvora pridáva bazén s vodnou plochou presne
 4,0 × 2,5 m, rovnobežne s hlavnou terasou. Modelová poloha bazéna nekoliduje s
 domom ani terasami, ale najmenší odstup od projektovanej dažďovej kanalizácie je
-približne 0,83 m. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
+približne 0,83 m. Vizualizačná hĺbka vody je navrhnutá na 1,40 m; nie je to
+realizačne potvrdená hodnota. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
 vizualizačný dizajnový návrh. Nie sú schválenou realizačnou špecifikáciou;
 materiály, výsadbu, systém a presné geodetické osadenie treba potvrdiť pred
@@ -41,13 +42,19 @@ panoramatická atmosféra sú zámerne označené ako ilustračný záhradný ko
 
 WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelový
 rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení,
-plné mipmapy a 16× anizotropné filtrovanie. K dispozícii je aj samostatný režim
+plné mipmapy, 16× anizotropné filtrovanie, stabilizované štvorstupňové kaskádové
+tiene a ACES tone mapping. Presety Záhrada a Ulica majú fyzickú výšku kamery
+3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu. K dispozícii je aj samostatný režim
 **Prelet**: stabilná world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým
 ovládačom a bezpečným návratom do orbitálnych pohľadov.
 
 Textúra trávnika `lawn-albedo.jpg` a botanické karty
 `ornamental-grass-card.png` a `perennial-cluster-card.png` boli pre tento
-prototyp vygenerované pomocou OpenAI imagegen. PBR sady v
+prototyp vygenerované pomocou OpenAI imagegen. Rovnako boli cez vstavaný režim
+OpenAI imagegen pre túto revíziu vytvorené `hedge-privet-albedo.png` (bezšvová
+fotorealistická báza hustého európskeho vtáčieho zobu, neutrálne mäkké svetlo)
+a `pool-water-normal.png` (bezšvová tangent-space normálová mapa jemných
+prekrývajúcich sa vĺn pokojného rezidenčného bazéna). PBR sady v
 `public/assets/textures` — omietka
 (`plaster-white-albedo.jpg`, `plaster-white-normal.jpg`), modřín
 (`larch-albedo.jpg`, `larch-normal.jpg`), terasové dosky

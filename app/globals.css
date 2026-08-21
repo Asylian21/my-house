@@ -419,9 +419,7 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
     radial-gradient(circle at 52% 42%, transparent 32%, rgb(5 7 7 / 28%) 140%);
 }
 .viewport.is-realistic::after {
-  background:
-    linear-gradient(90deg, rgb(16 24 21 / 10%), transparent 15%, transparent 84%, rgb(16 24 21 / 8%)),
-    radial-gradient(circle at 52% 43%, transparent 45%, rgb(30 42 37 / 12%) 145%);
+  background: linear-gradient(90deg, rgb(16 24 21 / 7%), transparent 15%, transparent 84%, rgb(16 24 21 / 6%));
 }
 .viewport.is-realistic .truth-card,
 .viewport.is-realistic .camera-dock,

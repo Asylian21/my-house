@@ -1352,6 +1352,7 @@ export const GARDEN_POOL = Object.freeze({
   waterWidthMm: 2_500,
   waterAreaM2: 10,
   copingWidthMm: 300,
+  proposedWaterDepthMm: 1_400,
   waterFootprintMm: [
     { x: 9_750, y: 14_500 },
     { x: 13_750, y: 14_500 },
