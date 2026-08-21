@@ -45,6 +45,7 @@ import {
   FOUNDATIONS,
   HOUSE,
   LAYERS,
+  SITE_FENCE,
   SOURCES,
   UTILITY_ROUTES,
   findSource,
@@ -187,6 +188,73 @@ function getEntityDetail(
 
   const utility = utilityDetail(id);
   if (utility) return utility;
+
+  if (id === SITE_FENCE.id) {
+    const tracedLengthMm = SITE_FENCE.annotatedCenterlineRuns.reduce(
+      (total, run) => total + lineLengthMm(run.pointsMm),
+      0,
+    );
+    return {
+      id,
+      code: "OP",
+      eyebrow: "OPLOTENIE SÚKROMNEJ ZÁHRADY",
+      title: "Minimalistický lamelový plot",
+      subtitle: "Antracitový hliník · dizajnový návrh",
+      status: "Poloha podľa náčrtu · materiál čaká na výber",
+      statusTone: "design",
+      rows: [
+        { label: "Trasa plotu podľa náčrtu", value: fmt(tracedLengthMm / 1000), unit: "m" },
+        { label: "Navrhovaná výška", value: fmt(SITE_FENCE.visualProposal.proposedHeightMm), unit: "mm" },
+        { label: "Raster lamiel", value: `${SITE_FENCE.visualProposal.slatWidthMm} / ${SITE_FENCE.visualProposal.slatPitchMm}`, unit: "mm" },
+        { label: "Povrch", value: "RAL 7016 · jemná štruktúra" },
+        { label: "Uzatvorenie", value: "súkromná záhrada · y = 3 000 mm" },
+        { label: "Priamy vjazd do garáže", value: "zostáva voľný" },
+      ],
+      sourceIds: SITE_FENCE.sourceIds,
+      note: "Žltý náčrt je prenesený na líniu čelnej fasády a následne po bočných a zadnej katastrálnej hranici. Výška 1,6 m, hliník RAL 7016 a detail lamiel sú kvalitný vizualizačný návrh, nie potvrdená realizačná špecifikácia. Pred realizáciou treba plot geodeticky vytýčiť.",
+    };
+  }
+
+  if (
+    id === SITE_FENCE.vehicleGate.id ||
+    id === SITE_FENCE.sidePedestrianGate.id
+  ) {
+    const vehicle = id === SITE_FENCE.vehicleGate.id;
+    return {
+      id,
+      code: vehicle ? "BR" : "PB",
+      eyebrow: vehicle ? "BRÁNA DO ZÁHRADY" : "BOČNÁ PEŠIA BRÁNKA",
+      title: vehicle
+        ? "Trojdielna teleskopická brána"
+        : "Skrytá bránka pri EAST-03",
+      subtitle: vehicle
+        ? "Čistý otvor 4,2 m · zasúvanie doľava"
+        : "Jednotný raster s plotom",
+      status: vehicle
+        ? "Poloha podľa zeleného náčrtu · mechanizmus návrh"
+        : "Funkčný dizajnový návrh · čaká na potvrdenie",
+      statusTone: "design",
+      rows: vehicle
+        ? [
+            { label: "Čistá šírka", value: fmt(SITE_FENCE.vehicleGate.clearWidthMm), unit: "mm" },
+            { label: "Stred otvoru", value: "x = 4 335 · y = 3 000", unit: "mm" },
+            { label: "Mechanizmus", value: "3-dielny teleskopický pojazd" },
+            { label: "Smer otvorenia", value: "doľava · −X" },
+            { label: "Vjazd do garáže", value: "samostatný · bez kolízie" },
+          ]
+        : [
+            { label: "Čistá šírka", value: fmt(SITE_FENCE.sidePedestrianGate.clearWidthMm), unit: "mm" },
+            { label: "Napojenie", value: SITE_FENCE.sidePedestrianGate.accessOpeningId },
+            { label: "Vzhľad", value: "bez viditeľného rozdielu v rastri" },
+          ],
+      sourceIds: vehicle
+        ? SITE_FENCE.vehicleGate.sourceIds
+        : SITE_FENCE.sidePedestrianGate.sourceIds,
+      note: vehicle
+        ? "Zelený otvor je na pôvodnom ľavom zjazde, nie pred novou garážovou bránou. Jedno 4,2 m posuvné krídlo sa do ľavého priestoru nezmestí, preto model navrhuje kompaktný trojdielny teleskopický systém na zapustenej koľajnici."
+        : "Bránka nie je samostatne vyznačená v náčrte. Je zapustená do rovnakého lamelového rastra, aby nový plot nezablokoval spevnený prístup k bočným dverám EAST-03.",
+    };
+  }
 
   if (id === "HOUSE-DESIGN") {
     return {
@@ -334,6 +402,8 @@ function SourceBadge({ kind }: { kind: SourceRecord["kind"] }) {
     SCAN_DOCUMENT: "GEODETICKÝ PODKLAD",
     ARITHMETIC_DERIVATION: "ODVODENÉ",
     UNRESOLVED_AS_BUILT: "CHÝBA PODKLAD",
+    CLIENT_REVISION: "REVÍZIA STAVEBNÍKA",
+    DESIGN_PROPOSAL: "DIZAJNOVÝ NÁVRH",
   };
   return <span className={`source-badge ${kind.toLowerCase()}`}>{map[kind]}</span>;
 }
@@ -594,7 +664,7 @@ export function TwinStudio() {
           )}
 
           <details open>
-            <summary><Map size={15} /><span>Areál a komunikácia</span><small>3</small></summary>
+            <summary><Map size={15} /><span>Areál a komunikácia</span><small>5</small></summary>
             <div role="group">
               {matches("miestna komunikácia 6012/1") && (
                 <button role="treeitem" aria-selected={selectionId === "ROAD-6012-1"} className={`tree-object ${selectionId === "ROAD-6012-1" ? "selected" : ""}`} onClick={() => select("ROAD-6012-1")}>
@@ -608,6 +678,16 @@ export function TwinStudio() {
               )}
               {matches("terasy spevnené plochy") && (
                 <div className="tree-static"><span className="entity-token terrain">SP</span><span><strong>Spevnené plochy</strong><small>C3/D1 · návrh</small></span></div>
+              )}
+              {matches("plot oplotenie súkromná záhrada") && (
+                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.id} className={`tree-object ${selectionId === SITE_FENCE.id ? "selected" : ""}`} onClick={() => select(SITE_FENCE.id)}>
+                  <span className="entity-token house">OP</span><span><strong>Oplotenie záhrady</strong><small>náčrt stavebníka · návrh</small></span>
+                </button>
+              )}
+              {matches("brána teleskopická záhrada") && (
+                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.vehicleGate.id} className={`tree-object ${selectionId === SITE_FENCE.vehicleGate.id ? "selected" : ""}`} onClick={() => select(SITE_FENCE.vehicleGate.id)}>
+                  <span className="entity-token house">BR</span><span><strong>Teleskopická brána</strong><small>4 200 mm · zelený náčrt</small></span>
+                </button>
               )}
             </div>
           </details>

@@ -16,6 +16,7 @@ export type EvidenceKind =
   | "CURRENT_REGISTER"
   | "PROJECT_DESIGN"
   | "CLIENT_REVISION"
+  | "DESIGN_PROPOSAL"
   | "PROVIDER_CONTEXT"
   | "SCAN_DOCUMENT"
   | "ARITHMETIC_DERIVATION"
@@ -132,6 +133,22 @@ export const SOURCES = {
       "Ponechať komín pri hlavnom obytnom priestore, posunúť ho o 1 m hlbšie do záhrady a odstrániť druhý komín pri zóne 1.09; FV pole na dvorovej rovine krídla posunúť o 2 m hlbšie do záhrady; bočný spevnený prístup na východnej fasáde vycentrovať na dvere EAST-03; garážovú bránu presunúť na uličnú fasádu namiesto prvého garážového okna a viesť príjazd priamo od ulice.",
     date: "21. 8. 2026",
     kind: "CLIENT_REVISION",
+  },
+  clientFenceMarkup20260821: {
+    id: "SRC-CLIENT-FENCE-20260821",
+    title: "Náčrt oplotenia stavebníka",
+    detail:
+      "Žltá línia uzatvára súkromnú záhradu na úrovni uličnej fasády domu a pokračuje po bočných a zadnej katastrálnej hranici; zelená vyznačuje samostatnú 4,2 m bránu v pôvodnom ľavom zjazde. Priamy príjazd k novej garážovej bráne zostáva otvorený od ulice.",
+    date: "21. 8. 2026 · 16:22",
+    kind: "CLIENT_REVISION",
+  },
+  fenceDesignProposal20260821: {
+    id: "SRC-FENCE-DESIGN-20260821",
+    title: "Dizajnový návrh oplotenia",
+    detail:
+      "Vizualizačný návrh zvislých hliníkových lamiel RAL 7016, trojdielnej teleskopickej brány a skrytej pešej bránky pri EAST-03. Materiál, výška, mechanizmus aj bočná bránka čakajú na potvrdenie stavebníka.",
+    date: "21. 8. 2026",
+    kind: "DESIGN_PROPOSAL",
   },
   section: {
     id: "SRC-D11005",
@@ -766,6 +783,22 @@ export const SITE_SURFACES = Object.freeze({
       { x: 6490, y: 3000 },
     ] as const satisfies readonly Point2Mm[],
   },
+  supersededSideDriveway: {
+    id: "SITE-DRIVEWAY-SIDE-SUPERSEDED",
+    areaM2: 40.855,
+    placementStatus: "SUPERSEDED_BY_CLIENT_DIRECT_GARAGE_ACCESS",
+    sourceId: SOURCES.coordination.id,
+    supersededById: "SITE-DRIVEWAY",
+    polygonMm: [
+      { x: 6440, y: 6970 },
+      { x: 6440, y: 632 },
+      { x: 6440, y: -3099 },
+      { x: 2242, y: -3104 },
+      { x: 2235, y: 2546 },
+      { x: 2237, y: 6270 },
+      { x: 6440, y: 6970 },
+    ] as const satisfies readonly Point2Mm[],
+  },
   entry: {
     id: "SITE-ENTRY",
     areaM2: 13.374,
@@ -810,6 +843,394 @@ export const SITE_SURFACES = Object.freeze({
       { x: 29543, y: 12248 },
       { x: 31139, y: 12247 },
     ] as const satisfies readonly Point2Mm[],
+  },
+});
+
+export interface FenceRunMm {
+  readonly id: string;
+  readonly label: string;
+  readonly pointsMm: readonly Point2Mm[];
+  readonly alignment: "CLIENT_FRONT_DATUM" | "CADASTRAL_BOUNDARY";
+}
+
+export interface PhysicalFenceRunMm {
+  readonly id: string;
+  readonly label: string;
+  readonly pointsMm: readonly Point2Mm[];
+  readonly referenceRunIds: readonly string[];
+  readonly status: "DESIGN_PROPOSAL_REQUIRES_SURVEY_AND_CLIENT_CONFIRMATION";
+}
+
+const fenceRun = (
+  id: string,
+  label: string,
+  pointsMm: readonly Point2Mm[],
+  alignment: FenceRunMm["alignment"],
+): FenceRunMm => ({ id, label, pointsMm, alignment });
+
+const physicalFenceRun = (
+  id: string,
+  label: string,
+  pointsMm: readonly Point2Mm[],
+  referenceRunIds: readonly string[],
+): PhysicalFenceRunMm => ({
+  id,
+  label,
+  pointsMm,
+  referenceRunIds,
+  status: "DESIGN_PROPOSAL_REQUIRES_SURVEY_AND_CLIENT_CONFIRMATION",
+});
+
+interface FenceLineMm {
+  readonly start: Point2Mm;
+  readonly end: Point2Mm;
+}
+
+const offsetFenceLine = (
+  start: Point2Mm,
+  end: Point2Mm,
+  insetMm: number,
+): FenceLineMm => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthMm = Math.hypot(dx, dy);
+  const offset = { x: (-dy / lengthMm) * insetMm, y: (dx / lengthMm) * insetMm };
+  return {
+    start: { x: start.x + offset.x, y: start.y + offset.y },
+    end: { x: end.x + offset.x, y: end.y + offset.y },
+  };
+};
+
+const intersectFenceLines = (
+  first: FenceLineMm,
+  second: FenceLineMm,
+): Point2Mm => {
+  const firstDx = first.end.x - first.start.x;
+  const firstDy = first.end.y - first.start.y;
+  const secondDx = second.end.x - second.start.x;
+  const secondDy = second.end.y - second.start.y;
+  const denominator = firstDx * secondDy - firstDy * secondDx;
+  if (Math.abs(denominator) < 1e-9) {
+    throw new Error("Odsadené línie plotu nemajú jednoznačný priesečník.");
+  }
+  const originDx = second.start.x - first.start.x;
+  const originDy = second.start.y - first.start.y;
+  const ratio = (originDx * secondDy - originDy * secondDx) / denominator;
+  return {
+    x: first.start.x + firstDx * ratio,
+    y: first.start.y + firstDy * ratio,
+  };
+};
+
+const fencePointAlong = (
+  start: Point2Mm,
+  end: Point2Mm,
+  distanceMm: number,
+): Point2Mm => {
+  const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
+  return {
+    x: start.x + ((end.x - start.x) / lengthMm) * distanceMm,
+    y: start.y + ((end.y - start.y) / lengthMm) * distanceMm,
+  };
+};
+
+// The markup encloses the private garden at the front-facade datum y=3000.
+// It deliberately does not fence the cadastral street frontage y=0, so the
+// revised direct garage driveway remains open. The west datum point is the
+// rounded intersection of the cadastral edge (0,0)–(-946,23200) with y=3000.
+const FENCE_WEST_DATUM = { x: -122, y: 3000 } as const satisfies Point2Mm;
+const FENCE_EAST_SIDE_GATE_START = {
+  x: 31163,
+  y: 9550,
+} as const satisfies Point2Mm;
+const FENCE_EAST_SIDE_GATE_END = {
+  x: 31159,
+  y: 10750,
+} as const satisfies Point2Mm;
+const FENCE_PHYSICAL_BOUNDARY_INSET_MM = 100;
+const FENCE_FRONT_LEFT_LINE: FenceLineMm = {
+  start: FENCE_WEST_DATUM,
+  end: { x: 2235, y: 3000 },
+};
+const FENCE_FRONT_RIGHT_LINE: FenceLineMm = {
+  start: { x: 28040, y: 3000 },
+  end: { x: 31187, y: 3000 },
+};
+const FENCE_EAST_PHYSICAL_LINE = offsetFenceLine(
+  { x: 31187, y: 3000 },
+  { x: 31109, y: 24497 },
+  FENCE_PHYSICAL_BOUNDARY_INSET_MM,
+);
+const FENCE_REAR_PHYSICAL_LINE = offsetFenceLine(
+  { x: 31109, y: 24497 },
+  { x: -946, y: 23200 },
+  FENCE_PHYSICAL_BOUNDARY_INSET_MM,
+);
+const FENCE_WEST_PHYSICAL_LINE = offsetFenceLine(
+  { x: -946, y: 23200 },
+  FENCE_WEST_DATUM,
+  FENCE_PHYSICAL_BOUNDARY_INSET_MM,
+);
+const FENCE_MITER_FRONT_EAST = intersectFenceLines(
+  FENCE_FRONT_RIGHT_LINE,
+  FENCE_EAST_PHYSICAL_LINE,
+);
+const FENCE_MITER_EAST_REAR = intersectFenceLines(
+  FENCE_EAST_PHYSICAL_LINE,
+  FENCE_REAR_PHYSICAL_LINE,
+);
+const FENCE_MITER_REAR_WEST = intersectFenceLines(
+  FENCE_REAR_PHYSICAL_LINE,
+  FENCE_WEST_PHYSICAL_LINE,
+);
+const FENCE_MITER_WEST_FRONT = intersectFenceLines(
+  FENCE_WEST_PHYSICAL_LINE,
+  FENCE_FRONT_LEFT_LINE,
+);
+const FENCE_EAST_OFFSET = {
+  x: FENCE_EAST_PHYSICAL_LINE.start.x - 31187,
+  y: FENCE_EAST_PHYSICAL_LINE.start.y - 3000,
+};
+const FENCE_SIDE_GATE_PHYSICAL_START = {
+  x: FENCE_EAST_SIDE_GATE_START.x + FENCE_EAST_OFFSET.x,
+  y: FENCE_EAST_SIDE_GATE_START.y + FENCE_EAST_OFFSET.y,
+} satisfies Point2Mm;
+const FENCE_SIDE_GATE_PHYSICAL_END = {
+  x: FENCE_EAST_SIDE_GATE_END.x + FENCE_EAST_OFFSET.x,
+  y: FENCE_EAST_SIDE_GATE_END.y + FENCE_EAST_OFFSET.y,
+} satisfies Point2Mm;
+
+export const SITE_FENCE = Object.freeze({
+  id: "SITE-FENCE",
+  parcelId: "PARCEL-6012/26",
+  enclosure: "PRIVATE_GARDEN",
+  datumYmm: HOUSE.facades.front.faceYmm,
+  sourceIds: [
+    SOURCES.clientFenceMarkup20260821.id,
+    SOURCES.fenceDesignProposal20260821.id,
+    SOURCES.cadastre.id,
+    SOURCES.coordination.id,
+  ],
+  // Exact centerlines represented by the user's yellow trace. Openings and
+  // the house facade together complete this private-garden enclosure.
+  annotatedCenterlineRuns: [
+    fenceRun(
+      "FENCE-MARKUP-FRONT-LEFT",
+      "Ľavé čelné uzatvorenie záhrady",
+      [FENCE_WEST_DATUM, { x: 2235, y: 3000 }],
+      "CLIENT_FRONT_DATUM",
+    ),
+    fenceRun(
+      "FENCE-MARKUP-FRONT-RIGHT",
+      "Pravé čelné uzatvorenie záhrady",
+      [{ x: 28040, y: 3000 }, { x: 31187, y: 3000 }],
+      "CLIENT_FRONT_DATUM",
+    ),
+    fenceRun(
+      "FENCE-MARKUP-EAST",
+      "Východná hranica záhrady",
+      [{ x: 31187, y: 3000 }, { x: 31109, y: 24497 }],
+      "CADASTRAL_BOUNDARY",
+    ),
+    fenceRun(
+      "FENCE-MARKUP-REAR",
+      "Zadná hranica záhrady",
+      [{ x: 31109, y: 24497 }, { x: -946, y: 23200 }],
+      "CADASTRAL_BOUNDARY",
+    ),
+    fenceRun(
+      "FENCE-MARKUP-WEST",
+      "Západná hranica záhrady",
+      [{ x: -946, y: 23200 }, FENCE_WEST_DATUM],
+      "CADASTRAL_BOUNDARY",
+    ),
+  ] as const satisfies readonly FenceRunMm[],
+  // Renderable fixed runs subtract the flush side wicket proposed at EAST-03.
+  fixedRuns: [
+    fenceRun(
+      "FENCE-FIXED-FRONT-LEFT",
+      "Pevné čelné pole vľavo od brány",
+      [FENCE_WEST_DATUM, { x: 2235, y: 3000 }],
+      "CLIENT_FRONT_DATUM",
+    ),
+    fenceRun(
+      "FENCE-FIXED-FRONT-RIGHT",
+      "Pravé čelné pole pri dome",
+      [{ x: 28040, y: 3000 }, { x: 31187, y: 3000 }],
+      "CLIENT_FRONT_DATUM",
+    ),
+    fenceRun(
+      "FENCE-FIXED-EAST-UPPER",
+      "Východný plot pred bočnou bránkou",
+      [{ x: 31187, y: 3000 }, FENCE_EAST_SIDE_GATE_START],
+      "CADASTRAL_BOUNDARY",
+    ),
+    fenceRun(
+      "FENCE-FIXED-EAST-LOWER",
+      "Východný plot za bočnou bránkou",
+      [FENCE_EAST_SIDE_GATE_END, { x: 31109, y: 24497 }],
+      "CADASTRAL_BOUNDARY",
+    ),
+    fenceRun(
+      "FENCE-FIXED-REAR",
+      "Zadný plot",
+      [{ x: 31109, y: 24497 }, { x: -946, y: 23200 }],
+      "CADASTRAL_BOUNDARY",
+    ),
+    fenceRun(
+      "FENCE-FIXED-WEST",
+      "Západný plot",
+      [{ x: -946, y: 23200 }, FENCE_WEST_DATUM],
+      "CADASTRAL_BOUNDARY",
+    ),
+  ] as const satisfies readonly FenceRunMm[],
+  // Physical centerlines are trimmed to common miter points and shifted
+  // 100 mm inside the parcel on cadastral sides. They are the renderer input;
+  // annotatedCenterlineRuns above remain the exact legal/client reference.
+  physicalFixedRuns: [
+    physicalFenceRun(
+      "FENCE-PHYSICAL-FRONT-LEFT",
+      "Fyzické ľavé čelné pole",
+      [FENCE_MITER_WEST_FRONT, { x: 2235, y: 3000 }],
+      ["FENCE-FIXED-FRONT-LEFT", "FENCE-FIXED-WEST"],
+    ),
+    physicalFenceRun(
+      "FENCE-PHYSICAL-FRONT-RIGHT",
+      "Fyzické pravé čelné pole",
+      [{ x: 28040, y: 3000 }, FENCE_MITER_FRONT_EAST],
+      ["FENCE-FIXED-FRONT-RIGHT", "FENCE-FIXED-EAST-UPPER"],
+    ),
+    physicalFenceRun(
+      "FENCE-PHYSICAL-EAST-UPPER",
+      "Fyzický východný plot pred bočnou bránkou",
+      [FENCE_MITER_FRONT_EAST, FENCE_SIDE_GATE_PHYSICAL_START],
+      ["FENCE-FIXED-EAST-UPPER"],
+    ),
+    physicalFenceRun(
+      "FENCE-PHYSICAL-EAST-LOWER",
+      "Fyzický východný plot za bočnou bránkou",
+      [FENCE_SIDE_GATE_PHYSICAL_END, FENCE_MITER_EAST_REAR],
+      ["FENCE-FIXED-EAST-LOWER"],
+    ),
+    physicalFenceRun(
+      "FENCE-PHYSICAL-REAR",
+      "Fyzický zadný plot",
+      [FENCE_MITER_EAST_REAR, FENCE_MITER_REAR_WEST],
+      ["FENCE-FIXED-REAR"],
+    ),
+    physicalFenceRun(
+      "FENCE-PHYSICAL-WEST",
+      "Fyzický západný plot",
+      [FENCE_MITER_REAR_WEST, FENCE_MITER_WEST_FRONT],
+      ["FENCE-FIXED-WEST"],
+    ),
+  ] as const satisfies readonly PhysicalFenceRunMm[],
+  vehicleGate: {
+    id: "GATE-GARDEN-VEHICLE",
+    label: "Teleskopická brána do súkromnej záhrady",
+    role: "SECONDARY_GARDEN_VEHICLE_GATE",
+    startMm: { x: 2235, y: 3000 } as const satisfies Point2Mm,
+    endMm: { x: 6435, y: 3000 } as const satisfies Point2Mm,
+    leafClosureEndMm: { x: 6440, y: 3000 } as const satisfies Point2Mm,
+    centerMm: { x: 4335, y: 3000 } as const satisfies Point2Mm,
+    clearWidthMm: 4200,
+    accessGarageDoorId: null,
+    alignmentSourceId: SITE_SURFACES.supersededSideDriveway.id,
+    markupStatus: "CLIENT_MARKUP_EXACT",
+    mechanismProposal: "TRIPLE_TELESCOPIC_TRACKED_SLIDING",
+    mechanismStatus: "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
+    panelCount: 3,
+    openingDirection: "LOCAL_X_NEGATIVE",
+    availableStackPocketMm: 2357,
+    proposedStackEnvelopeMm: 1900,
+    stackPocketStartMm: { x: 335, y: 3000 } as const satisfies Point2Mm,
+    endSupport: "HOUSE_FACADE_BRACKET",
+    terminalFrameCenterMm: { x: 6400, y: 3000 } as const satisfies Point2Mm,
+    facadeReceiver: {
+      centerMm: { x: 6434, y: 3045 } as const satisfies Point2Mm,
+      widthMm: 12,
+      depthMm: 130,
+      heightMm: 1420,
+      baseElevationMm: 100,
+    },
+    supportPostCentersMm: [
+      { x: 2175, y: 3045 } as const satisfies Point2Mm,
+    ],
+    sourceIds: [
+      SOURCES.clientFenceMarkup20260821.id,
+      SOURCES.fenceDesignProposal20260821.id,
+      SOURCES.coordination.id,
+    ],
+  },
+  sidePedestrianGate: {
+    id: "GATE-SIDE-PEDESTRIAN",
+    label: "Skrytá pešia bránka pri EAST-03",
+    startMm: FENCE_EAST_SIDE_GATE_START,
+    endMm: FENCE_EAST_SIDE_GATE_END,
+    clearWidthMm: 1200,
+    accessOpeningId: "EAST-03",
+    panelCount: 1,
+    endSupport: "POST",
+    physicalStartMm: FENCE_SIDE_GATE_PHYSICAL_START,
+    physicalEndMm: FENCE_SIDE_GATE_PHYSICAL_END,
+    terminalFrameCenterMm: FENCE_SIDE_GATE_PHYSICAL_END,
+    supportPostCentersMm: [
+      fencePointAlong(
+        FENCE_SIDE_GATE_PHYSICAL_START,
+        FENCE_SIDE_GATE_PHYSICAL_END,
+        -60,
+      ),
+      fencePointAlong(
+        FENCE_SIDE_GATE_PHYSICAL_START,
+        FENCE_SIDE_GATE_PHYSICAL_END,
+        Math.hypot(
+          FENCE_SIDE_GATE_PHYSICAL_END.x - FENCE_SIDE_GATE_PHYSICAL_START.x,
+          FENCE_SIDE_GATE_PHYSICAL_END.y - FENCE_SIDE_GATE_PHYSICAL_START.y,
+        ) + 60,
+      ),
+    ],
+    status: "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
+    sourceIds: [
+      SOURCES.fenceDesignProposal20260821.id,
+      SOURCES.floorPlan.id,
+      SOURCES.clientRevision20260821.id,
+    ],
+  },
+  houseClosure: {
+    startMm: { x: 6440, y: 3000 } as const satisfies Point2Mm,
+    endMm: { x: 28040, y: 3000 } as const satisfies Point2Mm,
+    role: "HOUSE_FRONT_FACADE_CLOSES_ENCLOSURE",
+  },
+  specificationStatus: "CLIENT_SELECTION_PENDING",
+  approvedHeightMm: null,
+  approvedMaterial: null,
+  visualProposal: {
+    status: "DESIGN_PROPOSAL",
+    style: "LUXURY_MINIMAL_VERTICAL_ALUMINIUM",
+    proposedHeightMm: 1600,
+    finish: "FINE_TEXTURE_POWDER_COAT_RAL_7016",
+    colorHex: "#252a2c",
+    slatWidthMm: 60,
+    slatDepthMm: 25,
+    slatPitchMm: 110,
+    groundClearanceMm: 70,
+    railWidthMm: 60,
+    railDepthMm: 24,
+    postSizeMm: 80,
+    gatePostSizeMm: 120,
+    maximumPostSpacingMm: 2000,
+    curbHeightMm: 100,
+    curbDepthMm: 120,
+    physicalBoundaryInsetMm: FENCE_PHYSICAL_BOUNDARY_INSET_MM,
+    telescopicPanelOverlapMm: 100,
+    telescopicPanelPlaneOffsetMm: 45,
+    gateThresholdDepthMm: 260,
+  },
+  legacyC3: {
+    proposedHeightMm: 1600,
+    material: "WIRE_MESH",
+    sourceId: SOURCES.coordination.id,
+    status: "UNCONFIRMED_LEGACY_PROPOSAL",
   },
 });
 
@@ -915,7 +1336,7 @@ export const UTILITY_ROUTES: readonly UtilityRoute[] = [
 export const LAYERS = [
   { id: "cadastre", label: "Kataster", shortLabel: "KN", color: "#ff5738", source: "ČÚZK · aktuálne" },
   { id: "street", label: "Ulica a spevnené plochy", shortLabel: "UL", color: "#9aa3a6", source: "C3 · návrh" },
-  { id: "building", label: "Dom a strecha", shortLabel: "RD", color: "#f5f2e9", source: "D1.1 · návrh" },
+  { id: "building", label: "Dom, strecha a plot", shortLabel: "RD", color: "#f5f2e9", source: "D1.1 + revízia" },
   { id: "foundations", label: "Základy", shortLabel: "ZA", color: "#929da0", source: "D1.1.001" },
   { id: "water", label: "Vodovod", shortLabel: "VO", color: "#398cff", source: "IO 03" },
   { id: "sewer", label: "Splašková kanalizácia", shortLabel: "SK", color: "#a76b35", source: "IO 02" },

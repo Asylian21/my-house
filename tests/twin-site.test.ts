@@ -8,10 +8,13 @@ import {
   FOUNDATIONS,
   HOUSE,
   ROAD_CONTEXT,
+  SITE_FENCE,
   SITE_SURFACES,
   SOURCES,
   UTILITY_ROUTES,
   foundationVolumeM3,
+  findSource,
+  lineLengthMm,
   sjtskToLocalMm,
   updateFoundationWidth,
 } from "../lib/twin-site";
@@ -26,6 +29,7 @@ import {
   sceneZM,
 } from "../lib/twin-render-frame";
 import { segmentFacadeMm } from "../lib/twin-facade";
+import { slatCenterDistancesMm } from "../lib/twin-fence";
 import { roofHeightMm, roofMountTransform } from "../lib/twin-roof";
 
 describe("site evidence seed", () => {
@@ -442,9 +446,420 @@ describe("site evidence seed", () => {
       ) / 2_000_000;
     expect(derivedAreaM2).toBeCloseTo(approach.areaM2, 3);
   });
+
+  it("translates the yellow garden enclosure and green gate without moving the garage drive", () => {
+    expect(SITE_FENCE).toMatchObject({
+      id: "SITE-FENCE",
+      parcelId: "PARCEL-6012/26",
+      enclosure: "PRIVATE_GARDEN",
+      datumYmm: HOUSE.facades.front.faceYmm,
+      specificationStatus: "CLIENT_SELECTION_PENDING",
+      approvedHeightMm: null,
+      approvedMaterial: null,
+    });
+    expect(SOURCES.clientFenceMarkup20260821.kind).toBe("CLIENT_REVISION");
+    expect(SOURCES.fenceDesignProposal20260821.kind).toBe("DESIGN_PROPOSAL");
+    expect(SITE_FENCE.sourceIds.every((sourceId) => findSource(sourceId))).toBe(
+      true,
+    );
+    expect(
+      SITE_FENCE.vehicleGate.sourceIds.every((sourceId) =>
+        findSource(sourceId),
+      ),
+    ).toBe(true);
+    expect(
+      SITE_FENCE.sidePedestrianGate.sourceIds.every((sourceId) =>
+        findSource(sourceId),
+      ),
+    ).toBe(true);
+    expect(SITE_FENCE.sidePedestrianGate.sourceIds).not.toContain(
+      SOURCES.clientFenceMarkup20260821.id,
+    );
+
+    expect(SITE_FENCE.annotatedCenterlineRuns).toEqual([
+      {
+        id: "FENCE-MARKUP-FRONT-LEFT",
+        label: "Ľavé čelné uzatvorenie záhrady",
+        pointsMm: [{ x: -122, y: 3000 }, { x: 2235, y: 3000 }],
+        alignment: "CLIENT_FRONT_DATUM",
+      },
+      {
+        id: "FENCE-MARKUP-FRONT-RIGHT",
+        label: "Pravé čelné uzatvorenie záhrady",
+        pointsMm: [{ x: 28040, y: 3000 }, { x: 31187, y: 3000 }],
+        alignment: "CLIENT_FRONT_DATUM",
+      },
+      {
+        id: "FENCE-MARKUP-EAST",
+        label: "Východná hranica záhrady",
+        pointsMm: [{ x: 31187, y: 3000 }, { x: 31109, y: 24497 }],
+        alignment: "CADASTRAL_BOUNDARY",
+      },
+      {
+        id: "FENCE-MARKUP-REAR",
+        label: "Zadná hranica záhrady",
+        pointsMm: [{ x: 31109, y: 24497 }, { x: -946, y: 23200 }],
+        alignment: "CADASTRAL_BOUNDARY",
+      },
+      {
+        id: "FENCE-MARKUP-WEST",
+        label: "Západná hranica záhrady",
+        pointsMm: [{ x: -946, y: 23200 }, { x: -122, y: 3000 }],
+        alignment: "CADASTRAL_BOUNDARY",
+      },
+    ]);
+    const tracedLengthMm = SITE_FENCE.annotatedCenterlineRuns.reduce(
+      (total, run) => total + lineLengthMm(run.pointsMm),
+      0,
+    );
+    expect(tracedLengthMm).toBe(79_299);
+
+    const gate = SITE_FENCE.vehicleGate;
+    expect(gate).toMatchObject({
+      role: "SECONDARY_GARDEN_VEHICLE_GATE",
+      startMm: { x: 2235, y: 3000 },
+      endMm: { x: 6435, y: 3000 },
+      leafClosureEndMm: { x: 6440, y: 3000 },
+      centerMm: { x: 4335, y: 3000 },
+      clearWidthMm: 4200,
+      accessGarageDoorId: null,
+      markupStatus: "CLIENT_MARKUP_EXACT",
+      mechanismProposal: "TRIPLE_TELESCOPIC_TRACKED_SLIDING",
+      mechanismStatus: "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
+      panelCount: 3,
+      endSupport: "HOUSE_FACADE_BRACKET",
+      terminalFrameCenterMm: { x: 6400, y: 3000 },
+      facadeReceiver: {
+        centerMm: { x: 6434, y: 3045 },
+        widthMm: 12,
+      },
+      supportPostCentersMm: [{ x: 2175, y: 3045 }],
+      proposedStackEnvelopeMm: 1900,
+      stackPocketStartMm: { x: 335, y: 3000 },
+    });
+    expect(Math.hypot(
+      gate.endMm.x - gate.startMm.x,
+      gate.endMm.y - gate.startMm.y,
+    )).toBe(gate.clearWidthMm);
+    expect(SITE_FENCE.houseClosure).toMatchObject({
+      startMm: HOUSE.footprintMm[0],
+      endMm: HOUSE.footprintMm[1],
+    });
+    expect(SITE_FENCE.houseClosure.startMm.x - gate.endMm.x).toBe(5);
+    expect(gate.alignmentSourceId).toBe(
+      SITE_SURFACES.supersededSideDriveway.id,
+    );
+    expect(gate.clearWidthMm / gate.panelCount).toBeLessThanOrEqual(
+      gate.availableStackPocketMm,
+    );
+    expect(gate.startMm.x - gate.stackPocketStartMm.x).toBe(
+      gate.proposedStackEnvelopeMm,
+    );
+    expect(gate.proposedStackEnvelopeMm).toBeLessThanOrEqual(
+      gate.availableStackPocketMm,
+    );
+    const vehiclePostHalfMm = SITE_FENCE.visualProposal.gatePostSizeMm / 2;
+    expect(gate.supportPostCentersMm[0].x + vehiclePostHalfMm).toBe(
+      gate.startMm.x,
+    );
+    expect(gate.supportPostCentersMm[0].x + vehiclePostHalfMm).toBeLessThan(
+      HOUSE.originMm.x,
+    );
+    expect(gate.supportPostCentersMm[0].x + vehiclePostHalfMm).toBeLessThan(
+      Math.min(...SITE_SURFACES.driveway.polygonMm.map(({ x }) => x)),
+    );
+    const terminalFrameHalfMm = 35;
+    expect(gate.terminalFrameCenterMm.x + terminalFrameHalfMm).toBeLessThan(
+      HOUSE.originMm.x,
+    );
+    expect(gate.terminalFrameCenterMm.x + terminalFrameHalfMm).toBeLessThan(
+      Math.min(...SITE_SURFACES.driveway.polygonMm.map(({ x }) => x)),
+    );
+    expect(
+      gate.facadeReceiver.centerMm.x + gate.facadeReceiver.widthMm / 2,
+    ).toBe(HOUSE.originMm.x);
+
+    const archivedDrive = SITE_SURFACES.supersededSideDriveway;
+    expect(archivedDrive).toMatchObject({
+      placementStatus: "SUPERSEDED_BY_CLIENT_DIRECT_GARAGE_ACCESS",
+      supersededById: SITE_SURFACES.driveway.id,
+    });
+    const archivedCrossSectionXs: number[] = [];
+    for (let index = 1; index < archivedDrive.polygonMm.length; index += 1) {
+      const start = archivedDrive.polygonMm[index - 1];
+      const end = archivedDrive.polygonMm[index];
+      if (
+        start.y === end.y ||
+        3000 < Math.min(start.y, end.y) ||
+        3000 > Math.max(start.y, end.y)
+      ) {
+        continue;
+      }
+      const ratio = (3000 - start.y) / (end.y - start.y);
+      archivedCrossSectionXs.push(start.x + (end.x - start.x) * ratio);
+    }
+    archivedCrossSectionXs.sort((left, right) => left - right);
+    expect(archivedCrossSectionXs).toHaveLength(2);
+    expect(Math.abs(archivedCrossSectionXs[0] - gate.startMm.x)).toBeLessThan(1);
+    expect(Math.abs(archivedCrossSectionXs[1] - gate.endMm.x)).toBeLessThanOrEqual(5);
+    expect(
+      Math.abs(
+        (archivedCrossSectionXs[0] + archivedCrossSectionXs[1]) / 2 -
+          gate.centerMm.x,
+      ),
+    ).toBeLessThanOrEqual(3);
+
+    const directDriveXs = SITE_SURFACES.driveway.polygonMm.map(({ x }) => x);
+    expect([Math.min(...directDriveXs), Math.max(...directDriveXs)]).toEqual([
+      6490,
+      10690,
+    ]);
+    expect(gate.centerMm.x).not.toBe(
+      HOUSE.facades.front.garageDoor.startXmm +
+        HOUSE.facades.front.garageDoor.widthMm / 2,
+    );
+    expect(gate.endMm.x).toBeLessThan(Math.min(...directDriveXs));
+
+    const exactWestX = (-946 * 3000) / 23200;
+    expect(Math.abs(SITE_FENCE.annotatedCenterlineRuns[0].pointsMm[0].x - exactWestX)).toBeLessThan(1);
+    const sideGate = SITE_FENCE.sidePedestrianGate;
+    const sideDoor = HOUSE.facades.east.openings.find(
+      ({ id }) => id === sideGate.accessOpeningId,
+    );
+    expect(sideDoor).toBeDefined();
+    expect((sideGate.startMm.y + sideGate.endMm.y) / 2).toBe(
+      sideDoor!.startYmm + sideDoor!.widthMm / 2,
+    );
+    expect(Math.hypot(
+      sideGate.endMm.x - sideGate.startMm.x,
+      sideGate.endMm.y - sideGate.startMm.y,
+    )).toBeCloseTo(sideGate.clearWidthMm, 1);
+    expect(sideGate.status).toBe(
+      "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
+    );
+    expect(Math.hypot(
+      sideGate.physicalStartMm.x - sideGate.supportPostCentersMm[0].x,
+      sideGate.physicalStartMm.y - sideGate.supportPostCentersMm[0].y,
+    )).toBeCloseTo(60, 8);
+    expect(Math.hypot(
+      sideGate.supportPostCentersMm[1].x - sideGate.physicalEndMm.x,
+      sideGate.supportPostCentersMm[1].y - sideGate.physicalEndMm.y,
+    )).toBeCloseTo(60, 8);
+    expect(SITE_FENCE.visualProposal).toMatchObject({
+      status: "DESIGN_PROPOSAL",
+      style: "LUXURY_MINIMAL_VERTICAL_ALUMINIUM",
+      proposedHeightMm: 1600,
+      finish: "FINE_TEXTURE_POWDER_COAT_RAL_7016",
+      colorHex: "#252a2c",
+      slatWidthMm: 60,
+      slatPitchMm: 110,
+      physicalBoundaryInsetMm: 100,
+      telescopicPanelOverlapMm: 100,
+      telescopicPanelPlaneOffsetMm: 45,
+    });
+
+    const subject = CADASTRAL_PARCELS.find((parcel) => parcel.isSubject)!;
+    const subjectRing = subject.sjtskRingMm.map(sjtskToLocalMm);
+    const pointToSegmentDistance = (
+      point: { x: number; y: number },
+      start: { x: number; y: number },
+      end: { x: number; y: number },
+    ) => {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const lengthSquared = dx * dx + dy * dy;
+      const ratio =
+        lengthSquared === 0
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                1,
+                ((point.x - start.x) * dx + (point.y - start.y) * dy) /
+                  lengthSquared,
+              ),
+            );
+      return Math.hypot(
+        point.x - (start.x + dx * ratio),
+        point.y - (start.y + dy * ratio),
+      );
+    };
+    const distanceToParcelMm = (point: { x: number; y: number }) =>
+      Math.min(
+        ...subjectRing.slice(1).map((end, index) =>
+          pointToSegmentDistance(point, subjectRing[index], end),
+        ),
+      );
+
+    for (const run of SITE_FENCE.fixedRuns) {
+      if (run.alignment === "CLIENT_FRONT_DATUM") {
+        expect(run.pointsMm.every(({ y }) => y === SITE_FENCE.datumYmm)).toBe(
+          true,
+        );
+      } else {
+        for (const point of run.pointsMm) {
+          expect(distanceToParcelMm(point)).toBeLessThan(1);
+        }
+        for (let index = 1; index < run.pointsMm.length; index += 1) {
+          const start = run.pointsMm[index - 1];
+          const end = run.pointsMm[index];
+          expect(
+            distanceToParcelMm({
+              x: (start.x + end.x) / 2,
+              y: (start.y + end.y) / 2,
+            }),
+          ).toBeLessThan(1);
+        }
+      }
+      for (let index = 1; index < run.pointsMm.length; index += 1) {
+        const start = run.pointsMm[index - 1];
+        const end = run.pointsMm[index];
+        if (start.y !== SITE_FENCE.datumYmm || end.y !== SITE_FENCE.datumYmm) {
+          continue;
+        }
+        const segmentMinX = Math.min(start.x, end.x);
+        const segmentMaxX = Math.max(start.x, end.x);
+        const crossesVehicleGate =
+          Math.max(segmentMinX, gate.startMm.x) <
+          Math.min(segmentMaxX, gate.endMm.x);
+        expect(crossesVehicleGate).toBe(false);
+      }
+    }
+    expect(
+      SITE_FENCE.fixedRuns.find(
+        ({ id }) => id === "FENCE-FIXED-EAST-UPPER",
+      )?.pointsMm.at(-1),
+    ).toEqual(sideGate.startMm);
+    expect(
+      SITE_FENCE.fixedRuns.find(
+        ({ id }) => id === "FENCE-FIXED-EAST-LOWER",
+      )?.pointsMm[0],
+    ).toEqual(sideGate.endMm);
+
+    const physicalById = new Map(
+      SITE_FENCE.physicalFixedRuns.map((run) => [run.id, run]),
+    );
+    expect(
+      SITE_FENCE.physicalFixedRuns.every(
+        ({ status }) =>
+          status ===
+          "DESIGN_PROPOSAL_REQUIRES_SURVEY_AND_CLIENT_CONFIRMATION",
+      ),
+    ).toBe(true);
+    const physicalFrontLeft = physicalById.get("FENCE-PHYSICAL-FRONT-LEFT")!;
+    const physicalFrontRight = physicalById.get("FENCE-PHYSICAL-FRONT-RIGHT")!;
+    const physicalEastUpper = physicalById.get("FENCE-PHYSICAL-EAST-UPPER")!;
+    const physicalEastLower = physicalById.get("FENCE-PHYSICAL-EAST-LOWER")!;
+    const physicalRear = physicalById.get("FENCE-PHYSICAL-REAR")!;
+    const physicalWest = physicalById.get("FENCE-PHYSICAL-WEST")!;
+    expect(physicalFrontRight.pointsMm.at(-1)).toEqual(
+      physicalEastUpper.pointsMm[0],
+    );
+    expect(physicalEastUpper.pointsMm.at(-1)).toEqual(
+      sideGate.physicalStartMm,
+    );
+    expect(physicalEastLower.pointsMm[0]).toEqual(sideGate.physicalEndMm);
+    expect(physicalEastLower.pointsMm.at(-1)).toEqual(
+      physicalRear.pointsMm[0],
+    );
+    expect(physicalRear.pointsMm.at(-1)).toEqual(physicalWest.pointsMm[0]);
+    expect(physicalWest.pointsMm.at(-1)).toEqual(
+      physicalFrontLeft.pointsMm[0],
+    );
+    expect(physicalFrontRight.pointsMm.at(-1)).toMatchObject({
+      x: expect.closeTo(31_086.9993, 2),
+      y: expect.closeTo(3_000, 6),
+    });
+    expect(physicalEastLower.pointsMm.at(-1)).toMatchObject({
+      x: expect.closeTo(31_009.378, 2),
+      y: expect.closeTo(24_392.8873, 2),
+    });
+    expect(physicalRear.pointsMm.at(-1)).toMatchObject({
+      x: expect.closeTo(-842.0059, 2),
+      y: expect.closeTo(23_104.126, 2),
+    });
+    expect(physicalWest.pointsMm.at(-1)).toMatchObject({
+      x: expect.closeTo(-21.9168, 2),
+      y: expect.closeTo(3_000, 6),
+    });
+    for (const run of [
+      physicalEastUpper,
+      physicalEastLower,
+      physicalRear,
+      physicalWest,
+    ]) {
+      for (let index = 1; index < run.pointsMm.length; index += 1) {
+        const start = run.pointsMm[index - 1];
+        const end = run.pointsMm[index];
+        const cadastralInsetMm = distanceToParcelMm({
+          x: (start.x + end.x) / 2,
+          y: (start.y + end.y) / 2,
+        });
+        expect(
+          Math.abs(
+            cadastralInsetMm -
+              SITE_FENCE.visualProposal.physicalBoundaryInsetMm,
+          ),
+        ).toBeLessThan(1);
+      }
+    }
+    expect(
+      Math.abs(
+        distanceToParcelMm(sideGate.physicalStartMm) -
+          SITE_FENCE.visualProposal.physicalBoundaryInsetMm,
+      ),
+    ).toBeLessThan(1);
+    expect(
+      Math.abs(
+        distanceToParcelMm(sideGate.physicalEndMm) -
+          SITE_FENCE.visualProposal.physicalBoundaryInsetMm,
+      ),
+    ).toBeLessThan(1);
+  });
 });
 
 describe("data to geometry contract", () => {
+  it("keeps the luxury fence raster at a fixed pitch with balanced margins", () => {
+    const style = SITE_FENCE.visualProposal;
+    const gateLengthMm = Math.hypot(
+      SITE_FENCE.vehicleGate.leafClosureEndMm.x -
+        SITE_FENCE.vehicleGate.startMm.x,
+      SITE_FENCE.vehicleGate.leafClosureEndMm.y -
+        SITE_FENCE.vehicleGate.startMm.y,
+    );
+    const panelLengthMm =
+      (gateLengthMm +
+        (SITE_FENCE.vehicleGate.panelCount - 1) *
+          style.telescopicPanelOverlapMm) /
+      SITE_FENCE.vehicleGate.panelCount;
+    for (const lengthMm of [
+      panelLengthMm,
+      Math.hypot(
+        SITE_FENCE.sidePedestrianGate.physicalEndMm.x -
+          SITE_FENCE.sidePedestrianGate.physicalStartMm.x,
+        SITE_FENCE.sidePedestrianGate.physicalEndMm.y -
+          SITE_FENCE.sidePedestrianGate.physicalStartMm.y,
+      ),
+    ]) {
+      const centers = slatCenterDistancesMm(
+        lengthMm,
+        style.slatWidthMm,
+        style.slatPitchMm,
+      );
+      expect(centers.length).toBeGreaterThan(1);
+      for (let index = 1; index < centers.length; index += 1) {
+        expect(centers[index] - centers[index - 1]).toBeCloseTo(
+          style.slatPitchMm,
+          10,
+        );
+      }
+      const leftMarginMm = centers[0] - style.slatWidthMm / 2;
+      const rightMarginMm =
+        lengthMm - (centers.at(-1)! + style.slatWidthMm / 2);
+      expect(leftMarginMm).toBeCloseTo(rightMarginMm, 10);
+    }
+  });
+
   it("cuts the street garage door and remaining front openings without overlap", () => {
     const garageDoor = HOUSE.facades.front.garageDoor;
     const openings = [

@@ -11,7 +11,12 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { EquiRectangularCubeTexture } from "@babylonjs/core/Materials/Textures/equiRectangularCubeTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-import { Vector3, Vector4 } from "@babylonjs/core/Maths/math.vector";
+import {
+  Matrix,
+  Quaternion,
+  Vector3,
+  Vector4,
+} from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
@@ -25,6 +30,7 @@ import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import "@babylonjs/core/Meshes/thinInstanceMesh";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
@@ -40,6 +46,7 @@ import {
   HOUSE,
   LAYERS,
   ROAD_CONTEXT,
+  SITE_FENCE,
   SITE_SURFACES,
   TERRACE_ZONES_D1,
   UTILITY_ROUTES,
@@ -75,6 +82,7 @@ import {
   type RoofPointMm,
   type RoofVertexMm,
 } from "./twin-roof";
+import { slatCenterDistancesMm } from "./twin-fence";
 
 export type CameraPreset = "garden" | "axonometric" | "top" | "street" | "focus";
 
@@ -260,6 +268,94 @@ function boxAtPlan(
   return mesh;
 }
 
+interface PlanBoxInstance {
+  readonly centerMm: Point2Mm;
+  readonly widthMm: number;
+  readonly depthMm: number;
+  readonly heightMm: number;
+  readonly baseElevationMm: number;
+  readonly yawRad: number;
+}
+
+function pointAlongSegment(
+  start: Point2Mm,
+  end: Point2Mm,
+  distanceMm: number,
+): Point2Mm {
+  const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
+  if (lengthMm === 0) return start;
+  const ratio = distanceMm / lengthMm;
+  return {
+    x: start.x + (end.x - start.x) * ratio,
+    y: start.y + (end.y - start.y) * ratio,
+  };
+}
+
+function slatInstancesForSegment(
+  start: Point2Mm,
+  end: Point2Mm,
+  widthMm: number,
+  depthMm: number,
+  pitchMm: number,
+  heightMm: number,
+  baseElevationMm: number,
+): PlanBoxInstance[] {
+  const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
+  const centerDistancesMm = slatCenterDistancesMm(
+    lengthMm,
+    widthMm,
+    pitchMm,
+  );
+  const yawRad = sceneYawForPlanSegment(start, end);
+  return centerDistancesMm.map((distanceMm) => ({
+    centerMm: pointAlongSegment(start, end, distanceMm),
+    widthMm,
+    depthMm,
+    heightMm,
+    baseElevationMm,
+    yawRad,
+  }));
+}
+
+function segmentBox(
+  start: Point2Mm,
+  end: Point2Mm,
+  depthMm: number,
+  heightMm: number,
+  baseElevationMm: number,
+): PlanBoxInstance {
+  return {
+    centerMm: {
+      x: (start.x + end.x) / 2,
+      y: (start.y + end.y) / 2,
+    },
+    widthMm: Math.hypot(end.x - start.x, end.y - start.y),
+    depthMm,
+    heightMm,
+    baseElevationMm,
+    yawRad: sceneYawForPlanSegment(start, end),
+  };
+}
+
+function inwardOffsetForSegment(
+  start: Point2Mm,
+  end: Point2Mm,
+  distanceMm: number,
+): Point2Mm {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthMm = Math.hypot(dx, dy);
+  if (lengthMm === 0 || distanceMm === 0) return { x: 0, y: 0 };
+  return {
+    x: (-dy / lengthMm) * distanceMm,
+    y: (dx / lengthMm) * distanceMm,
+  };
+}
+
+function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
+  return { x: point.x + offset.x, y: point.y + offset.y };
+}
+
 export class TwinSceneController {
   private readonly engine: Engine;
   private readonly scene: Scene;
@@ -440,6 +536,7 @@ export class TwinSceneController {
       rainwater: surfaceMaterial(this.scene, "rainwater", "#4aae7a", 0.8),
       electricity: surfaceMaterial(this.scene, "electricity", "#ec4ec6", 0.72),
       contextNetworks: surfaceMaterial(this.scene, "context-networks", "#62d8ff", 0.72),
+      fence: surfaceMaterial(this.scene, "fence", "#252a2c", 0.92, 0.7),
       selection: surfaceMaterial(this.scene, "selection", "#ff5738", 0.55, 0.82),
     };
     this.materials.parcel.disableDepthWrite = true;
@@ -465,6 +562,8 @@ export class TwinSceneController {
       solar: pbrMaterial(this.scene, "real-solar", "#0b1824", 0.12, 0.45),
       solarGrid: pbrMaterial(this.scene, "real-solar-grid", "#aeb6ba", 0.3, 0.8),
       chimney: pbrMaterial(this.scene, "real-chimney", "#787f7f", 0.32, 0.75),
+      fenceMetal: pbrMaterial(this.scene, "real-fence-metal", "#252a2c", 0.66, 0.05),
+      fenceTrack: pbrMaterial(this.scene, "real-fence-track", "#8d9496", 0.32, 0.72),
       mulch: pbrMaterial(this.scene, "real-mulch", "#2e2317", 1),
       stone: pbrMaterial(this.scene, "real-stone", "#d6d2c6", 0.9),
       fabric: pbrMaterial(this.scene, "real-fabric", "#e6e2d8", 0.95),
@@ -499,6 +598,7 @@ export class TwinSceneController {
     this.applyTexture(this.realisticMaterials.roof, "metal-anthracite-albedo", 7, 5, "metal-anthracite-normal", 0.3);
     this.realisticMaterials.roof.environmentIntensity = 0.35;
     this.realisticMaterials.roofEdge.environmentIntensity = 0.4;
+    this.realisticMaterials.fenceMetal.environmentIntensity = 0.55;
     this.applyTexture(this.realisticMaterials.gravel, "gravel-albedo", 6, 1.1, "gravel-normal", 0.9);
     this.applyTexture(this.realisticMaterials.concrete, "concrete-albedo", 2.2, 2.2, "concrete-normal", 0.5);
     this.applyTexture(this.realisticMaterials.paving, "concrete-albedo", 5, 2.5, "concrete-normal", 0.45);
@@ -516,6 +616,7 @@ export class TwinSceneController {
     this.buildCadastre();
     this.buildStreetAndSite();
     this.buildHouse();
+    this.buildFence();
     this.buildLandscape();
     this.buildUtilities();
 
@@ -649,6 +750,43 @@ export class TwinSceneController {
   private castShadow(mesh: AbstractMesh) {
     this.shadowGenerator.addShadowCaster(mesh);
     return mesh;
+  }
+
+  private buildThinBoxes(
+    name: string,
+    instances: readonly PlanBoxInstance[],
+    technical: Material,
+    realistic: Material,
+    layer: LayerId,
+    entityId: string,
+    castsShadow = true,
+  ) {
+    if (instances.length === 0) return null;
+    const mesh = CreateBox(name, { size: 1 }, this.scene);
+    const matrices = new Float32Array(instances.length * 16);
+    for (const [index, instance] of instances.entries()) {
+      const matrix = Matrix.Compose(
+        new Vector3(
+          instance.widthMm * MM_TO_M,
+          instance.heightMm * MM_TO_M,
+          instance.depthMm * MM_TO_M,
+        ),
+        Quaternion.RotationYawPitchRoll(instance.yawRad, 0, 0),
+        new Vector3(
+          xM(instance.centerMm.x),
+          (instance.baseElevationMm + instance.heightMm / 2) * MM_TO_M,
+          zM(instance.centerMm.y),
+        ),
+      );
+      matrix.copyToArray(matrices, index * 16);
+    }
+    mesh.thinInstanceSetBuffer("matrix", matrices, 16, true);
+    mesh.thinInstanceRefreshBoundingInfo(true);
+    mesh.thinInstanceEnablePicking = true;
+    mesh.receiveShadows = true;
+    this.appearance(mesh, technical, realistic);
+    if (castsShadow) this.castShadow(mesh);
+    return this.register(mesh, layer, entityId);
   }
 
   private buildTerrainAndGrid() {
@@ -828,6 +966,382 @@ export class TwinSceneController {
       paving.receiveShadows = true;
       this.register(paving, "street", surface.id);
     }
+  }
+
+  private buildFence() {
+    const style = SITE_FENCE.visualProposal;
+    const fixedSlatBottomMm = Math.max(
+      style.curbHeightMm + 50,
+      style.groundClearanceMm,
+    );
+    const fixedSlatHeightMm = style.proposedHeightMm - fixedSlatBottomMm;
+    const gateSlatBottomMm = style.groundClearanceMm;
+    const gateSlatHeightMm = style.proposedHeightMm - gateSlatBottomMm;
+    const fixedSlats: PlanBoxInstance[] = [];
+    const fixedRails: PlanBoxInstance[] = [];
+    const fixedCurbs: PlanBoxInstance[] = [];
+    const fixedPosts = new Map<string, PlanBoxInstance>();
+    const unsupportedEndpointKeys = new Set(
+      [
+        SITE_FENCE.vehicleGate.startMm,
+        SITE_FENCE.vehicleGate.endMm,
+        SITE_FENCE.sidePedestrianGate.physicalStartMm,
+        SITE_FENCE.sidePedestrianGate.physicalEndMm,
+        SITE_FENCE.houseClosure.startMm,
+        SITE_FENCE.houseClosure.endMm,
+      ].map(({ x, y }) => `${Math.round(x)}:${Math.round(y)}`),
+    );
+
+    for (const run of SITE_FENCE.physicalFixedRuns) {
+      for (let index = 1; index < run.pointsMm.length; index += 1) {
+        const start = run.pointsMm[index - 1];
+        const end = run.pointsMm[index];
+        const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
+        const yawRad = sceneYawForPlanSegment(start, end);
+        fixedSlats.push(
+          ...slatInstancesForSegment(
+            start,
+            end,
+            style.slatWidthMm,
+            style.slatDepthMm,
+            style.slatPitchMm,
+            fixedSlatHeightMm,
+            fixedSlatBottomMm,
+          ),
+        );
+        for (const railBaseElevationMm of [420, 1320]) {
+          fixedRails.push(
+            segmentBox(
+              start,
+              end,
+              style.railDepthMm,
+              style.railWidthMm,
+              railBaseElevationMm,
+            ),
+          );
+        }
+        fixedCurbs.push(
+          segmentBox(
+            start,
+            end,
+            style.curbDepthMm,
+            style.curbHeightMm,
+            0,
+          ),
+        );
+
+        const bayCount = Math.max(
+          1,
+          Math.ceil(lengthMm / style.maximumPostSpacingMm),
+        );
+        for (let bay = 0; bay <= bayCount; bay += 1) {
+          const centerMm = pointAlongSegment(
+            start,
+            end,
+            (lengthMm * bay) / bayCount,
+          );
+          const key = `${Math.round(centerMm.x)}:${Math.round(centerMm.y)}`;
+          if (unsupportedEndpointKeys.has(key) || fixedPosts.has(key)) continue;
+          fixedPosts.set(key, {
+            centerMm,
+            widthMm: style.postSizeMm,
+            depthMm: style.postSizeMm,
+            heightMm: style.proposedHeightMm,
+            baseElevationMm: 0,
+            yawRad,
+          });
+        }
+      }
+    }
+
+    this.buildThinBoxes(
+      "Plot · zvislé hliníkové lamely RAL 7016",
+      fixedSlats,
+      this.materials.fence,
+      this.realisticMaterials.fenceMetal,
+      "building",
+      SITE_FENCE.id,
+    );
+    this.buildThinBoxes(
+      "Plot · skryté nosné priečniky",
+      fixedRails,
+      this.materials.fence,
+      this.realisticMaterials.fenceMetal,
+      "building",
+      SITE_FENCE.id,
+    );
+    this.buildThinBoxes(
+      "Plot · subtílne stĺpiky",
+      [...fixedPosts.values()],
+      this.materials.fence,
+      this.realisticMaterials.fenceMetal,
+      "building",
+      SITE_FENCE.id,
+    );
+    this.buildThinBoxes(
+      "Plot · nízky pohľadový sokel",
+      fixedCurbs,
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "building",
+      SITE_FENCE.id,
+      false,
+    );
+
+    const buildGate = (
+      id: string,
+      label: string,
+      start: Point2Mm,
+      closureEnd: Point2Mm,
+      panelCount: number,
+      terminalFrameCenterMm: Point2Mm,
+      supportPostCentersMm: readonly Point2Mm[],
+    ) => {
+      const gateYaw = sceneYawForPlanSegment(start, closureEnd);
+      const lengthMm = Math.hypot(
+        closureEnd.x - start.x,
+        closureEnd.y - start.y,
+      );
+      const panelOverlapMm =
+        panelCount > 1 ? style.telescopicPanelOverlapMm : 0;
+      const panelPlaneOffsetMm =
+        panelCount > 1 ? style.telescopicPanelPlaneOffsetMm : 0;
+      const panelSpanMm =
+        (lengthMm + (panelCount - 1) * panelOverlapMm) / panelCount;
+      const panelAdvanceMm = panelSpanMm - panelOverlapMm;
+      const slats: PlanBoxInstance[] = [];
+      const frame: PlanBoxInstance[] = [];
+      for (let panel = 0; panel < panelCount; panel += 1) {
+        const panelStartDistanceMm = panel * panelAdvanceMm;
+        const panelEndDistanceMm = Math.min(
+          lengthMm,
+          panelStartDistanceMm + panelSpanMm,
+        );
+        const planeOffsetMm =
+          (panelCount - 1 - panel) * panelPlaneOffsetMm;
+        const planeOffset = inwardOffsetForSegment(
+          start,
+          closureEnd,
+          planeOffsetMm,
+        );
+        const panelStart = translatedPoint(
+          pointAlongSegment(start, closureEnd, panelStartDistanceMm),
+          planeOffset,
+        );
+        const panelEnd = translatedPoint(
+          pointAlongSegment(start, closureEnd, panelEndDistanceMm),
+          planeOffset,
+        );
+        slats.push(
+          ...slatInstancesForSegment(
+            panelStart,
+            panelEnd,
+            style.slatWidthMm,
+            style.slatDepthMm,
+            style.slatPitchMm,
+            gateSlatHeightMm,
+            gateSlatBottomMm,
+          ),
+        );
+        frame.push(
+          segmentBox(panelStart, panelEnd, 44, 80, gateSlatBottomMm),
+          segmentBox(
+            panelStart,
+            panelEnd,
+            44,
+            80,
+            style.proposedHeightMm - 80,
+          ),
+        );
+        const frameEnd =
+          panel === panelCount - 1 ? terminalFrameCenterMm : panelEnd;
+        for (const centerMm of [panelStart, frameEnd]) {
+          frame.push({
+            centerMm,
+            widthMm: 70,
+            depthMm: 44,
+            heightMm: gateSlatHeightMm,
+            baseElevationMm: gateSlatBottomMm,
+            yawRad: gateYaw,
+          });
+        }
+      }
+      const gatePosts: PlanBoxInstance[] = supportPostCentersMm.map(
+        (centerMm) => ({
+          centerMm,
+          widthMm: style.gatePostSizeMm,
+          depthMm: style.gatePostSizeMm,
+          heightMm: style.proposedHeightMm,
+          baseElevationMm: 0,
+          yawRad: gateYaw,
+        }),
+      );
+      this.buildThinBoxes(
+        `${label} · lamely`,
+        slats,
+        this.materials.fence,
+        this.realisticMaterials.fenceMetal,
+        "building",
+        id,
+      );
+      this.buildThinBoxes(
+        `${label} · rám`,
+        frame,
+        this.materials.fence,
+        this.realisticMaterials.fenceMetal,
+        "building",
+        id,
+      );
+      this.buildThinBoxes(
+        `${label} · zosilnené stĺpiky`,
+        gatePosts,
+        this.materials.fence,
+        this.realisticMaterials.fenceMetal,
+        "building",
+        id,
+      );
+    };
+
+    buildGate(
+      SITE_FENCE.vehicleGate.id,
+      SITE_FENCE.vehicleGate.label,
+      SITE_FENCE.vehicleGate.startMm,
+      SITE_FENCE.vehicleGate.leafClosureEndMm,
+      SITE_FENCE.vehicleGate.panelCount,
+      SITE_FENCE.vehicleGate.terminalFrameCenterMm,
+      SITE_FENCE.vehicleGate.supportPostCentersMm,
+    );
+    buildGate(
+      SITE_FENCE.sidePedestrianGate.id,
+      SITE_FENCE.sidePedestrianGate.label,
+      SITE_FENCE.sidePedestrianGate.physicalStartMm,
+      SITE_FENCE.sidePedestrianGate.physicalEndMm,
+      SITE_FENCE.sidePedestrianGate.panelCount,
+      SITE_FENCE.sidePedestrianGate.terminalFrameCenterMm,
+      SITE_FENCE.sidePedestrianGate.supportPostCentersMm,
+    );
+
+    const facadeReceiver = boxAtPlan(
+      this.scene,
+      "Teleskopická brána · subtílna prijímacia konzola na fasáde",
+      SITE_FENCE.vehicleGate.facadeReceiver.centerMm,
+      SITE_FENCE.vehicleGate.facadeReceiver.widthMm,
+      SITE_FENCE.vehicleGate.facadeReceiver.depthMm,
+      SITE_FENCE.vehicleGate.facadeReceiver.heightMm * MM_TO_M,
+      SITE_FENCE.vehicleGate.facadeReceiver.baseElevationMm * MM_TO_M,
+    );
+    this.appearance(
+      facadeReceiver,
+      this.materials.fence,
+      this.realisticMaterials.fenceMetal,
+    );
+    this.castShadow(facadeReceiver);
+    this.register(
+      facadeReceiver,
+      "building",
+      SITE_FENCE.vehicleGate.id,
+    );
+
+    const trackStart = SITE_FENCE.vehicleGate.stackPocketStartMm;
+    const trackEnd = SITE_FENCE.vehicleGate.leafClosureEndMm;
+    const trackCenter = {
+      x: (trackStart.x + trackEnd.x) / 2,
+      y:
+        trackStart.y +
+        ((SITE_FENCE.vehicleGate.panelCount - 1) *
+          style.telescopicPanelPlaneOffsetMm) /
+          2,
+    };
+    const threshold = boxAtPlan(
+      this.scene,
+      "Teleskopická brána · zapustený betónový prah",
+      trackCenter,
+      trackEnd.x - trackStart.x,
+      style.gateThresholdDepthMm,
+      0.05,
+      -0.025,
+    );
+    this.appearance(
+      threshold,
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+    );
+    threshold.receiveShadows = true;
+    this.register(threshold, "building", SITE_FENCE.vehicleGate.id);
+
+    const gateTracks = Array.from(
+      { length: SITE_FENCE.vehicleGate.panelCount },
+      (_, panel) => {
+        const offset = inwardOffsetForSegment(
+          trackStart,
+          trackEnd,
+          panel * style.telescopicPanelPlaneOffsetMm,
+        );
+        return segmentBox(
+          translatedPoint(trackStart, offset),
+          translatedPoint(trackEnd, offset),
+          28,
+          14,
+          22,
+        );
+      },
+    );
+    this.buildThinBoxes(
+      "Teleskopická brána · tri zapustené koľajnice",
+      gateTracks,
+      this.materials.fence,
+      this.realisticMaterials.fenceTrack,
+      "building",
+      SITE_FENCE.vehicleGate.id,
+      false,
+    );
+
+    for (const run of SITE_FENCE.annotatedCenterlineRuns) {
+      const centerline = CreateLines(
+        `${run.label} · referenčná os náčrtu`,
+        {
+          points: run.pointsMm.map((point) => point3(point, 1.64)),
+        },
+        this.scene,
+      );
+      centerline.color = Color3.FromHexString("#aebbb8");
+      centerline.alpha = 0.72;
+      centerline.isPickable = false;
+      this.technicalOverlay(centerline);
+      this.register(centerline, "building", SITE_FENCE.id);
+    }
+
+    const clearOpeningLine = CreateLines(
+      "Brána do záhrady · čistý otvor 4,2 m",
+      {
+        points: [
+          point3(SITE_FENCE.vehicleGate.startMm, 1.7),
+          point3(SITE_FENCE.vehicleGate.endMm, 1.7),
+        ],
+      },
+      this.scene,
+    );
+    clearOpeningLine.color = Color3.FromHexString("#4aae7a");
+    clearOpeningLine.isPickable = false;
+    this.technicalOverlay(clearOpeningLine);
+    this.register(clearOpeningLine, "building", SITE_FENCE.vehicleGate.id);
+
+    const stackEnvelope = CreateDashedLines(
+      "Brána do záhrady · teleskopická skladacia kapsa",
+      {
+        points: [
+          point3(SITE_FENCE.vehicleGate.startMm, 1.74),
+          point3(SITE_FENCE.vehicleGate.stackPocketStartMm, 1.74),
+        ],
+        dashSize: 0.22,
+        gapSize: 0.12,
+      },
+      this.scene,
+    );
+    stackEnvelope.color = Color3.FromHexString("#aebbb8");
+    stackEnvelope.isPickable = false;
+    this.technicalOverlay(stackEnvelope);
+    this.register(stackEnvelope, "building", SITE_FENCE.vehicleGate.id);
   }
 
   private buildHouse() {
