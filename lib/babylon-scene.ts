@@ -809,7 +809,11 @@ export class TwinSceneController {
     this.technicalOverlay(deck);
     this.register(deck, "street", SITE_SURFACES.timberTerrace.id);
 
-    for (const surface of [SITE_SURFACES.driveway, SITE_SURFACES.entry, SITE_SURFACES.binPad]) {
+    for (const surface of [
+      SITE_SURFACES.driveway,
+      SITE_SURFACES.entry,
+      SITE_SURFACES.sideEntryApproach,
+    ]) {
       const paving = createFlatPolygon(
         this.scene,
         `Navrhnutá betónová dlažba · ${surface.areaM2} m²`,
@@ -1275,7 +1279,7 @@ export class TwinSceneController {
       throw new Error("FV rozloženie nezodpovedá počtu modulov.");
     }
     if (photovoltaics.roofFace !== "WING_INNER") {
-      throw new Error("FV pole nad kuchyňou musí zostať na dvorovej rovine krídla.");
+      throw new Error("FV pole posunuté do záhrady musí zostať na dvorovej rovine krídla.");
     }
     for (let column = 0; column < photovoltaics.columns; column += 1) {
       for (let row = 0; row < photovoltaics.rows; row += 1) {
@@ -1295,7 +1299,7 @@ export class TwinSceneController {
         );
         const surfaceElevationM = mount.elevationMm * MM_TO_M;
         const panel = CreateBox(
-          `Fotovoltický panel ${column + 1}.${row + 1} · dvorová rovina nad kuchyňou`,
+          `Fotovoltický panel ${column + 1}.${row + 1} · dvorová rovina posunutá do záhrady`,
           {
             width: photovoltaics.moduleSlopeLengthMm * MM_TO_M,
             depth: photovoltaics.moduleRidgeWidthMm * MM_TO_M,

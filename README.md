@@ -11,10 +11,11 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 - skutočné geodetické zameranie prípojok nie je dostupné a aplikácia nič z návrhu neoznačuje ako as-built.
 
 Aktuálna revízia stavebníka z 21. 8. 2026 má pred staršími výkresmi prednosť
-v troch presne ohraničených bodoch: komín nad hlavným obytným/kuchynským
-priestorom zostáva a odstránený je druhý komín pri zóne 1.09, FV pole je na
-dvorovej rovine krídla nad kuchyňou posunuté bližšie k bočnej terase a mimo
-ponechaného komína a garážová brána s priamym príjazdom je na uličnej fasáde
+v štyroch presne ohraničených bodoch: komín pri hlavnom obytnom priestore
+zostáva, ale je posunutý o 1 m hlbšie do záhrady, zatiaľ čo druhý komín pri
+zóne 1.09 je odstránený; FV pole je na dvorovej rovine krídla posunuté o 2 m
+hlbšie do záhrady; bočný spevnený prístup na východnej fasáde je vycentrovaný
+na dvere EAST-03; garážová brána s priamym príjazdom je na uličnej fasáde
 namiesto prvého garážového okna. Ostatná geometria D1 zostáva nedotknutá.
 
 Režim **Realita** používa projektové rozmery a materiály D1 vrátane oboch

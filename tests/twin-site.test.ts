@@ -182,9 +182,11 @@ describe("site evidence seed", () => {
       layout: "2x3_CLIENT_REVISION",
       roofFace: "WING_INNER",
       facing: "COURTYARD",
-      placement: "ABOVE_KITCHEN",
+      placement: "GARDENWARD_ON_WING_INNER",
       towardTerraceId: "TERR-D1-WING",
-      firstModuleCenterMm: { x: 21_820, y: 12_600 },
+      previousFirstModuleCenterMm: { x: 21_820, y: 12_600 },
+      gardenShiftMm: 2_000,
+      firstModuleCenterMm: { x: 21_820, y: 14_600 },
       rowStepMm: { x: 1_550, y: 0 },
       columnStepMm: { x: 0, y: 1_100 },
     });
@@ -211,13 +213,17 @@ describe("site evidence seed", () => {
         })),
     ).flat();
     expect(photovoltaicCenters).toEqual([
-      { x: 21_820, y: 12_600 },
-      { x: 23_370, y: 12_600 },
-      { x: 21_820, y: 13_700 },
-      { x: 23_370, y: 13_700 },
-      { x: 21_820, y: 14_800 },
-      { x: 23_370, y: 14_800 },
+      { x: 21_820, y: 14_600 },
+      { x: 23_370, y: 14_600 },
+      { x: 21_820, y: 15_700 },
+      { x: 23_370, y: 15_700 },
+      { x: 21_820, y: 16_800 },
+      { x: 23_370, y: 16_800 },
     ]);
+    expect(
+      sceneZM(HOUSE.photovoltaics.firstModuleCenterMm.y) -
+        sceneZM(HOUSE.photovoltaics.previousFirstModuleCenterMm.y),
+    ).toBe(-2);
     for (const center of photovoltaicCenters) {
       const mount = roofMountTransform(
         HOUSE.photovoltaics.roofFace,
@@ -233,7 +239,8 @@ describe("site evidence seed", () => {
 
       const frameHalfSlopePlanMm =
         ((HOUSE.photovoltaics.moduleSlopeLengthMm + 40) / 2) *
-        Math.cos(mount.rotationZRad);
+          Math.cos(mount.rotationZRad) +
+        8 * Math.sin(mount.rotationZRad);
       const frameHalfRidgeMm =
         (HOUSE.photovoltaics.moduleRidgeWidthMm + 40) / 2;
       expect(center.x - frameHalfSlopePlanMm).toBeGreaterThanOrEqual(
@@ -263,6 +270,11 @@ describe("site evidence seed", () => {
         expect(overlapsChimneyCap).toBe(false);
       }
     }
+    expect(
+      Math.min(...photovoltaicCenters.map(({ y }) => y)) -
+        (HOUSE.photovoltaics.moduleRidgeWidthMm + 40) / 2 -
+        (HOUSE.chimneys[0].centerMm.y + 290),
+    ).toBe(1_080);
     expect(HOUSE.facades.front.garageDoor).toMatchObject({
       id: "GARAGE-DOOR",
       startXmm: 6_940,
@@ -288,11 +300,24 @@ describe("site evidence seed", () => {
     expect(HOUSE.chimneys).toEqual([
       {
         id: "CHIMNEY-LIVING-103",
-        centerMm: { x: 24_190, y: 11_700 },
+        centerMm: { x: 24_190, y: 12_700 },
+        designCenterMm: { x: 24_190, y: 11_700 },
+        gardenShiftMm: 1_000,
         zone: "MAIN_LIVING_AND_KITCHEN_1_03",
-        sourceId: SOURCES.roofPlan.id,
+        baseSourceId: SOURCES.roofPlan.id,
+        sourceId: SOURCES.clientRevision20260821.id,
       },
     ]);
+    expect(
+      sceneZM(HOUSE.chimneys[0].centerMm.y) -
+        sceneZM(HOUSE.chimneys[0].designCenterMm.y),
+    ).toBe(-1);
+    expect(
+      HOUSE.originMm.x +
+        HOUSE.wing.xMm +
+        HOUSE.roof.wingHalfSpanMm -
+        (HOUSE.chimneys[0].centerMm.x + 290),
+    ).toBe(60);
     expect(HOUSE.removedChimneys).toEqual([
       {
         id: "CHIMNEY-ROOM-109",
@@ -365,6 +390,57 @@ describe("site evidence seed", () => {
     );
     expect(electricity?.revisionStatus).toBe("REVISION_CONFLICT");
     expect(DEFAULT_LAYER_VISIBILITY.electricity).toBe(false);
+  });
+
+  it("centers the visible side approach on EAST-03 instead of the old C3 bin pad", () => {
+    const sideDoor = HOUSE.facades.east.openings.find(
+      ({ id }) => id === "EAST-03",
+    );
+    const nextWindow = HOUSE.facades.east.openings.find(
+      ({ id }) => id === "EAST-04",
+    );
+    expect(sideDoor).toBeDefined();
+    expect(nextWindow).toBeDefined();
+
+    const approach = SITE_SURFACES.sideEntryApproach;
+    const source = SITE_SURFACES.supersededBinPad;
+    expect(approach).toMatchObject({
+      id: "SITE-SIDE-ENTRY-APPROACH",
+      areaM2: 5.578,
+      accessOpeningId: "EAST-03",
+      placementStatus: "CLIENT_REVISION_ALIGNED_TO_SIDE_DOOR",
+      sourceSurfaceId: source.id,
+      sourceId: SOURCES.clientRevision20260821.id,
+    });
+    expect(source.placementStatus).toBe(
+      "SUPERSEDED_BY_CLIENT_SIDE_ENTRY_ALIGNMENT",
+    );
+    expect(approach.polygonMm).toEqual(
+      source.polygonMm.map(({ x, y }) => ({ x, y: y - 1_198 })),
+    );
+
+    const approachXs = approach.polygonMm.map(({ x }) => x);
+    const approachYs = approach.polygonMm.map(({ y }) => y);
+    const minX = Math.min(...approachXs);
+    const minY = Math.min(...approachYs);
+    const maxY = Math.max(...approachYs);
+    const sideDoorEndY = sideDoor!.startYmm + sideDoor!.widthMm;
+    expect(Math.abs(minX - HOUSE.facades.east.faceXmm)).toBeLessThanOrEqual(2);
+    expect((minY + maxY) / 2).toBe(
+      sideDoor!.startYmm + sideDoor!.widthMm / 2,
+    );
+    expect(sideDoor!.startYmm - minY).toBe(400);
+    expect(maxY - sideDoorEndY).toBe(400);
+    expect(maxY).toBeLessThan(nextWindow!.startYmm);
+
+    const derivedAreaM2 =
+      Math.abs(
+        approach.polygonMm.slice(0, -1).reduce((twiceArea, point, index) => {
+          const next = approach.polygonMm[index + 1];
+          return twiceArea + point.x * next.y - next.x * point.y;
+        }, 0),
+      ) / 2_000_000;
+    expect(derivedAreaM2).toBeCloseTo(approach.areaM2, 3);
   });
 });
 
