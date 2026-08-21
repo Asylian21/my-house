@@ -49,6 +49,7 @@ import {
   GARDEN_POOL,
   HOUSE,
   LAYERS,
+  ROAD_CONTEXT,
   SITE_FENCE,
   SOURCES,
   UTILITY_ROUTES,
@@ -269,19 +270,21 @@ function getEntityDetail(
       eyebrow: "ZÁHRADNÝ BAZÉN",
       title: GARDEN_POOL.label,
       subtitle: "Otvorený L-dvor pri hlavnej terase",
-      status: "Rozmer podľa revízie · poloha koordinačný návrh",
+      status: "Rozmer a dotyk terasy podľa revízie · koordinačný návrh",
       statusTone: "design",
       rows: [
         { label: "Vodná plocha", value: `${fmt(GARDEN_POOL.waterLengthMm)} × ${fmt(GARDEN_POOL.waterWidthMm)}`, unit: "mm" },
         { label: "Plocha vody", value: fmt(GARDEN_POOL.waterAreaM2), unit: "m²" },
         { label: "Svetlý lem", value: fmt(GARDEN_POOL.copingWidthMm), unit: "mm" },
         { label: "Navrhovaná hĺbka", value: fmt(GARDEN_POOL.proposedWaterDepthMm), unit: "mm" },
-        { label: "Odstup od hlavnej terasy", value: fmt(GARDEN_POOL.modelledClearancesMm.mainTerrace), unit: "mm" },
-        { label: "Najmenší modelový odstup od dažďovej vody", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
+        { label: "Medzera lemu od terasy", value: fmt(GARDEN_POOL.terraceConnection.planGapMm), unit: "mm" },
+        { label: "Dĺžka dotyku s terasou", value: fmt(GARDEN_POOL.terraceConnection.contactLengthMm), unit: "mm" },
+        { label: "Odstup od najbližšieho dažďového potrubia", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
+        { label: "Odstup od plášťa dažďovej nádrže", value: fmt(GARDEN_POOL.modelledClearancesMm.rainTankShell), unit: "mm" },
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
       ],
       sourceIds: GARDEN_POOL.sourceIds,
-      note: "Bazén má požadovanú vodnú plochu 4,0 × 2,5 m. Presný stred je zvolený tak, aby nekolidoval s domom, terasami ani modelovanou dažďovou nádržou a vsakom. Najmenší odstup od projektovaného potrubia je približne 0,83 m; pred realizáciou treba polohu zosúladiť s bazénovou technológiou a overiť skutočné vedenie dažďovej kanalizácie.",
+      note: "Bazén má požadovanú vodnú plochu 5,0 × 3,0 m. Jeho celý 5,6 m dlhý lem leží bez medzery na hrane hlavnej terasy a obe plochy majú spoločnú hornú úroveň. Pôvodná dažďová trasa je v modeli predbežne odklonená; od potrubia zostáva približne 0,63 m a od plášťa nádrže iba 0,468 m. Pred realizáciou treba trasu, nádrž, bazénovú technológiu aj skutočné vedenie potrubí odborne skoordinovať.",
     };
   }
 
@@ -317,20 +320,23 @@ function getEntityDetail(
       eyebrow: "DOPRAVNÁ INFRAŠTRUKTÚRA",
       title: "Miestna komunikácia pri parcele",
       subtitle: "Bez potvrdeného názvu ulice v RÚIAN",
-      status: "Kataster + projektový kontext",
+      status: "Aktuálny KN + povrch odvodený z C3",
       statusTone: "context",
       rows: [
         { label: "Parcela komunikácie", value: "6012/1" },
+        { label: "Evidovaná plocha", value: fmt(ROAD_CONTEXT.registeredAreaM2), unit: "m²" },
         { label: "Kategória", value: "miestna komunikácia" },
         { label: "Kontakt s parcelou", value: "2 cestné hrany + oblúk" },
         { label: "Čelná hrana", value: "28 194", unit: "mm" },
         { label: "Koncová hrana", value: "21 497", unit: "mm" },
-        { label: "Povrch vozovky v 3D", value: "orientačný obal C3" },
+        { label: "C3 rezerva po vozovku", value: fmt(Math.abs(ROAD_CONTEXT.frontAsphaltEdgeYmm)), unit: "mm" },
+        { label: "Vjazd ku garáži", value: "4 200", unit: "mm" },
+        { label: "Chodník ku dverám", value: "1 500", unit: "mm" },
+        { label: "Povrch vozovky v 3D", value: "hrana odvodená z C3" },
         { label: "Najbližšia evidovaná ulica", value: "Bezová · ≈185 m" },
-        { label: "Navrhnutý vjazd", value: "4 200", unit: "mm" },
       ],
       sourceIds: [SOURCES.cadastre.id, SOURCES.coordination.id, SOURCES.networkContext.id],
-      note: "Parcela 6012/26 je na konci bloku: komunikácia 6012/1 ju obopína pozdĺž čelnej aj koncovej hrany a spája ich zaobleným rohom. Hrany pri parcele sú z aktuálneho katastra; šírka a vonkajší obal sivého povrchu sú iba orientačný kontext C3, nie zameranie vozovky. Parcely 6012/25 a 6013 sú až cez komunikáciu. Bezová nie je názov bezprostrednej vetvy.",
+      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Hrana asfaltu a približne 3,104 m zelená cestná rezerva na čelnej aj bočnej vetve sú odvodené z napojení vo výkrese C3, nie z geodetického zamerania skutočných obrubníkov.",
     };
   }
 
@@ -419,7 +425,7 @@ function getEntityDetail(
       { label: "Súradnicový systém", value: "S-JTSK · EPSG:5514" },
     ],
     sourceIds: [SOURCES.cadastre.id, SOURCES.geometricPlan.id, SOURCES.terrain.id],
-    note: "Oranžová hranica v 3D je presný aktuálny CPX polygón ČÚZK. Dve cestné hrany komunikácie 6012/1 potvrdzujú koncovú rohovú polohu parcely; výmera z vrcholov sa zaokrúhľuje na evidovaných 753 m².",
+    note: "Oranžová hranica v 3D je presný aktuálny CP polygón ČÚZK. Dve cestné hrany komunikácie 6012/1 potvrdzujú koncovú rohovú polohu parcely; výmera z vrcholov sa zaokrúhľuje na evidovaných 753 m².",
   };
 }
 
@@ -730,9 +736,9 @@ export function TwinStudio() {
               {matches("terasy spevnené plochy") && (
                 <div className="tree-static"><span className="entity-token terrain">SP</span><span><strong>Spevnené plochy</strong><small>C3/D1 · návrh</small></span></div>
               )}
-              {matches("bazén 4 × 2,5 m dvor terasa") && (
+              {matches("bazén 5 × 3 m dvor terasa") && (
                 <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className={`tree-object ${selectionId === GARDEN_POOL.id ? "selected" : ""}`} onClick={() => select(GARDEN_POOL.id)}>
-                  <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>Bazén 4 × 2,5 m</strong><small>vodná plocha 10 m² · návrh</small></span>
+                  <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>Bazén 5 × 3 m</strong><small>vodná plocha 15 m² · na hrane terasy</small></span>
                 </button>
               )}
               {matches("plot oplotenie súkromná záhrada") && (
@@ -820,7 +826,7 @@ export function TwinStudio() {
           <div className="truth-live"><span /> AKTUÁLNY KATASTER · ROHOVÁ</div>
           <strong>6012/26</strong>
           <div><span>753 m²</span><i /><span>EPSG:5514</span></div>
-          <small>ČÚZK · overené 18. 8. 2026</small>
+          <small>ČÚZK · overené 21. 8. 2026</small>
         </div>
 
         <div className="camera-dock" role="toolbar" aria-label="Kamera a navigácia">

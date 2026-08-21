@@ -46,7 +46,7 @@ describe("site evidence seed", () => {
     expect(local?.[0]).toEqual({ x: 28_194, y: 0 });
     expect(local?.[6]).toEqual({ x: 31_109, y: 24_497 });
     expect(local?.[7]).toEqual({ x: -946, y: 23_200 });
-    expect(SOURCES.cadastre.href).toContain("inspire-cpx-wfs");
+    expect(SOURCES.cadastre.href).toContain("inspire-cp-wfs");
   });
 
   it("uses the later D1 floor plan without reflection and retains C3 as provenance", () => {
@@ -87,8 +87,35 @@ describe("site evidence seed", () => {
 
   it("models 6012/26 as an end parcel with two road-facing edges", () => {
     expect(ROAD_CONTEXT.id).toBe("ROAD-6012-1");
+    expect(ROAD_CONTEXT.featureId).toBe("CP.94487856010");
+    expect(ROAD_CONTEXT.nationalReference).toBe("613908-6012/1");
+    expect(ROAD_CONTEXT.registeredAreaM2).toBe(10_647);
     expect(ROAD_CONTEXT.legalBoundaryStatus).toBe("CURRENT_REGISTER");
-    expect(ROAD_CONTEXT.surfaceEnvelopeStatus).toBe("DESIGNED_APPROXIMATE");
+    expect(ROAD_CONTEXT.surfaceEnvelopeStatus).toBe(
+      "CURRENT_REGISTER_CLIPPED_CONTEXT",
+    );
+    expect(ROAD_CONTEXT.pavedSurfaceStatus).toBe(
+      "C3_DERIVED_NOT_AS_BUILT_SURVEY",
+    );
+    expect(ROAD_CONTEXT.frontAsphaltEdgeYmm).toBe(-3_104);
+    expect(ROAD_CONTEXT.frontReservePolygonMm).toEqual([
+      { x: -15_670, y: 5 },
+      { x: 0, y: 0 },
+      { x: 28_194, y: 0 },
+      { x: 28_194, y: -3_104 },
+      { x: -15_670, y: -3_104 },
+      { x: -15_670, y: 5 },
+    ]);
+    expect(
+      ROAD_CONTEXT.frontReserveSurfacePolygonsMm.map((ring) => {
+        const xs = ring.map(({ x }) => x);
+        return [Math.min(...xs), Math.max(...xs)];
+      }),
+    ).toEqual([
+      [-15_670, 6_490],
+      [10_690, 21_415],
+      [22_915, 28_194],
+    ]);
     expect(ROAD_CONTEXT.touchedBoundarySegments).toEqual([
       "160–136",
       "136–135–134–133–132–131–130",
@@ -102,6 +129,20 @@ describe("site evidence seed", () => {
       { x: 31_187, y: 3_000 },
       { x: 31_109, y: 24_497 },
     ]);
+    expect(ROAD_CONTEXT.sideAsphaltOffsetMm).toBe(3_104);
+    expect(ROAD_CONTEXT.cornerAsphaltEdgeMm).toEqual([
+      { x: 28_194, y: -3_104 },
+      { x: 29_677, y: -2_913 },
+      { x: 31_301, y: -2_254 },
+      { x: 33_120, y: -595 },
+      { x: 34_068, y: 1_342 },
+      { x: 34_291, y: 3_000 },
+      { x: 34_213, y: 24_497 },
+    ]);
+    expect(ROAD_CONTEXT.cornerReserveSurfacePolygonsMm).toHaveLength(2);
+    expect(ROAD_CONTEXT.cornerCarriagewayPolygonMm[0]).toEqual(
+      ROAD_CONTEXT.cornerAsphaltEdgeMm[0],
+    );
   });
 
   it("preserves D1 handedness at the Babylon render boundary", () => {
@@ -413,7 +454,7 @@ describe("site evidence seed", () => {
     );
     expect(SITE_SURFACES.driveway.areaM2).toBeCloseTo(4.2 * 6.104, 3);
     expect(SITE_SURFACES.driveway.placementStatus).toBe(
-      "CLIENT_REVISION_DIRECT_STREET_ACCESS",
+      "CLIENT_REVISION_WITH_C3_DERIVED_STREET_EDGE",
     );
     expect(SITE_SURFACES.driveway.sourceId).toBe(
       SOURCES.clientRevision20260821.id,
@@ -423,6 +464,26 @@ describe("site evidence seed", () => {
     );
     expect(electricity?.revisionStatus).toBe("REVISION_CONFLICT");
     expect(DEFAULT_LAYER_VISIBILITY.electricity).toBe(false);
+  });
+
+  it("centers a separate 1.5 m pedestrian path on the main entrance", () => {
+    const entryXs = SITE_SURFACES.entry.polygonMm.map(({ x }) => x);
+    const entryYs = SITE_SURFACES.entry.polygonMm.map(({ y }) => y);
+    expect([Math.min(...entryXs), Math.max(...entryXs)]).toEqual([
+      21_415, 22_915,
+    ]);
+    expect(Math.max(...entryXs) - Math.min(...entryXs)).toBe(1_500);
+    expect((Math.min(...entryXs) + Math.max(...entryXs)) / 2).toBe(22_165);
+    expect(Math.max(...entryYs)).toBe(HOUSE.facades.front.faceYmm);
+    expect(Math.min(...entryYs)).toBe(-3_104);
+    expect(SITE_SURFACES.entry.accessOpeningId).toBe("FRONT-ENTRY");
+    expect(SITE_SURFACES.entry.streetConnection).toMatchObject({
+      cadastralBoundaryYmm: 0,
+      asphaltEdgeYmm: -3_104,
+    });
+    expect(SITE_SURFACES.entry.placementStatus).toBe(
+      "DESIGN_PROPOSAL_CENTERED_ON_MAIN_ENTRY",
+    );
   });
 
   it("centers the visible side approach on EAST-03 instead of the old C3 bin pad", () => {
@@ -439,17 +500,23 @@ describe("site evidence seed", () => {
     const source = SITE_SURFACES.supersededBinPad;
     expect(approach).toMatchObject({
       id: "SITE-SIDE-ENTRY-APPROACH",
-      areaM2: 5.578,
+      areaM2: 11.202,
       accessOpeningId: "EAST-03",
       placementStatus: "CLIENT_REVISION_ALIGNED_TO_SIDE_DOOR",
       sourceSurfaceId: source.id,
       sourceId: SOURCES.clientRevision20260821.id,
+      streetConnection: {
+        sideAsphaltOffsetMm: 3_104,
+        privateAreaM2: 5.578,
+        roadReserveAreaM2: 5.624,
+      },
     });
     expect(source.placementStatus).toBe(
       "SUPERSEDED_BY_CLIENT_SIDE_ENTRY_ALIGNMENT",
     );
-    expect(approach.polygonMm).toEqual(
-      source.polygonMm.map(({ x, y }) => ({ x, y: y - 1_198 })),
+    expect(Math.max(...approach.polygonMm.map(({ x }) => x))).toBe(34_268);
+    expect(Math.max(...approach.privatePolygonMm.map(({ x }) => x))).toBe(
+      31_163,
     );
 
     const approachXs = approach.polygonMm.map(({ x }) => x);
@@ -881,17 +948,24 @@ describe("site evidence seed", () => {
 });
 
 describe("data to geometry contract", () => {
-  it("places the requested 4 × 2.5 m pool inside the open L courtyard", () => {
+  it("places the requested 5 × 3 m pool on the main terrace edge", () => {
     expect(GARDEN_POOL).toMatchObject({
-      id: "POOL-COURTYARD-4X2_5",
-      centerMm: { x: 11_750, y: 15_750 },
-      waterLengthMm: 4_000,
-      waterWidthMm: 2_500,
-      waterAreaM2: 10,
+      id: "POOL-COURTYARD-5X3",
+      centerMm: { x: 11_750, y: 14_900 },
+      waterLengthMm: 5_000,
+      waterWidthMm: 3_000,
+      waterAreaM2: 15,
       copingWidthMm: 300,
       proposedWaterDepthMm: 1_400,
       placementStatus:
-        "DESIGN_PROPOSAL_REQUIRES_COORDINATION_AND_CLIENT_CONFIRMATION",
+        "CLIENT_REQUESTED_LAYOUT_REQUIRES_RAINWATER_COORDINATION",
+      terraceConnection: {
+        terraceId: "TERR-D1-GARDEN",
+        copingEdgeYmm: 13_100,
+        planGapMm: 0,
+        contactLengthMm: 5_600,
+        sharedTopElevationMm: 20,
+      },
     });
     expect(GARDEN_POOL.waterFootprintMm[0]).toEqual(
       GARDEN_POOL.waterFootprintMm.at(-1),
@@ -903,15 +977,18 @@ describe("data to geometry contract", () => {
         return Math.hypot(end.x - start.x, end.y - start.y);
       })
       .sort((left, right) => left - right);
-    expect(edgeLengthsMm).toEqual([2_500, 2_500, 4_000, 4_000]);
-    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(10);
+    expect(edgeLengthsMm).toEqual([3_000, 3_000, 5_000, 5_000]);
+    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(15);
     expect(
       GARDEN_POOL.sourceIds.every((sourceId) => findSource(sourceId)),
     ).toBe(true);
-    expect(SOURCES.clientGardenRevision20260821.detail).toContain(
-      "4,0 × 2,5 m",
+    expect(SOURCES.clientExteriorRevision20260821.detail).toContain(
+      "5,0 × 3,0 m",
     );
     expect(SOURCES.poolDesignProposal20260821.kind).toBe("DESIGN_PROPOSAL");
+    expect(SOURCES.poolDesignProposal20260821.detail).toContain(
+      "Pôvodná vodná plocha 4,0 × 2,5 m",
+    );
 
     const copingXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
     const copingYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
@@ -931,6 +1008,27 @@ describe("data to geometry contract", () => {
     expect(poolBounds.x1).toBeLessThan(courtyardBounds.x1);
     expect(poolBounds.y0).toBeGreaterThan(courtyardBounds.y0);
     expect(poolBounds.y1).toBeLessThan(courtyardBounds.y1);
+    expect(poolBounds.y0).toBe(
+      GARDEN_POOL.terraceConnection.copingEdgeYmm,
+    );
+    expect(poolBounds.x1 - poolBounds.x0).toBe(
+      GARDEN_POOL.terraceConnection.contactLengthMm,
+    );
+    const terraceContactMm = TERRACE_ZONES_D1.flatMap((zone) => zone.rectsMm)
+      .filter((rect) => rect.y1 === poolBounds.y0)
+      .reduce(
+        (sum, rect) =>
+          sum +
+          Math.max(
+            0,
+            Math.min(poolBounds.x1, rect.x1) -
+              Math.max(poolBounds.x0, rect.x0),
+          ),
+        0,
+      );
+    expect(terraceContactMm).toBe(
+      GARDEN_POOL.terraceConnection.contactLengthMm,
+    );
 
     for (const zone of TERRACE_ZONES_D1) {
       for (const rect of zone.rectsMm) {
@@ -942,9 +1040,23 @@ describe("data to geometry contract", () => {
         expect(overlaps).toBe(false);
       }
     }
-    expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(
-      825,
+    expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(0);
+    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(468);
+    expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(630);
+    const reroutedRain = UTILITY_ROUTES.find(
+      ({ id }) => id === "UTIL-RAIN-SOUTH",
     );
+    expect(reroutedRain?.pointsMm).toEqual([
+      { x: 7_600, y: 10_800 },
+      { x: 7_600, y: 12_400 },
+      { x: 15_450, y: 12_400 },
+      { x: 16_230, y: 13_600 },
+    ]);
+    expect(reroutedRain?.sourceIds).toEqual([
+      SOURCES.rainwater.id,
+      SOURCES.clientExteriorRevision20260821.id,
+      SOURCES.poolDesignProposal20260821.id,
+    ]);
   });
 
   it("keeps the luxury fence raster at a fixed pitch with balanced margins", () => {

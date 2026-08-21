@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   FLIGHT_BOUNDS,
+  ORBIT_ZOOM,
   deriveRenderQualityProfile,
   flightCommandForCode,
   integrateFlightPosition,
@@ -10,6 +11,18 @@ import {
 } from "../lib/twin-viewport-contract";
 
 const commands = (...values: FlightCommand[]) => new Set(values);
+
+describe("orbit zoom contract", () => {
+  it("uses smooth radius-relative touchpad zoom and owns browser gestures", () => {
+    expect(ORBIT_ZOOM).toEqual({
+      lowerRadiusLimitM: 4.5,
+      upperRadiusLimitM: 64,
+      wheelDeltaPercentage: 0.015,
+      useNaturalPinchZoom: true,
+      preventBrowserGesture: true,
+    });
+  });
+});
 
 describe("Retina render quality contract", () => {
   it("renders a desktop Retina viewport at a true two-times backing resolution", () => {

@@ -1,5 +1,15 @@
 export type NavigationMode = "orbit" | "flight";
 
+export const ORBIT_ZOOM = Object.freeze({
+  lowerRadiusLimitM: 4.5,
+  upperRadiusLimitM: 64,
+  // Radius-relative zoom keeps a Mac trackpad smooth at small deltas while a
+  // conventional wheel remains useful in the wider site views.
+  wheelDeltaPercentage: 0.015,
+  useNaturalPinchZoom: true,
+  preventBrowserGesture: true,
+});
+
 export type FlightCommand =
   | "forward"
   | "backward"

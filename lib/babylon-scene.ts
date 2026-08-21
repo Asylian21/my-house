@@ -92,6 +92,7 @@ import {
 } from "./twin-roof";
 import { slatCenterDistancesMm } from "./twin-fence";
 import {
+  ORBIT_ZOOM,
   deriveRenderQualityProfile,
   flightCommandForCode,
   integrateFlightPosition,
@@ -281,6 +282,119 @@ function createGradedPolygon(
   data.positions = positions;
   data.indices = indices;
   data.normals = normals;
+  data.uvs = uvs;
+  data.applyToMesh(mesh);
+  return mesh;
+}
+
+function createGradedPolygonEdgeSkirt(
+  scene: Scene,
+  name: string,
+  ring: readonly Point2Mm[],
+  elevationForPoint: (point: Point2Mm) => number,
+  baseElevationM: number,
+) {
+  const openRing =
+    ring.length > 1 &&
+    ring[0].x === ring[ring.length - 1].x &&
+    ring[0].y === ring[ring.length - 1].y
+      ? ring.slice(0, -1)
+      : ring;
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  for (let index = 0; index < openRing.length; index += 1) {
+    const start = openRing[index];
+    const end = openRing[(index + 1) % openRing.length];
+    const topStart = elevationForPoint(start);
+    const topEnd = elevationForPoint(end);
+    const vertexOffset = positions.length / 3;
+    const quad = [
+      xM(start.x), topStart, zM(start.y),
+      xM(end.x), topEnd, zM(end.y),
+      xM(end.x), baseElevationM, zM(end.y),
+      xM(start.x), baseElevationM, zM(start.y),
+    ];
+    // Duplicate each face with the opposite winding. The restraints are visible
+    // from both the grass and paving sides without changing shared materials.
+    positions.push(...quad, ...quad);
+    indices.push(
+      vertexOffset,
+      vertexOffset + 1,
+      vertexOffset + 2,
+      vertexOffset,
+      vertexOffset + 2,
+      vertexOffset + 3,
+      vertexOffset + 4,
+      vertexOffset + 6,
+      vertexOffset + 5,
+      vertexOffset + 4,
+      vertexOffset + 7,
+      vertexOffset + 6,
+    );
+  }
+
+  const mesh = new Mesh(name, scene);
+  const normals = new Array(positions.length).fill(0);
+  VertexData.ComputeNormals(positions, indices, normals);
+  const data = new VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.normals = normals;
+  data.applyToMesh(mesh);
+  return mesh;
+}
+
+function createFlatPolygonWithHoles(
+  scene: Scene,
+  name: string,
+  outerRing: readonly Point2Mm[],
+  holeRings: readonly (readonly Point2Mm[])[],
+  elevationM: number,
+) {
+  const openRing = (ring: readonly Point2Mm[]) =>
+    ring.length > 1 &&
+    ring[0].x === ring[ring.length - 1].x &&
+    ring[0].y === ring[ring.length - 1].y
+      ? ring.slice(0, -1)
+      : [...ring];
+  const rings = [openRing(outerRing), ...holeRings.map(openRing)];
+  const points = rings.flat();
+  const holeIndices: number[] = [];
+  let vertexOffset = rings[0].length;
+  for (let index = 1; index < rings.length; index += 1) {
+    holeIndices.push(vertexOffset);
+    vertexOffset += rings[index].length;
+  }
+
+  const mesh = new Mesh(name, scene);
+  const planar = points.flatMap((point) => [xM(point.x), zM(point.y)]);
+  const positions = points.flatMap((point) => [
+    xM(point.x),
+    elevationM,
+    zM(point.y),
+  ]);
+  const minX = Math.min(...points.map((point) => point.x));
+  const maxX = Math.max(...points.map((point) => point.x));
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxY = Math.max(...points.map((point) => point.y));
+  const uvs = points.flatMap((point) => [
+    (point.x - minX) / Math.max(1, maxX - minX),
+    (point.y - minY) / Math.max(1, maxY - minY),
+  ]);
+  const triangulated = earcut(planar, holeIndices, 2);
+  const indices: number[] = [];
+  for (let index = 0; index < triangulated.length; index += 3) {
+    indices.push(
+      triangulated[index],
+      triangulated[index + 2],
+      triangulated[index + 1],
+    );
+  }
+  const data = new VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.normals = points.flatMap(() => [0, 1, 0]);
   data.uvs = uvs;
   data.applyToMesh(mesh);
   return mesh;
@@ -552,18 +666,18 @@ export class TwinSceneController {
       new Vector3(...gardenCamera.target),
       this.scene,
     );
-    this.orbitCamera.lowerRadiusLimit = 6;
-    this.orbitCamera.upperRadiusLimit = 86;
+    this.orbitCamera.lowerRadiusLimit = ORBIT_ZOOM.lowerRadiusLimitM;
+    this.orbitCamera.upperRadiusLimit = ORBIT_ZOOM.upperRadiusLimitM;
     this.orbitCamera.lowerBetaLimit = 0.06;
     this.orbitCamera.upperBetaLimit = Math.PI / 2.02;
-    this.orbitCamera.wheelPrecision = 38;
+    this.orbitCamera.wheelDeltaPercentage = ORBIT_ZOOM.wheelDeltaPercentage;
     this.orbitCamera.panningSensibility = 95;
-    this.orbitCamera.pinchPrecision = 72;
+    this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
     this.orbitCamera.inertia = 0.72;
     this.orbitCamera.minZ = 0.18;
     this.orbitCamera.maxZ = 220;
     this.orbitCamera.fov = gardenCamera.fov;
-    this.orbitCamera.attachControl(canvas, true);
+    this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
 
     this.flightCamera = new UniversalCamera(
       "helicopter-camera",
@@ -727,7 +841,9 @@ export class TwinSceneController {
       terrain: pbrMaterial(this.scene, "real-terrain", "#ffffff", 0.97),
       grass: pbrMaterial(this.scene, "real-grass", "#ffffff", 0.95),
       road: pbrMaterial(this.scene, "real-road", "#7c8283", 0.94),
+      roadReserve: pbrMaterial(this.scene, "real-road-reserve", "#807e72", 0.98),
       paving: pbrMaterial(this.scene, "real-paving", "#c9cbc6", 0.88),
+      pavingEntry: pbrMaterial(this.scene, "real-paving-entry", "#d6d2c8", 0.9),
       gravel: pbrMaterial(this.scene, "real-gravel", "#ffffff", 0.96),
       timber: pbrMaterial(this.scene, "real-timber", "#ffffff", 0.68),
       timberDark: pbrMaterial(this.scene, "real-timber-dark", "#8a5c30", 0.74),
@@ -870,6 +986,39 @@ export class TwinSceneController {
     this.realisticMaterials.solar.clearCoat.intensity = 0.9;
     this.realisticMaterials.solar.clearCoat.roughness = 0.07;
 
+    const asphaltTexture = new DynamicTexture(
+      "asphalt-aggregate-albedo",
+      { width: 1024, height: 1024 },
+      this.scene,
+      true,
+    );
+    const asphaltContext = asphaltTexture.getContext();
+    asphaltContext.fillStyle = "#5d6262";
+    asphaltContext.fillRect(0, 0, 1024, 1024);
+    for (let index = 0; index < 18_000; index += 1) {
+      const x = (index * 73 + (index % 37) * 19) % 1024;
+      const y = (index * 151 + (index % 53) * 11) % 1024;
+      const tone = 75 + ((index * 29) % 58);
+      asphaltContext.fillStyle = `rgba(${tone}, ${tone + 2}, ${tone + 1}, ${0.08 + (index % 5) * 0.018})`;
+      const size = index % 13 === 0 ? 2 : 1;
+      asphaltContext.fillRect(x, y, size, size);
+    }
+    asphaltContext.strokeStyle = "rgba(45, 49, 49, 0.22)";
+    asphaltContext.lineWidth = 2;
+    asphaltContext.beginPath();
+    asphaltContext.moveTo(0, 682);
+    asphaltContext.bezierCurveTo(260, 674, 620, 699, 1024, 687);
+    asphaltContext.stroke();
+    asphaltTexture.update(false);
+    asphaltTexture.wrapU = Texture.WRAP_ADDRESS;
+    asphaltTexture.wrapV = Texture.WRAP_ADDRESS;
+    asphaltTexture.uScale = 11;
+    asphaltTexture.vScale = 6;
+    asphaltTexture.anisotropicFilteringLevel = this.renderQuality.anisotropy;
+    this.realisticMaterials.road.albedoColor = Color3.White();
+    this.realisticMaterials.road.albedoTexture = asphaltTexture;
+    this.realisticMaterials.road.environmentIntensity = 0.34;
+
     this.poolWaterNormal = new Texture(
       "/assets/textures/pool-water-normal.png",
       this.scene,
@@ -913,6 +1062,8 @@ export class TwinSceneController {
     this.applyTexture(this.realisticMaterials.concrete, "concrete-albedo", 2.2, 2.2, "concrete-normal", 0.5);
     this.applyTexture(this.realisticMaterials.chimney, "concrete-albedo", 1.2, 3, "concrete-normal", 0.24);
     this.applyTexture(this.realisticMaterials.paving, "concrete-albedo", 5, 2.5, "concrete-normal", 0.45);
+    this.applyTexture(this.realisticMaterials.pavingEntry, "concrete-albedo", 3.2, 5.8, "concrete-normal", 0.34);
+    this.applyTexture(this.realisticMaterials.roadReserve, "gravel-albedo", 12, 3.4, "gravel-normal", 0.72);
     for (const [index, material] of [
       this.realisticMaterials.hedgeDark,
       this.realisticMaterials.hedgeMid,
@@ -1026,6 +1177,13 @@ export class TwinSceneController {
     this.scene.onBeforeRenderObservable.add(() => {
       this.updateFlightMotion();
       this.animateWaterSurface();
+      if (this.canvas.dataset.navigationMode !== this.navigationMode) {
+        this.canvas.dataset.navigationMode = this.navigationMode;
+      }
+      const cameraRadius = this.orbitCamera.radius.toFixed(3);
+      if (this.canvas.dataset.cameraRadius !== cameraRadius) {
+        this.canvas.dataset.cameraRadius = cameraRadius;
+      }
     });
 
     const render = () => this.scene.render();
@@ -1388,10 +1546,11 @@ export class TwinSceneController {
     for (const parcel of CADASTRAL_PARCELS) {
       const localRing = parcel.sjtskRingMm.map(sjtskToLocalMm);
       if (parcel.isSubject) {
-        const fill = createFlatPolygon(
+        const fill = createFlatPolygonWithHoles(
           this.scene,
           "Parcela 6012/26 · 753 m²",
           localRing,
+          [SITE_SURFACES.sideEntryApproach.privatePolygonMm],
           GROUND_Y,
         );
         this.appearance(
@@ -1418,9 +1577,29 @@ export class TwinSceneController {
   }
 
   private buildStreetAndSite() {
+    for (const [index, ring] of ROAD_CONTEXT.frontReserveSurfacePolygonsMm.entries()) {
+      const roadReserve = createGradedPolygon(
+        this.scene,
+        `Cestná rezerva 6012/1 · zelený diel ${index + 1} s otvormi pre vstupy`,
+        ring,
+        (point) =>
+          -0.02 -
+          ((point.y - ROAD_CONTEXT.frontAsphaltEdgeYmm) /
+            Math.abs(ROAD_CONTEXT.frontAsphaltEdgeYmm)) *
+            0.015,
+      );
+      this.appearance(
+        roadReserve,
+        this.materials.road,
+        this.realisticMaterials.grass,
+      );
+      roadReserve.receiveShadows = true;
+      this.register(roadReserve, "street", ROAD_CONTEXT.id);
+    }
+
     const frontage = createFlatPolygon(
       this.scene,
-      "Miestna komunikácia 6012/1 · čelná vetva",
+      "Miestna komunikácia 6012/1 · čelná vozovka po hranu odvodenú z C3",
       ROAD_CONTEXT.frontagePolygonMm,
       -0.115,
     );
@@ -1430,88 +1609,200 @@ export class TwinSceneController {
 
     const corner = createFlatPolygon(
       this.scene,
-      "Miestna komunikácia 6012/1 · koncový roh",
-      ROAD_CONTEXT.cornerPolygonMm,
+      "Miestna komunikácia 6012/1 · rohová vetva v katastrálnom koridore",
+      ROAD_CONTEXT.cornerCarriagewayPolygonMm,
       -0.114,
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
     corner.receiveShadows = true;
     this.register(corner, "street", ROAD_CONTEXT.id);
 
-    for (const curbSpec of [
-      {
-        name: "Obrubník čelnej hrany · západný diel",
-        centerMm: { x: (-8000 + 6490) / 2, y: -180 },
-        widthMm: 6490 - -8000,
-      },
-      {
-        name: "Obrubník čelnej hrany · medzi príjazdom a vstupom",
-        centerMm: { x: (10690 + 21141) / 2, y: -180 },
-        widthMm: 21141 - 10690,
-      },
-      {
-        name: "Obrubník čelnej hrany · východný diel",
-        centerMm: { x: (23343 + 28194) / 2, y: -180 },
-        widthMm: 28194 - 23343,
-      },
-      {
-        name: "Vonkajší okraj čelnej komunikácie",
-        centerMm: { x: 17000, y: -7580 },
-        widthMm: 50000,
-      },
-    ]) {
-      const curb = boxAtPlan(
+    for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
+      const sideReserve = createFlatPolygon(
         this.scene,
-        curbSpec.name,
-        curbSpec.centerMm,
-        curbSpec.widthMm,
-        120,
-        0.14,
-        -0.04,
-      );
-      this.appearance(curb, this.materials.paving, this.realisticMaterials.concrete);
-      curb.receiveShadows = true;
-      curb.isPickable = false;
-      this.register(curb, "street");
-    }
-
-    for (const [index, opening] of [
-      { x0: 6490, x1: 10690 },
-      { x0: 21141, x1: 23343 },
-    ].entries()) {
-      const droppedCurb = boxAtPlan(
-        this.scene,
-        `Znížený prejazdový obrubník ${index + 1}`,
-        { x: (opening.x0 + opening.x1) / 2, y: -180 },
-        opening.x1 - opening.x0,
-        150,
-        0.055,
-        -0.09,
+        `Bočná cestná rezerva 6012/1 · zelený diel ${index + 1} s otvorom EAST-03`,
+        ring,
+        -0.02,
       );
       this.appearance(
-        droppedCurb,
-        this.materials.paving,
-        this.realisticMaterials.concrete,
+        sideReserve,
+        this.materials.road,
+        this.realisticMaterials.grass,
       );
-      droppedCurb.receiveShadows = true;
-      droppedCurb.isPickable = false;
-      this.register(droppedCurb, "street");
+      sideReserve.receiveShadows = true;
+      this.register(sideReserve, "street", ROAD_CONTEXT.id);
     }
 
-    const cornerCurb = CreateLines(
-      "Obrubník koncového rohu 6012/1",
+    const frontOpenings = [
+      { id: "GARAGE-DOOR", x0: 6_490, x1: 10_690 },
+      { id: "FRONT-ENTRY", x0: 21_415, x1: 22_915 },
+    ] as const;
+    const curbTransitionLengthMm = 500;
+    const frontCurbSegments = [
       {
-        points: ROAD_CONTEXT.cornerPolygonMm
-          .slice(0, 7)
-          .map((point) => point3(point, -0.039)),
+        x0: -15_670,
+        x1: frontOpenings[0].x0 - curbTransitionLengthMm,
       },
-      this.scene,
+      {
+        x0: frontOpenings[0].x1 + curbTransitionLengthMm,
+        x1: frontOpenings[1].x0 - curbTransitionLengthMm,
+      },
+      {
+        x0: frontOpenings[1].x1 + curbTransitionLengthMm,
+        x1: 28_194,
+      },
+    ];
+    this.buildThinBoxes(
+      "Obrubník pri čelnej vozovke · prerušený pre garáž a hlavný vstup",
+      frontCurbSegments.map(({ x0, x1 }) =>
+        segmentBox(
+          { x: x0, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          { x: x1, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          120,
+          100,
+          -115,
+        ),
+      ),
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
     );
-    cornerCurb.color = Color3.FromHexString("#aab3b4");
-    cornerCurb.alpha = 0.82;
-    cornerCurb.isPickable = false;
-    this.technicalOverlay(cornerCurb);
-    this.register(cornerCurb, "street");
+    const frontTransitionCurbs = frontOpenings.flatMap(({ x0, x1 }) => [
+      ...Array.from({ length: 5 }, (_, index) => {
+        const startX = x0 - curbTransitionLengthMm + index * 100;
+        return segmentBox(
+          { x: startX, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          { x: startX + 100, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          150,
+          100 - (index + 0.5) * 19,
+          -115,
+        );
+      }),
+      ...Array.from({ length: 5 }, (_, index) => {
+        const startX = x1 + index * 100;
+        return segmentBox(
+          { x: startX, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          { x: startX + 100, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          150,
+          5 + (index + 0.5) * 19,
+          -115,
+        );
+      }),
+    ]);
+    this.buildThinBoxes(
+      "Päťstupňové nábehové obrubníky pri čelných vstupoch",
+      frontTransitionCurbs,
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
+    );
+    this.buildThinBoxes(
+      "Znížené obrubníky · vjazd do garáže a chodník k dverám",
+      frontOpenings.map(({ x0, x1 }) =>
+        segmentBox(
+          { x: x0, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          { x: x1, y: ROAD_CONTEXT.frontAsphaltEdgeYmm },
+          180,
+          5,
+          -115,
+        ),
+      ),
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
+    );
+
+    const sideTransitionStart = { x: 34_270, y: 8_750 };
+    const sideGateStart = { x: 34_268, y: 9_250 };
+    const sideGateEnd = { x: 34_262, y: 11_050 };
+    const sideTransitionEnd = { x: 34_260, y: 11_550 };
+    const innerCornerRuns = [
+      [...ROAD_CONTEXT.cornerAsphaltEdgeMm.slice(0, 6), sideTransitionStart],
+      [sideTransitionEnd, ROAD_CONTEXT.cornerAsphaltEdgeMm.at(-1)!],
+    ];
+    const innerCornerCurbs = innerCornerRuns.flatMap((run) =>
+      run
+        .slice(1)
+        .map((end, index) => segmentBox(run[index], end, 120, 99, -114)),
+    );
+    this.buildThinBoxes(
+      "Obrubník rohovej vetvy · prerušený pri bočnej bránke",
+      innerCornerCurbs,
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
+    );
+    const sideTransitionCurbs = [
+      ...Array.from({ length: 5 }, (_, index) =>
+        segmentBox(
+          pointAlongSegment(sideTransitionStart, sideGateStart, index * 100),
+          pointAlongSegment(
+            sideTransitionStart,
+            sideGateStart,
+            (index + 1) * 100,
+          ),
+          150,
+          99 - (index + 0.5) * 19,
+          -114,
+        ),
+      ),
+      ...Array.from({ length: 5 }, (_, index) =>
+        segmentBox(
+          pointAlongSegment(sideGateEnd, sideTransitionEnd, index * 100),
+          pointAlongSegment(
+            sideGateEnd,
+            sideTransitionEnd,
+            (index + 1) * 100,
+          ),
+          150,
+          4 + (index + 0.5) * 19,
+          -114,
+        ),
+      ),
+    ];
+    this.buildThinBoxes(
+      "Päťstupňové nábehové obrubníky pri EAST-03",
+      sideTransitionCurbs,
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
+    );
+    this.buildThinBoxes(
+      "Znížený obrubník pri bočnom vstupe EAST-03",
+      [segmentBox(sideGateStart, sideGateEnd, 180, 4, -114)],
+      this.materials.paving,
+      this.realisticMaterials.concrete,
+      "street",
+      ROAD_CONTEXT.id,
+      false,
+    );
+
+    const outerCadastralEdges = [
+      ROAD_CONTEXT.frontOppositeParcelEdgeMm,
+      ROAD_CONTEXT.cornerPolygonMm.slice(7, 15),
+    ];
+    for (const [index, edge] of outerCadastralEdges.entries()) {
+      const boundary = CreateLines(
+        `Vonkajšia hranica cestnej parcely 6012/1 podľa KN ${index + 1} · nie fyzický obrubník`,
+        { points: edge.map((point) => point3(point, -0.11)) },
+        this.scene,
+      );
+      boundary.color = Color3.FromHexString("#8f7f71");
+      boundary.alpha = 0.62;
+      boundary.isPickable = false;
+      this.technicalOverlay(boundary);
+      this.register(boundary, "street", ROAD_CONTEXT.id);
+    }
 
     const deck = createFlatPolygon(
       this.scene,
@@ -1532,17 +1823,28 @@ export class TwinSceneController {
       const isStreetRamp =
         surface.id === SITE_SURFACES.driveway.id ||
         surface.id === SITE_SURFACES.entry.id;
+      const isSideStreetRamp =
+        surface.id === SITE_SURFACES.sideEntryApproach.id;
       const yValues = surface.polygonMm.map((point) => point.y);
+      const xValues = surface.polygonMm.map((point) => point.x);
       const minY = Math.min(...yValues);
       const maxY = Math.max(...yValues);
-      const paving = isStreetRamp
+      const minX = Math.min(...xValues);
+      const maxX = Math.max(...xValues);
+      const elevationForPoint = (point: Point2Mm) =>
+        isSideStreetRamp
+          ? -0.11 +
+            ((maxX - point.x) / Math.max(1, maxX - minX)) * 0.095
+          : point.y <= 0
+            ? -0.11 +
+              ((point.y - minY) / Math.max(1, -minY)) * 0.08
+            : -0.03 + (point.y / Math.max(1, maxY)) * 0.015;
+      const paving = isStreetRamp || isSideStreetRamp
         ? createGradedPolygon(
             this.scene,
-            `Spádovaná betónová dlažba · ${surface.areaM2} m²`,
+            `Spádované samostatné napojenie ${surface.accessOpeningId} · ${surface.areaM2} m²`,
             surface.polygonMm,
-            (point) =>
-              -0.09 +
-              ((point.y - minY) / Math.max(1, maxY - minY)) * 0.115,
+            elevationForPoint,
           )
         : createFlatPolygon(
             this.scene,
@@ -1553,10 +1855,29 @@ export class TwinSceneController {
       this.appearance(
         paving,
         this.materials.paving,
-        this.realisticMaterials.paving,
+        surface.id === SITE_SURFACES.driveway.id
+          ? this.realisticMaterials.paving
+          : this.realisticMaterials.pavingEntry,
       );
       paving.receiveShadows = true;
       this.register(paving, "street", surface.id);
+
+      if (isStreetRamp || isSideStreetRamp) {
+        const edgeRestraint = createGradedPolygonEdgeSkirt(
+          this.scene,
+          `Bočné výškové uzavretie napojenia ${surface.accessOpeningId}`,
+          surface.polygonMm,
+          elevationForPoint,
+          -0.12,
+        );
+        this.appearance(
+          edgeRestraint,
+          this.materials.paving,
+          this.realisticMaterials.concrete,
+        );
+        edgeRestraint.receiveShadows = true;
+        this.register(edgeRestraint, "street", surface.id);
+      }
     }
   }
 
@@ -3997,6 +4318,8 @@ export class TwinSceneController {
   private buildGardenPool() {
     const pool = GARDEN_POOL;
     const waterSurfaceM = -0.012;
+    const sharedTerraceTopM =
+      pool.terraceConnection.sharedTopElevationMm * MM_TO_M;
     const floorTopM = waterSurfaceM - pool.proposedWaterDepthMm * MM_TO_M;
     const wallThicknessMm = 120;
 
@@ -4071,7 +4394,7 @@ export class TwinSceneController {
     }
 
     const water = CreateGround(
-      `${pool.label} · refrakčná vodná plocha presne 4 000 × 2 500 mm`,
+      `${pool.label} · refrakčná vodná plocha presne ${pool.waterLengthMm.toLocaleString("sk-SK")} × ${pool.waterWidthMm.toLocaleString("sk-SK")} mm`,
       {
         width: pool.waterLengthMm * MM_TO_M,
         height: pool.waterWidthMm * MM_TO_M,
@@ -4096,11 +4419,14 @@ export class TwinSceneController {
       depthMm: number;
     }> = [];
     const jointMm = 8;
+    const terraceDrainGapMm = 26;
     const longSlabs = 9;
     const longSlabMm =
       (outerLengthMm - jointMm * (longSlabs - 1)) / longSlabs;
     for (const side of [-1, 1]) {
       for (let index = 0; index < longSlabs; index += 1) {
+        const slabDepthMm =
+          side === -1 ? coping - terraceDrainGapMm : coping;
         copingSegments.push({
           centerMm: {
             x:
@@ -4108,10 +4434,12 @@ export class TwinSceneController {
               outerLengthMm / 2 +
               longSlabMm / 2 +
               index * (longSlabMm + jointMm),
-            y: pool.centerMm.y + side * (pool.waterWidthMm / 2 + coping / 2),
+            y:
+              pool.centerMm.y +
+              side * (pool.waterWidthMm / 2 + slabDepthMm / 2),
           },
           widthMm: longSlabMm,
-          depthMm: coping,
+          depthMm: slabDepthMm,
         });
       }
     }
@@ -4141,8 +4469,8 @@ export class TwinSceneController {
         segment.centerMm,
         segment.widthMm,
         segment.depthMm,
-        0.08,
-        waterSurfaceM - 0.013,
+        0.055,
+        sharedTerraceTopM - 0.055,
       );
       this.appearance(
         copingMesh,
@@ -4159,12 +4487,16 @@ export class TwinSceneController {
       `${pool.label} · tienistá lineárna odvodňovacia škára`,
       {
         x: pool.centerMm.x,
-        y: pool.centerMm.y - pool.waterWidthMm / 2 - coping + 24,
+        y:
+          pool.centerMm.y -
+          pool.waterWidthMm / 2 -
+          coping +
+          terraceDrainGapMm / 2,
       },
       outerLengthMm - 140,
       18,
-      0.024,
-      waterSurfaceM + 0.052,
+      0.008,
+      sharedTerraceTopM - 0.008,
     );
     drainSlot.material = this.realisticMaterials.fenceTrack;
     drainSlot.isPickable = false;
@@ -4270,7 +4602,9 @@ export class TwinSceneController {
     const outline = CreateLines(
       `${pool.label} · koordinačný obrys lemu`,
       {
-        points: pool.copingFootprintMm.map((point) => point3(point, 0.055)),
+        points: pool.copingFootprintMm.map((point) =>
+          point3(point, sharedTerraceTopM + 0.002),
+        ),
       },
       this.scene,
     );
@@ -4346,21 +4680,24 @@ export class TwinSceneController {
       [
         { x: 3600, y: 14200 },
         { x: 6900, y: 14650 },
-        { x: 8900, y: 15300 },
-        { x: 9200, y: 16500 },
-        { x: 9200, y: 17550 },
-        { x: 11200, y: 18150 },
-        { x: 14400, y: 18800 },
-        { x: 17400, y: 19900 },
+        { x: 8350, y: 15100 },
+        { x: 8350, y: 16400 },
+        { x: 7600, y: 16900 },
+        { x: 5400, y: 16000 },
+        { x: 3600, y: 15000 },
+        { x: 3600, y: 14200 },
+      ],
+      [
+        { x: 7600, y: 17450 },
+        { x: 11200, y: 17450 },
+        { x: 14500, y: 17800 },
+        { x: 17400, y: 19000 },
         { x: 17600, y: 20600 },
         { x: 15800, y: 19900 },
         { x: 13900, y: 19200 },
         { x: 11000, y: 18700 },
         { x: 8800, y: 18000 },
-        { x: 7400, y: 16900 },
-        { x: 5400, y: 16000 },
-        { x: 3600, y: 15000 },
-        { x: 3600, y: 14200 },
+        { x: 7600, y: 17450 },
       ],
       [
         { x: 28700, y: 15100 },
@@ -4388,8 +4725,8 @@ export class TwinSceneController {
     const shrubs = [
       { x: 5200, y: 15400, s: 1.2 },
       { x: 6900, y: 16000, s: 1.0 },
-      { x: 8150, y: 16400, s: 1.18 },
-      { x: 9000, y: 17650, s: 0.92 },
+      { x: 7700, y: 16550, s: 1.18 },
+      { x: 9200, y: 17750, s: 0.92 },
       { x: 11400, y: 18300, s: 1.18 },
       { x: 14500, y: 18900, s: 1.05 },
       { x: 16700, y: 18800, s: 1.3 },
@@ -5005,7 +5342,10 @@ export class TwinSceneController {
       this.orbitCamera.fov = this.flightCamera.fov;
       this.resetOrbitInertia();
       this.scene.activeCamera = this.orbitCamera;
-      this.orbitCamera.attachControl(this.canvas, true);
+      this.orbitCamera.attachControl(
+        this.canvas,
+        !ORBIT_ZOOM.preventBrowserGesture,
+      );
       this.navigationMode = "orbit";
     }
     this.onNavigationModeChange(this.navigationMode);

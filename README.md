@@ -4,7 +4,11 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 
 ## Dôkazová hranica
 
-- hranica parcely a výmera 753 m² vychádzajú z aktuálneho ČÚZK/CPX a geometrického plánu,
+- hranica parcely, výmera 753 m² a koridor cestnej parcely 6012/1 s výmerou
+  10 647 m² vychádzajú z aktuálnej služby ČÚZK/CP a geometrického plánu,
+- zelená cestná rezerva a hrana asfaltu vo vzdialenosti približne 3,104 m od
+  parcely sú odvodené z napojení C3 na čelnej aj bočnej vetve; nejde o
+  geodetické zameranie skutočných obrubníkov,
 - situačná revízia C3 a neskoršia detailná revízia D1.1 sú uložené oddelene; ich rozpor sa neskrýva,
 - prípojky vody, splaškovej a dažďovej kanalizácie sú projektovaný stav podľa IO 01–03,
 - verejný vodovod a splašková stoka pri parcele sú len kontext z verejnej DMVS,
@@ -23,10 +27,11 @@ geometria D1 zostáva nedotknutá.
 
 Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
 7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na
-hustý živý plot. Do otvoreného L-dvora pridáva bazén s vodnou plochou presne
-4,0 × 2,5 m, rovnobežne s hlavnou terasou. Modelová poloha bazéna nekoliduje s
-domom ani terasami, ale najmenší odstup od projektovanej dažďovej kanalizácie je
-približne 0,83 m. Vizualizačná hĺbka vody je navrhnutá na 1,40 m; nie je to
+hustý živý plot. Najnovšia exteriérová revízia zväčšuje bazén v otvorenom
+L-dvore na vodnú plochu presne 5,0 × 3,0 m. Jeho 5,6 m dlhý lem je bez medzery
+napojený na hranu hlavnej terasy a zdieľa s ňou hornú úroveň. Pôvodná dažďová
+trasa je v modeli predbežne odklonená; najmenší odstup od plášťa potrubia je
+približne 0,63 m. Vizualizačná hĺbka vody je navrhnutá na 1,40 m; nie je to
 realizačne potvrdená hodnota. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
 vizualizačný dizajnový návrh. Nie sú schválenou realizačnou špecifikáciou;
@@ -44,7 +49,9 @@ WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelo
 rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení,
 plné mipmapy, 16× anizotropné filtrovanie, stabilizované štvorstupňové kaskádové
 tiene a ACES tone mapping. Presety Záhrada a Ulica majú fyzickú výšku kamery
-3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu. K dispozícii je aj samostatný režim
+3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu. Orbitálny zoom používa
+prirodzený pinch smer a plynulú relatívnu citlivosť pre touchpad aj koliesko bez
+preberania gesta prehliadačom. K dispozícii je aj samostatný režim
 **Prelet**: stabilná world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým
 ovládačom a bezpečným návratom do orbitálnych pohľadov.
 

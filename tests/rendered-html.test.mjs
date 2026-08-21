@@ -35,10 +35,10 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /Březí u Mikulova/);
   assert.match(html, /Živý výkres/);
   assert.match(html, /Parcela 6012\/26/);
-  assert.match(html, /Bazén 4 × 2,5 m/);
+  assert.match(html, /Bazén 5 × 3 m/);
   assert.match(
     html,
-    /role="treeitem"[^>]+aria-selected="false"[^>]*>[\s\S]{0,400}?Bazén 4 × 2,5 m/,
+    /role="treeitem"[^>]+aria-selected="false"[^>]*>[\s\S]{0,400}?Bazén 5 × 3 m/,
   );
   assert.match(
     html,
@@ -76,6 +76,9 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /controllerRef\.current\?\.dispose\(\)/);
   assert.match(scene, /adaptToDeviceRatio: false/);
   assert.match(scene, /setHardwareScalingLevel\(/);
+  assert.match(scene, /wheelDeltaPercentage = ORBIT_ZOOM\.wheelDeltaPercentage/);
+  assert.match(scene, /useNaturalPinchZoom = ORBIT_ZOOM\.useNaturalPinchZoom/);
+  assert.match(scene, /!ORBIT_ZOOM\.preventBrowserGesture/);
   assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   assert.match(scene, /subSurface\.isRefractionEnabled = true/);
