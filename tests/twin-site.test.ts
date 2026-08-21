@@ -183,13 +183,19 @@ describe("site evidence seed", () => {
       roofFace: "WING_INNER",
       facing: "COURTYARD",
       placement: "ABOVE_KITCHEN",
-      firstModuleCenterMm: { x: 22_000, y: 12_100 },
+      towardTerraceId: "TERR-D1-WING",
+      firstModuleCenterMm: { x: 21_820, y: 12_600 },
       rowStepMm: { x: 1_550, y: 0 },
       columnStepMm: { x: 0, y: 1_100 },
     });
     expect(HOUSE.photovoltaics.rows * HOUSE.photovoltaics.columns).toBe(
       HOUSE.photovoltaics.moduleCount,
     );
+    expect(
+      TERRACE_ZONES_D1.some(
+        ({ id }) => id === HOUSE.photovoltaics.towardTerraceId,
+      ),
+    ).toBe(true);
     const photovoltaicCenters = Array.from(
       { length: HOUSE.photovoltaics.columns },
       (_, column) =>
@@ -205,12 +211,12 @@ describe("site evidence seed", () => {
         })),
     ).flat();
     expect(photovoltaicCenters).toEqual([
-      { x: 22_000, y: 12_100 },
-      { x: 23_550, y: 12_100 },
-      { x: 22_000, y: 13_200 },
-      { x: 23_550, y: 13_200 },
-      { x: 22_000, y: 14_300 },
-      { x: 23_550, y: 14_300 },
+      { x: 21_820, y: 12_600 },
+      { x: 23_370, y: 12_600 },
+      { x: 21_820, y: 13_700 },
+      { x: 23_370, y: 13_700 },
+      { x: 21_820, y: 14_800 },
+      { x: 23_370, y: 14_800 },
     ]);
     for (const center of photovoltaicCenters) {
       const mount = roofMountTransform(
@@ -242,6 +248,20 @@ describe("site evidence seed", () => {
       expect(center.y + frameHalfRidgeMm).toBeLessThanOrEqual(
         HOUSE.originMm.y + HOUSE.roof.wingOverallPlanLengthMm,
       );
+
+      for (const chimney of HOUSE.chimneys) {
+        const chimneyCapHalfMm = 290;
+        const overlapsChimneyCap =
+          center.x - frameHalfSlopePlanMm <
+            chimney.centerMm.x + chimneyCapHalfMm &&
+          center.x + frameHalfSlopePlanMm >
+            chimney.centerMm.x - chimneyCapHalfMm &&
+          center.y - frameHalfRidgeMm <
+            chimney.centerMm.y + chimneyCapHalfMm &&
+          center.y + frameHalfRidgeMm >
+            chimney.centerMm.y - chimneyCapHalfMm;
+        expect(overlapsChimneyCap).toBe(false);
+      }
     }
     expect(HOUSE.facades.front.garageDoor).toMatchObject({
       id: "GARAGE-DOOR",
@@ -267,17 +287,17 @@ describe("site evidence seed", () => {
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
     expect(HOUSE.chimneys).toEqual([
       {
-        id: "CHIMNEY-ROOM-109",
-        centerMm: { x: 17_640, y: 7_250 },
-        zone: "ROOM_1_09_ROOF_ZONE",
+        id: "CHIMNEY-LIVING-103",
+        centerMm: { x: 24_190, y: 11_700 },
+        zone: "MAIN_LIVING_AND_KITCHEN_1_03",
         sourceId: SOURCES.roofPlan.id,
       },
     ]);
     expect(HOUSE.removedChimneys).toEqual([
       {
-        id: "CHIMNEY-LIVING-103",
-        centerMm: { x: 24_190, y: 11_700 },
-        zone: "MAIN_LIVING_AND_KITCHEN_1_03",
+        id: "CHIMNEY-ROOM-109",
+        centerMm: { x: 17_640, y: 7_250 },
+        zone: "ROOM_1_09_ROOF_ZONE",
         sourceId: SOURCES.clientRevision20260821.id,
       },
     ]);
