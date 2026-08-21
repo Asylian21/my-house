@@ -24,6 +24,7 @@ import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder.pure";
+import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure";
 import {
   CreateDashedLines,
   CreateLines,
@@ -45,6 +46,7 @@ import earcut from "earcut";
 
 import {
   CADASTRAL_PARCELS,
+  GARDEN_POOL,
   HOUSE,
   LAYERS,
   ROAD_CONTEXT,
@@ -628,6 +630,8 @@ export class TwinSceneController {
       electricity: surfaceMaterial(this.scene, "electricity", "#ec4ec6", 0.72),
       contextNetworks: surfaceMaterial(this.scene, "context-networks", "#62d8ff", 0.72),
       fence: surfaceMaterial(this.scene, "fence", "#252a2c", 0.92, 0.7),
+      hedge: surfaceMaterial(this.scene, "hedge", "#315d35", 0.96),
+      poolWater: surfaceMaterial(this.scene, "pool-water", "#3ebbe0", 0.28, 0.82),
       selection: surfaceMaterial(this.scene, "selection", "#ff5738", 0.55, 0.82),
     };
     this.materials.parcel.disableDepthWrite = true;
@@ -655,6 +659,12 @@ export class TwinSceneController {
       chimney: pbrMaterial(this.scene, "real-chimney", "#787f7f", 0.32, 0.75),
       fenceMetal: pbrMaterial(this.scene, "real-fence-metal", "#252a2c", 0.66, 0.05),
       fenceTrack: pbrMaterial(this.scene, "real-fence-track", "#8d9496", 0.32, 0.72),
+      hedgeDark: pbrMaterial(this.scene, "real-hedge-dark", "#244a2b", 0.94),
+      hedgeMid: pbrMaterial(this.scene, "real-hedge-mid", "#356438", 0.92),
+      hedgeLight: pbrMaterial(this.scene, "real-hedge-light", "#477746", 0.9),
+      poolWater: pbrMaterial(this.scene, "real-pool-water", "#2da7c8", 0.06, 0, 0.76),
+      poolBasin: pbrMaterial(this.scene, "real-pool-basin", "#123f4c", 0.62),
+      poolLed: pbrMaterial(this.scene, "real-pool-led", "#d7fbff", 0.12),
       mulch: pbrMaterial(this.scene, "real-mulch", "#2e2317", 1),
       stone: pbrMaterial(this.scene, "real-stone", "#d6d2c6", 0.9),
       fabric: pbrMaterial(this.scene, "real-fabric", "#e6e2d8", 0.95),
@@ -673,6 +683,14 @@ export class TwinSceneController {
     this.realisticMaterials.glass.needDepthPrePass = true;
     this.realisticMaterials.warmInterior.emissiveColor =
       Color3.FromHexString("#4b3418");
+    this.realisticMaterials.poolWater.indexOfRefraction = 1.333;
+    this.realisticMaterials.poolWater.environmentIntensity = 1.35;
+    this.realisticMaterials.poolWater.useSpecularOverAlpha = true;
+    this.realisticMaterials.poolWater.needDepthPrePass = true;
+    this.realisticMaterials.poolWater.emissiveColor =
+      Color3.FromHexString("#062f38");
+    this.realisticMaterials.poolLed.emissiveColor =
+      Color3.FromHexString("#b7f5ff");
 
     this.applyTexture(this.realisticMaterials.grass, "lawn-albedo", 12, 10, "lawn-normal", 0.4);
     this.applyTexture(
@@ -1027,6 +1045,46 @@ export class TwinSceneController {
     return this.register(mesh, layer, entityId);
   }
 
+  private buildThinEllipsoids(
+    name: string,
+    instances: readonly PlanBoxInstance[],
+    technical: Material,
+    realistic: Material,
+    layer: LayerId,
+    entityId: string,
+  ) {
+    if (instances.length === 0) return null;
+    const mesh = CreateSphere(
+      name,
+      { diameter: 1, segments: 7 },
+      this.scene,
+    );
+    const matrices = new Float32Array(instances.length * 16);
+    for (const [index, instance] of instances.entries()) {
+      const matrix = Matrix.Compose(
+        new Vector3(
+          instance.widthMm * MM_TO_M,
+          instance.heightMm * MM_TO_M,
+          instance.depthMm * MM_TO_M,
+        ),
+        Quaternion.RotationYawPitchRoll(instance.yawRad, 0, 0),
+        new Vector3(
+          xM(instance.centerMm.x),
+          (instance.baseElevationMm + instance.heightMm / 2) * MM_TO_M,
+          zM(instance.centerMm.y),
+        ),
+      );
+      matrix.copyToArray(matrices, index * 16);
+    }
+    mesh.thinInstanceSetBuffer("matrix", matrices, 16, true);
+    mesh.thinInstanceRefreshBoundingInfo(true);
+    mesh.thinInstanceEnablePicking = true;
+    mesh.receiveShadows = true;
+    this.appearance(mesh, technical, realistic);
+    this.castShadow(mesh);
+    return this.register(mesh, layer, entityId);
+  }
+
   private buildTerrainAndGrid() {
     const terrain = CreateGround(
       "Terén · DMR 5G kontext",
@@ -1216,6 +1274,7 @@ export class TwinSceneController {
     const gateSlatBottomMm = style.groundClearanceMm;
     const gateSlatHeightMm = style.proposedHeightMm - gateSlatBottomMm;
     const fixedSlats: PlanBoxInstance[] = [];
+    const fixedSolidPanels: PlanBoxInstance[] = [];
     const fixedRails: PlanBoxInstance[] = [];
     const fixedCurbs: PlanBoxInstance[] = [];
     const fixedPosts = new Map<string, PlanBoxInstance>();
@@ -1231,32 +1290,62 @@ export class TwinSceneController {
     );
 
     for (const run of SITE_FENCE.physicalFixedRuns) {
+      if (run.treatment === "LIVING_HEDGE") continue;
       for (let index = 1; index < run.pointsMm.length; index += 1) {
         const start = run.pointsMm[index - 1];
         const end = run.pointsMm[index];
         const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
         const yawRad = sceneYawForPlanSegment(start, end);
-        fixedSlats.push(
-          ...slatInstancesForSegment(
-            start,
-            end,
-            style.slatWidthMm,
-            style.slatDepthMm,
-            style.slatPitchMm,
-            fixedSlatHeightMm,
-            fixedSlatBottomMm,
-          ),
-        );
-        for (const railBaseElevationMm of [420, 1320]) {
-          fixedRails.push(
-            segmentBox(
+        if (run.treatment === "SLATTED_ALUMINIUM") {
+          fixedSlats.push(
+            ...slatInstancesForSegment(
               start,
               end,
-              style.railDepthMm,
-              style.railWidthMm,
-              railBaseElevationMm,
+              style.slatWidthMm,
+              style.slatDepthMm,
+              style.slatPitchMm,
+              fixedSlatHeightMm,
+              fixedSlatBottomMm,
             ),
           );
+          for (const railBaseElevationMm of [420, 1320]) {
+            fixedRails.push(
+              segmentBox(
+                start,
+                end,
+                style.railDepthMm,
+                style.railWidthMm,
+                railBaseElevationMm,
+              ),
+            );
+          }
+        } else {
+          const panelCount = Math.max(
+            1,
+            Math.ceil(lengthMm / style.maximumPostSpacingMm),
+          );
+          const panelSpanMm = lengthMm / panelCount;
+          for (let panel = 0; panel < panelCount; panel += 1) {
+            const panelStart = pointAlongSegment(
+              start,
+              end,
+              panel * panelSpanMm + style.solidPanelJointMm / 2,
+            );
+            const panelEnd = pointAlongSegment(
+              start,
+              end,
+              (panel + 1) * panelSpanMm - style.solidPanelJointMm / 2,
+            );
+            fixedSolidPanels.push(
+              segmentBox(
+                panelStart,
+                panelEnd,
+                style.solidPanelDepthMm,
+                style.proposedHeightMm - style.curbHeightMm,
+                style.curbHeightMm,
+              ),
+            );
+          }
         }
         fixedCurbs.push(
           segmentBox(
@@ -1301,6 +1390,14 @@ export class TwinSceneController {
       SITE_FENCE.id,
     );
     this.buildThinBoxes(
+      "Bočný plot · plné veľkoformátové polia RAL 7016",
+      fixedSolidPanels,
+      this.materials.fence,
+      this.realisticMaterials.fenceMetal,
+      "building",
+      SITE_FENCE.id,
+    );
+    this.buildThinBoxes(
       "Plot · skryté nosné priečniky",
       fixedRails,
       this.materials.fence,
@@ -1326,12 +1423,69 @@ export class TwinSceneController {
       false,
     );
 
+    const hedgeVariants: PlanBoxInstance[][] = [[], [], []];
+    for (const run of SITE_FENCE.physicalFixedRuns) {
+      if (run.treatment !== "LIVING_HEDGE") continue;
+      for (let index = 1; index < run.pointsMm.length; index += 1) {
+        const start = run.pointsMm[index - 1];
+        const end = run.pointsMm[index];
+        const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
+        const yawRad = sceneYawForPlanSegment(start, end);
+        const rowOffsetsMm = [
+          style.rearHedgeCenterlineOffsetMm - style.rearHedgeDepthMm / 6,
+          style.rearHedgeCenterlineOffsetMm + style.rearHedgeDepthMm / 6,
+        ];
+        for (const [row, inwardMm] of rowOffsetsMm.entries()) {
+          const inward = inwardOffsetForSegment(start, end, inwardMm);
+          const rowStartMm = 450 + row * 310;
+          for (
+            let distanceMm = rowStartMm;
+            distanceMm <= lengthMm - 450;
+            distanceMm += style.rearHedgeClusterSpacingMm
+          ) {
+            const seed = Math.round(distanceMm / 10) + row * 17;
+            const heightFactor = 0.9 + ((seed * 37) % 19) / 100;
+            const widthFactor = 1.14 + ((seed * 23) % 18) / 100;
+            const depthFactor = 0.59 + ((seed * 11) % 8) / 100;
+            const centerMm = translatedPoint(
+              pointAlongSegment(start, end, distanceMm),
+              inward,
+            );
+            hedgeVariants[(seed + row) % hedgeVariants.length].push({
+              centerMm,
+              widthMm: style.rearHedgeClusterSpacingMm * widthFactor,
+              depthMm: style.rearHedgeDepthMm * depthFactor,
+              heightMm: style.rearHedgeHeightMm * heightFactor,
+              baseElevationMm: -40,
+              yawRad,
+            });
+          }
+        }
+      }
+    }
+    for (const [index, instances] of hedgeVariants.entries()) {
+      const material = [
+        this.realisticMaterials.hedgeDark,
+        this.realisticMaterials.hedgeMid,
+        this.realisticMaterials.hedgeLight,
+      ][index];
+      this.buildThinEllipsoids(
+        `Zadná hranica · hustý živý plot · tón ${index + 1}`,
+        instances,
+        this.materials.hedge,
+        material,
+        "building",
+        SITE_FENCE.id,
+      );
+    }
+
     const buildGate = (
       id: string,
       label: string,
       start: Point2Mm,
       closureEnd: Point2Mm,
       panelCount: number,
+      infillTreatment: "SLATTED_ALUMINIUM" | "SOLID_ALUMINIUM",
       terminalFrameCenterMm: Point2Mm,
       supportPostCentersMm: readonly Point2Mm[],
     ) => {
@@ -1347,7 +1501,7 @@ export class TwinSceneController {
       const panelSpanMm =
         (lengthMm + (panelCount - 1) * panelOverlapMm) / panelCount;
       const panelAdvanceMm = panelSpanMm - panelOverlapMm;
-      const slats: PlanBoxInstance[] = [];
+      const infill: PlanBoxInstance[] = [];
       const frame: PlanBoxInstance[] = [];
       for (let panel = 0; panel < panelCount; panel += 1) {
         const panelStartDistanceMm = panel * panelAdvanceMm;
@@ -1370,17 +1524,29 @@ export class TwinSceneController {
           pointAlongSegment(start, closureEnd, panelEndDistanceMm),
           planeOffset,
         );
-        slats.push(
-          ...slatInstancesForSegment(
-            panelStart,
-            panelEnd,
-            style.slatWidthMm,
-            style.slatDepthMm,
-            style.slatPitchMm,
-            gateSlatHeightMm,
-            gateSlatBottomMm,
-          ),
-        );
+        if (infillTreatment === "SLATTED_ALUMINIUM") {
+          infill.push(
+            ...slatInstancesForSegment(
+              panelStart,
+              panelEnd,
+              style.slatWidthMm,
+              style.slatDepthMm,
+              style.slatPitchMm,
+              gateSlatHeightMm,
+              gateSlatBottomMm,
+            ),
+          );
+        } else {
+          infill.push(
+            segmentBox(
+              panelStart,
+              panelEnd,
+              style.solidPanelDepthMm,
+              gateSlatHeightMm,
+              gateSlatBottomMm,
+            ),
+          );
+        }
         frame.push(
           segmentBox(panelStart, panelEnd, 44, 80, gateSlatBottomMm),
           segmentBox(
@@ -1415,8 +1581,8 @@ export class TwinSceneController {
         }),
       );
       this.buildThinBoxes(
-        `${label} · lamely`,
-        slats,
+        `${label} · ${infillTreatment === "SLATTED_ALUMINIUM" ? "lamely" : "plná výplň"}`,
+        infill,
         this.materials.fence,
         this.realisticMaterials.fenceMetal,
         "building",
@@ -1446,6 +1612,7 @@ export class TwinSceneController {
       SITE_FENCE.vehicleGate.startMm,
       SITE_FENCE.vehicleGate.leafClosureEndMm,
       SITE_FENCE.vehicleGate.panelCount,
+      SITE_FENCE.vehicleGate.infillTreatment,
       SITE_FENCE.vehicleGate.terminalFrameCenterMm,
       SITE_FENCE.vehicleGate.supportPostCentersMm,
     );
@@ -1455,6 +1622,7 @@ export class TwinSceneController {
       SITE_FENCE.sidePedestrianGate.physicalStartMm,
       SITE_FENCE.sidePedestrianGate.physicalEndMm,
       SITE_FENCE.sidePedestrianGate.panelCount,
+      SITE_FENCE.sidePedestrianGate.infillTreatment,
       SITE_FENCE.sidePedestrianGate.terminalFrameCenterMm,
       SITE_FENCE.sidePedestrianGate.supportPostCentersMm,
     );
@@ -3105,10 +3273,193 @@ export class TwinSceneController {
     this.register(merged, "street", zone.id);
   }
 
+  private buildGardenPool() {
+    const pool = GARDEN_POOL;
+    const basin = boxAtPlan(
+      this.scene,
+      `${pool.label} · tmavý bazénový plášť`,
+      pool.centerMm,
+      pool.waterLengthMm + 140,
+      pool.waterWidthMm + 140,
+      0.42,
+      -0.49,
+    );
+    this.appearance(
+      basin,
+      this.materials.poolWater,
+      this.realisticMaterials.poolBasin,
+    );
+    basin.receiveShadows = true;
+    this.register(basin, "street", pool.id);
+
+    const water = boxAtPlan(
+      this.scene,
+      `${pool.label} · vodná plocha presne 4 000 × 2 500 mm`,
+      pool.centerMm,
+      pool.waterLengthMm,
+      pool.waterWidthMm,
+      0.045,
+      -0.055,
+    );
+    this.appearance(
+      water,
+      this.materials.poolWater,
+      this.realisticMaterials.poolWater,
+    );
+    water.receiveShadows = true;
+    this.register(water, "street", pool.id);
+
+    const coping = pool.copingWidthMm;
+    const outerLengthMm = pool.waterLengthMm + 2 * coping;
+    const copingSegments = [
+      {
+        centerMm: {
+          x: pool.centerMm.x,
+          y: pool.centerMm.y - pool.waterWidthMm / 2 - coping / 2,
+        },
+        widthMm: outerLengthMm,
+        depthMm: coping,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x,
+          y: pool.centerMm.y + pool.waterWidthMm / 2 + coping / 2,
+        },
+        widthMm: outerLengthMm,
+        depthMm: coping,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x - pool.waterLengthMm / 2 - coping / 2,
+          y: pool.centerMm.y,
+        },
+        widthMm: coping,
+        depthMm: pool.waterWidthMm,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x + pool.waterLengthMm / 2 + coping / 2,
+          y: pool.centerMm.y,
+        },
+        widthMm: coping,
+        depthMm: pool.waterWidthMm,
+      },
+    ];
+    for (const [index, segment] of copingSegments.entries()) {
+      const copingMesh = boxAtPlan(
+        this.scene,
+        `${pool.label} · svetlý porcelánový lem ${index + 1}`,
+        segment.centerMm,
+        segment.widthMm,
+        segment.depthMm,
+        0.09,
+        -0.045,
+      );
+      this.appearance(
+        copingMesh,
+        this.materials.paving,
+        this.realisticMaterials.stone,
+      );
+      copingMesh.receiveShadows = true;
+      this.castShadow(copingMesh);
+      this.register(copingMesh, "street", pool.id);
+    }
+
+    const ledSegments = [
+      {
+        centerMm: {
+          x: pool.centerMm.x,
+          y: pool.centerMm.y - pool.waterWidthMm / 2 + 22,
+        },
+        widthMm: pool.waterLengthMm - 80,
+        depthMm: 18,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x,
+          y: pool.centerMm.y + pool.waterWidthMm / 2 - 22,
+        },
+        widthMm: pool.waterLengthMm - 80,
+        depthMm: 18,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x - pool.waterLengthMm / 2 + 22,
+          y: pool.centerMm.y,
+        },
+        widthMm: 18,
+        depthMm: pool.waterWidthMm - 80,
+      },
+      {
+        centerMm: {
+          x: pool.centerMm.x + pool.waterLengthMm / 2 - 22,
+          y: pool.centerMm.y,
+        },
+        widthMm: 18,
+        depthMm: pool.waterWidthMm - 80,
+      },
+    ];
+    for (const [index, segment] of ledSegments.entries()) {
+      const led = boxAtPlan(
+        this.scene,
+        `${pool.label} · zapustený LED pás ${index + 1}`,
+        segment.centerMm,
+        segment.widthMm,
+        segment.depthMm,
+        0.018,
+        -0.032,
+      );
+      this.appearance(
+        led,
+        this.materials.poolWater,
+        this.realisticMaterials.poolLed,
+      );
+      this.register(led, "street", pool.id);
+    }
+
+    for (const [index, step] of [
+      { x: 9_930, widthMm: 360, topM: -0.14 },
+      { x: 10_250, widthMm: 280, topM: -0.27 },
+      { x: 10_510, widthMm: 240, topM: -0.4 },
+    ].entries()) {
+      const heightM = 0.1;
+      const stair = boxAtPlan(
+        this.scene,
+        `${pool.label} · ponorený schod ${index + 1}`,
+        { x: step.x, y: pool.centerMm.y },
+        step.widthMm,
+        1_250,
+        heightM,
+        step.topM - heightM,
+      );
+      this.appearance(
+        stair,
+        this.materials.paving,
+        this.realisticMaterials.stone,
+      );
+      stair.receiveShadows = true;
+      this.register(stair, "street", pool.id);
+    }
+
+    const outline = CreateLines(
+      `${pool.label} · koordinačný obrys lemu`,
+      {
+        points: pool.copingFootprintMm.map((point) => point3(point, 0.055)),
+      },
+      this.scene,
+    );
+    outline.color = Color3.FromHexString("#5ed9f1");
+    outline.alpha = 0.88;
+    outline.isPickable = false;
+    this.technicalOverlay(outline);
+    this.register(outline, "street", pool.id);
+  }
+
   private buildLandscape() {
     for (const zone of TERRACE_ZONES_D1) {
       this.buildDeckZone(zone);
     }
+    this.buildGardenPool();
 
     // Gravel maintenance strip along the plastered facades.
     for (const strip of [
@@ -3168,15 +3519,21 @@ export class TwinSceneController {
     const plantingBeds = [
       [
         { x: 3600, y: 14200 },
-        { x: 7100, y: 14700 },
-        { x: 10500, y: 15600 },
-        { x: 14400, y: 16400 },
-        { x: 17400, y: 18100 },
+        { x: 6900, y: 14650 },
+        { x: 8900, y: 15300 },
+        { x: 9200, y: 16500 },
+        { x: 9200, y: 17550 },
+        { x: 11200, y: 18150 },
+        { x: 14400, y: 18800 },
+        { x: 17400, y: 19900 },
         { x: 17600, y: 20600 },
         { x: 15800, y: 19900 },
-        { x: 13000, y: 17900 },
-        { x: 9800, y: 17100 },
+        { x: 13900, y: 19200 },
+        { x: 11000, y: 18700 },
+        { x: 8800, y: 18000 },
+        { x: 7400, y: 16900 },
         { x: 5400, y: 16000 },
+        { x: 3600, y: 15000 },
         { x: 3600, y: 14200 },
       ],
       [
@@ -3206,9 +3563,9 @@ export class TwinSceneController {
       { x: 5200, y: 15400, s: 1.2 },
       { x: 6900, y: 16000, s: 1.0 },
       { x: 8700, y: 16400, s: 1.25 },
-      { x: 10500, y: 16550, s: 0.92 },
-      { x: 12600, y: 16900, s: 1.18 },
-      { x: 14800, y: 17400, s: 1.05 },
+      { x: 9000, y: 17650, s: 0.92 },
+      { x: 11400, y: 18300, s: 1.18 },
+      { x: 14500, y: 18900, s: 1.05 },
       { x: 16700, y: 18800, s: 1.3 },
       { x: 17100, y: 20300, s: 1.08 },
       { x: 29200, y: 18800, s: 1.25 },
@@ -3228,8 +3585,8 @@ export class TwinSceneController {
     for (const [index, grass] of [
       { x: 4700, y: 15100, s: 1.05 },
       { x: 7600, y: 16800, s: 1.18 },
-      { x: 11200, y: 17450, s: 0.94 },
-      { x: 13900, y: 18000, s: 1.12 },
+      { x: 10200, y: 18100, s: 0.94 },
+      { x: 13600, y: 18700, s: 1.12 },
       { x: 16400, y: 20100, s: 1.2 },
       { x: 22300, y: 23300, s: 1.24 },
       { x: 27400, y: 23050, s: 1.02 },

@@ -6,6 +6,7 @@ import {
   terraceZoneAreaM2,
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
+  GARDEN_POOL,
   HOUSE,
   ROAD_CONTEXT,
   SITE_FENCE,
@@ -15,6 +16,7 @@ import {
   foundationVolumeM3,
   findSource,
   lineLengthMm,
+  polygonAreaM2,
   sjtskToLocalMm,
   updateFoundationWidth,
 } from "../lib/twin-site";
@@ -458,6 +460,7 @@ describe("site evidence seed", () => {
       approvedMaterial: null,
     });
     expect(SOURCES.clientFenceMarkup20260821.kind).toBe("CLIENT_REVISION");
+    expect(SOURCES.clientGardenRevision20260821.kind).toBe("CLIENT_REVISION");
     expect(SOURCES.fenceDesignProposal20260821.kind).toBe("DESIGN_PROPOSAL");
     expect(SITE_FENCE.sourceIds.every((sourceId) => findSource(sourceId))).toBe(
       true,
@@ -637,6 +640,10 @@ describe("site evidence seed", () => {
     expect(sideGate.status).toBe(
       "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
     );
+    expect(SITE_FENCE.vehicleGate.infillTreatment).toBe(
+      "SLATTED_ALUMINIUM",
+    );
+    expect(sideGate.infillTreatment).toBe("SOLID_ALUMINIUM");
     expect(Math.hypot(
       sideGate.physicalStartMm.x - sideGate.supportPostCentersMm[0].x,
       sideGate.physicalStartMm.y - sideGate.supportPostCentersMm[0].y,
@@ -647,13 +654,21 @@ describe("site evidence seed", () => {
     )).toBeCloseTo(60, 8);
     expect(SITE_FENCE.visualProposal).toMatchObject({
       status: "DESIGN_PROPOSAL",
-      style: "LUXURY_MINIMAL_VERTICAL_ALUMINIUM",
+      style: "HYBRID_LUXURY_PRIVACY",
+      frontTreatment: "SLATTED_ALUMINIUM",
+      sideTreatment: "SOLID_ALUMINIUM",
+      rearTreatment: "LIVING_HEDGE",
       proposedHeightMm: 1600,
       finish: "FINE_TEXTURE_POWDER_COAT_RAL_7016",
       colorHex: "#252a2c",
       slatWidthMm: 60,
       slatPitchMm: 110,
       physicalBoundaryInsetMm: 100,
+      solidPanelDepthMm: 52,
+      solidPanelJointMm: 22,
+      rearHedgeHeightMm: 1850,
+      rearHedgeDepthMm: 900,
+      rearHedgeCenterlineOffsetMm: 450,
       telescopicPanelOverlapMm: 100,
       telescopicPanelPlaneOffsetMm: 45,
     });
@@ -740,6 +755,21 @@ describe("site evidence seed", () => {
       SITE_FENCE.physicalFixedRuns.map((run) => [run.id, run]),
     );
     expect(
+      Object.fromEntries(
+        SITE_FENCE.physicalFixedRuns.map(({ id, treatment }) => [
+          id,
+          treatment,
+        ]),
+      ),
+    ).toEqual({
+      "FENCE-PHYSICAL-FRONT-LEFT": "SLATTED_ALUMINIUM",
+      "FENCE-PHYSICAL-FRONT-RIGHT": "SLATTED_ALUMINIUM",
+      "FENCE-PHYSICAL-EAST-UPPER": "SOLID_ALUMINIUM",
+      "FENCE-PHYSICAL-EAST-LOWER": "SOLID_ALUMINIUM",
+      "FENCE-PHYSICAL-REAR": "LIVING_HEDGE",
+      "FENCE-PHYSICAL-WEST": "SOLID_ALUMINIUM",
+    });
+    expect(
       SITE_FENCE.physicalFixedRuns.every(
         ({ status }) =>
           status ===
@@ -815,10 +845,80 @@ describe("site evidence seed", () => {
           SITE_FENCE.visualProposal.physicalBoundaryInsetMm,
       ),
     ).toBeLessThan(1);
+    expect(
+      SITE_FENCE.visualProposal.physicalBoundaryInsetMm +
+        SITE_FENCE.visualProposal.rearHedgeCenterlineOffsetMm -
+        SITE_FENCE.visualProposal.rearHedgeDepthMm / 2,
+    ).toBeGreaterThanOrEqual(100);
   });
 });
 
 describe("data to geometry contract", () => {
+  it("places the requested 4 × 2.5 m pool inside the open L courtyard", () => {
+    expect(GARDEN_POOL).toMatchObject({
+      id: "POOL-COURTYARD-4X2_5",
+      centerMm: { x: 11_750, y: 15_750 },
+      waterLengthMm: 4_000,
+      waterWidthMm: 2_500,
+      waterAreaM2: 10,
+      copingWidthMm: 300,
+      placementStatus:
+        "DESIGN_PROPOSAL_REQUIRES_COORDINATION_AND_CLIENT_CONFIRMATION",
+    });
+    expect(GARDEN_POOL.waterFootprintMm[0]).toEqual(
+      GARDEN_POOL.waterFootprintMm.at(-1),
+    );
+    const edgeLengthsMm = GARDEN_POOL.waterFootprintMm
+      .slice(1)
+      .map((end, index) => {
+        const start = GARDEN_POOL.waterFootprintMm[index];
+        return Math.hypot(end.x - start.x, end.y - start.y);
+      })
+      .sort((left, right) => left - right);
+    expect(edgeLengthsMm).toEqual([2_500, 2_500, 4_000, 4_000]);
+    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(10);
+    expect(
+      GARDEN_POOL.sourceIds.every((sourceId) => findSource(sourceId)),
+    ).toBe(true);
+    expect(SOURCES.clientGardenRevision20260821.detail).toContain(
+      "4,0 × 2,5 m",
+    );
+    expect(SOURCES.poolDesignProposal20260821.kind).toBe("DESIGN_PROPOSAL");
+
+    const copingXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
+    const copingYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
+    const poolBounds = {
+      x0: Math.min(...copingXs),
+      x1: Math.max(...copingXs),
+      y0: Math.min(...copingYs),
+      y1: Math.max(...copingYs),
+    };
+    const courtyardBounds = {
+      x0: HOUSE.originMm.x,
+      x1: HOUSE.originMm.x + HOUSE.wing.xMm,
+      y0: HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
+      y1: HOUSE.originMm.y + HOUSE.maximumDepthMm,
+    };
+    expect(poolBounds.x0).toBeGreaterThan(courtyardBounds.x0);
+    expect(poolBounds.x1).toBeLessThan(courtyardBounds.x1);
+    expect(poolBounds.y0).toBeGreaterThan(courtyardBounds.y0);
+    expect(poolBounds.y1).toBeLessThan(courtyardBounds.y1);
+
+    for (const zone of TERRACE_ZONES_D1) {
+      for (const rect of zone.rectsMm) {
+        const overlaps =
+          Math.max(poolBounds.x0, rect.x0) <
+            Math.min(poolBounds.x1, rect.x1) &&
+          Math.max(poolBounds.y0, rect.y0) <
+            Math.min(poolBounds.y1, rect.y1);
+        expect(overlaps).toBe(false);
+      }
+    }
+    expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(
+      825,
+    );
+  });
+
   it("keeps the luxury fence raster at a fixed pitch with balanced margins", () => {
     const style = SITE_FENCE.visualProposal;
     const gateLengthMm = Math.hypot(
@@ -832,15 +932,7 @@ describe("data to geometry contract", () => {
         (SITE_FENCE.vehicleGate.panelCount - 1) *
           style.telescopicPanelOverlapMm) /
       SITE_FENCE.vehicleGate.panelCount;
-    for (const lengthMm of [
-      panelLengthMm,
-      Math.hypot(
-        SITE_FENCE.sidePedestrianGate.physicalEndMm.x -
-          SITE_FENCE.sidePedestrianGate.physicalStartMm.x,
-        SITE_FENCE.sidePedestrianGate.physicalEndMm.y -
-          SITE_FENCE.sidePedestrianGate.physicalStartMm.y,
-      ),
-    ]) {
+    for (const lengthMm of [panelLengthMm]) {
       const centers = slatCenterDistancesMm(
         lengthMm,
         style.slatWidthMm,

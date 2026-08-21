@@ -35,6 +35,15 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /Březí u Mikulova/);
   assert.match(html, /Živý výkres/);
   assert.match(html, /Parcela 6012\/26/);
+  assert.match(html, /Bazén 4 × 2,5 m/);
+  assert.match(
+    html,
+    /role="treeitem"[^>]+aria-selected="false"[^>]*>[\s\S]{0,400}?Bazén 4 × 2,5 m/,
+  );
+  assert.match(
+    html,
+    /Areál a komunikácia<\/span><small>6<\/small>/,
+  );
   assert.match(html, /ČÚZK/);
   assert.match(html, /DÁTOVÁ STOPA/);
   assert.match(html, /Skutočné prípojky/);

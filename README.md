@@ -21,10 +21,16 @@ namiesto prvého garážového okna; súkromnú záhradu uzatvára nový plot po
 na úrovni čelnej fasády, takže nezatvára nový priamy príjazd do garáže. Ostatná
 geometria D1 zostáva nedotknutá.
 
-Antracitové hliníkové lamely RAL 7016, výška 1,6 m, trojdielny teleskopický
-pojazd brány a skrytá pešia bránka pri EAST-03 sú vizualizačný dizajnový návrh.
-Nie sú schválenou realizačnou špecifikáciou; materiál, výšku, konkrétny systém
-a presné geodetické osadenie treba potvrdiť pred realizáciou.
+Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
+7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na
+hustý živý plot. Do otvoreného L-dvora pridáva bazén s vodnou plochou presne
+4,0 × 2,5 m, rovnobežne s hlavnou terasou. Modelová poloha bazéna nekoliduje s
+domom ani terasami, ale najmenší odstup od projektovanej dažďovej kanalizácie je
+približne 0,83 m. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
+bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
+vizualizačný dizajnový návrh. Nie sú schválenou realizačnou špecifikáciou;
+materiály, výsadbu, systém a presné geodetické osadenie treba potvrdiť pred
+realizáciou.
 
 Režim **Realita** používa projektové rozmery a materiály D1 vrátane oboch
 krytých terás odčítaných z vektorov výkresu D1.1.002: zapustenej presklenej

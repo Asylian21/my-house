@@ -46,6 +46,7 @@ import type { NavigationMode } from "@/lib/twin-viewport-contract";
 import {
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
+  GARDEN_POOL,
   HOUSE,
   LAYERS,
   SITE_FENCE,
@@ -201,20 +202,22 @@ function getEntityDetail(
       id,
       code: "OP",
       eyebrow: "OPLOTENIE SÚKROMNEJ ZÁHRADY",
-      title: "Minimalistický lamelový plot",
-      subtitle: "Antracitový hliník · dizajnový návrh",
+      title: "Hybridný minimalistický plot",
+      subtitle: "Čelné lamely · plné boky · živý plot vzadu",
       status: "Poloha podľa náčrtu · materiál čaká na výber",
       statusTone: "design",
       rows: [
         { label: "Trasa plotu podľa náčrtu", value: fmt(tracedLengthMm / 1000), unit: "m" },
         { label: "Navrhovaná výška", value: fmt(SITE_FENCE.visualProposal.proposedHeightMm), unit: "mm" },
-        { label: "Raster lamiel", value: `${SITE_FENCE.visualProposal.slatWidthMm} / ${SITE_FENCE.visualProposal.slatPitchMm}`, unit: "mm" },
+        { label: "Predná línia", value: `lamely ${SITE_FENCE.visualProposal.slatWidthMm} / ${SITE_FENCE.visualProposal.slatPitchMm}`, unit: "mm" },
+        { label: "Bočné línie", value: "plné hliníkové polia · nepriehľadné" },
+        { label: "Zadná línia", value: `hustý živý plot · návrh ${SITE_FENCE.visualProposal.rearHedgeHeightMm}`, unit: "mm" },
         { label: "Povrch", value: "RAL 7016 · jemná štruktúra" },
         { label: "Uzatvorenie", value: "súkromná záhrada · y = 3 000 mm" },
         { label: "Priamy vjazd do garáže", value: "zostáva voľný" },
       ],
       sourceIds: SITE_FENCE.sourceIds,
-      note: "Žltý náčrt je prenesený na líniu čelnej fasády a následne po bočných a zadnej katastrálnej hranici. Výška 1,6 m, hliník RAL 7016 a detail lamiel sú kvalitný vizualizačný návrh, nie potvrdená realizačná špecifikácia. Pred realizáciou treba plot geodeticky vytýčiť.",
+      note: "Žltý náčrt je prenesený na líniu čelnej fasády a následne po bočných a zadnej katastrálnej hranici. Predná časť ostáva vzdušná lamelová, boky sú plné RAL 7016 a zadnú kovovú líniu nahrádza hustý živý plot. Výška, výrobok aj druh výsadby sú vizualizačný návrh; pred realizáciou treba hranice geodeticky vytýčiť.",
     };
   }
 
@@ -232,7 +235,7 @@ function getEntityDetail(
         : "Skrytá bránka pri EAST-03",
       subtitle: vehicle
         ? "Čistý otvor 4,2 m · zasúvanie doľava"
-        : "Jednotný raster s plotom",
+        : "Plná výplň v bočnom plote",
       status: vehicle
         ? "Poloha podľa zeleného náčrtu · mechanizmus návrh"
         : "Funkčný dizajnový návrh · čaká na potvrdenie",
@@ -248,14 +251,36 @@ function getEntityDetail(
         : [
             { label: "Čistá šírka", value: fmt(SITE_FENCE.sidePedestrianGate.clearWidthMm), unit: "mm" },
             { label: "Napojenie", value: SITE_FENCE.sidePedestrianGate.accessOpeningId },
-            { label: "Vzhľad", value: "bez viditeľného rozdielu v rastri" },
+            { label: "Vzhľad", value: "plná RAL 7016 · skryté kovanie" },
           ],
       sourceIds: vehicle
         ? SITE_FENCE.vehicleGate.sourceIds
         : SITE_FENCE.sidePedestrianGate.sourceIds,
       note: vehicle
         ? "Zelený otvor je na pôvodnom ľavom zjazde, nie pred novou garážovou bránou. Jedno 4,2 m posuvné krídlo sa do ľavého priestoru nezmestí, preto model navrhuje kompaktný trojdielny teleskopický systém na zapustenej koľajnici."
-        : "Bránka nie je samostatne vyznačená v náčrte. Je zapustená do rovnakého lamelového rastra, aby nový plot nezablokoval spevnený prístup k bočným dverám EAST-03.",
+        : "Bránka nie je samostatne vyznačená v náčrte. Je zapustená do plného bočného poľa s rovnakým povrchom, aby zostala nenápadná a zároveň nezablokovala spevnený prístup k dverám EAST-03.",
+    };
+  }
+
+  if (id === GARDEN_POOL.id) {
+    return {
+      id,
+      code: "BZ",
+      eyebrow: "ZÁHRADNÝ BAZÉN",
+      title: GARDEN_POOL.label,
+      subtitle: "Otvorený L-dvor pri hlavnej terase",
+      status: "Rozmer podľa revízie · poloha koordinačný návrh",
+      statusTone: "design",
+      rows: [
+        { label: "Vodná plocha", value: `${fmt(GARDEN_POOL.waterLengthMm)} × ${fmt(GARDEN_POOL.waterWidthMm)}`, unit: "mm" },
+        { label: "Plocha vody", value: fmt(GARDEN_POOL.waterAreaM2), unit: "m²" },
+        { label: "Svetlý lem", value: fmt(GARDEN_POOL.copingWidthMm), unit: "mm" },
+        { label: "Odstup od hlavnej terasy", value: fmt(GARDEN_POOL.modelledClearancesMm.mainTerrace), unit: "mm" },
+        { label: "Najmenší modelový odstup od dažďovej vody", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
+        { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
+      ],
+      sourceIds: GARDEN_POOL.sourceIds,
+      note: "Bazén má požadovanú vodnú plochu 4,0 × 2,5 m. Presný stred je zvolený tak, aby nekolidoval s domom, terasami ani modelovanou dažďovou nádržou a vsakom. Najmenší odstup od projektovaného potrubia je približne 0,83 m; pred realizáciou treba polohu zosúladiť s bazénovou technológiou a overiť skutočné vedenie dažďovej kanalizácie.",
     };
   }
 
@@ -689,7 +714,7 @@ export function TwinStudio() {
           )}
 
           <details open>
-            <summary><Map size={15} /><span>Areál a komunikácia</span><small>5</small></summary>
+            <summary><Map size={15} /><span>Areál a komunikácia</span><small>6</small></summary>
             <div role="group">
               {matches("miestna komunikácia 6012/1") && (
                 <button role="treeitem" aria-selected={selectionId === "ROAD-6012-1"} className={`tree-object ${selectionId === "ROAD-6012-1" ? "selected" : ""}`} onClick={() => select("ROAD-6012-1")}>
@@ -703,6 +728,11 @@ export function TwinStudio() {
               )}
               {matches("terasy spevnené plochy") && (
                 <div className="tree-static"><span className="entity-token terrain">SP</span><span><strong>Spevnené plochy</strong><small>C3/D1 · návrh</small></span></div>
+              )}
+              {matches("bazén 4 × 2,5 m dvor terasa") && (
+                <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className={`tree-object ${selectionId === GARDEN_POOL.id ? "selected" : ""}`} onClick={() => select(GARDEN_POOL.id)}>
+                  <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>Bazén 4 × 2,5 m</strong><small>vodná plocha 10 m² · návrh</small></span>
+                </button>
               )}
               {matches("plot oplotenie súkromná záhrada") && (
                 <button role="treeitem" aria-selected={selectionId === SITE_FENCE.id} className={`tree-object ${selectionId === SITE_FENCE.id ? "selected" : ""}`} onClick={() => select(SITE_FENCE.id)}>

@@ -142,11 +142,27 @@ export const SOURCES = {
     date: "21. 8. 2026 · 16:22",
     kind: "CLIENT_REVISION",
   },
+  clientGardenRevision20260821: {
+    id: "SRC-CLIENT-GARDEN-20260821",
+    title: "Revízia záhrady stavebníka",
+    detail:
+      "Bočné hranice majú byť plné a nepriehľadné, zadnú hranicu má tvoriť hustý živý plot a do stredu otvoreného L-dvora pri terase sa dopĺňa bazén s vodnou plochou 4,0 × 2,5 m.",
+    date: "21. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   fenceDesignProposal20260821: {
     id: "SRC-FENCE-DESIGN-20260821",
     title: "Dizajnový návrh oplotenia",
     detail:
-      "Vizualizačný návrh zvislých hliníkových lamiel RAL 7016, trojdielnej teleskopickej brány a skrytej pešej bránky pri EAST-03. Materiál, výška, mechanizmus aj bočná bránka čakajú na potvrdenie stavebníka.",
+      "Vizualizačný návrh kombinuje čelné zvislé hliníkové lamely RAL 7016, plné bočné hliníkové polia, trojdielnu teleskopickú bránu, plnú skrytú bránku pri EAST-03 a hustý živý plot na zadnej hranici. Materiál, výška, mechanizmus aj druh výsadby čakajú na potvrdenie stavebníka.",
+    date: "21. 8. 2026",
+    kind: "DESIGN_PROPOSAL",
+  },
+  poolDesignProposal20260821: {
+    id: "SRC-POOL-DESIGN-20260821",
+    title: "Dizajnový návrh záhradného bazéna",
+    detail:
+      "Vodná plocha 4,0 × 2,5 m je orientovaná rovnobežne so záhradnou terasou a osadená v otvorenom L-dvore s kamenným lemom; presný typ bazéna, technológia, hĺbka a realizačné osadenie čakajú na potvrdenie.",
     date: "21. 8. 2026",
     kind: "DESIGN_PROPOSAL",
   },
@@ -858,6 +874,10 @@ export interface PhysicalFenceRunMm {
   readonly label: string;
   readonly pointsMm: readonly Point2Mm[];
   readonly referenceRunIds: readonly string[];
+  readonly treatment:
+    | "SLATTED_ALUMINIUM"
+    | "SOLID_ALUMINIUM"
+    | "LIVING_HEDGE";
   readonly status: "DESIGN_PROPOSAL_REQUIRES_SURVEY_AND_CLIENT_CONFIRMATION";
 }
 
@@ -873,11 +893,13 @@ const physicalFenceRun = (
   label: string,
   pointsMm: readonly Point2Mm[],
   referenceRunIds: readonly string[],
+  treatment: PhysicalFenceRunMm["treatment"],
 ): PhysicalFenceRunMm => ({
   id,
   label,
   pointsMm,
   referenceRunIds,
+  treatment,
   status: "DESIGN_PROPOSAL_REQUIRES_SURVEY_AND_CLIENT_CONFIRMATION",
 });
 
@@ -1007,6 +1029,7 @@ export const SITE_FENCE = Object.freeze({
   datumYmm: HOUSE.facades.front.faceYmm,
   sourceIds: [
     SOURCES.clientFenceMarkup20260821.id,
+    SOURCES.clientGardenRevision20260821.id,
     SOURCES.fenceDesignProposal20260821.id,
     SOURCES.cadastre.id,
     SOURCES.coordination.id,
@@ -1093,36 +1116,42 @@ export const SITE_FENCE = Object.freeze({
       "Fyzické ľavé čelné pole",
       [FENCE_MITER_WEST_FRONT, { x: 2235, y: 3000 }],
       ["FENCE-FIXED-FRONT-LEFT", "FENCE-FIXED-WEST"],
+      "SLATTED_ALUMINIUM",
     ),
     physicalFenceRun(
       "FENCE-PHYSICAL-FRONT-RIGHT",
       "Fyzické pravé čelné pole",
       [{ x: 28040, y: 3000 }, FENCE_MITER_FRONT_EAST],
       ["FENCE-FIXED-FRONT-RIGHT", "FENCE-FIXED-EAST-UPPER"],
+      "SLATTED_ALUMINIUM",
     ),
     physicalFenceRun(
       "FENCE-PHYSICAL-EAST-UPPER",
       "Fyzický východný plot pred bočnou bránkou",
       [FENCE_MITER_FRONT_EAST, FENCE_SIDE_GATE_PHYSICAL_START],
       ["FENCE-FIXED-EAST-UPPER"],
+      "SOLID_ALUMINIUM",
     ),
     physicalFenceRun(
       "FENCE-PHYSICAL-EAST-LOWER",
       "Fyzický východný plot za bočnou bránkou",
       [FENCE_SIDE_GATE_PHYSICAL_END, FENCE_MITER_EAST_REAR],
       ["FENCE-FIXED-EAST-LOWER"],
+      "SOLID_ALUMINIUM",
     ),
     physicalFenceRun(
       "FENCE-PHYSICAL-REAR",
       "Fyzický zadný plot",
       [FENCE_MITER_EAST_REAR, FENCE_MITER_REAR_WEST],
       ["FENCE-FIXED-REAR"],
+      "LIVING_HEDGE",
     ),
     physicalFenceRun(
       "FENCE-PHYSICAL-WEST",
       "Fyzický západný plot",
       [FENCE_MITER_REAR_WEST, FENCE_MITER_WEST_FRONT],
       ["FENCE-FIXED-WEST"],
+      "SOLID_ALUMINIUM",
     ),
   ] as const satisfies readonly PhysicalFenceRunMm[],
   vehicleGate: {
@@ -1140,6 +1169,7 @@ export const SITE_FENCE = Object.freeze({
     mechanismProposal: "TRIPLE_TELESCOPIC_TRACKED_SLIDING",
     mechanismStatus: "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
     panelCount: 3,
+    infillTreatment: "SLATTED_ALUMINIUM" as const,
     openingDirection: "LOCAL_X_NEGATIVE",
     availableStackPocketMm: 2357,
     proposedStackEnvelopeMm: 1900,
@@ -1170,6 +1200,7 @@ export const SITE_FENCE = Object.freeze({
     clearWidthMm: 1200,
     accessOpeningId: "EAST-03",
     panelCount: 1,
+    infillTreatment: "SOLID_ALUMINIUM" as const,
     endSupport: "POST",
     physicalStartMm: FENCE_SIDE_GATE_PHYSICAL_START,
     physicalEndMm: FENCE_SIDE_GATE_PHYSICAL_END,
@@ -1191,6 +1222,7 @@ export const SITE_FENCE = Object.freeze({
     ],
     status: "DESIGN_PROPOSAL_REQUIRES_CLIENT_CONFIRMATION",
     sourceIds: [
+      SOURCES.clientGardenRevision20260821.id,
       SOURCES.fenceDesignProposal20260821.id,
       SOURCES.floorPlan.id,
       SOURCES.clientRevision20260821.id,
@@ -1206,7 +1238,10 @@ export const SITE_FENCE = Object.freeze({
   approvedMaterial: null,
   visualProposal: {
     status: "DESIGN_PROPOSAL",
-    style: "LUXURY_MINIMAL_VERTICAL_ALUMINIUM",
+    style: "HYBRID_LUXURY_PRIVACY",
+    frontTreatment: "SLATTED_ALUMINIUM",
+    sideTreatment: "SOLID_ALUMINIUM",
+    rearTreatment: "LIVING_HEDGE",
     proposedHeightMm: 1600,
     finish: "FINE_TEXTURE_POWDER_COAT_RAL_7016",
     colorHex: "#252a2c",
@@ -1219,12 +1254,18 @@ export const SITE_FENCE = Object.freeze({
     postSizeMm: 80,
     gatePostSizeMm: 120,
     maximumPostSpacingMm: 2000,
+    solidPanelDepthMm: 52,
+    solidPanelJointMm: 22,
     curbHeightMm: 100,
     curbDepthMm: 120,
     physicalBoundaryInsetMm: FENCE_PHYSICAL_BOUNDARY_INSET_MM,
     telescopicPanelOverlapMm: 100,
     telescopicPanelPlaneOffsetMm: 45,
     gateThresholdDepthMm: 260,
+    rearHedgeHeightMm: 1850,
+    rearHedgeDepthMm: 900,
+    rearHedgeCenterlineOffsetMm: 450,
+    rearHedgeClusterSpacingMm: 620,
   },
   legacyC3: {
     proposedHeightMm: 1600,
@@ -1298,6 +1339,48 @@ export function terraceZoneAreaM2(zone: TerraceZoneD1): number {
     ) / 1_000_000
   );
 }
+
+export const GARDEN_POOL = Object.freeze({
+  id: "POOL-COURTYARD-4X2_5",
+  label: "Bazén 4 × 2,5 m",
+  targetZone: "OPEN_L_COURTYARD_BY_MAIN_TERRACE",
+  placementStatus:
+    "DESIGN_PROPOSAL_REQUIRES_COORDINATION_AND_CLIENT_CONFIRMATION",
+  centerMm: { x: 11_750, y: 15_750 } as const satisfies Point2Mm,
+  orientation: "LONG_EDGE_PARALLEL_TO_MAIN_TERRACE_LOCAL_X",
+  waterLengthMm: 4_000,
+  waterWidthMm: 2_500,
+  waterAreaM2: 10,
+  copingWidthMm: 300,
+  waterFootprintMm: [
+    { x: 9_750, y: 14_500 },
+    { x: 13_750, y: 14_500 },
+    { x: 13_750, y: 17_000 },
+    { x: 9_750, y: 17_000 },
+    { x: 9_750, y: 14_500 },
+  ] as const satisfies readonly Point2Mm[],
+  copingFootprintMm: [
+    { x: 9_450, y: 14_200 },
+    { x: 14_050, y: 14_200 },
+    { x: 14_050, y: 17_300 },
+    { x: 9_450, y: 17_300 },
+    { x: 9_450, y: 14_200 },
+  ] as const satisfies readonly Point2Mm[],
+  modelledClearancesMm: {
+    mainTerrace: 1_100,
+    wingTerrace: 3_990,
+    rainTankShell: 905,
+    infiltrationObject: 828,
+    closestRainPipeShell: 825,
+  },
+  sourceIds: [
+    SOURCES.clientGardenRevision20260821.id,
+    SOURCES.poolDesignProposal20260821.id,
+    SOURCES.floorPlan.id,
+    SOURCES.rainwater.id,
+    SOURCES.asBuiltGap.id,
+  ],
+});
 
 const route = (
   id: string,
