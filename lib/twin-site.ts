@@ -551,7 +551,12 @@ export const HOUSE = Object.freeze({
       eastWallInnerXmm: 27540,
       cornerPillar: { startXmm: 21040, startYmm: 21535, sizeMm: 500 },
       westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 3125 },
-      soffitElevationMm: 3090,
+      // The porch is open to the roof: its ceiling follows the two wing roof
+      // planes up to the ridge instead of a flat soffit, and the larch gable
+      // wall sits on the recessed plane so the front stays an open frame.
+      openToRoof: true,
+      ceilingClearanceMm: 60,
+      gablePlaneYmm: 19535,
       portal: "P04 · ocelový rám krovu HEA160",
     },
     gardenLoggia: {

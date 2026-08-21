@@ -342,6 +342,11 @@ describe("documented D1 covered porches and terrace zones", () => {
       porch.glazing.startXmm + porch.glazing.widthMm,
     );
     expect(porch.cornerPillar.sizeMm).toBe(500);
+    // The porch is open to the roof: the larch gable sits on the recessed
+    // plane, so nothing closes the front above the opening.
+    expect(porch.openToRoof).toBe(true);
+    expect(porch.gablePlaneYmm).toBe(porch.glazingFaceYmm);
+    expect(porch.ceilingClearanceMm).toBeGreaterThan(0);
     expect(porch.westOpening.endYmm - porch.westOpening.startYmm).toBe(2_000);
     expect(HOUSE.facades.wingWest.wallEndYmm).toBe(porch.westOpening.startYmm);
   });

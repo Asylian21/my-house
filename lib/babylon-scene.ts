@@ -69,6 +69,8 @@ import {
 import {
   deriveJoinedRoofGeometry,
   mainFrontRoofHeightMm,
+  wingInnerRoofHeightMm,
+  wingOuterRoofHeightMm,
   type JoinedRoofGeometry,
   type RoofPointMm,
   type RoofVertexMm,
@@ -467,7 +469,7 @@ export class TwinSceneController {
       stone: pbrMaterial(this.scene, "real-stone", "#d6d2c6", 0.9),
       fabric: pbrMaterial(this.scene, "real-fabric", "#e6e2d8", 0.95),
       upholsteryDark: pbrMaterial(this.scene, "real-upholstery-dark", "#22292a", 0.94),
-      curtain: pbrMaterial(this.scene, "real-curtain", "#e8e6df", 0.96, 0, 0.85),
+      curtain: pbrMaterial(this.scene, "real-curtain", "#e2e0d8", 0.96, 0, 0.6),
       interiorDark: pbrMaterial(this.scene, "real-interior-dark", "#1a2325", 0.75),
       warmInterior: pbrMaterial(this.scene, "real-interior", "#d5a76a", 0.82),
       plantGrass: pbrMaterial(this.scene, "real-plant-grass", "#ffffff", 0.9),
@@ -475,7 +477,7 @@ export class TwinSceneController {
     };
     this.realisticMaterials.glass.indexOfRefraction = 1.5;
     this.realisticMaterials.glass.metallicF0Factor = 0.06;
-    this.realisticMaterials.glass.environmentIntensity = 1.6;
+    this.realisticMaterials.glass.environmentIntensity = 1.15;
     this.realisticMaterials.glass.useSpecularOverAlpha = true;
     this.realisticMaterials.glass.backFaceCulling = true;
     this.realisticMaterials.glass.needDepthPrePass = true;
@@ -1065,13 +1067,17 @@ export class TwinSceneController {
     const wingEndY = HOUSE.originMm.y + HOUSE.maximumDepthMm + 8;
     const wingLeftX = HOUSE.originMm.x + HOUSE.wing.xMm;
     const wingRightX = wingLeftX + HOUSE.wing.widthMm;
+    // The gable itself is the recessed porch wall, 2 500 mm behind the roof
+    // line: the front stays an open frame of white rakes, exactly as the
+    // approved reference photograph and the D1.1.006 elevation read.
+    const gableYmm = HOUSE.porches.wingEnd.gablePlaneYmm + 20;
     const wingGable = createVerticalTriangle(
       this.scene,
-      "Drevený záhradný štít",
+      "Modřínový štít krytej terasy · zapustený 2 500 mm",
       [
-        new Vector3(xM(wingLeftX), eave, zM(wingEndY)),
-        new Vector3(xM(wingRightX), eave, zM(wingEndY)),
-        new Vector3(xM((wingLeftX + wingRightX) / 2), ridge, zM(wingEndY)),
+        new Vector3(xM(wingLeftX), eave, zM(gableYmm)),
+        new Vector3(xM(wingRightX), eave, zM(gableYmm)),
+        new Vector3(xM((wingLeftX + wingRightX) / 2), ridge, zM(gableYmm)),
       ],
       new Vector3(0, 0, -1),
     );
@@ -1092,7 +1098,7 @@ export class TwinSceneController {
       const fixture = boxAtPlan(
         this.scene,
         `Nástenné svietidlo štítu ${index + 1} · ilustračný koncept`,
-        { x: lamp.x, y: wingEndY - 30 },
+        { x: lamp.x, y: gableYmm + 30 },
         95,
         70,
         0.17,
@@ -1628,12 +1634,14 @@ export class TwinSceneController {
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
   private buildWingPorch() {
     const porch = HOUSE.porches.wingEnd;
-    const soffitM = porch.soffitElevationMm * MM_TO_M;
+    const wallTopM = HOUSE.eavesElevationMm * MM_TO_M;
+    const roofParameters = deriveJoinedRoofGeometry().parameters;
+    const clearanceMm = porch.ceilingClearanceMm;
 
     const backSegments = segmentFacadeMm(
       porch.glazing.startXmm,
       porch.backWall.endXmm,
-      porch.soffitElevationMm,
+      HOUSE.eavesElevationMm,
       [
         {
           id: "PORCH-GLAZING",
@@ -1673,10 +1681,10 @@ export class TwinSceneController {
       },
       porch.backWall.endXmm - porch.backWall.startXmm,
       36,
-      soffitM,
+      wallTopM,
       0,
     );
-    backLarch.material = this.larchFor(backLarchWidthM, soffitM, "porch-back");
+    backLarch.material = this.larchFor(backLarchWidthM, wallTopM, "porch-back");
     backLarch.receiveShadows = true;
     backLarch.isPickable = false;
     this.realisticOnly(backLarch);
@@ -1697,6 +1705,10 @@ export class TwinSceneController {
 
     // Larch lining on the east porch cheek (inner face of the east wall).
     const cheekDepthM = (porch.frontYmm - porch.glazingFaceYmm) * MM_TO_M;
+    const eastLiningTopM =
+      (wingOuterRoofHeightMm(porch.eastWallInnerXmm, roofParameters) -
+        clearanceMm) *
+      MM_TO_M;
     const eastLining = boxAtPlan(
       this.scene,
       "Krytá terasa · modřínový obklad východnej steny",
@@ -1706,32 +1718,58 @@ export class TwinSceneController {
       },
       36,
       porch.frontYmm - porch.glazingFaceYmm,
-      soffitM,
+      eastLiningTopM,
       0,
     );
-    eastLining.material = this.larchFor(cheekDepthM, soffitM, "porch-cheek");
+    eastLining.material = this.larchFor(cheekDepthM, eastLiningTopM, "porch-cheek");
     eastLining.receiveShadows = true;
     eastLining.isPickable = false;
     this.realisticOnly(eastLining);
     this.register(eastLining, "building", HOUSE.id);
 
-    // Flat soffit over the whole covered porch.
-    const soffit = boxAtPlan(
-      this.scene,
-      "Krytá terasa · podhľad +2,750",
+    // The porch is open to the roof: instead of a flat ceiling, two boarded
+    // panels follow the wing roof planes up to the ridge, so the space reads
+    // as tall and uncovered from the garden.
+    const porchDepthMm = porch.frontYmm - porch.glazingFaceYmm;
+    const porchCenterYmm = (porch.glazingFaceYmm + porch.frontYmm) / 2;
+    for (const [index, slope] of [
       {
-        x: (porch.cornerPillar.startXmm + porch.eastWallInnerXmm) / 2,
-        y: (porch.glazingFaceYmm + porch.frontYmm) / 2,
+        name: "západná",
+        startXmm: roofParameters.wingInnerEaveXmm,
+        endXmm: roofParameters.wingRidgeXmm,
+        heightAt: wingInnerRoofHeightMm,
       },
-      porch.eastWallInnerXmm - porch.cornerPillar.startXmm,
-      porch.frontYmm - porch.glazingFaceYmm,
-      0.035,
-      soffitM,
-    );
-    soffit.material = this.realisticMaterials.soffit;
-    soffit.isPickable = false;
-    this.realisticOnly(soffit);
-    this.register(soffit, "building", HOUSE.id);
+      {
+        name: "východná",
+        startXmm: roofParameters.wingRidgeXmm,
+        endXmm: roofParameters.maxXmm,
+        heightAt: wingOuterRoofHeightMm,
+      },
+    ].entries()) {
+      const startM =
+        (slope.heightAt(slope.startXmm, roofParameters) - clearanceMm) * MM_TO_M;
+      const endM =
+        (slope.heightAt(slope.endXmm, roofParameters) - clearanceMm) * MM_TO_M;
+      const runM = (slope.endXmm - slope.startXmm) * MM_TO_M;
+      const riseM = endM - startM;
+      const lengthM = Math.hypot(runM, riseM);
+      const thicknessM = 0.045;
+      const panel = boxAtPlan(
+        this.scene,
+        `Krytá terasa · ${slope.name} strešná podbitka`,
+        { x: (slope.startXmm + slope.endXmm) / 2, y: porchCenterYmm },
+        Math.round(lengthM * 1000),
+        porchDepthMm,
+        thicknessM,
+        (startM + endM) / 2 - thicknessM / 2,
+      );
+      panel.rotation.z = Math.atan2(riseM, runM);
+      panel.material = this.larchFor(lengthM, porchDepthMm * MM_TO_M, `porch-ceiling-${index}`);
+      panel.receiveShadows = true;
+      panel.isPickable = false;
+      this.realisticOnly(panel);
+      this.register(panel, "building", HOUSE.id);
+    }
 
     // Two concrete entry steps down to the lawn (reference photograph).
     for (const [index, step] of [
