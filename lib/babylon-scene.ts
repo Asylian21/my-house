@@ -68,7 +68,7 @@ import {
 } from "./twin-render-frame";
 import {
   deriveJoinedRoofGeometry,
-  mainFrontRoofHeightMm,
+  roofMountTransform,
   wingInnerRoofHeightMm,
   wingOuterRoofHeightMm,
   type JoinedRoofGeometry,
@@ -869,15 +869,16 @@ export class TwinSceneController {
     this.buildRealisticHouseShell();
     this.buildJoinedRoof();
 
+    const garageDoorSpec = HOUSE.facades.front.garageDoor;
     const garageDoor = boxAtPlan(
       this.scene,
-      "Garážová brána · 3 300 × 2 400 mm · RAL 7016",
+      "Garážová brána od ulice · 3 300 × 2 400 mm · RAL 7016",
       {
-        x: HOUSE.originMm.x - 36,
-        y: HOUSE.facades.west.garageDoor.startYmm + HOUSE.facades.west.garageDoor.widthMm / 2,
+        x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
+        y: HOUSE.facades.front.faceYmm - 36,
       },
+      garageDoorSpec.widthMm,
       80,
-      HOUSE.facades.west.garageDoor.widthMm,
       2.4,
       0,
     );
@@ -895,11 +896,11 @@ export class TwinSceneController {
         this.scene,
         `Horizontálna škára garážovej brány ${levelM.toFixed(1)}`,
         {
-          x: HOUSE.originMm.x - 82,
-          y: HOUSE.facades.west.garageDoor.startYmm + HOUSE.facades.west.garageDoor.widthMm / 2,
+          x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
+          y: HOUSE.facades.front.faceYmm - 82,
         },
+        garageDoorSpec.widthMm - 60,
         34,
-        HOUSE.facades.west.garageDoor.widthMm - 60,
         0.018,
         levelM,
       );
@@ -909,13 +910,11 @@ export class TwinSceneController {
       this.register(joint, "building");
     }
 
-    for (const [index, center] of [
-      { x: HOUSE.originMm.x + 11200, y: HOUSE.originMm.y + 4250 },
-      { x: HOUSE.originMm.x + 17750, y: HOUSE.originMm.y + 8700 },
-    ].entries()) {
+    for (const [index, chimneySpec] of HOUSE.chimneys.entries()) {
+      const center = chimneySpec.centerMm;
       const chimney = boxAtPlan(
         this.scene,
-        `Komín ${index + 1} · +6,160 m`,
+        `Komín ${index + 1} · ${chimneySpec.id} · +6,160 m`,
         center,
         540,
         540,
@@ -1268,21 +1267,40 @@ export class TwinSceneController {
   private buildSolarArray() {
     const roof = deriveJoinedRoofGeometry();
     const { parameters } = roof;
-    const actualPitch = Math.atan2(
-      parameters.ridgeElevationMm - parameters.eavesElevationMm,
-      parameters.mainRidgeYmm - parameters.frontEaveYmm,
-    );
-    const rows = 2;
-    const columns = HOUSE.photovoltaics.moduleCount / rows;
-    for (let column = 0; column < columns; column += 1) {
-      for (let row = 0; row < rows; row += 1) {
-        const centerXmm = parameters.minXmm + 12_450 + column * 1_080;
-        const centerYmm = parameters.frontEaveYmm + 1_280 + row * 1_560;
-        const surfaceElevationM =
-          mainFrontRoofHeightMm(centerYmm, parameters) * MM_TO_M;
+    const photovoltaics = HOUSE.photovoltaics;
+    if (
+      photovoltaics.rows * photovoltaics.columns !==
+      photovoltaics.moduleCount
+    ) {
+      throw new Error("FV rozloženie nezodpovedá počtu modulov.");
+    }
+    if (photovoltaics.roofFace !== "WING_INNER") {
+      throw new Error("FV pole nad kuchyňou musí zostať na dvorovej rovine krídla.");
+    }
+    for (let column = 0; column < photovoltaics.columns; column += 1) {
+      for (let row = 0; row < photovoltaics.rows; row += 1) {
+        const centerXmm =
+          photovoltaics.firstModuleCenterMm.x +
+          row * photovoltaics.rowStepMm.x +
+          column * photovoltaics.columnStepMm.x;
+        const centerYmm =
+          photovoltaics.firstModuleCenterMm.y +
+          row * photovoltaics.rowStepMm.y +
+          column * photovoltaics.columnStepMm.y;
+        const mount = roofMountTransform(
+          photovoltaics.roofFace,
+          centerXmm,
+          centerYmm,
+          parameters,
+        );
+        const surfaceElevationM = mount.elevationMm * MM_TO_M;
         const panel = CreateBox(
-          `Fotovoltický panel ${column + 1}.${row + 1} · vizualizačná referencia`,
-          { width: 1.02, depth: 1.72, height: 0.035 },
+          `Fotovoltický panel ${column + 1}.${row + 1} · dvorová rovina nad kuchyňou`,
+          {
+            width: photovoltaics.moduleSlopeLengthMm * MM_TO_M,
+            depth: photovoltaics.moduleRidgeWidthMm * MM_TO_M,
+            height: 0.035,
+          },
           this.scene,
         );
         panel.position.set(
@@ -1290,7 +1308,8 @@ export class TwinSceneController {
           surfaceElevationM + 0.05,
           zM(centerYmm),
         );
-        panel.rotation.x = actualPitch;
+        panel.rotation.x = mount.rotationXRad;
+        panel.rotation.z = mount.rotationZRad;
         panel.material = this.realisticMaterials.solar;
         panel.isPickable = false;
         this.realisticOnly(panel);
@@ -1299,7 +1318,11 @@ export class TwinSceneController {
 
         const frame = CreateBox(
           `Rám FV ${column + 1}.${row + 1}`,
-          { width: 1.06, depth: 1.76, height: 0.016 },
+          {
+            width: (photovoltaics.moduleSlopeLengthMm + 40) * MM_TO_M,
+            depth: (photovoltaics.moduleRidgeWidthMm + 40) * MM_TO_M,
+            height: 0.016,
+          },
           this.scene,
         );
         frame.position.set(
@@ -1307,7 +1330,8 @@ export class TwinSceneController {
           surfaceElevationM + 0.03,
           zM(centerYmm),
         );
-        frame.rotation.x = actualPitch;
+        frame.rotation.x = mount.rotationXRad;
+        frame.rotation.z = mount.rotationZRad;
         frame.material = this.realisticMaterials.solarGrid;
         frame.isPickable = false;
         this.realisticOnly(frame);
@@ -1321,14 +1345,22 @@ export class TwinSceneController {
     const porch = HOUSE.porches.wingEnd;
     const loggia = HOUSE.porches.gardenLoggia;
 
-    const frontOpenings: readonly FacadeOpeningMm[] =
-      HOUSE.facades.front.openings.map((opening) => ({
+    const frontOpenings: readonly FacadeOpeningMm[] = [
+      {
+        id: HOUSE.facades.front.garageDoor.id,
+        startMm: HOUSE.facades.front.garageDoor.startXmm,
+        widthMm: HOUSE.facades.front.garageDoor.widthMm,
+        heightMm: HOUSE.facades.front.garageDoor.heightMm,
+        sillMm: HOUSE.facades.front.garageDoor.sillMm,
+      },
+      ...HOUSE.facades.front.openings.map((opening) => ({
         id: opening.id,
         startMm: opening.startXmm,
         widthMm: opening.widthMm,
         heightMm: opening.heightMm,
         sillMm: opening.sillMm,
-      }));
+      })),
+    ];
     const eastOpenings: readonly FacadeOpeningMm[] =
       HOUSE.facades.east.openings.map((opening) => ({
         id: opening.id,
@@ -1358,13 +1390,6 @@ export class TwinSceneController {
         })),
     ];
     const westOpenings: readonly FacadeOpeningMm[] = [
-      {
-        id: HOUSE.facades.west.garageDoor.id,
-        startMm: HOUSE.facades.west.garageDoor.startYmm,
-        widthMm: HOUSE.facades.west.garageDoor.widthMm,
-        heightMm: HOUSE.facades.west.garageDoor.heightMm,
-        sillMm: HOUSE.facades.west.garageDoor.sillMm,
-      },
       {
         id: HOUSE.facades.west.loggiaOpening.id,
         startMm: HOUSE.facades.west.loggiaOpening.startYmm,
@@ -1473,10 +1498,10 @@ export class TwinSceneController {
       this.register(field, "building", HOUSE.id);
     }
 
-    for (const opening of frontOpenings) {
+    for (const opening of HOUSE.facades.front.openings) {
       this.buildWindowOnZFace(
         `Výplň otvoru ${opening.id} · D1.1.002`,
-        opening.startMm + opening.widthMm / 2,
+        opening.startXmm + opening.widthMm / 2,
         HOUSE.facades.front.faceYmm,
         opening.widthMm,
         opening.heightMm,

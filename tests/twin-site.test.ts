@@ -26,6 +26,7 @@ import {
   sceneZM,
 } from "../lib/twin-render-frame";
 import { segmentFacadeMm } from "../lib/twin-facade";
+import { roofHeightMm, roofMountTransform } from "../lib/twin-roof";
 
 describe("site evidence seed", () => {
   it("projects official GP points into the road-aligned local frame", () => {
@@ -49,7 +50,8 @@ describe("site evidence seed", () => {
     expect(HOUSE.coordinationRevision.documentedBuiltUpAreaM2).toBe(246.4);
     expect(HOUSE.orientation).toMatchObject({
       reflection: "NONE",
-      garageSide: "LOCAL_X_MIN",
+      garageVolumeSide: "LOCAL_X_MIN",
+      garageAccessSide: "LOCAL_Y_MIN",
       wingSide: "LOCAL_X_MAX",
     });
     expect(HOUSE.roof.mainPlanLengthMm).toBe(HOUSE.lowerBar.widthMm);
@@ -177,16 +179,80 @@ describe("site evidence seed", () => {
     expect(HOUSE.photovoltaics).toMatchObject({
       moduleCount: 6,
       wattsPerModule: 405,
-      roofFace: "LOCAL_Y_MIN",
+      layout: "2x3_CLIENT_REVISION",
+      roofFace: "WING_INNER",
+      facing: "COURTYARD",
+      placement: "ABOVE_KITCHEN",
+      firstModuleCenterMm: { x: 22_000, y: 12_100 },
+      rowStepMm: { x: 1_550, y: 0 },
+      columnStepMm: { x: 0, y: 1_100 },
     });
-    expect(HOUSE.facades.front.openings.slice(0, 2)).toEqual([
-      {
-        id: "FRONT-01",
-        startXmm: 8_490,
-        widthMm: 1_250,
-        heightMm: 750,
-        sillMm: 1_750,
-      },
+    expect(HOUSE.photovoltaics.rows * HOUSE.photovoltaics.columns).toBe(
+      HOUSE.photovoltaics.moduleCount,
+    );
+    const photovoltaicCenters = Array.from(
+      { length: HOUSE.photovoltaics.columns },
+      (_, column) =>
+        Array.from({ length: HOUSE.photovoltaics.rows }, (_, row) => ({
+          x:
+            HOUSE.photovoltaics.firstModuleCenterMm.x +
+            row * HOUSE.photovoltaics.rowStepMm.x +
+            column * HOUSE.photovoltaics.columnStepMm.x,
+          y:
+            HOUSE.photovoltaics.firstModuleCenterMm.y +
+            row * HOUSE.photovoltaics.rowStepMm.y +
+            column * HOUSE.photovoltaics.columnStepMm.y,
+        })),
+    ).flat();
+    expect(photovoltaicCenters).toEqual([
+      { x: 22_000, y: 12_100 },
+      { x: 23_550, y: 12_100 },
+      { x: 22_000, y: 13_200 },
+      { x: 23_550, y: 13_200 },
+      { x: 22_000, y: 14_300 },
+      { x: 23_550, y: 14_300 },
+    ]);
+    for (const center of photovoltaicCenters) {
+      const mount = roofMountTransform(
+        HOUSE.photovoltaics.roofFace,
+        center.x,
+        center.y,
+      );
+      expect(mount.elevationMm).toBe(
+        roofHeightMm(HOUSE.photovoltaics.roofFace, center.x, center.y),
+      );
+      expect(mount.elevationMm).toBeGreaterThan(HOUSE.eavesElevationMm);
+      expect(mount.rotationXRad).toBe(0);
+      expect(mount.rotationZRad).toBeGreaterThan(0);
+
+      const frameHalfSlopePlanMm =
+        ((HOUSE.photovoltaics.moduleSlopeLengthMm + 40) / 2) *
+        Math.cos(mount.rotationZRad);
+      const frameHalfRidgeMm =
+        (HOUSE.photovoltaics.moduleRidgeWidthMm + 40) / 2;
+      expect(center.x - frameHalfSlopePlanMm).toBeGreaterThanOrEqual(
+        HOUSE.originMm.x + HOUSE.wing.xMm,
+      );
+      expect(center.x + frameHalfSlopePlanMm).toBeLessThanOrEqual(
+        HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.roof.wingHalfSpanMm,
+      );
+      expect(center.y - frameHalfRidgeMm).toBeGreaterThanOrEqual(
+        HOUSE.originMm.y + HOUSE.wing.yMm,
+      );
+      expect(center.y + frameHalfRidgeMm).toBeLessThanOrEqual(
+        HOUSE.originMm.y + HOUSE.roof.wingOverallPlanLengthMm,
+      );
+    }
+    expect(HOUSE.facades.front.garageDoor).toMatchObject({
+      id: "GARAGE-DOOR",
+      startXmm: 6_940,
+      widthMm: 3_300,
+      heightMm: 2_400,
+      sillMm: 0,
+      access: "DIRECT_FROM_STREET",
+      sourceId: SOURCES.clientRevision20260821.id,
+    });
+    expect(HOUSE.facades.front.openings[0]).toEqual(
       {
         id: "FRONT-02",
         startXmm: 11_715,
@@ -194,7 +260,28 @@ describe("site evidence seed", () => {
         heightMm: 750,
         sillMm: 1_750,
       },
+    );
+    expect(HOUSE.facades.front.openings.some(({ id }) => id === "FRONT-01")).toBe(
+      false,
+    );
+    expect("garageDoor" in HOUSE.facades.west).toBe(false);
+    expect(HOUSE.chimneys).toEqual([
+      {
+        id: "CHIMNEY-ROOM-109",
+        centerMm: { x: 17_640, y: 7_250 },
+        zone: "ROOM_1_09_ROOF_ZONE",
+        sourceId: SOURCES.roofPlan.id,
+      },
     ]);
+    expect(HOUSE.removedChimneys).toEqual([
+      {
+        id: "CHIMNEY-LIVING-103",
+        centerMm: { x: 24_190, y: 11_700 },
+        zone: "MAIN_LIVING_AND_KITCHEN_1_03",
+        sourceId: SOURCES.clientRevision20260821.id,
+      },
+    ]);
+    expect(SOURCES.clientRevision20260821.kind).toBe("CLIENT_REVISION");
     expect(HOUSE.rainwaterDownpipes).toEqual([
       {
         id: "DS-01",
@@ -229,12 +316,29 @@ describe("site evidence seed", () => {
     expect(SOURCES.rainwater.detail).toContain("konflikt");
   });
 
-  it("does not silently overlap the active D1 garage with stale C3 coordination", () => {
-    expect(Math.max(...SITE_SURFACES.driveway.polygonMm.map(({ x }) => x))).toBe(
-      HOUSE.originMm.x,
+  it("connects the relocated garage door directly to the street", () => {
+    const drivewayXs = SITE_SURFACES.driveway.polygonMm.map(({ x }) => x);
+    const drivewayYs = SITE_SURFACES.driveway.polygonMm.map(({ y }) => y);
+    const garageDoor = HOUSE.facades.front.garageDoor;
+    expect(SITE_SURFACES.driveway.polygonMm.slice(0, 2)).toEqual([
+      { x: 6_490, y: HOUSE.facades.front.faceYmm },
+      { x: 10_690, y: HOUSE.facades.front.faceYmm },
+    ]);
+    expect(Math.min(...drivewayXs)).toBeLessThan(garageDoor.startXmm);
+    expect(Math.max(...drivewayXs)).toBeGreaterThan(
+      garageDoor.startXmm + garageDoor.widthMm,
     );
+    expect(Math.max(...drivewayYs)).toBe(HOUSE.facades.front.faceYmm);
+    expect(Math.min(...drivewayYs)).toBeLessThan(0);
+    expect((Math.min(...drivewayXs) + Math.max(...drivewayXs)) / 2).toBe(
+      garageDoor.startXmm + garageDoor.widthMm / 2,
+    );
+    expect(SITE_SURFACES.driveway.areaM2).toBeCloseTo(4.2 * 6.104, 3);
     expect(SITE_SURFACES.driveway.placementStatus).toBe(
-      "INFERRED_D1_CONNECTION",
+      "CLIENT_REVISION_DIRECT_STREET_ACCESS",
+    );
+    expect(SITE_SURFACES.driveway.sourceId).toBe(
+      SOURCES.clientRevision20260821.id,
     );
     const electricity = UTILITY_ROUTES.find(
       (route) => route.id === "UTIL-ELECTRICITY",
@@ -245,6 +349,46 @@ describe("site evidence seed", () => {
 });
 
 describe("data to geometry contract", () => {
+  it("cuts the street garage door and remaining front openings without overlap", () => {
+    const garageDoor = HOUSE.facades.front.garageDoor;
+    const openings = [
+      {
+        id: garageDoor.id,
+        startMm: garageDoor.startXmm,
+        widthMm: garageDoor.widthMm,
+        heightMm: garageDoor.heightMm,
+        sillMm: garageDoor.sillMm,
+      },
+      ...HOUSE.facades.front.openings.map((opening) => ({
+        id: opening.id,
+        startMm: opening.startXmm,
+        widthMm: opening.widthMm,
+        heightMm: opening.heightMm,
+        sillMm: opening.sillMm,
+      })),
+    ];
+    const segments = segmentFacadeMm(
+      HOUSE.originMm.x,
+      HOUSE.facades.east.faceXmm,
+      HOUSE.eavesElevationMm,
+      openings,
+    );
+    expect(segments).toContainEqual({
+      startMm: garageDoor.startXmm,
+      endMm: garageDoor.startXmm + garageDoor.widthMm,
+      bottomMm: garageDoor.heightMm,
+      topMm: HOUSE.eavesElevationMm,
+    });
+    expect(
+      segments.some(
+        ({ startMm, endMm, bottomMm }) =>
+          startMm < garageDoor.startXmm + garageDoor.widthMm &&
+          endMm > garageDoor.startXmm &&
+          bottomMm === 0,
+      ),
+    ).toBe(false);
+  });
+
   it("cuts the documented garden glazing out of the realistic shell", () => {
     const openings = HOUSE.facades.garden.openings.map((opening) => ({
       id: opening.id,

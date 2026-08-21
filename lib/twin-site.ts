@@ -15,6 +15,7 @@ export type ViewMode = "technical" | "realistic";
 export type EvidenceKind =
   | "CURRENT_REGISTER"
   | "PROJECT_DESIGN"
+  | "CLIENT_REVISION"
   | "PROVIDER_CONTEXT"
   | "SCAN_DOCUMENT"
   | "ARITHMETIC_DERIVATION"
@@ -123,6 +124,14 @@ export const SOURCES = {
     page: 1,
     scale: "1:100",
     kind: "PROJECT_DESIGN",
+  },
+  clientRevision20260821: {
+    id: "SRC-CLIENT-20260821",
+    title: "Aktuálna revízia stavebníka",
+    detail:
+      "Odstrániť komín v hlavnom obytnom priestore; FV pole presunúť nad kuchyňu na dvorovú strešnú rovinu; garážovú bránu presunúť na uličnú fasádu namiesto prvého garážového okna a viesť príjazd priamo od ulice.",
+    date: "21. 8. 2026",
+    kind: "CLIENT_REVISION",
   },
   section: {
     id: "SRC-D11005",
@@ -369,6 +378,22 @@ export const HOUSE = Object.freeze({
   eavesElevationMm: 3125,
   ridgeElevationMm: 5560,
   chimneyElevationMm: 6160,
+  chimneys: [
+    {
+      id: "CHIMNEY-ROOM-109",
+      centerMm: { x: 17640, y: 7250 } satisfies Point2Mm,
+      zone: "ROOM_1_09_ROOF_ZONE",
+      sourceId: SOURCES.roofPlan.id,
+    },
+  ] as const,
+  removedChimneys: [
+    {
+      id: "CHIMNEY-LIVING-103",
+      centerMm: { x: 24190, y: 11700 } satisfies Point2Mm,
+      zone: "MAIN_LIVING_AND_KITCHEN_1_03",
+      sourceId: SOURCES.clientRevision20260821.id,
+    },
+  ] as const,
   roofPitchDeg: 30,
   roof: {
     sourceId: SOURCES.roofPlan.id,
@@ -387,14 +412,16 @@ export const HOUSE = Object.freeze({
     front: {
       faceYmm: 3000,
       finish: "OFF_WHITE_ETICS",
+      garageDoor: {
+        id: "GARAGE-DOOR",
+        startXmm: 6940,
+        widthMm: 3300,
+        heightMm: 2400,
+        sillMm: 0,
+        access: "DIRECT_FROM_STREET",
+        sourceId: SOURCES.clientRevision20260821.id,
+      },
       openings: [
-        {
-          id: "FRONT-01",
-          startXmm: 8490,
-          widthMm: 1250,
-          heightMm: 750,
-          sillMm: 1750,
-        },
         {
           id: "FRONT-02",
           startXmm: 11715,
@@ -506,13 +533,6 @@ export const HOUSE = Object.freeze({
     west: {
       faceXmm: 6440,
       finish: "OFF_WHITE_ETICS",
-      garageDoor: {
-        id: "GARAGE-DOOR",
-        startYmm: 3675,
-        widthMm: 3300,
-        heightMm: 2400,
-        sillMm: 0,
-      },
       loggiaOpening: {
         id: "WEST-01",
         startYmm: 9300,
@@ -576,8 +596,18 @@ export const HOUSE = Object.freeze({
   photovoltaics: {
     moduleCount: 6,
     wattsPerModule: 405,
-    layout: "2x3_VISUAL_INFERENCE",
-    roofFace: "LOCAL_Y_MIN",
+    layout: "2x3_CLIENT_REVISION",
+    roofFace: "WING_INNER",
+    facing: "COURTYARD",
+    placement: "ABOVE_KITCHEN",
+    rows: 2,
+    columns: 3,
+    firstModuleCenterMm: { x: 22000, y: 12100 } satisfies Point2Mm,
+    rowStepMm: { x: 1550, y: 0 } satisfies Point2Mm,
+    columnStepMm: { x: 0, y: 1100 } satisfies Point2Mm,
+    moduleSlopeLengthMm: 1720,
+    moduleRidgeWidthMm: 1020,
+    sourceId: SOURCES.clientRevision20260821.id,
   },
   rainwaterDownpipes: [
     {
@@ -600,7 +630,8 @@ export const HOUSE = Object.freeze({
     sourceId: SOURCES.floorPlan.id,
     reflection: "NONE",
     frontEdge: "LOCAL_Y_MIN",
-    garageSide: "LOCAL_X_MIN",
+    garageVolumeSide: "LOCAL_X_MIN",
+    garageAccessSide: "LOCAL_Y_MIN",
     wingSide: "LOCAL_X_MAX",
   },
   coordinationRevision: {
@@ -624,6 +655,7 @@ export const HOUSE = Object.freeze({
     SOURCES.roofPlan.id,
     SOURCES.coordination.id,
     SOURCES.section.id,
+    SOURCES.clientRevision20260821.id,
   ],
 });
 
@@ -716,17 +748,16 @@ export const SITE_SURFACES = Object.freeze({
   },
   driveway: {
     id: "SITE-DRIVEWAY",
-    areaM2: 40.855,
+    areaM2: 25.637,
     sourceAreaM2: 48.603,
-    placementStatus: "INFERRED_D1_CONNECTION",
+    placementStatus: "CLIENT_REVISION_DIRECT_STREET_ACCESS",
+    sourceId: SOURCES.clientRevision20260821.id,
     polygonMm: [
-      { x: 6440, y: 6970 },
-      { x: 6440, y: 632 },
-      { x: 6440, y: -3099 },
-      { x: 2242, y: -3104 },
-      { x: 2235, y: 2546 },
-      { x: 2237, y: 6270 },
-      { x: 6440, y: 6970 },
+      { x: 6490, y: 3000 },
+      { x: 10690, y: 3000 },
+      { x: 10690, y: -3104 },
+      { x: 6490, y: -3104 },
+      { x: 6490, y: 3000 },
     ] as const satisfies readonly Point2Mm[],
   },
   entry: {

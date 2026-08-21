@@ -10,6 +10,12 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 - verejný vodovod a splašková stoka pri parcele sú len kontext z verejnej DMVS,
 - skutočné geodetické zameranie prípojok nie je dostupné a aplikácia nič z návrhu neoznačuje ako as-built.
 
+Aktuálna revízia stavebníka z 21. 8. 2026 má pred staršími výkresmi prednosť
+v troch presne ohraničených bodoch: komín nad hlavným obytným/kuchynským
+priestorom je odstránený, FV pole je na dvorovej rovine krídla nad kuchyňou a
+garážová brána s priamym príjazdom je na uličnej fasáde namiesto prvého
+garážového okna. Ostatná geometria D1 zostáva nedotknutá.
+
 Režim **Realita** používa projektové rozmery a materiály D1 vrátane oboch
 krytých terás odčítaných z vektorov výkresu D1.1.002: zapustenej presklenej
 steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (súčasť TERASY

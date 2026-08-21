@@ -192,6 +192,60 @@ export function roofHeightMm(
   }
 }
 
+export interface RoofMountTransform {
+  readonly elevationMm: number;
+  readonly rotationXRad: number;
+  readonly rotationZRad: number;
+}
+
+/**
+ * Returns the Babylon tilt for an object mounted flush to a roof face.
+ * Plan Y maps to negative world Z, so main-roof faces tilt around X while
+ * wing faces tilt around Z.
+ */
+export function roofMountTransform(
+  faceId: RoofFaceId,
+  xMm: number,
+  yMm: number,
+  parameters: JoinedRoofParameters = ACTIVE_JOINED_ROOF_PARAMETERS,
+): RoofMountTransform {
+  const mainPitch = Math.atan2(
+    parameters.ridgeElevationMm - parameters.eavesElevationMm,
+    parameters.mainRidgeYmm - parameters.frontEaveYmm,
+  );
+  const wingPitch = Math.atan2(
+    parameters.ridgeElevationMm - parameters.eavesElevationMm,
+    parameters.wingRidgeXmm - parameters.wingInnerEaveXmm,
+  );
+
+  switch (faceId) {
+    case "MAIN_FRONT":
+      return {
+        elevationMm: roofHeightMm(faceId, xMm, yMm, parameters),
+        rotationXRad: mainPitch,
+        rotationZRad: 0,
+      };
+    case "MAIN_GARDEN":
+      return {
+        elevationMm: roofHeightMm(faceId, xMm, yMm, parameters),
+        rotationXRad: -mainPitch,
+        rotationZRad: 0,
+      };
+    case "WING_INNER":
+      return {
+        elevationMm: roofHeightMm(faceId, xMm, yMm, parameters),
+        rotationXRad: 0,
+        rotationZRad: wingPitch,
+      };
+    case "WING_OUTER":
+      return {
+        elevationMm: roofHeightMm(faceId, xMm, yMm, parameters),
+        rotationXRad: 0,
+        rotationZRad: -wingPitch,
+      };
+  }
+}
+
 export function deriveJoinedRoofGeometry(
   parameters: JoinedRoofParameters = ACTIVE_JOINED_ROOF_PARAMETERS,
 ): JoinedRoofGeometry {
