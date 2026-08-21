@@ -44,13 +44,18 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /class="scene-panel "[^>]+aria-hidden="true"[^>]+inert/);
   assert.match(html, /class="inspector "[^>]+aria-hidden="true"[^>]+inert/);
   assert.match(html, /aria-pressed="true"[^>]*>[\s\S]{0,500}?Realita/i);
+  assert.match(html, /aria-label="Kamera a navigácia"/);
+  assert.match(html, /aria-label="Spustiť voľný 3D prelet"/);
+  assert.match(html, /aria-keyshortcuts="H"/);
+  assert.match(html, /H spustí voľný 3D prelet/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
   assert.doesNotMatch(html, /Overené 04|12 % realizácie|react-loading-skeleton/);
 });
 
 test("keeps Babylon client-only and removes the disposable starter preview", async () => {
-  const [viewport, page, layout, packageJson] = await Promise.all([
+  const [viewport, scene, page, layout, packageJson] = await Promise.all([
     readFile(new URL("../app/babylon-viewport.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -58,7 +63,12 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
 
   assert.match(viewport, /void import\("@\/lib\/babylon-scene"\)/);
   assert.match(viewport, /ResizeObserver/);
+  assert.match(viewport, /window\.matchMedia/);
   assert.match(viewport, /controllerRef\.current\?\.dispose\(\)/);
+  assert.match(scene, /adaptToDeviceRatio: false/);
+  assert.match(scene, /setHardwareScalingLevel\(/);
+  assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
+  assert.match(scene, /return this\.scene\.whenReadyAsync\(\)/);
   assert.match(page, /<TwinStudio \/>/);
   assert.match(layout, /lang="sk"/);
   assert.match(layout, /Dom 6012\/26 · Digitálne dvojča/);
@@ -69,8 +79,9 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
 
 test("ships and discloses every local illustrative rendering asset", async () => {
   const assets = [
-    ["../public/assets/environment/overcast-garden.jpg", "ffd8ff"],
-    ["../public/assets/environment/sky-partly-cloudy.jpg", "ffd8ff"],
+    ["../public/assets/environment/suburban-field-01-2k.jpg", "ffd8ff"],
+    ["../public/assets/environment/suburban-field-01-4k.jpg", "ffd8ff"],
+    ["../public/assets/environment/suburban-field-01-8k.jpg", "ffd8ff"],
     ["../public/assets/textures/lawn-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/lawn-normal.jpg", "ffd8ff"],
     ["../public/assets/textures/plaster-white-albedo.jpg", "ffd8ff"],

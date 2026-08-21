@@ -1,14 +1,29 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import type {
   CameraPreset,
   TwinSceneController,
 } from "@/lib/babylon-scene";
 import type { FoundationStrip, LayerId, ViewMode } from "@/lib/twin-site";
+import type {
+  FlightCommand,
+  NavigationMode,
+  RenderQualityProfile,
+} from "@/lib/twin-viewport-contract";
 
 export interface BabylonViewportHandle {
   setCameraPreset: (preset: CameraPreset) => void;
+  setNavigationMode: (mode: NavigationMode) => void;
+  setFlightCommand: (command: FlightCommand, active: boolean) => void;
+  nudgeFlight: (command: FlightCommand) => void;
 }
 
 interface BabylonViewportProps {
@@ -16,26 +31,50 @@ interface BabylonViewportProps {
   selectionId: string | null;
   visibleLayers: Readonly<Record<LayerId, boolean>>;
   viewMode: ViewMode;
+  navigationMode: NavigationMode;
   onSelect: (id: string) => void;
+  onNavigationModeChange: (mode: NavigationMode) => void;
 }
 
 export const BabylonViewport = forwardRef<
   BabylonViewportHandle,
   BabylonViewportProps
 >(function BabylonViewport(
-  { foundations, selectionId, visibleLayers, viewMode, onSelect },
+  {
+    foundations,
+    selectionId,
+    visibleLayers,
+    viewMode,
+    navigationMode,
+    onSelect,
+    onNavigationModeChange,
+  },
   ref,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<TwinSceneController | null>(null);
   const onSelectRef = useRef(onSelect);
+  const navigationModeRef = useRef(navigationMode);
+  const onNavigationModeChangeRef = useRef(onNavigationModeChange);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
 
   onSelectRef.current = onSelect;
+  navigationModeRef.current = navigationMode;
+  onNavigationModeChangeRef.current = onNavigationModeChange;
 
   useImperativeHandle(ref, () => ({
     setCameraPreset(preset) {
       controllerRef.current?.setCameraPreset(preset);
+    },
+    setNavigationMode(mode) {
+      controllerRef.current?.setNavigationMode(mode);
+    },
+    setFlightCommand(command, active) {
+      controllerRef.current?.setFlightCommand(command, active);
+    },
+    nudgeFlight(command) {
+      controllerRef.current?.nudgeFlight(command);
     },
   }), []);
 
@@ -44,14 +83,39 @@ export const BabylonViewport = forwardRef<
     if (!canvas) return;
     let active = true;
     let observer: ResizeObserver | undefined;
+    let dprQuery: MediaQueryList | undefined;
+    let controller: TwinSceneController | null = null;
+    const onWindowResize = () => controller?.resize();
+    const onDprChange = () => {
+      controller?.resize();
+      dprQuery?.removeEventListener("change", onDprChange);
+      dprQuery = window.matchMedia(
+        `(resolution: ${window.devicePixelRatio}dppx)`,
+      );
+      dprQuery.addEventListener("change", onDprChange);
+    };
 
     void import("@/lib/babylon-scene")
-      .then(({ createTwinScene }) => {
+      .then(async ({ createTwinScene }) => {
         if (!active) return;
-        const controller = createTwinScene(canvas, (id) => onSelectRef.current(id));
-        controllerRef.current = controller;
-        observer = new ResizeObserver(() => controller.resize());
+        const createdController = createTwinScene(
+          canvas,
+          (id) => onSelectRef.current(id),
+          (mode) => onNavigationModeChangeRef.current(mode),
+          (profile) => setQuality(profile),
+        );
+        controller = createdController;
+        controllerRef.current = createdController;
+        createdController.setNavigationMode(navigationModeRef.current);
+        observer = new ResizeObserver(() => createdController.resize());
         observer.observe(canvas);
+        window.addEventListener("resize", onWindowResize);
+        dprQuery = window.matchMedia(
+          `(resolution: ${window.devicePixelRatio}dppx)`,
+        );
+        dprQuery.addEventListener("change", onDprChange);
+        await createdController.whenReady();
+        if (!active) return;
         setStatus("ready");
       })
       .catch(() => {
@@ -61,6 +125,8 @@ export const BabylonViewport = forwardRef<
     return () => {
       active = false;
       observer?.disconnect();
+      window.removeEventListener("resize", onWindowResize);
+      dprQuery?.removeEventListener("change", onDprChange);
       controllerRef.current?.dispose();
       controllerRef.current = null;
     };
@@ -77,6 +143,44 @@ export const BabylonViewport = forwardRef<
     }
   }, [status, foundations, selectionId, visibleLayers, viewMode]);
 
+  useEffect(() => {
+    if (status === "ready") {
+      controllerRef.current?.setNavigationMode(navigationMode);
+    }
+  }, [status, navigationMode]);
+
+  const setMode = (mode: NavigationMode) => {
+    controllerRef.current?.setNavigationMode(mode);
+    onNavigationModeChangeRef.current(mode);
+  };
+
+  const applyPreset = (preset: CameraPreset) => {
+    setMode("orbit");
+    controllerRef.current?.setCameraPreset(preset);
+  };
+
+  const holdFlightCommand = (
+    command: FlightCommand,
+    active: boolean,
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+    if (active) {
+      // Keep focus on the canvas so its blur handler cannot cancel the first
+      // held touch command while the button takes pointer capture.
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    controllerRef.current?.setFlightCommand(command, active);
+  };
+
+  const qualityRatio = quality
+    ? quality.pixelRatio.toLocaleString("sk-SK", {
+        minimumFractionDigits: quality.pixelRatio % 1 === 0 ? 0 : 1,
+        maximumFractionDigits: 1,
+      })
+    : null;
+
   return (
     <div
       className="canvas-region"
@@ -85,9 +189,9 @@ export const BabylonViewport = forwardRef<
       aria-describedby="canvas-instructions"
     >
       <p id="canvas-instructions" className="sr-only">
-        Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo
-        gestom priblížite. Kláves 1 nastaví axonometriu, 2 pôdorys a F zameria
-        vybraný prvok. Kláves 4 otvorí záhradný prezentačný pohľad.
+        {navigationMode === "flight"
+          ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
+          : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber a H spustí voľný 3D prelet."}
       </p>
       <canvas
         ref={canvasRef}
@@ -95,13 +199,74 @@ export const BabylonViewport = forwardRef<
         tabIndex={0}
         aria-label="Ovládanie 3D modelu"
         onKeyDown={(event) => {
-          if (event.key === "1") controllerRef.current?.setCameraPreset("axonometric");
-          if (event.key === "2") controllerRef.current?.setCameraPreset("top");
-          if (event.key === "3") controllerRef.current?.setCameraPreset("street");
-          if (event.key === "4") controllerRef.current?.setCameraPreset("garden");
-          if (event.key.toLowerCase() === "f") controllerRef.current?.setCameraPreset("focus");
+          if (event.key === "1") applyPreset("axonometric");
+          if (event.key === "2") applyPreset("top");
+          if (event.key === "3") applyPreset("street");
+          if (event.key === "4") applyPreset("garden");
+          if (event.key.toLowerCase() === "f") applyPreset("focus");
+          if (event.key.toLowerCase() === "h") {
+            event.preventDefault();
+            setMode(navigationMode === "flight" ? "orbit" : "flight");
+          }
         }}
       />
+      {status === "ready" && quality && (
+        <div
+          className="render-quality-badge"
+          aria-label={`Retina render ${qualityRatio}-násobné rozlíšenie, MSAA ${quality.msaaSamples}-krát`}
+        >
+          <span>RETINA</span>
+          <small>{qualityRatio}× · MSAA {quality.msaaSamples}×</small>
+        </div>
+      )}
+      {status === "ready" && navigationMode === "flight" && (
+        <>
+          <div className="flight-hud" role="status" aria-live="polite">
+            <span>PRELET · HELIKOPTÉROVÁ KAMERA</span>
+            <strong>WASD pohyb · Q/E výška</strong>
+            <small>Ťahanie rozhľad · Shift turbo · Alt presne · Esc koniec</small>
+          </div>
+          <div
+            className="flight-control-pad"
+            role="group"
+            aria-label="Dotykové ovládanie voľného preletu"
+          >
+            {([
+              ["forward", "↑", "Letieť dopredu"],
+              ["left", "←", "Letieť doľava"],
+              ["backward", "↓", "Letieť dozadu"],
+              ["right", "→", "Letieť doprava"],
+              ["up", "+", "Stúpať"],
+              ["down", "−", "Klesať"],
+            ] as const).map(([command, glyph, label]) => (
+              <button
+                key={command}
+                className={`flight-command flight-${command}`}
+                aria-label={label}
+                onPointerDown={(event) => holdFlightCommand(command, true, event)}
+                onPointerUp={(event) => holdFlightCommand(command, false, event)}
+                onPointerCancel={(event) => holdFlightCommand(command, false, event)}
+                onLostPointerCapture={(event) => holdFlightCommand(command, false, event)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (event.detail === 0) controllerRef.current?.nudgeFlight(command);
+                }}
+              >
+                <span aria-hidden="true">{glyph}</span>
+              </button>
+            ))}
+            <button
+              className="flight-exit"
+              onClick={(event) => {
+                event.stopPropagation();
+                setMode("orbit");
+              }}
+            >
+              Ukončiť
+            </button>
+          </div>
+        </>
+      )}
       {status === "loading" && (
         <div className="viewport-state" role="status">
           <span className="drawing-loader" aria-hidden="true" />

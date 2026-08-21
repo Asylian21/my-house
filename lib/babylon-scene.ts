@@ -1,4 +1,6 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
+import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { PhotoDome } from "@babylonjs/core/Helpers/photoDome";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
@@ -83,8 +85,27 @@ import {
   type RoofVertexMm,
 } from "./twin-roof";
 import { slatCenterDistancesMm } from "./twin-fence";
+import {
+  deriveRenderQualityProfile,
+  flightCommandForCode,
+  integrateFlightPosition,
+  isSelectionTap,
+  type FlightCommand,
+  type NavigationMode,
+  type RenderQualityProfile,
+} from "./twin-viewport-contract";
 
 export type CameraPreset = "garden" | "axonometric" | "top" | "street" | "focus";
+
+interface PointerGestureState {
+  readonly pointerId: number;
+  readonly button: number;
+  readonly startedAt: number;
+  readonly startX: number;
+  readonly startY: number;
+  maximumPointers: number;
+  travelPx: number;
+}
 
 export interface SceneSnapshot {
   readonly foundations: readonly FoundationStrip[];
@@ -359,7 +380,8 @@ function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
 export class TwinSceneController {
   private readonly engine: Engine;
   private readonly scene: Scene;
-  private readonly camera: ArcRotateCamera;
+  private readonly orbitCamera: ArcRotateCamera;
+  private readonly flightCamera: UniversalCamera;
   private readonly layerMeshes = new Map<LayerId, AbstractMesh[]>();
   private readonly entityMeshes = new Map<string, AbstractMesh[]>();
   private readonly foundationMeshes = new Map<string, Mesh>();
@@ -373,6 +395,8 @@ export class TwinSceneController {
   private readonly realisticOnlyMeshes: AbstractMesh[] = [];
   private readonly technicalOverlayMeshes: AbstractMesh[] = [];
   private readonly shadowGenerator: ShadowGenerator;
+  private readonly postPipeline: DefaultRenderingPipeline;
+  private readonly ssaoPipeline: SSAO2RenderingPipeline | null;
   private readonly selectedOriginals = new Map<
     AbstractMesh,
     {
@@ -383,31 +407,50 @@ export class TwinSceneController {
     }
   >();
   private readonly onVisibilityChange: () => void;
+  private readonly keyboardFlightCommands = new Set<FlightCommand>();
+  private readonly manualFlightCommands = new Set<FlightCommand>();
+  private readonly flightModifierCodes = new Set<string>();
+  private readonly activePointers = new Set<number>();
+  private pointerGesture: PointerGestureState | null = null;
+  private navigationMode: NavigationMode = "orbit";
+  private renderQuality: RenderQualityProfile;
+  private ssaoAttached = false;
+  private flightHeading = { x: 0, z: -1 };
+  private orbitFocusDistance = 18;
+  private resizeFrame = 0;
   private snapshot: SceneSnapshot | null = null;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly onSelect: (id: string) => void,
+    private readonly onNavigationModeChange: (mode: NavigationMode) => void,
+    private readonly onRenderQualityChange: (
+      profile: RenderQualityProfile,
+    ) => void,
   ) {
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
       stencil: false,
-      adaptToDeviceRatio: true,
+      adaptToDeviceRatio: false,
+      powerPreference: "high-performance",
     });
+    this.renderQuality = this.deriveCurrentRenderQuality();
     this.engine.setHardwareScalingLevel(
-      Math.max(1, Math.min(2, window.devicePixelRatio) / 1.65),
+      this.renderQuality.hardwareScalingLevel,
     );
     this.scene = new Scene(this.engine);
     this.scene.useRightHandedSystem = true;
+    this.scene.skipPointerMovePicking = true;
     this.scene.clearColor = Color4.FromHexString("#c6cfd2ff");
     this.scene.ambientColor = Color3.FromHexString("#5d6462");
 
-    // Image-based lighting comes from a generated partly-cloudy sky so glass,
-    // metal roofing and white plaster pick up believable reflections.
+    // A dedicated 2K source avoids the very large transient float buffers that
+    // Babylon's equirectangular cube conversion would allocate from the 8K
+    // panorama. The resulting 512 px IBL cube remains visually lossless here.
     const environment = new EquiRectangularCubeTexture(
-      "/assets/environment/sky-partly-cloudy.jpg",
+      "/assets/environment/suburban-field-01-2k.jpg",
       this.scene,
-      canvas.clientWidth < 700 ? 128 : 256,
+      this.renderQuality.environmentTextureSize,
       false,
       false,
       () => {
@@ -415,10 +458,16 @@ export class TwinSceneController {
         this.scene.environmentIntensity = 0.95;
       },
     );
+    const panoramaUrl =
+      this.renderQuality.tier === "ULTRA" &&
+      this.engine.getCaps().maxTextureSize >= 8192 &&
+      this.renderQuality.renderWidthPx >= 2_000
+        ? "/assets/environment/suburban-field-01-8k.jpg"
+        : "/assets/environment/suburban-field-01-4k.jpg";
     const sky = new PhotoDome(
       "Ilustračné záhradné prostredie",
-      "/assets/environment/overcast-garden.jpg",
-      { resolution: 32, size: 170, useDirectMapping: false },
+      panoramaUrl,
+      { resolution: 64, size: 360, useDirectMapping: false },
       this.scene,
     );
     sky.rotation.y = Math.PI * 0.18;
@@ -436,7 +485,7 @@ export class TwinSceneController {
       Color4.FromHexString("#42504b32");
 
     const gardenCamera = gardenCameraForWidth(canvas.clientWidth);
-    this.camera = new ArcRotateCamera(
+    this.orbitCamera = new ArcRotateCamera(
       "architect-camera",
       gardenCamera.alpha,
       gardenCamera.beta,
@@ -444,16 +493,39 @@ export class TwinSceneController {
       new Vector3(...gardenCamera.target),
       this.scene,
     );
-    this.camera.lowerRadiusLimit = 6;
-    this.camera.upperRadiusLimit = 86;
-    this.camera.lowerBetaLimit = 0.06;
-    this.camera.upperBetaLimit = Math.PI / 2.02;
-    this.camera.wheelPrecision = 38;
-    this.camera.panningSensibility = 95;
-    this.camera.pinchPrecision = 72;
-    this.camera.inertia = 0.72;
-    this.camera.fov = gardenCamera.fov;
-    this.camera.attachControl(canvas, true);
+    this.orbitCamera.lowerRadiusLimit = 6;
+    this.orbitCamera.upperRadiusLimit = 86;
+    this.orbitCamera.lowerBetaLimit = 0.06;
+    this.orbitCamera.upperBetaLimit = Math.PI / 2.02;
+    this.orbitCamera.wheelPrecision = 38;
+    this.orbitCamera.panningSensibility = 95;
+    this.orbitCamera.pinchPrecision = 72;
+    this.orbitCamera.inertia = 0.72;
+    this.orbitCamera.minZ = 0.18;
+    this.orbitCamera.maxZ = 220;
+    this.orbitCamera.fov = gardenCamera.fov;
+    this.orbitCamera.attachControl(canvas, true);
+
+    this.flightCamera = new UniversalCamera(
+      "helicopter-camera",
+      this.orbitCamera.globalPosition.clone(),
+      this.scene,
+    );
+    this.flightCamera.inputs.removeByType("FreeCameraKeyboardMoveInput");
+    this.flightCamera.inputs.removeByType("FreeCameraTouchInput");
+    this.flightCamera.inputs.removeByType("FreeCameraGamepadInput");
+    const flightMouseInput = this.flightCamera.inputs.attached[
+      "mouse"
+    ] as FreeCameraMouseInput | undefined;
+    if (flightMouseInput) flightMouseInput.touchEnabled = true;
+    this.flightCamera.angularSensibility = 2600;
+    this.flightCamera.inertia = 0.68;
+    this.flightCamera.minZ = 0.18;
+    this.flightCamera.maxZ = 220;
+    this.flightCamera.fov = this.orbitCamera.fov;
+    this.flightCamera.setTarget(this.orbitCamera.target);
+    this.flightCamera.detachControl();
+    this.scene.activeCamera = this.orbitCamera;
 
     const ambient = new HemisphericLight(
       "ambient-light",
@@ -474,52 +546,71 @@ export class TwinSceneController {
     sun.intensity = 1.4;
     sun.diffuse = Color3.FromHexString("#fff6e6");
     sun.specular = Color3.FromHexString("#fff9ef");
-    const highQuality =
-      canvas.clientWidth >= 760 && !window.matchMedia("(pointer: coarse)").matches;
     this.shadowGenerator = new ShadowGenerator(
-      canvas.clientWidth < 700 ? 1024 : 2048,
+      this.renderQuality.shadowMapSize,
       sun,
     );
     this.shadowGenerator.usePercentageCloserFiltering = true;
-    this.shadowGenerator.filteringQuality = highQuality
+    this.shadowGenerator.filteringQuality =
+      this.renderQuality.tier === "ULTRA"
       ? ShadowGenerator.QUALITY_HIGH
       : ShadowGenerator.QUALITY_MEDIUM;
-    this.shadowGenerator.bias = 0.0008;
-    this.shadowGenerator.normalBias = 0.016;
+    this.shadowGenerator.bias = 0.00055;
+    this.shadowGenerator.normalBias = 0.007;
     this.shadowGenerator.setDarkness(0.25);
 
-    const post = new DefaultRenderingPipeline(
+    this.postPipeline = new DefaultRenderingPipeline(
       "architectural-photo-pipeline",
       true,
       this.scene,
-      [this.camera],
+      [this.orbitCamera, this.flightCamera],
     );
-    post.samples = highQuality
-      ? Math.max(1, Math.min(4, this.engine.getCaps().maxMSAASamples))
-      : 1;
-    post.fxaaEnabled = !highQuality;
-    post.bloomEnabled = false;
-    post.imageProcessingEnabled = true;
-    if (highQuality) {
-      post.sharpenEnabled = true;
-      post.sharpen.edgeAmount = 0.12;
-      post.sharpen.colorAmount = 1;
+    this.postPipeline.samples = this.renderQuality.msaaSamples;
+    this.postPipeline.fxaaEnabled = this.renderQuality.fxaaEnabled;
+    this.postPipeline.bloomEnabled = false;
+    this.postPipeline.imageProcessingEnabled = true;
+    this.postPipeline.sharpenEnabled = true;
+    this.postPipeline.sharpen.edgeAmount =
+      this.renderQuality.sharpenEdgeAmount;
+    this.postPipeline.sharpen.colorAmount = 1;
+    const renderCameras = [this.orbitCamera, this.flightCamera];
+    let ssaoPipeline: SSAO2RenderingPipeline | null = null;
+    if (this.renderQuality.ssaoEnabled && SSAO2RenderingPipeline.IsSupported) {
       try {
-        const ssao = new SSAO2RenderingPipeline(
+        ssaoPipeline = new SSAO2RenderingPipeline(
           "architectural-ssao",
           this.scene,
-          { ssaoRatio: 0.75, blurRatio: 0.75 },
-          [this.camera],
+          {
+            ssaoRatio: 1,
+            blurRatio: 1,
+          },
+          renderCameras,
           false,
         );
-        ssao.radius = 0.9;
-        ssao.totalStrength = 0.9;
-        ssao.samples = 12;
-        ssao.expensiveBlur = false;
+        ssaoPipeline.radius = 0.82;
+        ssaoPipeline.totalStrength = 0.82;
+        ssaoPipeline.samples = 16;
+        ssaoPipeline.expensiveBlur = true;
       } catch {
         // SSAO is a progressive enhancement; WebGL fallbacks skip it.
       }
     }
+    this.ssaoPipeline = ssaoPipeline;
+    this.ssaoAttached = Boolean(ssaoPipeline);
+    if (ssaoPipeline && !this.renderQuality.ssaoEnabled) {
+      this.scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline(
+        ssaoPipeline.name,
+        renderCameras,
+      );
+      this.ssaoAttached = false;
+    } else if (!ssaoPipeline && this.renderQuality.ssaoEnabled) {
+      this.renderQuality = {
+        ...this.renderQuality,
+        ssaoEnabled: false,
+        ssaoRatio: 0,
+      };
+    }
+    this.onRenderQualityChange(this.renderQuality);
 
     this.materials = {
       terrain: surfaceMaterial(this.scene, "terrain", "#171d1b", 1),
@@ -620,18 +711,165 @@ export class TwinSceneController {
     this.buildLandscape();
     this.buildUtilities();
 
-    this.scene.onPointerDown = (_, pick) => {
-      const id = pick?.pickedMesh?.metadata?.entityId;
-      if (typeof id === "string") this.onSelect(id);
+    this.scene.onPointerDown = (event) => {
+      this.activePointers.add(event.pointerId);
+      if (this.pointerGesture) {
+        this.pointerGesture.maximumPointers = Math.max(
+          this.pointerGesture.maximumPointers,
+          this.activePointers.size,
+        );
+        return;
+      }
+      this.pointerGesture = {
+        pointerId: event.pointerId,
+        button: event.button,
+        startedAt: performance.now(),
+        startX: event.clientX,
+        startY: event.clientY,
+        maximumPointers: this.activePointers.size,
+        travelPx: 0,
+      };
     };
+    this.scene.onPointerMove = (event) => {
+      const gesture = this.pointerGesture;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      gesture.travelPx = Math.max(
+        gesture.travelPx,
+        Math.hypot(
+          event.clientX - gesture.startX,
+          event.clientY - gesture.startY,
+        ),
+      );
+      gesture.maximumPointers = Math.max(
+        gesture.maximumPointers,
+        this.activePointers.size,
+      );
+    };
+    this.scene.onPointerUp = (event, pick) => {
+      const gesture = this.pointerGesture;
+      this.activePointers.delete(event.pointerId);
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      gesture.travelPx = Math.max(
+        gesture.travelPx,
+        Math.hypot(
+          event.clientX - gesture.startX,
+          event.clientY - gesture.startY,
+        ),
+      );
+      if (
+        isSelectionTap({
+          travelPx: gesture.travelPx,
+          durationMs: performance.now() - gesture.startedAt,
+          maximumPointers: gesture.maximumPointers,
+          button: gesture.button,
+        })
+      ) {
+        const id = pick?.pickedMesh?.metadata?.entityId;
+        if (typeof id === "string") this.onSelect(id);
+      }
+      this.pointerGesture = null;
+    };
+
+    this.canvas.addEventListener("keydown", this.handleFlightKeyDown);
+    this.canvas.addEventListener("keyup", this.handleFlightKeyUp);
+    this.canvas.addEventListener("blur", this.clearFlightInput);
+    this.canvas.addEventListener("pointercancel", this.cancelPointerGesture);
+    this.scene.onBeforeRenderObservable.add(() => this.updateFlightMotion());
 
     const render = () => this.scene.render();
     this.engine.runRenderLoop(render);
     this.onVisibilityChange = () => {
-      if (document.hidden) this.engine.stopRenderLoop(render);
+      if (document.hidden) {
+        this.clearFlightInput();
+        this.engine.stopRenderLoop(render);
+      }
       else this.engine.runRenderLoop(render);
     };
     document.addEventListener("visibilitychange", this.onVisibilityChange);
+  }
+
+  private deriveCurrentRenderQuality() {
+    return deriveRenderQualityProfile({
+      widthPx: this.canvas.clientWidth,
+      heightPx: this.canvas.clientHeight,
+      devicePixelRatio: window.devicePixelRatio,
+      maxMsaaSamples: this.engine.getCaps().maxMSAASamples,
+      isCoarsePointer: window.matchMedia("(pointer: coarse)").matches,
+      deviceMemoryGb: (
+        navigator as Navigator & { readonly deviceMemory?: number }
+      ).deviceMemory,
+    });
+  }
+
+  private readonly handleFlightKeyDown = (event: KeyboardEvent) => {
+    if (this.navigationMode !== "flight" || event.metaKey || event.ctrlKey) return;
+    if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
+      this.flightModifierCodes.add(event.code);
+      event.preventDefault();
+      return;
+    }
+    const command = flightCommandForCode(event.code);
+    if (!command) return;
+    this.keyboardFlightCommands.add(command);
+    event.preventDefault();
+  };
+
+  private readonly handleFlightKeyUp = (event: KeyboardEvent) => {
+    if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
+      this.flightModifierCodes.delete(event.code);
+      return;
+    }
+    const command = flightCommandForCode(event.code);
+    if (command) this.keyboardFlightCommands.delete(command);
+  };
+
+  private readonly clearFlightInput = () => {
+    this.keyboardFlightCommands.clear();
+    this.manualFlightCommands.clear();
+    this.flightModifierCodes.clear();
+    this.flightCamera.cameraDirection.setAll(0);
+    this.flightCamera.cameraRotation.setAll(0);
+  };
+
+  private readonly cancelPointerGesture = (event: PointerEvent) => {
+    this.activePointers.delete(event.pointerId);
+    if (this.pointerGesture?.pointerId === event.pointerId) {
+      this.pointerGesture = null;
+    }
+  };
+
+  private updateFlightMotion() {
+    if (this.navigationMode !== "flight") return;
+    const forward = this.flightCamera.getForwardRay(1).direction;
+    const horizontalLength = Math.hypot(forward.x, forward.z);
+    if (horizontalLength > 0.04) {
+      this.flightHeading = {
+        x: forward.x / horizontalLength,
+        z: forward.z / horizontalLength,
+      };
+    }
+    const commands = new Set<FlightCommand>([
+      ...this.keyboardFlightCommands,
+      ...this.manualFlightCommands,
+    ]);
+    const next = integrateFlightPosition({
+      position: this.flightCamera.position,
+      heading: this.flightHeading,
+      commands,
+      deltaMs: this.engine.getDeltaTime(),
+      boost: [...this.flightModifierCodes].some((code) =>
+        code.startsWith("Shift"),
+      ),
+      precision: [...this.flightModifierCodes].some((code) =>
+        code.startsWith("Alt"),
+      ),
+    });
+    this.flightCamera.position.set(next.x, next.y, next.z);
+    this.flightCamera.rotation.x = Math.max(
+      -Math.PI * 0.444,
+      Math.min(Math.PI * 0.444, this.flightCamera.rotation.x),
+    );
+    this.flightCamera.rotation.z = 0;
   }
 
   private applyTexture(
@@ -651,7 +889,7 @@ export class TwinSceneController {
     );
     albedo.uScale = uScale;
     albedo.vScale = vScale;
-    albedo.anisotropicFilteringLevel = 8;
+    albedo.anisotropicFilteringLevel = this.renderQuality.anisotropy;
     material.albedoTexture = albedo;
     if (normalName) {
       const bump = new Texture(
@@ -664,7 +902,7 @@ export class TwinSceneController {
       bump.uScale = uScale;
       bump.vScale = vScale;
       bump.level = bumpLevel;
-      bump.anisotropicFilteringLevel = 8;
+      bump.anisotropicFilteringLevel = this.renderQuality.anisotropy;
       material.bumpTexture = bump;
       material.forceIrradianceInFragment = true;
     }
@@ -701,12 +939,12 @@ export class TwinSceneController {
     const texture = new Texture(
       url,
       this.scene,
-      true,
+      false,
       false,
       Texture.TRILINEAR_SAMPLINGMODE,
     );
     texture.hasAlpha = true;
-    texture.anisotropicFilteringLevel = 4;
+    texture.anisotropicFilteringLevel = this.renderQuality.anisotropy;
     material.albedoTexture = texture;
     material.opacityTexture = texture;
     material.useAlphaFromAlbedoTexture = true;
@@ -3445,29 +3683,31 @@ export class TwinSceneController {
   }
 
   setCameraPreset(preset: CameraPreset) {
+    this.setNavigationMode("orbit");
+    this.resetOrbitInertia();
     if (preset === "garden") {
       const garden = gardenCameraForWidth(this.canvas.clientWidth);
-      this.camera.alpha = garden.alpha;
-      this.camera.beta = garden.beta;
-      this.camera.radius = garden.radius;
-      this.camera.fov = garden.fov;
-      this.camera.target.set(...garden.target);
+      this.orbitCamera.alpha = garden.alpha;
+      this.orbitCamera.beta = garden.beta;
+      this.orbitCamera.radius = garden.radius;
+      this.orbitCamera.fov = garden.fov;
+      this.orbitCamera.target.set(...garden.target);
       return;
     }
     if (preset === "top") {
-      this.camera.alpha = TOP_CAMERA_ALPHA;
-      this.camera.beta = 0.065;
-      this.camera.radius = this.canvas.clientWidth < 600 ? 56 : 44;
-      this.camera.fov = 0.72;
-      this.camera.target.set(0, 0, 0.5);
+      this.orbitCamera.alpha = TOP_CAMERA_ALPHA;
+      this.orbitCamera.beta = 0.065;
+      this.orbitCamera.radius = this.canvas.clientWidth < 600 ? 56 : 44;
+      this.orbitCamera.fov = 0.72;
+      this.orbitCamera.target.set(0, 0, 0.5);
       return;
     }
     if (preset === "street") {
-      this.camera.alpha = STREET_CAMERA_ALPHA;
-      this.camera.beta = Math.PI * 0.39;
-      this.camera.radius = this.canvas.clientWidth < 600 ? 43 : 31;
-      this.camera.fov = 0.68;
-      this.camera.target.set(-1, 1.4, 4.8);
+      this.orbitCamera.alpha = STREET_CAMERA_ALPHA;
+      this.orbitCamera.beta = Math.PI * 0.39;
+      this.orbitCamera.radius = this.canvas.clientWidth < 600 ? 43 : 31;
+      this.orbitCamera.fov = 0.68;
+      this.orbitCamera.target.set(-1, 1.4, 4.8);
       return;
     }
     if (preset === "focus") {
@@ -3476,25 +3716,171 @@ export class TwinSceneController {
         : undefined;
       const mesh = meshes?.find((candidate) => candidate.isEnabled());
       if (mesh) {
-        this.camera.target.copyFrom(mesh.getBoundingInfo().boundingBox.centerWorld);
+        this.orbitCamera.target.copyFrom(
+          mesh.getBoundingInfo().boundingBox.centerWorld,
+        );
         const extent = mesh.getBoundingInfo().boundingBox.extendSizeWorld.length();
-        this.camera.radius = Math.max(7, Math.min(35, extent * 3.2));
+        this.orbitCamera.radius = Math.max(7, Math.min(35, extent * 3.2));
       }
       return;
     }
-    this.camera.alpha = AXONOMETRIC_CAMERA_ALPHA;
-    this.camera.beta = Math.PI * 0.34;
-    this.camera.radius = this.canvas.clientWidth < 600 ? 58 : 42;
-    this.camera.fov = 0.72;
-    this.camera.target.set(0, 1.25, 0.5);
+    this.orbitCamera.alpha = AXONOMETRIC_CAMERA_ALPHA;
+    this.orbitCamera.beta = Math.PI * 0.34;
+    this.orbitCamera.radius = this.canvas.clientWidth < 600 ? 58 : 42;
+    this.orbitCamera.fov = 0.72;
+    this.orbitCamera.target.set(0, 1.25, 0.5);
+  }
+
+  private resetOrbitInertia() {
+    this.orbitCamera.inertialAlphaOffset = 0;
+    this.orbitCamera.inertialBetaOffset = 0;
+    this.orbitCamera.inertialRadiusOffset = 0;
+    this.orbitCamera.inertialPanningX = 0;
+    this.orbitCamera.inertialPanningY = 0;
+  }
+
+  setNavigationMode(mode: NavigationMode) {
+    if (mode === this.navigationMode) return;
+    if (mode === "flight") {
+      const orbitPosition = this.orbitCamera.globalPosition.clone();
+      this.orbitFocusDistance = Math.max(
+        8,
+        Math.min(32, Vector3.Distance(orbitPosition, this.orbitCamera.target)),
+      );
+      const boundedEntry = integrateFlightPosition({
+        position: orbitPosition,
+        heading: { x: 0, z: -1 },
+        commands: new Set(),
+        deltaMs: 0,
+      });
+      this.flightCamera.position.set(
+        boundedEntry.x,
+        boundedEntry.y,
+        boundedEntry.z,
+      );
+      this.flightCamera.rotationQuaternion = null;
+      this.flightCamera.fov = this.orbitCamera.fov;
+      this.flightCamera.setTarget(this.orbitCamera.target);
+      const forward = this.flightCamera.getForwardRay(1).direction;
+      const horizontalLength = Math.hypot(forward.x, forward.z);
+      if (horizontalLength > 0.04) {
+        this.flightHeading = {
+          x: forward.x / horizontalLength,
+          z: forward.z / horizontalLength,
+        };
+      }
+      this.orbitCamera.detachControl();
+      this.scene.activeCamera = this.flightCamera;
+      this.flightCamera.attachControl(false);
+      this.navigationMode = "flight";
+      this.canvas.focus({ preventScroll: true });
+    } else {
+      const forward = this.flightCamera.getForwardRay(1).direction.normalize();
+      const target = this.flightCamera.position.add(
+        forward.scale(this.orbitFocusDistance),
+      );
+      this.flightCamera.detachControl();
+      this.clearFlightInput();
+      this.orbitCamera.target.copyFrom(target);
+      this.orbitCamera.setPosition(this.flightCamera.position.clone());
+      this.orbitCamera.fov = this.flightCamera.fov;
+      this.resetOrbitInertia();
+      this.scene.activeCamera = this.orbitCamera;
+      this.orbitCamera.attachControl(this.canvas, true);
+      this.navigationMode = "orbit";
+    }
+    this.onNavigationModeChange(this.navigationMode);
+  }
+
+  setFlightCommand(command: FlightCommand, active: boolean) {
+    if (active) this.manualFlightCommands.add(command);
+    else this.manualFlightCommands.delete(command);
+  }
+
+  nudgeFlight(command: FlightCommand) {
+    if (this.navigationMode !== "flight") return;
+    const next = integrateFlightPosition({
+      position: this.flightCamera.position,
+      heading: this.flightHeading,
+      commands: new Set([command]),
+      deltaMs: 220,
+    });
+    this.flightCamera.position.set(next.x, next.y, next.z);
+  }
+
+  getNavigationMode() {
+    return this.navigationMode;
+  }
+
+  getRenderQuality() {
+    return this.renderQuality;
+  }
+
+  whenReady() {
+    return this.scene.whenReadyAsync();
   }
 
   resize() {
-    this.engine.resize();
+    if (this.resizeFrame) return;
+    this.resizeFrame = window.requestAnimationFrame(() => {
+      this.resizeFrame = 0;
+      let next = this.deriveCurrentRenderQuality();
+      if (!this.ssaoPipeline && next.ssaoEnabled) {
+        next = { ...next, ssaoEnabled: false, ssaoRatio: 0 };
+      }
+      const previous = this.renderQuality;
+      const scalingChanged =
+        previous.hardwareScalingLevel !== next.hardwareScalingLevel;
+      if (scalingChanged) {
+        // Babylon resizes internally when the hardware scaling level changes.
+        this.engine.setHardwareScalingLevel(next.hardwareScalingLevel);
+      }
+      if (previous.msaaSamples !== next.msaaSamples) {
+        this.postPipeline.samples = next.msaaSamples;
+      }
+      if (previous.fxaaEnabled !== next.fxaaEnabled) {
+        this.postPipeline.fxaaEnabled = next.fxaaEnabled;
+      }
+      if (previous.sharpenEdgeAmount !== next.sharpenEdgeAmount) {
+        this.postPipeline.sharpen.edgeAmount = next.sharpenEdgeAmount;
+      }
+      if (previous.shadowMapSize !== next.shadowMapSize) {
+        this.shadowGenerator.mapSize = next.shadowMapSize;
+      }
+      if (this.ssaoPipeline) {
+        if (previous.tier !== next.tier) {
+          this.ssaoPipeline.samples = next.tier === "ULTRA" ? 16 : 12;
+        }
+        const cameras = [this.orbitCamera, this.flightCamera];
+        if (next.ssaoEnabled && !this.ssaoAttached) {
+          this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline(
+            this.ssaoPipeline.name,
+            cameras,
+            true,
+          );
+          this.ssaoAttached = true;
+        } else if (!next.ssaoEnabled && this.ssaoAttached) {
+          this.scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline(
+            this.ssaoPipeline.name,
+            cameras,
+          );
+          this.ssaoAttached = false;
+        }
+      }
+      if (!scalingChanged) this.engine.resize();
+      this.renderQuality = next;
+      this.onRenderQualityChange(next);
+    });
   }
 
   dispose() {
+    if (this.resizeFrame) window.cancelAnimationFrame(this.resizeFrame);
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    this.canvas.removeEventListener("keydown", this.handleFlightKeyDown);
+    this.canvas.removeEventListener("keyup", this.handleFlightKeyUp);
+    this.canvas.removeEventListener("blur", this.clearFlightInput);
+    this.canvas.removeEventListener("pointercancel", this.cancelPointerGesture);
+    this.clearFlightInput();
     this.clearSelection();
     this.scene.dispose();
     this.engine.dispose();
@@ -3504,6 +3890,13 @@ export class TwinSceneController {
 export function createTwinScene(
   canvas: HTMLCanvasElement,
   onSelect: (id: string) => void,
+  onNavigationModeChange: (mode: NavigationMode) => void,
+  onRenderQualityChange: (profile: RenderQualityProfile) => void,
 ) {
-  return new TwinSceneController(canvas, onSelect);
+  return new TwinSceneController(
+    canvas,
+    onSelect,
+    onNavigationModeChange,
+    onRenderQualityChange,
+  );
 }

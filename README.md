@@ -33,18 +33,29 @@ steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (súčasť TE
 generujú doska po doske z `TERRACE_ZONES_D1`. Vegetácia, nábytok a
 panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 
-Lokálne panoramatické pozadie `overcast-garden.jpg`, textúra trávnika
-`lawn-albedo.jpg` a botanické karty `ornamental-grass-card.png`
-a `perennial-cluster-card.png` boli pre tento prototyp vygenerované pomocou
-OpenAI imagegen. PBR sady v `public/assets/textures` — omietka
+WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelový
+rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení,
+plné mipmapy a 16× anizotropné filtrovanie. K dispozícii je aj samostatný režim
+**Prelet**: stabilná world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým
+ovládačom a bezpečným návratom do orbitálnych pohľadov.
+
+Textúra trávnika `lawn-albedo.jpg` a botanické karty
+`ornamental-grass-card.png` a `perennial-cluster-card.png` boli pre tento
+prototyp vygenerované pomocou OpenAI imagegen. PBR sady v
+`public/assets/textures` — omietka
 (`plaster-white-albedo.jpg`, `plaster-white-normal.jpg`), modřín
 (`larch-albedo.jpg`, `larch-normal.jpg`), terasové dosky
 (`deck-plank-albedo.jpg`, `deck-plank-normal.jpg`), falcovaný plech
 (`metal-anthracite-albedo.jpg`, `metal-anthracite-normal.jpg`), kačírek
 (`gravel-albedo.jpg`, `gravel-normal.jpg`), betón (`concrete-albedo.jpg`,
-`concrete-normal.jpg`) a normálová mapa trávnika (`lawn-normal.jpg`) — spolu s
-IBL oblohou `sky-partly-cloudy.jpg` sú procedurálne vygenerované v tomto
-repozitári (deterministický generátor, žiadne externé licencie).
+`concrete-normal.jpg`) a normálová mapa trávnika (`lawn-normal.jpg`) sú
+procedurálne vygenerované v tomto repozitári (deterministický generátor, žiadne
+externé licencie). Aktívne panoramatické pozadie
+`suburban-field-01-8k.jpg` má rozlíšenie 8192 × 4096; responzívny variant
+`suburban-field-01-4k.jpg` a pamäťovo úsporný IBL variant
+`suburban-field-01-2k.jpg` sú odvodené z rovnakého zdroja. Dielo
+[Suburban Field 01](https://polyhaven.com/a/suburban_field_01) vytvoril Jacopo
+Voltolina a Poly Haven ho publikuje pod licenciou CC0.
 Nereprezentujú skutočný stav parcely, jej susedov ani konkrétny dodaný výrobok
 či realizačný výber výsadby.
 
@@ -72,6 +83,7 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 - `lib/twin-domain.ts` — engine-free doména, presný lokálny S-JTSK rám, proveniencia a nemenná história úprav,
 - `lib/twin-site.ts` — projektové revízie, vrstvy, zdroje a parametrické základy,
 - `lib/twin-facade.ts` — čisté delenie fasádneho plášťa okolo zdrojovaných otvorov,
+- `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy a pohyb voľnej kamery,
 - `lib/babylon-scene.ts` — jediná hranica medzi milimetrami domény a metrami Babylon scény,
 - `app/twin-studio.tsx` — prístupný DOM prieskumník, inspector a stav pracovného priestoru,
 - `app/babylon-viewport.tsx` — client-only životný cyklus WebGL canvasu.

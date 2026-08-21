@@ -17,6 +17,7 @@ import {
   MapPin,
   Menu,
   Orbit,
+  Plane,
   PanelLeftClose,
   PanelRightClose,
   Search,
@@ -40,6 +41,8 @@ import {
   BabylonViewport,
   type BabylonViewportHandle,
 } from "./babylon-viewport";
+import type { CameraPreset } from "@/lib/babylon-scene";
+import type { NavigationMode } from "@/lib/twin-viewport-contract";
 import {
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
@@ -414,6 +417,7 @@ export function TwinStudio() {
   const explorerTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorPanelRef = useRef<HTMLElement>(null);
+  const flightTriggerRef = useRef<HTMLButtonElement>(null);
   const isCompact = useSyncExternalStore(
     subscribeCompactLayout,
     getCompactLayoutSnapshot,
@@ -423,6 +427,8 @@ export function TwinStudio() {
   const [selectionId, setSelectionId] = useState("PARCEL-6012/26");
   const [visibleLayers, setVisibleLayers] = useState(DEFAULT_LAYER_VISIBILITY);
   const [viewMode, setViewMode] = useState<ViewMode>("realistic");
+  const [navigationMode, setNavigationMode] =
+    useState<NavigationMode>("orbit");
   const [search, setSearch] = useState("");
   const [explorerOpen, setExplorerOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -440,6 +446,7 @@ export function TwinStudio() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       const target = event.target as HTMLElement | null;
       const isTyping =
         target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
@@ -450,6 +457,13 @@ export function TwinStudio() {
         requestAnimationFrame(() => searchRef.current?.focus());
       }
       if (event.key === "Escape" && !isTyping) {
+        if (navigationMode === "flight") {
+          event.preventDefault();
+          setNavigationMode("orbit");
+          viewportRef.current?.setNavigationMode("orbit");
+          requestAnimationFrame(() => flightTriggerRef.current?.focus());
+          return;
+        }
         const restoreFocus = inspectorOpen
           ? inspectorTriggerRef
           : explorerOpen
@@ -469,7 +483,7 @@ export function TwinStudio() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [explorerOpen, inspectorOpen]);
+  }, [explorerOpen, inspectorOpen, navigationMode]);
 
   const openExplorer = () => {
     setInspectorOpen(false);
@@ -513,6 +527,17 @@ export function TwinStudio() {
 
   const toggleLayer = (layer: LayerId) => {
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  };
+
+  const showCameraPreset = (preset: CameraPreset) => {
+    setNavigationMode("orbit");
+    viewportRef.current?.setCameraPreset(preset);
+  };
+
+  const toggleFlight = () => {
+    const next = navigationMode === "flight" ? "orbit" : "flight";
+    setNavigationMode(next);
+    viewportRef.current?.setNavigationMode(next);
   };
 
   const applyWidth = () => {
@@ -748,14 +773,16 @@ export function TwinStudio() {
         </section>
       </aside>
 
-      <section className={`viewport ${viewMode === "realistic" ? "is-realistic" : ""}`} aria-label="3D pracovný priestor">
+      <section className={`viewport ${viewMode === "realistic" ? "is-realistic" : ""} ${navigationMode === "flight" ? "is-flight" : ""}`} aria-label="3D pracovný priestor">
         <BabylonViewport
           ref={viewportRef}
           foundations={foundations}
           selectionId={selectionId}
           visibleLayers={visibleLayers}
           viewMode={viewMode}
+          navigationMode={navigationMode}
           onSelect={select}
+          onNavigationModeChange={setNavigationMode}
         />
 
         <div className="truth-card">
@@ -765,12 +792,20 @@ export function TwinStudio() {
           <small>ČÚZK · overené 18. 8. 2026</small>
         </div>
 
-        <div className="camera-dock" role="toolbar" aria-label="Pohľady kamery">
-          <button aria-label="Záhradný prezentačný pohľad" onClick={() => viewportRef.current?.setCameraPreset("garden")}><Trees size={17} /><span>Záhrada</span><kbd>4</kbd></button>
-          <button aria-label="Axonometrický pohľad" onClick={() => viewportRef.current?.setCameraPreset("axonometric")}><Orbit size={17} /><span>Axonometria</span><kbd>1</kbd></button>
-          <button aria-label="Pôdorysný pohľad" onClick={() => viewportRef.current?.setCameraPreset("top")}><Map size={17} /><span>Pôdorys</span><kbd>2</kbd></button>
-          <button aria-label="Pohľad od ulice" onClick={() => viewportRef.current?.setCameraPreset("street")}><House size={17} /><span>Od ulice</span><kbd>3</kbd></button>
-          <button aria-label="Zamerať vybraný objekt" onClick={() => viewportRef.current?.setCameraPreset("focus")}><Focus size={17} /><span>Výber</span><kbd>F</kbd></button>
+        <div className="camera-dock" role="toolbar" aria-label="Kamera a navigácia">
+          <button aria-label="Záhradný prezentačný pohľad" aria-keyshortcuts="4" onClick={() => showCameraPreset("garden")}><Trees size={17} /><span>Záhrada</span><kbd>4</kbd></button>
+          <button aria-label="Axonometrický pohľad" aria-keyshortcuts="1" onClick={() => showCameraPreset("axonometric")}><Orbit size={17} /><span>Axonometria</span><kbd>1</kbd></button>
+          <button aria-label="Pôdorysný pohľad" aria-keyshortcuts="2" onClick={() => showCameraPreset("top")}><Map size={17} /><span>Pôdorys</span><kbd>2</kbd></button>
+          <button aria-label="Pohľad od ulice" aria-keyshortcuts="3" onClick={() => showCameraPreset("street")}><House size={17} /><span>Od ulice</span><kbd>3</kbd></button>
+          <button
+            ref={flightTriggerRef}
+            className={navigationMode === "flight" ? "active" : ""}
+            aria-label={navigationMode === "flight" ? "Ukončiť voľný 3D prelet" : "Spustiť voľný 3D prelet"}
+            aria-pressed={navigationMode === "flight"}
+            aria-keyshortcuts="H"
+            onClick={toggleFlight}
+          ><Plane size={17} /><span>Prelet</span><kbd>H</kbd></button>
+          <button aria-label="Zamerať vybraný objekt" aria-keyshortcuts="F" onClick={() => showCameraPreset("focus")}><Focus size={17} /><span>Výber</span><kbd>F</kbd></button>
           <button
             aria-label="Zobraziť na celej obrazovke"
             onClick={() => {
@@ -783,17 +818,19 @@ export function TwinStudio() {
         <div className="view-mode" role="group" aria-label="Režim zobrazenia">
           <button className={viewMode === "technical" ? "active" : ""} aria-pressed={viewMode === "technical"} onClick={() => {
             setViewMode("technical");
+            setNavigationMode("orbit");
             setExplorerOpen(false);
             setInspectorOpen(false);
-            requestAnimationFrame(() => viewportRef.current?.setCameraPreset("axonometric"));
+            requestAnimationFrame(() => showCameraPreset("axonometric"));
           }}>
             <SlidersHorizontal size={15} /> Technický
           </button>
           <button className={viewMode === "realistic" ? "active" : ""} aria-pressed={viewMode === "realistic"} onClick={() => {
             setViewMode("realistic");
+            setNavigationMode("orbit");
             setExplorerOpen(false);
             setInspectorOpen(false);
-            requestAnimationFrame(() => viewportRef.current?.setCameraPreset("garden"));
+            requestAnimationFrame(() => showCameraPreset("garden"));
           }}>
             <House size={15} /> Realita
           </button>
@@ -820,10 +857,12 @@ export function TwinStudio() {
             <div><strong>Ovládanie modelu</strong><button aria-label="Zavrieť pomoc" onClick={() => setHelpOpen(false)}><X size={16} /></button></div>
             <dl>
               <div><dt>Orbit</dt><dd>ťahanie / 1 prst</dd></div>
-              <div><dt>Posun</dt><dd>pravé tlačidlo / 2 prsty</dd></div>
-              <div><dt>Zoom</dt><dd>koliesko / pinch</dd></div>
-              <div><dt>Pohľady</dt><dd>1 · 2 · 3</dd></div>
-              <div><dt>Zamerať</dt><dd>F</dd></div>
+              <div><dt>Posun a zoom</dt><dd>pravé / koliesko / pinch</dd></div>
+              <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · F</dd></div>
+              <div><dt>Voľný prelet</dt><dd>H · potom WASD</dd></div>
+              <div><dt>Výška preletu</dt><dd>Q / E</dd></div>
+              <div><dt>Rýchlosť</dt><dd>Shift turbo · Alt presne</dd></div>
+              <div><dt>Ukončiť prelet</dt><dd>Esc</dd></div>
             </dl>
           </aside>
         )}
@@ -847,7 +886,7 @@ export function TwinStudio() {
         <div className={`evidence-status ${detail.statusTone}`}>
           {detail.statusTone === "current" ? <ShieldCheck size={15} /> : detail.statusTone === "warning" ? <TriangleAlert size={15} /> : <Database size={15} />}
           <span>{detail.status}</span>
-          <button aria-label="Zamerať objekt v 3D" onClick={() => viewportRef.current?.setCameraPreset("focus")}><Focus size={16} /></button>
+          <button aria-label="Zamerať objekt v 3D" onClick={() => showCameraPreset("focus")}><Focus size={16} /></button>
         </div>
         <div className="inspector-tabs" role="tablist" aria-label="Detail a zdroje">
           <button id="tab-parameters" role="tab" aria-controls="panel-parameters" aria-selected={inspectorTab === "parameters"} className={inspectorTab === "parameters" ? "active" : ""} onClick={() => setInspectorTab("parameters")}>Parametre</button>

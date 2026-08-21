@@ -433,7 +433,7 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
 }
 .canvas-region,
 .scene-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.scene-canvas { display: block; outline: none; touch-action: none; }
+.scene-canvas { display: block; outline: none; image-rendering: auto; touch-action: none; }
 .scene-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--focus), inset 0 0 0 5px var(--ink-950); }
 .viewport-state {
   position: absolute;
@@ -504,8 +504,93 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   cursor: pointer;
 }
 .camera-dock button:hover { color: white; background: rgb(255 255 255 / 8%); }
+.camera-dock button.active {
+  color: #f7faf8;
+  background: linear-gradient(135deg, rgb(79 111 95 / 88%), rgb(48 69 59 / 88%));
+  box-shadow: inset 0 0 0 1px rgb(169 222 188 / 22%);
+}
 .camera-dock button:last-child { width: 44px; justify-content: center; padding: 0; border-left: 1px solid var(--line-dark); }
 .camera-dock kbd { color: #606b67; font-family: var(--font-geist-mono); font-size: 9px; }
+.camera-dock button.active kbd { color: #c8d9cf; }
+
+.render-quality-badge {
+  position: absolute;
+  right: 19px;
+  bottom: 111px;
+  z-index: 5;
+  display: grid;
+  gap: 2px;
+  min-width: 92px;
+  padding: 8px 10px;
+  border: 1px solid rgb(211 237 220 / 20%);
+  color: #dce9df;
+  background: rgb(15 22 19 / 68%);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 15%);
+  pointer-events: none;
+}
+.render-quality-badge span {
+  color: #b9dfc5;
+  font-family: var(--font-geist-mono);
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: .13em;
+}
+.render-quality-badge small {
+  color: #83968b;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+}
+
+.flight-hud {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  z-index: 6;
+  display: grid;
+  gap: 3px;
+  min-width: 310px;
+  padding: 11px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(197 228 207 / 22%);
+  color: #edf4ef;
+  background: linear-gradient(135deg, rgb(17 28 23 / 86%), rgb(12 17 15 / 78%));
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 46px rgb(0 0 0 / 20%);
+  pointer-events: none;
+}
+.flight-hud > span {
+  color: #9fd0ae;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: .13em;
+}
+.flight-hud strong { font-size: 12px; font-weight: 580; }
+.flight-hud small { color: #899a90; font-family: var(--font-geist-mono); font-size: 8px; }
+
+.flight-control-pad { display: none; }
+.flight-control-pad button {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid rgb(234 243 236 / 20%);
+  border-radius: 12px;
+  color: #f2f6f3;
+  background: rgb(13 20 17 / 78%);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 26px rgb(0 0 0 / 18%);
+  font-family: var(--font-geist-mono);
+  font-size: 18px;
+  touch-action: none;
+  user-select: none;
+}
+.flight-control-pad button:active {
+  border-color: rgb(172 224 190 / 52%);
+  background: rgb(55 86 69 / 90%);
+  transform: scale(.96);
+}
 .view-mode {
   position: absolute;
   top: 17px;
@@ -869,6 +954,21 @@ a:focus-visible {
   .camera-dock button,
   .camera-dock button:last-child { width: 48px; min-height: 48px; justify-content: center; padding: 0; }
   .camera-dock kbd { display: none; }
+  .render-quality-badge { right: 13px; bottom: 171px; }
+  .flight-hud {
+    top: 182px;
+    left: 13px;
+    min-width: 0;
+    max-width: calc(100vw - 26px);
+    padding: 9px 11px;
+    transform: none;
+  }
+  .flight-hud small { display: none; }
+  .viewport.is-flight .viewport-legend,
+  .viewport.is-flight .visualization-note,
+  .viewport.is-flight .north-compass,
+  .viewport.is-flight .mobile-explorer-button,
+  .viewport.is-flight .render-quality-badge { display: none; }
   .view-mode { top: 13px; right: 13px; flex-direction: column; }
   .view-mode button { width: 48px; min-height: 48px; }
   .north-compass { right: 17px; bottom: 106px; width: 52px; height: 52px; }
@@ -887,6 +987,34 @@ a:focus-visible {
   .undo-button { min-height: 48px; }
   .evidence-status button,
   .source-card a { width: 48px; height: 48px; }
+}
+
+@media (pointer: coarse), (max-width: 760px) {
+  .flight-control-pad {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    z-index: 8;
+    display: grid;
+    grid-template-columns: repeat(4, 48px);
+    grid-template-rows: repeat(3, 48px);
+    gap: 8px;
+    transform: translateX(-50%);
+  }
+  .flight-forward { grid-column: 2; grid-row: 1; }
+  .flight-left { grid-column: 1; grid-row: 2; }
+  .flight-backward { grid-column: 2; grid-row: 2; }
+  .flight-right { grid-column: 3; grid-row: 2; }
+  .flight-up { grid-column: 4; grid-row: 1; }
+  .flight-down { grid-column: 4; grid-row: 2; }
+  .flight-control-pad .flight-exit {
+    grid-column: 1 / 5;
+    grid-row: 3;
+    font-size: 10px;
+    font-weight: 680;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
 }
 
 @media (max-width: 390px) {
