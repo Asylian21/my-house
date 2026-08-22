@@ -175,6 +175,8 @@ function glassPane(
   context.appearance(mesh, context.materials.technicalGlass, context.materials.glass);
   mesh.metadata = { ...(mesh.metadata ?? {}), entityId: spec.entityId };
   mesh.isPickable = true;
+  // Fixed glass stops the walker; only a sliding leaf is passable.
+  mesh.checkCollisions = label !== "posuvné krídlo";
   context.register(mesh, "building");
   return mesh;
 }

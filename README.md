@@ -103,10 +103,13 @@ veci v obytnom priestore 1.03: kachle s komínom sú menšie a stoja hneď vedľ
 dverí na bazénovú terasu opreté o západnú stenu — dymovod vedie do murovaného
 piliera 346 × 500 z výkresu D1.1.002, ktorý je teraz komínovým telesom
 (`HOUSE.chimneys[0]`, prestup strechou na dvorovej rovine, FV pole preto
-posunuté o ďalší stĺpcový krok 1,1 m do záhrady); štítová stena k prístrešku je
-celá presklená až po líniu šikmého podhľadu (stĺpiky po 1 250 mm, priečnik na
-+2,750, štítové zasklenie po vrchol 4,85 m, modřínový pás zostáva len medzi
-podhľadom a strechou) s jediným otváravým dverným krídlom 1 000 mm; kuchyňa
+posunuté o ďalší stĺpcový krok 1,1 m do záhrady); štítová stena k prístrešku
+je pod priečnikom +2,750 podľa detailu D1.1.002 — zdvižno‑posuvné dvere 2 500
+na západnej strane (jediné krídlo, ktoré sa otvára, s pevným nadsvetlíkom) a
+modřínom obložená plná stena na zvyšných 3 500 — a nad priečnikom je štítové
+okno (stĺpiky po 1 250 mm, zasklené až po šikmý podhľad, vrchol 4,85 m) ako na
+referenčnej fotografii stavebníka; modřínový pás zostáva len medzi podhľadom
+a strechou; kuchyňa
 je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
 vysoká skriňa s chladničkou a rúrou, biele horné skrinky s LED lištou a tmavý
 kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným

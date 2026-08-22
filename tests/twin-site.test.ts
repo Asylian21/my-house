@@ -1264,25 +1264,27 @@ describe("documented D1 covered porches and terrace zones", () => {
     const porch = HOUSE.porches.wingEnd;
     expect(porch.frontYmm).toBe(HOUSE.facades.wingEnd.faceYmm);
     expect(porch.frontYmm - porch.glazingFaceYmm).toBe(porch.clearDepthMm);
-    // D1 record: the 2 500 glazed wall and the larch back wall.
-    expect(porch.previousGlazing.startXmm).toBe(
+    // D1 layout below the transom: the 2 500 lift-and-slide door and the
+    // larch back wall; above +2,750 the gable window runs to the vault.
+    expect(porch.glazing.startXmm).toBe(
       HOUSE.facades.wingEnd.opening.roughOpeningStartXmm,
     );
-    expect(porch.previousGlazing.widthMm).toBe(
+    expect(porch.glazing.widthMm).toBe(
       HOUSE.facades.wingEnd.opening.roughOpeningWidthMm,
     );
-    expect(porch.previousBackWall.startXmm).toBe(
-      porch.previousGlazing.startXmm + porch.previousGlazing.widthMm,
+    expect(porch.glazing.kind).toBe("LIFT_AND_SLIDE");
+    expect(porch.backWall.startXmm).toBe(
+      porch.glazing.startXmm + porch.glazing.widthMm,
     );
-    // 22. 8. 2026: full-width curtain wall with one hinged door leaf.
-    expect(porch.glazing.startXmm).toBe(21_540);
-    expect(porch.glazing.startXmm + porch.glazing.widthMm).toBe(porch.eastWallInnerXmm);
-    expect(porch.glazing.gable).toBe("GLAZED_TO_VAULT");
-    expect(porch.glazing.mullionXmm[0]).toBe(porch.glazing.startXmm);
-    expect(porch.glazing.mullionXmm.at(-1)).toBe(porch.glazing.startXmm + porch.glazing.widthMm);
-    expect(porch.glazing.mullionXmm).toContain(porch.door.startXmm);
-    expect(porch.glazing.mullionXmm).toContain(porch.door.startXmm + porch.door.widthMm);
-    expect(porch.door.widthMm).toBe(1_000);
+    expect(porch.backWall.endXmm).toBe(porch.eastWallInnerXmm);
+    expect(porch.backWall.topMm).toBe(porch.gableWindow.bottomMm);
+    expect(porch.glazing.transomLightTopMm).toBe(porch.gableWindow.bottomMm);
+    expect(porch.gableWindow.gable).toBe("GLAZED_TO_VAULT");
+    expect(porch.gableWindow.mullionXmm[0]).toBe(porch.gableWindow.startXmm);
+    expect(porch.gableWindow.mullionXmm.at(-1)).toBe(porch.gableWindow.endXmm);
+    expect(porch.gableWindow.mullionXmm).toContain(porch.backWall.startXmm);
+    // Glazed share of the lower wall: roughly a quarter of the 7 m gable.
+    expect(porch.glazing.widthMm / HOUSE.wing.widthMm).toBeCloseTo(0.36, 1);
     expect(porch.cornerPillar.sizeMm).toBe(500);
     // The porch is open to the roof: the larch gable sits on the recessed
     // plane, so nothing closes the front above the opening.
