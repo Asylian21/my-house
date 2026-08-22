@@ -104,11 +104,13 @@ dverí na bazénovú terasu opreté o západnú stenu — dymovod vedie do murov
 piliera 346 × 500 z výkresu D1.1.002, ktorý je teraz komínovým telesom
 (`HOUSE.chimneys[0]`, prestup strechou na dvorovej rovine, FV pole preto
 posunuté o ďalší stĺpcový krok 1,1 m do záhrady); štítová stena k prístrešku
-má podľa detailu D1.1.002 a referenčnej fotografie stavebníka jediné pevné
-presklenie 2 500 × 2 750 na západnej strane (bez dverí), modřínom obloženú
-plnú stenu na zvyšných 3 500 a nad sklom iba malý pravouhlý trojuholníkový
-svetlík so spodnou stranou v dĺžke skla, šikmou stranou pozdĺž podhľadu a
-zvislou stranou na východnej hrane skla; zvyšok štítu je modřín; kuchyňa
+má podľa referenčnej fotografie stavebníka pri rohovom pilieri 500 mm
+murovaný pilier, potom jediné pevné presklenie 2 000 × 2 750 (bez dverí),
+nad ním uzavretý pás venca +2,750 → +3,050 cez celú šírku a nad pásom iba
+malý pravouhlý trojuholníkový svetlík so spodnou stranou v dĺžke skla, šikmou
+stranou pozdĺž podhľadu a zvislou stranou na východnej hrane skla; zvyšných
+3 500 je modřínom obložená plná stena a celý zvyšok štítu je modřín zvonku a
+omietka zvnútra; kuchyňa
 je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
 vysoká skriňa s chladničkou a rúrou, biele horné skrinky s LED lištou a tmavý
 kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným

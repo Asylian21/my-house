@@ -104,7 +104,8 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /AvatarController/);
   assert.match(scene, /buildPorchCurtainWall\(/);
   assert.match(scene, /Štítový trojuholníkový svetlík · zasklenie/);
-  assert.match(scene, /pevné presklenie 2 500/);
+  assert.match(scene, /pevné presklenie 2 000/);
+  assert.match(scene, /pás venca/);
   assert.match(scene, /pool-water-normal\.png/);
   assert.match(scene, /hedge-privet-albedo\.png/);
   assert.match(scene, /krížená botanická karta/);

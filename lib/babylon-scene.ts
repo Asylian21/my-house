@@ -3120,34 +3120,68 @@ export class TwinSceneController {
     const livingWestXmm = 21543;
     const livingEastXmm = 27541;
     const gableWindow = HOUSE.porches.wingEnd.gableWindow;
+    const ringBeamTopMm = HOUSE.porches.wingEnd.ringBeam.topMm;
+    const roofAt = (xMm: number) =>
+      xMm < (wingLeftX + wingRightX) / 2
+        ? wingInnerRoofHeightMm(xMm)
+        : wingOuterRoofHeightMm(xMm);
     const vaultHalfSpan = (wingLeftX + wingRightX) / 2 - livingWestXmm;
     const vaultAtX = (xMm: number) =>
       vaultRidgeMm -
       (vaultRidgeMm - vaultWallMm) *
         Math.min(1, Math.abs(xMm - (wingLeftX + wingRightX) / 2) / vaultHalfSpan);
-    const wingGable = verticalProfileSolid(
-      this.scene,
-      "Modřínový štít krytej terasy · nad plnou stenou a okolo svetlíka",
-      "Y",
+    const apexMm = vaultAtX(gableWindow.apexXmm) - 30;
+    // The larch gable above the ring beam, in three pieces around the
+    // triangular light: west of it, the wedge above its hypotenuse, and east.
+    const larchPieces: ReadonlyArray<readonly { readonly alongMm: number; readonly elevationMm: number }[]> = [
       [
         { alongMm: wingLeftX, elevationMm: HOUSE.eavesElevationMm },
-        { alongMm: (wingLeftX + wingRightX) / 2, elevationMm: HOUSE.ridgeElevationMm },
-        { alongMm: wingRightX, elevationMm: HOUSE.eavesElevationMm },
-        { alongMm: livingEastXmm, elevationMm: HOUSE.eavesElevationMm },
-        { alongMm: livingEastXmm, elevationMm: vaultWallMm },
-        { alongMm: gableWindow.endXmm, elevationMm: vaultWallMm },
-        { alongMm: gableWindow.endXmm, elevationMm: vaultAtX(gableWindow.apexXmm) },
-        { alongMm: gableWindow.startXmm, elevationMm: vaultWallMm },
-        { alongMm: gableWindow.startXmm, elevationMm: HOUSE.eavesElevationMm },
+        { alongMm: gableWindow.startXmm, elevationMm: roofAt(gableWindow.startXmm) },
+        { alongMm: gableWindow.startXmm, elevationMm: ringBeamTopMm },
+        { alongMm: livingWestXmm, elevationMm: ringBeamTopMm },
+        { alongMm: livingWestXmm, elevationMm: HOUSE.eavesElevationMm },
       ],
+      [
+        { alongMm: gableWindow.startXmm, elevationMm: gableWindow.bottomMm },
+        { alongMm: gableWindow.endXmm, elevationMm: apexMm },
+        { alongMm: gableWindow.endXmm, elevationMm: roofAt(gableWindow.endXmm) },
+        { alongMm: gableWindow.startXmm, elevationMm: roofAt(gableWindow.startXmm) },
+      ],
+      [
+        { alongMm: gableWindow.endXmm, elevationMm: ringBeamTopMm },
+        { alongMm: livingEastXmm, elevationMm: ringBeamTopMm },
+        { alongMm: livingEastXmm, elevationMm: HOUSE.eavesElevationMm },
+        { alongMm: wingRightX, elevationMm: HOUSE.eavesElevationMm },
+        { alongMm: (wingLeftX + wingRightX) / 2, elevationMm: HOUSE.ridgeElevationMm },
+        { alongMm: gableWindow.endXmm, elevationMm: roofAt(gableWindow.endXmm) },
+      ],
+    ];
+    const larchGable = this.larchFor(2.86, 2.44, "wing-gable");
+    for (const [index, profile] of larchPieces.entries()) {
+      if (index === 0) continue;
+      const piece = verticalProfileSolid(
+        this.scene,
+        `Modřínový štít krytej terasy · diel ${index + 1}`,
+        "Y",
+        profile,
+        gableYmm - 20,
+        gableYmm + 36,
+      );
+      this.appearance(piece, this.materials.wall, larchGable);
+      piece.receiveShadows = true;
+      piece.checkCollisions = true;
+      this.castShadow(piece);
+      this.register(piece, "building", HOUSE.id);
+    }
+    const wingGable = verticalProfileSolid(
+      this.scene,
+      "Modřínový štít krytej terasy · diel 1",
+      "Y",
+      larchPieces[0],
       gableYmm - 20,
       gableYmm + 36,
     );
-    this.appearance(
-      wingGable,
-      this.materials.wall,
-      this.larchFor(2.86, 2.44, "wing-gable"),
-    );
+    this.appearance(wingGable, this.materials.wall, larchGable);
     wingGable.receiveShadows = true;
     wingGable.checkCollisions = true;
     this.castShadow(wingGable);
@@ -3877,25 +3911,27 @@ export class TwinSceneController {
 
   /**
    * End wall of 1.03 toward the covered porch (22. 8. 2026, final client
-   * wording with the reference photograph): the single FIXED 2 500 glass
-   * pane on the west side (no door), the larch-clad solid wall over the
-   * remaining 3 500, and above the pane only a small right-triangle light
-   * whose base equals the pane width — its sloped side follows the vaulted
-   * ceiling, its vertical side stands on the pane's east edge.
+   * wording with the reference photograph): a 500 mm pier beside the corner
+   * pillar, a single FIXED 2 000 glass pane (no door), a closed ring-beam
+   * band above it, and above the band only a small right-triangle light of
+   * the pane width — sloped side along the vaulted ceiling, vertical side on
+   * the pane's east edge. The remaining 3 500 is the larch-clad solid wall;
+   * every other part of the gable is larch outside and plaster inside.
    */
   private buildPorchCurtainWall() {
     const porch = HOUSE.porches.wingEnd;
     const glazing = porch.glazing;
     const gable = porch.gableWindow;
+    const beam = porch.ringBeam;
     const faceYmm = porch.glazingFaceYmm;
     const frame = this.realisticMaterials.glassFrame;
-    const transomMm = gable.bottomMm;
+    const vaultWallMm = 2750;
     const vaultRidgeMm = 4850;
     const ridgeXmm = HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.roof.wingHalfSpanMm;
     const westXmm = 21543;
     const vaultAt = (xMm: number) =>
       vaultRidgeMm -
-      (vaultRidgeMm - transomMm) *
+      (vaultRidgeMm - vaultWallMm) *
         Math.min(1, Math.abs(xMm - ridgeXmm) / (ridgeXmm - westXmm));
     const planeYmm = faceYmm - 150;
     const barDepthMm = 100;
@@ -3903,7 +3939,7 @@ export class TwinSceneController {
 
     // ---- fixed pane 0 → +2,750 (real joinery, no sash, no door)
     this.buildWindowOnZFace(
-      "Krytá terasa · pevné presklenie 2 500 · D1.1.002",
+      "Krytá terasa · pevné presklenie 2 000 · revízia 22. 8. 2026",
       glazing.startXmm + glazing.widthMm / 2,
       faceYmm,
       glazing.widthMm,
@@ -3916,50 +3952,59 @@ export class TwinSceneController {
       500,
     );
 
-    // ---- solid wall 24 040 – 27 540 up to the transom, larch outside
-    const wall = porch.backWall;
-    const solid = boxAtPlan(
-      this.scene,
-      "Krytá terasa · plná zadná stena",
-      { x: (wall.startXmm + wall.endXmm) / 2, y: faceYmm - 250 },
-      wall.endXmm - wall.startXmm,
-      500,
-      wall.topMm * MM_TO_M,
-      0,
-    );
-    solid.material = this.realisticMaterials.wall;
-    solid.receiveShadows = true;
-    solid.checkCollisions = true;
-    this.castShadow(solid);
-    this.realisticOnly(solid);
-    this.register(solid, "building", HOUSE.id);
-    const larchWidthM = (wall.endXmm - wall.startXmm) * MM_TO_M;
-    const larchHeightM = wall.topMm * MM_TO_M;
-    const larch = boxAtPlan(
-      this.scene,
-      "Krytá terasa · modřínový obklad zadnej steny",
-      { x: (wall.startXmm + wall.endXmm) / 2, y: faceYmm + 18 },
-      wall.endXmm - wall.startXmm,
-      36,
-      larchHeightM,
-      0,
-    );
-    larch.material = this.larchFor(larchWidthM, larchHeightM, "porch-back");
-    larch.receiveShadows = true;
-    larch.isPickable = false;
-    this.realisticOnly(larch);
-    this.register(larch, "building", HOUSE.id);
+    // ---- masonry below the ring beam: west pier and the back wall
+    const masonry = (label: string, startXmm: number, endXmm: number, bottomMm: number, topMm: number) => {
+      const block = boxAtPlan(
+        this.scene,
+        label,
+        { x: (startXmm + endXmm) / 2, y: faceYmm - 250 },
+        endXmm - startXmm,
+        500,
+        (topMm - bottomMm) * MM_TO_M,
+        bottomMm * MM_TO_M,
+      );
+      block.material = this.realisticMaterials.wall;
+      block.receiveShadows = true;
+      block.checkCollisions = true;
+      this.castShadow(block);
+      this.realisticOnly(block);
+      this.register(block, "building", HOUSE.id);
+      const widthM = (endXmm - startXmm) * MM_TO_M;
+      const heightM = (topMm - bottomMm) * MM_TO_M;
+      const larch = boxAtPlan(
+        this.scene,
+        `${label} · modřínový obklad`,
+        { x: (startXmm + endXmm) / 2, y: faceYmm + 18 },
+        endXmm - startXmm,
+        36,
+        heightM,
+        bottomMm * MM_TO_M,
+      );
+      larch.material = this.larchFor(widthM, heightM, `porch-${startXmm}-${bottomMm}`);
+      larch.receiveShadows = true;
+      larch.isPickable = false;
+      this.realisticOnly(larch);
+      this.register(larch, "building", HOUSE.id);
+    };
+    masonry("Krytá terasa · murovaný pilier pri rohu", porch.westPier.startXmm, porch.westPier.endXmm, 0, beam.bottomMm);
+    masonry("Krytá terasa · plná zadná stena", porch.backWall.startXmm, porch.backWall.endXmm, 0, porch.backWall.topMm);
+    // Ring beam band across the whole end wall, closed above the pane.
+    masonry("Krytá terasa · pás venca +2,750 → +3,050", beam.spanStartXmm, beam.spanEndXmm, beam.bottomMm, beam.topMm);
 
-    // ---- interior plaster above the solid wall up to the vault line
+    // ---- interior plaster above the band up to the vault line, leaving the
+    // triangular light open
     const closure = verticalProfileSolid(
       this.scene,
-      "Krytá terasa · štít nad plnou stenou · interiérová omietka",
+      "Krytá terasa · štít nad vencom · interiérová omietka",
       "Y",
       [
-        { alongMm: wall.startXmm, elevationMm: transomMm },
-        { alongMm: wall.endXmm, elevationMm: transomMm },
+        { alongMm: westXmm, elevationMm: beam.topMm },
+        { alongMm: porch.backWall.endXmm + 1, elevationMm: beam.topMm },
         { alongMm: ridgeXmm, elevationMm: vaultAt(ridgeXmm) },
-        { alongMm: wall.startXmm, elevationMm: vaultAt(wall.startXmm) },
+        { alongMm: gable.endXmm, elevationMm: vaultAt(gable.endXmm) },
+        { alongMm: gable.endXmm, elevationMm: gable.bottomMm },
+        { alongMm: gable.startXmm, elevationMm: gable.bottomMm },
+        { alongMm: gable.startXmm, elevationMm: vaultAt(gable.startXmm) },
       ],
       faceYmm - 500,
       faceYmm,
@@ -3969,21 +4014,20 @@ export class TwinSceneController {
     closure.checkCollisions = true;
     this.realisticOnly(closure);
     this.register(closure, "building", HOUSE.id);
-    // Plaster return beside the pane up to the vault (21 543 → 21 540 gap is
-    // the pillar; nothing to close there).
 
-    // ---- triangular light above the pane: base = pane width, apex on the
+    // ---- triangular light above the band: base = pane width, apex on the
     // east edge at the vault line, hypotenuse along the ceiling slope.
     const apexMm = vaultAt(gable.apexXmm) - 30;
     const x0 = gable.startXmm;
     const x1 = gable.endXmm;
+    const baseMm = gable.bottomMm;
     const pane = verticalProfileSolid(
       this.scene,
       "Štítový trojuholníkový svetlík · zasklenie",
       "Y",
       [
-        { alongMm: x0 + barWidthMm, elevationMm: transomMm + barWidthMm },
-        { alongMm: x1 - barWidthMm, elevationMm: transomMm + barWidthMm },
+        { alongMm: x0 + barWidthMm, elevationMm: baseMm + barWidthMm },
+        { alongMm: x1 - barWidthMm, elevationMm: baseMm + barWidthMm },
         { alongMm: x1 - barWidthMm, elevationMm: apexMm - barWidthMm },
       ],
       planeYmm - 12,
@@ -4000,7 +4044,7 @@ export class TwinSceneController {
       x1 - x0,
       barDepthMm,
       barWidthMm * MM_TO_M,
-      transomMm * MM_TO_M,
+      baseMm * MM_TO_M,
     );
     const post = boxAtPlan(
       this.scene,
@@ -4008,11 +4052,11 @@ export class TwinSceneController {
       { x: x1 - barWidthMm / 2, y: planeYmm },
       barWidthMm,
       barDepthMm,
-      (apexMm - transomMm) * MM_TO_M,
-      transomMm * MM_TO_M,
+      (apexMm - baseMm) * MM_TO_M,
+      baseMm * MM_TO_M,
     );
     const runM = (x1 - x0) * MM_TO_M;
-    const riseM = (apexMm - transomMm) * MM_TO_M;
+    const riseM = (apexMm - baseMm) * MM_TO_M;
     const rail = boxAtPlan(
       this.scene,
       "Štítový trojuholníkový svetlík · šikmý rám",
@@ -4020,7 +4064,7 @@ export class TwinSceneController {
       Math.round(Math.hypot(runM, riseM) * 1000) + barWidthMm,
       barDepthMm,
       barWidthMm * MM_TO_M,
-      ((transomMm + apexMm) / 2) * MM_TO_M - (barWidthMm / 2) * MM_TO_M,
+      ((baseMm + apexMm) / 2) * MM_TO_M - (barWidthMm / 2) * MM_TO_M,
     );
     rail.rotation.z = Math.atan2(riseM, runM);
     for (const bar of [bottomRail, post, rail]) {
@@ -4031,8 +4075,6 @@ export class TwinSceneController {
       this.castShadow(bar);
       this.register(bar, "building", HOUSE.id);
     }
-    // Plaster reveal between the pane head and the transom? None: the fixed
-    // pane runs straight up to the triangle's bottom rail.
   }
 
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
