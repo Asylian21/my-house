@@ -25,6 +25,7 @@ import {
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
+import { ExtrudePolygon } from "@babylonjs/core/Meshes/Builders/polygonBuilder.pure";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder.pure";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure";
@@ -44,6 +45,7 @@ import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/edgesRenderer";
 import "@babylonjs/core/Culling/ray";
+import "@babylonjs/core/Collisions/collisionCoordinator";
 import { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
 
@@ -91,12 +93,28 @@ import {
   type RoofVertexMm,
 } from "./twin-roof";
 import { slatCenterDistancesMm } from "./twin-fence";
+import { buildInterior } from "./babylon-interior";
+import {
+  INTERIOR_ROOMS,
+  roomAt,
+  type InteriorRoom,
+} from "./twin-interior";
 import {
   ORBIT_ZOOM,
+  clampOrbitRadius,
   deriveRenderQualityProfile,
   flightCommandForCode,
+  flightWheelDollyDistanceM,
+  integrateFlightDolly,
   integrateFlightPosition,
+  integrateWalkPosition,
+  WALK_COLLISION_ELLIPSOID_M,
+  WALK_EYE_HEIGHT_M,
   isSelectionTap,
+  normalizeWheelPixels,
+  orbitZoomMultiplier,
+  stepOrbitZoom,
+  wheelZoomGesture,
   type FlightCommand,
   type NavigationMode,
   type RenderQualityProfile,
@@ -457,6 +475,44 @@ function boxAtPlan(
   return mesh;
 }
 
+/**
+ * Solid extruded from a vertical profile. `plane === "Y"` keeps the profile in
+ * a plane of constant plan-y (profile `along` = plan x), `plane === "X"` in a
+ * plane of constant plan-x (profile `along` = plan y). The solid fills the
+ * thickness between `fromMm` and `toMm` on the perpendicular axis.
+ */
+function verticalProfileSolid(
+  scene: Scene,
+  name: string,
+  plane: "X" | "Y",
+  profile: readonly { readonly alongMm: number; readonly elevationMm: number }[],
+  fromMm: number,
+  toMm: number,
+) {
+  const thicknessM = Math.abs(toMm - fromMm) * MM_TO_M;
+  const shape = profile.map((point) =>
+    plane === "Y"
+      ? new Vector3(xM(point.alongMm), 0, point.elevationMm * MM_TO_M)
+      : new Vector3(-zM(point.alongMm), 0, point.elevationMm * MM_TO_M),
+  );
+  const mesh = ExtrudePolygon(
+    name,
+    { shape, depth: thicknessM, sideOrientation: Mesh.DOUBLESIDE },
+    scene,
+    earcut,
+  );
+  // Pitch the XZ polygon upright (profile z → world y, extrusion -y → +z),
+  // then yaw X-plane profiles so the extrusion runs along world x.
+  const yaw = plane === "Y" ? 0 : Math.PI / 2;
+  mesh.rotationQuaternion = Quaternion.RotationYawPitchRoll(yaw, -Math.PI / 2, 0);
+  if (plane === "Y") {
+    mesh.position.set(0, 0, zM(Math.max(fromMm, toMm)));
+  } else {
+    mesh.position.set(xM(Math.min(fromMm, toMm)), 0, 0);
+  }
+  return mesh;
+}
+
 interface PlanBoxInstance {
   readonly centerMm: Point2Mm;
   readonly widthMm: number;
@@ -545,6 +601,49 @@ function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
   return { x: point.x + offset.x, y: point.y + offset.y };
 }
 
+/**
+ * Moves a free camera by `step` through the scene collider. The collider is
+ * an internal Babylon entry point; its result is applied synchronously by
+ * the default collision coordinator.
+ */
+function collideCamera(camera: UniversalCamera, step: Vector3) {
+  const collidable = camera as unknown as {
+    _collideWithWorld?: (displacement: Vector3) => void;
+  };
+  if (camera.checkCollisions && typeof collidable._collideWithWorld === "function") {
+    collidable._collideWithWorld(step);
+  } else {
+    camera.position.addInPlace(step);
+  }
+}
+
+/** Where a walker entering a room looks first: toward its largest glazing. */
+function walkLookTargetMm(room: InteriorRoom): Point2Mm {
+  switch (room.id) {
+    case "ROOM-1-03":
+      return { x: 24540, y: 21000 };
+    case "ROOM-1-02":
+      return { x: 22090, y: 11000 };
+    case "ROOM-1-01":
+      return { x: 22100, y: 6500 };
+    case "ROOM-1-12":
+      return { x: 8500, y: 3000 };
+    case "ROOM-1-09":
+    case "ROOM-1-10":
+      return { x: room.standingPointMm.x, y: 11500 };
+    case "ROOM-1-04":
+    case "ROOM-1-08":
+    case "ROOM-1-11":
+      return { x: room.standingPointMm.x, y: 2500 };
+    case "ROOM-1-05":
+    case "ROOM-1-06":
+    case "ROOM-1-07":
+      return { x: 28500, y: room.standingPointMm.y };
+    default:
+      return { x: room.standingPointMm.x + 1000, y: room.standingPointMm.y };
+  }
+}
+
 export class TwinSceneController {
   private readonly engine: Engine;
   private readonly scene: Scene;
@@ -588,6 +687,8 @@ export class TwinSceneController {
   private ssaoAttached = false;
   private flightHeading = { x: 0, z: -1 };
   private orbitFocusDistance = 18;
+  private orbitZoomTargetM = ORBIT_ZOOM.upperRadiusLimitM;
+  private orbitZoomActive = false;
   private resizeFrame = 0;
   private snapshot: SceneSnapshot | null = null;
 
@@ -670,7 +771,9 @@ export class TwinSceneController {
     this.orbitCamera.upperRadiusLimit = ORBIT_ZOOM.upperRadiusLimitM;
     this.orbitCamera.lowerBetaLimit = 0.06;
     this.orbitCamera.upperBetaLimit = Math.PI / 2.02;
-    this.orbitCamera.wheelDeltaPercentage = ORBIT_ZOOM.wheelDeltaPercentage;
+    // Wheel zoom is handled by the dedicated exponential controller below;
+    // the built-in percentage model cannot keep up with Mac trackpad deltas.
+    this.orbitCamera.inputs.removeByType("ArcRotateCameraMouseWheelInput");
     this.orbitCamera.panningSensibility = 95;
     this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
     this.orbitCamera.inertia = 0.72;
@@ -678,6 +781,7 @@ export class TwinSceneController {
     this.orbitCamera.maxZ = 220;
     this.orbitCamera.fov = gardenCamera.fov;
     this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
+    this.orbitZoomTargetM = this.orbitCamera.radius;
 
     this.flightCamera = new UniversalCamera(
       "helicopter-camera",
@@ -705,7 +809,7 @@ export class TwinSceneController {
       new Vector3(0.25, 1, -0.12),
       this.scene,
     );
-    ambient.intensity = 0.34;
+    ambient.intensity = 0.3;
     ambient.diffuse = Color3.FromHexString("#eef4f6");
     ambient.groundColor = Color3.FromHexString("#6a755f");
     // Soft high sun angled so the garden facade and porch corner read like the
@@ -716,7 +820,7 @@ export class TwinSceneController {
       this.scene,
     );
     sun.position = new Vector3(-26, 46, -26);
-    sun.intensity = 0.78;
+    sun.intensity = 1.04;
     sun.diffuse = Color3.FromHexString("#fffaf1");
     sun.specular = Color3.FromHexString("#ffffff");
     this.cascadedShadowGenerator = CascadedShadowGenerator.IsSupported
@@ -745,7 +849,7 @@ export class TwinSceneController {
     this.shadowGenerator.bias = 0.00018;
     this.shadowGenerator.normalBias = 0.0018;
     this.shadowGenerator.transparencyShadow = true;
-    this.shadowGenerator.setDarkness(0.2);
+    this.shadowGenerator.setDarkness(0.14);
 
     this.selectionHighlight = new HighlightLayer(
       "selection-outline",
@@ -763,12 +867,23 @@ export class TwinSceneController {
     );
     this.postPipeline.samples = this.renderQuality.msaaSamples;
     this.postPipeline.fxaaEnabled = this.renderQuality.fxaaEnabled;
+    // HDR bloom only catches true highlights (sun glints on water, metal
+    // seams, glass edges); the sky stays clean below the threshold.
     this.postPipeline.bloomEnabled = false;
+    this.postPipeline.bloomThreshold = 1;
+    this.postPipeline.bloomWeight = 0.055;
+    this.postPipeline.bloomKernel = 48;
+    this.postPipeline.bloomScale = 0.5;
     this.postPipeline.imageProcessingEnabled = true;
     this.postPipeline.sharpenEnabled = true;
     this.postPipeline.sharpen.edgeAmount =
       this.renderQuality.sharpenEdgeAmount;
     this.postPipeline.sharpen.colorAmount = 1;
+    // Animated fine grain gives flat outdoor gradients a photographic
+    // texture; it is enabled together with bloom in realistic mode only.
+    this.postPipeline.grainEnabled = false;
+    this.postPipeline.grain.intensity = 9;
+    this.postPipeline.grain.animated = true;
     const renderCameras = [this.orbitCamera, this.flightCamera];
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
     // Construct once even when the initial mobile tier is HIGH. This allows a
@@ -851,9 +966,9 @@ export class TwinSceneController {
       wall: pbrMaterial(this.scene, "real-wall", "#ffffff", 0.92),
       soffit: pbrMaterial(this.scene, "real-soffit", "#f4f2ec", 0.9),
       concrete: pbrMaterial(this.scene, "real-concrete", "#ffffff", 0.86),
-      roof: pbrMaterial(this.scene, "real-roof", "#ffffff", 0.72, 0),
-      roofEdge: pbrMaterial(this.scene, "real-roof-edge", "#282d31", 0.6, 0),
-      glass: pbrMaterial(this.scene, "real-glass", "#36494d", 0.07, 0, 0.3),
+      roof: pbrMaterial(this.scene, "real-roof", "#ffffff", 0.52, 0.18),
+      roofEdge: pbrMaterial(this.scene, "real-roof-edge", "#282d31", 0.48, 0.28),
+      glass: pbrMaterial(this.scene, "real-glass", "#819491", 0.045, 0, 0.34),
       glassFrame: pbrMaterial(this.scene, "real-glass-frame", "#26292b", 0.34, 0.55),
       glassFrameWood: pbrMaterial(this.scene, "real-glass-frame-wood", "#77522c", 0.5),
       solar: pbrMaterial(this.scene, "real-solar", "#0b1824", 0.16, 0),
@@ -865,7 +980,7 @@ export class TwinSceneController {
       hedgeDark: pbrMaterial(this.scene, "real-hedge-dark", "#244a2b", 0.94),
       hedgeMid: pbrMaterial(this.scene, "real-hedge-mid", "#356438", 0.92),
       hedgeLight: pbrMaterial(this.scene, "real-hedge-light", "#477746", 0.9),
-      poolWater: pbrMaterial(this.scene, "real-pool-water", "#83c8cf", 0.045, 0, 0.64),
+      poolWater: pbrMaterial(this.scene, "real-pool-water", "#72c3ce", 0.035, 0, 0.76),
       poolBasin: pbrMaterial(this.scene, "real-pool-basin", "#d3e3e1", 0.7),
       poolTile: pbrMaterial(this.scene, "real-pool-tile", "#d8e8e6", 0.64),
       poolLed: pbrMaterial(this.scene, "real-pool-led", "#d7fbff", 0.12),
@@ -880,27 +995,30 @@ export class TwinSceneController {
       plantPerennial: pbrMaterial(this.scene, "real-plant-perennial", "#ffffff", 0.9),
     };
     this.realisticMaterials.glass.indexOfRefraction = 1.5;
-    this.realisticMaterials.glass.metallicF0Factor = 0.06;
-    this.realisticMaterials.glass.environmentIntensity = 1.15;
+    // Preserve the dielectric Fresnel response. The old 0.06 factor almost
+    // removed reflections, which made the glazing read as flat black panels.
+    this.realisticMaterials.glass.metallicF0Factor = 1;
+    this.realisticMaterials.glass.environmentIntensity = 1.55;
     this.realisticMaterials.glass.useSpecularOverAlpha = true;
     this.realisticMaterials.glass.backFaceCulling = true;
     this.realisticMaterials.glass.needDepthPrePass = true;
-    this.realisticMaterials.glass.subSurface.isRefractionEnabled = true;
-    this.realisticMaterials.glass.subSurface.refractionTexture = environment;
-    this.realisticMaterials.glass.subSurface.indexOfRefraction = 1.5;
-    this.realisticMaterials.glass.subSurface.linkRefractionWithTransparency = true;
-    this.realisticMaterials.glass.subSurface.minimumThickness = 0.012;
-    this.realisticMaterials.glass.subSurface.maximumThickness = 0.024;
-    this.realisticMaterials.glass.subSurface.tintColor =
-      Color3.FromHexString("#c8dcda");
-    this.realisticMaterials.glass.subSurface.tintColorAtDistance = 2.8;
+    // Real transmission: the glazing is alpha-blended over whatever stands
+    // behind it — the fitted-out interior from the garden, the terrace and
+    // garden from inside. The former IBL refraction only ever showed the
+    // panorama, which read as fog from the walkthrough.
+    this.realisticMaterials.glass.subSurface.isRefractionEnabled = false;
+    this.realisticMaterials.glass.transparencyMode =
+      PBRMaterial.PBRMATERIAL_ALPHABLEND;
+    this.realisticMaterials.glass.alpha = 0.14;
+    this.realisticMaterials.glass.albedoColor = Color3.FromHexString("#8fa6a3");
+    this.realisticMaterials.glass.separateCullingPass = true;
     this.realisticMaterials.glass.clearCoat.isEnabled = true;
-    this.realisticMaterials.glass.clearCoat.intensity = 0.62;
-    this.realisticMaterials.glass.clearCoat.roughness = 0.05;
+    this.realisticMaterials.glass.clearCoat.intensity = 0.9;
+    this.realisticMaterials.glass.clearCoat.roughness = 0.035;
     this.realisticMaterials.warmInterior.emissiveColor =
       Color3.FromHexString("#4b3418");
     this.realisticMaterials.poolWater.indexOfRefraction = 1.333;
-    this.realisticMaterials.poolWater.environmentIntensity = 1.35;
+    this.realisticMaterials.poolWater.environmentIntensity = 1.65;
     this.realisticMaterials.poolWater.useSpecularOverAlpha = true;
     this.realisticMaterials.poolWater.needDepthPrePass = true;
     this.realisticMaterials.poolWater.subSurface.isRefractionEnabled = true;
@@ -1029,7 +1147,7 @@ export class TwinSceneController {
     this.poolWaterNormal.gammaSpace = false;
     this.poolWaterNormal.uScale = 2.35;
     this.poolWaterNormal.vScale = 1.65;
-    this.poolWaterNormal.level = 0.28;
+    this.poolWaterNormal.level = 0.42;
     this.poolWaterNormal.anisotropicFilteringLevel =
       this.renderQuality.anisotropy;
     this.realisticMaterials.poolWater.bumpTexture = this.poolWaterNormal;
@@ -1050,6 +1168,14 @@ export class TwinSceneController {
     this.realisticMaterials.roof.environmentIntensity = 0.35;
     this.realisticMaterials.roofEdge.environmentIntensity = 0.4;
     this.realisticMaterials.fenceMetal.environmentIntensity = 0.55;
+    // Material tints keep the procedural source textures plausible under the
+    // neutral HDRI: warm beige plaster, natural larch and a maintained lawn
+    // without the synthetic pure-white texture multiplier.
+    this.realisticMaterials.wall.albedoColor = Color3.FromHexString("#f3efe5");
+    this.realisticMaterials.timber.albedoColor = Color3.FromHexString("#e2c39f");
+    this.realisticMaterials.deck.albedoColor = Color3.FromHexString("#d7c4aa");
+    this.realisticMaterials.grass.albedoColor = Color3.FromHexString("#c6d2bc");
+    this.realisticMaterials.terrain.albedoColor = Color3.FromHexString("#aebca5");
     this.applyTexture(
       this.realisticMaterials.fenceMetal,
       "metal-anthracite-albedo",
@@ -1085,9 +1211,9 @@ export class TwinSceneController {
         ["#b9cab7", "#d1ddca", "#e0e8d8"][index],
       );
       material.albedoTexture = foliage;
-      material.environmentIntensity = 0.48;
+      material.environmentIntensity = 0.68;
       material.subSurface.isTranslucencyEnabled = true;
-      material.subSurface.translucencyIntensity = 0.08;
+      material.subSurface.translucencyIntensity = 0.16;
       material.subSurface.useAlbedoToTintTranslucency = true;
     }
     this.configurePlantCardMaterial(
@@ -1112,6 +1238,7 @@ export class TwinSceneController {
     }
 
     this.scene.onPointerDown = (event) => {
+      if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
       this.activePointers.add(event.pointerId);
       if (this.pointerGesture) {
         this.pointerGesture.maximumPointers = Math.max(
@@ -1174,8 +1301,12 @@ export class TwinSceneController {
     this.canvas.addEventListener("keyup", this.handleFlightKeyUp);
     this.canvas.addEventListener("blur", this.clearFlightInput);
     this.canvas.addEventListener("pointercancel", this.cancelPointerGesture);
+    this.canvas.addEventListener("wheel", this.handleCanvasWheel, {
+      passive: false,
+    });
     this.scene.onBeforeRenderObservable.add(() => {
       this.updateFlightMotion();
+      this.updateOrbitZoomGlide();
       this.animateWaterSurface();
       if (this.canvas.dataset.navigationMode !== this.navigationMode) {
         this.canvas.dataset.navigationMode = this.navigationMode;
@@ -1212,7 +1343,13 @@ export class TwinSceneController {
   }
 
   private readonly handleFlightKeyDown = (event: KeyboardEvent) => {
-    if (this.navigationMode !== "flight" || event.metaKey || event.ctrlKey) return;
+    if (
+      (this.navigationMode !== "flight" && this.navigationMode !== "walk") ||
+      event.metaKey ||
+      event.ctrlKey
+    ) {
+      return;
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.add(event.code);
       event.preventDefault();
@@ -1248,7 +1385,76 @@ export class TwinSceneController {
     }
   };
 
+  /**
+   * Exponential orbit zoom and flight dolly driven straight from the DOM
+   * wheel stream. Trackpad scroll, momentum, physical notches and the
+   * ctrl-key pinch all normalize into pixels and compose multiplicatively,
+   * which keeps the response identical at every radius.
+   */
+  private readonly handleCanvasWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const pixels = normalizeWheelPixels(event);
+    if (!pixels) return;
+    if (this.navigationMode === "walk") {
+      const distanceM = Math.max(-0.6, Math.min(0.6, flightWheelDollyDistanceM(pixels)));
+      if (!distanceM) return;
+      collideCamera(
+        this.flightCamera,
+        new Vector3(this.flightHeading.x * distanceM, 0, this.flightHeading.z * distanceM),
+      );
+      return;
+    }
+    if (this.navigationMode === "flight") {
+      const distanceM = flightWheelDollyDistanceM(pixels);
+      if (!distanceM) return;
+      const forward = this.flightCamera.getForwardRay(1).direction;
+      const next = integrateFlightDolly(
+        this.flightCamera.position,
+        { x: forward.x, y: forward.y, z: forward.z },
+        distanceM,
+      );
+      this.flightCamera.position.set(next.x, next.y, next.z);
+      return;
+    }
+    const gesture = wheelZoomGesture(event);
+    const multiplier = orbitZoomMultiplier(pixels, gesture);
+    const pending = this.orbitZoomActive
+      ? this.orbitZoomTargetM
+      : this.orbitCamera.radius;
+    this.orbitZoomTargetM = clampOrbitRadius(pending * multiplier);
+    this.orbitZoomActive =
+      Math.abs(this.orbitZoomTargetM - this.orbitCamera.radius) >
+      ORBIT_ZOOM.settleEpsilonM;
+  };
+
+  /** Framerate-independent exponential glide toward the zoom target. */
+  private updateOrbitZoomGlide() {
+    if (this.navigationMode !== "orbit") return;
+    if (!this.orbitZoomActive) {
+      // Follow native touch pinch and any external/programmatic camera move.
+      this.orbitZoomTargetM = this.orbitCamera.radius;
+      return;
+    }
+    const step = stepOrbitZoom(
+      this.orbitCamera.radius,
+      this.orbitZoomTargetM,
+      this.engine.getDeltaTime(),
+    );
+    this.orbitCamera.radius = step.radiusM;
+    this.orbitZoomActive = !step.settled;
+  }
+
+  private cancelOrbitZoomGlide() {
+    this.orbitZoomActive = false;
+    this.orbitZoomTargetM = this.orbitCamera.radius;
+  }
+
   private updateFlightMotion() {
+    if (this.navigationMode === "walk") {
+      this.updateWalkMotion();
+      return;
+    }
     if (this.navigationMode !== "flight") return;
     const forward = this.flightCamera.getForwardRay(1).direction;
     const horizontalLength = Math.hypot(forward.x, forward.z);
@@ -1280,6 +1486,56 @@ export class TwinSceneController {
       Math.min(Math.PI * 0.444, this.flightCamera.rotation.x),
     );
     this.flightCamera.rotation.z = 0;
+  }
+
+  private updateWalkMotion() {
+    const forward = this.flightCamera.getForwardRay(1).direction;
+    const horizontalLength = Math.hypot(forward.x, forward.z);
+    if (horizontalLength > 0.04) {
+      this.flightHeading = {
+        x: forward.x / horizontalLength,
+        z: forward.z / horizontalLength,
+      };
+    }
+    const commands = new Set<FlightCommand>([
+      ...this.keyboardFlightCommands,
+      ...this.manualFlightCommands,
+    ]);
+    const position = this.flightCamera.position;
+    const next = integrateWalkPosition({
+      position,
+      heading: this.flightHeading,
+      commands,
+      deltaMs: this.engine.getDeltaTime(),
+      boost: [...this.flightModifierCodes].some((code) =>
+        code.startsWith("Shift"),
+      ),
+      precision: [...this.flightModifierCodes].some((code) =>
+        code.startsWith("Alt"),
+      ),
+      floorY: 0,
+    });
+    // The kinematic step goes straight through the camera collider, so
+    // walls stop the walker instead of being crossed. (Babylon's
+    // `cameraDirection` channel is an inertial input accumulator since 9.x
+    // and would multiply the step; the collider applies it exactly once.)
+    const step = new Vector3(next.x - position.x, 0, next.z - position.z);
+    this.flightCamera.cameraDirection.setAll(0);
+    if (step.lengthSquared() > 1e-12) {
+      collideCamera(this.flightCamera, step);
+    }
+    position.y = next.y;
+    this.flightCamera.rotation.x = Math.max(
+      -Math.PI * 0.4,
+      Math.min(Math.PI * 0.4, this.flightCamera.rotation.x),
+    );
+    this.flightCamera.rotation.z = 0;
+    const room = this.getWalkRoom();
+    const roomId = room?.id ?? null;
+    if (roomId !== this.walkRoomId) {
+      this.walkRoomId = roomId;
+      this.canvas.dataset.walkRoom = room?.number ?? "";
+    }
   }
 
   private animateWaterSurface() {
@@ -1365,16 +1621,18 @@ export class TwinSceneController {
     texture.hasAlpha = true;
     texture.anisotropicFilteringLevel = this.renderQuality.anisotropy;
     material.albedoTexture = texture;
-    material.opacityTexture = texture;
+    material.opacityTexture = null;
     material.useAlphaFromAlbedoTexture = true;
-    material.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHATESTANDBLEND;
-    material.alphaCutOff = 0.36;
+    material.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHATEST;
+    material.alphaCutOff = 0.28;
     material.backFaceCulling = false;
     material.twoSidedLighting = true;
     material.unlit = false;
-    material.environmentIntensity = 0.52;
+    material.needDepthPrePass = true;
+    material.forceDepthWrite = true;
+    material.environmentIntensity = 0.72;
     material.subSurface.isTranslucencyEnabled = true;
-    material.subSurface.translucencyIntensity = 0.14;
+    material.subSurface.translucencyIntensity = 0.2;
     material.subSurface.useAlbedoToTintTranslucency = true;
   }
 
@@ -2507,7 +2765,18 @@ export class TwinSceneController {
 
     this.buildGables();
     this.buildRealisticHouseShell();
+    this.buildInteriorFitOut();
     this.buildJoinedRoof();
+    // Every plastered shell wall stops the walkthrough collider.
+    for (const mesh of this.layerMeshes.get("building") ?? []) {
+      if (
+        mesh instanceof Mesh &&
+        mesh.material === this.realisticMaterials.wall &&
+        mesh.getTotalVertices() > 0
+      ) {
+        mesh.checkCollisions = true;
+      }
+    }
 
     const garageDoorSpec = HOUSE.facades.front.garageDoor;
     const garageDoor = boxAtPlan(
@@ -2576,15 +2845,18 @@ export class TwinSceneController {
       this.castShadow(flashing);
       this.register(flashing, "building");
 
+      // The flue column runs from the living-room floor (where the stove
+      // stands) through the vaulted ceiling to +6,160 above the roof.
       const chimney = boxAtPlan(
         this.scene,
         `Komín ${index + 1} · ${chimneySpec.id} · +6,160 m`,
         center,
         540,
         540,
-        3.16,
-        3,
+        6.16,
+        0,
       );
+      chimney.checkCollisions = true;
       this.appearance(
         chimney,
         this.materials.roof,
@@ -2646,60 +2918,91 @@ export class TwinSceneController {
       const heightM = HOUSE.eavesElevationMm * MM_TO_M - 0.03;
       const porch = HOUSE.porches.wingEnd;
       const loggia = HOUSE.porches.gardenLoggia;
-      // The IO01 route stays authoritative; only the visual pipe steps aside
-      // when it would cross the open porch front.
-      const insidePorchFront =
-        downpipe.faceYmm === porch.frontYmm &&
-        downpipe.xMm > porch.glazing.startXmm &&
-        downpipe.xMm < porch.backWall.endXmm;
-      const insideLoggiaFront =
-        downpipe.faceYmm === loggia.faceYmm &&
-        downpipe.xMm > loggia.openingStartXmm &&
-        downpipe.xMm < loggia.openingEndXmm;
-      const visualXmm = insidePorchFront
-        ? porch.backWall.endXmm + 380
-        : insideLoggiaFront
-          ? loggia.cornerPier.startXmm + 650
-          : downpipe.xMm;
-      if (visualXmm !== downpipe.xMm) {
-        const offsetLink = CreateTube(
-          `${downpipe.id} · viditeľné pododkvapové odsadenie`,
-          {
-            path: [downpipe.xMm, visualXmm].map(
-              (xMm) =>
-                new Vector3(
-                  xM(xMm),
-                  HOUSE.eavesElevationMm * MM_TO_M - 0.04,
-                  zM(downpipe.faceYmm + 65),
-                ),
-            ),
-            radius: 0.05,
-            tessellation: 16,
-            cap: Mesh.CAP_ALL,
-          },
-          this.scene,
-        );
-        offsetLink.material = this.realisticMaterials.roofEdge;
-        offsetLink.isPickable = false;
-        this.realisticOnly(offsetLink);
-        this.castShadow(offsetLink);
-        this.register(offsetLink, "building");
+      let pipeXmm: number;
+      let pipeYmm: number;
+      if ("faceYmm" in downpipe) {
+        // The IO01 route stays authoritative; only the visual pipe steps
+        // aside when it would cross the OPEN porch front (the glazing
+        // stretch) or the open loggia bay. Over a solid wall the pipe simply
+        // runs down the facade like any real downpipe.
+        const insidePorchFront =
+          downpipe.faceYmm === porch.frontYmm &&
+          downpipe.xMm > porch.glazing.startXmm &&
+          downpipe.xMm < porch.backWall.startXmm;
+        const insideLoggiaFront =
+          downpipe.faceYmm === loggia.faceYmm &&
+          downpipe.xMm > loggia.openingStartXmm &&
+          downpipe.xMm < loggia.openingEndXmm;
+        pipeXmm = insidePorchFront
+          ? porch.backWall.endXmm + 380
+          : insideLoggiaFront
+            ? loggia.cornerPier.startXmm + 650
+            : downpipe.xMm;
+        pipeYmm = downpipe.faceYmm + 65;
+        if (pipeXmm !== downpipe.xMm) {
+          const offsetLink = CreateTube(
+            `${downpipe.id} · viditeľné pododkvapové odsadenie`,
+            {
+              path: [downpipe.xMm, pipeXmm].map(
+                (xMm) =>
+                  new Vector3(
+                    xM(xMm),
+                    HOUSE.eavesElevationMm * MM_TO_M - 0.04,
+                    zM(pipeYmm),
+                  ),
+              ),
+              radius: 0.05,
+              tessellation: 16,
+              cap: Mesh.CAP_ALL,
+            },
+            this.scene,
+          );
+          offsetLink.material = this.realisticMaterials.roofEdge;
+          offsetLink.isPickable = false;
+          this.realisticOnly(offsetLink);
+          this.castShadow(offsetLink);
+          this.register(offsetLink, "building");
+        }
+      } else {
+        // Pipe on an X facade (east eave of the wing): hangs 65 mm off the
+        // plaster, directly under the covered gutter profile.
+        pipeXmm = downpipe.faceXmm + 65;
+        pipeYmm = downpipe.yMm;
       }
       const pipe = CreateCylinder(
         `${downpipe.id} · dažďový zvod · vizualizačný detail IO01`,
         { height: heightM, diameter: 0.1, tessellation: 16 },
         this.scene,
       );
-      pipe.position.set(
-        xM(visualXmm),
-        0.03 + heightM / 2,
-        zM(downpipe.faceYmm + 65),
-      );
+      pipe.position.set(xM(pipeXmm), 0.03 + heightM / 2, zM(pipeYmm));
       pipe.material = this.realisticMaterials.roofEdge;
       pipe.isPickable = false;
       this.realisticOnly(pipe);
       this.castShadow(pipe);
       this.register(pipe, "building");
+
+      // Gutter outlet elbow tying the pipe to the eave profile.
+      const elbow = CreateTube(
+        `${downpipe.id} · odbočka zo žľabu`,
+        {
+          path: [
+            new Vector3(xM(pipeXmm), HOUSE.eavesElevationMm * MM_TO_M - 0.04, zM(pipeYmm)),
+            new Vector3(
+              xM("faceYmm" in downpipe ? pipeXmm : downpipe.faceXmm + 10),
+              HOUSE.eavesElevationMm * MM_TO_M - 0.04,
+              zM("faceYmm" in downpipe ? downpipe.faceYmm + 10 : pipeYmm),
+            ),
+          ],
+          radius: 0.05,
+          tessellation: 16,
+          cap: Mesh.CAP_ALL,
+        },
+        this.scene,
+      );
+      elbow.material = this.realisticMaterials.roofEdge;
+      elbow.isPickable = false;
+      this.realisticOnly(elbow);
+      this.register(elbow, "building");
     }
   }
 
@@ -2808,7 +3111,6 @@ export class TwinSceneController {
     garageGable.receiveShadows = true;
     this.register(garageGable, "building", HOUSE.id);
 
-    const wingEndY = HOUSE.originMm.y + HOUSE.maximumDepthMm + 8;
     const wingLeftX = HOUSE.originMm.x + HOUSE.wing.xMm;
     const wingRightX = wingLeftX + HOUSE.wing.widthMm;
     // The gable itself is the recessed porch wall, 2 500 mm behind the roof
@@ -2840,34 +3142,61 @@ export class TwinSceneController {
       { x: 22600, elevationM: 3.5 },
       { x: 26400, elevationM: 3.5 },
     ].entries()) {
-      const fixture = boxAtPlan(
-        this.scene,
+      const fixture = CreateCylinder(
         `Nástenné svietidlo štítu ${index + 1} · ilustračný koncept`,
-        { x: lamp.x, y: gableYmm + 30 },
-        95,
-        70,
-        0.17,
-        lamp.elevationM,
+        { height: 0.17, diameter: 0.07, tessellation: 24 },
+        this.scene,
       );
-      fixture.material = this.realisticMaterials.glassFrame;
+      fixture.position.set(xM(lamp.x), lamp.elevationM + 0.085, zM(gableYmm + 55));
+      fixture.material = this.realisticMaterials.fenceTrack;
       fixture.isPickable = false;
       this.realisticOnly(fixture);
+      this.castShadow(fixture);
       this.register(fixture, "building");
+      const bracket = boxAtPlan(
+        this.scene,
+        `Nástenné svietidlo štítu ${index + 1} · konzola`,
+        { x: lamp.x, y: gableYmm + 24 },
+        24,
+        48,
+        0.03,
+        lamp.elevationM + 0.07,
+      );
+      bracket.material = this.realisticMaterials.fenceTrack;
+      bracket.isPickable = false;
+      this.realisticOnly(bracket);
+      this.register(bracket, "building");
     }
 
+    // White rake boards of the P04 portal. Their underside runs exactly
+    // through the crown corner of each white support (x = 21 040 / 28 040 at
+    // +3,125) and their back face is flush with the support front, so the
+    // gable frame reads as one continuous white outline standing on the two
+    // supports — the defect of a rake floating 80 mm in front of the pillar
+    // is gone.
+    const portal = HOUSE.porches.wingEnd.portalFrame;
     const halfSpanM = (HOUSE.wing.widthMm * MM_TO_M) / 2;
-    const gableEdgeLength = Math.hypot(halfSpanM, gableRise);
     const edgeAngle = Math.atan2(gableRise, halfSpanM);
+    const rakeHeightM = portal.rakeHeightMm * MM_TO_M;
+    const rakeDepthM = (portal.rakeFrontFaceYmm - portal.rakeBackFaceYmm) * MM_TO_M;
+    const rakeZ = zM((portal.rakeBackFaceYmm + portal.rakeFrontFaceYmm) / 2);
+    // Extend each board past the apex so the two meet in a clean mitre.
+    const apexExtensionM = (rakeHeightM / 2) * Math.tan(edgeAngle);
+    const gableEdgeLength = Math.hypot(halfSpanM, gableRise) + apexExtensionM;
+    const liftM = rakeHeightM / 2 / Math.cos(edgeAngle);
     for (const side of [-1, 1]) {
       const edge = CreateBox(
         `Biely rám záhradného štítu ${side}`,
-        { width: gableEdgeLength, depth: 0.12, height: 0.16 },
+        { width: gableEdgeLength, depth: rakeDepthM, height: rakeHeightM },
         this.scene,
       );
+      const startX = xM(wingLeftX + (side < 0 ? 0 : HOUSE.wing.widthMm));
+      const direction = -side;
+      const centerAlong = gableEdgeLength / 2;
       edge.position.set(
-        xM(wingLeftX + HOUSE.wing.widthMm / 2 + side * HOUSE.wing.widthMm / 4),
-        eave + gableRise / 2,
-        zM(wingEndY + 72),
+        startX + direction * Math.cos(edgeAngle) * centerAlong,
+        eave + Math.sin(edgeAngle) * centerAlong + liftM,
+        rakeZ,
       );
       edge.rotation.z = -side * edgeAngle;
       edge.material = this.realisticMaterials.wall;
@@ -2876,10 +3205,26 @@ export class TwinSceneController {
       this.castShadow(edge);
       this.register(edge, "building");
     }
+    // Apex cover plate hiding the mitre joint of the two rakes.
+    const apexPlate = CreateBox(
+      "Biely rám záhradného štítu · vrcholový spoj",
+      { width: 0.2, depth: rakeDepthM + 0.004, height: rakeHeightM * 0.6 },
+      this.scene,
+    );
+    apexPlate.position.set(
+      xM(wingLeftX + HOUSE.wing.widthMm / 2),
+      ridge + liftM + rakeHeightM * 0.1,
+      rakeZ,
+    );
+    apexPlate.material = this.realisticMaterials.wall;
+    apexPlate.isPickable = false;
+    this.realisticOnly(apexPlate);
+    this.register(apexPlate, "building");
   }
 
   private buildRoofEdges(roof: JoinedRoofGeometry) {
     const { parameters } = roof;
+    const rakeFrontYmm = HOUSE.porches.wingEnd.portalFrame.rakeFrontFaceYmm;
     const specs = [
       {
         name: "Predný krytý žľab · vizualizačný profil",
@@ -2899,23 +3244,25 @@ export class TwinSceneController {
         widthMm: parameters.wingInnerEaveXmm - parameters.minXmm + 120,
         depthMm: 105,
       },
+      // Both wing gutters stop flush with the front face of the white rake
+      // boards so nothing pokes past the P04 portal frame.
       {
         name: "Vnútorná okapová hrana krídla · vizualizačný profil",
         center: {
           x: parameters.wingInnerEaveXmm - 60,
-          y: (parameters.gardenEaveYmm + parameters.wingEndYmm) / 2,
+          y: (parameters.gardenEaveYmm - 60 + rakeFrontYmm) / 2,
         },
         widthMm: 105,
-        depthMm: parameters.wingEndYmm - parameters.gardenEaveYmm + 120,
+        depthMm: rakeFrontYmm - parameters.gardenEaveYmm + 60,
       },
       {
         name: "Vonkajšia okapová hrana krídla · vizualizačný profil",
         center: {
           x: parameters.maxXmm + 60,
-          y: (parameters.frontEaveYmm + parameters.wingEndYmm) / 2,
+          y: (parameters.frontEaveYmm - 60 + rakeFrontYmm) / 2,
         },
         widthMm: 105,
-        depthMm: parameters.wingEndYmm - parameters.frontEaveYmm + 120,
+        depthMm: rakeFrontYmm - parameters.frontEaveYmm + 60,
       },
     ];
     for (const spec of specs) {
@@ -3390,6 +3737,22 @@ export class TwinSceneController {
     );
   }
 
+  /** Interior fit-out of 1.NP traced from D1.1.002 (see twin-interior.ts). */
+  private buildInteriorFitOut() {
+    buildInterior({
+      scene: this.scene,
+      anisotropy: this.renderQuality.anisotropy,
+      wall: this.realisticMaterials.wall,
+      soffit: this.realisticMaterials.soffit,
+      glassFrame: this.realisticMaterials.glassFrame,
+      chimneyMetal: this.realisticMaterials.chimneyMetal,
+      timber: this.realisticMaterials.timber,
+      register: (mesh, layer, entityId) => this.register(mesh, layer, entityId),
+      realisticOnly: (mesh) => this.realisticOnly(mesh),
+      castShadow: (mesh) => this.castShadow(mesh),
+    });
+  }
+
   /** Garden loggia recessed 2 953 mm behind the garden facade (D1.1.002). */
   private buildGardenLoggia() {
     const loggia = HOUSE.porches.gardenLoggia;
@@ -3636,6 +3999,53 @@ export class TwinSceneController {
       this.register(panel, "building", HOUSE.id);
     }
 
+    // P04 portal supports: continue both white supports above the +3,125
+    // wall crown with a sloped head that follows the roof plane, so the
+    // pillar and the east wall end meet the boarded soffit and the rake
+    // without any gap — one continuous white frame from the deck to the apex.
+    for (const support of porch.portalFrame.supportsMm) {
+      const heightAt =
+        support.startXmm < roofParameters.wingRidgeXmm
+          ? wingInnerRoofHeightMm
+          : wingOuterRoofHeightMm;
+      const crownMm = HOUSE.eavesElevationMm;
+      const profile = [
+        { alongMm: support.startXmm, elevationMm: crownMm },
+        { alongMm: support.endXmm, elevationMm: crownMm },
+        { alongMm: support.endXmm, elevationMm: heightAt(support.endXmm, roofParameters) },
+        { alongMm: support.startXmm, elevationMm: heightAt(support.startXmm, roofParameters) },
+      ].filter(
+        (point, index, points) =>
+          index === 0 ||
+          Math.abs(point.elevationMm - points[index - 1].elevationMm) > 1 ||
+          Math.abs(point.alongMm - points[index - 1].alongMm) > 1,
+      );
+      // Drop a duplicated closing vertex when the outer edge sits on the crown.
+      const last = profile[profile.length - 1];
+      if (
+        profile.length > 3 &&
+        Math.abs(last.alongMm - profile[0].alongMm) < 1 &&
+        Math.abs(last.elevationMm - profile[0].elevationMm) < 1
+      ) {
+        profile.pop();
+      }
+      const head = verticalProfileSolid(
+        this.scene,
+        `${support.id} · hlava podpory portálu P04`,
+        "Y",
+        profile,
+        support.startYmm,
+        support.endYmm,
+      );
+      head.material = this.realisticMaterials.wall;
+      head.receiveShadows = true;
+      head.isPickable = false;
+      head.checkCollisions = true;
+      this.realisticOnly(head);
+      this.castShadow(head);
+      this.register(head, "building", HOUSE.id);
+    }
+
     // Two concrete entry steps down to the lawn (reference photograph).
     for (const [index, step] of [
       { y0: porch.frontYmm, y1: porch.frontYmm + 380, top: 0.015 },
@@ -3741,20 +4151,8 @@ export class TwinSceneController {
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
   ) {
     const frameMat = frameMaterial ?? this.realisticMaterials.glassFrame;
-    const recess = boxAtPlan(
-      this.scene,
-      `${name} · interiérová hĺbka`,
-      { x: centerXmm, y: faceYmm - outwardY * 740 },
-      widthMm + 120,
-      26,
-      (heightMm + 120) * MM_TO_M,
-      Math.max(0, sillMm - 60) * MM_TO_M,
-    );
-    recess.material = this.realisticMaterials.interiorDark;
-    recess.isPickable = false;
-    this.realisticOnly(recess);
-    this.register(recess, "building");
-
+    // The real interior fit-out now sits behind the glazing; no dark
+    // "interior depth" panel is needed any more.
     if (kind !== "door") {
       const curtainWidthMm = Math.max(150, Math.min(420, widthMm * 0.18));
       for (let index = 0; index < 2; index += 1) {
@@ -3779,6 +4177,7 @@ export class TwinSceneController {
         this.register(curtain, "building");
       }
 
+      if (sillMm > 0) {
       const interiorSill = boxAtPlan(
         this.scene,
         `${name} · interiérový parapet`,
@@ -3792,6 +4191,7 @@ export class TwinSceneController {
       interiorSill.isPickable = false;
       this.realisticOnly(interiorSill);
       this.register(interiorSill, "building");
+      }
     }
 
     this.buildZOpeningReveals(
@@ -4051,20 +4451,8 @@ export class TwinSceneController {
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
   ) {
     const frameMat = frameMaterial ?? this.realisticMaterials.glassFrame;
-    const recess = boxAtPlan(
-      this.scene,
-      `${name} · interiérová hĺbka`,
-      { x: faceXmm - outwardX * 740, y: centerYmm },
-      26,
-      widthMm + 120,
-      (heightMm + 120) * MM_TO_M,
-      Math.max(0, sillMm - 60) * MM_TO_M,
-    );
-    recess.material = this.realisticMaterials.interiorDark;
-    recess.isPickable = false;
-    this.realisticOnly(recess);
-    this.register(recess, "building");
-
+    // The real interior fit-out now sits behind the glazing; no dark
+    // "interior depth" panel is needed any more.
     if (kind !== "door") {
       const curtainWidthMm = Math.max(150, Math.min(420, widthMm * 0.18));
       for (let index = 0; index < 2; index += 1) {
@@ -4089,6 +4477,7 @@ export class TwinSceneController {
         this.register(curtain, "building");
       }
 
+      if (sillMm > 0) {
       const interiorSill = boxAtPlan(
         this.scene,
         `${name} · interiérový parapet`,
@@ -4102,6 +4491,7 @@ export class TwinSceneController {
       interiorSill.isPickable = false;
       this.realisticOnly(interiorSill);
       this.register(interiorSill, "building");
+      }
     }
 
     this.buildXOpeningReveals(
@@ -5060,7 +5450,10 @@ export class TwinSceneController {
       { diameter: 2.55, height: 0.34, tessellation: 28 },
       this.scene,
     );
-    rainTank.position.set(xM(16230), 0.12, zM(17165));
+    // Moved south onto open lawn so the enlarged pool can sit flush in the
+    // inner-L corner (client revision); modelled clearance 1 787 mm to the
+    // pool coping shell.
+    rainTank.position.set(xM(16_600), 0.12, zM(19_400));
     rainTank.material = this.materials.rainwater;
     this.technicalOverlay(rainTank);
     this.register(rainTank, "rainwater", "OBJ-RAIN-TANK");
@@ -5176,6 +5569,12 @@ export class TwinSceneController {
     this.scene.imageProcessingConfiguration.contrast = realistic ? 1.08 : 1.04;
     this.scene.imageProcessingConfiguration.vignetteEnabled = realistic;
     this.scene.imageProcessingConfiguration.vignetteWeight = 0.32;
+    // Photographic finish belongs to the reality view; the technical model
+    // stays a clean, grain-free linework document.
+    this.postPipeline.bloomEnabled = realistic;
+    this.postPipeline.grainEnabled = realistic && !this.renderQuality.fxaaEnabled;
+    this.postPipeline.grain.intensity = 9;
+    this.postPipeline.grain.animated = true;
     this.scene.fogMode = realistic ? Scene.FOGMODE_EXP2 : Scene.FOGMODE_NONE;
     this.scene.fogDensity = 0.0026;
     this.scene.fogColor = Color3.FromHexString("#c2cccc");
@@ -5206,6 +5605,13 @@ export class TwinSceneController {
   setCameraPreset(preset: CameraPreset) {
     this.setNavigationMode("orbit");
     this.resetOrbitInertia();
+    this.applyCameraPreset(preset);
+    // A preset jumps the radius programmatically; drop any pending wheel
+    // glide so it cannot fight the new framing.
+    this.cancelOrbitZoomGlide();
+  }
+
+  private applyCameraPreset(preset: CameraPreset) {
     if (preset === "garden") {
       const garden = gardenCameraForWidth(this.canvas.clientWidth);
       this.orbitCamera.alpha = garden.alpha;
@@ -5297,26 +5703,38 @@ export class TwinSceneController {
 
   setNavigationMode(mode: NavigationMode) {
     if (mode === this.navigationMode) return;
+    if (mode === "walk") {
+      this.enterWalkthrough();
+      return;
+    }
     if (mode === "flight") {
-      const orbitPosition = this.orbitCamera.globalPosition.clone();
-      this.orbitFocusDistance = Math.max(
-        8,
-        Math.min(32, Vector3.Distance(orbitPosition, this.orbitCamera.target)),
-      );
+      const fromWalk = this.navigationMode === "walk";
+      const orbitPosition = fromWalk
+        ? this.flightCamera.position.clone()
+        : this.orbitCamera.globalPosition.clone();
+      if (!fromWalk) {
+        this.orbitFocusDistance = Math.max(
+          8,
+          Math.min(32, Vector3.Distance(orbitPosition, this.orbitCamera.target)),
+        );
+      }
       const boundedEntry = integrateFlightPosition({
         position: orbitPosition,
         heading: { x: 0, z: -1 },
         commands: new Set(),
         deltaMs: 0,
       });
+      this.leaveWalkCollisions();
       this.flightCamera.position.set(
         boundedEntry.x,
         boundedEntry.y,
         boundedEntry.z,
       );
       this.flightCamera.rotationQuaternion = null;
-      this.flightCamera.fov = this.orbitCamera.fov;
-      this.flightCamera.setTarget(this.orbitCamera.target);
+      if (!fromWalk) {
+        this.flightCamera.fov = this.orbitCamera.fov;
+        this.flightCamera.setTarget(this.orbitCamera.target);
+      }
       const forward = this.flightCamera.getForwardRay(1).direction;
       const horizontalLength = Math.hypot(forward.x, forward.z);
       if (horizontalLength > 0.04) {
@@ -5325,9 +5743,11 @@ export class TwinSceneController {
           z: forward.z / horizontalLength,
         };
       }
-      this.orbitCamera.detachControl();
-      this.scene.activeCamera = this.flightCamera;
-      this.flightCamera.attachControl(false);
+      if (!fromWalk) {
+        this.orbitCamera.detachControl();
+        this.scene.activeCamera = this.flightCamera;
+        this.flightCamera.attachControl(false);
+      }
       this.navigationMode = "flight";
       this.canvas.focus({ preventScroll: true });
     } else {
@@ -5335,12 +5755,14 @@ export class TwinSceneController {
       const target = this.flightCamera.position.add(
         forward.scale(this.orbitFocusDistance),
       );
+      this.leaveWalkCollisions();
       this.flightCamera.detachControl();
       this.clearFlightInput();
       this.orbitCamera.target.copyFrom(target);
       this.orbitCamera.setPosition(this.flightCamera.position.clone());
       this.orbitCamera.fov = this.flightCamera.fov;
       this.resetOrbitInertia();
+      this.cancelOrbitZoomGlide();
       this.scene.activeCamera = this.orbitCamera;
       this.orbitCamera.attachControl(
         this.canvas,
@@ -5351,12 +5773,96 @@ export class TwinSceneController {
     this.onNavigationModeChange(this.navigationMode);
   }
 
+  /**
+   * Walkthrough: stand at eye level inside a room of the D1.1.002 plan. With
+   * no room given the walker enters the main living space looking toward the
+   * covered porch; the collider keeps the walker out of walls while open
+   * doors and the glazed terrace doors stay passable.
+   */
+  enterWalkthrough(roomId?: string) {
+    const room =
+      INTERIOR_ROOMS.find((candidate) => candidate.id === roomId) ??
+      INTERIOR_ROOMS.find((candidate) => candidate.id === "ROOM-1-03") ??
+      INTERIOR_ROOMS[0];
+    const standing = room.standingPointMm;
+    const look = walkLookTargetMm(room);
+    const wasOrbit = this.navigationMode === "orbit";
+    if (wasOrbit) {
+      this.orbitFocusDistance = 6;
+      this.orbitCamera.detachControl();
+    }
+    this.clearFlightInput();
+    this.flightCamera.position.set(xM(standing.x), WALK_EYE_HEIGHT_M, zM(standing.y));
+    this.flightCamera.rotationQuaternion = null;
+    this.flightCamera.fov = 1.05;
+    this.flightCamera.setTarget(new Vector3(xM(look.x), WALK_EYE_HEIGHT_M - 0.05, zM(look.y)));
+    const forward = this.flightCamera.getForwardRay(1).direction;
+    const horizontalLength = Math.hypot(forward.x, forward.z);
+    if (horizontalLength > 0.04) {
+      this.flightHeading = {
+        x: forward.x / horizontalLength,
+        z: forward.z / horizontalLength,
+      };
+    }
+    this.flightCamera.ellipsoid = new Vector3(
+      WALK_COLLISION_ELLIPSOID_M.x,
+      WALK_COLLISION_ELLIPSOID_M.y,
+      WALK_COLLISION_ELLIPSOID_M.z,
+    );
+    this.flightCamera.ellipsoidOffset = new Vector3(0, 0, 0);
+    this.flightCamera.checkCollisions = true;
+    this.flightCamera.applyGravity = false;
+    this.scene.collisionsEnabled = true;
+    if (this.scene.activeCamera !== this.flightCamera) {
+      this.scene.activeCamera = this.flightCamera;
+      this.flightCamera.attachControl(false);
+    }
+    this.navigationMode = "walk";
+    this.walkRoomId = room.id;
+    this.canvas.focus({ preventScroll: true });
+    this.onNavigationModeChange(this.navigationMode);
+  }
+
+  /** Room the walker currently stands in, or null outside the house. */
+  getWalkRoom(): InteriorRoom | null {
+    if (this.navigationMode !== "walk") return null;
+    const position = this.flightCamera.position;
+    return roomAt({
+      x: Math.round(position.x * 1000 + SCENE_CENTER_MM.x),
+      y: Math.round(SCENE_CENTER_MM.y - position.z * 1000),
+    });
+  }
+
+  private walkRoomId: string | null = null;
+
+  private leaveWalkCollisions() {
+    this.flightCamera.checkCollisions = false;
+  }
+
   setFlightCommand(command: FlightCommand, active: boolean) {
     if (active) this.manualFlightCommands.add(command);
     else this.manualFlightCommands.delete(command);
   }
 
   nudgeFlight(command: FlightCommand) {
+    if (this.navigationMode === "walk") {
+      const next = integrateWalkPosition({
+        position: this.flightCamera.position,
+        heading: this.flightHeading,
+        commands: new Set([command]),
+        deltaMs: 260,
+        floorY: 0,
+      });
+      collideCamera(
+        this.flightCamera,
+        new Vector3(
+          next.x - this.flightCamera.position.x,
+          0,
+          next.z - this.flightCamera.position.z,
+        ),
+      );
+      return;
+    }
     if (this.navigationMode !== "flight") return;
     const next = integrateFlightPosition({
       position: this.flightCamera.position,
@@ -5445,6 +5951,7 @@ export class TwinSceneController {
     this.canvas.removeEventListener("keyup", this.handleFlightKeyUp);
     this.canvas.removeEventListener("blur", this.clearFlightInput);
     this.canvas.removeEventListener("pointercancel", this.cancelPointerGesture);
+    this.canvas.removeEventListener("wheel", this.handleCanvasWheel);
     this.clearFlightInput();
     this.clearSelection();
     this.scene.dispose();

@@ -1,14 +1,124 @@
-export type NavigationMode = "orbit" | "flight";
+export type NavigationMode = "orbit" | "flight" | "walk";
 
+export type WheelZoomGesture = "scroll" | "pinch";
+
+export interface WheelEventSummary {
+  readonly deltaY: number;
+  readonly deltaMode: number;
+  readonly ctrlKey: boolean;
+}
+
+/**
+ * Exponential orbit zoom. Every input contributes a multiplicative factor
+ * `exp(-gain * pixels)` to a target radius, so the same two-finger distance
+ * feels identical at 6 m and at 60 m — the behaviour Mac trackpad users expect
+ * from map applications. Trackpad scroll and pinch are reported through the
+ * same wheel stream, but pinch deltas are an order of magnitude smaller, so
+ * they carry their own higher gain.
+ */
 export const ORBIT_ZOOM = Object.freeze({
   lowerRadiusLimitM: 4.5,
   upperRadiusLimitM: 64,
-  // Radius-relative zoom keeps a Mac trackpad smooth at small deltas while a
-  // conventional wheel remains useful in the wider site views.
-  wheelDeltaPercentage: 0.015,
+  /** Two-finger scroll and physical wheel notches, per normalised pixel. */
+  scrollGainPerPx: 0.0018,
+  /** Browser-synthesised pinch (wheel + ctrlKey), per normalised pixel. */
+  pinchGainPerPx: 0.009,
+  /** Firefox reports wheel distances in lines; one line ≈ 16 px of travel. */
+  lineModePx: 16,
+  pageModePx: 800,
+  /** Safety clamp on a single event so momentum bursts cannot teleport. */
+  maxMultiplierPerEvent: 2,
+  minMultiplierPerEvent: 0.5,
+  /** Framerate-independent glide half-life towards the target radius. */
+  glideHalfLifeMs: 42,
+  /** Snap once the camera is visually indistinguishable from the target. */
+  settleEpsilonM: 0.0015,
   useNaturalPinchZoom: true,
   preventBrowserGesture: true,
 });
+
+const DOM_DELTA_PIXEL = 0;
+const DOM_DELTA_LINE = 1;
+const DOM_DELTA_PAGE = 2;
+
+export function normalizeWheelPixels({
+  deltaY,
+  deltaMode,
+}: Pick<WheelEventSummary, "deltaY" | "deltaMode">): number {
+  if (!Number.isFinite(deltaY)) return 0;
+  if (deltaMode === DOM_DELTA_LINE)
+    return deltaY * ORBIT_ZOOM.lineModePx;
+  if (deltaMode === DOM_DELTA_PAGE) return deltaY * ORBIT_ZOOM.pageModePx;
+  return deltaMode === DOM_DELTA_PIXEL ? deltaY : 0;
+}
+
+export function wheelZoomGesture({ ctrlKey }: WheelEventSummary): WheelZoomGesture {
+  // macOS browsers report trackpad pinch as wheel events with ctrlKey set.
+  // A real keyboard-ctrl scroll is indistinguishable; treating it as pinch
+  // keeps both fast, which matches user intent in either case.
+  return ctrlKey ? "pinch" : "scroll";
+}
+
+/** Multiplicative radius change for one wheel event; >1 zooms out. */
+export function orbitZoomMultiplier(
+  pixels: number,
+  gesture: WheelZoomGesture,
+): number {
+  const gain =
+    gesture === "pinch"
+      ? ORBIT_ZOOM.pinchGainPerPx
+      : ORBIT_ZOOM.scrollGainPerPx;
+  // Positive deltaY (scroll towards you / closing pinch) moves the camera
+  // back, matching the previous natural-direction behaviour.
+  const raw = Math.exp(gain * pixels);
+  return Math.max(
+    ORBIT_ZOOM.minMultiplierPerEvent,
+    Math.min(ORBIT_ZOOM.maxMultiplierPerEvent, raw),
+  );
+}
+
+export function clampOrbitRadius(radiusM: number): number {
+  return Math.max(
+    ORBIT_ZOOM.lowerRadiusLimitM,
+    Math.min(ORBIT_ZOOM.upperRadiusLimitM, radiusM),
+  );
+}
+
+/** Exponential glide used by the render loop; exact at any frame rate. */
+export function easeOrbitRadius(
+  currentM: number,
+  targetM: number,
+  deltaMs: number,
+): number {
+  // Exponential blending is unconditionally stable: a long frame gap simply
+  // converges further towards the target instead of overshooting it.
+  const seconds = Math.max(0, Number.isFinite(deltaMs) ? deltaMs : 0) / 1000;
+  const blend = 1 - Math.pow(0.5, seconds / (ORBIT_ZOOM.glideHalfLifeMs / 1000));
+  return currentM + (targetM - currentM) * blend;
+}
+
+export interface OrbitZoomStep {
+  readonly radiusM: number;
+  readonly settled: boolean;
+}
+
+/**
+ * Advances one zoom frame and snaps exactly to the target at the end. Keeping
+ * the settled state explicit prevents an idle timer from discarding the last
+ * part of a Mac trackpad gesture before the camera reaches its target.
+ */
+export function stepOrbitZoom(
+  currentM: number,
+  targetM: number,
+  deltaMs: number,
+): OrbitZoomStep {
+  const target = clampOrbitRadius(targetM);
+  const radius = easeOrbitRadius(currentM, target, deltaMs);
+  if (Math.abs(target - radius) <= ORBIT_ZOOM.settleEpsilonM) {
+    return { radiusM: target, settled: true };
+  }
+  return { radiusM: radius, settled: false };
+}
 
 export type FlightCommand =
   | "forward"
@@ -48,6 +158,8 @@ const MAX_PIXEL_RATIO = 2;
 const MIN_SUPERSAMPLED_RATIO = 1.5;
 const MAX_RENDER_PIXELS = 12_000_000;
 const ULTRA_RENDER_PIXELS = 7_000_000;
+/** Below this surface area an 8× MSAA resolve stays affordable on desktops. */
+const ULTRA_MSAA8_RENDER_PIXELS = 4_500_000;
 
 const finitePositive = (value: number, fallback: number) =>
   Number.isFinite(value) && value > 0 ? value : fallback;
@@ -91,7 +203,13 @@ export function deriveRenderQualityProfile({
     supportedMsaa >= 2
       ? "ULTRA"
       : "HIGH";
-  const msaaSamples = Math.min(tier === "ULTRA" ? 4 : 2, supportedMsaa);
+  const msaaTarget =
+    tier === "ULTRA"
+      ? renderPixelCount <= ULTRA_MSAA8_RENDER_PIXELS && supportedMsaa >= 8
+        ? 8
+        : 4
+      : 2;
+  const msaaSamples = Math.min(msaaTarget, supportedMsaa);
 
   return {
     tier,
@@ -178,6 +296,41 @@ export function flightCommandForCode(code: string): FlightCommand | null {
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.max(minimum, Math.min(maximum, value));
 
+/** Wheel dolly in flight mode, metres of travel per normalised pixel. */
+export const FLIGHT_WHEEL_DOLLY_M_PER_PX = 0.011;
+export const FLIGHT_WHEEL_DOLLY_MAX_M = 5;
+
+export function flightWheelDollyDistanceM(pixels: number): number {
+  if (!Number.isFinite(pixels)) return 0;
+  const raw = pixels * FLIGHT_WHEEL_DOLLY_M_PER_PX;
+  return Math.max(
+    -FLIGHT_WHEEL_DOLLY_MAX_M,
+    Math.min(FLIGHT_WHEEL_DOLLY_MAX_M, -raw),
+  );
+}
+
+/** Moves a flight pose along an arbitrary 3-D view ray, respecting bounds. */
+export function integrateFlightDolly(
+  position: FlightPosition,
+  direction: FlightPosition,
+  distanceM: number,
+): FlightPosition {
+  const length = Math.hypot(direction.x, direction.y, direction.z);
+  if (!Number.isFinite(distanceM) || length < 1e-6) {
+    return {
+      x: clamp(position.x, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
+      y: clamp(position.y, FLIGHT_BOUNDS.minY, FLIGHT_BOUNDS.maxY),
+      z: clamp(position.z, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
+    };
+  }
+  const step = distanceM / length;
+  return {
+    x: clamp(position.x + direction.x * step, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
+    y: clamp(position.y + direction.y * step, FLIGHT_BOUNDS.minY, FLIGHT_BOUNDS.maxY),
+    z: clamp(position.z + direction.z * step, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
+  };
+}
+
 export function integrateFlightPosition({
   position,
   heading,
@@ -242,4 +395,71 @@ export function isSelectionTap({
     travelPx <= 7 &&
     durationMs <= 650
   );
+}
+
+/**
+ * Walkthrough mode: a person standing on the floor slab. Horizontal motion
+ * only — the eye height is pinned above the floor under the camera, the
+ * vertical flight commands are ignored and wall collisions are resolved by
+ * the renderer's collider around this kinematic step.
+ */
+export const WALK_EYE_HEIGHT_M = 1.65;
+export const WALK_SPEED_MPS = Object.freeze({
+  precision: 0.45,
+  normal: 1.45,
+  boost: 3.1,
+});
+/** Radii of the walker's collision ellipsoid (half extents in metres). */
+export const WALK_COLLISION_ELLIPSOID_M = Object.freeze({
+  x: 0.26,
+  y: 0.42,
+  z: 0.26,
+});
+
+export interface WalkMotionInput extends FlightMotionInput {
+  /** Elevation of the floor under the walker, metres. */
+  readonly floorY: number;
+}
+
+export function integrateWalkPosition({
+  position,
+  heading,
+  commands,
+  deltaMs,
+  boost = false,
+  precision = false,
+  floorY,
+}: WalkMotionInput): FlightPosition {
+  const headingLength = Math.hypot(heading.x, heading.z);
+  const forwardX = headingLength > 1e-6 ? heading.x / headingLength : 0;
+  const forwardZ = headingLength > 1e-6 ? heading.z / headingLength : -1;
+  const rightX = -forwardZ;
+  const rightZ = forwardX;
+  const forwardAxis =
+    Number(commands.has("forward")) - Number(commands.has("backward"));
+  const strafeAxis =
+    Number(commands.has("right")) - Number(commands.has("left"));
+  const eyeY = (Number.isFinite(floorY) ? floorY : 0) + WALK_EYE_HEIGHT_M;
+  let dx = forwardX * forwardAxis + rightX * strafeAxis;
+  let dz = forwardZ * forwardAxis + rightZ * strafeAxis;
+  const length = Math.hypot(dx, dz);
+  const bounded = {
+    x: clamp(position.x, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
+    y: eyeY,
+    z: clamp(position.z, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
+  };
+  if (length < 1e-9) return bounded;
+  dx /= length;
+  dz /= length;
+  const speed = precision
+    ? WALK_SPEED_MPS.precision
+    : boost
+      ? WALK_SPEED_MPS.boost
+      : WALK_SPEED_MPS.normal;
+  const seconds = clamp(finitePositive(deltaMs, 0), 0, 50) / 1000;
+  return {
+    x: clamp(bounded.x + dx * speed * seconds, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
+    y: eyeY,
+    z: clamp(bounded.z + dz * speed * seconds, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
+  };
 }

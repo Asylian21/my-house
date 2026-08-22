@@ -11,14 +11,14 @@ export const MM_TO_M = 0.001;
 export const SCENE_CENTER_MM = Object.freeze({ x: 15_200, y: 10_800 });
 
 export const TOP_CAMERA_ALPHA = Math.PI / 2;
-export const STREET_CAMERA_ALPHA = Math.PI / 2;
+export const STREET_CAMERA_ALPHA = 1.42;
 export const AXONOMETRIC_CAMERA_ALPHA = Math.PI * 0.72;
 // Human-scale hero view from inside the rear hedge. The old preset placed the
 // eye 9.6–14.5 m above grade and outside the parcel, so it read as a drone shot
 // and looked through the hedge. This angle keeps the pool in the foreground
 // while looking back at both legs of the L-shaped garden facade.
 export const GARDEN_CAMERA_ALPHA = -2.38;
-export const GARDEN_CAMERA_BETA = Math.acos((3.05 - 1.35) / 14.4);
+export const GARDEN_CAMERA_BETA = Math.acos((3.05 - 1.4) / 17.2);
 
 export interface GardenCameraConfig {
   readonly alpha: number;
@@ -43,36 +43,36 @@ function betaForEyeHeight(
 
 export function gardenCameraForWidth(widthPx: number): GardenCameraConfig {
   if (widthPx < 600) {
-    const target = [2, 1.4, -0.8] as const;
-    const radius = 15.8;
+    const target = [1.8, 1.45, -0.95] as const;
+    const radius = 18.4;
     return {
       alpha: GARDEN_CAMERA_ALPHA,
       beta: betaForEyeHeight(target[1], radius, 3.2),
       radius,
-      fov: 0.94,
+      fov: 0.9,
       target,
     };
   }
   return {
     alpha: GARDEN_CAMERA_ALPHA,
     beta: GARDEN_CAMERA_BETA,
-    radius: 14.4,
-    fov: 0.72,
-    target: [1.8, 1.35, -0.7],
+    radius: 17.2,
+    fov: 0.68,
+    target: [1.6, 1.4, -0.9],
   };
 }
 
 export function streetCameraForWidth(widthPx: number): GardenCameraConfig {
   const mobile = widthPx < 600;
-  const radius = mobile ? 20 : 16;
+  const radius = mobile ? 26 : 22.5;
   const target: readonly [number, number, number] = mobile
-    ? [0, 1.35, 4.8]
-    : [-1, 1.35, 4.2];
+    ? [0, 1.4, 4.4]
+    : [-0.6, 1.4, 3.9];
   return {
     alpha: STREET_CAMERA_ALPHA,
     beta: betaForEyeHeight(target[1], radius, mobile ? 2 : 1.85),
     radius,
-    fov: mobile ? 0.82 : 0.7,
+    fov: mobile ? 0.8 : 0.66,
     target,
   };
 }

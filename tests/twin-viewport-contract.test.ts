@@ -2,24 +2,119 @@ import { describe, expect, it } from "vitest";
 
 import {
   FLIGHT_BOUNDS,
+  FLIGHT_WHEEL_DOLLY_MAX_M,
   ORBIT_ZOOM,
+  clampOrbitRadius,
   deriveRenderQualityProfile,
+  easeOrbitRadius,
   flightCommandForCode,
+  flightWheelDollyDistanceM,
+  integrateFlightDolly,
   integrateFlightPosition,
   isSelectionTap,
+  normalizeWheelPixels,
+  orbitZoomMultiplier,
+  stepOrbitZoom,
+  wheelZoomGesture,
   type FlightCommand,
 } from "../lib/twin-viewport-contract";
 
 const commands = (...values: FlightCommand[]) => new Set(values);
 
 describe("orbit zoom contract", () => {
-  it("uses smooth radius-relative touchpad zoom and owns browser gestures", () => {
+  it("uses an exponential trackpad model and owns browser gestures", () => {
     expect(ORBIT_ZOOM).toEqual({
       lowerRadiusLimitM: 4.5,
       upperRadiusLimitM: 64,
-      wheelDeltaPercentage: 0.015,
+      scrollGainPerPx: 0.0018,
+      pinchGainPerPx: 0.009,
+      lineModePx: 16,
+      pageModePx: 800,
+      maxMultiplierPerEvent: 2,
+      minMultiplierPerEvent: 0.5,
+      glideHalfLifeMs: 42,
+      settleEpsilonM: 0.0015,
       useNaturalPinchZoom: true,
       preventBrowserGesture: true,
+    });
+  });
+
+  it("normalizes pixel, line and page wheel modes into pixels", () => {
+    expect(normalizeWheelPixels({ deltaY: 12, deltaMode: 0 })).toBe(12);
+    expect(normalizeWheelPixels({ deltaY: 3, deltaMode: 1 })).toBe(48);
+    expect(normalizeWheelPixels({ deltaY: 0.5, deltaMode: 2 })).toBe(400);
+    expect(normalizeWheelPixels({ deltaY: 7, deltaMode: 9 })).toBe(0);
+    expect(
+      normalizeWheelPixels({ deltaY: Number.NaN, deltaMode: 0 }),
+    ).toBe(0);
+  });
+
+  it("treats ctrl-modified wheels as trackpad pinch", () => {
+    expect(wheelZoomGesture({ ctrlKey: true })).toBe("pinch");
+    expect(wheelZoomGesture({ ctrlKey: false })).toBe("scroll");
+  });
+
+  it("zooms out on downward scroll and in on upward scroll", () => {
+    const down = orbitZoomMultiplier(100, "scroll");
+    const up = orbitZoomMultiplier(-100, "scroll");
+    expect(down).toBeGreaterThan(1);
+    expect(up).toBeLessThan(1);
+    // Exponential model is symmetric around 1.
+    expect(down * up).toBeCloseTo(1, 10);
+  });
+
+  it("keeps one physical notch responsive without teleporting", () => {
+    // Chrome reports a physical notch as ~100 px; Firefox as ~3 lines.
+    expect(orbitZoomMultiplier(100, "scroll")).toBeCloseTo(1.1972, 3);
+    expect(orbitZoomMultiplier(normalizeWheelPixels({ deltaY: 3, deltaMode: 1 }), "scroll"))
+      .toBeCloseTo(orbitZoomMultiplier(48, "scroll"), 10);
+  });
+
+  it("gives pinch gestures five times the scroll response", () => {
+    const pinch = orbitZoomMultiplier(25, "pinch");
+    const scroll = orbitZoomMultiplier(25, "scroll");
+    expect(pinch).toBeGreaterThan(scroll);
+    expect(Math.log(pinch)).toBeCloseTo(5 * Math.log(scroll), 6);
+  });
+
+  it("clamps a single event so momentum bursts cannot teleport the camera", () => {
+    expect(orbitZoomMultiplier(10_000, "scroll")).toBe(
+      ORBIT_ZOOM.maxMultiplierPerEvent,
+    );
+    expect(orbitZoomMultiplier(-10_000, "pinch")).toBeLessThanOrEqual(
+      1 / ORBIT_ZOOM.minMultiplierPerEvent,
+    );
+    expect(clampOrbitRadius(0.5)).toBe(ORBIT_ZOOM.lowerRadiusLimitM);
+    expect(clampOrbitRadius(500)).toBe(ORBIT_ZOOM.upperRadiusLimitM);
+  });
+
+  it("glides exponentially and stays consistent at any frame rate", () => {
+    const single = easeOrbitRadius(40, 20, 100);
+    const twoSteps = easeOrbitRadius(easeOrbitRadius(40, 20, 50), 20, 50);
+    expect(twoSteps).toBeCloseTo(single, 8);
+
+    const afterHalfLife = easeOrbitRadius(40, 20, ORBIT_ZOOM.glideHalfLifeMs);
+    expect(afterHalfLife).toBeCloseTo(30, 6);
+
+    // A long frame gap (tab switch) converges fully instead of overshooting.
+    expect(easeOrbitRadius(40, 20, 5_000)).toBeCloseTo(20, 6);
+    expect(easeOrbitRadius(40, 20, Number.NaN)).toBe(40);
+    expect(easeOrbitRadius(40, 20, -5)).toBe(40);
+  });
+
+  it("finishes every glide exactly instead of dropping its idle tail", () => {
+    let radiusM = 16;
+    let settled = false;
+    for (let frame = 0; frame < 240 && !settled; frame += 1) {
+      const step = stepOrbitZoom(radiusM, 10, 1000 / 120);
+      radiusM = step.radiusM;
+      settled = step.settled;
+    }
+    expect(settled).toBe(true);
+    expect(radiusM).toBe(10);
+    expect(stepOrbitZoom(10, 500, 5_000)).toEqual({
+      radiusM: ORBIT_ZOOM.upperRadiusLimitM,
+      settled: true,
     });
   });
 });
@@ -46,6 +141,35 @@ describe("Retina render quality contract", () => {
       environmentTextureSize: 512,
       anisotropy: 16,
     });
+  });
+
+  it("spends eight MSAA samples only on compact ultra-tier surfaces", () => {
+    const compactDesktop = deriveRenderQualityProfile({
+      widthPx: 1280,
+      heightPx: 800,
+      devicePixelRatio: 2,
+      maxMsaaSamples: 16,
+    });
+    expect(compactDesktop.renderPixelCount).toBeLessThanOrEqual(4_500_000);
+    expect(compactDesktop.tier).toBe("ULTRA");
+    expect(compactDesktop.msaaSamples).toBe(8);
+
+    const withoutHardwareMsaa = deriveRenderQualityProfile({
+      widthPx: 1280,
+      heightPx: 800,
+      devicePixelRatio: 2,
+      maxMsaaSamples: 4,
+    });
+    expect(withoutHardwareMsaa.msaaSamples).toBe(4);
+
+    const largeSurface = deriveRenderQualityProfile({
+      widthPx: 1512,
+      heightPx: 982,
+      devicePixelRatio: 2,
+      maxMsaaSamples: 16,
+    });
+    expect(largeSurface.renderPixelCount).toBeGreaterThan(4_500_000);
+    expect(largeSurface.msaaSamples).toBe(4);
   });
 
   it("supersamples standard-density displays without exceeding the Retina cap", () => {
@@ -266,5 +390,80 @@ describe("free-flight camera contract", () => {
         button: 2,
       }),
     ).toBe(false);
+  });
+
+  it("dollies along the view ray with trackpad scroll and caps momentum", () => {
+    // Scrolling towards you moves backwards, mirroring orbit zoom direction.
+    const forward = flightWheelDollyDistanceM(-100);
+    const backward = flightWheelDollyDistanceM(100);
+    expect(forward).toBeGreaterThan(0);
+    expect(backward).toBeLessThan(0);
+    expect(forward).toBeCloseTo(-backward, 12);
+    expect(Math.abs(flightWheelDollyDistanceM(-50_000))).toBe(
+      FLIGHT_WHEEL_DOLLY_MAX_M,
+    );
+    expect(flightWheelDollyDistanceM(Number.NaN)).toBe(0);
+
+    const start = { x: 0, y: 6, z: 0 };
+    const ray = { x: 0, y: -0.5, z: -1 };
+    const rayLength = Math.hypot(ray.x, ray.y, ray.z);
+    const flown = integrateFlightDolly(start, ray, 4);
+    expect(flown.x).toBeCloseTo(start.x, 10);
+    expect(flown.y).toBeCloseTo(6 + (ray.y * 4) / rayLength, 10);
+    expect(flown.z).toBeCloseTo((ray.z * 4) / rayLength, 10);
+
+    const bounded = integrateFlightDolly(
+      { x: FLIGHT_BOUNDS.maxX, y: FLIGHT_BOUNDS.minY, z: 0 },
+      { x: 1, y: -1, z: 0 },
+      40,
+    );
+    expect(bounded.x).toBe(FLIGHT_BOUNDS.maxX);
+    expect(bounded.y).toBe(FLIGHT_BOUNDS.minY);
+  });
+});
+
+describe("walkthrough motion", () => {
+  it("pins the eye height above the floor and ignores vertical commands", async () => {
+    const { integrateWalkPosition, WALK_EYE_HEIGHT_M, WALK_SPEED_MPS } = await import(
+      "../lib/twin-viewport-contract"
+    );
+    const still = integrateWalkPosition({
+      position: { x: 1, y: 9, z: 2 },
+      heading: { x: 0, z: -1 },
+      commands: new Set(["up", "down"]),
+      deltaMs: 16,
+      floorY: 0,
+    });
+    expect(still).toEqual({ x: 1, y: WALK_EYE_HEIGHT_M, z: 2 });
+    const forward = integrateWalkPosition({
+      position: { x: 0, y: WALK_EYE_HEIGHT_M, z: 0 },
+      heading: { x: 0, z: -1 },
+      commands: new Set(["forward"]),
+      deltaMs: 40,
+      floorY: 0,
+    });
+    expect(forward.z).toBeCloseTo(-WALK_SPEED_MPS.normal * 0.04, 5);
+    expect(forward.y).toBe(WALK_EYE_HEIGHT_M);
+    const boosted = integrateWalkPosition({
+      position: { x: 0, y: WALK_EYE_HEIGHT_M, z: 0 },
+      heading: { x: 1, z: 0 },
+      commands: new Set(["right"]),
+      deltaMs: 50,
+      boost: true,
+      floorY: 0,
+    });
+    expect(boosted.x).toBeCloseTo(0, 5);
+    expect(boosted.z).toBeCloseTo(WALK_SPEED_MPS.boost * 0.05, 5);
+  });
+
+  it("walks slower than it flies so rooms stay controllable", async () => {
+    const { WALK_SPEED_MPS, FLIGHT_SPEED_MPS, WALK_COLLISION_ELLIPSOID_M } = await import(
+      "../lib/twin-viewport-contract"
+    );
+    expect(WALK_SPEED_MPS.normal).toBeLessThan(FLIGHT_SPEED_MPS.normal);
+    expect(WALK_SPEED_MPS.boost).toBeLessThan(FLIGHT_SPEED_MPS.boost);
+    // The collider must pass a 700 mm leaf and a 2 100 mm door head.
+    expect(WALK_COLLISION_ELLIPSOID_M.x * 2).toBeLessThan(0.7);
+    expect(1.65 + WALK_COLLISION_ELLIPSOID_M.y).toBeLessThan(2.1);
   });
 });

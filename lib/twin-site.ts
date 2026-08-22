@@ -397,6 +397,23 @@ export function sjtskToLocalMm(point: Point2Mm): Point2Mm {
   };
 }
 
+/** Visible rainwater downpipe hung on a Z facade (xMm along it) or an X facade (yMm along it). */
+export type RainwaterDownpipe =
+  | {
+      readonly id: string;
+      readonly xMm: number;
+      readonly faceYmm: number;
+      readonly sourceRouteId: string;
+      readonly certainty: "VISUAL_INFERENCE";
+    }
+  | {
+      readonly id: string;
+      readonly yMm: number;
+      readonly faceXmm: number;
+      readonly sourceRouteId: string;
+      readonly certainty: "VISUAL_INFERENCE";
+    };
+
 export const HOUSE = Object.freeze({
   id: "HOUSE-DESIGN",
   // D1.1.002 is the active plan geometry. Its national-grid placement is an
@@ -617,6 +634,21 @@ export const HOUSE = Object.freeze({
       eastWallInnerXmm: 27540,
       cornerPillar: { startXmm: 21040, startYmm: 21535, sizeMm: 500 },
       westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 3125 },
+      // P04 portal: both white supports (the 500 × 500 corner pillar and the
+      // 500 mm east wall end) are continued above the wall crown with a
+      // sloped head that meets the boarded roof soffit, and the white rake
+      // boards of the gable sit in the same plane as the supports (their
+      // back face flush with the pillar front at 22 035, the outer face on
+      // the 50 mm roof overhang at 22 085).
+      portalFrame: {
+        supportsMm: [
+          { id: "PORCH-SUPPORT-WEST", startXmm: 21040, endXmm: 21540, startYmm: 21535, endYmm: 22035 },
+          { id: "PORCH-SUPPORT-EAST", startXmm: 27540, endXmm: 28040, startYmm: 19535, endYmm: 22035 },
+        ],
+        rakeBackFaceYmm: 22035,
+        rakeFrontFaceYmm: 22105,
+        rakeHeightMm: 180,
+      },
       // The porch is open to the roof: its ceiling follows the two wing roof
       // planes up to the ridge instead of a flat soffit, and the larch gable
       // wall sits on the recessed plane so the front stays an open frame.
@@ -666,14 +698,18 @@ export const HOUSE = Object.freeze({
       sourceRouteId: "UTIL-RAIN-SOUTH",
       certainty: "VISUAL_INFERENCE",
     },
+    // The wing roof is a gable over the porch: its gutters run along the two
+    // long eaves (x = 21 040 and x = 28 040), not along the open gable front.
+    // The visible pipe therefore hangs on the east eave next to the porch
+    // corner instead of standing as a loose post in the open porch frame.
     {
       id: "DS-02",
-      xMm: 26300,
-      faceYmm: 22035,
+      yMm: 21700,
+      faceXmm: 28040,
       sourceRouteId: "UTIL-RAIN-NORTH",
       certainty: "VISUAL_INFERENCE",
     },
-  ],
+  ] as const satisfies readonly RainwaterDownpipe[],
   datumElevationM: 184,
   orientation: {
     sourceId: SOURCES.floorPlan.id,
@@ -1547,44 +1583,53 @@ export function terraceZoneAreaM2(zone: TerraceZoneD1): number {
 }
 
 export const GARDEN_POOL = Object.freeze({
-  id: "POOL-COURTYARD-5X3",
-  label: "Bazén 5 × 3 m",
+  id: "POOL-COURTYARD-56X3",
+  label: "Bazén 5,6 × 3 m",
   targetZone: "OPEN_L_COURTYARD_BY_MAIN_TERRACE",
   placementStatus:
     "CLIENT_REQUESTED_LAYOUT_REQUIRES_RAINWATER_COORDINATION",
-  centerMm: { x: 11_750, y: 14_900 } as const satisfies Point2Mm,
+  centerMm: { x: 14_940, y: 14_900 } as const satisfies Point2Mm,
   orientation: "LONG_EDGE_PARALLEL_TO_MAIN_TERRACE_LOCAL_X",
   terraceConnection: {
     terraceId: "TERR-D1-GARDEN",
     edge: "NORTH_Y_13100",
     copingEdgeYmm: 13_100,
     planGapMm: 0,
-    contactLengthMm: 5_600,
+    contactLengthMm: 6_200,
     sharedTopElevationMm: 20,
   },
-  waterLengthMm: 5_000,
+  // The pool lies in the inner corner of the L: its coping east edge sits
+  // flush against the wing deck west edge, same zero-gap rule as the main
+  // terrace connection above.
+  wingDeckContact: {
+    deckId: "TERR-D1-WING",
+    edgeXmm: 18_040,
+    planGapMm: 0,
+    sharedTopElevationMm: 20,
+  } as const,
+  waterLengthMm: 5_600,
   waterWidthMm: 3_000,
-  waterAreaM2: 15,
+  waterAreaM2: 16.8,
   copingWidthMm: 300,
   proposedWaterDepthMm: 1_400,
   waterFootprintMm: [
-    { x: 9_250, y: 13_400 },
-    { x: 14_250, y: 13_400 },
-    { x: 14_250, y: 16_400 },
-    { x: 9_250, y: 16_400 },
-    { x: 9_250, y: 13_400 },
+    { x: 12_140, y: 13_400 },
+    { x: 17_740, y: 13_400 },
+    { x: 17_740, y: 16_400 },
+    { x: 12_140, y: 16_400 },
+    { x: 12_140, y: 13_400 },
   ] as const satisfies readonly Point2Mm[],
   copingFootprintMm: [
-    { x: 8_950, y: 13_100 },
-    { x: 14_550, y: 13_100 },
-    { x: 14_550, y: 16_700 },
-    { x: 8_950, y: 16_700 },
-    { x: 8_950, y: 13_100 },
+    { x: 11_840, y: 13_100 },
+    { x: 18_040, y: 13_100 },
+    { x: 18_040, y: 16_700 },
+    { x: 11_840, y: 16_700 },
+    { x: 11_840, y: 13_100 },
   ] as const satisfies readonly Point2Mm[],
   modelledClearancesMm: {
     mainTerrace: 0,
-    wingTerrace: 3_490,
-    rainTankShell: 468,
+    wingTerrace: 0,
+    rainTankShell: 1_787,
     infiltrationObject: 1_428,
     closestRainPipeShell: 630,
   },
@@ -1627,8 +1672,8 @@ export const UTILITY_ROUTES: readonly UtilityRoute[] = [
   route("UTIL-WATER", "Navrhnutá vodovodná prípojka", "water", [[13500, -1689], [13500, 1415], [12861, 1415], [12861, 3000]], SOURCES.water.id, "DESIGNED", 80),
   route("UTIL-SEWER", "Navrhnutá splašková kanalizácia", "sewer", [[15794, 3000], [15712, 1483], [16814, 1483]], SOURCES.sewer.id, "DESIGNED", 95),
   route("UTIL-SEWER-FUTURE", "Budúce gravitačné prepojenie", "sewer", [[15712, 1483], [15640, -400], [15400, -5600]], SOURCES.sewer.id, "FUTURE_OPTION", 45),
-  route("UTIL-RAIN-SOUTH", "Dažďová kanalizácia · prítok k ŠD · predbežne obídený bazén", "rainwater", [[7600, 10800], [7600, 12400], [15450, 12400], [16230, 13600]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientExteriorRevision20260821.id, SOURCES.poolDesignProposal20260821.id]),
-  route("UTIL-RAIN-NORTH", "Dažďová kanalizácia · ŠD–Šf–AN", "rainwater", [[26300, 21000], [22400, 15200], [16230, 13600], [16230, 14745], [16230, 17165]], SOURCES.rainwater.id, "DESIGNED", 70),
+  route("UTIL-RAIN-SOUTH", "Dažďová kanalizácia · prítok k ŠD · predbežne obídený bazén", "rainwater", [[7600, 10800], [7600, 12400], [11000, 12400], [11000, 17400], [16900, 17400]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientExteriorRevision20260821.id, SOURCES.poolDesignProposal20260821.id]),
+  route("UTIL-RAIN-NORTH", "Dažďová kanalizácia · ŠD–Šf–AN", "rainwater", [[26300, 21000], [22400, 15600], [18800, 15600], [18800, 17400], [16900, 17400]], SOURCES.rainwater.id, "DESIGNED", 70),
   route("UTIL-RAIN-OVERFLOW", "Bezpečnostný prepad do vsaku", "rainwater", [[15416, 18147], [13981, 19878], [12981, 19878]], SOURCES.rainwater.id, "DESIGNED", 55),
   route("UTIL-ELECTRICITY", "Domové vedenie NN · staršia C3 trasa", "electricity", [[0, 3500], [2600, 4200], [5200, 4750], [7236, 5327]], SOURCES.coordination.id, "DESIGNED", 55, "REVISION_CONFLICT"),
 ] as const;

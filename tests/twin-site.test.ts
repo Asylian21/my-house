@@ -164,24 +164,24 @@ describe("site evidence seed", () => {
     expect(GARDEN_CAMERA_ALPHA).toBeCloseTo(-2.38, 12);
     expect(Math.cos(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
     expect(Math.sin(GARDEN_CAMERA_ALPHA)).toBeLessThan(0);
-    expect(GARDEN_CAMERA_BETA).toBeGreaterThan(1.44);
-    expect(GARDEN_CAMERA_BETA).toBeLessThan(1.47);
+    expect(GARDEN_CAMERA_BETA).toBeGreaterThan(1.46);
+    expect(GARDEN_CAMERA_BETA).toBeLessThan(1.49);
   });
 
   it("keeps the approved Realita camera deterministic on desktop and mobile", () => {
     expect(gardenCameraForWidth(1600)).toEqual({
       alpha: GARDEN_CAMERA_ALPHA,
       beta: GARDEN_CAMERA_BETA,
-      radius: 14.4,
-      fov: 0.72,
-      target: [1.8, 1.35, -0.7],
+      radius: 17.2,
+      fov: 0.68,
+      target: [1.6, 1.4, -0.9],
     });
     expect(gardenCameraForWidth(600)).toEqual(gardenCameraForWidth(1600));
     expect(gardenCameraForWidth(390)).toMatchObject({
       alpha: GARDEN_CAMERA_ALPHA,
-      radius: 15.8,
-      fov: 0.94,
-      target: [2, 1.4, -0.8],
+      radius: 18.4,
+      fov: 0.9,
+      target: [1.8, 1.45, -0.95],
     });
     expect(gardenCameraForWidth(599)).toEqual(gardenCameraForWidth(390));
     expect(gardenCameraForWidth(1600).radius).toBeLessThan(
@@ -411,12 +411,16 @@ describe("site evidence seed", () => {
       },
       {
         id: "DS-02",
-        xMm: 26_300,
-        faceYmm: 22_035,
+        yMm: 21_700,
+        faceXmm: 28_040,
         sourceRouteId: "UTIL-RAIN-NORTH",
         certainty: "VISUAL_INFERENCE",
       },
     ]);
+    // The gable front of the porch is open: no downpipe may stand in it.
+    for (const downpipe of HOUSE.rainwaterDownpipes) {
+      expect("faceYmm" in downpipe && downpipe.faceYmm === HOUSE.porches.wingEnd.frontYmm).toBe(false);
+    }
     expect(DEFAULT_LAYER_VISIBILITY.foundations).toBe(false);
     expect(DEFAULT_LAYER_VISIBILITY.contextNetworks).toBe(false);
   });
@@ -948,13 +952,13 @@ describe("site evidence seed", () => {
 });
 
 describe("data to geometry contract", () => {
-  it("places the requested 5 × 3 m pool on the main terrace edge", () => {
+  it("places the requested 5,6 × 3 m pool flush into the inner-L corner", () => {
     expect(GARDEN_POOL).toMatchObject({
-      id: "POOL-COURTYARD-5X3",
-      centerMm: { x: 11_750, y: 14_900 },
-      waterLengthMm: 5_000,
+      id: "POOL-COURTYARD-56X3",
+      centerMm: { x: 14_940, y: 14_900 },
+      waterLengthMm: 5_600,
       waterWidthMm: 3_000,
-      waterAreaM2: 15,
+      waterAreaM2: 16.8,
       copingWidthMm: 300,
       proposedWaterDepthMm: 1_400,
       placementStatus:
@@ -963,7 +967,13 @@ describe("data to geometry contract", () => {
         terraceId: "TERR-D1-GARDEN",
         copingEdgeYmm: 13_100,
         planGapMm: 0,
-        contactLengthMm: 5_600,
+        contactLengthMm: 6_200,
+        sharedTopElevationMm: 20,
+      },
+      wingDeckContact: {
+        deckId: "TERR-D1-WING",
+        edgeXmm: 18_040,
+        planGapMm: 0,
         sharedTopElevationMm: 20,
       },
     });
@@ -977,8 +987,8 @@ describe("data to geometry contract", () => {
         return Math.hypot(end.x - start.x, end.y - start.y);
       })
       .sort((left, right) => left - right);
-    expect(edgeLengthsMm).toEqual([3_000, 3_000, 5_000, 5_000]);
-    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(15);
+    expect(edgeLengthsMm).toEqual([3_000, 3_000, 5_600, 5_600]);
+    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(16.8);
     expect(
       GARDEN_POOL.sourceIds.every((sourceId) => findSource(sourceId)),
     ).toBe(true);
@@ -1030,6 +1040,15 @@ describe("data to geometry contract", () => {
       GARDEN_POOL.terraceConnection.contactLengthMm,
     );
 
+    // The coping east edge sits flush with the wing deck west edge, so the
+    // pool fills the inner corner of the terrace L with no lawn strip.
+    const wingDeckRect = TERRACE_ZONES_D1.find(
+      (zone) => zone.id === GARDEN_POOL.wingDeckContact.deckId,
+    )?.rectsMm[0];
+    expect(wingDeckRect).toBeDefined();
+    expect(poolBounds.x1).toBe(GARDEN_POOL.wingDeckContact.edgeXmm);
+    expect(poolBounds.x1).toBe(wingDeckRect?.x0);
+
     for (const zone of TERRACE_ZONES_D1) {
       for (const rect of zone.rectsMm) {
         const overlaps =
@@ -1041,7 +1060,7 @@ describe("data to geometry contract", () => {
       }
     }
     expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(0);
-    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(468);
+    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(1_787);
     expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(630);
     const reroutedRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-SOUTH",
@@ -1049,14 +1068,31 @@ describe("data to geometry contract", () => {
     expect(reroutedRain?.pointsMm).toEqual([
       { x: 7_600, y: 10_800 },
       { x: 7_600, y: 12_400 },
-      { x: 15_450, y: 12_400 },
-      { x: 16_230, y: 13_600 },
+      { x: 11_000, y: 12_400 },
+      { x: 11_000, y: 17_400 },
+      { x: 16_900, y: 17_400 },
     ]);
     expect(reroutedRain?.sourceIds).toEqual([
       SOURCES.rainwater.id,
       SOURCES.clientExteriorRevision20260821.id,
       SOURCES.poolDesignProposal20260821.id,
     ]);
+    const northRain = UTILITY_ROUTES.find(
+      ({ id }) => id === "UTIL-RAIN-NORTH",
+    );
+    expect(northRain?.pointsMm).toEqual([
+      { x: 26_300, y: 21_000 },
+      { x: 22_400, y: 15_600 },
+      { x: 18_800, y: 15_600 },
+      { x: 18_800, y: 17_400 },
+      { x: 16_900, y: 17_400 },
+    ]);
+    // Both preliminary legs share the bypass corridor 700 mm south of the
+    // coping; minus the 70 mm pipe shell this keeps the documented ~0,63 m.
+    const corridorGapMm = Math.min(
+      ...northRain!.pointsMm.filter(({ y }) => y === 17_400).map(() => 17_400),
+    );
+    expect(corridorGapMm - GARDEN_POOL.copingFootprintMm[2].y - 70).toBe(630);
   });
 
   it("keeps the luxury fence raster at a fixed pitch with balanced margins", () => {

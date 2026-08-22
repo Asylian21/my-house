@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Deterministický generátor PBR textúr a IBL oblohy pre režim Realita.
 
-Spustenie:  python3 tools/generate-visual-assets.py
+Spustenie:  python3 tools/generate-visual-assets.py            (úplná sada)
+            python3 tools/generate-visual-assets.py interior   (iba interiér)
 Vygeneruje všetky procedurálne assety do public/assets (omietka, modřín,
 terasové dosky, falcovaný plech, kačírek, betón, normálová mapa trávnika a
 obloha). Žiadne externé zdroje ani licencie — všetko vzniká lokálne.
@@ -209,6 +210,105 @@ def gen_sky(w=2048, h=1024):
     img = Image.fromarray(out).filter(ImageFilter.GaussianBlur(1.1))
     img.save(f"{ENV}/sky-partly-cloudy.jpg", quality=92)
     print("saved", f"{ENV}/sky-partly-cloudy.jpg")
+
+
+# ---------------------------------------------------------------- interior: vinyl oak planks (1.02–1.04, 1.08–1.10, 1.03)
+def gen_vinyl_oak(size=1024, rows=8, fname="vinyl-oak"):
+    """Svetlý dubový vinyl: 8 dosiek na dlaždicu, posunuté škáry, jemná kresba."""
+    h = w = size
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    height = np.zeros((h, w), dtype=np.float64)
+    r = np.random.default_rng(612)
+    bh = h // rows
+    base_colors = [(214, 188, 150), (206, 178, 138), (220, 196, 160), (199, 170, 130), (211, 184, 146), (224, 200, 166)]
+    for i in range(rows):
+        grain = fbm((bh, w), octaves=6, seed=700 + i)
+        fine = fbm((bh, w), octaves=7, persistence=0.7, seed=760 + i)
+        col = np.array(base_colors[i % len(base_colors)], dtype=np.float64)
+        streak = (grain - 0.5) * 34 + (fine - 0.5) * 10
+        y0, y1 = i * bh, (i + 1) * bh
+        for ch in range(3):
+            albedo[y0:y1, :, ch] = np.clip(col[ch] + streak * (1.1 - ch * 0.12), 90, 245)
+        height[y0:y1, :] = grain * 0.35 + fine * 0.15
+        joint = int((r.random() * 0.6 + 0.2) * w)
+        albedo[y0:y1, joint:joint + 2, :] *= 0.72
+        height[y0:y1, joint:joint + 2] -= 0.5
+        albedo[y0:y0 + 2, :, :] *= 0.74
+        height[y0:y0 + 2, :] -= 0.5
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(height, 2.0), f"{OUT}/{fname}-normal.jpg")
+
+
+# ---------------------------------------------------------------- interior: porcelain floor tile 600 × 600 (2 × 2 per tile)
+def gen_tile(size=1024, per_side=2, fname="tile-porcelain"):
+    h = w = size
+    n = fbm((h, w), octaves=5, seed=811)
+    fine = fbm((h, w), octaves=7, persistence=0.65, seed=812)
+    base = np.array((196, 194, 188), dtype=np.float64)
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    tone = (n - 0.5) * 22 + (fine - 0.5) * 8
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + tone, 120, 230)
+    height = n * 0.2 + fine * 0.1
+    step = w // per_side
+    grout = 5
+    for k in range(per_side + 1):
+        a = min(w - grout, k * step)
+        albedo[a:a + grout, :, :] = (150, 148, 144)
+        albedo[:, a:a + grout, :] = (150, 148, 144)
+        height[a:a + grout, :] -= 0.9
+        height[:, a:a + grout] -= 0.9
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(height, 1.8), f"{OUT}/{fname}-normal.jpg")
+
+
+# ---------------------------------------------------------------- interior: epoxy floor (garage, technical room)
+def gen_epoxy(size=512, fname="epoxy-grey"):
+    h = w = size
+    n = fbm((h, w), octaves=4, seed=901)
+    flakes = np.random.default_rng(902).random((h, w)) > 0.992
+    base = np.array((142, 146, 148), dtype=np.float64)
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + (n - 0.5) * 12, 100, 190)
+    albedo[flakes] = (210, 210, 206)
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(n * 0.08, 0.6), f"{OUT}/{fname}-normal.jpg")
+
+
+# ---------------------------------------------------------------- interior: wall tiles 300 × 600 (wet rooms up to 2 100)
+def gen_wall_tile(size=1024, fname="tile-wall"):
+    h = w = size
+    n = fbm((h, w), octaves=4, seed=921)
+    base = np.array((226, 226, 222), dtype=np.float64)
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + (n - 0.5) * 10, 180, 245)
+    height = n * 0.1
+    grout = 4
+    for k in range(0, w + 1, w // 2):
+        a = min(w - grout, k)
+        albedo[:, a:a + grout, :] = (190, 190, 186)
+        height[:, a:a + grout] -= 0.8
+    for k in range(0, h + 1, h // 4):
+        a = min(h - grout, k)
+        albedo[a:a + grout, :, :] = (190, 190, 186)
+        height[a:a + grout, :] -= 0.8
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(height, 1.6), f"{OUT}/{fname}-normal.jpg")
+
+
+import sys
+
+if "interior" in sys.argv:
+    # Only the interior set; the exterior assets above stay byte-identical
+    # to the committed files and are regenerated only on an explicit full run.
+    gen_vinyl_oak()
+    gen_tile()
+    gen_epoxy()
+    gen_wall_tile()
+    print("INTERIOR DONE")
+    sys.exit(0)
 
 
 gen_larch()

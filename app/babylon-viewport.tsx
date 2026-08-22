@@ -18,10 +18,12 @@ import type {
   NavigationMode,
   RenderQualityProfile,
 } from "@/lib/twin-viewport-contract";
+import { INTERIOR_ROOMS } from "@/lib/twin-interior";
 
 export interface BabylonViewportHandle {
   setCameraPreset: (preset: CameraPreset) => void;
   setNavigationMode: (mode: NavigationMode) => void;
+  enterWalkthrough: (roomId?: string) => void;
   setFlightCommand: (command: FlightCommand, active: boolean) => void;
   nudgeFlight: (command: FlightCommand) => void;
 }
@@ -58,6 +60,7 @@ export const BabylonViewport = forwardRef<
   const onNavigationModeChangeRef = useRef(onNavigationModeChange);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
+  const [walkRoom, setWalkRoom] = useState<string>("");
 
   onSelectRef.current = onSelect;
   navigationModeRef.current = navigationMode;
@@ -69,6 +72,9 @@ export const BabylonViewport = forwardRef<
     },
     setNavigationMode(mode) {
       controllerRef.current?.setNavigationMode(mode);
+    },
+    enterWalkthrough(roomId) {
+      controllerRef.current?.enterWalkthrough(roomId);
     },
     setFlightCommand(command, active) {
       controllerRef.current?.setFlightCommand(command, active);
@@ -106,6 +112,10 @@ export const BabylonViewport = forwardRef<
         );
         controller = createdController;
         controllerRef.current = createdController;
+        if (import.meta.env?.DEV) {
+          (window as unknown as Record<string, unknown>).twinDebug =
+            createdController;
+        }
         createdController.setNavigationMode(navigationModeRef.current);
         observer = new ResizeObserver(() => createdController.resize());
         observer.observe(canvas);
@@ -147,6 +157,20 @@ export const BabylonViewport = forwardRef<
     if (status === "ready") {
       controllerRef.current?.setNavigationMode(navigationMode);
     }
+  }, [status, navigationMode]);
+
+  useEffect(() => {
+    if (status !== "ready" || navigationMode !== "walk") {
+      setWalkRoom("");
+      return;
+    }
+    const read = () => {
+      const room = controllerRef.current?.getWalkRoom();
+      setWalkRoom(room ? `${room.number} · ${room.name}` : "Exteriér · terasa a záhrada");
+    };
+    read();
+    const timer = window.setInterval(read, 400);
+    return () => window.clearInterval(timer);
   }, [status, navigationMode]);
 
   const setMode = (mode: NavigationMode) => {
@@ -191,7 +215,9 @@ export const BabylonViewport = forwardRef<
       <p id="canvas-instructions" className="sr-only">
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
-          : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber a H spustí voľný 3D prelet."}
+          : navigationMode === "walk"
+            ? "Prechádzka interiérom vo výške očí. Ťahaním sa rozhliadate, W A S D ovládajú chôdzu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
+            : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
         ref={canvasRef}
@@ -208,6 +234,11 @@ export const BabylonViewport = forwardRef<
             event.preventDefault();
             setMode(navigationMode === "flight" ? "orbit" : "flight");
           }
+          if (event.key.toLowerCase() === "g") {
+            event.preventDefault();
+            if (navigationMode === "walk") setMode("orbit");
+            else controllerRef.current?.enterWalkthrough();
+          }
         }}
       />
       {status === "ready" && quality && (
@@ -219,13 +250,37 @@ export const BabylonViewport = forwardRef<
           <small>{qualityRatio}× · MSAA {quality.msaaSamples}×</small>
         </div>
       )}
-      {status === "ready" && navigationMode === "flight" && (
+      {status === "ready" && navigationMode === "walk" && (
+        <div className="flight-hud walk-hud" role="status" aria-live="polite">
+          <span>PRECHÁDZKA · {walkRoom || "INTERIÉR 1.NP"}</span>
+          <strong>WASD chôdza · ťahanie rozhľad</strong>
+          <small>Shift rýchlo · Alt pomaly · koliesko krok · Esc koniec</small>
+          <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
+            {INTERIOR_ROOMS.map((room) => (
+              <button
+                key={room.id}
+                type="button"
+                aria-label={`Prejsť do ${room.number} ${room.name}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  controllerRef.current?.enterWalkthrough(room.id);
+                }}
+              >
+                {room.number}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {status === "ready" && (navigationMode === "flight" || navigationMode === "walk") && (
         <>
+          {navigationMode === "flight" && (
           <div className="flight-hud" role="status" aria-live="polite">
             <span>PRELET · HELIKOPTÉROVÁ KAMERA</span>
             <strong>WASD pohyb · Q/E výška</strong>
             <small>Ťahanie rozhľad · Shift turbo · Alt presne · Esc koniec</small>
           </div>
+          )}
           <div
             className="flight-control-pad"
             role="group"

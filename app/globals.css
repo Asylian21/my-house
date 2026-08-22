@@ -565,6 +565,30 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   letter-spacing: .13em;
 }
 .flight-hud strong { font-size: 12px; font-weight: 580; }
+.walk-hud { pointer-events: auto; }
+.walk-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.walk-rooms button {
+  min-width: 38px;
+  padding: 4px 7px;
+  border: 1px solid rgb(197 228 207 / 28%);
+  border-radius: 6px;
+  color: #d8e8dc;
+  background: rgb(30 46 38 / 70%);
+  font-family: var(--font-geist-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.walk-rooms button:hover,
+.walk-rooms button:focus-visible { border-color: #9fd0ae; background: rgb(55 86 69 / 90%); }
+.viewport.is-walk .flight-up,
+.viewport.is-walk .flight-down { visibility: hidden; }
 .flight-hud small { color: #899a90; font-family: var(--font-geist-mono); font-size: 8px; }
 
 .flight-control-pad { display: none; }

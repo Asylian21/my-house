@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   Focus,
+  Footprints,
   Fullscreen,
   House,
   Info,
@@ -284,7 +285,7 @@ function getEntityDetail(
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
       ],
       sourceIds: GARDEN_POOL.sourceIds,
-      note: "Bazén má požadovanú vodnú plochu 5,0 × 3,0 m. Jeho celý 5,6 m dlhý lem leží bez medzery na hrane hlavnej terasy a obe plochy majú spoločnú hornú úroveň. Pôvodná dažďová trasa je v modeli predbežne odklonená; od potrubia zostáva približne 0,63 m a od plášťa nádrže iba 0,468 m. Pred realizáciou treba trasu, nádrž, bazénovú technológiu aj skutočné vedenie potrubí odborne skoordinovať.",
+      note: "Modelovaný variant má po dorovnaní do vnútorného rohu L vodnú plochu 5,6 × 3,0 m, teda o 0,6 m dlhšiu než posledná doložená požiadavka 5,0 × 3,0 m. Lem sa bez medzery dotýka hlavnej aj bočnej terasy a všetky tri plochy majú spoločnú hornú úroveň. Dažďová trasa je predbežne odklonená; od potrubia zostáva približne 0,63 m a od plášťa nádrže 1,787 m. Rozmer variantu, trasu, nádrž, technológiu aj skutočné vedenie potrubí treba pred realizáciou potvrdiť a odborne skoordinovať.",
     };
   }
 
@@ -489,7 +490,7 @@ export function TwinStudio() {
         requestAnimationFrame(() => searchRef.current?.focus());
       }
       if (event.key === "Escape" && !isTyping) {
-        if (navigationMode === "flight") {
+        if (navigationMode === "flight" || navigationMode === "walk") {
           event.preventDefault();
           setNavigationMode("orbit");
           viewportRef.current?.setNavigationMode("orbit");
@@ -570,6 +571,18 @@ export function TwinStudio() {
     const next = navigationMode === "flight" ? "orbit" : "flight";
     setNavigationMode(next);
     viewportRef.current?.setNavigationMode(next);
+  };
+
+  const toggleWalk = () => {
+    const next = navigationMode === "walk" ? "orbit" : "walk";
+    setNavigationMode(next);
+    if (next === "walk") {
+      // Walkthrough always needs the realistic fit-out to be visible.
+      setViewMode("realistic");
+      viewportRef.current?.enterWalkthrough();
+    } else {
+      viewportRef.current?.setNavigationMode("orbit");
+    }
   };
 
   const applyWidth = () => {
@@ -736,9 +749,9 @@ export function TwinStudio() {
               {matches("terasy spevnené plochy") && (
                 <div className="tree-static"><span className="entity-token terrain">SP</span><span><strong>Spevnené plochy</strong><small>C3/D1 · návrh</small></span></div>
               )}
-              {matches("bazén 5 × 3 m dvor terasa") && (
+              {matches(`${GARDEN_POOL.label} bazén dvor terasa`) && (
                 <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className={`tree-object ${selectionId === GARDEN_POOL.id ? "selected" : ""}`} onClick={() => select(GARDEN_POOL.id)}>
-                  <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>Bazén 5 × 3 m</strong><small>vodná plocha 15 m² · na hrane terasy</small></span>
+                  <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>{GARDEN_POOL.label}</strong><small>vodná plocha {fmt(GARDEN_POOL.waterAreaM2)} m² · v rohu terás</small></span>
                 </button>
               )}
               {matches("plot oplotenie súkromná záhrada") && (
@@ -810,7 +823,7 @@ export function TwinStudio() {
         </section>
       </aside>
 
-      <section className={`viewport ${viewMode === "realistic" ? "is-realistic" : ""} ${navigationMode === "flight" ? "is-flight" : ""}`} aria-label="3D pracovný priestor">
+      <section className={`viewport ${viewMode === "realistic" ? "is-realistic" : ""} ${navigationMode === "flight" ? "is-flight" : ""} ${navigationMode === "walk" ? "is-flight is-walk" : ""}`} aria-label="3D pracovný priestor">
         <BabylonViewport
           ref={viewportRef}
           foundations={foundations}
@@ -842,6 +855,13 @@ export function TwinStudio() {
             aria-keyshortcuts="H"
             onClick={toggleFlight}
           ><Plane size={17} /><span>Prelet</span><kbd>H</kbd></button>
+          <button
+            className={navigationMode === "walk" ? "active" : ""}
+            aria-label={navigationMode === "walk" ? "Ukončiť prechádzku interiérom" : "Prejsť sa interiérom domu"}
+            aria-pressed={navigationMode === "walk"}
+            aria-keyshortcuts="G"
+            onClick={toggleWalk}
+          ><Footprints size={17} /><span>Interiér</span><kbd>G</kbd></button>
           <button aria-label="Zamerať vybraný objekt" aria-keyshortcuts="F" onClick={() => showCameraPreset("focus")}><Focus size={17} /><span>Výber</span><kbd>F</kbd></button>
           <button
             aria-label="Zobraziť na celej obrazovke"

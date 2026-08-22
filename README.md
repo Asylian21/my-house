@@ -27,9 +27,11 @@ geometria D1 zostáva nedotknutá.
 
 Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
 7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na
-hustý živý plot. Najnovšia exteriérová revízia zväčšuje bazén v otvorenom
-L-dvore na vodnú plochu presne 5,0 × 3,0 m. Jeho 5,6 m dlhý lem je bez medzery
-napojený na hranu hlavnej terasy a zdieľa s ňou hornú úroveň. Pôvodná dažďová
+hustý živý plot. Najnovšia doložená exteriérová revízia požaduje v otvorenom
+L-dvore vodnú plochu 5,0 × 3,0 m. Aktuálny modelovaný variant ju po dorovnaní
+do vnútorného rohu oboch terás predlžuje na 5,6 × 3,0 m; jeho 6,2 m dlhý lem je
+bez medzery napojený na hlavnú aj bočnú terasu a zdieľa s nimi hornú úroveň.
+Rozdiel 0,6 m je otvorene vedený ako vizualizačný návrh na potvrdenie. Dažďová
 trasa je v modeli predbežne odklonená; najmenší odstup od plášťa potrubia je
 približne 0,63 m. Vizualizačná hĺbka vody je navrhnutá na 1,40 m; nie je to
 realizačne potvrdená hodnota. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
@@ -46,15 +48,51 @@ generujú doska po doske z `TERRACE_ZONES_D1`. Vegetácia, nábytok a
 panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 
 WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelový
-rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení,
-plné mipmapy, 16× anizotropné filtrovanie, stabilizované štvorstupňové kaskádové
-tiene a ACES tone mapping. Presety Záhrada a Ulica majú fyzickú výšku kamery
-3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu. Orbitálny zoom používa
-prirodzený pinch smer a plynulú relatívnu citlivosť pre touchpad aj koliesko bez
-preberania gesta prehliadačom. K dispozícii je aj samostatný režim
-**Prelet**: stabilná world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým
-ovládačom a bezpečným návratom do orbitálnych pohľadov.
+rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení
+(8× MSAA na kompaktných plochách ULTRA vrstvy), plné mipmapy, 16× anizotropné
+filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektrický
+Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
+skutočné odlesky a animovaný filmový grain. Presety Záhrada a Ulica majú
+fyzickú výšku kamery 3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu.
+Orbitálny zoom používa exponenciálny model vlastnej implementácie: každá
+udalosť kolieska násobí cieľový polomer faktorom `exp(gain · px)`, pričom
+touchpad scroll, momentum, fyzické koliesko aj pinch (wheel + ctrl) sú
+normalizované na pixle a pinch má päťnásobnú citlivosť. Glide polomeru je
+framerate-nezávislý s polčasom 42 ms a vždy dobehne presne do cieľa, takže
+reakcia je rovnaká pri každom priblížení aj obnovovacej frekvencii; v režime
+Prelet koliesko doluje pozdĺž
+pohľadového lúča. K dispozícii je aj samostatný režim **Prelet**: stabilná
+world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým ovládačom a
+bezpečným návratom do orbitálnych pohľadov.
 
+Režim **Interiér** (kláves G) je prechádzka vo výške očí 1,65 m. Vnútorné
+nosné steny, priečky 140 mm, dvere so zárubňami a otvorenými krídlami,
+podlahy podľa legendy miestností (keramická dlažba, vinyl, epoxidová stierka),
+SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
+2 750 → 4 850 mm sú odčítané z vektorov výkresu D1.1.002 (`lib/twin-interior.ts`,
+hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
+prelet (WASD, ťahanie, Shift/Alt, koliesko krok), steny ho zastavia cez
+kolízny elipsoid 0,26 × 0,42 m, otvorené interiérové dvere a presklené steny
+terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástich
+miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
+1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
+nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,
+kachle pri komíne a soklové lišty sú ilustračný návrh, nie projektová
+špecifikácia. Sklo je od tejto revízie skutočne priehľadné (alfa prekrytie s
+dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
+interiér a zvnútra terasu.
+
+Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
+obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú
+nad korunou múru šikmou hlavou až k debneniu strechy, biele lemovacie dosky
+štítu sedia spodnou hranou presne na rohu koruny a zadnou plochou lícujú s
+čelom podpory, oba žľaby krídla končia v líci lemovky a dažďový zvod DS-02
+visí na východnom odkvape (x = 28 040) namiesto voľne stojaceho stĺpika v
+otvorenom čele terasy, kde žiadny žľab nie je.
+
+Interiérové PBR sady `vinyl-oak`, `tile-porcelain`, `epoxy-grey` a `tile-wall`
+vznikajú rovnakým deterministickým generátorom
+(`python3 tools/generate-visual-assets.py interior`).
 Textúra trávnika `lawn-albedo.jpg` a botanické karty
 `ornamental-grass-card.png` a `perennial-cluster-card.png` boli pre tento
 prototyp vygenerované pomocou OpenAI imagegen. Rovnako boli cez vstavaný režim
@@ -103,7 +141,9 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 - `lib/twin-domain.ts` — engine-free doména, presný lokálny S-JTSK rám, proveniencia a nemenná história úprav,
 - `lib/twin-site.ts` — projektové revízie, vrstvy, zdroje a parametrické základy,
 - `lib/twin-facade.ts` — čisté delenie fasádneho plášťa okolo zdrojovaných otvorov,
-- `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy a pohyb voľnej kamery,
+- `lib/twin-interior.ts` — miestnosti, vnútorné steny a dvere 1.NP odčítané z D1.1.002,
+- `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy, pohyb voľnej kamery a chodca,
+- `lib/babylon-interior.ts` — stavba interiérového vybavenia zo záznamu miestností,
 - `lib/babylon-scene.ts` — jediná hranica medzi milimetrami domény a metrami Babylon scény,
 - `app/twin-studio.tsx` — prístupný DOM prieskumník, inspector a stav pracovného priestoru,
 - `app/babylon-viewport.tsx` — client-only životný cyklus WebGL canvasu.
