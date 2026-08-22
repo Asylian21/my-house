@@ -564,100 +564,32 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   font-weight: 760;
   letter-spacing: .13em;
 }
-.flight-hud > strong,
-.walk-status > strong { font-size: 12px; font-weight: 580; }
-.walk-hud {
-  width: min(560px, calc(100vw - 32px));
-  min-width: 0;
-  gap: 9px;
-  padding: 12px;
-  pointer-events: auto;
-}
-.walk-status { display: grid; gap: 3px; }
-.walk-coarse-copy { display: none; }
-.walk-status > span {
-  color: #9fd0ae;
-  font-family: var(--font-geist-mono);
-  font-size: 8px;
-  font-weight: 760;
-  letter-spacing: .13em;
-}
-.walk-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.walk-actions button,
-.walk-relocate > summary {
-  min-height: 36px;
-  padding: 7px 10px;
-  border: 1px solid rgb(197 228 207 / 22%);
-  border-radius: 8px;
-  color: #dce9df;
-  background: rgb(30 46 38 / 64%);
-  font: 650 9px/1.2 var(--font-geist-mono);
-  letter-spacing: .025em;
-  cursor: pointer;
-}
-.walk-actions button:hover,
-.walk-actions button:focus-visible,
-.walk-relocate > summary:hover,
-.walk-relocate > summary:focus-visible {
-  border-color: #9fd0ae;
-  background: rgb(55 86 69 / 90%);
-}
-.walk-look-control { color: #b9dfc5 !important; }
-.walk-actions button:disabled { opacity: .58; cursor: progress; }
-.walk-hud.is-look-locked {
-  width: auto;
-  min-width: 250px;
-  padding: 9px 12px;
-  pointer-events: none;
-}
-.walk-hud.is-look-locked .walk-actions,
-.walk-hud.is-look-locked .walk-relocate { display: none; }
-.walk-relocate { position: relative; width: fit-content; }
-.walk-relocate > summary { display: grid; place-items: center; list-style: none; }
-.walk-relocate > summary::-webkit-details-marker { display: none; }
-.walk-relocate > summary::after { content: "⌄"; margin-left: 7px; color: #9fd0ae; }
-.walk-relocate[open] > summary::after { content: "⌃"; }
+.flight-hud strong { font-size: 12px; font-weight: 580; }
+.walk-hud { pointer-events: auto; }
 .walk-rooms {
-  position: absolute;
-  top: calc(100% + 7px);
-  left: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(170px, 1fr));
-  gap: 5px;
-  width: min(480px, calc(100vw - 48px));
-  max-height: min(310px, calc(100dvh - 330px));
-  padding: 8px;
-  overflow: auto;
-  border: 1px solid rgb(197 228 207 / 24%);
-  border-radius: 10px;
-  background: rgb(12 18 15 / 96%);
-  box-shadow: 0 22px 48px rgb(0 0 0 / 32%);
-  backdrop-filter: blur(20px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
 }
 .walk-rooms button {
-  display: grid;
-  gap: 2px;
-  min-height: 44px;
-  padding: 7px 9px;
+  min-width: 38px;
+  padding: 4px 7px;
   border: 1px solid rgb(197 228 207 / 28%);
-  border-radius: 8px;
+  border-radius: 6px;
   color: #d8e8dc;
   background: rgb(30 46 38 / 70%);
-  text-align: left;
+  font-family: var(--font-geist-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
   cursor: pointer;
 }
-.walk-rooms button strong {
-  color: #b9dfc5;
-  font: 760 9px/1 var(--font-geist-mono);
-  letter-spacing: .07em;
-}
-.walk-rooms button small { color: #a9b5ad; font-size: 10px; }
 .walk-rooms button:hover,
 .walk-rooms button:focus-visible { border-color: #9fd0ae; background: rgb(55 86 69 / 90%); }
 .viewport.is-walk .flight-up,
 .viewport.is-walk .flight-down { visibility: hidden; }
-.flight-hud > small,
-.walk-status > small { color: #899a90; font-family: var(--font-geist-mono); font-size: 8px; }
+.flight-hud small { color: #899a90; font-family: var(--font-geist-mono); font-size: 8px; }
 
 .flight-control-pad { display: none; }
 .flight-control-pad button {
@@ -982,7 +914,6 @@ a:focus-visible {
   .project-locator span:last-child,
   .project-locator i { display: none; }
   .camera-dock { top: 78px; }
-  .flight-hud { top: 138px; }
   .truth-card { width: 170px; }
   .view-mode button { width: 42px; justify-content: center; padding: 0; font-size: 0; }
   .mobile-explorer-button {
@@ -1054,13 +985,7 @@ a:focus-visible {
     padding: 9px 11px;
     transform: none;
   }
-  .flight-hud > small,
-  .walk-status > small { display: none; }
-  .walk-hud { width: min(560px, calc(100vw - 26px)); }
-  .walk-rooms {
-    grid-template-columns: 1fr;
-    width: min(300px, calc(100vw - 48px));
-  }
+  .flight-hud small { display: none; }
   .viewport.is-flight .viewport-legend,
   .viewport.is-flight .visualization-note,
   .viewport.is-flight .north-compass,
@@ -1087,13 +1012,6 @@ a:focus-visible {
 }
 
 @media (pointer: coarse), (max-width: 760px) {
-  .walk-fine-copy { display: none; }
-  .walk-coarse-copy { display: block; }
-  .walk-actions button,
-  .walk-relocate > summary { min-height: 44px; }
-  .walk-look-control { display: none; }
-  .walk-hud { z-index: 9; }
-  .walk-rooms { max-height: min(38dvh, 310px); }
   .flight-control-pad {
     position: absolute;
     bottom: 18px;
@@ -1111,12 +1029,6 @@ a:focus-visible {
   .flight-right { grid-column: 3; grid-row: 2; }
   .flight-up { grid-column: 4; grid-row: 1; }
   .flight-down { grid-column: 4; grid-row: 2; }
-  .flight-run { grid-column: 4; grid-row: 2; }
-  .flight-run.active {
-    border-color: rgb(172 224 190 / 62%);
-    color: #d8f2df;
-    background: rgb(55 86 69 / 94%);
-  }
   .flight-control-pad .flight-exit {
     grid-column: 1 / 5;
     grid-row: 3;

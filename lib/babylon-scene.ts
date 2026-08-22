@@ -2142,12 +2142,31 @@ export class TwinSceneController {
     );
 
     for (const run of SITE_FENCE.physicalFixedRuns) {
-      if (run.treatment === "LIVING_HEDGE") continue;
       for (let index = 1; index < run.pointsMm.length; index += 1) {
         const start = run.pointsMm[index - 1];
         const end = run.pointsMm[index];
         const lengthMm = Math.hypot(end.x - start.x, end.y - start.y);
         const yawRad = sceneYawForPlanSegment(start, end);
+        // Invisible collider so the walker cannot pass the fence or hedge.
+        const fenceCollider = CreateBox(
+          `${run.id} · kolízny pás ${index}`,
+          {
+            width: lengthMm * MM_TO_M,
+            depth: run.treatment === "LIVING_HEDGE" ? 0.6 : 0.12,
+            height: 1.6,
+          },
+          this.scene,
+        );
+        fenceCollider.position.set(
+          xM((start.x + end.x) / 2),
+          0.8,
+          zM((start.y + end.y) / 2),
+        );
+        fenceCollider.rotation.y = yawRad;
+        fenceCollider.isVisible = false;
+        fenceCollider.isPickable = false;
+        fenceCollider.checkCollisions = true;
+        if (run.treatment === "LIVING_HEDGE") continue;
         if (run.treatment === "SLATTED_ALUMINIUM") {
           fixedSlats.push(
             ...slatInstancesForSegment(
@@ -4492,6 +4511,20 @@ export class TwinSceneController {
       mesh.receiveShadows = true;
       this.register(mesh, "street", pool.id);
     }
+
+    // Invisible collider over the basin: the walker stops at the coping.
+    const poolCollider = boxAtPlan(
+      this.scene,
+      `${pool.label} · kolízny blok vodnej plochy`,
+      pool.centerMm,
+      pool.waterLengthMm + 2 * wallThicknessMm,
+      pool.waterWidthMm + 2 * wallThicknessMm,
+      0.9,
+      -0.4,
+    );
+    poolCollider.isVisible = false;
+    poolCollider.isPickable = false;
+    poolCollider.checkCollisions = true;
 
     const water = CreateGround(
       `${pool.label} · refrakčná vodná plocha presne ${pool.waterLengthMm.toLocaleString("sk-SK")} × ${pool.waterWidthMm.toLocaleString("sk-SK")} mm`,
