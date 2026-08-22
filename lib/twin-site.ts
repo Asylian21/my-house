@@ -140,7 +140,7 @@ export const SOURCES = {
     id: "SRC-CLIENT-20260822",
     title: "Revízia stavebníka · interiér a štít terasy",
     detail:
-      "Menšie krbové kachle s komínom hneď vedľa dverí na bazénovú terasu, opreté o západnú stenu obytného priestoru (murovaný pilier D1.1.002); štítová stena obytného priestoru ku krytej terase: dole zostáva posuvné presklenie 2 500 z D1 (jediné otváravé krídlo) a modřínová plná stena, nad priečnikom +2,750 je štítové okno presklené až po šikmý podhľad (podľa referenčnej fotografie); kuchyňa podľa pôdorysu D1.1.002 (zadná linka s drezom a umývačkou, polostrov s varnou doskou). Dôsledok: FV pole na dvorovej rovine posunuté o ďalších 1,1 m do záhrady kvôli odstupu od nového komína.",
+      "Menšie krbové kachle s komínom hneď vedľa dverí na bazénovú terasu, opreté o západnú stenu obytného priestoru (murovaný pilier D1.1.002); štítová stena obytného priestoru ku krytej terase: jediné pevné presklenie 2 500 z D1 bez dverí, modřínová plná stena a nad sklom iba malý trojuholníkový svetlík so spodnou stranou v dĺžke skla (podľa referenčnej fotografie); kuchyňa podľa pôdorysu D1.1.002 (zadná linka s drezom a umývačkou, polostrov s varnou doskou). Dôsledok: FV pole na dvorovej rovine posunuté o ďalších 1,1 m do záhrady kvôli odstupu od nového komína.",
     date: "22. 8. 2026",
     kind: "CLIENT_REVISION",
   },
@@ -642,28 +642,27 @@ export const HOUSE = Object.freeze({
       frontYmm: 22035,
       glazingFaceYmm: 19535,
       clearDepthMm: 2500,
-      // 22. 8. 2026 (corrected the same day against the D1.1.002 detail and
-      // the client's reference photograph): the lower part of the end wall
-      // keeps the D1 layout — a 2 500 lift-and-slide door on the west side
-      // (the only leaf that opens) and the larch-clad solid wall over the
-      // remaining 3 500 — while everything above the +2,750 transom is a
-      // gable window glazed up to the vaulted ceiling line.
+      // 22. 8. 2026 (final wording of the client): the end wall keeps the D1
+      // layout below — a single FIXED 2 500 glass pane on the west side (no
+      // door) and the larch-clad solid wall over the remaining 3 500 — and
+      // above the pane only a small triangular light whose base equals the
+      // pane width, with the sloped side following the vaulted ceiling and
+      // the vertical side on the pane's east edge (reference photograph).
       glazing: {
         startXmm: 21540,
         widthMm: 2500,
-        heightMm: 2400,
+        heightMm: 2750,
         sillMm: 0,
-        kind: "LIFT_AND_SLIDE",
-        transomLightTopMm: 2750,
+        kind: "FIXED",
         sourceId: SOURCES.clientRevision20260822.id,
       },
       backWall: { startXmm: 24040, endXmm: 27540, cladding: "LARCH", topMm: 2750 },
       gableWindow: {
         startXmm: 21540,
-        endXmm: 27540,
+        endXmm: 24040,
         bottomMm: 2750,
-        gable: "GLAZED_TO_VAULT",
-        mullionXmm: [21540, 22790, 24040, 25040, 26290, 27540],
+        apexXmm: 24040,
+        shape: "RIGHT_TRIANGLE_TO_VAULT",
         sourceId: SOURCES.clientRevision20260822.id,
       },
       eastWallInnerXmm: 27540,

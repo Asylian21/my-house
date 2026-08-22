@@ -284,6 +284,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         );
       }
     }
+    if (spec.sillMm === 0) return built;
     // Exterior aluminium sill: 2 mm sheet with a 40 mm projection and a drip
     // edge; slightly sloped away from the frame.
     const extSillDepth = GLAZING_PLANE_DEPTH_MM - FRAME_DEPTH_MM / 2 + 40;

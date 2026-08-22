@@ -3119,17 +3119,26 @@ export class TwinSceneController {
     const vaultRidgeMm = 4850;
     const livingWestXmm = 21543;
     const livingEastXmm = 27541;
+    const gableWindow = HOUSE.porches.wingEnd.gableWindow;
+    const vaultHalfSpan = (wingLeftX + wingRightX) / 2 - livingWestXmm;
+    const vaultAtX = (xMm: number) =>
+      vaultRidgeMm -
+      (vaultRidgeMm - vaultWallMm) *
+        Math.min(1, Math.abs(xMm - (wingLeftX + wingRightX) / 2) / vaultHalfSpan);
     const wingGable = verticalProfileSolid(
       this.scene,
-      "Modřínový štít krytej terasy · pás nad presklením",
+      "Modřínový štít krytej terasy · nad plnou stenou a okolo svetlíka",
       "Y",
       [
         { alongMm: wingLeftX, elevationMm: HOUSE.eavesElevationMm },
         { alongMm: (wingLeftX + wingRightX) / 2, elevationMm: HOUSE.ridgeElevationMm },
         { alongMm: wingRightX, elevationMm: HOUSE.eavesElevationMm },
+        { alongMm: livingEastXmm, elevationMm: HOUSE.eavesElevationMm },
         { alongMm: livingEastXmm, elevationMm: vaultWallMm },
-        { alongMm: (wingLeftX + wingRightX) / 2, elevationMm: vaultRidgeMm },
-        { alongMm: livingWestXmm, elevationMm: vaultWallMm },
+        { alongMm: gableWindow.endXmm, elevationMm: vaultWallMm },
+        { alongMm: gableWindow.endXmm, elevationMm: vaultAtX(gableWindow.apexXmm) },
+        { alongMm: gableWindow.startXmm, elevationMm: vaultWallMm },
+        { alongMm: gableWindow.startXmm, elevationMm: HOUSE.eavesElevationMm },
       ],
       gableYmm - 20,
       gableYmm + 36,
@@ -3867,12 +3876,12 @@ export class TwinSceneController {
   }
 
   /**
-   * End wall of 1.03 toward the covered porch (22. 8. 2026, corrected to the
-   * D1.1.002 detail and the client's reference photograph): below the
-   * +2,750 transom the D1 layout — a 2 500 lift-and-slide door (the only
-   * leaf that opens) with a fixed light above it, and the larch-clad solid
-   * wall over the remaining 3 500 — and above the transom a gable window
-   * with anthracite mullions glazed up to the vaulted ceiling line.
+   * End wall of 1.03 toward the covered porch (22. 8. 2026, final client
+   * wording with the reference photograph): the single FIXED 2 500 glass
+   * pane on the west side (no door), the larch-clad solid wall over the
+   * remaining 3 500, and above the pane only a small right-triangle light
+   * whose base equals the pane width — its sloped side follows the vaulted
+   * ceiling, its vertical side stands on the pane's east edge.
    */
   private buildPorchCurtainWall() {
     const porch = HOUSE.porches.wingEnd;
@@ -3888,13 +3897,13 @@ export class TwinSceneController {
       vaultRidgeMm -
       (vaultRidgeMm - transomMm) *
         Math.min(1, Math.abs(xMm - ridgeXmm) / (ridgeXmm - westXmm));
-    const planeYmm = faceYmm - 60;
-    const mullionDepthMm = 120;
-    const mullionWidthMm = 70;
+    const planeYmm = faceYmm - 150;
+    const barDepthMm = 100;
+    const barWidthMm = 70;
 
-    // ---- lower part: lift-and-slide door bay with a fixed transom light
+    // ---- fixed pane 0 → +2,750 (real joinery, no sash, no door)
     this.buildWindowOnZFace(
-      "Krytá terasa · zdvižno-posuvné dvere 2 500 · D1.1.002",
+      "Krytá terasa · pevné presklenie 2 500 · D1.1.002",
       glazing.startXmm + glazing.widthMm / 2,
       faceYmm,
       glazing.widthMm,
@@ -3903,45 +3912,15 @@ export class TwinSceneController {
       1,
       this.realisticMaterials.wall,
       frame,
-      "sliding",
+      "fixed",
       500,
     );
-    const lightBottom = glazing.heightMm;
-    const light = boxAtPlan(
-      this.scene,
-      "Krytá terasa · pevný nadsvetlík nad dverami",
-      { x: glazing.startXmm + glazing.widthMm / 2, y: faceYmm - 150 },
-      glazing.widthMm - 2 * mullionWidthMm + 20,
-      24,
-      (glazing.transomLightTopMm - lightBottom - 70) * MM_TO_M,
-      (lightBottom + 10) * MM_TO_M,
-    );
-    this.appearance(light, this.materials.glass, this.realisticMaterials.glass);
-    light.isPickable = false;
-    light.checkCollisions = true;
-    this.register(light, "building");
-    for (const xMm of [glazing.startXmm + mullionWidthMm / 2, glazing.startXmm + glazing.widthMm - mullionWidthMm / 2]) {
-      const post = boxAtPlan(
-        this.scene,
-        "Krytá terasa · stĺpik nadsvetlíka",
-        { x: xMm, y: faceYmm - 150 },
-        mullionWidthMm,
-        150,
-        (glazing.transomLightTopMm - lightBottom) * MM_TO_M,
-        lightBottom * MM_TO_M,
-      );
-      post.material = frame;
-      post.isPickable = false;
-      post.checkCollisions = true;
-      this.realisticOnly(post);
-      this.register(post, "building", HOUSE.id);
-    }
 
-    // ---- lower part: solid wall 24 040 – 27 540 up to the transom
+    // ---- solid wall 24 040 – 27 540 up to the transom, larch outside
     const wall = porch.backWall;
     const solid = boxAtPlan(
       this.scene,
-      "Krytá terasa · plná zadná stena pod štítovým oknom",
+      "Krytá terasa · plná zadná stena",
       { x: (wall.startXmm + wall.endXmm) / 2, y: faceYmm - 250 },
       wall.endXmm - wall.startXmm,
       500,
@@ -3971,87 +3950,89 @@ export class TwinSceneController {
     this.realisticOnly(larch);
     this.register(larch, "building", HOUSE.id);
 
-    // ---- transom across the whole width on the vault line
-    const transom = boxAtPlan(
+    // ---- interior plaster above the solid wall up to the vault line
+    const closure = verticalProfileSolid(
       this.scene,
-      "Štítové okno · priečnik +2,750",
-      { x: (gable.startXmm + gable.endXmm) / 2, y: planeYmm },
-      gable.endXmm - gable.startXmm,
-      mullionDepthMm,
-      0.12,
-      transomMm * MM_TO_M - 0.06,
+      "Krytá terasa · štít nad plnou stenou · interiérová omietka",
+      "Y",
+      [
+        { alongMm: wall.startXmm, elevationMm: transomMm },
+        { alongMm: wall.endXmm, elevationMm: transomMm },
+        { alongMm: ridgeXmm, elevationMm: vaultAt(ridgeXmm) },
+        { alongMm: wall.startXmm, elevationMm: vaultAt(wall.startXmm) },
+      ],
+      faceYmm - 500,
+      faceYmm,
     );
-    transom.material = frame;
-    transom.isPickable = false;
-    transom.checkCollisions = true;
-    this.realisticOnly(transom);
-    this.castShadow(transom);
-    this.register(transom, "building", HOUSE.id);
+    closure.material = this.realisticMaterials.wall;
+    closure.receiveShadows = true;
+    closure.checkCollisions = true;
+    this.realisticOnly(closure);
+    this.register(closure, "building", HOUSE.id);
+    // Plaster return beside the pane up to the vault (21 543 → 21 540 gap is
+    // the pillar; nothing to close there).
 
-    // ---- gable window: mullions, sloped head rails, glass to the vault
-    const mullions = gable.mullionXmm;
-    for (const [index, xMm] of mullions.entries()) {
-      const topMm = vaultAt(xMm) - 20;
-      const bar = boxAtPlan(
-        this.scene,
-        `Štítové okno · stĺpik ${index + 1}`,
-        { x: xMm, y: planeYmm },
-        mullionWidthMm,
-        mullionDepthMm,
-        (topMm - transomMm) * MM_TO_M,
-        transomMm * MM_TO_M,
-      );
+    // ---- triangular light above the pane: base = pane width, apex on the
+    // east edge at the vault line, hypotenuse along the ceiling slope.
+    const apexMm = vaultAt(gable.apexXmm) - 30;
+    const x0 = gable.startXmm;
+    const x1 = gable.endXmm;
+    const pane = verticalProfileSolid(
+      this.scene,
+      "Štítový trojuholníkový svetlík · zasklenie",
+      "Y",
+      [
+        { alongMm: x0 + barWidthMm, elevationMm: transomMm + barWidthMm },
+        { alongMm: x1 - barWidthMm, elevationMm: transomMm + barWidthMm },
+        { alongMm: x1 - barWidthMm, elevationMm: apexMm - barWidthMm },
+      ],
+      planeYmm - 12,
+      planeYmm + 12,
+    );
+    this.appearance(pane, this.materials.glass, this.realisticMaterials.glass);
+    pane.isPickable = false;
+    pane.checkCollisions = true;
+    this.register(pane, "building");
+    const bottomRail = boxAtPlan(
+      this.scene,
+      "Štítový trojuholníkový svetlík · spodný priečnik",
+      { x: (x0 + x1) / 2, y: planeYmm },
+      x1 - x0,
+      barDepthMm,
+      barWidthMm * MM_TO_M,
+      transomMm * MM_TO_M,
+    );
+    const post = boxAtPlan(
+      this.scene,
+      "Štítový trojuholníkový svetlík · zvislý stĺpik",
+      { x: x1 - barWidthMm / 2, y: planeYmm },
+      barWidthMm,
+      barDepthMm,
+      (apexMm - transomMm) * MM_TO_M,
+      transomMm * MM_TO_M,
+    );
+    const runM = (x1 - x0) * MM_TO_M;
+    const riseM = (apexMm - transomMm) * MM_TO_M;
+    const rail = boxAtPlan(
+      this.scene,
+      "Štítový trojuholníkový svetlík · šikmý rám",
+      { x: (x0 + x1) / 2, y: planeYmm },
+      Math.round(Math.hypot(runM, riseM) * 1000) + barWidthMm,
+      barDepthMm,
+      barWidthMm * MM_TO_M,
+      ((transomMm + apexMm) / 2) * MM_TO_M - (barWidthMm / 2) * MM_TO_M,
+    );
+    rail.rotation.z = Math.atan2(riseM, runM);
+    for (const bar of [bottomRail, post, rail]) {
       bar.material = frame;
       bar.isPickable = false;
+      bar.checkCollisions = true;
       this.realisticOnly(bar);
       this.castShadow(bar);
       this.register(bar, "building", HOUSE.id);
     }
-    for (const side of [-1, 1] as const) {
-      const x0 = side < 0 ? gable.startXmm : ridgeXmm;
-      const x1 = side < 0 ? ridgeXmm : gable.endXmm;
-      const h0 = vaultAt(x0);
-      const h1 = vaultAt(x1);
-      const runM = (x1 - x0) * MM_TO_M;
-      const riseM = (h1 - h0) * MM_TO_M;
-      const rail = boxAtPlan(
-        this.scene,
-        `Štítové okno · šikmý horný rám ${side < 0 ? "západ" : "východ"}`,
-        { x: (x0 + x1) / 2, y: planeYmm },
-        Math.round(Math.hypot(runM, riseM) * 1000),
-        mullionDepthMm,
-        0.09,
-        ((h0 + h1) / 2) * MM_TO_M - 0.055,
-      );
-      rail.rotation.z = Math.atan2(riseM, runM);
-      rail.material = frame;
-      rail.isPickable = false;
-      this.realisticOnly(rail);
-      this.register(rail, "building", HOUSE.id);
-    }
-    for (let index = 0; index < mullions.length - 1; index += 1) {
-      const x0 = mullions[index] + mullionWidthMm / 2;
-      const x1 = mullions[index + 1] - mullionWidthMm / 2;
-      const profile = [
-        { alongMm: x0, elevationMm: transomMm + 60 },
-        { alongMm: x1, elevationMm: transomMm + 60 },
-        { alongMm: x1, elevationMm: vaultAt(x1) - 30 },
-      ];
-      if (x0 < ridgeXmm && x1 > ridgeXmm) profile.push({ alongMm: ridgeXmm, elevationMm: vaultAt(ridgeXmm) - 30 });
-      profile.push({ alongMm: x0, elevationMm: vaultAt(x0) - 30 });
-      const pane = verticalProfileSolid(
-        this.scene,
-        `Štítové okno · zasklenie ${index + 1}`,
-        "Y",
-        profile,
-        planeYmm - 12,
-        planeYmm + 12,
-      );
-      this.appearance(pane, this.materials.glass, this.realisticMaterials.glass);
-      pane.isPickable = false;
-      pane.checkCollisions = true;
-      this.register(pane, "building");
-    }
+    // Plaster reveal between the pane head and the transom? None: the fixed
+    // pane runs straight up to the triangle's bottom rail.
   }
 
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
