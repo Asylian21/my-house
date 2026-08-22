@@ -1,4 +1,5 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import type { ArcRotateCameraMouseWheelInput } from "@babylonjs/core/Cameras/Inputs/arcRotateCameraMouseWheelInput";
 import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
 import { Engine } from "@babylonjs/core/Engines/engine";
@@ -24,6 +25,7 @@ import {
 } from "@babylonjs/core/Maths/math.vector";
 import { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
+import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
 import { ExtrudePolygon } from "@babylonjs/core/Meshes/Builders/polygonBuilder.pure";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
@@ -36,6 +38,7 @@ import {
 import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
@@ -44,7 +47,7 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/edgesRenderer";
-import "@babylonjs/core/Culling/ray";
+import { Ray } from "@babylonjs/core/Culling/ray";
 import "@babylonjs/core/Collisions/collisionCoordinator";
 import { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -100,23 +103,26 @@ import {
   type InteriorRoom,
 } from "./twin-interior";
 import {
-  ORBIT_ZOOM,
-  clampOrbitRadius,
+  ORBIT_CONTROLS,
+  PERSON_CAMERA,
+  cyclePersonCameraView,
   deriveRenderQualityProfile,
+  easeAngleRadians,
   flightCommandForCode,
   flightWheelDollyDistanceM,
   integrateFlightDolly,
   integrateFlightPosition,
   integrateWalkPosition,
   WALK_COLLISION_ELLIPSOID_M,
-  WALK_EYE_HEIGHT_M,
+  WALK_COLLISION_OFFSET_M,
   isSelectionTap,
   normalizeWheelPixels,
-  orbitZoomMultiplier,
-  stepOrbitZoom,
-  wheelZoomGesture,
+  personCameraRadius,
+  stepPersonCameraBoom,
+  walkFacingYaw,
   type FlightCommand,
   type NavigationMode,
+  type PersonCameraView,
   type RenderQualityProfile,
 } from "./twin-viewport-contract";
 
@@ -131,6 +137,23 @@ interface PointerGestureState {
   readonly startY: number;
   maximumPointers: number;
   travelPx: number;
+}
+
+interface OrbitPose {
+  readonly alpha: number;
+  readonly beta: number;
+  readonly radius: number;
+  readonly target: Vector3;
+  readonly fov: number;
+}
+
+interface PersonAvatarRig {
+  readonly root: TransformNode;
+  readonly parts: readonly AbstractMesh[];
+  readonly leftArm: AbstractMesh;
+  readonly rightArm: AbstractMesh;
+  readonly leftLeg: AbstractMesh;
+  readonly rightLeg: AbstractMesh;
 }
 
 export interface SceneSnapshot {
@@ -601,22 +624,6 @@ function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
   return { x: point.x + offset.x, y: point.y + offset.y };
 }
 
-/**
- * Moves a free camera by `step` through the scene collider. The collider is
- * an internal Babylon entry point; its result is applied synchronously by
- * the default collision coordinator.
- */
-function collideCamera(camera: UniversalCamera, step: Vector3) {
-  const collidable = camera as unknown as {
-    _collideWithWorld?: (displacement: Vector3) => void;
-  };
-  if (camera.checkCollisions && typeof collidable._collideWithWorld === "function") {
-    collidable._collideWithWorld(step);
-  } else {
-    camera.position.addInPlace(step);
-  }
-}
-
 /** Where a walker entering a room looks first: toward its largest glazing. */
 function walkLookTargetMm(room: InteriorRoom): Point2Mm {
   switch (room.id) {
@@ -649,6 +656,10 @@ export class TwinSceneController {
   private readonly scene: Scene;
   private readonly orbitCamera: ArcRotateCamera;
   private readonly flightCamera: UniversalCamera;
+  private readonly personCamera: ArcRotateCamera;
+  private readonly personCameraTarget: TransformNode;
+  private readonly personCollider: Mesh;
+  private personAvatar!: PersonAvatarRig;
   private readonly layerMeshes = new Map<LayerId, AbstractMesh[]>();
   private readonly entityMeshes = new Map<string, AbstractMesh[]>();
   private readonly foundationMeshes = new Map<string, Mesh>();
@@ -681,14 +692,28 @@ export class TwinSceneController {
   private readonly manualFlightCommands = new Set<FlightCommand>();
   private readonly flightModifierCodes = new Set<string>();
   private readonly activePointers = new Set<number>();
+  private readonly walkableMeshes: AbstractMesh[] = [];
   private pointerGesture: PointerGestureState | null = null;
   private navigationMode: NavigationMode = "orbit";
   private renderQuality: RenderQualityProfile;
   private ssaoAttached = false;
   private flightHeading = { x: 0, z: -1 };
   private orbitFocusDistance = 18;
-  private orbitZoomTargetM = ORBIT_ZOOM.upperRadiusLimitM;
-  private orbitZoomActive = false;
+  private orbitPoseBeforeWalk: OrbitPose | null = null;
+  private personView: PersonCameraView = "shoulder";
+  private personShoulderSide: -1 | 1 = 1;
+  private personYaw = 0;
+  private personAnimationPhase = 0;
+  private personFloorY = 0;
+  private personDesiredRadius = PERSON_CAMERA.shoulderRadiusM;
+  private personEffectiveRadius = PERSON_CAMERA.shoulderRadiusM;
+  private personCameraObstructed = false;
+  private personLookState: "paused" | "locking" | "locked" | "error" =
+    "paused";
+  private personUnlockEscapePending = false;
+  private personUnlockEscapeExpiresAt = Number.NEGATIVE_INFINITY;
+  private personPointerLockTimer = 0;
+  private readonly reduceMotion: boolean;
   private resizeFrame = 0;
   private snapshot: SceneSnapshot | null = null;
 
@@ -700,6 +725,9 @@ export class TwinSceneController {
       profile: RenderQualityProfile,
     ) => void,
   ) {
+    this.reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
       stencil: true,
@@ -767,21 +795,38 @@ export class TwinSceneController {
       new Vector3(...gardenCamera.target),
       this.scene,
     );
-    this.orbitCamera.lowerRadiusLimit = ORBIT_ZOOM.lowerRadiusLimitM;
-    this.orbitCamera.upperRadiusLimit = ORBIT_ZOOM.upperRadiusLimitM;
+    this.orbitCamera.lowerRadiusLimit = ORBIT_CONTROLS.lowerRadiusLimitM;
+    this.orbitCamera.upperRadiusLimit = ORBIT_CONTROLS.upperRadiusLimitM;
     this.orbitCamera.lowerBetaLimit = 0.06;
     this.orbitCamera.upperBetaLimit = Math.PI / 2.02;
-    // Wheel zoom is handled by the dedicated exponential controller below;
-    // the built-in percentage model cannot keep up with Mac trackpad deltas.
-    this.orbitCamera.inputs.removeByType("ArcRotateCameraMouseWheelInput");
-    this.orbitCamera.panningSensibility = 95;
-    this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
-    this.orbitCamera.inertia = 0.72;
+    this.orbitCamera.angularSensibilityX = ORBIT_CONTROLS.angularSensibilityX;
+    this.orbitCamera.angularSensibilityY = ORBIT_CONTROLS.angularSensibilityY;
+    this.orbitCamera.panningSensibility = ORBIT_CONTROLS.panningSensibility;
+    this.orbitCamera.useNaturalPinchZoom =
+      ORBIT_CONTROLS.useNaturalPinchZoom;
+    this.orbitCamera.inertia = this.reduceMotion
+      ? 0.32
+      : ORBIT_CONTROLS.rotationInertia;
+    this.orbitCamera.panningInertia = this.reduceMotion
+      ? 0.32
+      : ORBIT_CONTROLS.panningInertia;
+    const orbitWheelInput = this.orbitCamera.inputs.attached[
+      "mousewheel"
+    ] as ArcRotateCameraMouseWheelInput | undefined;
+    if (orbitWheelInput) {
+      orbitWheelInput.wheelDeltaPercentage =
+        ORBIT_CONTROLS.wheelDeltaPercentage;
+      orbitWheelInput.zoomToMouseLocation =
+        ORBIT_CONTROLS.zoomToMouseLocation;
+    }
     this.orbitCamera.minZ = 0.18;
     this.orbitCamera.maxZ = 220;
     this.orbitCamera.fov = gardenCamera.fov;
-    this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
-    this.orbitZoomTargetM = this.orbitCamera.radius;
+    this.orbitCamera.attachControl(
+      !ORBIT_CONTROLS.preventBrowserGesture,
+      true,
+      2,
+    );
 
     this.flightCamera = new UniversalCamera(
       "helicopter-camera",
@@ -802,6 +847,70 @@ export class TwinSceneController {
     this.flightCamera.fov = this.orbitCamera.fov;
     this.flightCamera.setTarget(this.orbitCamera.target);
     this.flightCamera.detachControl();
+
+    // The visible person, its collision body and its chase camera deliberately
+    // have separate transforms. Walls can stop the actor while the camera
+    // compresses independently, which is the core of a GTA-style controller.
+    this.personCollider = new Mesh("Postava · kolízna kapsula", this.scene);
+    this.personCollider.visibility = 0;
+    this.personCollider.isPickable = false;
+    this.personCollider.ellipsoid = new Vector3(
+      WALK_COLLISION_ELLIPSOID_M.x,
+      WALK_COLLISION_ELLIPSOID_M.y,
+      WALK_COLLISION_ELLIPSOID_M.z,
+    );
+    this.personCollider.ellipsoidOffset = new Vector3(
+      WALK_COLLISION_OFFSET_M.x,
+      WALK_COLLISION_OFFSET_M.y,
+      WALK_COLLISION_OFFSET_M.z,
+    );
+    this.personCollider.setEnabled(false);
+    this.personCameraTarget = new TransformNode(
+      "Postava · cieľ kamery",
+      this.scene,
+    );
+    this.personCamera = new ArcRotateCamera(
+      "person-camera",
+      gardenCamera.alpha,
+      1.18,
+      PERSON_CAMERA.shoulderRadiusM,
+      Vector3.Zero(),
+      this.scene,
+    );
+    this.personCamera.setTarget(this.personCameraTarget);
+    this.personCamera.inputs.removeByType("ArcRotateCameraKeyboardMoveInput");
+    this.personCamera.lowerRadiusLimit = PERSON_CAMERA.lowerRadiusLimitM;
+    this.personCamera.upperRadiusLimit = PERSON_CAMERA.upperRadiusLimitM;
+    this.personCamera.lowerBetaLimit = PERSON_CAMERA.lowerBetaLimit;
+    this.personCamera.upperBetaLimit = PERSON_CAMERA.upperBetaLimit;
+    this.personCamera.angularSensibilityX = PERSON_CAMERA.angularSensibilityX;
+    this.personCamera.angularSensibilityY = PERSON_CAMERA.angularSensibilityY;
+    this.personCamera.useNaturalPinchZoom = true;
+    this.personCamera.inertia = this.reduceMotion
+      ? 0.28
+      : PERSON_CAMERA.rotationInertia;
+    this.personCamera.panningInertia = 0;
+    this.personCamera.fov = PERSON_CAMERA.fieldOfViewRad;
+    this.personCamera.minZ = 0.06;
+    this.personCamera.maxZ = 220;
+    // The boom collision is resolved separately so an obstruction can
+    // compress only the rendered camera, without overwriting the user's
+    // desired wheel/pinch distance.
+    this.personCamera.checkCollisions = false;
+    this.personCamera.collisionRadius = new Vector3(
+      PERSON_CAMERA.collisionRadiusM,
+      PERSON_CAMERA.collisionRadiusM,
+      PERSON_CAMERA.collisionRadiusM,
+    );
+    const personWheelInput = this.personCamera.inputs.attached[
+      "mousewheel"
+    ] as ArcRotateCameraMouseWheelInput | undefined;
+    if (personWheelInput) {
+      personWheelInput.wheelDeltaPercentage =
+        PERSON_CAMERA.wheelDeltaPercentage;
+      personWheelInput.zoomToMouseLocation = false;
+    }
+    this.personCamera.detachControl();
     this.scene.activeCamera = this.orbitCamera;
 
     const ambient = new HemisphericLight(
@@ -863,7 +972,7 @@ export class TwinSceneController {
       "architectural-photo-pipeline",
       true,
       this.scene,
-      [this.orbitCamera, this.flightCamera],
+      [this.orbitCamera, this.flightCamera, this.personCamera],
     );
     this.postPipeline.samples = this.renderQuality.msaaSamples;
     this.postPipeline.fxaaEnabled = this.renderQuality.fxaaEnabled;
@@ -884,7 +993,11 @@ export class TwinSceneController {
     this.postPipeline.grainEnabled = false;
     this.postPipeline.grain.intensity = 9;
     this.postPipeline.grain.animated = true;
-    const renderCameras = [this.orbitCamera, this.flightCamera];
+    const renderCameras = [
+      this.orbitCamera,
+      this.flightCamera,
+      this.personCamera,
+    ];
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
     // Construct once even when the initial mobile tier is HIGH. This allows a
     // later resize/promotion to ULTRA to attach SSAO instead of silently losing
@@ -1233,12 +1346,13 @@ export class TwinSceneController {
     this.buildFence();
     this.buildLandscape();
     this.buildUtilities();
+    this.buildPersonNavigationColliders();
+    this.personAvatar = this.buildPersonAvatar();
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo = true;
     }
 
     this.scene.onPointerDown = (event) => {
-      if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
       this.activePointers.add(event.pointerId);
       if (this.pointerGesture) {
         this.pointerGesture.maximumPointers = Math.max(
@@ -1284,6 +1398,7 @@ export class TwinSceneController {
         ),
       );
       if (
+        this.navigationMode === "orbit" &&
         isSelectionTap({
           travelPx: gesture.travelPx,
           durationMs: performance.now() - gesture.startedAt,
@@ -1293,6 +1408,18 @@ export class TwinSceneController {
       ) {
         const id = pick?.pickedMesh?.metadata?.entityId;
         if (typeof id === "string") this.onSelect(id);
+      }
+      if (
+        this.navigationMode === "walk" &&
+        event.pointerType === "mouse" &&
+        isSelectionTap({
+          travelPx: gesture.travelPx,
+          durationMs: performance.now() - gesture.startedAt,
+          maximumPointers: gesture.maximumPointers,
+          button: gesture.button,
+        })
+      ) {
+        this.lockPersonLook();
       }
       this.pointerGesture = null;
     };
@@ -1304,16 +1431,30 @@ export class TwinSceneController {
     this.canvas.addEventListener("wheel", this.handleCanvasWheel, {
       passive: false,
     });
+    document.addEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange,
+    );
+    document.addEventListener("pointerlockerror", this.handlePointerLockError);
     this.scene.onBeforeRenderObservable.add(() => {
       this.updateFlightMotion();
-      this.updateOrbitZoomGlide();
+      this.applyPersonCameraBoomCollision();
       this.animateWaterSurface();
       if (this.canvas.dataset.navigationMode !== this.navigationMode) {
         this.canvas.dataset.navigationMode = this.navigationMode;
       }
-      const cameraRadius = this.orbitCamera.radius.toFixed(3);
+      const cameraRadius = (
+        this.navigationMode === "walk"
+          ? this.personCamera.radius
+          : this.orbitCamera.radius
+      ).toFixed(3);
       if (this.canvas.dataset.cameraRadius !== cameraRadius) {
         this.canvas.dataset.cameraRadius = cameraRadius;
+      }
+    });
+    this.scene.onAfterRenderObservable.add(() => {
+      if (this.navigationMode === "walk") {
+        this.personCamera.radius = this.personDesiredRadius;
       }
     });
 
@@ -1321,6 +1462,7 @@ export class TwinSceneController {
     this.engine.runRenderLoop(render);
     this.onVisibilityChange = () => {
       if (document.hidden) {
+        this.releasePersonLook();
         this.clearFlightInput();
         this.engine.stopRenderLoop(render);
       }
@@ -1350,6 +1492,37 @@ export class TwinSceneController {
     ) {
       return;
     }
+    if (this.navigationMode === "walk") {
+      const cameraStep = 0.055;
+      if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+        this.personCamera.alpha +=
+          event.code === "ArrowLeft" ? -cameraStep : cameraStep;
+        event.preventDefault();
+        return;
+      }
+      if (event.code === "ArrowUp" || event.code === "ArrowDown") {
+        this.personCamera.beta = Math.max(
+          PERSON_CAMERA.lowerBetaLimit,
+          Math.min(
+            PERSON_CAMERA.upperBetaLimit,
+            this.personCamera.beta +
+              (event.code === "ArrowUp" ? -cameraStep : cameraStep),
+          ),
+        );
+        event.preventDefault();
+        return;
+      }
+      if (!event.repeat && event.code === "KeyV") {
+        this.cyclePersonView();
+        event.preventDefault();
+        return;
+      }
+      if (!event.repeat && event.code === "KeyQ") {
+        this.togglePersonShoulder();
+        event.preventDefault();
+        return;
+      }
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.add(event.code);
       event.preventDefault();
@@ -1378,6 +1551,110 @@ export class TwinSceneController {
     this.flightCamera.cameraRotation.setAll(0);
   };
 
+  private readonly handlePointerLockChange = () => {
+    if (this.personPointerLockTimer) {
+      window.clearTimeout(this.personPointerLockTimer);
+      this.personPointerLockTimer = 0;
+    }
+    const locked = document.pointerLockElement === this.canvas;
+    if (locked) {
+      this.personLookState = "locked";
+      this.personUnlockEscapePending = false;
+    } else {
+      if (
+        this.personLookState === "locked" ||
+        this.personLookState === "locking"
+      ) {
+        // The browser can unlock before it dispatches the Escape keydown.
+        // Keep one short-lived token for that one event; a second fast Escape
+        // must still be able to leave person mode.
+        this.personUnlockEscapePending = true;
+        this.personUnlockEscapeExpiresAt = performance.now() + 500;
+      }
+      this.personLookState = "paused";
+      this.clearFlightInput();
+    }
+    this.canvas.dataset.personLook = this.personLookState;
+  };
+
+  private readonly handlePointerLockError = () => {
+    if (this.navigationMode !== "walk") return;
+    if (this.personPointerLockTimer) {
+      window.clearTimeout(this.personPointerLockTimer);
+      this.personPointerLockTimer = 0;
+    }
+    this.personLookState = "error";
+    this.canvas.dataset.personLook = "error";
+    this.clearFlightInput();
+  };
+
+  /** Locks mouse movement to the chase camera after an explicit user click. */
+  lockPersonLook() {
+    if (this.navigationMode !== "walk") return false;
+    if (document.pointerLockElement === this.canvas) return true;
+    if (typeof this.canvas.requestPointerLock !== "function") {
+      this.handlePointerLockError();
+      return false;
+    }
+    try {
+      this.personLookState = "locking";
+      this.canvas.dataset.personLook = "locking";
+      this.engine.enterPointerlock();
+      this.personPointerLockTimer = window.setTimeout(() => {
+        this.personPointerLockTimer = 0;
+        if (
+          this.navigationMode === "walk" &&
+          this.personLookState === "locking" &&
+          document.pointerLockElement !== this.canvas
+        ) {
+          this.handlePointerLockError();
+        }
+      }, 900);
+      return true;
+    } catch {
+      // Safari and touch devices keep the drag-to-look fallback.
+      this.handlePointerLockError();
+      return false;
+    }
+  }
+
+  /** Releases mouse look without leaving person mode. */
+  releasePersonLook() {
+    const pending = this.personLookState === "locking";
+    if (
+      document.pointerLockElement !== this.canvas &&
+      !this.engine.isPointerLock &&
+      !pending
+    ) {
+      return false;
+    }
+    this.engine.exitPointerlock();
+    this.personLookState = "paused";
+    this.canvas.dataset.personLook = "paused";
+    this.personUnlockEscapePending = false;
+    this.clearFlightInput();
+    return true;
+  }
+
+  isPersonLookLocked() {
+    return document.pointerLockElement === this.canvas;
+  }
+
+  getPersonLookState() {
+    return this.personLookState;
+  }
+
+  /** Consumes the unlock Escape even if the browser released first. */
+  consumePersonEscape() {
+    if (this.navigationMode !== "walk") return false;
+    if (this.releasePersonLook()) return true;
+    const consumeUnlock =
+      this.personUnlockEscapePending &&
+      performance.now() <= this.personUnlockEscapeExpiresAt;
+    this.personUnlockEscapePending = false;
+    return consumeUnlock;
+  }
+
   private readonly cancelPointerGesture = (event: PointerEvent) => {
     this.activePointers.delete(event.pointerId);
     if (this.pointerGesture?.pointerId === event.pointerId) {
@@ -1385,70 +1662,23 @@ export class TwinSceneController {
     }
   };
 
-  /**
-   * Exponential orbit zoom and flight dolly driven straight from the DOM
-   * wheel stream. Trackpad scroll, momentum, physical notches and the
-   * ctrl-key pinch all normalize into pixels and compose multiplicatively,
-   * which keeps the response identical at every radius.
-   */
+  /** Flight keeps a direct wheel dolly; ArcRotate cameras own orbit/person zoom. */
   private readonly handleCanvasWheel = (event: WheelEvent) => {
+    if (this.navigationMode !== "flight") return;
     event.preventDefault();
     event.stopPropagation();
     const pixels = normalizeWheelPixels(event);
     if (!pixels) return;
-    if (this.navigationMode === "walk") {
-      const distanceM = Math.max(-0.6, Math.min(0.6, flightWheelDollyDistanceM(pixels)));
-      if (!distanceM) return;
-      collideCamera(
-        this.flightCamera,
-        new Vector3(this.flightHeading.x * distanceM, 0, this.flightHeading.z * distanceM),
-      );
-      return;
-    }
-    if (this.navigationMode === "flight") {
-      const distanceM = flightWheelDollyDistanceM(pixels);
-      if (!distanceM) return;
-      const forward = this.flightCamera.getForwardRay(1).direction;
-      const next = integrateFlightDolly(
-        this.flightCamera.position,
-        { x: forward.x, y: forward.y, z: forward.z },
-        distanceM,
-      );
-      this.flightCamera.position.set(next.x, next.y, next.z);
-      return;
-    }
-    const gesture = wheelZoomGesture(event);
-    const multiplier = orbitZoomMultiplier(pixels, gesture);
-    const pending = this.orbitZoomActive
-      ? this.orbitZoomTargetM
-      : this.orbitCamera.radius;
-    this.orbitZoomTargetM = clampOrbitRadius(pending * multiplier);
-    this.orbitZoomActive =
-      Math.abs(this.orbitZoomTargetM - this.orbitCamera.radius) >
-      ORBIT_ZOOM.settleEpsilonM;
-  };
-
-  /** Framerate-independent exponential glide toward the zoom target. */
-  private updateOrbitZoomGlide() {
-    if (this.navigationMode !== "orbit") return;
-    if (!this.orbitZoomActive) {
-      // Follow native touch pinch and any external/programmatic camera move.
-      this.orbitZoomTargetM = this.orbitCamera.radius;
-      return;
-    }
-    const step = stepOrbitZoom(
-      this.orbitCamera.radius,
-      this.orbitZoomTargetM,
-      this.engine.getDeltaTime(),
+    const distanceM = flightWheelDollyDistanceM(pixels);
+    if (!distanceM) return;
+    const forward = this.flightCamera.getForwardRay(1).direction;
+    const next = integrateFlightDolly(
+      this.flightCamera.position,
+      { x: forward.x, y: forward.y, z: forward.z },
+      distanceM,
     );
-    this.orbitCamera.radius = step.radiusM;
-    this.orbitZoomActive = !step.settled;
-  }
-
-  private cancelOrbitZoomGlide() {
-    this.orbitZoomActive = false;
-    this.orbitZoomTargetM = this.orbitCamera.radius;
-  }
+    this.flightCamera.position.set(next.x, next.y, next.z);
+  };
 
   private updateFlightMotion() {
     if (this.navigationMode === "walk") {
@@ -1489,53 +1719,232 @@ export class TwinSceneController {
   }
 
   private updateWalkMotion() {
-    const forward = this.flightCamera.getForwardRay(1).direction;
-    const horizontalLength = Math.hypot(forward.x, forward.z);
-    if (horizontalLength > 0.04) {
-      this.flightHeading = {
-        x: forward.x / horizontalLength,
-        z: forward.z / horizontalLength,
-      };
-    }
+    const heading = this.personCameraHeading();
+    this.flightHeading = heading;
     const commands = new Set<FlightCommand>([
       ...this.keyboardFlightCommands,
       ...this.manualFlightCommands,
     ]);
-    const position = this.flightCamera.position;
+    const deltaMs = this.engine.getDeltaTime();
+    const position = this.personCollider.position;
+    const boost = [...this.flightModifierCodes].some((code) =>
+      code.startsWith("Shift"),
+    );
     const next = integrateWalkPosition({
       position,
-      heading: this.flightHeading,
+      heading,
       commands,
-      deltaMs: this.engine.getDeltaTime(),
-      boost: [...this.flightModifierCodes].some((code) =>
-        code.startsWith("Shift"),
-      ),
+      deltaMs,
+      boost,
       precision: [...this.flightModifierCodes].some((code) =>
         code.startsWith("Alt"),
       ),
-      floorY: 0,
+      floorY: this.personFloorY,
     });
-    // The kinematic step goes straight through the camera collider, so
-    // walls stop the walker instead of being crossed. (Babylon's
-    // `cameraDirection` channel is an inertial input accumulator since 9.x
-    // and would multiply the step; the collider applies it exactly once.)
+    const before = position.clone();
     const step = new Vector3(next.x - position.x, 0, next.z - position.z);
-    this.flightCamera.cameraDirection.setAll(0);
     if (step.lengthSquared() > 1e-12) {
-      collideCamera(this.flightCamera, step);
+      this.personCollider.moveWithCollisions(step);
     }
-    position.y = next.y;
-    this.flightCamera.rotation.x = Math.max(
-      -Math.PI * 0.4,
-      Math.min(Math.PI * 0.4, this.flightCamera.rotation.x),
+    this.personFloorY = this.walkFloorHeightAt(
+      position.x,
+      position.z,
+      this.personFloorY,
     );
-    this.flightCamera.rotation.z = 0;
+    position.y = this.personFloorY;
+    const moved = position.subtract(before);
+    const movedDistance = Math.hypot(moved.x, moved.z);
+    this.personYaw = easeAngleRadians(
+      this.personYaw,
+      walkFacingYaw(moved, this.personYaw),
+      deltaMs,
+    );
+    this.updatePersonRig(deltaMs, movedDistance, boost);
     const room = this.getWalkRoom();
     const roomId = room?.id ?? null;
     if (roomId !== this.walkRoomId) {
       this.walkRoomId = roomId;
       this.canvas.dataset.walkRoom = room?.number ?? "";
     }
+  }
+
+  private personCameraHeading() {
+    const x = -Math.cos(this.personCamera.alpha);
+    const z = -Math.sin(this.personCamera.alpha);
+    const length = Math.hypot(x, z);
+    return length > 1e-6 ? { x: x / length, z: z / length } : { x: 0, z: -1 };
+  }
+
+  private walkFloorHeightAt(x: number, z: number, fallbackY: number) {
+    const originY = Math.max(fallbackY + 3, 3);
+    const ray = new Ray(
+      new Vector3(x, originY, z),
+      Vector3.Down(),
+      originY - fallbackY + 4,
+    );
+    let highestReachable = Number.NEGATIVE_INFINITY;
+    for (const mesh of this.walkableMeshes) {
+      if (mesh.isDisposed() || !mesh.isEnabled() || !mesh.isVisible) continue;
+      const hit = ray.intersectsMesh(mesh, false);
+      const height = hit.pickedPoint?.y;
+      if (
+        hit.hit &&
+        typeof height === "number" &&
+        height <= fallbackY + 0.28 &&
+        height >= fallbackY - 0.72 &&
+        height > highestReachable
+      ) {
+        highestReachable = height;
+      }
+    }
+    // Ignore roofs/upper storeys while retaining a valid floor beneath them.
+    return Number.isFinite(highestReachable) ? highestReachable : fallbackY;
+  }
+
+  private updatePersonRig(
+    deltaMs: number,
+    movedDistance = 0,
+    running = false,
+  ) {
+    if (this.personView !== "first-person" && this.personCamera.radius < 0.44) {
+      this.personView = "first-person";
+    } else if (
+      this.personView === "first-person" &&
+      this.personCamera.radius > 0.58
+    ) {
+      this.personView = "close";
+    }
+
+    const radius = this.personCamera.radius;
+    const firstPersonBlend =
+      1 - Math.max(0, Math.min(1, (radius - 0.42) / 0.46));
+    const targetHeight =
+      PERSON_CAMERA.targetHeightM +
+      (PERSON_CAMERA.firstPersonTargetHeightM - PERSON_CAMERA.targetHeightM) *
+        firstPersonBlend;
+    const shoulderDistanceBlend = Math.max(
+      0,
+      Math.min(
+        1,
+        (radius - PERSON_CAMERA.closeRadiusM) /
+          (PERSON_CAMERA.shoulderRadiusM - PERSON_CAMERA.closeRadiusM),
+      ),
+    );
+    const shoulderFade = Math.max(0, Math.min(1, (radius - 0.42) / 0.5));
+    const shoulderScreenOffset =
+      (PERSON_CAMERA.closeShoulderScreenOffsetM +
+        (PERSON_CAMERA.shoulderScreenOffsetM -
+          PERSON_CAMERA.closeShoulderScreenOffsetM) *
+          shoulderDistanceBlend) *
+      shoulderFade *
+      this.personShoulderSide;
+    this.personCamera.targetScreenOffset.set(shoulderScreenOffset, 0);
+    this.personCameraTarget.position.set(
+      this.personCollider.position.x,
+      this.personFloorY + targetHeight,
+      this.personCollider.position.z,
+    );
+
+    const walking = movedDistance > 0.00001;
+    if (walking) this.personAnimationPhase += movedDistance * (running ? 11 : 8);
+    const swing =
+      walking && !this.reduceMotion
+        ? Math.sin(this.personAnimationPhase) * (running ? 0.62 : 0.42)
+        : 0;
+    this.personAvatar.leftArm.rotation.x = -swing;
+    this.personAvatar.rightArm.rotation.x = swing;
+    this.personAvatar.leftLeg.rotation.x = swing;
+    this.personAvatar.rightLeg.rotation.x = -swing;
+    this.personAvatar.root.rotation.y = this.personYaw;
+    this.personAvatar.root.position.y =
+      walking && !this.reduceMotion
+        ? Math.abs(Math.sin(this.personAnimationPhase * 2)) * 0.018
+        : 0;
+
+    const avatarVisibility =
+      this.personView === "first-person"
+        ? 0
+        : Math.max(0, Math.min(1, (this.personCamera.radius - 0.42) / 0.58));
+    for (const part of this.personAvatar.parts) {
+      part.visibility = avatarVisibility;
+    }
+    this.canvas.dataset.personView = this.personView;
+    this.canvas.dataset.personShoulder =
+      this.personShoulderSide < 0 ? "left" : "right";
+
+    // Avoid lingering Babylon input offsets after a view-preset snap.
+    if (deltaMs <= 0) {
+      this.personCamera.inertialAlphaOffset = 0;
+      this.personCamera.inertialBetaOffset = 0;
+      this.personCamera.inertialRadiusOffset = 0;
+    }
+  }
+
+  /**
+   * Compresses the rendered chase-camera boom against collidable geometry.
+   * The desired radius is restored after render, so clearing a wall returns
+   * to the user's wheel/pinch distance instead of getting permanently stuck.
+   */
+  private applyPersonCameraBoomCollision() {
+    if (this.navigationMode !== "walk") return;
+    const requested = Math.max(
+      PERSON_CAMERA.lowerRadiusLimitM,
+      Math.min(PERSON_CAMERA.upperRadiusLimitM, this.personCamera.radius),
+    );
+    this.personDesiredRadius = requested;
+    const alpha = this.personCamera.alpha;
+    const beta = this.personCamera.beta;
+    const direction = new Vector3(
+      Math.cos(alpha) * Math.sin(beta),
+      Math.cos(beta),
+      Math.sin(alpha) * Math.sin(beta),
+    ).normalize();
+    const lateral = Vector3.Cross(Vector3.Up(), direction)
+      .normalize()
+      .scale(PERSON_CAMERA.collisionRadiusM);
+    const vertical = Vector3.Cross(direction, lateral).normalize();
+    vertical.scaleInPlace(PERSON_CAMERA.collisionRadiusM);
+    const rayOffsets = [
+      Vector3.Zero(),
+      lateral,
+      lateral.negate(),
+      vertical,
+      vertical.negate(),
+    ];
+    let hitDistanceM: number | null = null;
+    for (const offset of rayOffsets) {
+      const ray = new Ray(
+        this.personCameraTarget.position.add(offset),
+        direction,
+        requested,
+      );
+      const hit = this.scene.pickWithRay(
+        ray,
+        (mesh) =>
+          mesh !== this.personCollider &&
+          mesh.isEnabled() &&
+          (mesh.checkCollisions || mesh.metadata?.cameraOccluder === true),
+        false,
+      );
+      if (
+        hit?.hit &&
+        Number.isFinite(hit.distance) &&
+        (hitDistanceM === null || hit.distance < hitDistanceM)
+      ) {
+        hitDistanceM = hit.distance;
+      }
+    }
+    const step = stepPersonCameraBoom({
+      desiredRadiusM: requested,
+      currentRadiusM: this.personEffectiveRadius,
+      hitDistanceM,
+      deltaMs: this.engine.getDeltaTime(),
+      wasObstructed: this.personCameraObstructed,
+      reduceMotion: this.reduceMotion,
+    });
+    this.personEffectiveRadius = step.radiusM;
+    this.personCameraObstructed = step.obstructed;
+    this.personCamera.radius = step.radiusM;
   }
 
   private animateWaterSurface() {
@@ -1672,6 +2081,212 @@ export class TwinSceneController {
     return mesh;
   }
 
+  private markWalkable<T extends AbstractMesh>(mesh: T): T {
+    mesh.metadata = { ...(mesh.metadata ?? {}), walkSurface: true };
+    this.walkableMeshes.push(mesh);
+    return mesh;
+  }
+
+  private createWalkBlocker(name: string, instance: PlanBoxInstance) {
+    const blocker = CreateBox(
+      `Navigácia · ${name}`,
+      {
+        width: instance.widthMm * MM_TO_M,
+        height: instance.heightMm * MM_TO_M,
+        depth: instance.depthMm * MM_TO_M,
+      },
+      this.scene,
+    );
+    blocker.position.set(
+      xM(instance.centerMm.x),
+      (instance.baseElevationMm + instance.heightMm / 2) * MM_TO_M,
+      zM(instance.centerMm.y),
+    );
+    blocker.rotation.y = instance.yawRad;
+    blocker.visibility = 0;
+    blocker.isPickable = false;
+    blocker.checkCollisions = true;
+    blocker.metadata = { navigationObstacle: true };
+    return blocker;
+  }
+
+  /** Coarse, invisible colliders for exterior hazards and thin-instance fences. */
+  private buildPersonNavigationColliders() {
+    const style = SITE_FENCE.visualProposal;
+    const fenceGradeMm = GROUND_Y / MM_TO_M;
+    for (const run of SITE_FENCE.physicalFixedRuns) {
+      for (let index = 1; index < run.pointsMm.length; index += 1) {
+        let start = run.pointsMm[index - 1];
+        let end = run.pointsMm[index];
+        let depthMm = Math.max(style.curbDepthMm, 180);
+        if (run.treatment === "LIVING_HEDGE") {
+          const inward = inwardOffsetForSegment(
+            start,
+            end,
+            style.rearHedgeCenterlineOffsetMm,
+          );
+          start = translatedPoint(start, inward);
+          end = translatedPoint(end, inward);
+          depthMm = style.rearHedgeDepthMm * 0.72;
+        }
+        this.createWalkBlocker(
+          `${run.id} · hranica ${index}`,
+          segmentBox(start, end, depthMm, 2_200, fenceGradeMm - 160),
+        );
+      }
+    }
+    for (const gate of [
+      {
+        id: SITE_FENCE.vehicleGate.id,
+        start: SITE_FENCE.vehicleGate.startMm,
+        end: SITE_FENCE.vehicleGate.leafClosureEndMm,
+      },
+      {
+        id: SITE_FENCE.sidePedestrianGate.id,
+        start: SITE_FENCE.sidePedestrianGate.physicalStartMm,
+        end: SITE_FENCE.sidePedestrianGate.physicalEndMm,
+      },
+    ]) {
+      this.createWalkBlocker(
+        `${gate.id} · zatvorená brána`,
+        segmentBox(
+          gate.start,
+          gate.end,
+          Math.max(style.solidPanelDepthMm, 160),
+          style.proposedHeightMm,
+          fenceGradeMm,
+        ),
+      );
+    }
+    this.createWalkBlocker("bazén · vodná plocha", {
+      centerMm: GARDEN_POOL.centerMm,
+      widthMm: GARDEN_POOL.waterLengthMm,
+      depthMm: GARDEN_POOL.waterWidthMm,
+      heightMm: GARDEN_POOL.proposedWaterDepthMm + 620,
+      baseElevationMm: -GARDEN_POOL.proposedWaterDepthMm,
+      yawRad: 0,
+    });
+  }
+
+  private buildPersonAvatar(): PersonAvatarRig {
+    const root = new TransformNode("Postava · vizuálny koreň", this.scene);
+    root.parent = this.personCollider;
+    const jacket = surfaceMaterial(
+      this.scene,
+      "Postava · bunda",
+      "#355d50",
+      0.72,
+    );
+    const trousers = surfaceMaterial(
+      this.scene,
+      "Postava · nohavice",
+      "#252e33",
+      0.78,
+    );
+    const skin = surfaceMaterial(
+      this.scene,
+      "Postava · pokožka",
+      "#c89070",
+      0.82,
+    );
+    const shoes = surfaceMaterial(
+      this.scene,
+      "Postava · obuv",
+      "#111719",
+      0.86,
+    );
+    const parts: AbstractMesh[] = [];
+    const finishPart = <T extends AbstractMesh>(part: T, material: Material) => {
+      part.parent = root;
+      part.material = material;
+      part.isPickable = false;
+      part.receiveShadows = true;
+      this.castShadow(part);
+      parts.push(part);
+      return part;
+    };
+
+    const torso = finishPart(
+      CreateCapsule(
+        "Postava · trup",
+        { height: 0.82, radius: 0.235, tessellation: 12, subdivisions: 2 },
+        this.scene,
+      ),
+      jacket,
+    );
+    torso.position.y = 1.16;
+    const head = finishPart(
+      CreateSphere(
+        "Postava · hlava",
+        { diameter: 0.32, segments: 14 },
+        this.scene,
+      ),
+      skin,
+    );
+    head.position.y = 1.7;
+
+    const leftLeg = finishPart(
+      CreateCapsule(
+        "Postava · ľavá noha",
+        { height: 0.78, radius: 0.09, tessellation: 10 },
+        this.scene,
+      ),
+      trousers,
+    );
+    leftLeg.position.set(-0.11, 0.48, 0);
+    const rightLeg = finishPart(
+      CreateCapsule(
+        "Postava · pravá noha",
+        { height: 0.78, radius: 0.09, tessellation: 10 },
+        this.scene,
+      ),
+      trousers,
+    );
+    rightLeg.position.set(0.11, 0.48, 0);
+
+    const leftArm = finishPart(
+      CreateCapsule(
+        "Postava · ľavá ruka",
+        { height: 0.67, radius: 0.072, tessellation: 10 },
+        this.scene,
+      ),
+      jacket,
+    );
+    leftArm.position.set(-0.31, 1.12, 0);
+    const rightArm = finishPart(
+      CreateCapsule(
+        "Postava · pravá ruka",
+        { height: 0.67, radius: 0.072, tessellation: 10 },
+        this.scene,
+      ),
+      jacket,
+    );
+    rightArm.position.set(0.31, 1.12, 0);
+
+    for (const side of [-1, 1] as const) {
+      const shoe = finishPart(
+        CreateBox(
+          `Postava · ${side < 0 ? "ľavá" : "pravá"} topánka`,
+          { width: 0.18, height: 0.12, depth: 0.32 },
+          this.scene,
+        ),
+        shoes,
+      );
+      shoe.position.set(side * 0.11, 0.1, -0.055);
+    }
+    const backpack = finishPart(
+      CreateBox(
+        "Postava · subtílny batoh",
+        { width: 0.34, height: 0.46, depth: 0.12 },
+        this.scene,
+      ),
+      trousers,
+    );
+    backpack.position.set(0, 1.18, 0.235);
+    root.setEnabled(false);
+    return { root, parts, leftArm, rightArm, leftLeg, rightLeg };
+  }
+
   private buildThinBoxes(
     name: string,
     instances: readonly PlanBoxInstance[],
@@ -1763,6 +2378,7 @@ export class TwinSceneController {
     );
     terrain.receiveShadows = true;
     terrain.isPickable = false;
+    this.markWalkable(terrain);
 
     const minor = Color3.FromHexString("#313a37");
     const major = Color3.FromHexString("#55605c");
@@ -1817,6 +2433,7 @@ export class TwinSceneController {
           this.realisticMaterials.grass,
         );
         fill.receiveShadows = true;
+        this.markWalkable(fill);
         this.register(fill, "cadastre");
       }
       const outline = CreateLines(
@@ -1852,6 +2469,7 @@ export class TwinSceneController {
         this.realisticMaterials.grass,
       );
       roadReserve.receiveShadows = true;
+      this.markWalkable(roadReserve);
       this.register(roadReserve, "street", ROAD_CONTEXT.id);
     }
 
@@ -1863,6 +2481,7 @@ export class TwinSceneController {
     );
     this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
     frontage.receiveShadows = true;
+    this.markWalkable(frontage);
     this.register(frontage, "street", ROAD_CONTEXT.id);
 
     const corner = createFlatPolygon(
@@ -1873,6 +2492,7 @@ export class TwinSceneController {
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
     corner.receiveShadows = true;
+    this.markWalkable(corner);
     this.register(corner, "street", ROAD_CONTEXT.id);
 
     for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
@@ -1888,6 +2508,7 @@ export class TwinSceneController {
         this.realisticMaterials.grass,
       );
       sideReserve.receiveShadows = true;
+      this.markWalkable(sideReserve);
       this.register(sideReserve, "street", ROAD_CONTEXT.id);
     }
 
@@ -2070,6 +2691,7 @@ export class TwinSceneController {
     );
     this.appearance(deck, this.materials.timber, this.realisticMaterials.timber);
     deck.receiveShadows = true;
+    this.markWalkable(deck);
     this.technicalOverlay(deck);
     this.register(deck, "street", SITE_SURFACES.timberTerrace.id);
 
@@ -2118,6 +2740,7 @@ export class TwinSceneController {
           : this.realisticMaterials.pavingEntry,
       );
       paving.receiveShadows = true;
+      this.markWalkable(paving);
       this.register(paving, "street", surface.id);
 
       if (isStreetRamp || isSideStreetRamp) {
@@ -2798,6 +3421,7 @@ export class TwinSceneController {
     );
     garageDoor.receiveShadows = true;
     garageDoor.isPickable = false;
+    garageDoor.checkCollisions = true;
     this.register(garageDoor, "building");
 
     for (let levelM = 0.3; levelM < 2.4; levelM += 0.3) {
@@ -3017,6 +3641,7 @@ export class TwinSceneController {
         faceVertices,
       );
       this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
+      panel.metadata = { ...(panel.metadata ?? {}), cameraOccluder: true };
       panel.receiveShadows = true;
       this.castShadow(panel);
       panel.enableEdgesRendering();
@@ -3036,6 +3661,10 @@ export class TwinSceneController {
       underside.material = this.realisticMaterials.soffit;
       underside.receiveShadows = true;
       underside.isPickable = false;
+      underside.metadata = {
+        ...(underside.metadata ?? {}),
+        cameraOccluder: true,
+      };
       this.realisticOnly(underside);
       this.register(underside, "building", HOUSE.id);
     }
@@ -3750,6 +4379,7 @@ export class TwinSceneController {
       register: (mesh, layer, entityId) => this.register(mesh, layer, entityId),
       realisticOnly: (mesh) => this.realisticOnly(mesh),
       castShadow: (mesh) => this.castShadow(mesh),
+      markWalkable: (mesh) => this.markWalkable(mesh),
     });
   }
 
@@ -4700,6 +5330,7 @@ export class TwinSceneController {
     merged.material = material;
     merged.receiveShadows = true;
     merged.isPickable = false;
+    this.markWalkable(merged);
     this.realisticOnly(merged);
     this.castShadow(merged);
     this.register(merged, "street", zone.id);
@@ -5606,9 +6237,6 @@ export class TwinSceneController {
     this.setNavigationMode("orbit");
     this.resetOrbitInertia();
     this.applyCameraPreset(preset);
-    // A preset jumps the radius programmatically; drop any pending wheel
-    // glide so it cannot fight the new framing.
-    this.cancelOrbitZoomGlide();
   }
 
   private applyCameraPreset(preset: CameraPreset) {
@@ -5709,32 +6337,38 @@ export class TwinSceneController {
     }
     if (mode === "flight") {
       const fromWalk = this.navigationMode === "walk";
-      const orbitPosition = fromWalk
-        ? this.flightCamera.position.clone()
+      const sourcePosition = fromWalk
+        ? this.personCamera.globalPosition.clone()
         : this.orbitCamera.globalPosition.clone();
+      const sourceTarget = fromWalk
+        ? this.personCameraTarget.position.clone()
+        : this.orbitCamera.target.clone();
+      const sourceFov = fromWalk
+        ? this.personCamera.fov
+        : this.orbitCamera.fov;
       if (!fromWalk) {
         this.orbitFocusDistance = Math.max(
           8,
-          Math.min(32, Vector3.Distance(orbitPosition, this.orbitCamera.target)),
+          Math.min(32, Vector3.Distance(sourcePosition, sourceTarget)),
         );
+        this.orbitCamera.detachControl();
+      } else {
+        this.leavePersonMode();
       }
       const boundedEntry = integrateFlightPosition({
-        position: orbitPosition,
+        position: sourcePosition,
         heading: { x: 0, z: -1 },
         commands: new Set(),
         deltaMs: 0,
       });
-      this.leaveWalkCollisions();
       this.flightCamera.position.set(
         boundedEntry.x,
         boundedEntry.y,
         boundedEntry.z,
       );
       this.flightCamera.rotationQuaternion = null;
-      if (!fromWalk) {
-        this.flightCamera.fov = this.orbitCamera.fov;
-        this.flightCamera.setTarget(this.orbitCamera.target);
-      }
+      this.flightCamera.fov = sourceFov;
+      this.flightCamera.setTarget(sourceTarget);
       const forward = this.flightCamera.getForwardRay(1).direction;
       const horizontalLength = Math.hypot(forward.x, forward.z);
       if (horizontalLength > 0.04) {
@@ -5743,42 +6377,55 @@ export class TwinSceneController {
           z: forward.z / horizontalLength,
         };
       }
-      if (!fromWalk) {
-        this.orbitCamera.detachControl();
-        this.scene.activeCamera = this.flightCamera;
-        this.flightCamera.attachControl(false);
-      }
+      this.scene.activeCamera = this.flightCamera;
+      this.flightCamera.attachControl(false);
       this.navigationMode = "flight";
       this.canvas.focus({ preventScroll: true });
     } else {
-      const forward = this.flightCamera.getForwardRay(1).direction.normalize();
-      const target = this.flightCamera.position.add(
-        forward.scale(this.orbitFocusDistance),
-      );
-      this.leaveWalkCollisions();
-      this.flightCamera.detachControl();
+      const fromWalk = this.navigationMode === "walk";
+      if (fromWalk && this.orbitPoseBeforeWalk) {
+        const pose = this.orbitPoseBeforeWalk;
+        this.leavePersonMode();
+        this.orbitCamera.alpha = pose.alpha;
+        this.orbitCamera.beta = pose.beta;
+        this.orbitCamera.radius = pose.radius;
+        this.orbitCamera.target.copyFrom(pose.target);
+        this.orbitCamera.fov = pose.fov;
+      } else {
+        const sourcePosition = fromWalk
+          ? this.personCamera.globalPosition.clone()
+          : this.flightCamera.position.clone();
+        const sourceForward = fromWalk
+          ? this.personCameraTarget.position
+              .subtract(sourcePosition)
+              .normalize()
+          : this.flightCamera.getForwardRay(1).direction.normalize();
+        const target = sourcePosition.add(
+          sourceForward.scale(this.orbitFocusDistance),
+        );
+        if (fromWalk) this.leavePersonMode();
+        else this.flightCamera.detachControl();
+        this.orbitCamera.target.copyFrom(target);
+        this.orbitCamera.setPosition(sourcePosition);
+        this.orbitCamera.fov = fromWalk
+          ? this.personCamera.fov
+          : this.flightCamera.fov;
+      }
+      this.orbitPoseBeforeWalk = null;
       this.clearFlightInput();
-      this.orbitCamera.target.copyFrom(target);
-      this.orbitCamera.setPosition(this.flightCamera.position.clone());
-      this.orbitCamera.fov = this.flightCamera.fov;
       this.resetOrbitInertia();
-      this.cancelOrbitZoomGlide();
       this.scene.activeCamera = this.orbitCamera;
       this.orbitCamera.attachControl(
-        this.canvas,
-        !ORBIT_ZOOM.preventBrowserGesture,
+        !ORBIT_CONTROLS.preventBrowserGesture,
+        true,
+        2,
       );
       this.navigationMode = "orbit";
     }
     this.onNavigationModeChange(this.navigationMode);
   }
 
-  /**
-   * Walkthrough: stand at eye level inside a room of the D1.1.002 plan. With
-   * no room given the walker enters the main living space looking toward the
-   * covered porch; the collider keeps the walker out of walls while open
-   * doors and the glazed terrace doors stay passable.
-   */
+  /** Starts the GTA-style actor and chase camera at a room's standing point. */
   enterWalkthrough(roomId?: string) {
     const room =
       INTERIOR_ROOMS.find((candidate) => candidate.id === roomId) ??
@@ -5786,39 +6433,69 @@ export class TwinSceneController {
       INTERIOR_ROOMS[0];
     const standing = room.standingPointMm;
     const look = walkLookTargetMm(room);
-    const wasOrbit = this.navigationMode === "orbit";
-    if (wasOrbit) {
-      this.orbitFocusDistance = 6;
+    if (this.navigationMode === "orbit") {
+      this.orbitPoseBeforeWalk = {
+        alpha: this.orbitCamera.alpha,
+        beta: this.orbitCamera.beta,
+        radius: this.orbitCamera.radius,
+        target: this.orbitCamera.target.clone(),
+        fov: this.orbitCamera.fov,
+      };
       this.orbitCamera.detachControl();
+    } else if (this.navigationMode === "flight") {
+      this.orbitPoseBeforeWalk = null;
+      this.flightCamera.detachControl();
+    } else {
+      this.personCamera.detachControl();
+      this.releasePersonLook();
     }
     this.clearFlightInput();
-    this.flightCamera.position.set(xM(standing.x), WALK_EYE_HEIGHT_M, zM(standing.y));
-    this.flightCamera.rotationQuaternion = null;
-    this.flightCamera.fov = 1.05;
-    this.flightCamera.setTarget(new Vector3(xM(look.x), WALK_EYE_HEIGHT_M - 0.05, zM(look.y)));
-    const forward = this.flightCamera.getForwardRay(1).direction;
-    const horizontalLength = Math.hypot(forward.x, forward.z);
-    if (horizontalLength > 0.04) {
-      this.flightHeading = {
-        x: forward.x / horizontalLength,
-        z: forward.z / horizontalLength,
-      };
-    }
-    this.flightCamera.ellipsoid = new Vector3(
-      WALK_COLLISION_ELLIPSOID_M.x,
-      WALK_COLLISION_ELLIPSOID_M.y,
-      WALK_COLLISION_ELLIPSOID_M.z,
+    const actorX = xM(standing.x);
+    const actorZ = zM(standing.y);
+    this.personFloorY = this.walkFloorHeightAt(actorX, actorZ, 0);
+    this.personCollider.position.set(actorX, this.personFloorY, actorZ);
+    this.personCollider.setEnabled(true);
+    this.personAvatar.root.setEnabled(true);
+    this.personView = "shoulder";
+    this.personShoulderSide = 1;
+    const lookX = xM(look.x) - actorX;
+    const lookZ = zM(look.y) - actorZ;
+    const lookLength = Math.hypot(lookX, lookZ);
+    const heading =
+      lookLength > 1e-6
+        ? { x: lookX / lookLength, z: lookZ / lookLength }
+        : { x: 0, z: -1 };
+    this.flightHeading = heading;
+    this.personYaw = walkFacingYaw(heading, this.personYaw);
+    this.personCameraTarget.position.set(
+      actorX,
+      this.personFloorY + PERSON_CAMERA.targetHeightM,
+      actorZ,
     );
-    this.flightCamera.ellipsoidOffset = new Vector3(0, 0, 0);
-    this.flightCamera.checkCollisions = true;
-    this.flightCamera.applyGravity = false;
+    const radius = personCameraRadius(this.personView);
+    this.personDesiredRadius = radius;
+    this.personEffectiveRadius = radius;
+    this.personCameraObstructed = false;
+    this.personCamera.setPosition(
+      new Vector3(
+        actorX - heading.x * radius,
+        this.personFloorY + PERSON_CAMERA.targetHeightM + 1.08,
+        actorZ - heading.z * radius,
+      ),
+    );
+    this.personCamera.radius = radius;
+    this.personCamera.fov = PERSON_CAMERA.fieldOfViewRad;
+    this.updatePersonRig(0);
     this.scene.collisionsEnabled = true;
-    if (this.scene.activeCamera !== this.flightCamera) {
-      this.scene.activeCamera = this.flightCamera;
-      this.flightCamera.attachControl(false);
-    }
+    this.scene.activeCamera = this.personCamera;
+    this.personCamera.attachControl(false, false, -1);
     this.navigationMode = "walk";
     this.walkRoomId = room.id;
+    this.personLookState = "paused";
+    this.personUnlockEscapePending = false;
+    this.personUnlockEscapeExpiresAt = Number.NEGATIVE_INFINITY;
+    this.canvas.dataset.walkRoom = room.number;
+    this.canvas.dataset.personLook = "paused";
     this.canvas.focus({ preventScroll: true });
     this.onNavigationModeChange(this.navigationMode);
   }
@@ -5826,7 +6503,7 @@ export class TwinSceneController {
   /** Room the walker currently stands in, or null outside the house. */
   getWalkRoom(): InteriorRoom | null {
     if (this.navigationMode !== "walk") return null;
-    const position = this.flightCamera.position;
+    const position = this.personCollider.position;
     return roomAt({
       x: Math.round(position.x * 1000 + SCENE_CENTER_MM.x),
       y: Math.round(SCENE_CENTER_MM.y - position.z * 1000),
@@ -5835,8 +6512,44 @@ export class TwinSceneController {
 
   private walkRoomId: string | null = null;
 
-  private leaveWalkCollisions() {
-    this.flightCamera.checkCollisions = false;
+  private leavePersonMode() {
+    this.releasePersonLook();
+    this.clearFlightInput();
+    this.personCamera.detachControl();
+    this.personAvatar.root.setEnabled(false);
+    this.personCollider.setEnabled(false);
+    this.personLookState = "paused";
+    this.personUnlockEscapePending = false;
+    this.canvas.dataset.personLook = "paused";
+    this.canvas.dataset.walkRoom = "";
+  }
+
+  cyclePersonView() {
+    if (this.navigationMode !== "walk") return this.personView;
+    this.personView = cyclePersonCameraView(this.personView);
+    const radius = personCameraRadius(this.personView);
+    this.personDesiredRadius = radius;
+    this.personEffectiveRadius = radius;
+    this.personCameraObstructed = false;
+    this.personCamera.radius = radius;
+    this.updatePersonRig(0);
+    return this.personView;
+  }
+
+  togglePersonShoulder() {
+    if (this.navigationMode !== "walk") return this.personShoulderSide;
+    if (this.personView === "first-person") return this.personShoulderSide;
+    this.personShoulderSide = this.personShoulderSide === 1 ? -1 : 1;
+    this.updatePersonRig(0);
+    return this.personShoulderSide;
+  }
+
+  getPersonCameraView() {
+    return this.personView;
+  }
+
+  getPersonShoulderSide() {
+    return this.personShoulderSide;
   }
 
   setFlightCommand(command: FlightCommand, active: boolean) {
@@ -5844,23 +6557,35 @@ export class TwinSceneController {
     else this.manualFlightCommands.delete(command);
   }
 
+  setPersonRunning(active: boolean) {
+    if (active) this.flightModifierCodes.add("ShiftTouch");
+    else this.flightModifierCodes.delete("ShiftTouch");
+  }
+
   nudgeFlight(command: FlightCommand) {
     if (this.navigationMode === "walk") {
+      const heading = this.personCameraHeading();
+      const position = this.personCollider.position;
       const next = integrateWalkPosition({
-        position: this.flightCamera.position,
-        heading: this.flightHeading,
+        position,
+        heading,
         commands: new Set([command]),
         deltaMs: 260,
-        floorY: 0,
+        floorY: this.personFloorY,
       });
-      collideCamera(
-        this.flightCamera,
-        new Vector3(
-          next.x - this.flightCamera.position.x,
-          0,
-          next.z - this.flightCamera.position.z,
-        ),
+      const before = position.clone();
+      this.personCollider.moveWithCollisions(
+        new Vector3(next.x - position.x, 0, next.z - position.z),
       );
+      this.personFloorY = this.walkFloorHeightAt(
+        position.x,
+        position.z,
+        this.personFloorY,
+      );
+      position.y = this.personFloorY;
+      const moved = position.subtract(before);
+      this.personYaw = walkFacingYaw(moved, this.personYaw);
+      this.updatePersonRig(0, Math.hypot(moved.x, moved.z));
       return;
     }
     if (this.navigationMode !== "flight") return;
@@ -5875,6 +6600,31 @@ export class TwinSceneController {
 
   getNavigationMode() {
     return this.navigationMode;
+  }
+
+  getNavigationSnapshot() {
+    return {
+      mode: this.navigationMode,
+      actorPosition: {
+        x: this.personCollider.position.x,
+        y: this.personCollider.position.y,
+        z: this.personCollider.position.z,
+      },
+      actorYaw: this.personYaw,
+      personView: this.personView,
+      shoulder: this.personShoulderSide < 0 ? "left" : "right",
+      cameraRadius: this.personDesiredRadius,
+      effectiveCameraRadius: this.personEffectiveRadius,
+      cameraPosition: {
+        x: this.personCamera.globalPosition.x,
+        y: this.personCamera.globalPosition.y,
+        z: this.personCamera.globalPosition.z,
+      },
+      avatarVisible: this.personAvatar.parts.some(
+        (part) => part.isEnabled() && part.visibility > 0.01,
+      ),
+      pointerLocked: this.isPersonLookLocked(),
+    } as const;
   }
 
   getRenderQuality() {
@@ -5922,7 +6672,11 @@ export class TwinSceneController {
         if (previous.tier !== next.tier) {
           this.ssaoPipeline.samples = next.tier === "ULTRA" ? 16 : 12;
         }
-        const cameras = [this.orbitCamera, this.flightCamera];
+        const cameras = [
+          this.orbitCamera,
+          this.flightCamera,
+          this.personCamera,
+        ];
         if (next.ssaoEnabled && !this.ssaoAttached) {
           this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline(
             this.ssaoPipeline.name,
@@ -5946,7 +6700,16 @@ export class TwinSceneController {
 
   dispose() {
     if (this.resizeFrame) window.cancelAnimationFrame(this.resizeFrame);
+    if (this.personPointerLockTimer) {
+      window.clearTimeout(this.personPointerLockTimer);
+    }
+    if (document.pointerLockElement === this.canvas) this.engine.exitPointerlock();
     document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    document.removeEventListener(
+      "pointerlockchange",
+      this.handlePointerLockChange,
+    );
+    document.removeEventListener("pointerlockerror", this.handlePointerLockError);
     this.canvas.removeEventListener("keydown", this.handleFlightKeyDown);
     this.canvas.removeEventListener("keyup", this.handleFlightKeyUp);
     this.canvas.removeEventListener("blur", this.clearFlightInput);

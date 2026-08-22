@@ -54,26 +54,30 @@ filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektric
 Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
 skutočné odlesky a animovaný filmový grain. Presety Záhrada a Ulica majú
 fyzickú výšku kamery 3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu.
-Orbitálny zoom používa exponenciálny model vlastnej implementácie: každá
-udalosť kolieska násobí cieľový polomer faktorom `exp(gain · px)`, pričom
-touchpad scroll, momentum, fyzické koliesko aj pinch (wheel + ctrl) sú
-normalizované na pixle a pinch má päťnásobnú citlivosť. Glide polomeru je
-framerate-nezávislý s polčasom 42 ms a vždy dobehne presne do cieľa, takže
-reakcia je rovnaká pri každom priblížení aj obnovovacej frekvencii; v režime
-Prelet koliesko doluje pozdĺž
-pohľadového lúča. K dispozícii je aj samostatný režim **Prelet**: stabilná
+Orbitálne ovládanie používa jedinú frame-independent vstupnú cestu Babylonu:
+macOS momentum sa už nezdvojuje vlastným glide efektom, zoom smeruje k bodu
+pod kurzorom a rotácia, posun aj zoom majú krátku zhodnú zotrvačnosť.
+Citlivosť posunu je zámerne tlmená pre touchpad; koliesko aj pinch ostávajú
+plynulé a prehliadač ich počas práce s modelom nepreberá. V režime Prelet
+koliesko doluje pozdĺž pohľadového lúča. K dispozícii je aj samostatný režim
+**Prelet**: stabilná
 world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým ovládačom a
 bezpečným návratom do orbitálnych pohľadov.
 
-Režim **Interiér** (kláves G) je prechádzka vo výške očí 1,65 m. Vnútorné
+Režim **Postava** (kláves G) je GTA-style pohyb po interiéri, terase aj
+záhrade. Má samostatnú kolíznu kapsulu, viditeľnú low-poly postavu, kameru
+za ramenom s kolíziou o steny a režimy za postavou / blízko / z očí (V).
+Q prepína rameno, kliknutie zapína voľný pointer-lock rozhľad, Escape najprv
+uvoľní kurzor a druhé stlačenie režim ukončí. WASD sa vždy orientuje podľa
+kamery, Shift zapína beh a trackpad, koliesko alebo pinch menia iba vzdialenosť
+kamery — neposúvajú postavu. Vnútorné
 nosné steny, priečky 140 mm, dvere so zárubňami a otvorenými krídlami,
 podlahy podľa legendy miestností (keramická dlažba, vinyl, epoxidová stierka),
 SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
 2 750 → 4 850 mm sú odčítané z vektorov výkresu D1.1.002 (`lib/twin-interior.ts`,
-hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
-prelet (WASD, ťahanie, Shift/Alt, koliesko krok), steny ho zastavia cez
-kolízny elipsoid 0,26 × 0,42 m, otvorené interiérové dvere a presklené steny
-terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástich
+hrúbka stien z obrysov 1,44 pt v mierke 1:100). Steny, oplotenie, zatvorené
+brány a bazén postavu zastavia; otvorené interiérové dvere a presklené steny
+terás zostávajú priechodné. HUD ponúka zbalený vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
 nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,

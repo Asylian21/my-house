@@ -1,38 +1,28 @@
 export type NavigationMode = "orbit" | "flight" | "walk";
 
-export type WheelZoomGesture = "scroll" | "pinch";
-
 export interface WheelEventSummary {
   readonly deltaY: number;
   readonly deltaMode: number;
-  readonly ctrlKey: boolean;
 }
 
 /**
- * Exponential orbit zoom. Every input contributes a multiplicative factor
- * `exp(-gain * pixels)` to a target radius, so the same two-finger distance
- * feels identical at 6 m and at 60 m — the behaviour Mac trackpad users expect
- * from map applications. Trackpad scroll and pinch are reported through the
- * same wheel stream, but pinch deltas are an order of magnitude smaller, so
- * they carry their own higher gain.
+ * Orbit input tuning for Babylon 9's frame-independent movement pipeline.
+ * macOS already supplies momentum, so rotation, pan and zoom deliberately use
+ * the same short decay instead of stacking a second application-side glide.
  */
-export const ORBIT_ZOOM = Object.freeze({
+export const ORBIT_CONTROLS = Object.freeze({
   lowerRadiusLimitM: 4.5,
   upperRadiusLimitM: 64,
-  /** Two-finger scroll and physical wheel notches, per normalised pixel. */
-  scrollGainPerPx: 0.0018,
-  /** Browser-synthesised pinch (wheel + ctrlKey), per normalised pixel. */
-  pinchGainPerPx: 0.009,
+  wheelDeltaPercentage: 0.012,
+  zoomToMouseLocation: true,
+  rotationInertia: 0.58,
+  panningInertia: 0.58,
+  angularSensibilityX: 1_050,
+  angularSensibilityY: 1_150,
+  panningSensibility: 900,
   /** Firefox reports wheel distances in lines; one line ≈ 16 px of travel. */
   lineModePx: 16,
   pageModePx: 800,
-  /** Safety clamp on a single event so momentum bursts cannot teleport. */
-  maxMultiplierPerEvent: 2,
-  minMultiplierPerEvent: 0.5,
-  /** Framerate-independent glide half-life towards the target radius. */
-  glideHalfLifeMs: 42,
-  /** Snap once the camera is visually indistinguishable from the target. */
-  settleEpsilonM: 0.0015,
   useNaturalPinchZoom: true,
   preventBrowserGesture: true,
 });
@@ -47,77 +37,9 @@ export function normalizeWheelPixels({
 }: Pick<WheelEventSummary, "deltaY" | "deltaMode">): number {
   if (!Number.isFinite(deltaY)) return 0;
   if (deltaMode === DOM_DELTA_LINE)
-    return deltaY * ORBIT_ZOOM.lineModePx;
-  if (deltaMode === DOM_DELTA_PAGE) return deltaY * ORBIT_ZOOM.pageModePx;
+    return deltaY * ORBIT_CONTROLS.lineModePx;
+  if (deltaMode === DOM_DELTA_PAGE) return deltaY * ORBIT_CONTROLS.pageModePx;
   return deltaMode === DOM_DELTA_PIXEL ? deltaY : 0;
-}
-
-export function wheelZoomGesture({ ctrlKey }: WheelEventSummary): WheelZoomGesture {
-  // macOS browsers report trackpad pinch as wheel events with ctrlKey set.
-  // A real keyboard-ctrl scroll is indistinguishable; treating it as pinch
-  // keeps both fast, which matches user intent in either case.
-  return ctrlKey ? "pinch" : "scroll";
-}
-
-/** Multiplicative radius change for one wheel event; >1 zooms out. */
-export function orbitZoomMultiplier(
-  pixels: number,
-  gesture: WheelZoomGesture,
-): number {
-  const gain =
-    gesture === "pinch"
-      ? ORBIT_ZOOM.pinchGainPerPx
-      : ORBIT_ZOOM.scrollGainPerPx;
-  // Positive deltaY (scroll towards you / closing pinch) moves the camera
-  // back, matching the previous natural-direction behaviour.
-  const raw = Math.exp(gain * pixels);
-  return Math.max(
-    ORBIT_ZOOM.minMultiplierPerEvent,
-    Math.min(ORBIT_ZOOM.maxMultiplierPerEvent, raw),
-  );
-}
-
-export function clampOrbitRadius(radiusM: number): number {
-  return Math.max(
-    ORBIT_ZOOM.lowerRadiusLimitM,
-    Math.min(ORBIT_ZOOM.upperRadiusLimitM, radiusM),
-  );
-}
-
-/** Exponential glide used by the render loop; exact at any frame rate. */
-export function easeOrbitRadius(
-  currentM: number,
-  targetM: number,
-  deltaMs: number,
-): number {
-  // Exponential blending is unconditionally stable: a long frame gap simply
-  // converges further towards the target instead of overshooting it.
-  const seconds = Math.max(0, Number.isFinite(deltaMs) ? deltaMs : 0) / 1000;
-  const blend = 1 - Math.pow(0.5, seconds / (ORBIT_ZOOM.glideHalfLifeMs / 1000));
-  return currentM + (targetM - currentM) * blend;
-}
-
-export interface OrbitZoomStep {
-  readonly radiusM: number;
-  readonly settled: boolean;
-}
-
-/**
- * Advances one zoom frame and snaps exactly to the target at the end. Keeping
- * the settled state explicit prevents an idle timer from discarding the last
- * part of a Mac trackpad gesture before the camera reaches its target.
- */
-export function stepOrbitZoom(
-  currentM: number,
-  targetM: number,
-  deltaMs: number,
-): OrbitZoomStep {
-  const target = clampOrbitRadius(targetM);
-  const radius = easeOrbitRadius(currentM, target, deltaMs);
-  if (Math.abs(target - radius) <= ORBIT_ZOOM.settleEpsilonM) {
-    return { radiusM: target, settled: true };
-  }
-  return { radiusM: radius, settled: false };
 }
 
 export type FlightCommand =
@@ -397,23 +319,160 @@ export function isSelectionTap({
   );
 }
 
+export type PersonCameraView = "shoulder" | "close" | "first-person";
+
+/** GTA-style chase-camera presets. Radius is still user-adjustable by wheel or pinch. */
+export const PERSON_CAMERA = Object.freeze({
+  shoulderRadiusM: 3.35,
+  closeRadiusM: 1.75,
+  firstPersonRadiusM: 0.18,
+  lowerRadiusLimitM: 0.16,
+  upperRadiusLimitM: 4.8,
+  lowerBetaLimit: 0.72,
+  upperBetaLimit: 1.5,
+  targetHeightM: 1.43,
+  firstPersonTargetHeightM: 1.64,
+  // A view-matrix composition offset keeps the actor over one shoulder while
+  // the physical boom still starts at the centre of the head. That prevents
+  // the collision ray from starting inside a nearby wall.
+  shoulderScreenOffsetM: 0.28,
+  closeShoulderScreenOffsetM: 0.12,
+  fieldOfViewRad: 1.02,
+  wheelDeltaPercentage: 0.018,
+  rotationInertia: 0.5,
+  angularSensibilityX: 820,
+  angularSensibilityY: 920,
+  collisionRadiusM: 0.18,
+});
+
+export interface PersonCameraBoomInput {
+  readonly desiredRadiusM: number;
+  readonly currentRadiusM: number;
+  readonly hitDistanceM: number | null;
+  readonly deltaMs: number;
+  readonly wasObstructed: boolean;
+  readonly reduceMotion?: boolean;
+}
+
+/** Resolves a wall-compressed chase boom without losing the user's radius. */
+export function stepPersonCameraBoom({
+  desiredRadiusM,
+  currentRadiusM,
+  hitDistanceM,
+  deltaMs,
+  wasObstructed,
+  reduceMotion = false,
+}: PersonCameraBoomInput) {
+  const desired = clamp(
+    Number.isFinite(desiredRadiusM)
+      ? desiredRadiusM
+      : PERSON_CAMERA.shoulderRadiusM,
+    PERSON_CAMERA.lowerRadiusLimitM,
+    PERSON_CAMERA.upperRadiusLimitM,
+  );
+  const current = clamp(
+    Number.isFinite(currentRadiusM) ? currentRadiusM : desired,
+    PERSON_CAMERA.lowerRadiusLimitM,
+    desired,
+  );
+  const collisionRadius =
+    typeof hitDistanceM === "number" && Number.isFinite(hitDistanceM)
+      ? clamp(
+          hitDistanceM - PERSON_CAMERA.collisionRadiusM,
+          PERSON_CAMERA.lowerRadiusLimitM,
+          desired,
+        )
+      : desired;
+  if (collisionRadius < desired - 0.01) {
+    if (collisionRadius <= current || reduceMotion) {
+      return {
+        radiusM: collisionRadius,
+        obstructed: true,
+      } as const;
+    }
+    // A receding wall should let the boom breathe out while it is still in
+    // the ray. Expanding immediately looks like a camera pop, so use the same
+    // short half-life as the fully-cleared recovery path.
+    const elapsed = clamp(Number.isFinite(deltaMs) ? deltaMs : 0, 0, 50);
+    const blend = 1 - Math.pow(0.5, elapsed / 90);
+    return {
+      radiusM: current + (collisionRadius - current) * blend,
+      obstructed: true,
+    } as const;
+  }
+  if (!wasObstructed || reduceMotion) {
+    return { radiusM: desired, obstructed: false } as const;
+  }
+  const elapsed = clamp(Number.isFinite(deltaMs) ? deltaMs : 0, 0, 50);
+  const blend = 1 - Math.pow(0.5, elapsed / 90);
+  const restored = current + (desired - current) * blend;
+  return Math.abs(desired - restored) < 0.015
+    ? ({ radiusM: desired, obstructed: false } as const)
+    : ({ radiusM: restored, obstructed: true } as const);
+}
+
+export function personCameraRadius(view: PersonCameraView): number {
+  if (view === "first-person") return PERSON_CAMERA.firstPersonRadiusM;
+  if (view === "close") return PERSON_CAMERA.closeRadiusM;
+  return PERSON_CAMERA.shoulderRadiusM;
+}
+
+export function cyclePersonCameraView(view: PersonCameraView): PersonCameraView {
+  if (view === "shoulder") return "close";
+  if (view === "close") return "first-person";
+  return "shoulder";
+}
+
+/** Normalized shortest signed rotation from `from` to `to`. */
+export function shortestAngleDelta(from: number, to: number): number {
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return 0;
+  return Math.atan2(Math.sin(to - from), Math.cos(to - from));
+}
+
+/** Frame-rate-independent turn used by the visible avatar. */
+export function easeAngleRadians(
+  current: number,
+  target: number,
+  deltaMs: number,
+  halfLifeMs = 72,
+): number {
+  const seconds = Math.max(0, Number.isFinite(deltaMs) ? deltaMs : 0) / 1000;
+  const halfLifeSeconds = Math.max(0.001, halfLifeMs / 1000);
+  const blend = 1 - Math.pow(0.5, seconds / halfLifeSeconds);
+  return current + shortestAngleDelta(current, target) * blend;
+}
+
+/** Local -Z is the avatar's forward direction. */
+export function walkFacingYaw(
+  displacement: { readonly x: number; readonly z: number },
+  fallbackYaw: number,
+): number {
+  if (!Number.isFinite(displacement.x) || !Number.isFinite(displacement.z)) {
+    return fallbackYaw;
+  }
+  if (Math.hypot(displacement.x, displacement.z) < 1e-6) return fallbackYaw;
+  return Math.atan2(displacement.x, -displacement.z);
+}
+
 /**
- * Walkthrough mode: a person standing on the floor slab. Horizontal motion
- * only — the eye height is pinned above the floor under the camera, the
- * vertical flight commands are ignored and wall collisions are resolved by
- * the renderer's collider around this kinematic step.
+ * Walk mode uses a feet-level actor pivot. The independent chase camera owns
+ * the view while this compact ellipsoid resolves walls and furniture.
  */
-export const WALK_EYE_HEIGHT_M = 1.65;
 export const WALK_SPEED_MPS = Object.freeze({
-  precision: 0.45,
-  normal: 1.45,
-  boost: 3.1,
+  precision: 0.55,
+  normal: 1.55,
+  boost: 3.4,
 });
 /** Radii of the walker's collision ellipsoid (half extents in metres). */
 export const WALK_COLLISION_ELLIPSOID_M = Object.freeze({
-  x: 0.26,
-  y: 0.42,
-  z: 0.26,
+  x: 0.28,
+  y: 0.84,
+  z: 0.28,
+});
+export const WALK_COLLISION_OFFSET_M = Object.freeze({
+  x: 0,
+  y: 0.86,
+  z: 0,
 });
 
 export interface WalkMotionInput extends FlightMotionInput {
@@ -439,13 +498,13 @@ export function integrateWalkPosition({
     Number(commands.has("forward")) - Number(commands.has("backward"));
   const strafeAxis =
     Number(commands.has("right")) - Number(commands.has("left"));
-  const eyeY = (Number.isFinite(floorY) ? floorY : 0) + WALK_EYE_HEIGHT_M;
+  const actorY = Number.isFinite(floorY) ? floorY : 0;
   let dx = forwardX * forwardAxis + rightX * strafeAxis;
   let dz = forwardZ * forwardAxis + rightZ * strafeAxis;
   const length = Math.hypot(dx, dz);
   const bounded = {
     x: clamp(position.x, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
-    y: eyeY,
+    y: actorY,
     z: clamp(position.z, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
   };
   if (length < 1e-9) return bounded;
@@ -459,7 +518,7 @@ export function integrateWalkPosition({
   const seconds = clamp(finitePositive(deltaMs, 0), 0, 50) / 1000;
   return {
     x: clamp(bounded.x + dx * speed * seconds, FLIGHT_BOUNDS.minX, FLIGHT_BOUNDS.maxX),
-    y: eyeY,
+    y: actorY,
     z: clamp(bounded.z + dz * speed * seconds, FLIGHT_BOUNDS.minZ, FLIGHT_BOUNDS.maxZ),
   };
 }

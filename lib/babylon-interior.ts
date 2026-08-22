@@ -37,6 +37,7 @@ export interface InteriorBuildContext {
   register(mesh: AbstractMesh, layer: LayerId, entityId?: string): AbstractMesh;
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
+  markWalkable(mesh: AbstractMesh): AbstractMesh;
 }
 
 export interface InteriorMaterials {
@@ -251,12 +252,20 @@ function finish(
   context: InteriorBuildContext,
   mesh: Mesh,
   material: PBRMaterial,
-  options: { collide?: boolean; shadow?: boolean; pickable?: boolean } = {},
+  options: {
+    collide?: boolean;
+    shadow?: boolean;
+    pickable?: boolean;
+    cameraOccluder?: boolean;
+  } = {},
 ) {
   mesh.material = material;
   mesh.receiveShadows = true;
   mesh.isPickable = options.pickable ?? false;
   mesh.checkCollisions = options.collide ?? false;
+  if (options.cameraOccluder) {
+    mesh.metadata = { ...(mesh.metadata ?? {}), cameraOccluder: true };
+  }
   context.realisticOnly(mesh);
   if (options.shadow) context.castShadow(mesh);
   context.register(mesh, "building", HOUSE_ENTITY);
@@ -291,7 +300,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.052,
       1.5,
     );
-    finish(context, slab, materials.epoxy);
+    context.markWalkable(finish(context, slab, materials.epoxy));
   }
   // Door thresholds carry the floor of the room the door opens from.
   for (const door of INTERIOR_DOORS) {
@@ -311,7 +320,13 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.04,
       fromRoom?.floor === "TILE" ? 1.2 : 1.6,
     );
-    finish(context, threshold, fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl);
+    context.markWalkable(
+      finish(
+        context,
+        threshold,
+        fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl,
+      ),
+    );
   }
   for (const room of INTERIOR_ROOMS) {
     const floorTile = room.floor === "TILE" ? 1.2 : room.floor === "EPOXY" ? 1.5 : 1.6;
@@ -326,7 +341,11 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
         FLOOR_TOP_M - 0.04,
         floorTile,
       );
-      finish(context, floor, floorMaterial(materials, room), { pickable: true });
+      context.markWalkable(
+        finish(context, floor, floorMaterial(materials, room), {
+          pickable: true,
+        }),
+      );
 
       const vaulted = room.ceiling === "VAULTED_TO_RIDGE" && index === 0;
       if (!vaulted) {
@@ -340,7 +359,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
           room.clearHeightMm * MM_TO_M,
           2,
         );
-        finish(context, ceiling, materials.ceiling);
+        finish(context, ceiling, materials.ceiling, { cameraOccluder: true });
       }
     }
     if (room.ceiling === "VAULTED_TO_RIDGE") buildVault(context, materials, room);
@@ -375,7 +394,7 @@ function buildVault(context: InteriorBuildContext, materials: InteriorMaterials,
       2,
     );
     slab.rotation.z = side < 0 ? Math.atan2(riseM, runM) : -Math.atan2(riseM, runM);
-    finish(context, slab, materials.ceiling);
+    finish(context, slab, materials.ceiling, { cameraOccluder: true });
   }
   // Triangular closures of the vault above the south and north walls.
   const apex = { alongMm: WING_RIDGE_XMM, elevationMm: VAULT_RIDGE_MM };

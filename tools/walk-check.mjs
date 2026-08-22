@@ -18,22 +18,25 @@ const result = await page.evaluate(async () => {
   const out = {};
   const walk = (roomId, command, frames) => {
     t.enterWalkthrough(roomId);
-    const start = t.flightCamera.position.clone();
+    const start = t.getNavigationSnapshot().actorPosition;
     t.setFlightCommand(command, true);
     const steps = [];
     for (let i = 0; i < frames; i += 1) {
-      const before = t.flightCamera.position.clone();
+      const before = t.getNavigationSnapshot().actorPosition;
       t.scene.render();
-      const after = t.flightCamera.position.clone();
+      const after = t.getNavigationSnapshot().actorPosition;
       steps.push(Number(Math.hypot(after.x - before.x, after.z - before.z).toFixed(3)));
     }
     t.setFlightCommand(command, false);
-    const end = t.flightCamera.position.clone();
+    const end = t.getNavigationSnapshot().actorPosition;
+    const snapshot = t.getNavigationSnapshot();
     return {
       room: t.getWalkRoom()?.number ?? null,
       travelled: Math.hypot(end.x - start.x, end.z - start.z),
       y: end.y,
       mode: t.getNavigationMode(),
+      view: snapshot.personView,
+      avatarVisible: snapshot.avatarVisible,
       steps,
     };
   };

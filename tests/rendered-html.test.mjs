@@ -56,8 +56,8 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /aria-label="Kamera a navigácia"/);
   assert.match(html, /aria-label="Spustiť voľný 3D prelet"/);
   assert.match(html, /aria-keyshortcuts="H"/);
-  assert.match(html, /H spustí voľný 3D prelet a G prechádzku interiérom/);
-  assert.match(html, /aria-label="Prejsť sa interiérom domu"/);
+  assert.match(html, /H spustí voľný 3D prelet a G režim postavy/);
+  assert.match(html, /aria-label="Spustiť režim postavy"/);
   assert.match(html, /aria-keyshortcuts="G"/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
   assert.doesNotMatch(html, /Overené 04|12 % realizácie|react-loading-skeleton/);
@@ -78,30 +78,43 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /controllerRef\.current\?\.dispose\(\)/);
   assert.match(scene, /adaptToDeviceRatio: false/);
   assert.match(scene, /setHardwareScalingLevel\(/);
-  assert.match(
+  assert.doesNotMatch(
     scene,
     /removeByType\("ArcRotateCameraMouseWheelInput"\)/,
   );
-  assert.match(scene, /useNaturalPinchZoom = ORBIT_ZOOM\.useNaturalPinchZoom/);
-  assert.match(scene, /!ORBIT_ZOOM\.preventBrowserGesture/);
-  // Dedicated exponential wheel zoom: normalized pixels, pinch gain and a
-  // framerate-independent glide, with the canvas listener owning the gesture.
+  assert.match(scene, /useNaturalPinchZoom =\s*ORBIT_CONTROLS\.useNaturalPinchZoom/);
+  assert.match(scene, /zoomToMouseLocation =\s*ORBIT_CONTROLS\.zoomToMouseLocation/);
+  assert.match(scene, /!ORBIT_CONTROLS\.preventBrowserGesture/);
+  // Orbit and chase cameras use Babylon's one frame-independent wheel path;
+  // the direct DOM listener remains scoped to helicopter dolly only.
   assert.match(scene, /addEventListener\("wheel", this\.handleCanvasWheel/);
+  assert.match(scene, /if \(this\.navigationMode !== "flight"\) return/);
   assert.match(scene, /normalizeWheelPixels\(event\)/);
-  assert.match(scene, /orbitZoomMultiplier\(pixels, gesture\)/);
-  // The glide step lives in the contract (`stepOrbitZoom` wraps
-  // `easeOrbitRadius`) so the scene only consumes the settled result.
-  assert.match(scene, /stepOrbitZoom\(/);
-  assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
+  assert.doesNotMatch(scene, /orbitZoomMultiplier|stepOrbitZoom|orbitZoomTarget/);
+  assert.match(scene, /this\.orbitCamera,\s*this\.flightCamera,\s*this\.personCamera/);
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   // Water keeps true refraction; glazing is alpha-blended so the interior
   // fit-out shows through from outside and the terrace from inside.
   assert.match(scene, /poolWater\.subSurface\.isRefractionEnabled = true/);
   assert.match(scene, /glass\.subSurface\.isRefractionEnabled = false/);
-  // Walkthrough: collider-driven walking with the interior fit-out.
+  // Person mode: independent actor, visible avatar, chase camera and pointer lock.
   assert.match(scene, /enterWalkthrough\(/);
   assert.match(scene, /Collisions\/collisionCoordinator/);
   assert.match(scene, /integrateWalkPosition\(/);
+  assert.match(scene, /"person-camera"/);
+  assert.match(scene, /CreateCapsule\(/);
+  assert.match(scene, /personCollider\.moveWithCollisions\(/);
+  assert.match(scene, /stepPersonCameraBoom\(/);
+  assert.match(scene, /scene\.pickWithRay\(/);
+  assert.match(scene, /cameraOccluder/);
+  assert.match(scene, /const rayOffsets =/);
+  assert.match(scene, /garageDoor\.checkCollisions = true/);
+  assert.match(scene, /private leavePersonMode\(\) \{[\s\S]{0,180}?clearFlightInput\(\)/);
+  assert.match(scene, /pointerlockchange/);
+  assert.match(scene, /pointerlockerror/);
+  assert.match(viewport, /POSTAVA/);
+  assert.match(viewport, /Pohľad:/);
+  assert.match(viewport, /Premiestniť sa/);
   assert.match(scene, /pool-water-normal\.png/);
   assert.match(scene, /hedge-privet-albedo\.png/);
   assert.match(scene, /krížená botanická karta/);

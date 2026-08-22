@@ -451,6 +451,7 @@ export function TwinStudio() {
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorPanelRef = useRef<HTMLElement>(null);
   const flightTriggerRef = useRef<HTMLButtonElement>(null);
+  const walkTriggerRef = useRef<HTMLButtonElement>(null);
   const isCompact = useSyncExternalStore(
     subscribeCompactLayout,
     getCompactLayoutSnapshot,
@@ -491,10 +492,21 @@ export function TwinStudio() {
       }
       if (event.key === "Escape" && !isTyping) {
         if (navigationMode === "flight" || navigationMode === "walk") {
+          if (
+            navigationMode === "walk" &&
+            viewportRef.current?.consumePersonEscape()
+          ) {
+            event.preventDefault();
+            return;
+          }
           event.preventDefault();
           setNavigationMode("orbit");
           viewportRef.current?.setNavigationMode("orbit");
-          requestAnimationFrame(() => flightTriggerRef.current?.focus());
+          requestAnimationFrame(() =>
+            navigationMode === "walk"
+              ? walkTriggerRef.current?.focus()
+              : flightTriggerRef.current?.focus(),
+          );
           return;
         }
         const restoreFocus = inspectorOpen
@@ -582,6 +594,7 @@ export function TwinStudio() {
       viewportRef.current?.enterWalkthrough();
     } else {
       viewportRef.current?.setNavigationMode("orbit");
+      requestAnimationFrame(() => walkTriggerRef.current?.focus());
     }
   };
 
@@ -833,6 +846,7 @@ export function TwinStudio() {
           navigationMode={navigationMode}
           onSelect={select}
           onNavigationModeChange={setNavigationMode}
+          onPersonModeRequest={toggleWalk}
         />
 
         <div className="truth-card">
@@ -856,12 +870,13 @@ export function TwinStudio() {
             onClick={toggleFlight}
           ><Plane size={17} /><span>Prelet</span><kbd>H</kbd></button>
           <button
+            ref={walkTriggerRef}
             className={navigationMode === "walk" ? "active" : ""}
-            aria-label={navigationMode === "walk" ? "Ukončiť prechádzku interiérom" : "Prejsť sa interiérom domu"}
+            aria-label={navigationMode === "walk" ? "Ukončiť režim postavy" : "Spustiť režim postavy"}
             aria-pressed={navigationMode === "walk"}
             aria-keyshortcuts="G"
             onClick={toggleWalk}
-          ><Footprints size={17} /><span>Interiér</span><kbd>G</kbd></button>
+          ><Footprints size={17} /><span>Postava</span><kbd>G</kbd></button>
           <button aria-label="Zamerať vybraný objekt" aria-keyshortcuts="F" onClick={() => showCameraPreset("focus")}><Focus size={17} /><span>Výber</span><kbd>F</kbd></button>
           <button
             aria-label="Zobraziť na celej obrazovke"
@@ -914,12 +929,14 @@ export function TwinStudio() {
             <div><strong>Ovládanie modelu</strong><button aria-label="Zavrieť pomoc" onClick={() => setHelpOpen(false)}><X size={16} /></button></div>
             <dl>
               <div><dt>Orbit</dt><dd>ťahanie / 1 prst</dd></div>
-              <div><dt>Posun a zoom</dt><dd>pravé / koliesko / pinch</dd></div>
+              <div><dt>Zoom k bodu</dt><dd>trackpad / koliesko / pinch</dd></div>
+              <div><dt>Posun</dt><dd>pravé alebo Ctrl + ťahanie</dd></div>
               <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · F</dd></div>
               <div><dt>Voľný prelet</dt><dd>H · potom WASD</dd></div>
               <div><dt>Výška preletu</dt><dd>Q / E</dd></div>
-              <div><dt>Rýchlosť</dt><dd>Shift turbo · Alt presne</dd></div>
-              <div><dt>Ukončiť prelet</dt><dd>Esc</dd></div>
+              <div><dt>Postava</dt><dd>G · WASD · Shift beh</dd></div>
+              <div><dt>Kamera postavy</dt><dd>klik · pohyb · V · Q</dd></div>
+              <div><dt>Uvoľniť / ukončiť</dt><dd>Esc · potom Esc</dd></div>
             </dl>
           </aside>
         )}

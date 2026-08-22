@@ -3,120 +3,54 @@ import { describe, expect, it } from "vitest";
 import {
   FLIGHT_BOUNDS,
   FLIGHT_WHEEL_DOLLY_MAX_M,
-  ORBIT_ZOOM,
-  clampOrbitRadius,
+  ORBIT_CONTROLS,
+  PERSON_CAMERA,
+  WALK_COLLISION_ELLIPSOID_M,
+  WALK_COLLISION_OFFSET_M,
+  WALK_SPEED_MPS,
+  cyclePersonCameraView,
   deriveRenderQualityProfile,
-  easeOrbitRadius,
+  easeAngleRadians,
   flightCommandForCode,
   flightWheelDollyDistanceM,
   integrateFlightDolly,
   integrateFlightPosition,
+  integrateWalkPosition,
   isSelectionTap,
   normalizeWheelPixels,
-  orbitZoomMultiplier,
-  stepOrbitZoom,
-  wheelZoomGesture,
+  personCameraRadius,
+  shortestAngleDelta,
+  stepPersonCameraBoom,
+  walkFacingYaw,
   type FlightCommand,
 } from "../lib/twin-viewport-contract";
 
 const commands = (...values: FlightCommand[]) => new Set(values);
 
-describe("orbit zoom contract", () => {
-  it("uses an exponential trackpad model and owns browser gestures", () => {
-    expect(ORBIT_ZOOM).toEqual({
+describe("orbit trackpad contract", () => {
+  it("uses Babylon's single input pipeline with restrained Mac tuning", () => {
+    expect(ORBIT_CONTROLS).toEqual({
       lowerRadiusLimitM: 4.5,
       upperRadiusLimitM: 64,
-      scrollGainPerPx: 0.0018,
-      pinchGainPerPx: 0.009,
+      wheelDeltaPercentage: 0.012,
+      zoomToMouseLocation: true,
+      rotationInertia: 0.58,
+      panningInertia: 0.58,
+      angularSensibilityX: 1050,
+      angularSensibilityY: 1150,
+      panningSensibility: 900,
       lineModePx: 16,
       pageModePx: 800,
-      maxMultiplierPerEvent: 2,
-      minMultiplierPerEvent: 0.5,
-      glideHalfLifeMs: 42,
-      settleEpsilonM: 0.0015,
       useNaturalPinchZoom: true,
       preventBrowserGesture: true,
     });
-  });
-
-  it("normalizes pixel, line and page wheel modes into pixels", () => {
-    expect(normalizeWheelPixels({ deltaY: 12, deltaMode: 0 })).toBe(12);
-    expect(normalizeWheelPixels({ deltaY: 3, deltaMode: 1 })).toBe(48);
-    expect(normalizeWheelPixels({ deltaY: 0.5, deltaMode: 2 })).toBe(400);
-    expect(normalizeWheelPixels({ deltaY: 7, deltaMode: 9 })).toBe(0);
-    expect(
-      normalizeWheelPixels({ deltaY: Number.NaN, deltaMode: 0 }),
-    ).toBe(0);
-  });
-
-  it("treats ctrl-modified wheels as trackpad pinch", () => {
-    expect(wheelZoomGesture({ ctrlKey: true })).toBe("pinch");
-    expect(wheelZoomGesture({ ctrlKey: false })).toBe("scroll");
-  });
-
-  it("zooms out on downward scroll and in on upward scroll", () => {
-    const down = orbitZoomMultiplier(100, "scroll");
-    const up = orbitZoomMultiplier(-100, "scroll");
-    expect(down).toBeGreaterThan(1);
-    expect(up).toBeLessThan(1);
-    // Exponential model is symmetric around 1.
-    expect(down * up).toBeCloseTo(1, 10);
-  });
-
-  it("keeps one physical notch responsive without teleporting", () => {
-    // Chrome reports a physical notch as ~100 px; Firefox as ~3 lines.
-    expect(orbitZoomMultiplier(100, "scroll")).toBeCloseTo(1.1972, 3);
-    expect(orbitZoomMultiplier(normalizeWheelPixels({ deltaY: 3, deltaMode: 1 }), "scroll"))
-      .toBeCloseTo(orbitZoomMultiplier(48, "scroll"), 10);
-  });
-
-  it("gives pinch gestures five times the scroll response", () => {
-    const pinch = orbitZoomMultiplier(25, "pinch");
-    const scroll = orbitZoomMultiplier(25, "scroll");
-    expect(pinch).toBeGreaterThan(scroll);
-    expect(Math.log(pinch)).toBeCloseTo(5 * Math.log(scroll), 6);
-  });
-
-  it("clamps a single event so momentum bursts cannot teleport the camera", () => {
-    expect(orbitZoomMultiplier(10_000, "scroll")).toBe(
-      ORBIT_ZOOM.maxMultiplierPerEvent,
+    expect(ORBIT_CONTROLS.wheelDeltaPercentage).toBeLessThan(0.02);
+    expect(ORBIT_CONTROLS.panningSensibility).toBeGreaterThanOrEqual(700);
+    expect(ORBIT_CONTROLS.rotationInertia).toBe(
+      ORBIT_CONTROLS.panningInertia,
     );
-    expect(orbitZoomMultiplier(-10_000, "pinch")).toBeLessThanOrEqual(
-      1 / ORBIT_ZOOM.minMultiplierPerEvent,
-    );
-    expect(clampOrbitRadius(0.5)).toBe(ORBIT_ZOOM.lowerRadiusLimitM);
-    expect(clampOrbitRadius(500)).toBe(ORBIT_ZOOM.upperRadiusLimitM);
   });
 
-  it("glides exponentially and stays consistent at any frame rate", () => {
-    const single = easeOrbitRadius(40, 20, 100);
-    const twoSteps = easeOrbitRadius(easeOrbitRadius(40, 20, 50), 20, 50);
-    expect(twoSteps).toBeCloseTo(single, 8);
-
-    const afterHalfLife = easeOrbitRadius(40, 20, ORBIT_ZOOM.glideHalfLifeMs);
-    expect(afterHalfLife).toBeCloseTo(30, 6);
-
-    // A long frame gap (tab switch) converges fully instead of overshooting.
-    expect(easeOrbitRadius(40, 20, 5_000)).toBeCloseTo(20, 6);
-    expect(easeOrbitRadius(40, 20, Number.NaN)).toBe(40);
-    expect(easeOrbitRadius(40, 20, -5)).toBe(40);
-  });
-
-  it("finishes every glide exactly instead of dropping its idle tail", () => {
-    let radiusM = 16;
-    let settled = false;
-    for (let frame = 0; frame < 240 && !settled; frame += 1) {
-      const step = stepOrbitZoom(radiusM, 10, 1000 / 120);
-      radiusM = step.radiusM;
-      settled = step.settled;
-    }
-    expect(settled).toBe(true);
-    expect(radiusM).toBe(10);
-    expect(stepOrbitZoom(10, 500, 5_000)).toEqual({
-      radiusM: ORBIT_ZOOM.upperRadiusLimitM,
-      settled: true,
-    });
-  });
 });
 
 describe("Retina render quality contract", () => {
@@ -241,6 +175,16 @@ describe("Retina render quality contract", () => {
 });
 
 describe("free-flight camera contract", () => {
+  it("normalizes the direct flight wheel dolly across DOM delta modes", () => {
+    expect(normalizeWheelPixels({ deltaY: 12, deltaMode: 0 })).toBe(12);
+    expect(normalizeWheelPixels({ deltaY: 3, deltaMode: 1 })).toBe(48);
+    expect(normalizeWheelPixels({ deltaY: 0.5, deltaMode: 2 })).toBe(400);
+    expect(normalizeWheelPixels({ deltaY: 7, deltaMode: 9 })).toBe(0);
+    expect(
+      normalizeWheelPixels({ deltaY: Number.NaN, deltaMode: 0 }),
+    ).toBe(0);
+  });
+
   it("maps layout-independent keyboard codes to helicopter movement", () => {
     expect(flightCommandForCode("KeyW")).toBe("forward");
     expect(flightCommandForCode("ArrowDown")).toBe("backward");
@@ -423,29 +367,26 @@ describe("free-flight camera contract", () => {
 });
 
 describe("walkthrough motion", () => {
-  it("pins the eye height above the floor and ignores vertical commands", async () => {
-    const { integrateWalkPosition, WALK_EYE_HEIGHT_M, WALK_SPEED_MPS } = await import(
-      "../lib/twin-viewport-contract"
-    );
+  it("keeps the actor pivot at floor level and ignores vertical commands", () => {
     const still = integrateWalkPosition({
       position: { x: 1, y: 9, z: 2 },
       heading: { x: 0, z: -1 },
       commands: new Set(["up", "down"]),
       deltaMs: 16,
-      floorY: 0,
+      floorY: 0.14,
     });
-    expect(still).toEqual({ x: 1, y: WALK_EYE_HEIGHT_M, z: 2 });
+    expect(still).toEqual({ x: 1, y: 0.14, z: 2 });
     const forward = integrateWalkPosition({
-      position: { x: 0, y: WALK_EYE_HEIGHT_M, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
       heading: { x: 0, z: -1 },
       commands: new Set(["forward"]),
       deltaMs: 40,
       floorY: 0,
     });
     expect(forward.z).toBeCloseTo(-WALK_SPEED_MPS.normal * 0.04, 5);
-    expect(forward.y).toBe(WALK_EYE_HEIGHT_M);
+    expect(forward.y).toBe(0);
     const boosted = integrateWalkPosition({
-      position: { x: 0, y: WALK_EYE_HEIGHT_M, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
       heading: { x: 1, z: 0 },
       commands: new Set(["right"]),
       deltaMs: 50,
@@ -457,13 +398,104 @@ describe("walkthrough motion", () => {
   });
 
   it("walks slower than it flies so rooms stay controllable", async () => {
-    const { WALK_SPEED_MPS, FLIGHT_SPEED_MPS, WALK_COLLISION_ELLIPSOID_M } = await import(
-      "../lib/twin-viewport-contract"
-    );
+    const { FLIGHT_SPEED_MPS } = await import("../lib/twin-viewport-contract");
     expect(WALK_SPEED_MPS.normal).toBeLessThan(FLIGHT_SPEED_MPS.normal);
     expect(WALK_SPEED_MPS.boost).toBeLessThan(FLIGHT_SPEED_MPS.boost);
     // The collider must pass a 700 mm leaf and a 2 100 mm door head.
     expect(WALK_COLLISION_ELLIPSOID_M.x * 2).toBeLessThan(0.7);
-    expect(1.65 + WALK_COLLISION_ELLIPSOID_M.y).toBeLessThan(2.1);
+    expect(
+      WALK_COLLISION_OFFSET_M.y - WALK_COLLISION_ELLIPSOID_M.y,
+    ).toBeGreaterThanOrEqual(0);
+    expect(
+      WALK_COLLISION_OFFSET_M.y + WALK_COLLISION_ELLIPSOID_M.y,
+    ).toBeLessThan(2.1);
+  });
+
+  it("cycles GTA camera distances and keeps first person near the eyes", () => {
+    expect(cyclePersonCameraView("shoulder")).toBe("close");
+    expect(cyclePersonCameraView("close")).toBe("first-person");
+    expect(cyclePersonCameraView("first-person")).toBe("shoulder");
+    expect(personCameraRadius("shoulder")).toBe(PERSON_CAMERA.shoulderRadiusM);
+    expect(personCameraRadius("close")).toBe(PERSON_CAMERA.closeRadiusM);
+    expect(personCameraRadius("first-person")).toBe(
+      PERSON_CAMERA.firstPersonRadiusM,
+    );
+    expect(PERSON_CAMERA.firstPersonRadiusM).toBeLessThan(0.25);
+  });
+
+  it("compresses behind a wall and restores the requested boom after clearing", () => {
+    const blocked = stepPersonCameraBoom({
+      desiredRadiusM: PERSON_CAMERA.shoulderRadiusM,
+      currentRadiusM: PERSON_CAMERA.shoulderRadiusM,
+      hitDistanceM: 0.9,
+      deltaMs: 16,
+      wasObstructed: false,
+    });
+    expect(blocked.obstructed).toBe(true);
+    expect(blocked.radiusM).toBeCloseTo(
+      0.9 - PERSON_CAMERA.collisionRadiusM,
+      10,
+    );
+
+    const recedingWall = stepPersonCameraBoom({
+      desiredRadiusM: PERSON_CAMERA.shoulderRadiusM,
+      currentRadiusM: blocked.radiusM,
+      hitDistanceM: 2,
+      deltaMs: 16,
+      wasObstructed: true,
+    });
+    expect(recedingWall.obstructed).toBe(true);
+    expect(recedingWall.radiusM).toBeGreaterThan(blocked.radiusM);
+    expect(recedingWall.radiusM).toBeLessThan(
+      2 - PERSON_CAMERA.collisionRadiusM,
+    );
+
+    let radiusM = blocked.radiusM;
+    let obstructed = blocked.obstructed;
+    for (let frame = 0; frame < 180 && obstructed; frame += 1) {
+      const step = stepPersonCameraBoom({
+        desiredRadiusM: PERSON_CAMERA.shoulderRadiusM,
+        currentRadiusM: radiusM,
+        hitDistanceM: null,
+        deltaMs: 1000 / 60,
+        wasObstructed: obstructed,
+      });
+      radiusM = step.radiusM;
+      obstructed = step.obstructed;
+    }
+    expect(obstructed).toBe(false);
+    expect(radiusM).toBe(PERSON_CAMERA.shoulderRadiusM);
+
+    const reducedMotion = stepPersonCameraBoom({
+      desiredRadiusM: PERSON_CAMERA.shoulderRadiusM,
+      currentRadiusM: blocked.radiusM,
+      hitDistanceM: null,
+      deltaMs: 16,
+      wasObstructed: true,
+      reduceMotion: true,
+    });
+    expect(reducedMotion).toEqual({
+      radiusM: PERSON_CAMERA.shoulderRadiusM,
+      obstructed: false,
+    });
+  });
+
+  it("turns the avatar over the shortest arc at any frame rate", () => {
+    expect(shortestAngleDelta(Math.PI - 0.1, -Math.PI + 0.1)).toBeCloseTo(
+      0.2,
+      10,
+    );
+    const start = Math.PI - 0.12;
+    const target = -Math.PI + 0.18;
+    const single = easeAngleRadians(start, target, 100);
+    const twoSteps = easeAngleRadians(
+      easeAngleRadians(start, target, 50),
+      target,
+      50,
+    );
+    expect(twoSteps).toBeCloseTo(single, 10);
+    expect(walkFacingYaw({ x: 0, z: -1 }, 0)).toBeCloseTo(0, 10);
+    expect(walkFacingYaw({ x: 1, z: 0 }, 0)).toBeCloseTo(Math.PI / 2, 10);
+    expect(walkFacingYaw({ x: 0, z: 0 }, 1.2)).toBe(1.2);
   });
 });
