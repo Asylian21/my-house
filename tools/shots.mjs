@@ -20,7 +20,14 @@ await page.waitForTimeout(1500);
 await page.evaluate(() => { window.twinDebug.engine.stopRenderLoop(); });
 for (const shot of shots) {
   await page.evaluate(`(async () => { const t = window.twinDebug; ${shot.setup || ""} })()`);
-  await page.evaluate(() => { const t = window.twinDebug; for (let i = 0; i < 4; i += 1) t.scene.render(); });
+  // Parallel shader compilation needs event-loop turns: render, yield, repeat
+  // until every enabled mesh is ready (e.g. the freshly loaded avatar).
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const ready = await page.evaluate(() => { const t = window.twinDebug; t.scene.render(); return t.scene.meshes.every((m) => !m.isEnabled() || m.isReady(true)); });
+    if (ready) break;
+    await page.waitForTimeout(250);
+  }
+  await page.evaluate(() => { const t = window.twinDebug; for (let i = 0; i < 2; i += 1) t.scene.render(); });
   await page.screenshot({ path: shot.out, timeout: 180000 });
   const pose = await page.evaluate(() => { const t = window.twinDebug; const c = t.scene.activeCamera; return `${c.name} @ ${c.position.x.toFixed(2)}, ${c.position.y.toFixed(2)}, ${c.position.z.toFixed(2)} mode=${t.getNavigationMode()}`; });
   console.log("shot", shot.out, pose);

@@ -37,7 +37,6 @@ export interface InteriorBuildContext {
   register(mesh: AbstractMesh, layer: LayerId, entityId?: string): AbstractMesh;
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
-  markWalkable(mesh: AbstractMesh): AbstractMesh;
 }
 
 export interface InteriorMaterials {
@@ -49,7 +48,10 @@ export interface InteriorMaterials {
   readonly doorLeaf: PBRMaterial;
   readonly doorFrame: PBRMaterial;
   readonly kitchenFront: PBRMaterial;
+  readonly kitchenUpper: PBRMaterial;
   readonly worktop: PBRMaterial;
+  readonly steel: PBRMaterial;
+  readonly blackGlass: PBRMaterial;
   readonly fireplace: PBRMaterial;
   readonly skirting: PBRMaterial;
   readonly wallTile: PBRMaterial;
@@ -153,8 +155,31 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   );
   const doorLeaf = pbr(scene, "real-interior-door-leaf", "#f4f3ef", 0.52);
   const doorFrame = pbr(scene, "real-interior-door-frame", "#ecebe6", 0.6);
-  const kitchenFront = pbr(scene, "real-interior-kitchen-front", "#2a2f31", 0.42);
-  const worktop = pbr(scene, "real-interior-worktop", "#d9d4c8", 0.3);
+  const kitchenFront = texturedPbr(
+    scene,
+    "real-interior-kitchen-front",
+    "oak-veneer-albedo",
+    "oak-veneer-normal",
+    anisotropy,
+    0.55,
+    0.3,
+    "#f3ebdf",
+  );
+  const kitchenUpper = pbr(scene, "real-interior-kitchen-upper", "#eeece6", 0.38);
+  const worktop = texturedPbr(
+    scene,
+    "real-interior-worktop",
+    "stone-dark-albedo",
+    "stone-dark-normal",
+    anisotropy,
+    0.22,
+    0.3,
+  );
+  const steel = pbr(scene, "real-interior-steel", "#c9cdd0", 0.28, 0.9);
+  const blackGlass = pbr(scene, "real-interior-black-glass", "#0c0e10", 0.08, 0.1);
+  blackGlass.clearCoat.isEnabled = true;
+  blackGlass.clearCoat.intensity = 0.8;
+  blackGlass.clearCoat.roughness = 0.05;
   const fireplace = pbr(scene, "real-interior-fireplace", "#1d2022", 0.48, 0.2);
   const skirting = pbr(scene, "real-interior-skirting", "#f7f6f2", 0.6);
   const wallTile = texturedPbr(
@@ -175,7 +200,10 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     doorLeaf,
     doorFrame,
     kitchenFront,
+    kitchenUpper,
     worktop,
+    steel,
+    blackGlass,
     fireplace,
     skirting,
     wallTile,
@@ -252,20 +280,12 @@ function finish(
   context: InteriorBuildContext,
   mesh: Mesh,
   material: PBRMaterial,
-  options: {
-    collide?: boolean;
-    shadow?: boolean;
-    pickable?: boolean;
-    cameraOccluder?: boolean;
-  } = {},
+  options: { collide?: boolean; shadow?: boolean; pickable?: boolean } = {},
 ) {
   mesh.material = material;
   mesh.receiveShadows = true;
   mesh.isPickable = options.pickable ?? false;
   mesh.checkCollisions = options.collide ?? false;
-  if (options.cameraOccluder) {
-    mesh.metadata = { ...(mesh.metadata ?? {}), cameraOccluder: true };
-  }
   context.realisticOnly(mesh);
   if (options.shadow) context.castShadow(mesh);
   context.register(mesh, "building", HOUSE_ENTITY);
@@ -300,7 +320,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.052,
       1.5,
     );
-    context.markWalkable(finish(context, slab, materials.epoxy));
+    finish(context, slab, materials.epoxy);
   }
   // Door thresholds carry the floor of the room the door opens from.
   for (const door of INTERIOR_DOORS) {
@@ -320,13 +340,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.04,
       fromRoom?.floor === "TILE" ? 1.2 : 1.6,
     );
-    context.markWalkable(
-      finish(
-        context,
-        threshold,
-        fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl,
-      ),
-    );
+    finish(context, threshold, fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl);
   }
   for (const room of INTERIOR_ROOMS) {
     const floorTile = room.floor === "TILE" ? 1.2 : room.floor === "EPOXY" ? 1.5 : 1.6;
@@ -341,11 +355,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
         FLOOR_TOP_M - 0.04,
         floorTile,
       );
-      context.markWalkable(
-        finish(context, floor, floorMaterial(materials, room), {
-          pickable: true,
-        }),
-      );
+      finish(context, floor, floorMaterial(materials, room), { pickable: true });
 
       const vaulted = room.ceiling === "VAULTED_TO_RIDGE" && index === 0;
       if (!vaulted) {
@@ -359,7 +369,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
           room.clearHeightMm * MM_TO_M,
           2,
         );
-        finish(context, ceiling, materials.ceiling, { cameraOccluder: true });
+        finish(context, ceiling, materials.ceiling);
       }
     }
     if (room.ceiling === "VAULTED_TO_RIDGE") buildVault(context, materials, room);
@@ -394,14 +404,13 @@ function buildVault(context: InteriorBuildContext, materials: InteriorMaterials,
       2,
     );
     slab.rotation.z = side < 0 ? Math.atan2(riseM, runM) : -Math.atan2(riseM, runM);
-    finish(context, slab, materials.ceiling, { cameraOccluder: true });
+    finish(context, slab, materials.ceiling);
   }
   // Triangular closures of the vault above the south and north walls.
   const apex = { alongMm: WING_RIDGE_XMM, elevationMm: VAULT_RIDGE_MM };
-  for (const [label, y0, y1] of [
-    ["južný", rect.y0 - 139, rect.y0],
-    ["severný", rect.y1 - 500, rect.y1],
-  ] as const) {
+  // Only the south end is closed; the north end toward the porch is the
+  // glazed gable (HOUSE.porches.wingEnd.glazing.gable).
+  for (const [label, y0, y1] of [["južný", rect.y0 - 139, rect.y0]] as const) {
     const closure = profileSolidY(
       context.scene,
       `${room.number} · ${label} štít podhľadu`,
@@ -453,42 +462,83 @@ function buildWalls(context: InteriorBuildContext, materials: InteriorMaterials)
   );
   finish(context, corner, materials.plaster, { collide: true });
 
+  // The pier is the plastered flue (HOUSE.chimneys[0]); its finish box sits
+  // 10 mm proud of the concrete column so the interior reads as plaster.
   const pier = texturedBox(
     context.scene,
-    `${FIREPLACE_PIER.id} · murovaný pilier západnej steny`,
+    `${FIREPLACE_PIER.id} · omietnutý komínový pilier`,
     rectCenter(FIREPLACE_PIER.rectMm),
-    FIREPLACE_PIER.rectMm.x1 - FIREPLACE_PIER.rectMm.x0,
-    FIREPLACE_PIER.rectMm.y1 - FIREPLACE_PIER.rectMm.y0,
+    FIREPLACE_PIER.rectMm.x1 - FIREPLACE_PIER.rectMm.x0 + 20,
+    FIREPLACE_PIER.rectMm.y1 - FIREPLACE_PIER.rectMm.y0 + 20,
     heightM,
     0,
     2.4,
   );
   finish(context, pier, materials.plaster, { collide: true, shadow: true, pickable: true });
 
-  // Stove against the flue column (illustrative design furniture).
-  const chimney = HOUSE.chimneys[0].centerMm;
+  // Compact stove leaning on the west wall right beside the terrace door
+  // (22. 8. 2026 revision): 450 × 450 × 1 000 steel body, glass front, flue
+  // pipe rising and turning into the pier.
+  const stoveX0 = FIREPLACE_PIER.rectMm.x0 + 10;
+  const stoveY0 = 13900;
   const stove = texturedBox(
     context.scene,
-    "Krbové kachle pri komíne · ilustračný koncept",
-    { x: chimney.x, y: chimney.y + 270 + 240 },
-    480,
-    480,
-    1.05,
-    0,
+    "Krbové kachle vedľa dverí na terasu · ilustračný koncept",
+    { x: stoveX0 + 225, y: stoveY0 + 225 },
+    450,
+    450,
+    1.0,
+    0.06,
     1,
   );
   finish(context, stove, materials.fireplace, { collide: true, shadow: true });
   const stoveGlass = texturedBox(
     context.scene,
     "Krbové kachle · presklené dvierka",
-    { x: chimney.x, y: chimney.y + 270 + 480 + 6 },
-    360,
+    { x: stoveX0 + 450 + 6, y: stoveY0 + 225 },
     10,
-    0.42,
-    0.38,
+    320,
+    0.4,
+    0.36,
     1,
   );
   finish(context, stoveGlass, context.glassFrame);
+  for (const [index, legY] of [stoveY0 + 60, stoveY0 + 390].entries()) {
+    const leg = texturedBox(
+      context.scene,
+      `Krbové kachle · nožička ${index + 1}`,
+      { x: stoveX0 + 225, y: legY },
+      380,
+      30,
+      0.06,
+      0,
+      1,
+    );
+    finish(context, leg, materials.fireplace);
+  }
+  const riser = CreateCylinder(
+    "Krbové kachle · dymovod zvislý",
+    { height: 0.55, diameter: 0.15, tessellation: 24 },
+    context.scene,
+  );
+  riser.position.set(xM(stoveX0 + 225), 1.06 + 0.275, zM(stoveY0 + 225));
+  finish(context, riser, materials.fireplace);
+  const runLengthMm = FIREPLACE_PIER.rectMm.y0 + 60 - (stoveY0 + 225);
+  const run = CreateCylinder(
+    "Krbové kachle · dymovod do komína",
+    { height: runLengthMm * MM_TO_M, diameter: 0.15, tessellation: 24 },
+    context.scene,
+  );
+  run.position.set(xM(stoveX0 + 225), 1.06 + 0.55, zM(stoveY0 + 225 + runLengthMm / 2));
+  run.rotation.x = Math.PI / 2;
+  finish(context, run, materials.fireplace);
+  const elbow = CreateCylinder(
+    "Krbové kachle · koleno dymovodu",
+    { height: 0.16, diameter: 0.17, tessellation: 24 },
+    context.scene,
+  );
+  elbow.position.set(xM(stoveX0 + 225), 1.06 + 0.55, zM(stoveY0 + 225));
+  finish(context, elbow, materials.fireplace);
 }
 
 function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, door: InteriorDoor) {
@@ -577,54 +627,348 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
   finish(context, handle, context.chimneyMetal);
 }
 
-function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterials) {
-  const run = KITCHEN_RUN.rectMm;
-  const base = texturedBox(
+/** Slim black bar handle on a front. */
+function barHandle(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  name: string,
+  center: Point2Mm,
+  lengthMm: number,
+  alongX: boolean,
+  elevationM: number,
+) {
+  const mesh = texturedBox(
     context.scene,
-    `${KITCHEN_RUN.id} · spodné skrinky 2 900 · návrhová kuchyňa`,
-    rectCenter({ ...run, x1: KITCHEN_RUN.tallUnitRectMm.x0 }),
-    KITCHEN_RUN.tallUnitRectMm.x0 - run.x0,
+    name,
+    center,
+    alongX ? lengthMm : 12,
+    alongX ? 12 : lengthMm,
+    0.012,
+    elevationM,
+    1,
+  );
+  finish(context, mesh, materials.fireplace);
+}
+
+function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const k = KITCHEN_RUN;
+  const run = k.rectMm;
+  const counterM = k.counterHeightMm * MM_TO_M;
+  const plinthM = 0.1;
+  const worktopM = 0.04;
+  const tall = k.tallUnitRectMm;
+
+  // ---- back run: carcass, 100 mm recessed plinth, drawer fronts, worktop
+  const runStart = tall.x1;
+  const carcass = texturedBox(
+    context.scene,
+    `${k.id} · spodné skrinky zadnej linky ${run.x1 - runStart} mm`,
+    { x: (runStart + run.x1) / 2, y: (run.y0 + run.y1) / 2 - 10 },
+    run.x1 - runStart,
     run.y1 - run.y0 - 20,
-    KITCHEN_RUN.counterHeightMm * MM_TO_M - 0.04,
+    counterM - worktopM - plinthM,
+    plinthM,
+    1.2,
+  );
+  finish(context, carcass, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
+  const plinth = texturedBox(
+    context.scene,
+    `${k.id} · sokel`,
+    { x: (runStart + run.x1) / 2, y: (run.y0 + run.y1) / 2 - 40 },
+    run.x1 - runStart,
+    run.y1 - run.y0 - 80,
+    plinthM,
     0,
     1,
   );
-  finish(context, base, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
+  finish(context, plinth, materials.fireplace, { collide: true });
+  // Front joints: 15 mm grooves drawn as thin dark strips between fronts.
+  const fronts = [runStart, 23991, 24591, k.dishwasherXmm[0], k.dishwasherXmm[1], run.x1];
+  for (const [index, xMm] of fronts.entries()) {
+    if (index === 0 || index === fronts.length - 1) continue;
+    const joint = texturedBox(
+      context.scene,
+      `${k.id} · škára frontov ${index}`,
+      { x: xMm, y: run.y1 + 2 },
+      4,
+      4,
+      counterM - worktopM - plinthM,
+      plinthM,
+      1,
+    );
+    finish(context, joint, materials.fireplace);
+  }
+  // Horizontal drawer joints on the two drawer stacks (left of the sink).
+  for (const [x0, x1] of [[runStart, 23991], [23991, 24591]] as const) {
+    for (const level of [0.38, 0.62]) {
+      const joint = texturedBox(
+        context.scene,
+        `${k.id} · škára zásuvky`,
+        { x: (x0 + x1) / 2, y: run.y1 + 2 },
+        x1 - x0 - 10,
+        4,
+        0.004,
+        level,
+        1,
+      );
+      finish(context, joint, materials.fireplace);
+    }
+    for (const level of [0.34, 0.58, 0.8]) {
+      barHandle(context, materials, `${k.id} · úchytka zásuvky`, { x: (x0 + x1) / 2, y: run.y1 + 14 }, x1 - x0 - 160, true, level);
+    }
+  }
+  // Dishwasher: integrated front with a handle; sink cabinet door handle.
+  barHandle(context, materials, `${k.id} · úchytka umývačky`, { x: (k.dishwasherXmm[0] + k.dishwasherXmm[1]) / 2, y: run.y1 + 14 }, 400, true, 0.8);
+  barHandle(context, materials, `${k.id} · úchytka drezovej skrinky`, { x: k.sinkCenterXmm, y: run.y1 + 14 }, 300, true, 0.8);
+  barHandle(context, materials, `${k.id} · úchytka skrinky vpravo`, { x: (k.dishwasherXmm[1] + run.x1) / 2, y: run.y1 + 14 }, 160, true, 0.8);
   const worktop = texturedBox(
     context.scene,
-    `${KITCHEN_RUN.id} · pracovná doska`,
-    rectCenter({ ...run, x1: KITCHEN_RUN.tallUnitRectMm.x0 + 10 }),
-    KITCHEN_RUN.tallUnitRectMm.x0 + 10 - run.x0,
+    `${k.id} · pracovná doska z tmavého kremeňa`,
+    { x: (runStart + run.x1 + 20) / 2, y: (run.y0 + run.y1) / 2 + 10 },
+    run.x1 - runStart + 20,
     run.y1 - run.y0 + 20,
-    0.04,
-    KITCHEN_RUN.counterHeightMm * MM_TO_M - 0.04,
-    1,
+    worktopM,
+    counterM - worktopM,
+    1.4,
   );
   finish(context, worktop, materials.worktop, { shadow: true });
-  const tall = KITCHEN_RUN.tallUnitRectMm;
+  // Undermount sink and tap.
+  const sinkBowl = texturedBox(
+    context.scene,
+    `${k.id} · nerezový drez`,
+    { x: k.sinkCenterXmm, y: run.y0 + 300 },
+    500,
+    400,
+    0.18,
+    counterM - 0.19,
+    1,
+  );
+  finish(context, sinkBowl, materials.steel);
+  const sinkRim = texturedBox(
+    context.scene,
+    `${k.id} · výrez drezu`,
+    { x: k.sinkCenterXmm, y: run.y0 + 300 },
+    520,
+    420,
+    0.004,
+    counterM - 0.001,
+    1,
+  );
+  finish(context, sinkRim, materials.fireplace);
+  const tapRiser = CreateCylinder(`${k.id} · batéria`, { height: 0.3, diameter: 0.03, tessellation: 16 }, context.scene);
+  tapRiser.position.set(xM(k.sinkCenterXmm), counterM + 0.15, zM(run.y0 + 80));
+  finish(context, tapRiser, materials.steel);
+  const tapSpout = CreateCylinder(`${k.id} · výtok batérie`, { height: 0.22, diameter: 0.022, tessellation: 16 }, context.scene);
+  tapSpout.position.set(xM(k.sinkCenterXmm), counterM + 0.29, zM(run.y0 + 190));
+  tapSpout.rotation.x = Math.PI / 2;
+  finish(context, tapSpout, materials.steel);
+  // Splashback: 600 mm dark quartz upstand between worktop and upper cabinets.
+  const splash = texturedBox(
+    context.scene,
+    `${k.id} · obklad za linkou`,
+    { x: (runStart + run.x1) / 2, y: run.y0 + 6 },
+    run.x1 - runStart,
+    12,
+    k.upperCabinets.bottomMm * MM_TO_M - counterM,
+    counterM,
+    1.4,
+  );
+  finish(context, splash, materials.worktop);
+  // Upper cabinets (white matt) with a lit underside strip.
+  const upper = texturedBox(
+    context.scene,
+    `${k.id} · horné skrinky`,
+    { x: (runStart + run.x1) / 2, y: run.y0 + k.upperCabinets.depthMm / 2 },
+    run.x1 - runStart,
+    k.upperCabinets.depthMm,
+    (k.upperCabinets.topMm - k.upperCabinets.bottomMm) * MM_TO_M,
+    k.upperCabinets.bottomMm * MM_TO_M,
+    1.2,
+  );
+  finish(context, upper, materials.kitchenUpper, { shadow: true });
+  for (const xMm of [23991, 24591, 25191]) {
+    const joint = texturedBox(
+      context.scene,
+      `${k.id} · škára horných skriniek`,
+      { x: xMm, y: run.y0 + k.upperCabinets.depthMm + 2 },
+      4,
+      4,
+      (k.upperCabinets.topMm - k.upperCabinets.bottomMm) * MM_TO_M - 0.02,
+      k.upperCabinets.bottomMm * MM_TO_M + 0.01,
+      1,
+    );
+    finish(context, joint, materials.fireplace);
+  }
+  const ledStrip = texturedBox(
+    context.scene,
+    `${k.id} · LED lišta pod skrinkami`,
+    { x: (runStart + run.x1) / 2, y: run.y0 + k.upperCabinets.depthMm - 30 },
+    run.x1 - runStart - 40,
+    20,
+    0.012,
+    k.upperCabinets.bottomMm * MM_TO_M - 0.012,
+    1,
+  );
+  finish(context, ledStrip, materials.ceiling);
+  // Extractor hood above the hob position is on the peninsula; here a flat
+  // cooker hood is not needed. Tall column: fridge-freezer + oven stack.
   const tallUnit = texturedBox(
     context.scene,
-    `${KITCHEN_RUN.id} · vysoká skriňa`,
+    `${k.id} · vysoká skriňa · chladnička a rúra`,
     rectCenter(tall),
     tall.x1 - tall.x0,
-    tall.y1 - tall.y0,
-    2.2,
+    tall.y1 - tall.y0 - 20,
+    2.24,
+    0,
+    1.2,
+  );
+  finish(context, tallUnit, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
+  const oven = texturedBox(
+    context.scene,
+    `${k.id} · vstavaná rúra`,
+    { x: (tall.x0 + tall.x1) / 2, y: tall.y1 - 4 },
+    560,
+    10,
+    0.595,
+    0.9,
+    1,
+  );
+  finish(context, oven, materials.blackGlass);
+  barHandle(context, materials, `${k.id} · madlo rúry`, { x: (tall.x0 + tall.x1) / 2, y: tall.y1 + 24 }, 480, true, 1.44);
+  for (const level of [0.45, 1.9]) {
+    const vertical = texturedBox(
+      context.scene,
+      `${k.id} · zvislá úchytka`,
+      { x: tall.x1 - 40, y: tall.y1 + 14 },
+      12,
+      12,
+      0.3,
+      level - 0.15,
+      1,
+    );
+    finish(context, vertical, materials.fireplace);
+  }
+  for (const level of [1.5, 0.9]) {
+    const joint = texturedBox(
+      context.scene,
+      `${k.id} · škára vysokej skrine`,
+      { x: (tall.x0 + tall.x1) / 2, y: tall.y1 + 2 },
+      tall.x1 - tall.x0 - 10,
+      4,
+      0.004,
+      level,
+      1,
+    );
+    finish(context, joint, materials.fireplace);
+  }
+
+  // ---- peninsula with the hob (D1.1.002 symbol) and a breakfast overhang
+  const pen = k.peninsulaRectMm;
+  const penCarcass = texturedBox(
+    context.scene,
+    `${k.id} · polostrov ${pen.x1 - pen.x0} × ${pen.y1 - pen.y0}`,
+    rectCenter(pen),
+    pen.x1 - pen.x0,
+    pen.y1 - pen.y0 - 20,
+    counterM - worktopM - plinthM,
+    plinthM,
+    1.2,
+  );
+  finish(context, penCarcass, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
+  const penPlinth = texturedBox(
+    context.scene,
+    `${k.id} · sokel polostrova`,
+    rectCenter(pen),
+    pen.x1 - pen.x0 - 80,
+    pen.y1 - pen.y0 - 100,
+    plinthM,
     0,
     1,
   );
-  finish(context, tallUnit, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
-  // Upper cabinets on the back wall.
-  const upper = texturedBox(
+  finish(context, penPlinth, materials.fireplace, { collide: true });
+  const penTop = texturedBox(
     context.scene,
-    `${KITCHEN_RUN.id} · horné skrinky`,
-    { x: (run.x0 + tall.x0) / 2, y: run.y0 + 175 },
-    tall.x0 - run.x0,
-    350,
-    0.8,
-    1.45,
+    `${k.id} · pracovná doska polostrova`,
+    { x: (pen.x0 + pen.x1) / 2, y: (pen.y0 + pen.y1) / 2 + 150 },
+    pen.x1 - pen.x0 + 20,
+    pen.y1 - pen.y0 + 320,
+    worktopM,
+    counterM - worktopM,
+    1.4,
+  );
+  finish(context, penTop, materials.worktop, { shadow: true, collide: true });
+  for (const xMm of [pen.x0 + 900, pen.x0 + 1800, pen.x0 + 3100, pen.x0 + 4000]) {
+    const joint = texturedBox(
+      context.scene,
+      `${k.id} · škára frontu polostrova`,
+      { x: xMm, y: pen.y0 - 2 },
+      4,
+      4,
+      counterM - worktopM - plinthM,
+      plinthM,
+      1,
+    );
+    finish(context, joint, materials.fireplace);
+  }
+  for (const xMm of [pen.x0 + 450, pen.x0 + 1350, pen.x0 + 2450, pen.x0 + 3550, pen.x0 + 4375]) {
+    barHandle(context, materials, `${k.id} · úchytka polostrova`, { x: xMm, y: pen.y0 - 14 }, 300, true, 0.8);
+  }
+  // Induction hob: black glass flush with the worktop, four ring marks.
+  const hob = texturedBox(
+    context.scene,
+    `${k.id} · indukčná varná doska`,
+    { x: k.hobCenterXmm, y: (pen.y0 + pen.y1) / 2 },
+    580,
+    510,
+    0.006,
+    counterM,
     1,
   );
-  finish(context, upper, materials.kitchenFront, { shadow: true });
+  finish(context, hob, materials.blackGlass);
+  for (const [dx, dy] of [[-140, -120], [140, -120], [-140, 120], [140, 120]]) {
+    const ring = CreateCylinder(
+      `${k.id} · varná zóna`,
+      { height: 0.002, diameter: 0.2, tessellation: 32 },
+      context.scene,
+    );
+    ring.position.set(xM(k.hobCenterXmm + dx), counterM + 0.007, zM((pen.y0 + pen.y1) / 2 + dy));
+    finish(context, ring, materials.steel);
+  }
+  // Island extractor above the hob.
+  const hood = texturedBox(
+    context.scene,
+    `${k.id} · ostrovný odsávač`,
+    { x: k.hobCenterXmm, y: (pen.y0 + pen.y1) / 2 },
+    900,
+    500,
+    0.08,
+    1.6,
+    1,
+  );
+  finish(context, hood, materials.steel, { shadow: true });
+  const duct = texturedBox(
+    context.scene,
+    `${k.id} · komín odsávača`,
+    { x: k.hobCenterXmm, y: (pen.y0 + pen.y1) / 2 },
+    300,
+    300,
+    1.1,
+    1.68,
+    1,
+  );
+  finish(context, duct, materials.steel);
+  // Three bar stools on the breakfast side.
+  for (const xMm of [pen.x0 + 3150, pen.x0 + 3750, pen.x0 + 4350]) {
+    const seat = CreateCylinder(`${k.id} · barová stolička`, { height: 0.04, diameter: 0.36, tessellation: 24 }, context.scene);
+    seat.position.set(xM(xMm), 0.68, zM(pen.y1 + 420));
+    finish(context, seat, materials.fireplace, { shadow: true, collide: true });
+    const stem = CreateCylinder(`${k.id} · noha stoličky`, { height: 0.66, diameter: 0.04, tessellation: 12 }, context.scene);
+    stem.position.set(xM(xMm), 0.33, zM(pen.y1 + 420));
+    finish(context, stem, materials.steel);
+    const foot = CreateCylinder(`${k.id} · podstava stoličky`, { height: 0.012, diameter: 0.4, tessellation: 24 }, context.scene);
+    foot.position.set(xM(xMm), 0.006, zM(pen.y1 + 420));
+    finish(context, foot, materials.steel);
+  }
 }
 
 interface Interval {

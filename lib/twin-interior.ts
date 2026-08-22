@@ -65,9 +65,17 @@ export interface InteriorDoor {
 
 export interface KitchenRun {
   readonly id: string;
+  /** Back run against the 1.06/1.07 wall: sink and dishwasher (D1.1.002). */
   readonly rectMm: RectMm;
   readonly counterHeightMm: number;
+  /** Fridge/oven column at the west end of the back run. */
   readonly tallUnitRectMm: RectMm;
+  readonly sinkCenterXmm: number;
+  readonly dishwasherXmm: readonly [number, number];
+  /** Parallel peninsula with the hob, 1 000 mm in front of the back run. */
+  readonly peninsulaRectMm: RectMm;
+  readonly hobCenterXmm: number;
+  readonly upperCabinets: { readonly bottomMm: number; readonly topMm: number; readonly depthMm: number };
 }
 
 export interface FireplacePier {
@@ -312,11 +320,22 @@ export const FIREPLACE_PIER: FireplacePier = Object.freeze({
   rectMm: { x0: 21543, y0: 14551, x1: 21890, y1: 15051 },
 });
 
+/**
+ * Kitchen traced from D1.1.002: a 2 900 back run (thick outline 22 791 –
+ * 25 691 × 10 949 – 11 550, 600 deep) with the sink and dishwasher symbols,
+ * and a 4 750 × 600 peninsula drawn 12 544 – 13 136 with the four-zone hob
+ * at x ≈ 24 090. Fronts, worktop and appliances are a design finish.
+ */
 export const KITCHEN_RUN: KitchenRun = Object.freeze({
   id: "KITCHEN-RUN",
   rectMm: { x0: 22791, y0: 10949, x1: 25691, y1: 11550 },
   counterHeightMm: 900,
-  tallUnitRectMm: { x0: 25090, y0: 10949, x1: 25691, y1: 11550 },
+  tallUnitRectMm: { x0: 22791, y0: 10949, x1: 23391, y1: 11550 },
+  sinkCenterXmm: 24300,
+  dishwasherXmm: [24700, 25300] as const,
+  peninsulaRectMm: { x0: 22791, y0: 12544, x1: 27541, y1: 13144 },
+  hobCenterXmm: 24090,
+  upperCabinets: { bottomMm: 1450, topMm: 2250, depthMm: 350 },
 });
 
 export const INTERIOR_DOORS: readonly InteriorDoor[] = [

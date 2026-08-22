@@ -136,6 +136,14 @@ export const SOURCES = {
     date: "21. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientRevision20260822: {
+    id: "SRC-CLIENT-20260822",
+    title: "Revízia stavebníka · interiér a štít terasy",
+    detail:
+      "Menšie krbové kachle s komínom hneď vedľa dverí na bazénovú terasu, opreté o západnú stenu obytného priestoru (murovaný pilier D1.1.002); štítová stena obytného priestoru ku krytej terase celá presklená bez plnej steny, jediné otváravé dverné krídlo; kuchyňa podľa pôdorysu D1.1.002 (zadná linka s drezom a umývačkou, polostrov s varnou doskou). Dôsledok: FV pole na dvorovej rovine posunuté o ďalších 1,1 m do záhrady kvôli odstupu od nového komína.",
+    date: "22. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
@@ -441,12 +449,17 @@ export const HOUSE = Object.freeze({
   chimneys: [
     {
       id: "CHIMNEY-LIVING-103",
-      centerMm: { x: 24190, y: 12700 } satisfies Point2Mm,
+      // 22. 8. 2026: the flue is the 347 × 500 masonry pier on the west wall
+      // of 1.03, right beside the terrace door; the stove leans on that wall.
+      centerMm: { x: 21716, y: 14801 } satisfies Point2Mm,
+      planMm: { widthMm: 346, depthMm: 500 },
+      previousCenterMm: { x: 24190, y: 12700 } satisfies Point2Mm,
       designCenterMm: { x: 24190, y: 11700 } satisfies Point2Mm,
       gardenShiftMm: 1000,
       zone: "MAIN_LIVING_AND_KITCHEN_1_03",
       baseSourceId: SOURCES.roofPlan.id,
-      sourceId: SOURCES.clientRevision20260821.id,
+      previousSourceId: SOURCES.clientRevision20260821.id,
+      sourceId: SOURCES.clientRevision20260822.id,
     },
   ] as const,
   removedChimneys: [
@@ -629,8 +642,22 @@ export const HOUSE = Object.freeze({
       frontYmm: 22035,
       glazingFaceYmm: 19535,
       clearDepthMm: 2500,
-      glazing: { startXmm: 21540, widthMm: 2500, heightMm: 2400, sillMm: 0 },
-      backWall: { startXmm: 24040, endXmm: 27540, cladding: "LARCH" },
+      // 22. 8. 2026: the whole end wall of 1.03 toward the porch is a glazed
+      // curtain wall from the floor up to the vaulted ceiling line, mullions
+      // every 1 250 mm, with a single hinged door leaf; no solid wall.
+      glazing: {
+        startXmm: 21540,
+        widthMm: 6000,
+        heightMm: 2750,
+        sillMm: 0,
+        gable: "GLAZED_TO_VAULT",
+        mullionXmm: [21540, 22790, 24040, 25040, 26290, 27540],
+        transomMm: 2750,
+        sourceId: SOURCES.clientRevision20260822.id,
+      },
+      door: { startXmm: 24040, widthMm: 1000, heightMm: 2400, hinge: "WEST" },
+      previousGlazing: { startXmm: 21540, widthMm: 2500, heightMm: 2400, sillMm: 0 },
+      previousBackWall: { startXmm: 24040, endXmm: 27540, cladding: "LARCH" },
       eastWallInnerXmm: 27540,
       cornerPillar: { startXmm: 21040, startYmm: 21535, sizeMm: 500 },
       westOpening: { startYmm: 19535, endYmm: 21535, heightMm: 3125 },
@@ -680,10 +707,13 @@ export const HOUSE = Object.freeze({
     placement: "GARDENWARD_ON_WING_INNER",
     towardTerraceId: "TERR-D1-WING",
     previousFirstModuleCenterMm: { x: 21820, y: 12600 } satisfies Point2Mm,
-    gardenShiftMm: 2000,
+    // 2 000 mm client shift (21. 8.) plus 1 100 mm (one column step) to clear
+    // the relocated flue on the wing inner roof plane (22. 8.).
+    gardenShiftMm: 3100,
+    chimneyClearanceShiftMm: 1100,
     rows: 2,
     columns: 3,
-    firstModuleCenterMm: { x: 21820, y: 14600 } satisfies Point2Mm,
+    firstModuleCenterMm: { x: 21820, y: 15700 } satisfies Point2Mm,
     rowStepMm: { x: 1550, y: 0 } satisfies Point2Mm,
     columnStepMm: { x: 0, y: 1100 } satisfies Point2Mm,
     moduleSlopeLengthMm: 1720,

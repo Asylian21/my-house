@@ -54,30 +54,42 @@ filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektric
 Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
 skutočné odlesky a animovaný filmový grain. Presety Záhrada a Ulica majú
 fyzickú výšku kamery 3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu.
-Orbitálne ovládanie používa jedinú frame-independent vstupnú cestu Babylonu:
-macOS momentum sa už nezdvojuje vlastným glide efektom, zoom smeruje k bodu
-pod kurzorom a rotácia, posun aj zoom majú krátku zhodnú zotrvačnosť.
-Citlivosť posunu je zámerne tlmená pre touchpad; koliesko aj pinch ostávajú
-plynulé a prehliadač ich počas práce s modelom nepreberá. V režime Prelet
-koliesko doluje pozdĺž pohľadového lúča. K dispozícii je aj samostatný režim
-**Prelet**: stabilná
+Orbitálny zoom používa exponenciálny model vlastnej implementácie: každá
+udalosť kolieska násobí cieľový polomer faktorom `exp(gain · px)`, pričom
+touchpad scroll, momentum, fyzické koliesko aj pinch (wheel + ctrl) sú
+normalizované na pixle a pinch má päťnásobnú citlivosť. Glide polomeru je
+framerate-nezávislý s polčasom 42 ms a vždy dobehne presne do cieľa, takže
+reakcia je rovnaká pri každom priblížení aj obnovovacej frekvencii; v režime
+Prelet koliesko doluje pozdĺž
+pohľadového lúča. K dispozícii je aj samostatný režim **Prelet**: stabilná
 world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým ovládačom a
 bezpečným návratom do orbitálnych pohľadov.
 
-Režim **Postava** (kláves G) je GTA-style pohyb po interiéri, terase aj
-záhrade. Má samostatnú kolíznu kapsulu, viditeľnú low-poly postavu, kameru
-za ramenom s kolíziou o steny a režimy za postavou / blízko / z očí (V).
-Q prepína rameno, kliknutie zapína voľný pointer-lock rozhľad, Escape najprv
-uvoľní kurzor a druhé stlačenie režim ukončí. WASD sa vždy orientuje podľa
-kamery, Shift zapína beh a trackpad, koliesko alebo pinch menia iba vzdialenosť
-kamery — neposúvajú postavu. Vnútorné
+Režim **Interiér** (kláves G) je prechádzka domom s postavou z pohľadu
+tretej osoby. Postava je textúrovaná rigovaná ženská figúra Mixamo „Michelle“
+(`public/assets/avatar/avatar.glb`, zdroj: ukážkové modely three.js), na ktorej
+kostru sú offline preretargetované Mixamo lokomočné klipy Idle/Walk/Run z
+modelu „Vanguard/Soldier“ (`tools/avatar/retarget.mjs`: zhoda svetových
+orientácií kostí oproti obom T-pózam, zarovnanie smeru postáv, preškálovaný
+posun bokov). Mixamo assety podliehajú licencii Adobe Mixamo (použitie
+v projekte áno, samostatná redistribúcia nie); textúry figúry majú 512 px, čo
+je hranica realizmu dostupných voľných rigovaných postáv. Ovládanie: W A S D
+chôdza v smere kamery, ťahanie otáča kameru okolo postavy, Shift beh, koliesko
+priblíženie, V prepne pohľad z očí; pohyb má krátke zrýchlenie a dobeh
+(`WALK_CAMERA` v `lib/twin-viewport-contract.ts`), postava sa otáča do smeru
+chôdze, kamera sa po 1,4 s bez ťahania sama vracia za postavu a nikdy
+neprechádza stenou (kolízny polomer 0,22 m). Animácie Idle/Walk/Run sa
+miešajú podľa rýchlosti a klipy sú časovo škálované, aby nohy nekĺzali.
+Staršia verzia režimu bola iba kamera vo výške očí 1,65 m; tá zostáva ako
+pohľad z očí (V). Vnútorné
 nosné steny, priečky 140 mm, dvere so zárubňami a otvorenými krídlami,
 podlahy podľa legendy miestností (keramická dlažba, vinyl, epoxidová stierka),
 SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
 2 750 → 4 850 mm sú odčítané z vektorov výkresu D1.1.002 (`lib/twin-interior.ts`,
-hrúbka stien z obrysov 1,44 pt v mierke 1:100). Steny, oplotenie, zatvorené
-brány a bazén postavu zastavia; otvorené interiérové dvere a presklené steny
-terás zostávajú priechodné. HUD ponúka zbalený vstup do každej z dvanástich
+hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
+prelet (WASD, ťahanie, Shift/Alt, koliesko krok), steny ho zastavia cez
+kolízny elipsoid 0,26 × 0,42 m, otvorené interiérové dvere a presklené steny
+terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
 nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,
@@ -85,6 +97,27 @@ kachle pri komíne a soklové lišty sú ilustračný návrh, nie projektová
 špecifikácia. Sklo je od tejto revízie skutočne priehľadné (alfa prekrytie s
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
+
+Revízia stavebníka z 22. 8. 2026 (`SOURCES.clientRevision20260822`) mení tri
+veci v obytnom priestore 1.03: kachle s komínom sú menšie a stoja hneď vedľa
+dverí na bazénovú terasu opreté o západnú stenu — dymovod vedie do murovaného
+piliera 346 × 500 z výkresu D1.1.002, ktorý je teraz komínovým telesom
+(`HOUSE.chimneys[0]`, prestup strechou na dvorovej rovine, FV pole preto
+posunuté o ďalší stĺpcový krok 1,1 m do záhrady); štítová stena k prístrešku je
+celá presklená až po líniu šikmého podhľadu (stĺpiky po 1 250 mm, priečnik na
++2,750, štítové zasklenie po vrchol 4,85 m, modřínový pás zostáva len medzi
+podhľadom a strechou) s jediným otváravým dverným krídlom 1 000 mm; kuchyňa
+je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
+vysoká skriňa s chladničkou a rúrou, biele horné skrinky s LED lištou a tmavý
+kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným
+odsávačom a barovými stoličkami (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
+kremeň `stone-dark`). Okná a dvere sú stavané ako skutočné výplne
+(`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
+profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
+ušami a nosom, exteriérový hliníkový parapet s okapnicou a bočnicami, zdvižno‑
+posuvné dvere s pevným a posuvným krídlom na dvoch koľajniciach a vstupné
+dvere s bočným svetlíkom. Pevné sklá zastavujú chodca, posuvné a dverné
+krídla sú priechodné.
 
 Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
 obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú
@@ -94,7 +127,8 @@ nad korunou múru šikmou hlavou až k debneniu strechy, biele lemovacie dosky
 visí na východnom odkvape (x = 28 040) namiesto voľne stojaceho stĺpika v
 otvorenom čele terasy, kde žiadny žľab nie je.
 
-Interiérové PBR sady `vinyl-oak`, `tile-porcelain`, `epoxy-grey` a `tile-wall`
+Interiérové PBR sady `vinyl-oak`, `tile-porcelain`, `epoxy-grey`, `tile-wall`,
+`oak-veneer` a `stone-dark`
 vznikajú rovnakým deterministickým generátorom
 (`python3 tools/generate-visual-assets.py interior`).
 Textúra trávnika `lawn-albedo.jpg` a botanické karty
@@ -148,6 +182,8 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 - `lib/twin-interior.ts` — miestnosti, vnútorné steny a dvere 1.NP odčítané z D1.1.002,
 - `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy, pohyb voľnej kamery a chodca,
 - `lib/babylon-interior.ts` — stavba interiérového vybavenia zo záznamu miestností,
+- `lib/babylon-openings.ts` — okná, parapety, posuvné a vstupné dvere,
+- `lib/babylon-avatar.ts` — postava prechádzky, jej kolízie, animácie a sledovacia kamera,
 - `lib/babylon-scene.ts` — jediná hranica medzi milimetrami domény a metrami Babylon scény,
 - `app/twin-studio.tsx` — prístupný DOM prieskumník, inspector a stav pracovného priestoru,
 - `app/babylon-viewport.tsx` — client-only životný cyklus WebGL canvasu.

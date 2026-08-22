@@ -298,6 +298,37 @@ def gen_wall_tile(size=1024, fname="tile-wall"):
     save(normal_from_height(height, 1.6), f"{OUT}/{fname}-normal.jpg")
 
 
+
+# ---------------------------------------------------------------- interior: oak veneer kitchen fronts (matt, straight grain)
+def gen_oak_veneer(size=1024, fname="oak-veneer"):
+    h = w = size
+    grain = fbm((h, w // 16), octaves=6, persistence=0.6, seed=1201)
+    grain = np.array(Image.fromarray((grain * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC)) / 255.0
+    fine = fbm((h, w), octaves=7, persistence=0.7, seed=1202)
+    base = np.array((205, 176, 134), dtype=np.float64)
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    streak = (grain - 0.5) * 26 + (fine - 0.5) * 8
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + streak * (1.1 - ch * 0.15), 110, 235)
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(grain * 0.25 + fine * 0.08, 1.2), f"{OUT}/{fname}-normal.jpg")
+
+
+# ---------------------------------------------------------------- interior: dark quartz worktop
+def gen_stone_dark(size=1024, fname="stone-dark"):
+    h = w = size
+    n = fbm((h, w), octaves=5, seed=1301)
+    r = np.random.default_rng(1302)
+    speck = r.random((h, w))
+    base = np.array((58, 60, 62), dtype=np.float64)
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + (n - 0.5) * 14, 35, 90)
+    albedo[speck > 0.985] = (120, 122, 124)
+    albedo[speck < 0.006] = (22, 22, 24)
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
+    save(normal_from_height(n * 0.05, 0.4), f"{OUT}/{fname}-normal.jpg")
+
 import sys
 
 if "interior" in sys.argv:
@@ -307,6 +338,8 @@ if "interior" in sys.argv:
     gen_tile()
     gen_epoxy()
     gen_wall_tile()
+    gen_oak_veneer()
+    gen_stone_dark()
     print("INTERIOR DONE")
     sys.exit(0)
 

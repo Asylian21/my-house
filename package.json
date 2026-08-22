@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@babylonjs/core": "^9.21.2",
+    "@babylonjs/loaders": "^9.21.2",
     "drizzle-orm": "0.45.2",
     "earcut": "^3.2.3",
     "lucide-react": "^1.31.0",

@@ -56,8 +56,8 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /aria-label="Kamera a navigácia"/);
   assert.match(html, /aria-label="Spustiť voľný 3D prelet"/);
   assert.match(html, /aria-keyshortcuts="H"/);
-  assert.match(html, /H spustí voľný 3D prelet a G režim postavy/);
-  assert.match(html, /aria-label="Spustiť režim postavy"/);
+  assert.match(html, /H spustí voľný 3D prelet a G prechádzku interiérom/);
+  assert.match(html, /aria-label="Prejsť sa interiérom domu"/);
   assert.match(html, /aria-keyshortcuts="G"/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
   assert.doesNotMatch(html, /Overené 04|12 % realizácie|react-loading-skeleton/);
@@ -78,43 +78,31 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /controllerRef\.current\?\.dispose\(\)/);
   assert.match(scene, /adaptToDeviceRatio: false/);
   assert.match(scene, /setHardwareScalingLevel\(/);
-  assert.doesNotMatch(
+  assert.match(
     scene,
     /removeByType\("ArcRotateCameraMouseWheelInput"\)/,
   );
-  assert.match(scene, /useNaturalPinchZoom =\s*ORBIT_CONTROLS\.useNaturalPinchZoom/);
-  assert.match(scene, /zoomToMouseLocation =\s*ORBIT_CONTROLS\.zoomToMouseLocation/);
-  assert.match(scene, /!ORBIT_CONTROLS\.preventBrowserGesture/);
-  // Orbit and chase cameras use Babylon's one frame-independent wheel path;
-  // the direct DOM listener remains scoped to helicopter dolly only.
+  assert.match(scene, /useNaturalPinchZoom = ORBIT_ZOOM\.useNaturalPinchZoom/);
+  assert.match(scene, /!ORBIT_ZOOM\.preventBrowserGesture/);
+  // Dedicated exponential wheel zoom: normalized pixels, pinch gain and a
+  // framerate-independent glide, with the canvas listener owning the gesture.
   assert.match(scene, /addEventListener\("wheel", this\.handleCanvasWheel/);
-  assert.match(scene, /if \(this\.navigationMode !== "flight"\) return/);
   assert.match(scene, /normalizeWheelPixels\(event\)/);
-  assert.doesNotMatch(scene, /orbitZoomMultiplier|stepOrbitZoom|orbitZoomTarget/);
-  assert.match(scene, /this\.orbitCamera,\s*this\.flightCamera,\s*this\.personCamera/);
+  assert.match(scene, /orbitZoomMultiplier\(pixels, gesture\)/);
+  // The glide step lives in the contract (`stepOrbitZoom` wraps
+  // `easeOrbitRadius`) so the scene only consumes the settled result.
+  assert.match(scene, /stepOrbitZoom\(/);
+  assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   // Water keeps true refraction; glazing is alpha-blended so the interior
   // fit-out shows through from outside and the terrace from inside.
   assert.match(scene, /poolWater\.subSurface\.isRefractionEnabled = true/);
   assert.match(scene, /glass\.subSurface\.isRefractionEnabled = false/);
-  // Person mode: independent actor, visible avatar, chase camera and pointer lock.
+  // Walkthrough: collider-driven walking with the interior fit-out.
   assert.match(scene, /enterWalkthrough\(/);
   assert.match(scene, /Collisions\/collisionCoordinator/);
-  assert.match(scene, /integrateWalkPosition\(/);
-  assert.match(scene, /"person-camera"/);
-  assert.match(scene, /CreateCapsule\(/);
-  assert.match(scene, /personCollider\.moveWithCollisions\(/);
-  assert.match(scene, /stepPersonCameraBoom\(/);
-  assert.match(scene, /scene\.pickWithRay\(/);
-  assert.match(scene, /cameraOccluder/);
-  assert.match(scene, /const rayOffsets =/);
-  assert.match(scene, /garageDoor\.checkCollisions = true/);
-  assert.match(scene, /private leavePersonMode\(\) \{[\s\S]{0,180}?clearFlightInput\(\)/);
-  assert.match(scene, /pointerlockchange/);
-  assert.match(scene, /pointerlockerror/);
-  assert.match(viewport, /POSTAVA/);
-  assert.match(viewport, /Pohľad:/);
-  assert.match(viewport, /Premiestniť sa/);
+  assert.match(scene, /AvatarController/);
+  assert.match(scene, /buildPorchCurtainWall\(/);
   assert.match(scene, /pool-water-normal\.png/);
   assert.match(scene, /hedge-privet-albedo\.png/);
   assert.match(scene, /krížená botanická karta/);
@@ -156,14 +144,20 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     ["../public/assets/textures/epoxy-grey-normal.jpg", "ffd8ff"],
     ["../public/assets/textures/tile-wall-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/tile-wall-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/oak-veneer-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/oak-veneer-normal.jpg", "ffd8ff"],
+    ["../public/assets/textures/stone-dark-albedo.jpg", "ffd8ff"],
+    ["../public/assets/textures/stone-dark-normal.jpg", "ffd8ff"],
+    ["../public/assets/avatar/avatar.glb", "676c5446"],
     ["../public/assets/textures/hedge-privet-albedo.png", "89504e470d0a1a0a"],
     ["../public/assets/textures/pool-water-normal.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/perennial-cluster-card.png", "89504e470d0a1a0a"],
   ];
-  const [sceneSource, interiorSource, readme] = await Promise.all([
+  const [sceneSource, interiorSource, avatarSource, readme] = await Promise.all([
     readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-interior.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/babylon-avatar.ts", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
   ]);
 
@@ -179,7 +173,12 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     const textureName = publicUrl
       .replace("/assets/textures/", "")
       .replace(".jpg", "");
-    const wired = [sceneSource, interiorSource].some(
+    if (publicUrl.endsWith(".glb")) {
+      assert.ok(avatarSource.includes(publicUrl), `${publicUrl} is not wired into Babylon`);
+      assert.ok(readme.includes("avatar.glb"), `${relativePath} is not disclosed`);
+      continue;
+    }
+    const wired = [sceneSource, interiorSource, avatarSource].some(
       (source) =>
         source.includes(publicUrl) ||
         source.includes(`"${textureName}"`) ||

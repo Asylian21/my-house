@@ -16,7 +16,6 @@ import type { FoundationStrip, LayerId, ViewMode } from "@/lib/twin-site";
 import type {
   FlightCommand,
   NavigationMode,
-  PersonCameraView,
   RenderQualityProfile,
 } from "@/lib/twin-viewport-contract";
 import { INTERIOR_ROOMS } from "@/lib/twin-interior";
@@ -25,15 +24,9 @@ export interface BabylonViewportHandle {
   setCameraPreset: (preset: CameraPreset) => void;
   setNavigationMode: (mode: NavigationMode) => void;
   enterWalkthrough: (roomId?: string) => void;
+  setWalkView: (view: "third" | "first") => void;
   setFlightCommand: (command: FlightCommand, active: boolean) => void;
   nudgeFlight: (command: FlightCommand) => void;
-  setPersonRunning: (active: boolean) => void;
-  cyclePersonView: () => PersonCameraView | undefined;
-  togglePersonShoulder: () => -1 | 1 | undefined;
-  lockPersonLook: () => boolean;
-  releasePersonLook: () => boolean;
-  isPersonLookLocked: () => boolean;
-  consumePersonEscape: () => boolean;
 }
 
 interface BabylonViewportProps {
@@ -44,7 +37,6 @@ interface BabylonViewportProps {
   navigationMode: NavigationMode;
   onSelect: (id: string) => void;
   onNavigationModeChange: (mode: NavigationMode) => void;
-  onPersonModeRequest: () => void;
 }
 
 export const BabylonViewport = forwardRef<
@@ -59,7 +51,6 @@ export const BabylonViewport = forwardRef<
     navigationMode,
     onSelect,
     onNavigationModeChange,
-    onPersonModeRequest,
   },
   ref,
 ) {
@@ -71,12 +62,7 @@ export const BabylonViewport = forwardRef<
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
   const [walkRoom, setWalkRoom] = useState<string>("");
-  const [personView, setPersonView] =
-    useState<PersonCameraView>("shoulder");
-  const [personShoulder, setPersonShoulder] = useState<-1 | 1>(1);
-  const [personLookState, setPersonLookState] =
-    useState<"paused" | "locking" | "locked" | "error">("paused");
-  const [personRunning, setPersonRunning] = useState(false);
+  const [walkView, setWalkView] = useState<"third" | "first">("third");
 
   onSelectRef.current = onSelect;
   navigationModeRef.current = navigationMode;
@@ -92,32 +78,15 @@ export const BabylonViewport = forwardRef<
     enterWalkthrough(roomId) {
       controllerRef.current?.enterWalkthrough(roomId);
     },
+    setWalkView(view) {
+      controllerRef.current?.setWalkView(view);
+      setWalkView(view);
+    },
     setFlightCommand(command, active) {
       controllerRef.current?.setFlightCommand(command, active);
     },
     nudgeFlight(command) {
       controllerRef.current?.nudgeFlight(command);
-    },
-    setPersonRunning(active) {
-      controllerRef.current?.setPersonRunning(active);
-    },
-    cyclePersonView() {
-      return controllerRef.current?.cyclePersonView();
-    },
-    togglePersonShoulder() {
-      return controllerRef.current?.togglePersonShoulder();
-    },
-    lockPersonLook() {
-      return controllerRef.current?.lockPersonLook() ?? false;
-    },
-    releasePersonLook() {
-      return controllerRef.current?.releasePersonLook() ?? false;
-    },
-    isPersonLookLocked() {
-      return controllerRef.current?.isPersonLookLocked() ?? false;
-    },
-    consumePersonEscape() {
-      return controllerRef.current?.consumePersonEscape() ?? false;
     },
   }), []);
 
@@ -199,20 +168,14 @@ export const BabylonViewport = forwardRef<
   useEffect(() => {
     if (status !== "ready" || navigationMode !== "walk") {
       setWalkRoom("");
-      setPersonLookState("paused");
-      setPersonRunning(false);
       return;
     }
     const read = () => {
-      const controller = controllerRef.current;
-      const room = controller?.getWalkRoom();
+      const room = controllerRef.current?.getWalkRoom();
       setWalkRoom(room ? `${room.number} · ${room.name}` : "Exteriér · terasa a záhrada");
-      setPersonView(controller?.getPersonCameraView() ?? "shoulder");
-      setPersonShoulder(controller?.getPersonShoulderSide() ?? 1);
-      setPersonLookState(controller?.getPersonLookState() ?? "paused");
     };
     read();
-    const timer = window.setInterval(read, 200);
+    const timer = window.setInterval(read, 400);
     return () => window.clearInterval(timer);
   }, [status, navigationMode]);
 
@@ -259,15 +222,14 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Režim postavy. Kliknutie do scény zapne voľný rozhľad myšou, ťahanie zostáva dostupné na trackpade a dotyku. W A S D ovládajú pohyb, Shift beh, V mení pohľad, Q prepína rameno a Escape uvoľní kurzor."
-            : "Interaktívny technický model. Ťahaním model otáčate, pravým alebo Control ťahaním posúvate a trackpadom, kolieskom alebo pinch gestom plynulo približujete k ukazovateľu. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G režim postavy."}
+            ? "Prechádzka domom s postavou. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
+            : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
         ref={canvasRef}
         className="scene-canvas"
         tabIndex={0}
         aria-label="Ovládanie 3D modelu"
-        aria-describedby="canvas-instructions"
         onKeyDown={(event) => {
           if (event.key === "1") applyPreset("axonometric");
           if (event.key === "2") applyPreset("top");
@@ -280,7 +242,14 @@ export const BabylonViewport = forwardRef<
           }
           if (event.key.toLowerCase() === "g") {
             event.preventDefault();
-            onPersonModeRequest();
+            if (navigationMode === "walk") setMode("orbit");
+            else controllerRef.current?.enterWalkthrough();
+          }
+          if (event.key.toLowerCase() === "v" && navigationMode === "walk") {
+            event.preventDefault();
+            const next = walkView === "third" ? "first" : "third";
+            controllerRef.current?.setWalkView(next);
+            setWalkView(next);
           }
         }}
       />
@@ -294,90 +263,25 @@ export const BabylonViewport = forwardRef<
         </div>
       )}
       {status === "ready" && navigationMode === "walk" && (
-        <div className={`flight-hud walk-hud ${personLookState === "locked" ? "is-look-locked" : ""}`}>
-          <div className="walk-status" role="status" aria-live="polite">
-            <span>POSTAVA · {walkRoom || "INTERIÉR 1.NP"}</span>
-            <strong className="walk-fine-copy">WASD pohyb · trackpad / myš kamera</strong>
-            <strong className="walk-coarse-copy">Tlačidlá pohyb · ťahanie kamerou</strong>
-            <small>
-              {personLookState === "locked"
-                ? "Voľný rozhľad aktívny · Esc uvoľní kurzor"
-                : personLookState === "error"
-                  ? "Voľný rozhľad sa nepodarilo zapnúť · ťahanie zostáva aktívne"
-                  : "Shift beh · šípky kamera · V pohľad · Q rameno"}
-            </small>
-          </div>
-          <div className="walk-actions" role="group" aria-label="Kamera postavy">
-            <button
-              type="button"
-              aria-keyshortcuts="V"
-              onClick={(event) => {
-                event.stopPropagation();
-                const next = controllerRef.current?.cyclePersonView();
-                if (next) setPersonView(next);
-              }}
-            >
-              Pohľad: {personView === "shoulder" ? "za postavou" : personView === "close" ? "blízko" : "z očí"}
-            </button>
-            {personView !== "first-person" && (
+        <div className="flight-hud walk-hud" role="status" aria-live="polite">
+          <span>PRECHÁDZKA · {walkRoom || "INTERIÉR 1.NP"}</span>
+          <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
+          <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · Esc koniec</small>
+          <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
+            {INTERIOR_ROOMS.map((room) => (
               <button
+                key={room.id}
                 type="button"
-                aria-label={personShoulder < 0 ? "Kamera je na ľavom ramene, prepnúť na pravé" : "Kamera je na pravom ramene, prepnúť na ľavé"}
-                aria-keyshortcuts="Q"
+                aria-label={`Prejsť do ${room.number} ${room.name}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  const next = controllerRef.current?.togglePersonShoulder();
-                  if (next) setPersonShoulder(next);
+                  controllerRef.current?.enterWalkthrough(room.id);
                 }}
               >
-                Rameno: {personShoulder < 0 ? "ľavé" : "pravé"}
+                {room.number}
               </button>
-            )}
-            {personLookState !== "locked" && (
-              <button
-                type="button"
-                className="walk-look-control"
-                disabled={personLookState === "locking"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  controllerRef.current?.lockPersonLook();
-                }}
-              >
-                {personLookState === "locking" ? "Zapínam rozhľad…" : "Zapnúť voľný rozhľad"}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onPersonModeRequest();
-              }}
-            >
-              Ukončiť režim
-            </button>
+            ))}
           </div>
-          <details className="walk-relocate">
-            <summary>Premiestniť sa</summary>
-            <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
-              {INTERIOR_ROOMS.map((room) => (
-                <button
-                  key={room.id}
-                  type="button"
-                  aria-label={`Prejsť do ${room.number} ${room.name}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    controllerRef.current?.enterWalkthrough(room.id);
-                    event.currentTarget
-                      .closest("details")
-                      ?.removeAttribute("open");
-                  }}
-                >
-                  <strong>{room.number}</strong>
-                  <small>{room.name}</small>
-                </button>
-              ))}
-            </div>
-          </details>
         </div>
       )}
       {status === "ready" && (navigationMode === "flight" || navigationMode === "walk") && (
@@ -392,26 +296,17 @@ export const BabylonViewport = forwardRef<
           <div
             className="flight-control-pad"
             role="group"
-            aria-label={navigationMode === "walk" ? "Dotykové ovládanie postavy" : "Dotykové ovládanie voľného preletu"}
+            aria-label="Dotykové ovládanie voľného preletu"
           >
-            {(navigationMode === "walk"
-              ? ([
-                  ["forward", "↑", "Ísť dopredu"],
-                  ["left", "←", "Ísť doľava"],
-                  ["backward", "↓", "Ísť dozadu"],
-                  ["right", "→", "Ísť doprava"],
-                ] as const)
-              : ([
-                  ["forward", "↑", "Letieť dopredu"],
-                  ["left", "←", "Letieť doľava"],
-                  ["backward", "↓", "Letieť dozadu"],
-                  ["right", "→", "Letieť doprava"],
-                  ["up", "+", "Stúpať"],
-                  ["down", "−", "Klesať"],
-                ] as const)
-            ).map(([command, glyph, label]) => (
+            {([
+              ["forward", "↑", "Letieť dopredu"],
+              ["left", "←", "Letieť doľava"],
+              ["backward", "↓", "Letieť dozadu"],
+              ["right", "→", "Letieť doprava"],
+              ["up", "+", "Stúpať"],
+              ["down", "−", "Klesať"],
+            ] as const).map(([command, glyph, label]) => (
               <button
-                type="button"
                 key={command}
                 className={`flight-command flight-${command}`}
                 aria-label={label}
@@ -427,30 +322,11 @@ export const BabylonViewport = forwardRef<
                 <span aria-hidden="true">{glyph}</span>
               </button>
             ))}
-            {navigationMode === "walk" && (
-              <button
-                type="button"
-                className={`flight-command flight-run ${personRunning ? "active" : ""}`}
-                aria-label={personRunning ? "Vypnúť beh" : "Zapnúť beh"}
-                aria-pressed={personRunning}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  const next = !personRunning;
-                  setPersonRunning(next);
-                  controllerRef.current?.setPersonRunning(next);
-                }}
-              >
-                <span aria-hidden="true">⇧</span>
-              </button>
-            )}
             <button
-              type="button"
               className="flight-exit"
-              aria-label={navigationMode === "walk" ? "Ukončiť režim postavy" : "Ukončiť voľný prelet"}
               onClick={(event) => {
                 event.stopPropagation();
-                if (navigationMode === "walk") onPersonModeRequest();
-                else setMode("orbit");
+                setMode("orbit");
               }}
             >
               Ukončiť

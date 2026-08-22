@@ -259,8 +259,9 @@ describe("site evidence seed", () => {
       placement: "GARDENWARD_ON_WING_INNER",
       towardTerraceId: "TERR-D1-WING",
       previousFirstModuleCenterMm: { x: 21_820, y: 12_600 },
-      gardenShiftMm: 2_000,
-      firstModuleCenterMm: { x: 21_820, y: 14_600 },
+      gardenShiftMm: 3_100,
+      chimneyClearanceShiftMm: 1_100,
+      firstModuleCenterMm: { x: 21_820, y: 15_700 },
       rowStepMm: { x: 1_550, y: 0 },
       columnStepMm: { x: 0, y: 1_100 },
     });
@@ -287,17 +288,17 @@ describe("site evidence seed", () => {
         })),
     ).flat();
     expect(photovoltaicCenters).toEqual([
-      { x: 21_820, y: 14_600 },
-      { x: 23_370, y: 14_600 },
       { x: 21_820, y: 15_700 },
       { x: 23_370, y: 15_700 },
       { x: 21_820, y: 16_800 },
       { x: 23_370, y: 16_800 },
+      { x: 21_820, y: 17_900 },
+      { x: 23_370, y: 17_900 },
     ]);
     expect(
       sceneZM(HOUSE.photovoltaics.firstModuleCenterMm.y) -
         sceneZM(HOUSE.photovoltaics.previousFirstModuleCenterMm.y),
-    ).toBe(-2);
+    ).toBeCloseTo(-3.1, 6);
     for (const center of photovoltaicCenters) {
       const mount = roofMountTransform(
         HOUSE.photovoltaics.roofFace,
@@ -344,11 +345,13 @@ describe("site evidence seed", () => {
         expect(overlapsChimneyCap).toBe(false);
       }
     }
+    // The nearest module row starts well clear of the flue cap (pier end
+    // 15 051 + cap overhang): 15 700 − 530 − 15 051 − 40 ≥ 0.
     expect(
       Math.min(...photovoltaicCenters.map(({ y }) => y)) -
         (HOUSE.photovoltaics.moduleRidgeWidthMm + 40) / 2 -
-        (HOUSE.chimneys[0].centerMm.y + 290),
-    ).toBe(1_080);
+        (HOUSE.chimneys[0].centerMm.y + HOUSE.chimneys[0].planMm.depthMm / 2 + 40),
+    ).toBeGreaterThanOrEqual(0);
     expect(HOUSE.facades.front.garageDoor).toMatchObject({
       id: "GARAGE-DOOR",
       startXmm: 6_940,
@@ -374,24 +377,30 @@ describe("site evidence seed", () => {
     expect(HOUSE.chimneys).toEqual([
       {
         id: "CHIMNEY-LIVING-103",
-        centerMm: { x: 24_190, y: 12_700 },
+        centerMm: { x: 21_716, y: 14_801 },
+        planMm: { widthMm: 346, depthMm: 500 },
+        previousCenterMm: { x: 24_190, y: 12_700 },
         designCenterMm: { x: 24_190, y: 11_700 },
         gardenShiftMm: 1_000,
         zone: "MAIN_LIVING_AND_KITCHEN_1_03",
         baseSourceId: SOURCES.roofPlan.id,
-        sourceId: SOURCES.clientRevision20260821.id,
+        previousSourceId: SOURCES.clientRevision20260821.id,
+        sourceId: SOURCES.clientRevision20260822.id,
       },
     ]);
+    // The flue is the D1.1.002 pier on the west wall of 1.03, next to the
+    // 2 250 terrace door (11 550 – 13 800), and stays on the wing inner plane.
+    const flue = HOUSE.chimneys[0];
+    expect(flue.centerMm.x - flue.planMm.widthMm / 2).toBe(21_543);
+    expect(flue.centerMm.y - flue.planMm.depthMm / 2).toBeGreaterThan(
+      HOUSE.facades.wingWest.opening.startYmm + HOUSE.facades.wingWest.opening.widthMm,
+    );
+    expect(flue.centerMm.x + flue.planMm.widthMm / 2).toBeLessThan(
+      HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.roof.wingHalfSpanMm,
+    );
     expect(
-      sceneZM(HOUSE.chimneys[0].centerMm.y) -
-        sceneZM(HOUSE.chimneys[0].designCenterMm.y),
+      sceneZM(flue.previousCenterMm.y) - sceneZM(flue.designCenterMm.y),
     ).toBe(-1);
-    expect(
-      HOUSE.originMm.x +
-        HOUSE.wing.xMm +
-        HOUSE.roof.wingHalfSpanMm -
-        (HOUSE.chimneys[0].centerMm.x + 290),
-    ).toBe(60);
     expect(HOUSE.removedChimneys).toEqual([
       {
         id: "CHIMNEY-ROOM-109",
@@ -1255,15 +1264,25 @@ describe("documented D1 covered porches and terrace zones", () => {
     const porch = HOUSE.porches.wingEnd;
     expect(porch.frontYmm).toBe(HOUSE.facades.wingEnd.faceYmm);
     expect(porch.frontYmm - porch.glazingFaceYmm).toBe(porch.clearDepthMm);
-    expect(porch.glazing.startXmm).toBe(
+    // D1 record: the 2 500 glazed wall and the larch back wall.
+    expect(porch.previousGlazing.startXmm).toBe(
       HOUSE.facades.wingEnd.opening.roughOpeningStartXmm,
     );
-    expect(porch.glazing.widthMm).toBe(
+    expect(porch.previousGlazing.widthMm).toBe(
       HOUSE.facades.wingEnd.opening.roughOpeningWidthMm,
     );
-    expect(porch.backWall.startXmm).toBe(
-      porch.glazing.startXmm + porch.glazing.widthMm,
+    expect(porch.previousBackWall.startXmm).toBe(
+      porch.previousGlazing.startXmm + porch.previousGlazing.widthMm,
     );
+    // 22. 8. 2026: full-width curtain wall with one hinged door leaf.
+    expect(porch.glazing.startXmm).toBe(21_540);
+    expect(porch.glazing.startXmm + porch.glazing.widthMm).toBe(porch.eastWallInnerXmm);
+    expect(porch.glazing.gable).toBe("GLAZED_TO_VAULT");
+    expect(porch.glazing.mullionXmm[0]).toBe(porch.glazing.startXmm);
+    expect(porch.glazing.mullionXmm.at(-1)).toBe(porch.glazing.startXmm + porch.glazing.widthMm);
+    expect(porch.glazing.mullionXmm).toContain(porch.door.startXmm);
+    expect(porch.glazing.mullionXmm).toContain(porch.door.startXmm + porch.door.widthMm);
+    expect(porch.door.widthMm).toBe(1_000);
     expect(porch.cornerPillar.sizeMm).toBe(500);
     // The porch is open to the roof: the larch gable sits on the recessed
     // plane, so nothing closes the front above the opening.
