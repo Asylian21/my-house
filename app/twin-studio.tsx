@@ -559,12 +559,23 @@ export function TwinStudio() {
   };
 
   const toggleLayer = (layer: LayerId) => {
+    if (navigationMode === "walk" && layer === "building") return;
     setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
   };
 
   const showCameraPreset = (preset: CameraPreset) => {
     setNavigationMode("orbit");
     viewportRef.current?.setCameraPreset(preset);
+  };
+
+  const handleViewportNavigationModeChange = (next: NavigationMode) => {
+    setNavigationMode(next);
+    if (next === "walk") {
+      setVisibleLayers((current) =>
+        current.building ? current : { ...current, building: true },
+      );
+      setViewMode("realistic");
+    }
   };
 
   const toggleFlight = () => {
@@ -577,7 +588,11 @@ export function TwinStudio() {
     const next = navigationMode === "walk" ? "orbit" : "walk";
     setNavigationMode(next);
     if (next === "walk") {
-      // Walkthrough always needs the realistic fit-out to be visible.
+      // Walkthrough always needs both the shell collision layer and the
+      // realistic fit-out. This also recovers from a previously hidden house.
+      setVisibleLayers((current) =>
+        current.building ? current : { ...current, building: true },
+      );
       setViewMode("realistic");
       viewportRef.current?.enterWalkthrough();
     } else {
@@ -832,7 +847,7 @@ export function TwinStudio() {
           viewMode={viewMode}
           navigationMode={navigationMode}
           onSelect={select}
-          onNavigationModeChange={setNavigationMode}
+          onNavigationModeChange={handleViewportNavigationModeChange}
         />
 
         <div className="truth-card">

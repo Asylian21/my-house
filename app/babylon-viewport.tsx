@@ -25,6 +25,7 @@ export interface BabylonViewportHandle {
   setNavigationMode: (mode: NavigationMode) => void;
   enterWalkthrough: (roomId?: string) => void;
   setWalkView: (view: "third" | "first") => void;
+  recoverWalkthrough: () => void;
   setFlightCommand: (command: FlightCommand, active: boolean) => void;
   nudgeFlight: (command: FlightCommand) => void;
 }
@@ -63,6 +64,7 @@ export const BabylonViewport = forwardRef<
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
   const [walkRoom, setWalkRoom] = useState<string>("");
   const [walkView, setWalkView] = useState<"third" | "first">("third");
+  const [walkBlocked, setWalkBlocked] = useState(false);
 
   onSelectRef.current = onSelect;
   navigationModeRef.current = navigationMode;
@@ -81,6 +83,9 @@ export const BabylonViewport = forwardRef<
     setWalkView(view) {
       controllerRef.current?.setWalkView(view);
       setWalkView(view);
+    },
+    recoverWalkthrough() {
+      controllerRef.current?.recoverWalkthrough();
     },
     setFlightCommand(command, active) {
       controllerRef.current?.setFlightCommand(command, active);
@@ -168,14 +173,16 @@ export const BabylonViewport = forwardRef<
   useEffect(() => {
     if (status !== "ready" || navigationMode !== "walk") {
       setWalkRoom("");
+      setWalkBlocked(false);
       return;
     }
     const read = () => {
       const room = controllerRef.current?.getWalkRoom();
       setWalkRoom(room ? `${room.number} · ${room.name}` : "Exteriér · terasa a záhrada");
+      setWalkBlocked(controllerRef.current?.isWalkBlocked() ?? false);
     };
     read();
-    const timer = window.setInterval(read, 400);
+    const timer = window.setInterval(read, 200);
     return () => window.clearInterval(timer);
   }, [status, navigationMode]);
 
@@ -222,7 +229,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s postavou. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
+            ? "Prechádzka domom s postavou. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -251,6 +258,10 @@ export const BabylonViewport = forwardRef<
             controllerRef.current?.setWalkView(next);
             setWalkView(next);
           }
+          if (event.key.toLowerCase() === "r" && navigationMode === "walk") {
+            event.preventDefault();
+            controllerRef.current?.recoverWalkthrough();
+          }
         }}
       />
       {status === "ready" && quality && (
@@ -266,8 +277,19 @@ export const BabylonViewport = forwardRef<
         <div className="flight-hud walk-hud" role="status" aria-live="polite">
           <span>PRECHÁDZKA · {walkRoom || "INTERIÉR 1.NP"}</span>
           <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
-          <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · Esc koniec</small>
+          <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
           <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
+            <button
+              type="button"
+              className={`walk-recover${walkBlocked ? " is-needed" : ""}`}
+              aria-label={walkBlocked ? "Vyslobodiť zaseknutú postavu" : "Vystrediť kameru za postavou"}
+              onClick={(event) => {
+                event.stopPropagation();
+                controllerRef.current?.recoverWalkthrough();
+              }}
+            >
+              {walkBlocked ? "Vyslobodiť" : "Vystrediť"}
+            </button>
             {INTERIOR_ROOMS.map((room) => (
               <button
                 key={room.id}
@@ -296,7 +318,7 @@ export const BabylonViewport = forwardRef<
           <div
             className="flight-control-pad"
             role="group"
-            aria-label="Dotykové ovládanie voľného preletu"
+            aria-label={navigationMode === "walk" ? "Dotykové ovládanie chôdze" : "Dotykové ovládanie voľného preletu"}
           >
             {([
               ["forward", "↑", "Letieť dopredu"],
@@ -305,11 +327,17 @@ export const BabylonViewport = forwardRef<
               ["right", "→", "Letieť doprava"],
               ["up", "+", "Stúpať"],
               ["down", "−", "Klesať"],
-            ] as const).map(([command, glyph, label]) => (
+            ] as const)
+              .filter(([command]) => navigationMode === "flight" || (command !== "up" && command !== "down"))
+              .map(([command, glyph, label]) => (
               <button
                 key={command}
                 className={`flight-command flight-${command}`}
-                aria-label={label}
+                aria-label={
+                  navigationMode === "walk"
+                    ? label.replace("Letieť", "Kráčať")
+                    : label
+                }
                 onPointerDown={(event) => holdFlightCommand(command, true, event)}
                 onPointerUp={(event) => holdFlightCommand(command, false, event)}
                 onPointerCancel={(event) => holdFlightCommand(command, false, event)}

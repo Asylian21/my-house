@@ -415,25 +415,225 @@ export const WALK_SPEED_MPS = Object.freeze({
  * inertia-free-feeling response (no GTA-style drift or foot sliding).
  */
 export const WALK_CAMERA = Object.freeze({
-  radiusM: 3.1,
-  minRadiusM: 1.4,
-  maxRadiusM: 7,
-  betaRad: 1.3,
+  /** Comfortable indoor distance requested by the user. */
+  radiusM: 2.6,
+  /** Wheel/pinch limits. Obstruction may compress below this range. */
+  minRadiusM: 0.75,
+  maxRadiusM: 4.5,
+  /** Near-first-person fallback used only while a wall blocks the boom. */
+  obstructionMinRadiusM: 0.08,
+  betaRad: 1.32,
+  lowerBetaRad: 0.93,
+  upperBetaRad: 1.5,
   targetHeightM: 1.4,
-  followTauS: 0.08,
-  turnTauS: 0.09,
-  accelTauS: 0.11,
-  decelTauS: 0.07,
+  closeTargetHeightM: 1.62,
+  /** Target smoothing is capped as well, so it never trails into a partition. */
+  followTauS: 0.03,
+  maxTargetLagM: 0.055,
+  turnTauS: 0.075,
+  accelTauS: 0.09,
+  decelTauS: 0.055,
   /** Idle time after the last drag before the camera drifts back behind the walker. */
-  recenterDelayS: 1.4,
-  recenterTauS: 1.1,
+  recenterDelayS: 0.58,
+  recenterTauS: 0.44,
+  rotationInertia: 0.58,
+  angularSensibilityX: 820,
+  angularSensibilityY: 920,
+  collisionProbeRadiusM: 0.17,
+  collisionPaddingM: 0.09,
+  collisionHysteresisM: 0.025,
+  recoveryHalfLifeMs: 120,
+  avatarFadeNearM: 0.85,
+  avatarFadeFarM: 1.25,
+  maxMoveSubstepM: 0.05,
 });
 /** Radii of the walker's collision ellipsoid (half extents in metres). */
 export const WALK_COLLISION_ELLIPSOID_M = Object.freeze({
-  x: 0.26,
-  y: 0.42,
-  z: 0.26,
+  x: 0.22,
+  y: 0.8,
+  z: 0.22,
 });
+export const WALK_COLLISION_OFFSET_M = Object.freeze({
+  x: 0,
+  y: 0.82,
+  z: 0,
+});
+
+export interface WalkCameraBoomInput {
+  readonly desiredRadiusM: number;
+  readonly currentRadiusM: number;
+  readonly hitDistanceM: number | null;
+  readonly deltaMs: number;
+  readonly wasObstructed: boolean;
+}
+
+export interface RayAabbInput {
+  readonly origin: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly direction: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly minimum: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly maximum: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly maxDistanceM: number;
+  readonly paddingM?: number;
+}
+
+/** Distance to a world-axis-aligned box, or null when the finite ray misses. */
+export function rayAabbDistance({
+  origin,
+  direction,
+  minimum,
+  maximum,
+  maxDistanceM,
+  paddingM = 0,
+}: RayAabbInput): number | null {
+  const directionLength = Math.hypot(direction.x, direction.y, direction.z);
+  if (!Number.isFinite(directionLength) || directionLength < 1e-9) return null;
+  const limit = Number.isFinite(maxDistanceM) ? Math.max(0, maxDistanceM) : 0;
+  const padding = Number.isFinite(paddingM) ? clamp(paddingM, 0, 1) : 0;
+  let near = 0;
+  let far = limit;
+
+  // This helper also runs in the chase-camera broad phase. Keep the slab
+  // calculation scalar and allocation-free: creating axis/value arrays here
+  // produced visible garbage-collection bumps while sprinting indoors.
+  const xSpeed = direction.x / directionLength;
+  const xLow = Math.min(minimum.x, maximum.x) - padding;
+  const xHigh = Math.max(minimum.x, maximum.x) + padding;
+  if (
+    !Number.isFinite(origin.x) ||
+    !Number.isFinite(xSpeed) ||
+    !Number.isFinite(xLow) ||
+    !Number.isFinite(xHigh)
+  ) return null;
+  if (Math.abs(xSpeed) < 1e-9) {
+    if (origin.x < xLow || origin.x > xHigh) return null;
+  } else {
+    let entry = (xLow - origin.x) / xSpeed;
+    let exit = (xHigh - origin.x) / xSpeed;
+    if (entry > exit) {
+      const swap = entry;
+      entry = exit;
+      exit = swap;
+    }
+    near = Math.max(near, entry);
+    far = Math.min(far, exit);
+    if (near > far) return null;
+  }
+
+  const ySpeed = direction.y / directionLength;
+  const yLow = Math.min(minimum.y, maximum.y) - padding;
+  const yHigh = Math.max(minimum.y, maximum.y) + padding;
+  if (
+    !Number.isFinite(origin.y) ||
+    !Number.isFinite(ySpeed) ||
+    !Number.isFinite(yLow) ||
+    !Number.isFinite(yHigh)
+  ) return null;
+  if (Math.abs(ySpeed) < 1e-9) {
+    if (origin.y < yLow || origin.y > yHigh) return null;
+  } else {
+    let entry = (yLow - origin.y) / ySpeed;
+    let exit = (yHigh - origin.y) / ySpeed;
+    if (entry > exit) {
+      const swap = entry;
+      entry = exit;
+      exit = swap;
+    }
+    near = Math.max(near, entry);
+    far = Math.min(far, exit);
+    if (near > far) return null;
+  }
+
+  const zSpeed = direction.z / directionLength;
+  const zLow = Math.min(minimum.z, maximum.z) - padding;
+  const zHigh = Math.max(minimum.z, maximum.z) + padding;
+  if (
+    !Number.isFinite(origin.z) ||
+    !Number.isFinite(zSpeed) ||
+    !Number.isFinite(zLow) ||
+    !Number.isFinite(zHigh)
+  ) return null;
+  if (Math.abs(zSpeed) < 1e-9) {
+    if (origin.z < zLow || origin.z > zHigh) return null;
+  } else {
+    let entry = (zLow - origin.z) / zSpeed;
+    let exit = (zHigh - origin.z) / zSpeed;
+    if (entry > exit) {
+      const swap = entry;
+      entry = exit;
+      exit = swap;
+    }
+    near = Math.max(near, entry);
+    far = Math.min(far, exit);
+    if (near > far) return null;
+  }
+  return near <= limit ? near : null;
+}
+
+/**
+ * Resolves a wall-compressed chase-camera boom without ever overwriting the
+ * user's requested radius. Compression is immediate; clearing or receding
+ * geometry restores the view with a short frame-rate-independent half-life.
+ */
+export function stepWalkCameraBoom({
+  desiredRadiusM,
+  currentRadiusM,
+  hitDistanceM,
+  deltaMs,
+  wasObstructed,
+}: WalkCameraBoomInput) {
+  const desired = clamp(
+    Number.isFinite(desiredRadiusM) ? desiredRadiusM : WALK_CAMERA.radiusM,
+    WALK_CAMERA.minRadiusM,
+    WALK_CAMERA.maxRadiusM,
+  );
+  const current = clamp(
+    Number.isFinite(currentRadiusM) ? currentRadiusM : desired,
+    WALK_CAMERA.obstructionMinRadiusM,
+    desired,
+  );
+  const collisionLimit =
+    typeof hitDistanceM === "number" && Number.isFinite(hitDistanceM)
+      ? clamp(
+          hitDistanceM - WALK_CAMERA.collisionPaddingM,
+          WALK_CAMERA.obstructionMinRadiusM,
+          desired,
+        )
+      : desired;
+  const hitObstructs =
+    collisionLimit < desired - WALK_CAMERA.collisionHysteresisM;
+
+  if (hitObstructs && collisionLimit <= current) {
+    return { radiusM: collisionLimit, obstructed: true } as const;
+  }
+  if (!hitObstructs && !wasObstructed) {
+    return { radiusM: desired, obstructed: false } as const;
+  }
+
+  const target = hitObstructs ? collisionLimit : desired;
+  const elapsed = clamp(Number.isFinite(deltaMs) ? deltaMs : 0, 0, 50);
+  const blend = 1 - Math.pow(0.5, elapsed / WALK_CAMERA.recoveryHalfLifeMs);
+  const restored = current + (target - current) * blend;
+  if (!hitObstructs && Math.abs(desired - restored) <= 0.012) {
+    return { radiusM: desired, obstructed: false } as const;
+  }
+  return { radiusM: restored, obstructed: true } as const;
+}
 
 export interface WalkMotionInput extends FlightMotionInput {
   /** Elevation of the floor under the walker, metres. */

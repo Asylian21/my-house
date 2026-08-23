@@ -587,6 +587,18 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
 }
 .walk-rooms button:hover,
 .walk-rooms button:focus-visible { border-color: #9fd0ae; background: rgb(55 86 69 / 90%); }
+.walk-rooms .walk-recover {
+  min-width: 82px;
+  border-color: rgb(159 208 174 / 46%);
+  color: #eaf5ed;
+  background: rgb(46 72 57 / 84%);
+}
+.walk-rooms .walk-recover.is-needed {
+  border-color: #ffc36b;
+  color: #fff5e6;
+  background: rgb(122 70 26 / 90%);
+  box-shadow: 0 0 0 2px rgb(255 195 107 / 14%);
+}
 .viewport.is-walk .flight-up,
 .viewport.is-walk .flight-down { visibility: hidden; }
 .flight-hud small { color: #899a90; font-family: var(--font-geist-mono); font-size: 8px; }

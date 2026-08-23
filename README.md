@@ -80,10 +80,14 @@ posun bokov). Mixamo assety podliehajú licencii Adobe Mixamo (použitie
 v projekte áno, samostatná redistribúcia nie); textúry figúry majú 512 px, čo
 je hranica realizmu dostupných voľných rigovaných postáv. Ovládanie: W A S D
 chôdza v smere kamery, ťahanie otáča kameru okolo postavy, Shift beh, koliesko
-priblíženie, V prepne pohľad z očí; pohyb má krátke zrýchlenie a dobeh
+priblíženie, V prepne pohľad z očí a R vystredí kameru alebo vráti zaseknutú
+postavu na posledný bezpečný bod; pohyb má krátke zrýchlenie a dobeh
 (`WALK_CAMERA` v `lib/twin-viewport-contract.ts`), postava sa otáča do smeru
-chôdze, kamera sa po 1,4 s bez ťahania sama vracia za postavu a nikdy
-neprechádza stenou (kolízny polomer 0,22 m). Animácie Idle/Walk/Run sa
+skutočného posunu a kamera sa po 0,58 s bez ťahania plynulo vracia za postavu.
+Päťlúčová vnútorná sonda pred stenou okamžite skráti kamerové rameno bez
+straty používateľovho priblíženia; po uvoľnení ho obnoví s polčasom 120 ms.
+Pod približne 1 m sa postava schová a pohľad plynulo prejde k výške očí, takže
+nezacloní malé WC ani úzku chodbu. Animácie Idle/Walk/Run sa
 miešajú podľa rýchlosti a klipy sú časovo škálované, aby nohy nekĺzali.
 Staršia verzia režimu bola iba kamera vo výške očí 1,65 m; tá zostáva ako
 pohľad z očí (V). Vnútorné
@@ -92,8 +96,9 @@ podlahy podľa legendy miestností (keramická dlažba, vinyl, epoxidová stierk
 SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
 2 750 → 4 850 mm sú odčítané z vektorov výkresu D1.1.002 (`lib/twin-interior.ts`,
 hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
-prelet (WASD, ťahanie, Shift/Alt, koliesko krok), steny ho zastavia cez
-kolízny elipsoid 0,26 × 0,42 m, otvorené interiérové dvere a presklené steny
+prelet (WASD, ťahanie, Shift/Alt), steny ho zastavia cez kolízny elipsoid
+s polomermi 0,22 × 0,80 × 0,22 m a pohyb sa delí na najviac 50 mm kroky.
+Otvorené interiérové dvere a presklené steny
 terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská

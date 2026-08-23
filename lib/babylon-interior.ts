@@ -280,12 +280,20 @@ function finish(
   context: InteriorBuildContext,
   mesh: Mesh,
   material: PBRMaterial,
-  options: { collide?: boolean; shadow?: boolean; pickable?: boolean } = {},
+  options: {
+    collide?: boolean;
+    shadow?: boolean;
+    pickable?: boolean;
+    cameraOccluder?: boolean;
+  } = {},
 ) {
   mesh.material = material;
   mesh.receiveShadows = true;
   mesh.isPickable = options.pickable ?? false;
   mesh.checkCollisions = options.collide ?? false;
+  if (options.cameraOccluder) {
+    mesh.metadata = { ...(mesh.metadata ?? {}), cameraOccluder: true };
+  }
   context.realisticOnly(mesh);
   if (options.shadow) context.castShadow(mesh);
   context.register(mesh, "building", HOUSE_ENTITY);
@@ -369,7 +377,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
           room.clearHeightMm * MM_TO_M,
           2,
         );
-        finish(context, ceiling, materials.ceiling);
+        finish(context, ceiling, materials.ceiling, { cameraOccluder: true });
       }
     }
     if (room.ceiling === "VAULTED_TO_RIDGE") buildVault(context, materials, room);
@@ -404,7 +412,7 @@ function buildVault(context: InteriorBuildContext, materials: InteriorMaterials,
       2,
     );
     slab.rotation.z = side < 0 ? Math.atan2(riseM, runM) : -Math.atan2(riseM, runM);
-    finish(context, slab, materials.ceiling);
+    finish(context, slab, materials.ceiling, { cameraOccluder: true });
   }
   // Triangular closures of the vault above the south and north walls.
   const apex = { alongMm: WING_RIDGE_XMM, elevationMm: VAULT_RIDGE_MM };
@@ -566,7 +574,10 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
       0,
       1,
     );
-    finish(context, jamb, materials.doorFrame, { collide: true });
+    // The structural wall already guards the opening. A second collision box
+    // on each 60 mm lining left just centimetres of tolerance and caught the
+    // walker's shoulder while crossing at an angle.
+    finish(context, jamb, materials.doorFrame);
   }
   const headCenter = plan(door.startMm + door.widthMm / 2, wallCenter);
   const head = texturedBox(
@@ -579,7 +590,7 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
     heightM - frameMm * MM_TO_M,
     1,
   );
-  finish(context, head, materials.doorFrame);
+  finish(context, head, materials.doorFrame, { cameraOccluder: true });
   // Lintel above the opening up to the wall crown.
   const lintel = texturedBox(
     context.scene,
@@ -591,7 +602,7 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
     heightM,
     2.4,
   );
-  finish(context, lintel, materials.plaster);
+  finish(context, lintel, materials.plaster, { cameraOccluder: true });
 
   // Leaf standing open at 90°, hinged on the `hinge` end and swung into the
   // `swing` side, so every room stays walkable.
@@ -681,7 +692,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     0,
     1,
   );
-  finish(context, plinth, materials.fireplace, { collide: true });
+  finish(context, plinth, materials.fireplace);
   // Front joints: 15 mm grooves drawn as thin dark strips between fronts.
   const fronts = [runStart, 23991, 24591, k.dishwasherXmm[0], k.dishwasherXmm[1], run.x1];
   for (const [index, xMm] of fronts.entries()) {
@@ -885,7 +896,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     0,
     1,
   );
-  finish(context, penPlinth, materials.fireplace, { collide: true });
+  finish(context, penPlinth, materials.fireplace);
   const penTop = texturedBox(
     context.scene,
     `${k.id} · pracovná doska polostrova`,
@@ -896,7 +907,27 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     counterM - worktopM,
     1.4,
   );
-  finish(context, penTop, materials.worktop, { shadow: true, collide: true });
+  finish(context, penTop, materials.worktop, { shadow: true });
+  // Babylon's ellipsoid can slide vertically over counter-height meshes as if
+  // they were a step. A single smooth, invisible vertical guard follows the
+  // worktop footprint, preventing visual traversal without snag-prone detail
+  // collisions on handles, plinths or the overhang.
+  const penNavigationGuard = texturedBox(
+    context.scene,
+    `${k.id} · navigačný obrys polostrova`,
+    { x: (pen.x0 + pen.x1) / 2, y: (pen.y0 + pen.y1) / 2 + 150 },
+    pen.x1 - pen.x0 + 20,
+    pen.y1 - pen.y0 + 320,
+    6,
+    -2,
+    1,
+  );
+  finish(context, penNavigationGuard, materials.kitchenFront, { collide: true });
+  penNavigationGuard.isVisible = false;
+  penNavigationGuard.metadata = {
+    ...(penNavigationGuard.metadata ?? {}),
+    walkCollisionOnly: true,
+  };
   for (const xMm of [pen.x0 + 900, pen.x0 + 1800, pen.x0 + 3100, pen.x0 + 4000]) {
     const joint = texturedBox(
       context.scene,
@@ -961,7 +992,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   for (const xMm of [pen.x0 + 3150, pen.x0 + 3750, pen.x0 + 4350]) {
     const seat = CreateCylinder(`${k.id} · barová stolička`, { height: 0.04, diameter: 0.36, tessellation: 24 }, context.scene);
     seat.position.set(xM(xMm), 0.68, zM(pen.y1 + 420));
-    finish(context, seat, materials.fireplace, { shadow: true, collide: true });
+    finish(context, seat, materials.fireplace, { shadow: true });
     const stem = CreateCylinder(`${k.id} · noha stoličky`, { height: 0.66, diameter: 0.04, tessellation: 12 }, context.scene);
     stem.position.set(xM(xMm), 0.33, zM(pen.y1 + 420));
     finish(context, stem, materials.steel);
@@ -969,6 +1000,25 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     foot.position.set(xM(xMm), 0.006, zM(pen.y1 + 420));
     finish(context, foot, materials.steel);
   }
+  // Treat the three stools as one rounded-body obstacle. This preserves their
+  // visual footprint while avoiding nine tiny seat/stem/base colliders that
+  // would catch a novice walking past the breakfast side.
+  const stoolNavigationGuard = texturedBox(
+    context.scene,
+    `${k.id} · navigačný obrys barových stoličiek`,
+    { x: pen.x0 + 3750, y: pen.y1 + 420 },
+    1600,
+    400,
+    6,
+    -2,
+    1,
+  );
+  finish(context, stoolNavigationGuard, materials.kitchenFront, { collide: true });
+  stoolNavigationGuard.isVisible = false;
+  stoolNavigationGuard.metadata = {
+    ...(stoolNavigationGuard.metadata ?? {}),
+    walkCollisionOnly: true,
+  };
 }
 
 interface Interval {

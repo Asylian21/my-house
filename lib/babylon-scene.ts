@@ -618,8 +618,12 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
     case "ROOM-1-08":
     case "ROOM-1-11":
       return { x: room.standingPointMm.x, y: 2500 };
-    case "ROOM-1-05":
     case "ROOM-1-06":
+      // The WC is too narrow for a useful chase view across its short axis.
+      // Face the open door instead: the first W press naturally exits to the
+      // corridor, rather than driving a novice straight into the east wall.
+      return { x: 22000, y: 10266 };
+    case "ROOM-1-05":
     case "ROOM-1-07":
       return { x: 28500, y: room.standingPointMm.y };
     default:
@@ -1229,6 +1233,12 @@ export class TwinSceneController {
 
     this.scene.onPointerDown = (event) => {
       if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
+      if (
+        this.navigationMode === "walk" &&
+        this.scene.activeCamera === this.avatar.camera
+      ) {
+        this.avatar.noteCameraInput();
+      }
       this.activePointers.add(event.pointerId);
       if (this.pointerGesture) {
         this.pointerGesture.maximumPointers = Math.max(
@@ -1250,6 +1260,12 @@ export class TwinSceneController {
     this.scene.onPointerMove = (event) => {
       const gesture = this.pointerGesture;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
+      if (
+        this.navigationMode === "walk" &&
+        this.scene.activeCamera === this.avatar.camera
+      ) {
+        this.avatar.noteCameraInput();
+      }
       gesture.travelPx = Math.max(
         gesture.travelPx,
         Math.hypot(
@@ -1274,6 +1290,7 @@ export class TwinSceneController {
         ),
       );
       if (
+        this.navigationMode === "orbit" &&
         isSelectionTap({
           travelPx: gesture.travelPx,
           durationMs: performance.now() - gesture.startedAt,
@@ -2852,7 +2869,9 @@ export class TwinSceneController {
         6.16,
         0,
       );
-      chimney.checkCollisions = true;
+      // The overlapping interior plaster pier is the authoritative walk
+      // collider; a second full-height box here caused corner jitter.
+      chimney.checkCollisions = false;
       this.appearance(
         chimney,
         this.materials.roof,
@@ -3013,6 +3032,7 @@ export class TwinSceneController {
         faceVertices,
       );
       this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
+      panel.metadata = { ...(panel.metadata ?? {}), cameraOccluder: true };
       panel.receiveShadows = true;
       this.castShadow(panel);
       panel.enableEdgesRendering();
@@ -3030,6 +3050,10 @@ export class TwinSceneController {
       );
       underside.flipFaces(true);
       underside.material = this.realisticMaterials.soffit;
+      underside.metadata = {
+        ...(underside.metadata ?? {}),
+        cameraOccluder: true,
+      };
       underside.receiveShadows = true;
       underside.isPickable = false;
       this.realisticOnly(underside);
@@ -5305,7 +5329,10 @@ export class TwinSceneController {
     this.snapshot = snapshot;
     this.updateFoundations(snapshot.foundations);
     for (const [layer, meshes] of this.layerMeshes) {
-      for (const mesh of meshes) mesh.setEnabled(snapshot.visibleLayers[layer]);
+      const visible =
+        snapshot.visibleLayers[layer] ||
+        (this.navigationMode === "walk" && layer === "building");
+      for (const mesh of meshes) mesh.setEnabled(visible);
     }
     this.applyViewMode(snapshot.viewMode);
     if (snapshot.selectionId) {
@@ -5585,6 +5612,12 @@ export class TwinSceneController {
     }
     this.clearFlightInput();
     const avatar = this.ensureAvatar();
+    // Keyboard entry (G) can bypass the toolbar's React layer update. Make
+    // the authoritative shell/collision geometry live before the first walk
+    // frame; the parent callback synchronises the visible-layer UI next.
+    for (const mesh of this.layerMeshes.get("building") ?? []) {
+      mesh.setEnabled(true);
+    }
     const yaw = Math.atan2(xM(look.x) - xM(standing.x), zM(look.y) - zM(standing.y));
     avatar.place(xM(standing.x), zM(standing.y), yaw);
     this.flightHeading = { x: Math.sin(yaw), z: Math.cos(yaw) };
@@ -5617,8 +5650,9 @@ export class TwinSceneController {
 
   private leaveWalkCollisions() {
     this.flightCamera.checkCollisions = false;
+    this.flightCamera.minZ = 0.18;
     this.avatar.camera.detachControl();
-    this.avatar.setFirstPerson(true);
+    this.avatar.deactivate();
   }
 
   private ensureAvatar() {
@@ -5648,6 +5682,7 @@ export class TwinSceneController {
     if (third) {
       this.flightCamera.detachControl();
       this.flightCamera.checkCollisions = false;
+      this.flightCamera.minZ = 0.18;
       avatar.setFirstPerson(false);
       this.scene.activeCamera = avatar.camera;
       avatar.camera.attachControl(this.canvas, true);
@@ -5660,6 +5695,7 @@ export class TwinSceneController {
       this.flightCamera.rotationQuaternion = null;
       this.flightCamera.setTarget(eye.add(new Vector3(Math.sin(yaw), -0.04, Math.cos(yaw))));
       this.flightCamera.checkCollisions = false;
+      this.flightCamera.minZ = 0.04;
       if (this.scene.activeCamera !== this.flightCamera) {
         this.scene.activeCamera = this.flightCamera;
         this.flightCamera.attachControl(false);
@@ -5691,6 +5727,29 @@ export class TwinSceneController {
 
   getNavigationMode() {
     return this.navigationMode;
+  }
+
+  recoverWalkthrough() {
+    if (this.navigationMode !== "walk") return;
+    this.clearFlightInput();
+    this.avatar.recover();
+    this.applyWalkView();
+    this.canvas.focus({ preventScroll: true });
+  }
+
+  isWalkBlocked() {
+    return this.navigationMode === "walk" && this.avatar.isBlocked;
+  }
+
+  getWalkDebugState() {
+    return {
+      mode: this.navigationMode,
+      view: this.walkView,
+      roomId: this.getWalkRoom()?.id ?? null,
+      pose: this.avatar.pose,
+      camera: this.avatar.cameraState,
+      blocked: this.avatar.isBlocked,
+    } as const;
   }
 
   getRenderQuality() {

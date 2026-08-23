@@ -4,17 +4,23 @@ import {
   FLIGHT_BOUNDS,
   FLIGHT_WHEEL_DOLLY_MAX_M,
   ORBIT_ZOOM,
+  WALK_CAMERA,
+  WALK_COLLISION_ELLIPSOID_M,
+  WALK_COLLISION_OFFSET_M,
   clampOrbitRadius,
   deriveRenderQualityProfile,
   easeOrbitRadius,
   flightCommandForCode,
   flightWheelDollyDistanceM,
+  integrateAvatarVelocity,
   integrateFlightDolly,
   integrateFlightPosition,
   isSelectionTap,
   normalizeWheelPixels,
   orbitZoomMultiplier,
+  rayAabbDistance,
   stepOrbitZoom,
+  stepWalkCameraBoom,
   wheelZoomGesture,
   type FlightCommand,
 } from "../lib/twin-viewport-contract";
@@ -457,13 +463,128 @@ describe("walkthrough motion", () => {
   });
 
   it("walks slower than it flies so rooms stay controllable", async () => {
-    const { WALK_SPEED_MPS, FLIGHT_SPEED_MPS, WALK_COLLISION_ELLIPSOID_M } = await import(
+    const { WALK_SPEED_MPS, FLIGHT_SPEED_MPS } = await import(
       "../lib/twin-viewport-contract"
     );
     expect(WALK_SPEED_MPS.normal).toBeLessThan(FLIGHT_SPEED_MPS.normal);
     expect(WALK_SPEED_MPS.boost).toBeLessThan(FLIGHT_SPEED_MPS.boost);
-    // The collider must pass a 700 mm leaf and a 2 100 mm door head.
-    expect(WALK_COLLISION_ELLIPSOID_M.x * 2).toBeLessThan(0.7);
-    expect(1.65 + WALK_COLLISION_ELLIPSOID_M.y).toBeLessThan(2.1);
+    // The capsule has usable shoulder tolerance in the 601 mm corridor and
+    // the 680 mm clear framed opening, while its head clears 2 100 mm.
+    expect(0.601 - WALK_COLLISION_ELLIPSOID_M.x * 2).toBeGreaterThan(0.15);
+    expect(0.68 - WALK_COLLISION_ELLIPSOID_M.x * 2).toBeGreaterThan(0.2);
+    expect(
+      WALK_COLLISION_OFFSET_M.y + WALK_COLLISION_ELLIPSOID_M.y,
+    ).toBeLessThan(2.1);
+    expect(
+      WALK_COLLISION_OFFSET_M.y - WALK_COLLISION_ELLIPSOID_M.y,
+    ).toBeGreaterThanOrEqual(0.015);
+  });
+
+  it("normalizes diagonal locomotion and brakes faster than it accelerates", () => {
+    const axial = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("forward"),
+      deltaMs: 50,
+    });
+    const diagonal = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("forward", "right"),
+      deltaMs: 50,
+    });
+    expect(Math.hypot(diagonal.x, diagonal.z)).toBeCloseTo(
+      Math.hypot(axial.x, axial.z),
+      10,
+    );
+    const braking = integrateAvatarVelocity({
+      velocity: axial,
+      forward: { x: 0, z: -1 },
+      commands: commands(),
+      deltaMs: 50,
+    });
+    expect(Math.hypot(braking.x, braking.z)).toBeLessThan(
+      Math.hypot(axial.x, axial.z) * 0.42,
+    );
+  });
+});
+
+describe("adaptive indoor chase camera", () => {
+  it("finds the first finite world-box contact without triangle picking", () => {
+    expect(
+      rayAabbDistance({
+        origin: { x: 0, y: 1.4, z: 0 },
+        direction: { x: 0, y: 0.25, z: -1 },
+        minimum: { x: -2, y: 0, z: -1.1 },
+        maximum: { x: 2, y: 2.6, z: -0.9 },
+        maxDistanceM: 2.6,
+      }),
+    ).toBeCloseTo(0.9277, 3);
+    expect(
+      rayAabbDistance({
+        origin: { x: 0, y: 1.4, z: 0 },
+        direction: { x: 1, y: 0, z: 0 },
+        minimum: { x: -2, y: 0, z: -1.1 },
+        maximum: { x: 2, y: 2.6, z: -0.9 },
+        maxDistanceM: 2.6,
+      }),
+    ).toBeNull();
+  });
+
+  it("compresses immediately before a wall but preserves the requested zoom", () => {
+    const compressed = stepWalkCameraBoom({
+      desiredRadiusM: WALK_CAMERA.radiusM,
+      currentRadiusM: WALK_CAMERA.radiusM,
+      hitDistanceM: 0.48,
+      deltaMs: 16,
+      wasObstructed: false,
+    });
+    expect(compressed.radiusM).toBeCloseTo(
+      0.48 - WALK_CAMERA.collisionPaddingM,
+      10,
+    );
+    expect(compressed.obstructed).toBe(true);
+
+    const clearing = stepWalkCameraBoom({
+      desiredRadiusM: WALK_CAMERA.radiusM,
+      currentRadiusM: compressed.radiusM,
+      hitDistanceM: null,
+      deltaMs: 16,
+      wasObstructed: true,
+    });
+    expect(clearing.radiusM).toBeGreaterThan(compressed.radiusM);
+    expect(clearing.radiusM).toBeLessThan(WALK_CAMERA.radiusM);
+  });
+
+  it("restores at the same rate across common frame rates", () => {
+    const restore = (frameMs: number, frames: number) => {
+      let radiusM = 0.4;
+      let obstructed = true;
+      for (let frame = 0; frame < frames; frame += 1) {
+        const next = stepWalkCameraBoom({
+          desiredRadiusM: WALK_CAMERA.radiusM,
+          currentRadiusM: radiusM,
+          hitDistanceM: null,
+          deltaMs: frameMs,
+          wasObstructed: obstructed,
+        });
+        radiusM = next.radiusM;
+        obstructed = next.obstructed;
+      }
+      return radiusM;
+    };
+    expect(restore(20, 6)).toBeCloseTo(restore(40, 3), 10);
+  });
+
+  it("ignores grazing hits inside the anti-jitter hysteresis", () => {
+    const grazing = stepWalkCameraBoom({
+      desiredRadiusM: 2,
+      currentRadiusM: 2,
+      hitDistanceM:
+        2 + WALK_CAMERA.collisionPaddingM - WALK_CAMERA.collisionHysteresisM / 2,
+      deltaMs: 16,
+      wasObstructed: false,
+    });
+    expect(grazing).toEqual({ radiusM: 2, obstructed: false });
   });
 });
