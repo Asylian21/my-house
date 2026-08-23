@@ -67,8 +67,13 @@ bezpečným návratom do orbitálnych pohľadov.
 
 Režim **Interiér** (kláves G) je prechádzka domom s postavou z pohľadu
 tretej osoby. Postava je textúrovaná rigovaná ženská figúra Mixamo „Michelle“
-(`public/assets/avatar/avatar.glb`, zdroj: ukážkové modely three.js), na ktorej
-kostru sú offline preretargetované Mixamo lokomočné klipy Idle/Walk/Run z
+so svetlou pleťou (`public/assets/avatar/avatar.glb`, zdroj: ukážkové modely
+three.js). Svetlý albedo atlas
+`public/assets/avatar/michelle-light-diffuse.png` vznikol z pôvodnej 512 px
+diffuse mapy cielenou úpravou cez OpenAI imagegen a následným presným
+maskovaním iba plôch kože; odev, UV švy, kostra a geometria zostali bez
+zmeny. Na kostru sú offline preretargetované Mixamo lokomočné klipy
+Idle/Walk/Run z
 modelu „Vanguard/Soldier“ (`tools/avatar/retarget.mjs`: zhoda svetových
 orientácií kostí oproti obom T-pózam, zarovnanie smeru postáv, preškálovaný
 posun bokov). Mixamo assety podliehajú licencii Adobe Mixamo (použitie

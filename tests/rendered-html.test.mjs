@@ -152,6 +152,7 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     ["../public/assets/textures/stone-dark-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/stone-dark-normal.jpg", "ffd8ff"],
     ["../public/assets/avatar/avatar.glb", "676c5446"],
+    ["../public/assets/avatar/michelle-light-diffuse.png", "89504e470d0a1a0a"],
     ["../public/assets/textures/hedge-privet-albedo.png", "89504e470d0a1a0a"],
     ["../public/assets/textures/pool-water-normal.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
@@ -196,5 +197,6 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     );
   }
   assert.match(readme, /OpenAI imagegen/);
+  assert.match(avatarSource, /material\.albedoTexture = avatarDiffuse/);
   assert.match(readme, /ilustračný záhradný koncept/);
 });

@@ -2,6 +2,7 @@ import type { AnimationGroup } from "@babylonjs/core/Animations/animationGroup";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import { ImportMeshAsync } from "@babylonjs/core/Loading/sceneLoader";
 import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
@@ -19,6 +20,8 @@ import {
 } from "./twin-viewport-contract";
 
 export const AVATAR_URL = "/assets/avatar/avatar.glb";
+export const AVATAR_DIFFUSE_URL =
+  "/assets/avatar/michelle-light-diffuse.png";
 
 export interface AvatarPose {
   readonly x: number;
@@ -117,11 +120,19 @@ export class AvatarController {
           glbRoot.rotation = new Vector3(0, 0, 0);
           glbRoot.rotationQuaternion = null;
           this.meshes = result.meshes.filter((mesh) => mesh.getTotalVertices() > 0);
+          const avatarDiffuse = new Texture(AVATAR_DIFFUSE_URL, this.scene, {
+            invertY: false,
+            samplingMode: Texture.TRILINEAR_SAMPLINGMODE,
+            useSRGBBuffer: true,
+          });
+          avatarDiffuse.name = "Avatar · svetlá pokožka";
+          avatarDiffuse.gammaSpace = true;
           for (const mesh of this.meshes) {
             mesh.isPickable = false;
             mesh.receiveShadows = true;
             const material = mesh.material as PBRMaterial | null;
             if (material && "environmentIntensity" in material) {
+              material.albedoTexture = avatarDiffuse;
               material.environmentIntensity = 0.9;
             }
             this.onMeshLoaded(mesh);
