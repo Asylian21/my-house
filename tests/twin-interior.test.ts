@@ -394,7 +394,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(overlaps(fitout.clearFloorRectMm, fitout.basin.footprintMm)).toBe(false);
   });
 
-  it("releases the centre of room 1.05 with a walk-in shower and vertical laundry tower", () => {
+  it("fits the window-end shower and one built-in bathroom wall into room 1.05", () => {
     const fitout = BATHROOM_FITOUT;
     const bathroom = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
     const bathroomDoor = INTERIOR_DOORS.find((door) => door.id === "DOOR-102-105")!;
@@ -406,35 +406,53 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       { x: rect.x1 - 1, y: rect.y1 - 1 },
     ].every((point) => roomAt(point)?.id === bathroom.id);
 
-    expect(fitout.sourceId).toBe(SOURCES.clientBathroomRevision20260823.id);
+    expect(fitout.sourceId).toBe(SOURCES.clientBathroomBuiltInRevision20260823.id);
     expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(roomAreaM2(bathroom)).toBeCloseTo(8.339778, 6);
 
     expect(insideBathroom(fitout.shower.footprintMm)).toBe(true);
-    expect(fitout.shower.footprintMm.x1 - fitout.shower.footprintMm.x0).toBe(1400);
+    expect(fitout.shower.footprintMm.x1 - fitout.shower.footprintMm.x0).toBeGreaterThanOrEqual(1200);
     expect(fitout.shower.footprintMm.y1 - fitout.shower.footprintMm.y0).toBe(900);
     expect(inside(fitout.shower.glassPanelMm, fitout.shower.footprintMm)).toBe(true);
     expect(inside(fitout.shower.linearDrainMm, fitout.shower.footprintMm)).toBe(true);
-    expect(fitout.shower.clearEntryWidthMm).toBe(
-      fitout.shower.footprintMm.y1 - fitout.shower.footprintMm.y0,
-    );
+    expect(fitout.shower.clearEntryWidthMm).toBeGreaterThanOrEqual(600);
     expect(eastWindow.sillMm).toBe(1750);
+    expect(inside(fitout.shower.footprintMm, bathroom.rectsMm[1])).toBe(true);
+    expect(fitout.shower.footprintMm.x1).toBe(bathroom.rectsMm[1].x1);
+    expect(fitout.shower.footprintMm.y0).toBeLessThan(eastWindow.startYmm + eastWindow.widthMm);
+    expect(fitout.shower.footprintMm.y1).toBeGreaterThan(eastWindow.startYmm);
 
-    expect(insideBathroom(fitout.vanity.footprintMm)).toBe(true);
-    expect(fitout.vanity.footprintMm.x1 - fitout.vanity.footprintMm.x0).toBe(460);
-    expect(fitout.vanity.footprintMm.y1 - fitout.vanity.footprintMm.y0).toBe(1000);
-    expect(fitout.vanity.facing).toBe("EAST");
-    expect(fitout.vanity.rimElevationMm).toBe(860);
+    const builtIn = fitout.builtIn;
+    expect(insideBathroom(builtIn.footprintMm)).toBe(true);
+    expect(inside(builtIn.footprintMm, bathroom.rectsMm[0])).toBe(true);
+    expect(builtIn.footprintMm.x0).toBe(bathroom.rectsMm[0].x0);
+    expect(builtIn.footprintMm.x1).toBe(bathroom.rectsMm[0].x1);
+    expect(builtIn.footprintMm.y1).toBe(bathroom.rectsMm[0].y1);
+    expect(builtIn.footprintMm.x1 - builtIn.footprintMm.x0).toBe(2616);
+    expect(builtIn.footprintMm.y1 - builtIn.footprintMm.y0).toBe(650);
+    expect(builtIn.facing).toBe("SOUTH");
+    expect(builtIn.heightMm).toBeLessThan(bathroom.clearHeightMm);
+    expect(builtIn.overheadCabinetBottomMm).toBeGreaterThan(builtIn.counterHeightMm);
 
-    expect(insideBathroom(fitout.laundryTower.footprintMm)).toBe(true);
-    expect(fitout.laundryTower.footprintMm.x1 - fitout.laundryTower.footprintMm.x0).toBe(650);
-    expect(fitout.laundryTower.footprintMm.y1 - fitout.laundryTower.footprintMm.y0).toBe(650);
-    expect(fitout.laundryTower.applianceCount).toBe(2);
-    expect(fitout.laundryTower.heightMm).toBeLessThan(bathroom.clearHeightMm);
+    expect(inside(builtIn.basin.footprintMm, builtIn.footprintMm)).toBe(true);
+    expect(builtIn.basin.footprintMm.x1 - builtIn.basin.footprintMm.x0).toBeGreaterThanOrEqual(1100);
+    expect(builtIn.basin.footprintMm.y1 - builtIn.basin.footprintMm.y0).toBeGreaterThanOrEqual(450);
+    expect(builtIn.basin.finish).toBe("MATTE_BLACK");
+    expect(builtIn.basin.rimElevationMm).toBe(builtIn.counterHeightMm);
+
+    expect(builtIn.appliances.map((appliance) => appliance.kind)).toEqual(["WASHER", "DRYER"]);
+    expect(builtIn.appliances.map((appliance) => appliance.finish)).toEqual(["WHITE", "WHITE"]);
+    for (const appliance of builtIn.appliances) {
+      expect(inside(appliance.footprintMm, builtIn.footprintMm), appliance.kind).toBe(true);
+      expect(appliance.footprintMm.x1 - appliance.footprintMm.x0, appliance.kind).toBe(600);
+      expect(appliance.footprintMm.y1 - appliance.footprintMm.y0, appliance.kind).toBe(600);
+    }
+    expect(overlaps(builtIn.appliances[0].footprintMm, builtIn.appliances[1].footprintMm)).toBe(false);
+    expect(builtIn.appliances[0].footprintMm.x1).toBeLessThan(builtIn.appliances[1].footprintMm.x0);
 
     expect(insideBathroom(fitout.clearFloorRectMm)).toBe(true);
-    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(1500);
+    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(2600);
     expect(fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0).toBeGreaterThanOrEqual(850);
     expect(roomAt(bathroom.standingPointMm)?.id).toBe(bathroom.id);
     expect(inside(fitout.clearFloorRectMm, bathroom.rectsMm[0])).toBe(true);
@@ -442,19 +460,16 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(bathroom.standingPointMm.x).toBeLessThan(fitout.clearFloorRectMm.x1);
     expect(bathroom.standingPointMm.y).toBeGreaterThan(fitout.clearFloorRectMm.y0);
     expect(bathroom.standingPointMm.y).toBeLessThan(fitout.clearFloorRectMm.y1);
-    expect(insideBathroom(fitout.laundryServiceRectMm)).toBe(true);
-    expect(fitout.laundryServiceRectMm.y1 - fitout.laundryServiceRectMm.y0).toBe(900);
+    expect(insideBathroom(fitout.applianceServiceRectMm)).toBe(true);
+    expect(fitout.applianceServiceRectMm.y1 - fitout.applianceServiceRectMm.y0).toBe(900);
 
     for (const [label, rect] of [
       ["sprcha", fitout.shower.footprintMm],
-      ["umývadlo", fitout.vanity.footprintMm],
-      ["práčovňová veža", fitout.laundryTower.footprintMm],
+      ["vstavaná stena", builtIn.footprintMm],
     ] as const) {
       expect(overlaps(rect, fitout.clearFloorRectMm), `${label} × voľný stred`).toBe(false);
     }
-    expect(overlaps(fitout.vanity.footprintMm, fitout.laundryTower.footprintMm)).toBe(false);
-    expect(overlaps(fitout.shower.footprintMm, fitout.laundryTower.footprintMm)).toBe(false);
-    expect(overlaps(fitout.shower.footprintMm, fitout.vanity.footprintMm)).toBe(false);
+    expect(overlaps(fitout.shower.footprintMm, builtIn.footprintMm)).toBe(false);
 
     const leafRect: RectMm = {
       x0: bathroomDoor.wallSpanMm[1],
@@ -463,7 +478,6 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       y1: bathroomDoor.startMm + 100,
     };
     expect(overlaps(leafRect, fitout.shower.footprintMm)).toBe(false);
-    expect(overlaps(leafRect, fitout.vanity.footprintMm)).toBe(false);
-    expect(overlaps(leafRect, fitout.laundryTower.footprintMm)).toBe(false);
+    expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
   });
 });

@@ -78,6 +78,8 @@ export interface InteriorMaterials {
   readonly sanitaryCeramic: PBRMaterial;
   readonly mirrorGlass: PBRMaterial;
   readonly showerGlass: PBRMaterial;
+  readonly blackCeramic: PBRMaterial;
+  readonly applianceEnamel: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -274,6 +276,14 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   showerGlass.clearCoat.isEnabled = true;
   showerGlass.clearCoat.intensity = 0.95;
   showerGlass.clearCoat.roughness = 0.025;
+  const blackCeramic = pbr(scene, "real-bathroom-black-ceramic", "#08090a", 0.12, 0.02);
+  blackCeramic.clearCoat.isEnabled = true;
+  blackCeramic.clearCoat.intensity = 0.78;
+  blackCeramic.clearCoat.roughness = 0.06;
+  const applianceEnamel = pbr(scene, "real-bathroom-appliance-white", "#fafaf7", 0.25, 0.04);
+  applianceEnamel.clearCoat.isEnabled = true;
+  applianceEnamel.clearCoat.intensity = 0.45;
+  applianceEnamel.clearCoat.roughness = 0.16;
   return {
     plaster,
     ceiling,
@@ -304,6 +314,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     sanitaryCeramic,
     mirrorGlass,
     showerGlass,
+    blackCeramic,
+    applianceEnamel,
   };
 }
 
@@ -1657,17 +1669,40 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
 }
 
 /**
- * Compact fitout for the L-shaped bathroom/laundry 1.05. The east recess is
- * kept as a single flush walk-in shower; all dry functions are lifted from
- * the floor or stacked vertically so the room reads as one calm open space.
+ * Final client fitout for the L-shaped bathroom/laundry 1.05. The small east
+ * window terminates a premium walk-in shower, while the complete north recess
+ * reads as one fitted furniture wall with a black basin and white appliances.
  */
 function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
   const fitout = BATHROOM_FITOUT;
   const shower = fitout.shower;
 
+  const showerFeatureWall = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1250 · tmavá veľkoformátová stena pod oknom`,
+    { x: shower.footprintMm.x1 - 12, y: (shower.footprintMm.y0 + shower.footprintMm.y1) / 2 },
+    24,
+    shower.footprintMm.y1 - shower.footprintMm.y0,
+    1.7,
+    0,
+    1.2,
+  );
+  finish(context, showerFeatureWall, materials.mediaPanel, { shadow: true });
+  const showerFeatureLed = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1250 · nepriame svetlo pod vysokým oknom`,
+    { x: shower.footprintMm.x1 - 27, y: (shower.footprintMm.y0 + shower.footprintMm.y1) / 2 },
+    12,
+    shower.footprintMm.y1 - shower.footprintMm.y0 - 80,
+    0.012,
+    1.685,
+    1,
+  );
+  finish(context, showerFeatureLed, materials.warmLight);
+
   const showerFloor = texturedBox(
     context.scene,
-    `${fitout.id} · WALK-IN-1400 · bezprahová sprchová plocha`,
+    `${fitout.id} · WALK-IN-1250 · bezprahová sprchová plocha`,
     rectCenter(shower.footprintMm),
     shower.footprintMm.x1 - shower.footprintMm.x0,
     shower.footprintMm.y1 - shower.footprintMm.y0,
@@ -1678,7 +1713,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   finish(context, showerFloor, materials.wallTile, { pickable: true });
   const drain = texturedBox(
     context.scene,
-    `${fitout.id} · WALK-IN-1400 · lineárny nerezový žľab`,
+    `${fitout.id} · WALK-IN-1250 · lineárny nerezový žľab`,
     rectCenter(shower.linearDrainMm),
     shower.linearDrainMm.x1 - shower.linearDrainMm.x0,
     shower.linearDrainMm.y1 - shower.linearDrainMm.y0,
@@ -1690,7 +1725,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   for (let slot = 0; slot < 6; slot += 1) {
     const drainSlot = texturedBox(
       context.scene,
-      `${fitout.id} · WALK-IN-1400 · štrbina žľabu ${slot + 1}`,
+      `${fitout.id} · WALK-IN-1250 · štrbina žľabu ${slot + 1}`,
       {
         x: shower.linearDrainMm.x0 + 20 + slot * 11,
         y: (shower.linearDrainMm.y0 + shower.linearDrainMm.y1) / 2,
@@ -1707,7 +1742,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   const panel = shower.glassPanelMm;
   const glass = texturedBox(
     context.scene,
-    `${fitout.id} · WALK-IN-1400 · číre bezpečnostné sklo`,
+    `${fitout.id} · WALK-IN-1250 · číre bezpečnostné sklo`,
     rectCenter(panel),
     panel.x1 - panel.x0,
     panel.y1 - panel.y0,
@@ -1716,13 +1751,13 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     1,
   );
   finish(context, glass, materials.showerGlass, { shadow: true, pickable: true });
-  for (const [index, xMm] of [panel.x0, panel.x1].entries()) {
+  for (const [index, yMm] of [panel.y0, panel.y1].entries()) {
     const post = texturedBox(
       context.scene,
-      `${fitout.id} · WALK-IN-1400 · čierny profil ${index + 1}`,
-      { x: xMm, y: (panel.y0 + panel.y1) / 2 },
-      18,
+      `${fitout.id} · WALK-IN-1250 · čierny profil ${index + 1}`,
+      { x: (panel.x0 + panel.x1) / 2, y: yMm },
       22,
+      18,
       2.12,
       0,
       1,
@@ -1731,10 +1766,10 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   }
   const topRail = texturedBox(
     context.scene,
-    `${fitout.id} · WALK-IN-1400 · horný stabilizačný profil`,
+    `${fitout.id} · WALK-IN-1250 · horný stabilizačný profil`,
     rectCenter(panel),
-    panel.x1 - panel.x0,
     20,
+    panel.y1 - panel.y0,
     0.018,
     2.1,
     1,
@@ -1745,30 +1780,30 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   const showerColumnXmm = 27020;
   const showerWallYmm = 6680;
   const riser = CreateCylinder(
-    `${fitout.id} · WALK-IN-1400 · sprchová tyč`,
+    `${fitout.id} · WALK-IN-1250 · matne čierna sprchová tyč`,
     { height: 1.55, diameter: 0.026, tessellation: 20 },
     context.scene,
   );
   riser.position.set(xM(showerColumnXmm), 1.13, zM(showerWallYmm));
-  finish(context, riser, materials.steel, { shadow: true });
+  finish(context, riser, materials.fireplace, { shadow: true });
   const overheadArm = CreateCylinder(
-    `${fitout.id} · WALK-IN-1400 · rameno hlavovej sprchy`,
+    `${fitout.id} · WALK-IN-1250 · rameno hlavovej sprchy`,
     { height: 0.32, diameter: 0.024, tessellation: 20 },
     context.scene,
   );
   overheadArm.rotation.x = Math.PI / 2;
   overheadArm.position.set(xM(showerColumnXmm), 2.04, zM(showerWallYmm + 150));
-  finish(context, overheadArm, materials.steel, { shadow: true });
+  finish(context, overheadArm, materials.fireplace, { shadow: true });
   const rainHead = CreateCylinder(
-    `${fitout.id} · WALK-IN-1400 · hlavová sprcha 240`,
+    `${fitout.id} · WALK-IN-1250 · čierna hlavová sprcha 240`,
     { height: 0.025, diameter: 0.24, tessellation: 36 },
     context.scene,
   );
   rainHead.position.set(xM(showerColumnXmm), 2.035, zM(showerWallYmm + 300));
-  finish(context, rainHead, materials.steel, { shadow: true, pickable: true });
+  finish(context, rainHead, materials.fireplace, { shadow: true, pickable: true });
   const mixer = texturedBox(
     context.scene,
-    `${fitout.id} · WALK-IN-1400 · termostatická batéria`,
+    `${fitout.id} · WALK-IN-1250 · čierna termostatická batéria`,
     { x: showerColumnXmm, y: showerWallYmm - 3 },
     260,
     35,
@@ -1776,199 +1811,249 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     1.03,
     1,
   );
-  finish(context, mixer, materials.steel, { pickable: true });
+  finish(context, mixer, materials.fireplace, { pickable: true });
 
-  const vanity = fitout.vanity;
-  const vanityCenter = rectCenter(vanity.footprintMm);
+  const builtIn = fitout.builtIn;
+  const run = builtIn.footprintMm;
+  const basin = builtIn.basin;
+  const basinCenter = rectCenter(basin.footprintMm);
+  const vanityX1 = builtIn.appliances[0].footprintMm.x0 - 36;
+
+  // One continuous 2 616 mm cabinet composition: the vanity, appliance bays,
+  // mirror and overhead storage share the same datum and flush top line.
   const vanityCabinet = texturedBox(
     context.scene,
-    `${fitout.id} · FLOATING-VANITY-1000 · bezúchytková dubová skrinka`,
-    { x: vanityCenter.x + 8, y: vanityCenter.y },
-    vanity.footprintMm.x1 - vanity.footprintMm.x0 - 16,
-    vanity.footprintMm.y1 - vanity.footprintMm.y0 - 40,
-    0.42,
-    0.37,
+    `${fitout.id} · BUILT-IN-2616 · plávajúca bezúchytková skrinka`,
+    { x: (run.x0 + vanityX1) / 2, y: (run.y0 + run.y1) / 2 },
+    vanityX1 - run.x0,
+    run.y1 - run.y0 - 24,
+    0.7,
+    0.1,
     1,
   );
-  finish(context, vanityCabinet, materials.kitchenFront, {
-    shadow: true,
-    pickable: true,
-  });
-  const vanityJoint = texturedBox(
+  finish(context, vanityCabinet, materials.kitchenFront, { shadow: true, pickable: true });
+  const vanityPlinth = texturedBox(
     context.scene,
-    `${fitout.id} · FLOATING-VANITY-1000 · deliaca škára zásuviek`,
-    { x: vanity.footprintMm.x1 + 3, y: vanityCenter.y },
-    7,
-    vanity.footprintMm.y1 - vanity.footprintMm.y0 - 70,
-    0.005,
-    0.575,
-    1,
-  );
-  finish(context, vanityJoint, materials.fireplace);
-  const vanityTop = texturedBox(
-    context.scene,
-    `${fitout.id} · FLOATING-VANITY-1000 · tenká kamenná doska`,
-    vanityCenter,
-    vanity.footprintMm.x1 - vanity.footprintMm.x0,
-    vanity.footprintMm.y1 - vanity.footprintMm.y0,
-    0.035,
-    0.79,
-    1,
-  );
-  finish(context, vanityTop, materials.worktop, { shadow: true });
-  softEllipsoid(
-    context,
-    `${fitout.id} · FLOATING-VANITY-1000 · keramické umývadlo`,
-    { x: vanityCenter.x + 35, y: vanityCenter.y },
-    [0.37, 0.15, 0.64],
-    vanity.rimElevationMm * MM_TO_M - 0.015,
-    materials.sanitaryCeramic,
-  );
-  softEllipsoid(
-    context,
-    `${fitout.id} · FLOATING-VANITY-1000 · vnútorná misa`,
-    { x: vanityCenter.x + 58, y: vanityCenter.y },
-    [0.25, 0.025, 0.45],
-    vanity.rimElevationMm * MM_TO_M + 0.02,
-    materials.mirrorGlass,
-  );
-  const basinDrain = CreateCylinder(
-    `${fitout.id} · FLOATING-VANITY-1000 · odtok`,
-    { height: 0.008, diameter: 0.052, tessellation: 24 },
-    context.scene,
-  );
-  basinDrain.position.set(
-    xM(vanityCenter.x + 76),
-    vanity.rimElevationMm * MM_TO_M + 0.035,
-    zM(vanityCenter.y),
-  );
-  finish(context, basinDrain, materials.steel);
-  const tapRiser = CreateCylinder(
-    `${fitout.id} · FLOATING-VANITY-1000 · vysoká batéria`,
-    { height: 0.25, diameter: 0.03, tessellation: 20 },
-    context.scene,
-  );
-  tapRiser.position.set(xM(vanity.footprintMm.x0 + 110), 0.965, zM(vanityCenter.y));
-  finish(context, tapRiser, materials.steel, { shadow: true });
-  const tapSpout = CreateCylinder(
-    `${fitout.id} · FLOATING-VANITY-1000 · výtok batérie`,
-    { height: 0.19, diameter: 0.023, tessellation: 20 },
-    context.scene,
-  );
-  tapSpout.rotation.z = Math.PI / 2;
-  tapSpout.position.set(xM(vanity.footprintMm.x0 + 190), 1.075, zM(vanityCenter.y));
-  finish(context, tapSpout, materials.steel, { shadow: true });
-  const mirrorFrame = texturedBox(
-    context.scene,
-    `${fitout.id} · FLOATING-VANITY-1000 · zrkadlo s nepriamym LED`,
-    { x: vanity.footprintMm.x0 + 8, y: vanityCenter.y },
-    16,
-    910,
-    0.9,
-    1.05,
-    1,
-  );
-  finish(context, mirrorFrame, materials.warmLight, { shadow: true });
-  const mirror = texturedBox(
-    context.scene,
-    `${fitout.id} · FLOATING-VANITY-1000 · zrkadlová plocha`,
-    { x: vanity.footprintMm.x0 + 18, y: vanityCenter.y },
-    9,
-    880,
-    0.86,
-    1.07,
-    1,
-  );
-  finish(context, mirror, materials.mirrorGlass, { pickable: true });
-
-  const tower = fitout.laundryTower;
-  const towerCenter = rectCenter(tower.footprintMm);
-  const towerCabinet = texturedBox(
-    context.scene,
-    `${fitout.id} · LAUNDRY-TOWER-650 · odvetraná vysoká skriňa`,
-    towerCenter,
-    tower.footprintMm.x1 - tower.footprintMm.x0,
-    tower.footprintMm.y1 - tower.footprintMm.y0,
-    tower.heightMm * MM_TO_M,
+    `${fitout.id} · BUILT-IN-2616 · zapustený čierny sokel`,
+    { x: (run.x0 + vanityX1) / 2, y: run.y0 + 70 },
+    vanityX1 - run.x0 - 80,
+    100,
+    0.1,
     0,
     1,
   );
-  finish(context, towerCabinet, materials.kitchenFront, {
-    shadow: true,
-    pickable: true,
-  });
-  const applianceLevels = [0.65, 1.48] as const;
-  for (const [index, elevationM] of applianceLevels.entries()) {
-    const applianceFront = texturedBox(
+  finish(context, vanityPlinth, materials.fireplace);
+  const counter = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · súvislá tmavá doska pod umývadlom`,
+    { x: (run.x0 + vanityX1) / 2, y: (run.y0 + run.y1) / 2 },
+    vanityX1 - run.x0,
+    run.y1 - run.y0,
+    0.035,
+    builtIn.counterHeightMm * MM_TO_M - 0.035,
+    1,
+  );
+  finish(context, counter, materials.worktop, { shadow: true });
+  softEllipsoid(
+    context,
+    `${fitout.id} · BUILT-IN-2616 · veľké matne čierne umývadlo`,
+    basinCenter,
+    [1.0, 0.16, 0.39],
+    basin.rimElevationMm * MM_TO_M + 0.035,
+    materials.blackCeramic,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · BUILT-IN-2616 · vnútorná čierna misa`,
+    { x: basinCenter.x, y: basinCenter.y - 8 },
+    [0.82, 0.028, 0.27],
+    basin.rimElevationMm * MM_TO_M + 0.095,
+    materials.blackGlass,
+  );
+  const basinDrain = CreateCylinder(
+    `${fitout.id} · BUILT-IN-2616 · čierna výpusť umývadla`,
+    { height: 0.009, diameter: 0.058, tessellation: 24 },
+    context.scene,
+  );
+  basinDrain.position.set(
+    xM(basinCenter.x),
+    basin.rimElevationMm * MM_TO_M + 0.115,
+    zM(basinCenter.y - 10),
+  );
+  finish(context, basinDrain, materials.fireplace);
+
+  const mirrorGlow = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · nepriame LED za zrkadlom`,
+    { x: basinCenter.x, y: run.y1 - 8 },
+    1060,
+    18,
+    0.82,
+    1.1,
+    1,
+  );
+  finish(context, mirrorGlow, materials.warmLight, { shadow: true });
+  const mirror = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · veľké bezrámové zrkadlo`,
+    { x: basinCenter.x, y: run.y1 - 19 },
+    1020,
+    9,
+    0.78,
+    1.12,
+    1,
+  );
+  finish(context, mirror, materials.mirrorGlass, { pickable: true });
+  const wallTap = CreateCylinder(
+    `${fitout.id} · BUILT-IN-2616 · nástenná čierna batéria`,
+    { height: 0.18, diameter: 0.03, tessellation: 20 },
+    context.scene,
+  );
+  wallTap.rotation.x = Math.PI / 2;
+  wallTap.position.set(xM(basinCenter.x), 1.18, zM(run.y1 - 95));
+  finish(context, wallTap, materials.fireplace, { shadow: true });
+  const tapMouth = CreateCylinder(
+    `${fitout.id} · BUILT-IN-2616 · ústie čiernej batérie`,
+    { height: 0.065, diameter: 0.034, tessellation: 20 },
+    context.scene,
+  );
+  tapMouth.position.set(xM(basinCenter.x), 1.145, zM(run.y1 - 180));
+  finish(context, tapMouth, materials.fireplace, { shadow: true });
+
+  const basinTopCabinet = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · horná skrinka nad zrkadlom`,
+    { x: (run.x0 + vanityX1) / 2, y: (run.y0 + run.y1) / 2 },
+    vanityX1 - run.x0,
+    run.y1 - run.y0,
+    0.35,
+    builtIn.heightMm * MM_TO_M - 0.35,
+    1,
+  );
+  finish(context, basinTopCabinet, materials.kitchenFront, { shadow: true, pickable: true });
+  const applianceUpperX0 = vanityX1;
+  const applianceUpper = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · horné skrinky nad spotrebičmi`,
+    { x: (applianceUpperX0 + run.x1) / 2, y: (run.y0 + run.y1) / 2 },
+    run.x1 - applianceUpperX0,
+    run.y1 - run.y0,
+    (builtIn.heightMm - builtIn.overheadCabinetBottomMm) * MM_TO_M,
+    builtIn.overheadCabinetBottomMm * MM_TO_M,
+    1,
+  );
+  finish(context, applianceUpper, materials.kitchenFront, { shadow: true, pickable: true });
+  for (const xMm of [vanityX1, builtIn.appliances[1].footprintMm.x0 - 50]) {
+    const cabinetJoint = texturedBox(
       context.scene,
-      `${fitout.id} · LAUNDRY-TOWER-650 · ${index === 0 ? "práčka" : "sušička"}`,
-      { x: towerCenter.x, y: tower.footprintMm.y0 - 5 },
-      570,
-      20,
-      0.7,
-      elevationM - 0.35,
+      `${fitout.id} · BUILT-IN-2616 · zvislá škára horných skriniek`,
+      { x: xMm, y: run.y0 - 4 },
+      5,
+      14,
+      (builtIn.heightMm - builtIn.overheadCabinetBottomMm) * MM_TO_M - 0.04,
+      builtIn.overheadCabinetBottomMm * MM_TO_M + 0.02,
       1,
     );
-    finish(context, applianceFront, materials.kitchenUpper, { pickable: true });
+    finish(context, cabinetJoint, materials.fireplace);
+  }
+  const applianceLed = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · zapustené LED nad spotrebičmi`,
+    { x: (applianceUpperX0 + run.x1) / 2, y: run.y0 + 35 },
+    run.x1 - applianceUpperX0 - 60,
+    22,
+    0.012,
+    builtIn.overheadCabinetBottomMm * MM_TO_M - 0.014,
+    1,
+  );
+  finish(context, applianceLed, materials.warmLight);
+
+  for (const [index, appliance] of builtIn.appliances.entries()) {
+    const applianceCenter = rectCenter(appliance.footprintMm);
+    const label = appliance.kind === "WASHER" ? "biela práčka" : "biela sušička";
+    const body = texturedBox(
+      context.scene,
+      `${fitout.id} · BUILT-IN-2616 · ${label}`,
+      { x: applianceCenter.x, y: run.y0 - 4 },
+      570,
+      26,
+      0.86,
+      0.08,
+      1,
+    );
+    finish(context, body, materials.applianceEnamel, { shadow: true, pickable: true });
     const doorRim = CreateCylinder(
-      `${fitout.id} · LAUNDRY-TOWER-650 · rám dvierok ${index + 1}`,
-      { height: 0.035, diameter: 0.46, tessellation: 40 },
+      `${fitout.id} · BUILT-IN-2616 · biely rám bubna ${index + 1}`,
+      { height: 0.038, diameter: 0.47, tessellation: 40 },
       context.scene,
     );
     doorRim.rotation.x = Math.PI / 2;
-    doorRim.position.set(xM(towerCenter.x), elevationM, zM(tower.footprintMm.y0 - 22));
-    finish(context, doorRim, materials.steel, { shadow: true });
+    doorRim.position.set(xM(applianceCenter.x), 0.48, zM(run.y0 - 28));
+    finish(context, doorRim, materials.applianceEnamel, { shadow: true });
     const doorGlass = CreateCylinder(
-      `${fitout.id} · LAUNDRY-TOWER-650 · tmavé sklo dvierok ${index + 1}`,
-      { height: 0.042, diameter: 0.38, tessellation: 40 },
+      `${fitout.id} · BUILT-IN-2616 · sklo bubna ${index + 1}`,
+      { height: 0.046, diameter: 0.38, tessellation: 40 },
       context.scene,
     );
     doorGlass.rotation.x = Math.PI / 2;
-    doorGlass.position.set(xM(towerCenter.x), elevationM, zM(tower.footprintMm.y0 - 38));
+    doorGlass.position.set(xM(applianceCenter.x), 0.48, zM(run.y0 - 45));
     finish(context, doorGlass, materials.blackGlass, { pickable: true });
     const controls = texturedBox(
       context.scene,
-      `${fitout.id} · LAUNDRY-TOWER-650 · ovládací panel ${index + 1}`,
-      { x: towerCenter.x + 155, y: tower.footprintMm.y0 - 31 },
-      140,
-      14,
-      0.055,
-      elevationM + 0.24,
+      `${fitout.id} · BUILT-IN-2616 · ovládací panel ${index + 1}`,
+      { x: applianceCenter.x + 145, y: run.y0 - 34 },
+      150,
+      16,
+      0.06,
+      0.8,
       1,
     );
     finish(context, controls, materials.blackGlass, { pickable: true });
-  }
-  for (let vent = 0; vent < 5; vent += 1) {
-    const ventSlot = texturedBox(
+    const selector = CreateCylinder(
+      `${fitout.id} · BUILT-IN-2616 · volič programu ${index + 1}`,
+      { height: 0.024, diameter: 0.06, tessellation: 24 },
       context.scene,
-      `${fitout.id} · LAUNDRY-TOWER-650 · horné odvetranie ${vent + 1}`,
-      { x: towerCenter.x - 120 + vent * 60, y: tower.footprintMm.y0 - 31 },
-      38,
-      14,
-      0.012,
-      2.22,
+    );
+    selector.rotation.x = Math.PI / 2;
+    selector.position.set(xM(applianceCenter.x - 150), 0.83, zM(run.y0 - 43));
+    finish(context, selector, materials.applianceEnamel, { pickable: true });
+  }
+  for (const xMm of [builtIn.appliances[0].footprintMm.x0 - 18, 24699, run.x1 - 24]) {
+    const sidePanel = texturedBox(
+      context.scene,
+      `${fitout.id} · BUILT-IN-2616 · zvislý skriňový panel`,
+      { x: xMm, y: (run.y0 + run.y1) / 2 },
+      32,
+      run.y1 - run.y0,
+      1.08,
+      0,
       1,
     );
-    finish(context, ventSlot, materials.fireplace);
+    finish(context, sidePanel, materials.kitchenFront, { shadow: true });
   }
+  const topCornice = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · súvislá horná línia`,
+    rectCenter(run),
+    run.x1 - run.x0,
+    run.y1 - run.y0,
+    0.055,
+    builtIn.heightMm * MM_TO_M - 0.055,
+    1,
+  );
+  finish(context, topCornice, materials.kitchenFront, { shadow: true });
 
   navigationGuard(
     context,
     materials,
-    `${fitout.id} · FLOATING-VANITY-1000 · hladký navigačný obrys`,
-    vanity.footprintMm,
+    `${fitout.id} · BUILT-IN-2616 · hladký navigačný obrys`,
+    run,
   );
   navigationGuard(
     context,
     materials,
-    `${fitout.id} · LAUNDRY-TOWER-650 · hladký navigačný obrys`,
-    tower.footprintMm,
-  );
-  navigationGuard(
-    context,
-    materials,
-    `${fitout.id} · WALK-IN-1400 · navigačný obrys skla`,
-    { x0: panel.x0, y0: panel.y0 - 10, x1: panel.x1, y1: panel.y1 + 10 },
+    `${fitout.id} · WALK-IN-1250 · navigačný obrys skla`,
+    { x0: panel.x0 - 10, y0: panel.y0, x1: panel.x1 + 10, y1: panel.y1 },
   );
 }
 

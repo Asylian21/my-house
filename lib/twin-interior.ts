@@ -141,19 +141,32 @@ export interface BathroomFitout {
     readonly clearEntryWidthMm: number;
     readonly linearDrainMm: RectMm;
   };
-  readonly vanity: {
-    readonly footprintMm: RectMm;
-    readonly facing: "EAST";
-    readonly rimElevationMm: number;
-  };
-  readonly laundryTower: {
+  readonly builtIn: {
     readonly footprintMm: RectMm;
     readonly facing: "SOUTH";
     readonly heightMm: number;
-    readonly applianceCount: 2;
+    readonly counterHeightMm: number;
+    readonly overheadCabinetBottomMm: number;
+    readonly basin: {
+      readonly footprintMm: RectMm;
+      readonly finish: "MATTE_BLACK";
+      readonly rimElevationMm: number;
+    };
+    readonly appliances: readonly [
+      {
+        readonly kind: "WASHER";
+        readonly footprintMm: RectMm;
+        readonly finish: "WHITE";
+      },
+      {
+        readonly kind: "DRYER";
+        readonly footprintMm: RectMm;
+        readonly finish: "WHITE";
+      },
+    ];
   };
   readonly clearFloorRectMm: RectMm;
-  readonly laundryServiceRectMm: RectMm;
+  readonly applianceServiceRectMm: RectMm;
 }
 
 export interface FireplacePier {
@@ -509,37 +522,50 @@ export const WC_FITOUT: WcFitout = Object.freeze({
 });
 
 /**
- * Compact client layout for the L-shaped room 1.05. The fixed architecture
- * stays unchanged: the 900 mm-deep east leg becomes one walk-in wet zone,
- * while a floating vanity and a vertical laundry tower release the centre.
+ * Final client layout for the L-shaped room 1.05. The fixed architecture stays
+ * unchanged: the east leg is the walk-in wet zone and the complete north
+ * recess becomes one 2 616 mm built-in wall with a basin and two appliances.
  */
 export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
-  id: "BATHROOM-FITOUT-2026-08-23",
-  sourceId: SOURCES.clientBathroomRevision20260823.id,
+  id: "BATHROOM-FITOUT-BUILTIN-2026-08-23",
+  sourceId: SOURCES.clientBathroomBuiltInRevision20260823.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-05",
   shower: {
-    footprintMm: { x0: 26141, y0: 6652, x1: 27541, y1: 7552 },
-    // A longitudinal panel protects the dry room while the complete 900 mm
-    // west edge remains an open, threshold-free entrance.
-    glassPanelMm: { x0: 26141, y0: 7537, x1: 27041, y1: 7552 },
-    clearEntryWidthMm: 900,
-    linearDrainMm: { x0: 27291, y0: 6762, x1: 27371, y1: 7442 },
+    footprintMm: { x0: 26291, y0: 6652, x1: 27541, y1: 7552 },
+    // A narrow fixed return protects the dry room while leaving a 600 mm
+    // threshold-free entrance on the west edge of the shower.
+    glassPanelMm: { x0: 26291, y0: 6652, x1: 26306, y1: 6952 },
+    clearEntryWidthMm: 600,
+    linearDrainMm: { x0: 27391, y0: 6752, x1: 27471, y1: 7452 },
   },
-  vanity: {
-    footprintMm: { x0: 22783, y0: 7822, x1: 23243, y1: 8822 },
-    facing: "EAST",
-    rimElevationMm: 860,
-  },
-  laundryTower: {
-    footprintMm: { x0: 24749, y0: 8322, x1: 25399, y1: 8972 },
+  builtIn: {
+    footprintMm: { x0: 22783, y0: 8322, x1: 25399, y1: 8972 },
     facing: "SOUTH",
     heightMm: 2350,
-    applianceCount: 2,
+    counterHeightMm: 900,
+    overheadCabinetBottomMm: 1100,
+    basin: {
+      footprintMm: { x0: 22883, y0: 8422, x1: 23983, y1: 8872 },
+      finish: "MATTE_BLACK",
+      rimElevationMm: 900,
+    },
+    appliances: [
+      {
+        kind: "WASHER",
+        footprintMm: { x0: 24049, y0: 8352, x1: 24649, y1: 8952 },
+        finish: "WHITE",
+      },
+      {
+        kind: "DRYER",
+        footprintMm: { x0: 24749, y0: 8352, x1: 25349, y1: 8952 },
+        finish: "WHITE",
+      },
+    ],
   },
-  clearFloorRectMm: { x0: 23243, y0: 7453, x1: 24749, y1: 8322 },
-  laundryServiceRectMm: { x0: 24749, y0: 7422, x1: 25399, y1: 8322 },
+  clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8322 },
+  applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
 });
 
 /**

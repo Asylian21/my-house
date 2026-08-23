@@ -192,6 +192,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientBathroomBuiltInRevision20260823: {
+    id: "SRC-CLIENT-BATHROOM-BUILTIN-20260823",
+    title: "Revízia stavebníka · vstavaná kúpeľňová stena",
+    detail:
+      "V miestnosti 1.05 umiestniť supermodernú walk-in sprchu úplne na koniec východného výklenku k malému vysokému oknu EAST-02. Celý zadný výrez za vstupom riešiť ako jednu vstavanú skriňovú zostavu s veľkým čiernym umývadlom, viditeľnou bielou práčkou a viditeľnou bielou sušičkou vedľa seba a s hornými skrinkami. Všetko musí rozmerovo sedieť bez zásahu do dverí, okna a priečok.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
