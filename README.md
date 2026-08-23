@@ -124,7 +124,7 @@ omietka zvnútra; kuchyňa
 je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
 vysoká skriňa s chladničkou a rúrou, biele horné skrinky s LED lištou a tmavý
 kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným
-odsávačom a barovými stoličkami (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
+odsávačom a voľným presahom bez barových stoličiek (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
 kremeň `stone-dark`). Okná a dvere sú stavané ako skutočné výplne
 (`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
 profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
@@ -139,8 +139,9 @@ pilierom 3,37 m dlhá vstavaná bezúchytková TV zostava v teplej greige, dubov
 dyhe a tmavom kameni, so zapusteným 98-palcovým TV, plávajúcou skrinkou,
 soundbarom a nepriamou 2700 K LED. Oproti stojí nízka svetlá modulová
 L-sedačka s ležadlom až na plnej časti štítovej steny, na koberci s dvojicou
-oválnych stolíkov. Medzi kuchynským polostrovom a sedačkou je oválny kamenný
-stôl 2 100 × 950 pre šesť čalúnených stoličiek a trojica subtílnych závesov.
+oválnych stolíkov. Medzi kuchynským polostrovom a sedačkou je kompaktný klasický
+dubový stôl 1 400 × 800 so štyrmi zúženými nohami, štyrmi rámovými čalúnenými
+stoličkami a jedným centrálnym teplým závesným svietidlom.
 Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uzamknuté
 kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
 musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.

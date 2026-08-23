@@ -930,7 +930,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     finish(context, joint, materials.fireplace);
   }
 
-  // ---- peninsula with the hob (D1.1.002 symbol) and a breakfast overhang
+  // ---- peninsula with the hob (D1.1.002 symbol) and a clear serving overhang
   const pen = k.peninsulaRectMm;
   const penCarcass = texturedBox(
     context.scene,
@@ -1045,37 +1045,6 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     1,
   );
   finish(context, duct, materials.steel);
-  // Three bar stools on the breakfast side.
-  for (const xMm of [pen.x0 + 3150, pen.x0 + 3750, pen.x0 + 4350]) {
-    const seat = CreateCylinder(`${k.id} · barová stolička`, { height: 0.04, diameter: 0.36, tessellation: 24 }, context.scene);
-    seat.position.set(xM(xMm), 0.68, zM(pen.y1 + 420));
-    finish(context, seat, materials.fireplace, { shadow: true });
-    const stem = CreateCylinder(`${k.id} · noha stoličky`, { height: 0.66, diameter: 0.04, tessellation: 12 }, context.scene);
-    stem.position.set(xM(xMm), 0.33, zM(pen.y1 + 420));
-    finish(context, stem, materials.steel);
-    const foot = CreateCylinder(`${k.id} · podstava stoličky`, { height: 0.012, diameter: 0.4, tessellation: 24 }, context.scene);
-    foot.position.set(xM(xMm), 0.006, zM(pen.y1 + 420));
-    finish(context, foot, materials.steel);
-  }
-  // Treat the three stools as one rounded-body obstacle. This preserves their
-  // visual footprint while avoiding nine tiny seat/stem/base colliders that
-  // would catch a novice walking past the breakfast side.
-  const stoolNavigationGuard = texturedBox(
-    context.scene,
-    `${k.id} · navigačný obrys barových stoličiek`,
-    { x: pen.x0 + 3750, y: pen.y1 + 420 },
-    1600,
-    400,
-    6,
-    -2,
-    1,
-  );
-  finish(context, stoolNavigationGuard, materials.kitchenFront, { collide: true });
-  stoolNavigationGuard.isVisible = false;
-  stoolNavigationGuard.metadata = {
-    ...(stoolNavigationGuard.metadata ?? {}),
-    walkCollisionOnly: true,
-  };
 }
 
 function softEllipsoid(
@@ -1437,45 +1406,78 @@ export function buildLivingDiningFitout(
     y1: 17580,
   });
 
-  // ---- six-seat dining zone: an oval dark-stone top with two sculptural
-  // pedestals, three chairs on each long side and a restrained pendant trio.
+  // ---- compact four-seat dining zone: a classic rectangular oak table with
+  // a proper apron, four tapered legs, framed chairs and one calm pendant.
   const dining = fitout.dining;
   const tableHeightM = dining.tableHeightMm * MM_TO_M;
-  const centerLengthMm = dining.tableLengthMm - dining.tableDepthMm;
-  const topThicknessM = 0.055;
-  const centerTop = texturedBox(
+  const topThicknessM = 0.052;
+  const tableTop = texturedBox(
     context.scene,
-    "LIVING-103-DINING · oválny kamenný stôl · stred",
+    "LIVING-103-DINING · klasický dubový stôl · doska",
     dining.tableCenterMm,
-    centerLengthMm,
+    dining.tableLengthMm,
     dining.tableDepthMm,
     topThicknessM,
     tableHeightM - topThicknessM,
-    1.4,
+    1.2,
   );
-  finish(context, centerTop, materials.worktop, { shadow: true, pickable: true });
-  for (const side of [-1, 1]) {
-    const capX = dining.tableCenterMm.x + side * centerLengthMm / 2;
-    const cap = CreateCylinder(
-      `LIVING-103-DINING · oválny kamenný stôl · ${side < 0 ? "západné" : "východné"} zaoblenie`,
-      { height: topThicknessM, diameter: dining.tableDepthMm * MM_TO_M, tessellation: 64 },
+  finish(context, tableTop, materials.kitchenFront, { shadow: true, pickable: true });
+
+  const apronHeightM = 0.13;
+  const apronElevationM = tableHeightM - topThicknessM - apronHeightM;
+  for (const [index, yOffsetMm] of [-1, 1].entries()) {
+    const rail = texturedBox(
       context.scene,
+      `LIVING-103-DINING · dubová lubová výstuha pozdĺžna ${index + 1}`,
+      {
+        x: dining.tableCenterMm.x,
+        y: dining.tableCenterMm.y + yOffsetMm * (dining.tableDepthMm / 2 - 62),
+      },
+      dining.tableLengthMm - 160,
+      48,
+      apronHeightM,
+      apronElevationM,
+      1,
     );
-    cap.position.set(xM(capX), tableHeightM - topThicknessM / 2, zM(dining.tableCenterMm.y));
-    finish(context, cap, materials.worktop, { shadow: true, pickable: true });
+    finish(context, rail, materials.kitchenFront, { shadow: true });
   }
-  for (const offsetX of [-560, 560]) {
-    const pedestal = CreateCylinder(
-      "LIVING-103-DINING · rebrovaná mosadzná podnož",
-      { height: tableHeightM - topThicknessM, diameter: 0.36, tessellation: 40 },
+  for (const [index, xOffsetMm] of [-1, 1].entries()) {
+    const rail = texturedBox(
       context.scene,
+      `LIVING-103-DINING · dubová lubová výstuha priečna ${index + 1}`,
+      {
+        x: dining.tableCenterMm.x + xOffsetMm * (dining.tableLengthMm / 2 - 62),
+        y: dining.tableCenterMm.y,
+      },
+      48,
+      dining.tableDepthMm - 160,
+      apronHeightM,
+      apronElevationM,
+      1,
     );
-    pedestal.position.set(
-      xM(dining.tableCenterMm.x + offsetX),
-      (tableHeightM - topThicknessM) / 2,
-      zM(dining.tableCenterMm.y),
-    );
-    finish(context, pedestal, materials.brushedBrass, { shadow: true });
+    finish(context, rail, materials.kitchenFront, { shadow: true });
+  }
+  const tableLegHeightM = tableHeightM - topThicknessM - 0.012;
+  for (const xSide of [-1, 1]) {
+    for (const ySide of [-1, 1]) {
+      const leg = CreateCylinder(
+        "LIVING-103-DINING · klasická zúžená dubová noha stola",
+        {
+          height: tableLegHeightM,
+          diameterTop: 0.058,
+          diameterBottom: 0.078,
+          tessellation: 4,
+        },
+        context.scene,
+      );
+      leg.position.set(
+        xM(dining.tableCenterMm.x + xSide * (dining.tableLengthMm / 2 - 105)),
+        tableLegHeightM / 2,
+        zM(dining.tableCenterMm.y + ySide * (dining.tableDepthMm / 2 - 105)),
+      );
+      leg.rotation.y = Math.PI / 4;
+      finish(context, leg, materials.kitchenFront, { shadow: true });
+    }
   }
   navigationGuard(context, materials, "LIVING-103-DINING · hladký navigačný obrys stola", {
     x0: dining.tableCenterMm.x - dining.tableLengthMm / 2,
@@ -1498,83 +1500,123 @@ export function buildLivingDiningFitout(
   };
   for (const chair of dining.chairs) {
     const forward = facingVector(chair.facing);
-    const seat = CreateCylinder(
-      `LIVING-103-DINING · ${chair.id} · čalúnený sedák`,
-      { height: 0.085, diameter: 0.52, tessellation: 40 },
+    const right = { x: forward.y, y: -forward.x };
+    const alongX = chair.facing === "NORTH" || chair.facing === "SOUTH";
+    const seat = texturedBox(
       context.scene,
-    );
-    seat.position.set(xM(chair.centerMm.x), 0.46, zM(chair.centerMm.y));
-    seat.scaling.set(
-      chair.facing === "NORTH" || chair.facing === "SOUTH" ? 1.08 : 0.94,
-      1,
-      chair.facing === "NORTH" || chair.facing === "SOUTH" ? 0.94 : 1.08,
+      `LIVING-103-DINING · ${chair.id} · klasický čalúnený sedák`,
+      chair.centerMm,
+      alongX ? 470 : 460,
+      alongX ? 460 : 470,
+      0.082,
+      0.425,
+      0.8,
     );
     finish(context, seat, materials.upholstery, { shadow: true, pickable: true });
+
+    for (const rightSide of [-1, 1]) {
+      for (const forwardSide of [-1, 1]) {
+        const leg = CreateCylinder(
+          `LIVING-103-DINING · ${chair.id} · zúžená dubová noha`,
+          { height: 0.43, diameterTop: 0.038, diameterBottom: 0.055, tessellation: 4 },
+          context.scene,
+        );
+        leg.position.set(
+          xM(chair.centerMm.x + right.x * rightSide * 168 + forward.x * forwardSide * 145),
+          0.215,
+          zM(chair.centerMm.y + right.y * rightSide * 168 + forward.y * forwardSide * 145),
+        );
+        leg.rotation.y = Math.PI / 4;
+        finish(context, leg, materials.kitchenFront, { shadow: true });
+      }
+    }
+
     const backCenter = {
-      x: chair.centerMm.x - forward.x * 225,
-      y: chair.centerMm.y - forward.y * 225,
+      x: chair.centerMm.x - forward.x * 205,
+      y: chair.centerMm.y - forward.y * 205,
     };
-    const backRunsAlongX = chair.facing === "NORTH" || chair.facing === "SOUTH";
-    softCapsule(
-      context,
-      `LIVING-103-DINING · ${chair.id} · obopínajúce operadlo`,
+    for (const side of [-1, 1]) {
+      const post = texturedBox(
+        context.scene,
+        `LIVING-103-DINING · ${chair.id} · dubový stĺpik operadla`,
+        {
+          x: backCenter.x + right.x * side * 195,
+          y: backCenter.y + right.y * side * 195,
+        },
+        42,
+        42,
+        0.47,
+        0.43,
+        1,
+      );
+      finish(context, post, materials.kitchenFront, { shadow: true });
+    }
+    const backPad = texturedBox(
+      context.scene,
+      `LIVING-103-DINING · ${chair.id} · čalúnená výplň operadla`,
       backCenter,
-      0.69,
-      0.56,
-      0.17,
-      new Vector3(backRunsAlongX ? 1 : 0, 0, backRunsAlongX ? 0 : 1),
-      backRunsAlongX ? [1, 1, 0.44] : [0.44, 1, 1],
-      materials.upholstery,
+      alongX ? 350 : 44,
+      alongX ? 44 : 350,
+      0.245,
+      0.57,
+      0.8,
     );
-    const stem = CreateCylinder(
-      `LIVING-103-DINING · ${chair.id} · centrálna noha`,
-      { height: 0.43, diameter: 0.045, tessellation: 16 },
+    finish(context, backPad, materials.upholstery, { shadow: true });
+    const topRail = texturedBox(
       context.scene,
+      `LIVING-103-DINING · ${chair.id} · horná dubová priečka`,
+      backCenter,
+      alongX ? 440 : 52,
+      alongX ? 52 : 440,
+      0.065,
+      0.855,
+      1,
     );
-    stem.position.set(xM(chair.centerMm.x), 0.225, zM(chair.centerMm.y));
-    finish(context, stem, materials.brushedBrass, { shadow: true });
-    const foot = CreateCylinder(
-      `LIVING-103-DINING · ${chair.id} · subtílna podstava`,
-      { height: 0.014, diameter: 0.39, tessellation: 32 },
-      context.scene,
-    );
-    foot.position.set(xM(chair.centerMm.x), 0.007, zM(chair.centerMm.y));
-    finish(context, foot, materials.brushedBrass);
+    finish(context, topRail, materials.kitchenFront, { shadow: true });
   }
 
   const livingRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-03")!;
-  for (const [index, pendantX] of [23650, 24450, 25250].entries()) {
-    const lampElevationM = 2.04;
-    const ceilingM = ceilingElevationMm(livingRoom, pendantX) * MM_TO_M - 0.07;
-    const cordHeightM = Math.max(0.15, ceilingM - lampElevationM);
-    const cord = CreateCylinder(
-      `LIVING-103-DINING · závesné svietidlo ${index + 1} · kábel`,
-      { height: cordHeightM, diameter: 0.012, tessellation: 12 },
-      context.scene,
-    );
-    cord.position.set(
-      xM(pendantX),
-      lampElevationM + cordHeightM / 2,
-      zM(dining.tableCenterMm.y),
-    );
-    finish(context, cord, materials.fireplace);
-    const globe = CreateSphere(
-      `LIVING-103-DINING · závesné svietidlo ${index + 1} · 2700 K difúzor`,
-      { diameter: 0.19, segments: 24 },
-      context.scene,
-    );
-    globe.position.set(xM(pendantX), lampElevationM, zM(dining.tableCenterMm.y));
-    finish(context, globe, materials.warmLight, { shadow: true });
-    const light = new PointLight(
-      `LIVING-103-DINING · závesné svietidlo ${index + 1} · svetlo`,
-      new Vector3(xM(pendantX), lampElevationM - 0.06, zM(dining.tableCenterMm.y)),
-      context.scene,
-    );
-    light.diffuse = Color3.FromHexString("#ffd2a0");
-    light.specular = Color3.FromHexString("#8f7254");
-    light.intensity = 0.18;
-    light.range = 3.4;
-  }
+  const lampElevationM = 2.08;
+  const ceilingM = ceilingElevationMm(livingRoom, dining.tableCenterMm.x) * MM_TO_M - 0.07;
+  const cordHeightM = Math.max(0.15, ceilingM - lampElevationM - 0.08);
+  const cord = CreateCylinder(
+    "LIVING-103-DINING · centrálne závesné svietidlo · kábel",
+    { height: cordHeightM, diameter: 0.012, tessellation: 12 },
+    context.scene,
+  );
+  cord.position.set(
+    xM(dining.tableCenterMm.x),
+    lampElevationM + 0.08 + cordHeightM / 2,
+    zM(dining.tableCenterMm.y),
+  );
+  finish(context, cord, materials.fireplace);
+  const shade = CreateCylinder(
+    "LIVING-103-DINING · centrálne závesné svietidlo · klasické tienidlo",
+    { height: 0.22, diameterTop: 0.18, diameterBottom: 0.48, tessellation: 48 },
+    context.scene,
+  );
+  shade.position.set(xM(dining.tableCenterMm.x), lampElevationM, zM(dining.tableCenterMm.y));
+  finish(context, shade, materials.brushedBrass, { shadow: true });
+  const diffuser = CreateSphere(
+    "LIVING-103-DINING · centrálne závesné svietidlo · 2700 K difúzor",
+    { diameter: 0.2, segments: 24 },
+    context.scene,
+  );
+  diffuser.position.set(
+    xM(dining.tableCenterMm.x),
+    lampElevationM - 0.095,
+    zM(dining.tableCenterMm.y),
+  );
+  finish(context, diffuser, materials.warmLight, { shadow: true });
+  const light = new PointLight(
+    "LIVING-103-DINING · centrálne závesné svietidlo · svetlo",
+    new Vector3(xM(dining.tableCenterMm.x), lampElevationM - 0.15, zM(dining.tableCenterMm.y)),
+    context.scene,
+  );
+  light.diffuse = Color3.FromHexString("#ffd2a0");
+  light.specular = Color3.FromHexString("#8f7254");
+  light.intensity = 0.25;
+  light.range = 3.2;
 }
 
 interface Interval {

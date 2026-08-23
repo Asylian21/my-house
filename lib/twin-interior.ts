@@ -75,6 +75,8 @@ export interface KitchenRun {
   /** Parallel peninsula with the hob, 1 000 mm in front of the back run. */
   readonly peninsulaRectMm: RectMm;
   readonly hobCenterXmm: number;
+  /** Client revision keeps the peninsula overhang visually and physically free. */
+  readonly barStoolCount: 0;
   readonly upperCabinets: { readonly bottomMm: number; readonly topMm: number; readonly depthMm: number };
 }
 
@@ -370,6 +372,7 @@ export const KITCHEN_RUN: KitchenRun = Object.freeze({
   dishwasherXmm: [24700, 25300] as const,
   peninsulaRectMm: { x0: 22791, y0: 12544, x1: 27541, y1: 13144 },
   hobCenterXmm: 24090,
+  barStoolCount: 0,
   upperCabinets: { bottomMm: 1450, topMm: 2250, depthMm: 350 },
 });
 
@@ -402,16 +405,14 @@ export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
   },
   dining: {
     tableCenterMm: { x: 24450, y: 14750 },
-    tableLengthMm: 2100,
-    tableDepthMm: 950,
+    tableLengthMm: 1400,
+    tableDepthMm: 800,
     tableHeightMm: 760,
     chairs: [
-      { id: "DINING-CHAIR-SW", centerMm: { x: 23650, y: 13720 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-SC", centerMm: { x: 24450, y: 13720 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-SE", centerMm: { x: 25250, y: 13720 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-NW", centerMm: { x: 23650, y: 15830 }, facing: "SOUTH" },
-      { id: "DINING-CHAIR-NC", centerMm: { x: 24450, y: 15830 }, facing: "SOUTH" },
-      { id: "DINING-CHAIR-NE", centerMm: { x: 25250, y: 15830 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-SW", centerMm: { x: 24050, y: 13750 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-SE", centerMm: { x: 24850, y: 13750 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-NW", centerMm: { x: 24050, y: 15750 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-NE", centerMm: { x: 24850, y: 15750 }, facing: "SOUTH" },
     ],
   },
 });

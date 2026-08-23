@@ -170,6 +170,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       expect(roomAt(room.standingPointMm)?.id, room.number).toBe(room.id);
     }
     expect(roomAt({ x: (KITCHEN_RUN.rectMm.x0 + KITCHEN_RUN.rectMm.x1) / 2, y: 11200 })?.number).toBe("1.03");
+    expect(KITCHEN_RUN.barStoolCount).toBe(0);
   });
 
   it("lays out the client living and dining concept between the fireplace, glazing and kitchen", () => {
@@ -216,8 +217,11 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(KITCHEN_RUN.peninsulaRectMm.y1).toBeLessThan(tableRect.y0);
     expect(tableRect.y1).toBeLessThan(mainRectMm.y0);
     expect(tableRect.x0 - tvWall.x1).toBeGreaterThanOrEqual(1200);
-    expect(fitout.dining.chairs).toHaveLength(6);
-    expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(6);
+    expect(fitout.dining.tableLengthMm).toBe(1400);
+    expect(fitout.dining.tableDepthMm).toBe(800);
+    expect(fitout.dining.tableLengthMm * fitout.dining.tableDepthMm).toBeLessThanOrEqual(1_120_000);
+    expect(fitout.dining.chairs).toHaveLength(4);
+    expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(4);
     expect(new Set(fitout.dining.chairs.map((chair) => chair.facing))).toEqual(
       new Set(["NORTH", "SOUTH"]),
     );
