@@ -143,7 +143,15 @@ technickej miestnosti: WC má nový čistý rozmer 1 299 × 1 600 mm a geometric
 plochu približne 2,08 m². `WC_FITOUT` dopĺňa závesnú misu s podomietkovým
 modulom, kompaktné 450 mm umývadlo, batériu a zrkadlo; pred misou ostáva 779 mm
 a otvorené dverné krídlo je bez kolízie. Akumulačná nádrž je v zmenšenom
-západnom poli technickej miestnosti nanovo vycentrovaná. Okná a dvere sú
+západnom poli technickej miestnosti nanovo vycentrovaná.
+Klientská kompaktná revízia kúpeľne a práčovne 1.05 ponecháva všetky priečky
+aj vysoké okno EAST-02. Pôvodné rozdrobené zariadenie nahrádza 1 400 × 900 mm
+walk-in sprcha vo východnom výklenku, plávajúca 1 000 mm umývadlová skrinka
+a jediná 650 × 650 mm vetraná veža s práčkou a sušičkou nad sebou
+(`BATHROOM_FITOUT`). Otvorené dvere zostávajú bez kolízie, pred spotrebičmi je
+900 mm servisný pás a voľný stred má šírku približne 1,5 m. Ide o interiérový
+dizajnový koncept; hydroizoláciu, odvetranie a výrobné napojenia musí potvrdiť
+profesijný projekt. Okná a dvere sú
 stavané ako skutočné výplne
 (`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
 profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s

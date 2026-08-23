@@ -129,6 +129,33 @@ export interface WcFitout {
   readonly clearFloorRectMm: RectMm;
 }
 
+export interface BathroomFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-05";
+  readonly shower: {
+    readonly footprintMm: RectMm;
+    readonly glassPanelMm: RectMm;
+    readonly clearEntryWidthMm: number;
+    readonly linearDrainMm: RectMm;
+  };
+  readonly vanity: {
+    readonly footprintMm: RectMm;
+    readonly facing: "EAST";
+    readonly rimElevationMm: number;
+  };
+  readonly laundryTower: {
+    readonly footprintMm: RectMm;
+    readonly facing: "SOUTH";
+    readonly heightMm: number;
+    readonly applianceCount: 2;
+  };
+  readonly clearFloorRectMm: RectMm;
+  readonly laundryServiceRectMm: RectMm;
+}
+
 export interface FireplacePier {
   readonly id: string;
   readonly rectMm: RectMm;
@@ -479,6 +506,40 @@ export const WC_FITOUT: WcFitout = Object.freeze({
     rimElevationMm: 850,
   },
   clearFloorRectMm: { x0: 22783, y0: 9697, x1: 23562, y1: 10392 },
+});
+
+/**
+ * Compact client layout for the L-shaped room 1.05. The fixed architecture
+ * stays unchanged: the 900 mm-deep east leg becomes one walk-in wet zone,
+ * while a floating vanity and a vertical laundry tower release the centre.
+ */
+export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
+  id: "BATHROOM-FITOUT-2026-08-23",
+  sourceId: SOURCES.clientBathroomRevision20260823.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-05",
+  shower: {
+    footprintMm: { x0: 26141, y0: 6652, x1: 27541, y1: 7552 },
+    // A longitudinal panel protects the dry room while the complete 900 mm
+    // west edge remains an open, threshold-free entrance.
+    glassPanelMm: { x0: 26141, y0: 7537, x1: 27041, y1: 7552 },
+    clearEntryWidthMm: 900,
+    linearDrainMm: { x0: 27291, y0: 6762, x1: 27371, y1: 7442 },
+  },
+  vanity: {
+    footprintMm: { x0: 22783, y0: 7822, x1: 23243, y1: 8822 },
+    facing: "EAST",
+    rimElevationMm: 860,
+  },
+  laundryTower: {
+    footprintMm: { x0: 24749, y0: 8322, x1: 25399, y1: 8972 },
+    facing: "SOUTH",
+    heightMm: 2350,
+    applianceCount: 2,
+  },
+  clearFloorRectMm: { x0: 23243, y0: 7453, x1: 24749, y1: 8322 },
+  laundryServiceRectMm: { x0: 24749, y0: 7422, x1: 25399, y1: 8322 },
 });
 
 /**

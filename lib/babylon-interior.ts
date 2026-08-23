@@ -15,6 +15,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
 
 import {
+  BATHROOM_FITOUT,
   FIREPLACE_PIER,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
@@ -76,6 +77,7 @@ export interface InteriorMaterials {
   readonly copperPipe: PBRMaterial;
   readonly sanitaryCeramic: PBRMaterial;
   readonly mirrorGlass: PBRMaterial;
+  readonly showerGlass: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -262,6 +264,16 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   mirrorGlass.clearCoat.isEnabled = true;
   mirrorGlass.clearCoat.intensity = 1;
   mirrorGlass.clearCoat.roughness = 0.02;
+  const showerGlass = pbr(scene, "real-bathroom-shower-glass", "#dbe8e9", 0.06);
+  showerGlass.alpha = 0.18;
+  showerGlass.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
+  showerGlass.needDepthPrePass = true;
+  showerGlass.separateCullingPass = true;
+  showerGlass.useSpecularOverAlpha = true;
+  showerGlass.indexOfRefraction = 1.5;
+  showerGlass.clearCoat.isEnabled = true;
+  showerGlass.clearCoat.intensity = 0.95;
+  showerGlass.clearCoat.roughness = 0.025;
   return {
     plaster,
     ceiling,
@@ -291,6 +303,7 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     copperPipe,
     sanitaryCeramic,
     mirrorGlass,
+    showerGlass,
   };
 }
 
@@ -1643,6 +1656,322 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   );
 }
 
+/**
+ * Compact fitout for the L-shaped bathroom/laundry 1.05. The east recess is
+ * kept as a single flush walk-in shower; all dry functions are lifted from
+ * the floor or stacked vertically so the room reads as one calm open space.
+ */
+function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = BATHROOM_FITOUT;
+  const shower = fitout.shower;
+
+  const showerFloor = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1400 · bezprahová sprchová plocha`,
+    rectCenter(shower.footprintMm),
+    shower.footprintMm.x1 - shower.footprintMm.x0,
+    shower.footprintMm.y1 - shower.footprintMm.y0,
+    0.012,
+    0.001,
+    0.6,
+  );
+  finish(context, showerFloor, materials.wallTile, { pickable: true });
+  const drain = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1400 · lineárny nerezový žľab`,
+    rectCenter(shower.linearDrainMm),
+    shower.linearDrainMm.x1 - shower.linearDrainMm.x0,
+    shower.linearDrainMm.y1 - shower.linearDrainMm.y0,
+    0.008,
+    0.014,
+    1,
+  );
+  finish(context, drain, materials.steel, { pickable: true });
+  for (let slot = 0; slot < 6; slot += 1) {
+    const drainSlot = texturedBox(
+      context.scene,
+      `${fitout.id} · WALK-IN-1400 · štrbina žľabu ${slot + 1}`,
+      {
+        x: shower.linearDrainMm.x0 + 20 + slot * 11,
+        y: (shower.linearDrainMm.y0 + shower.linearDrainMm.y1) / 2,
+      },
+      4,
+      shower.linearDrainMm.y1 - shower.linearDrainMm.y0 - 40,
+      0.004,
+      0.023,
+      1,
+    );
+    finish(context, drainSlot, materials.fireplace);
+  }
+
+  const panel = shower.glassPanelMm;
+  const glass = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1400 · číre bezpečnostné sklo`,
+    rectCenter(panel),
+    panel.x1 - panel.x0,
+    panel.y1 - panel.y0,
+    2.1,
+    0,
+    1,
+  );
+  finish(context, glass, materials.showerGlass, { shadow: true, pickable: true });
+  for (const [index, xMm] of [panel.x0, panel.x1].entries()) {
+    const post = texturedBox(
+      context.scene,
+      `${fitout.id} · WALK-IN-1400 · čierny profil ${index + 1}`,
+      { x: xMm, y: (panel.y0 + panel.y1) / 2 },
+      18,
+      22,
+      2.12,
+      0,
+      1,
+    );
+    finish(context, post, materials.fireplace, { shadow: true });
+  }
+  const topRail = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1400 · horný stabilizačný profil`,
+    rectCenter(panel),
+    panel.x1 - panel.x0,
+    20,
+    0.018,
+    2.1,
+    1,
+  );
+  finish(context, topRail, materials.fireplace, { shadow: true });
+
+  // Shower controls sit on the solid south wall outside the high east window.
+  const showerColumnXmm = 27020;
+  const showerWallYmm = 6680;
+  const riser = CreateCylinder(
+    `${fitout.id} · WALK-IN-1400 · sprchová tyč`,
+    { height: 1.55, diameter: 0.026, tessellation: 20 },
+    context.scene,
+  );
+  riser.position.set(xM(showerColumnXmm), 1.13, zM(showerWallYmm));
+  finish(context, riser, materials.steel, { shadow: true });
+  const overheadArm = CreateCylinder(
+    `${fitout.id} · WALK-IN-1400 · rameno hlavovej sprchy`,
+    { height: 0.32, diameter: 0.024, tessellation: 20 },
+    context.scene,
+  );
+  overheadArm.rotation.x = Math.PI / 2;
+  overheadArm.position.set(xM(showerColumnXmm), 2.04, zM(showerWallYmm + 150));
+  finish(context, overheadArm, materials.steel, { shadow: true });
+  const rainHead = CreateCylinder(
+    `${fitout.id} · WALK-IN-1400 · hlavová sprcha 240`,
+    { height: 0.025, diameter: 0.24, tessellation: 36 },
+    context.scene,
+  );
+  rainHead.position.set(xM(showerColumnXmm), 2.035, zM(showerWallYmm + 300));
+  finish(context, rainHead, materials.steel, { shadow: true, pickable: true });
+  const mixer = texturedBox(
+    context.scene,
+    `${fitout.id} · WALK-IN-1400 · termostatická batéria`,
+    { x: showerColumnXmm, y: showerWallYmm - 3 },
+    260,
+    35,
+    0.075,
+    1.03,
+    1,
+  );
+  finish(context, mixer, materials.steel, { pickable: true });
+
+  const vanity = fitout.vanity;
+  const vanityCenter = rectCenter(vanity.footprintMm);
+  const vanityCabinet = texturedBox(
+    context.scene,
+    `${fitout.id} · FLOATING-VANITY-1000 · bezúchytková dubová skrinka`,
+    { x: vanityCenter.x + 8, y: vanityCenter.y },
+    vanity.footprintMm.x1 - vanity.footprintMm.x0 - 16,
+    vanity.footprintMm.y1 - vanity.footprintMm.y0 - 40,
+    0.42,
+    0.37,
+    1,
+  );
+  finish(context, vanityCabinet, materials.kitchenFront, {
+    shadow: true,
+    pickable: true,
+  });
+  const vanityJoint = texturedBox(
+    context.scene,
+    `${fitout.id} · FLOATING-VANITY-1000 · deliaca škára zásuviek`,
+    { x: vanity.footprintMm.x1 + 3, y: vanityCenter.y },
+    7,
+    vanity.footprintMm.y1 - vanity.footprintMm.y0 - 70,
+    0.005,
+    0.575,
+    1,
+  );
+  finish(context, vanityJoint, materials.fireplace);
+  const vanityTop = texturedBox(
+    context.scene,
+    `${fitout.id} · FLOATING-VANITY-1000 · tenká kamenná doska`,
+    vanityCenter,
+    vanity.footprintMm.x1 - vanity.footprintMm.x0,
+    vanity.footprintMm.y1 - vanity.footprintMm.y0,
+    0.035,
+    0.79,
+    1,
+  );
+  finish(context, vanityTop, materials.worktop, { shadow: true });
+  softEllipsoid(
+    context,
+    `${fitout.id} · FLOATING-VANITY-1000 · keramické umývadlo`,
+    { x: vanityCenter.x + 35, y: vanityCenter.y },
+    [0.37, 0.15, 0.64],
+    vanity.rimElevationMm * MM_TO_M - 0.015,
+    materials.sanitaryCeramic,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · FLOATING-VANITY-1000 · vnútorná misa`,
+    { x: vanityCenter.x + 58, y: vanityCenter.y },
+    [0.25, 0.025, 0.45],
+    vanity.rimElevationMm * MM_TO_M + 0.02,
+    materials.mirrorGlass,
+  );
+  const basinDrain = CreateCylinder(
+    `${fitout.id} · FLOATING-VANITY-1000 · odtok`,
+    { height: 0.008, diameter: 0.052, tessellation: 24 },
+    context.scene,
+  );
+  basinDrain.position.set(
+    xM(vanityCenter.x + 76),
+    vanity.rimElevationMm * MM_TO_M + 0.035,
+    zM(vanityCenter.y),
+  );
+  finish(context, basinDrain, materials.steel);
+  const tapRiser = CreateCylinder(
+    `${fitout.id} · FLOATING-VANITY-1000 · vysoká batéria`,
+    { height: 0.25, diameter: 0.03, tessellation: 20 },
+    context.scene,
+  );
+  tapRiser.position.set(xM(vanity.footprintMm.x0 + 110), 0.965, zM(vanityCenter.y));
+  finish(context, tapRiser, materials.steel, { shadow: true });
+  const tapSpout = CreateCylinder(
+    `${fitout.id} · FLOATING-VANITY-1000 · výtok batérie`,
+    { height: 0.19, diameter: 0.023, tessellation: 20 },
+    context.scene,
+  );
+  tapSpout.rotation.z = Math.PI / 2;
+  tapSpout.position.set(xM(vanity.footprintMm.x0 + 190), 1.075, zM(vanityCenter.y));
+  finish(context, tapSpout, materials.steel, { shadow: true });
+  const mirrorFrame = texturedBox(
+    context.scene,
+    `${fitout.id} · FLOATING-VANITY-1000 · zrkadlo s nepriamym LED`,
+    { x: vanity.footprintMm.x0 + 8, y: vanityCenter.y },
+    16,
+    910,
+    0.9,
+    1.05,
+    1,
+  );
+  finish(context, mirrorFrame, materials.warmLight, { shadow: true });
+  const mirror = texturedBox(
+    context.scene,
+    `${fitout.id} · FLOATING-VANITY-1000 · zrkadlová plocha`,
+    { x: vanity.footprintMm.x0 + 18, y: vanityCenter.y },
+    9,
+    880,
+    0.86,
+    1.07,
+    1,
+  );
+  finish(context, mirror, materials.mirrorGlass, { pickable: true });
+
+  const tower = fitout.laundryTower;
+  const towerCenter = rectCenter(tower.footprintMm);
+  const towerCabinet = texturedBox(
+    context.scene,
+    `${fitout.id} · LAUNDRY-TOWER-650 · odvetraná vysoká skriňa`,
+    towerCenter,
+    tower.footprintMm.x1 - tower.footprintMm.x0,
+    tower.footprintMm.y1 - tower.footprintMm.y0,
+    tower.heightMm * MM_TO_M,
+    0,
+    1,
+  );
+  finish(context, towerCabinet, materials.kitchenFront, {
+    shadow: true,
+    pickable: true,
+  });
+  const applianceLevels = [0.65, 1.48] as const;
+  for (const [index, elevationM] of applianceLevels.entries()) {
+    const applianceFront = texturedBox(
+      context.scene,
+      `${fitout.id} · LAUNDRY-TOWER-650 · ${index === 0 ? "práčka" : "sušička"}`,
+      { x: towerCenter.x, y: tower.footprintMm.y0 - 5 },
+      570,
+      20,
+      0.7,
+      elevationM - 0.35,
+      1,
+    );
+    finish(context, applianceFront, materials.kitchenUpper, { pickable: true });
+    const doorRim = CreateCylinder(
+      `${fitout.id} · LAUNDRY-TOWER-650 · rám dvierok ${index + 1}`,
+      { height: 0.035, diameter: 0.46, tessellation: 40 },
+      context.scene,
+    );
+    doorRim.rotation.x = Math.PI / 2;
+    doorRim.position.set(xM(towerCenter.x), elevationM, zM(tower.footprintMm.y0 - 22));
+    finish(context, doorRim, materials.steel, { shadow: true });
+    const doorGlass = CreateCylinder(
+      `${fitout.id} · LAUNDRY-TOWER-650 · tmavé sklo dvierok ${index + 1}`,
+      { height: 0.042, diameter: 0.38, tessellation: 40 },
+      context.scene,
+    );
+    doorGlass.rotation.x = Math.PI / 2;
+    doorGlass.position.set(xM(towerCenter.x), elevationM, zM(tower.footprintMm.y0 - 38));
+    finish(context, doorGlass, materials.blackGlass, { pickable: true });
+    const controls = texturedBox(
+      context.scene,
+      `${fitout.id} · LAUNDRY-TOWER-650 · ovládací panel ${index + 1}`,
+      { x: towerCenter.x + 155, y: tower.footprintMm.y0 - 31 },
+      140,
+      14,
+      0.055,
+      elevationM + 0.24,
+      1,
+    );
+    finish(context, controls, materials.blackGlass, { pickable: true });
+  }
+  for (let vent = 0; vent < 5; vent += 1) {
+    const ventSlot = texturedBox(
+      context.scene,
+      `${fitout.id} · LAUNDRY-TOWER-650 · horné odvetranie ${vent + 1}`,
+      { x: towerCenter.x - 120 + vent * 60, y: tower.footprintMm.y0 - 31 },
+      38,
+      14,
+      0.012,
+      2.22,
+      1,
+    );
+    finish(context, ventSlot, materials.fireplace);
+  }
+
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · FLOATING-VANITY-1000 · hladký navigačný obrys`,
+    vanity.footprintMm,
+  );
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · LAUNDRY-TOWER-650 · hladký navigačný obrys`,
+    tower.footprintMm,
+  );
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · WALK-IN-1400 · navigačný obrys skla`,
+    { x0: panel.x0, y0: panel.y0 - 10, x1: panel.x1, y1: panel.y1 + 10 },
+  );
+}
+
 function softEllipsoid(
   context: InteriorBuildContext,
   name: string,
@@ -2369,6 +2698,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildKitchen(context, materials);
   buildTechnicalHeatingFitout(context, materials);
   buildWcFitout(context, materials);
+  buildBathroomFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {
     label: "soklová lišta",

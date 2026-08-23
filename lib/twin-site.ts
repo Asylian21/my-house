@@ -184,6 +184,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientBathroomRevision20260823: {
+    id: "SRC-CLIENT-BATHROOM-20260823",
+    title: "Revízia stavebníka · kompaktná kúpeľňa a práčovňa",
+    detail:
+      "Zjednodušiť miestnosť 1.05 bez posúvania stavebných priečok: pôvodné rozdrobené vybavenie nahradiť jednou walk-in sprchou vo východnom výklenku, plávajúcou umývadlovou skrinkou a práčkou so sušičkou nad sebou vo vysokej vetranej skrini. Zachovať vysoké okno EAST-02, celý oblúk dverí a voľný stred miestnosti.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
