@@ -19,6 +19,9 @@ import {
   normalizeWheelPixels,
   orbitZoomMultiplier,
   rayAabbDistance,
+  resolveWalkCollisionVelocity,
+  shouldResetWalkCollisionCarry,
+  shouldResolveWalkCollisionBatch,
   stepOrbitZoom,
   stepWalkCameraBoom,
   wheelZoomGesture,
@@ -506,6 +509,197 @@ describe("walkthrough motion", () => {
     expect(Math.hypot(braking.x, braking.z)).toBeLessThan(
       Math.hypot(axial.x, axial.z) * 0.42,
     );
+  });
+
+  it("keeps a shallow authoritative wall slide time-equivalent at 60/144/240 Hz", () => {
+    const results = [60, 144, 240].map((fps) => {
+      const deltaMs = 1000 / fps;
+      const babylonHorizontalFloorM =
+        WALK_COLLISION_ELLIPSOID_M.x * 0.001 * 10;
+      const shallowAngleRad = Math.PI / 12;
+      let velocity = { x: 0, z: 0 };
+      let pending = { x: 0, z: 0 };
+      let sinceSolve = { x: 0, z: 0 };
+      let pendingMs = 0;
+      let sinceSolveMs = 0;
+      let travelledAlongWallM = 0;
+      let solves = 0;
+      let rejectedSolves = 0;
+      let minimumSuccessfulTangentM = Number.POSITIVE_INFINITY;
+      let maximumNormalVelocityAfterSolve = 0;
+
+      // Exactly one second at every refresh rate.
+      for (let frame = 0; frame < fps; frame += 1) {
+        const terminal = integrateAvatarVelocity({
+          velocity,
+          forward: {
+            x: Math.cos(shallowAngleRad),
+            z: -Math.sin(shallowAngleRad),
+          },
+          commands: commands("forward"),
+          deltaMs,
+          precision: true,
+        });
+        pending = {
+          x: pending.x + terminal.x * (deltaMs / 1000),
+          z: pending.z + terminal.z * (deltaMs / 1000),
+        };
+        sinceSolve = {
+          x: sinceSolve.x + terminal.x * (deltaMs / 1000),
+          z: sinceSolve.z + terminal.z * (deltaMs / 1000),
+        };
+        pendingMs += deltaMs;
+        sinceSolveMs += deltaMs;
+        if (!shouldResolveWalkCollisionBatch(sinceSolve, sinceSolveMs)) {
+          velocity = terminal;
+          continue;
+        }
+
+        // A wall blocks +x. Babylon may discard its recursive slide when the
+        // remaining tangent is below its ellipsoid-scaled epsilon floor.
+        const movedZ =
+          Math.abs(pending.z) > babylonHorizontalFloorM ? pending.z : 0;
+        velocity = resolveWalkCollisionVelocity({
+          terminal,
+          intended: pending,
+          moved: { x: 0, z: movedZ },
+          elapsedMs: pendingMs,
+        });
+        travelledAlongWallM += Math.abs(movedZ);
+        maximumNormalVelocityAfterSolve = Math.max(
+          maximumNormalVelocityAfterSolve,
+          Math.abs(velocity.x),
+        );
+        solves += 1;
+        if (movedZ === 0) {
+          // Runtime retains a rejected displacement: the next collision call
+          // receives enough real tangent to pass Babylon's recursive floor.
+          rejectedSolves += 1;
+          const carryM = Math.hypot(pending.x, pending.z);
+          if (carryM > WALK_CAMERA.maxRejectedCollisionCarryM) {
+            const scale = WALK_CAMERA.maxRejectedCollisionCarryM / carryM;
+            pending = { x: pending.x * scale, z: pending.z * scale };
+            pendingMs *= scale;
+          }
+          sinceSolve = { x: 0, z: 0 };
+          sinceSolveMs = 0;
+        } else {
+          minimumSuccessfulTangentM = Math.min(
+            minimumSuccessfulTangentM,
+            Math.abs(pending.z),
+          );
+          pending = { x: 0, z: 0 };
+          sinceSolve = { x: 0, z: 0 };
+          pendingMs = 0;
+          sinceSolveMs = 0;
+        }
+      }
+
+      expect(solves).toBeGreaterThan(10);
+      expect(rejectedSolves).toBeGreaterThan(0);
+      expect(travelledAlongWallM).toBeGreaterThan(0.025);
+      expect(minimumSuccessfulTangentM).toBeGreaterThan(
+        babylonHorizontalFloorM,
+      );
+      expect(maximumNormalVelocityAfterSolve).toBe(0);
+      return travelledAlongWallM;
+    });
+    expect(Math.max(...results) - Math.min(...results)).toBeLessThan(0.025);
+
+    // A long idle must not make the first 240 Hz precision frame eligible for
+    // a sub-epsilon solve merely because wall-clock time elapsed.
+    const firstPrecisionFrame = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("forward"),
+      deltaMs: 1000 / 240,
+      precision: true,
+    });
+    expect(
+      shouldResolveWalkCollisionBatch(
+        {
+          x: firstPrecisionFrame.x / 240,
+          z: firstPrecisionFrame.z / 240,
+        },
+        1000 + 1000 / 240,
+      ),
+    ).toBe(false);
+
+    // A rejected wall-normal carry is discarded on release, so a later
+    // perpendicular key press cannot discharge it as a positional impulse.
+    let rejectedCarry = {
+      x: WALK_CAMERA.minCollisionSolveDistanceM,
+      z: 0,
+    };
+    let rejectedCarryMs = 40;
+    if (shouldResetWalkCollisionCarry(false, { x: 0, z: 0 })) {
+      rejectedCarry = { x: 0, z: 0 };
+      rejectedCarryMs = 0;
+    }
+    const firstNewDirectionFrame = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("forward"),
+      deltaMs: 1000 / 240,
+    });
+    rejectedCarry.z += firstNewDirectionFrame.z / 240;
+    rejectedCarryMs += 1000 / 240;
+    expect(rejectedCarry.x).toBe(0);
+    expect(
+      shouldResolveWalkCollisionBatch(rejectedCarry, rejectedCarryMs),
+    ).toBe(false);
+
+    // Immediate W -> A without a release frame must discard the old rejected
+    // carry, while another W frame must keep accumulating it.
+    const rejectedForwardCarry = {
+      x: 0,
+      z: -WALK_CAMERA.minCollisionSolveDistanceM,
+    };
+    const sameDirectionFrame = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("forward"),
+      deltaMs: 1000 / 240,
+    });
+    const perpendicularFrame = integrateAvatarVelocity({
+      velocity: { x: 0, z: 0 },
+      forward: { x: 0, z: -1 },
+      commands: commands("left"),
+      deltaMs: 1000 / 240,
+    });
+    expect(
+      shouldResetWalkCollisionCarry(
+        true,
+        sameDirectionFrame,
+        rejectedForwardCarry,
+      ),
+    ).toBe(false);
+    expect(
+      shouldResetWalkCollisionCarry(
+        true,
+        perpendicularFrame,
+        rejectedForwardCarry,
+      ),
+    ).toBe(true);
+    let immediatePerpendicularCarry = { ...rejectedForwardCarry };
+    if (
+      shouldResetWalkCollisionCarry(
+        true,
+        perpendicularFrame,
+        immediatePerpendicularCarry,
+      )
+    ) {
+      immediatePerpendicularCarry = { x: 0, z: 0 };
+    }
+    immediatePerpendicularCarry.x += perpendicularFrame.x / 240;
+    immediatePerpendicularCarry.z += perpendicularFrame.z / 240;
+    expect(immediatePerpendicularCarry.z).toBeCloseTo(0, 12);
+    expect(
+      shouldResolveWalkCollisionBatch(
+        immediatePerpendicularCarry,
+        1000 / 240,
+      ),
+    ).toBe(false);
   });
 });
 

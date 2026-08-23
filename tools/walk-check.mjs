@@ -8,7 +8,14 @@ import { createRequire } from "node:module";
 import { delimiter, dirname, join } from "node:path";
 
 const APP_URL = "http://localhost:3000/";
-const FIXED_DELTA_MS = 1000 / 60;
+const WALK_CHECK_FPS = Number(process.env.WALK_CHECK_FPS ?? 60);
+assert.ok(
+  Number.isFinite(WALK_CHECK_FPS) && WALK_CHECK_FPS > 0,
+  `WALK_CHECK_FPS must be a positive finite number, got ${process.env.WALK_CHECK_FPS}`,
+);
+const framesFrom60Hz = (framesAt60Hz) =>
+  Math.max(1, Math.round((framesAt60Hz * WALK_CHECK_FPS) / 60));
+const FIXED_DELTA_MS = 1000 / WALK_CHECK_FPS;
 const LAUNCH_ARGS =
   process.platform === "darwin"
     ? ["--use-gl=angle", "--use-angle=metal", "--ignore-gpu-blocklist"]
@@ -172,7 +179,7 @@ async function run() {
     });
     console.log("walk-check: authoritative viewport ready state reached");
 
-    const load = await page.evaluate(async (fixedDeltaMs) => {
+    const load = await page.evaluate(async ({ fixedDeltaMs, fps }) => {
       const controller = window.twinDebug;
       controller.engine.stopRenderLoop();
       await controller.avatar.load();
@@ -188,6 +195,8 @@ async function run() {
       const pose = () => ({ ...controller.avatar.pose });
       const distance = (from, to) =>
         Math.hypot(to.x - from.x, to.z - from.z);
+      const framesFrom60Hz = (framesAt60Hz) =>
+        Math.max(1, Math.round((framesAt60Hz * fps) / 60));
       const addError = (errors, message) => {
         if (errors.length < 30 && !errors.includes(message)) errors.push(message);
       };
@@ -281,7 +290,7 @@ async function run() {
           controller.applyWalkView();
         }
         const cameraErrors = [];
-        render(3, `${label} settle`, cameraErrors);
+        render(framesFrom60Hz(3), `${label} settle`, cameraErrors);
         return {
           pose: pose(),
           roomId: controller.getWalkRoom()?.id ?? null,
@@ -316,6 +325,7 @@ async function run() {
         distance,
         inspectCamera,
         render,
+        framesFrom60Hz,
         begin,
         measureFrames,
       };
@@ -341,7 +351,7 @@ async function run() {
         roomId: initial.roomId,
         cameraErrors: initial.cameraErrors,
       };
-    }, FIXED_DELTA_MS);
+    }, { fixedDeltaMs: FIXED_DELTA_MS, fps: WALK_CHECK_FPS });
 
     assert.match(load.httpReadyState, /^(interactive|complete)$/);
     assert.equal(load.canvasCount, 1, "walkthrough must expose exactly one canvas");
@@ -376,28 +386,28 @@ async function run() {
           id: "wcForward",
           roomId: "ROOM-1-06",
           command: "forward",
-          frames: 55,
+          frames: harness.framesFrom60Hz(55),
           expectedRoomId: "ROOM-1-02",
         },
         {
           id: "wcBackward",
           roomId: "ROOM-1-06",
           command: "backward",
-          frames: 40,
+          frames: harness.framesFrom60Hz(40),
           expectedRoomId: "ROOM-1-06",
         },
         {
           id: "livingForward",
           roomId: "ROOM-1-03",
           command: "forward",
-          frames: 40,
+          frames: harness.framesFrom60Hz(40),
           expectedRoomId: "ROOM-1-03",
         },
         {
           id: "bedroomLeft",
           roomId: "ROOM-1-10",
           command: "left",
-          frames: 40,
+          frames: harness.framesFrom60Hz(40),
           expectedRoomId: "ROOM-1-10",
         },
       ];
@@ -543,7 +553,11 @@ async function run() {
           if (typeof controller.applyWalkView === "function") {
             controller.applyWalkView();
           }
-          harness.render(3, `${door.id} ${direction.id} placed`, cameraErrors);
+          harness.render(
+            harness.framesFrom60Hz(3),
+            `${door.id} ${direction.id} placed`,
+            cameraErrors,
+          );
 
           const observedStartRoomId = controller.getWalkRoom()?.id ?? null;
           const requiredProjectedM = Math.max(0.1, distanceM - 0.16);
@@ -555,7 +569,11 @@ async function run() {
           let frames = 0;
           controller.setFlightCommand("forward", true);
           try {
-            for (frames = 1; frames <= 110; frames += 1) {
+            for (
+              frames = 1;
+              frames <= harness.framesFrom60Hz(110);
+              frames += 1
+            ) {
               harness.render(
                 1,
                 `${door.id} ${direction.id} traversal`,
@@ -578,7 +596,7 @@ async function run() {
               } else {
                 targetFrames = 0;
               }
-              if (targetFrames >= 3) {
+              if (targetFrames >= harness.framesFrom60Hz(3)) {
                 arrived = true;
                 break;
               }
@@ -667,7 +685,11 @@ async function run() {
       controller.avatar.camera.alpha = Math.PI;
       controller.avatar.camera.inertialAlphaOffset = 0;
       controller.avatar.noteCameraInput();
-      harness.render(1, "recovery wall heading", recoveryCameraErrors);
+      harness.render(
+        harness.framesFrom60Hz(1),
+        "recovery wall heading",
+        recoveryCameraErrors,
+      );
       const beforeInput = harness.pose();
       controller.setFlightCommand("forward", true);
       let blockedPose;
@@ -676,7 +698,11 @@ async function run() {
       let blockedReached = false;
       let blockedFrames = 0;
       try {
-        for (blockedFrames = 1; blockedFrames <= 100; blockedFrames += 1) {
+        for (
+          blockedFrames = 1;
+          blockedFrames <= harness.framesFrom60Hz(100);
+          blockedFrames += 1
+        ) {
           harness.render(1, "recovery blocked precondition", recoveryCameraErrors);
           if (controller.isWalkBlocked()) {
             blockedReached = true;
@@ -686,7 +712,11 @@ async function run() {
         blockedPose = harness.pose();
         controller.recoverWalkthrough();
         recovered = harness.pose();
-        harness.render(30, "recovery released", recoveryCameraErrors);
+        harness.render(
+          harness.framesFrom60Hz(30),
+          "recovery released",
+          recoveryCameraErrors,
+        );
         afterRecovery = harness.pose();
       } finally {
         controller.setFlightCommand("forward", false);
@@ -720,7 +750,10 @@ async function run() {
         movement.travelled < 3,
         `${movement.id}: implausible travel ${movement.travelled.toFixed(4)} m`,
       );
-      assert.ok(movement.movingFrames >= 3, `${movement.id}: no sustained movement`);
+      assert.ok(
+        movement.movingFrames >= framesFrom60Hz(3),
+        `${movement.id}: no sustained movement`,
+      );
       assert.ok(
         movement.maxStepM > 0 && movement.maxStepM < 0.12,
         `${movement.id}: invalid maximum frame step ${movement.maxStepM}`,
@@ -810,7 +843,10 @@ async function run() {
     try {
       await page.keyboard.down("w");
       keyboardMotion = await page.evaluate(() =>
-        window.__walkCheckHarness.measureFrames(40, "keyboard W"),
+        window.__walkCheckHarness.measureFrames(
+          window.__walkCheckHarness.framesFrom60Hz(40),
+          "keyboard W",
+        ),
       );
     } finally {
       await page.keyboard.up("w");
@@ -831,7 +867,10 @@ async function run() {
     try {
       await page.keyboard.down("w");
       blurMotion = await page.evaluate(() =>
-        window.__walkCheckHarness.measureFrames(18, "blur precondition"),
+        window.__walkCheckHarness.measureFrames(
+          window.__walkCheckHarness.framesFrom60Hz(18),
+          "blur precondition",
+        ),
       );
       const blurred = await page.evaluate(() => {
         const canvasElement = document.querySelector("canvas");
@@ -840,7 +879,11 @@ async function run() {
       });
       assert.equal(blurred, true, "canvas did not lose focus");
       blurReleased = await page.evaluate(() =>
-        window.__walkCheckHarness.measureFrames(70, "blur release", 15),
+        window.__walkCheckHarness.measureFrames(
+          window.__walkCheckHarness.framesFrom60Hz(70),
+          "blur release",
+          window.__walkCheckHarness.framesFrom60Hz(15),
+        ),
       );
     } finally {
       await page.keyboard.up("w");
@@ -851,7 +894,7 @@ async function run() {
     );
     assert.ok(
       blurReleased.tailTravelled < 0.02,
-      `blur did not clear held input; final 15 frames travelled ${blurReleased.tailTravelled.toFixed(4)} m`,
+      `blur did not clear held input; final ${framesFrom60Hz(15)} frames travelled ${blurReleased.tailTravelled.toFixed(4)} m`,
     );
     assertNoCameraErrors(blurMotion, "blur precondition");
     assertNoCameraErrors(blurReleased, "blur release");
@@ -873,6 +916,7 @@ async function run() {
     assert.deepEqual(pageErrors, [], `uncaught browser errors:\n${pageErrors.join("\n")}`);
 
     const report = {
+      fps: WALK_CHECK_FPS,
       load,
       movements: suite.movements.map((movement) => ({
         id: movement.id,
@@ -908,7 +952,7 @@ async function run() {
     };
     console.log(JSON.stringify(report, null, 2));
     console.log(
-      `walk-check PASS: ${suite.doors.doorCount} doors / ${suite.doors.entries.length} directions`,
+      `walk-check PASS @ ${WALK_CHECK_FPS} FPS: ${suite.doors.doorCount} doors / ${suite.doors.entries.length} directions`,
     );
   } finally {
     await browser.close();

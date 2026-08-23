@@ -18,6 +18,9 @@ import {
   WALK_COLLISION_OFFSET_M,
   WALK_SPEED_MPS,
   integrateAvatarVelocity,
+  resolveWalkCollisionVelocity,
+  shouldResetWalkCollisionCarry,
+  shouldResolveWalkCollisionBatch,
   stepWalkCameraBoom,
   type FlightCommand,
 } from "./twin-viewport-contract";
@@ -157,6 +160,9 @@ export class AvatarController {
     () => new Ray(new Vector3(), new Vector3(0, 0, 1), WALK_CAMERA.maxRadiusM),
   );
   private readonly intendedMovement = new Vector3();
+  private readonly movementSinceCollisionSolve = new Vector3();
+  private pendingMovementSecondsS = 0;
+  private collisionBatchAccountedSecondsS = 0;
   private readonly movementSubstep = new Vector3();
   private readonly positionBeforeMove = new Vector3();
   private readonly actualMovement = new Vector3();
@@ -330,6 +336,10 @@ export class AvatarController {
     this.yaw = yawRad;
     this.root.rotation.set(0, yawRad, 0);
     this.velocity.setAll(0);
+    this.intendedMovement.setAll(0);
+    this.movementSinceCollisionSolve.setAll(0);
+    this.pendingMovementSecondsS = 0;
+    this.collisionBatchAccountedSecondsS = 0;
     this.effectiveCameraRadiusM = this.preferredCameraRadiusM;
     this.adaptiveVisibility = Math.max(
       0,
@@ -367,6 +377,10 @@ export class AvatarController {
     this.active = false;
     this.setVisible(false);
     this.velocity.setAll(0);
+    this.intendedMovement.setAll(0);
+    this.movementSinceCollisionSolve.setAll(0);
+    this.pendingMovementSecondsS = 0;
+    this.collisionBatchAccountedSecondsS = 0;
     this.blockedForS = 0;
     this.recoveryNeeded = false;
     this.recoveryClearTravelM = 0;
@@ -397,6 +411,10 @@ export class AvatarController {
     this.collider.computeWorldMatrix(true);
     this.root.position.copyFrom(this.collider.position);
     this.velocity.setAll(0);
+    this.intendedMovement.setAll(0);
+    this.movementSinceCollisionSolve.setAll(0);
+    this.pendingMovementSecondsS = 0;
+    this.collisionBatchAccountedSecondsS = 0;
     this.blockedForS = 0;
     this.recoveryNeeded = false;
     this.recoveryClearTravelM = 0;
@@ -454,13 +472,53 @@ export class AvatarController {
       precision: modifiers.precision,
     });
     const seconds = Math.min(50, Math.max(0, deltaMs)) / 1000;
-    const intended = this.intendedMovement.set(
-      next.x * seconds,
-      0,
-      next.z * seconds,
+    const hasDirectionalInput =
+      commands.has("forward") ||
+      commands.has("backward") ||
+      commands.has("left") ||
+      commands.has("right");
+    const intended = this.intendedMovement;
+    const resetCollisionCarry = shouldResetWalkCollisionCarry(
+      hasDirectionalInput,
+      next,
+      intended,
     );
-    this.positionBeforeMove.copyFrom(this.collider.position);
-    if (intended.lengthSquared() > 1e-12) {
+    if (resetCollisionCarry) {
+      intended.setAll(0);
+      this.movementSinceCollisionSolve.setAll(0);
+      this.pendingMovementSecondsS = 0;
+      this.collisionBatchAccountedSecondsS = 0;
+    }
+    intended.x += next.x * seconds;
+    intended.z += next.z * seconds;
+    this.movementSinceCollisionSolve.x += next.x * seconds;
+    this.movementSinceCollisionSolve.z += next.z * seconds;
+    // Do not let wall-clock idle time turn the next sub-epsilon key press into
+    // an immediate (and discarded) collision solve.
+    if (!(resetCollisionCarry && !hasDirectionalInput)) {
+      this.pendingMovementSecondsS += seconds;
+    }
+    const resolvedCollisionBatch = shouldResolveWalkCollisionBatch(
+      this.movementSinceCollisionSolve,
+      (this.pendingMovementSecondsS - this.collisionBatchAccountedSecondsS) *
+        1000,
+    );
+    let moved = this.actualMovement.setAll(0);
+    const intendedDistance = intended.length();
+    let movedDistance = 0;
+    let progress = 1;
+    let collisionCorrectionM = 0;
+    let actualX = next.x;
+    let actualZ = next.z;
+    let collisionBatchSecondsS = 0;
+    let collisionAccountingSecondsS = 0;
+    if (resolvedCollisionBatch) {
+      collisionBatchSecondsS = this.pendingMovementSecondsS;
+      collisionAccountingSecondsS = Math.max(
+        0,
+        collisionBatchSecondsS - this.collisionBatchAccountedSecondsS,
+      );
+      this.positionBeforeMove.copyFrom(this.collider.position);
       const substeps = Math.max(
         1,
         Math.ceil(intended.length() / WALK_CAMERA.maxMoveSubstepM),
@@ -476,78 +534,105 @@ export class AvatarController {
         this.collider.position.y = 0;
         this.collider.computeWorldMatrix(true);
       }
+      moved = this.actualMovement
+        .copyFrom(this.collider.position)
+        .subtractInPlace(this.positionBeforeMove);
+      moved.y = 0;
+      movedDistance = moved.length();
+      progress = intendedDistance > 1e-5
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              Vector3.Dot(moved, intended) / (intendedDistance * intendedDistance),
+            ),
+          )
+        : 1;
+      collisionCorrectionM = Math.hypot(
+        intended.x - moved.x,
+        intended.z - moved.z,
+      );
+      const collisionVelocity = resolveWalkCollisionVelocity({
+        terminal: next,
+        intended,
+        moved,
+        elapsedMs: collisionBatchSecondsS * 1000,
+      });
+      actualX = collisionVelocity.x;
+      actualZ = collisionVelocity.z;
+      const retainRejectedMovement =
+        hasDirectionalInput &&
+        movedDistance <= 1e-5 &&
+        collisionCorrectionM > 1e-5;
+      if (retainRejectedMovement) {
+        const carryDistanceM = intended.length();
+        if (carryDistanceM > WALK_CAMERA.maxRejectedCollisionCarryM) {
+          const carryScale =
+            WALK_CAMERA.maxRejectedCollisionCarryM / carryDistanceM;
+          intended.scaleInPlace(carryScale);
+          this.pendingMovementSecondsS *= carryScale;
+        }
+        this.collisionBatchAccountedSecondsS =
+          this.pendingMovementSecondsS;
+        this.movementSinceCollisionSolve.setAll(0);
+      } else {
+        intended.setAll(0);
+        this.movementSinceCollisionSolve.setAll(0);
+        this.pendingMovementSecondsS = 0;
+        this.collisionBatchAccountedSecondsS = 0;
+      }
     }
-    const moved = this.actualMovement
-      .copyFrom(this.collider.position)
-      .subtractInPlace(this.positionBeforeMove);
-    moved.y = 0;
-    const intendedDistance = intended.length();
-    const movedDistance = moved.length();
-    const progress = intendedDistance > 1e-5
-      ? Math.max(
-          0,
-          Math.min(
-            1,
-            Vector3.Dot(moved, intended) / (intendedDistance * intendedDistance),
-          ),
-        )
-      : 1;
-    const collisionCorrectionM = Math.hypot(
-      intended.x - moved.x,
-      intended.z - moved.z,
-    );
-    const actualX = seconds > 1e-5 ? moved.x / seconds : 0;
-    const actualZ = seconds > 1e-5 ? moved.z / seconds : 0;
-    // Collision response is always authoritative. In particular, a shallow
-    // wall slide must not retain the intended wall-normal velocity and hit the
-    // same corner again on every frame.
+    // A solved collision is authoritative. Unsolved high-refresh frames keep
+    // integrating input until their real displacement clears Babylon's
+    // epsilon; collision-free batches retain their terminal velocity rather
+    // than replacing it with the batch-average acceleration.
     this.velocity.set(actualX, 0, actualZ);
     this.root.position.copyFrom(this.collider.position);
 
     const speed = Math.hypot(actualX, actualZ);
-    const hasDirectionalInput =
-      commands.has("forward") ||
-      commands.has("backward") ||
-      commands.has("left") ||
-      commands.has("right");
-    if (hasDirectionalInput && intendedDistance > 1e-7 && progress < 0.12) {
-      this.blockedForS += seconds;
-    } else {
-      this.blockedForS = Math.max(0, this.blockedForS - seconds * 1.2);
-    }
-    if (this.blockedForS >= 0.3) {
-      this.recoveryNeeded = true;
-      this.recoveryClearTravelM = 0;
-    }
-    if (
-      this.recoveryNeeded &&
-      hasDirectionalInput &&
-      progress > 0.72 &&
-      movedDistance > 0.001
-    ) {
-      this.recoveryClearTravelM += movedDistance;
-      if (this.recoveryClearTravelM >= 0.45) {
-        this.recoveryNeeded = false;
-        this.blockedForS = 0;
+    if (resolvedCollisionBatch) {
+      if (hasDirectionalInput && intendedDistance > 1e-7 && progress < 0.12) {
+        this.blockedForS += collisionAccountingSecondsS;
+      } else {
+        this.blockedForS = Math.max(
+          0,
+          this.blockedForS - collisionAccountingSecondsS * 1.2,
+        );
+      }
+      if (this.blockedForS >= 0.3) {
+        this.recoveryNeeded = true;
         this.recoveryClearTravelM = 0;
       }
-    }
-    if (
-      progress > 0.97 &&
-      collisionCorrectionM < 0.01 &&
-      movedDistance > 0.001
-    ) {
-      this.safeTravelM += movedDistance;
-      if (this.safeTravelM >= 0.14) {
-        // Retain one proven-clear checkpoint behind the newest candidate.
-        // Recovery therefore creates useful breathing room instead of moving
-        // only a few centimetres when contact follows a checkpoint update.
-        this.lastSafePosition.copyFrom(this.safeCandidatePosition);
-        this.safeCandidatePosition.copyFrom(this.collider.position);
+      if (
+        this.recoveryNeeded &&
+        hasDirectionalInput &&
+        progress > 0.72 &&
+        movedDistance > 0.001
+      ) {
+        this.recoveryClearTravelM += movedDistance;
+        if (this.recoveryClearTravelM >= 0.45) {
+          this.recoveryNeeded = false;
+          this.blockedForS = 0;
+          this.recoveryClearTravelM = 0;
+        }
+      }
+      if (
+        progress > 0.97 &&
+        collisionCorrectionM < 0.01 &&
+        movedDistance > 0.001
+      ) {
+        this.safeTravelM += movedDistance;
+        if (this.safeTravelM >= 0.14) {
+          // Retain one proven-clear checkpoint behind the newest candidate.
+          // Recovery therefore creates useful breathing room instead of moving
+          // only a few centimetres when contact follows a checkpoint update.
+          this.lastSafePosition.copyFrom(this.safeCandidatePosition);
+          this.safeCandidatePosition.copyFrom(this.collider.position);
+          this.safeTravelM = 0;
+        }
+      } else if (collisionCorrectionM >= 0.01) {
         this.safeTravelM = 0;
       }
-    } else if (collisionCorrectionM >= 0.01) {
-      this.safeTravelM = 0;
     }
 
     if (speed > 0.08) {

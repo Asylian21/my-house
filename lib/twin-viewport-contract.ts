@@ -445,6 +445,18 @@ export const WALK_CAMERA = Object.freeze({
   recoveryHalfLifeMs: 120,
   avatarFadeNearM: 0.85,
   avatarFadeFarM: 1.25,
+  /**
+   * Babylon stops a collision retry below 10 * CollisionsEpsilon in
+   * ellipsoid space. Batch smaller render-frame displacements so a 45-degree
+   * slide still clears that floor with the 220 mm horizontal radius.
+   */
+  minCollisionSolveDistanceM: 0.004,
+  /** Bound latency when inputs cancel before reaching the distance floor. */
+  maxCollisionBatchMs: 50,
+  /** Rejected motion retained for a shallow slide, bounded below one substep. */
+  maxRejectedCollisionCarryM: 0.025,
+  /** Carry is stale once a new input turns at least 60 degrees away from it. */
+  rejectedCarryResetDirectionCos: 0.5,
   maxMoveSubstepM: 0.05,
 });
 /** Radii of the walker's collision ellipsoid (half extents in metres). */
@@ -691,6 +703,84 @@ export interface AvatarVelocityInput {
   readonly deltaMs: number;
   readonly boost?: boolean;
   readonly precision?: boolean;
+}
+
+/**
+ * Whether an accumulated planar displacement is large enough to hand to
+ * Babylon's ellipsoid collision solver. Keeping this pure makes the
+ * high-refresh movement contract deterministic and regression-testable.
+ */
+export function shouldResolveWalkCollisionBatch(
+  displacement: { readonly x: number; readonly z: number },
+  elapsedMs: number,
+): boolean {
+  const x = Number.isFinite(displacement.x) ? displacement.x : 0;
+  const z = Number.isFinite(displacement.z) ? displacement.z : 0;
+  const distanceM = Math.hypot(x, z);
+  if (distanceM >= WALK_CAMERA.minCollisionSolveDistanceM) return true;
+  return (
+    distanceM >= WALK_CAMERA.minCollisionSolveDistanceM * 0.5 &&
+    Number.isFinite(elapsedMs) &&
+    elapsedMs >= WALK_CAMERA.maxCollisionBatchMs
+  );
+}
+
+/**
+ * Release clears settled carry; active input clears carry after a meaningful
+ * direction change. The normalized dot keeps this independent of speed and
+ * preserves accumulation while the player continues in the same direction.
+ */
+export function shouldResetWalkCollisionCarry(
+  hasDirectionalInput: boolean,
+  velocity: { readonly x: number; readonly z: number },
+  carry: { readonly x: number; readonly z: number } = { x: 0, z: 0 },
+): boolean {
+  const velocityM = Math.hypot(velocity.x, velocity.z);
+  if (!hasDirectionalInput) return velocityM <= 1e-4;
+  const carryM = Math.hypot(carry.x, carry.z);
+  if (velocityM <= 1e-4 || carryM <= 1e-7) return false;
+  const directionCos =
+    (carry.x * velocity.x + carry.z * velocity.z) / (carryM * velocityM);
+  return directionCos <= WALK_CAMERA.rejectedCarryResetDirectionCos;
+}
+
+/**
+ * Removes the velocity component rejected by a solved collision while
+ * retaining the terminal tangent speed. This keeps a real wall slide without
+ * re-introducing the wall-normal component on the following frame.
+ */
+export function resolveWalkCollisionVelocity({
+  terminal,
+  intended,
+  moved,
+  elapsedMs,
+}: {
+  readonly terminal: { readonly x: number; readonly z: number };
+  readonly intended: { readonly x: number; readonly z: number };
+  readonly moved: { readonly x: number; readonly z: number };
+  readonly elapsedMs: number;
+}): { x: number; z: number } {
+  const correctionX = intended.x - moved.x;
+  const correctionZ = intended.z - moved.z;
+  const correctionM = Math.hypot(correctionX, correctionZ);
+  if (correctionM <= 1e-5) return { x: terminal.x, z: terminal.z };
+  const seconds = clamp(finitePositive(elapsedMs, 0), 0, 50_000) / 1000;
+  if (Math.hypot(moved.x, moved.z) <= 1e-5 || seconds <= 1e-5) {
+    return {
+      x: seconds > 1e-5 ? moved.x / seconds : 0,
+      z: seconds > 1e-5 ? moved.z / seconds : 0,
+    };
+  }
+  const normalX = correctionX / correctionM;
+  const normalZ = correctionZ / correctionM;
+  const rejectedSpeed = Math.max(
+    0,
+    terminal.x * normalX + terminal.z * normalZ,
+  );
+  return {
+    x: terminal.x - normalX * rejectedSpeed,
+    z: terminal.z - normalZ * rejectedSpeed,
+  };
 }
 
 /**
