@@ -225,6 +225,10 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(new Set(fitout.dining.chairs.map((chair) => chair.facing))).toEqual(
       new Set(["NORTH", "SOUTH"]),
     );
+    const southChairs = fitout.dining.chairs.filter((chair) => chair.facing === "NORTH");
+    const northChairs = fitout.dining.chairs.filter((chair) => chair.facing === "SOUTH");
+    expect(tableRect.y0 - Math.max(...southChairs.map((chair) => chair.centerMm.y))).toBe(350);
+    expect(Math.min(...northChairs.map((chair) => chair.centerMm.y)) - tableRect.y1).toBe(350);
     for (const chair of fitout.dining.chairs) {
       expect(roomAt(chair.centerMm)?.id, chair.id).toBe(living.id);
     }

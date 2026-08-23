@@ -409,10 +409,10 @@ export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
     tableDepthMm: 800,
     tableHeightMm: 760,
     chairs: [
-      { id: "DINING-CHAIR-SW", centerMm: { x: 24050, y: 13750 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-SE", centerMm: { x: 24850, y: 13750 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-NW", centerMm: { x: 24050, y: 15750 }, facing: "SOUTH" },
-      { id: "DINING-CHAIR-NE", centerMm: { x: 24850, y: 15750 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-SW", centerMm: { x: 24050, y: 14000 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-SE", centerMm: { x: 24850, y: 14000 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-NW", centerMm: { x: 24050, y: 15500 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-NE", centerMm: { x: 24850, y: 15500 }, facing: "SOUTH" },
     ],
   },
 });
