@@ -6,13 +6,14 @@ import {
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
   KITCHEN_RUN,
+  LIVING_DINING_FITOUT,
   ceilingElevationMm,
   roomAreaM2,
   roomAt,
   totalDocumentedFloorAreaM2,
   type RectMm,
 } from "../lib/twin-interior";
-import { HOUSE } from "../lib/twin-site";
+import { HOUSE, SOURCES } from "../lib/twin-site";
 
 const overlaps = (a: RectMm, b: RectMm) =>
   a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
@@ -169,5 +170,71 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       expect(roomAt(room.standingPointMm)?.id, room.number).toBe(room.id);
     }
     expect(roomAt({ x: (KITCHEN_RUN.rectMm.x0 + KITCHEN_RUN.rectMm.x1) / 2, y: 11200 })?.number).toBe("1.03");
+  });
+
+  it("lays out the client living and dining concept between the fireplace, glazing and kitchen", () => {
+    const fitout = LIVING_DINING_FITOUT;
+    const living = INTERIOR_ROOMS.find((room) => room.number === "1.03")!;
+    const livingMain = living.rectsMm[0];
+    const tvWall = fitout.tvWall.rectMm;
+    const rearGlazing = HOUSE.porches.wingEnd.glazing;
+    const rearInnerFaceYmm = HOUSE.porches.wingEnd.glazingFaceYmm - 500;
+
+    expect(fitout.sourceId).toBe(SOURCES.clientRevision20260823.id);
+    expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
+    expect(tvWall.x0).toBe(livingMain.x0);
+    expect(tvWall.x1).toBeLessThan(rearGlazing.startXmm);
+    expect(tvWall.y0 - FIREPLACE_PIER.rectMm.y1).toBeGreaterThanOrEqual(300);
+    expect(rearInnerFaceYmm - tvWall.y1).toBeGreaterThanOrEqual(250);
+    expect(inside(tvWall, livingMain)).toBe(true);
+
+    const [bayY0, bayY1] = fitout.tvWall.centralBayYmm;
+    expect(bayY0).toBeGreaterThan(tvWall.y0);
+    expect(bayY1).toBeLessThan(tvWall.y1);
+    expect(bayY1 - bayY0).toBeGreaterThan(fitout.tvWall.tv.widthMm);
+    expect(fitout.tvWall.tv.diagonalIn).toBe(98);
+    expect(fitout.tvWall.tv.widthMm / fitout.tvWall.tv.heightMm).toBeCloseTo(16 / 9, 2);
+
+    const { mainRectMm, chaiseRectMm } = fitout.sofa;
+    expect(inside(mainRectMm, livingMain)).toBe(true);
+    expect(inside(chaiseRectMm, livingMain)).toBe(true);
+    expect(mainRectMm.y1).toBeLessThan(rearInnerFaceYmm);
+    expect(chaiseRectMm.x0 - (rearGlazing.startXmm + rearGlazing.widthMm)).toBeGreaterThanOrEqual(400);
+    expect(overlaps(mainRectMm, chaiseRectMm)).toBe(true);
+    expect(mainRectMm.y1 - mainRectMm.y0).toBeGreaterThan(mainRectMm.x1 - mainRectMm.x0);
+    expect(chaiseRectMm.x1 - chaiseRectMm.x0).toBeGreaterThan(chaiseRectMm.y1 - chaiseRectMm.y0);
+    expect(mainRectMm.x0 - tvWall.x1).toBeGreaterThanOrEqual(4000);
+    expect(mainRectMm.x0 - tvWall.x1).toBeLessThanOrEqual(4500);
+
+    const tableRect: RectMm = {
+      x0: fitout.dining.tableCenterMm.x - fitout.dining.tableLengthMm / 2,
+      x1: fitout.dining.tableCenterMm.x + fitout.dining.tableLengthMm / 2,
+      y0: fitout.dining.tableCenterMm.y - fitout.dining.tableDepthMm / 2,
+      y1: fitout.dining.tableCenterMm.y + fitout.dining.tableDepthMm / 2,
+    };
+    expect(inside(tableRect, livingMain)).toBe(true);
+    expect(KITCHEN_RUN.peninsulaRectMm.y1).toBeLessThan(tableRect.y0);
+    expect(tableRect.y1).toBeLessThan(mainRectMm.y0);
+    expect(tableRect.x0 - tvWall.x1).toBeGreaterThanOrEqual(1200);
+    expect(fitout.dining.chairs).toHaveLength(6);
+    expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(6);
+    expect(new Set(fitout.dining.chairs.map((chair) => chair.facing))).toEqual(
+      new Set(["NORTH", "SOUTH"]),
+    );
+    for (const chair of fitout.dining.chairs) {
+      expect(roomAt(chair.centerMm)?.id, chair.id).toBe(living.id);
+    }
+
+    expect(overlaps(tableRect, mainRectMm)).toBe(false);
+    expect(overlaps(tableRect, chaiseRectMm)).toBe(false);
+    expect(overlaps(tvWall, mainRectMm)).toBe(false);
+    expect(overlaps(tvWall, chaiseRectMm)).toBe(false);
+    expect(overlaps(mainRectMm, chaiseRectMm)).toBe(true);
+    expect(overlaps(tableRect, {
+      x0: living.standingPointMm.x - 220,
+      x1: living.standingPointMm.x + 220,
+      y0: living.standingPointMm.y - 220,
+      y1: living.standingPointMm.y + 220,
+    })).toBe(false);
   });
 });

@@ -3,6 +3,7 @@
 
 Spustenie:  python3 tools/generate-visual-assets.py            (úplná sada)
             python3 tools/generate-visual-assets.py interior   (iba interiér)
+            python3 tools/generate-visual-assets.py living     (iba textílie dennej zóny)
 Vygeneruje všetky procedurálne assety do public/assets (omietka, modřín,
 terasové dosky, falcovaný plech, kačírek, betón, normálová mapa trávnika a
 obloha). Žiadne externé zdroje ani licencie — všetko vzniká lokálne.
@@ -329,7 +330,49 @@ def gen_stone_dark(size=1024, fname="stone-dark"):
     save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg")
     save(normal_from_height(n * 0.05, 0.4), f"{OUT}/{fname}-normal.jpg")
 
+
+# ---------------------------------------------------------------- living: woven taupe boucle upholstery
+def gen_boucle_taupe(size=1024, fname="boucle-taupe"):
+    h = w = size
+    coarse = fbm((h, w), octaves=6, persistence=0.64, seed=1401)
+    fine = fbm((h, w), octaves=8, persistence=0.72, seed=1402)
+    yy, xx = np.mgrid[0:h, 0:w]
+    warp = np.sin(xx * np.pi / 5.0 + coarse * 3.0)
+    weft = np.sin(yy * np.pi / 6.0 + fine * 2.5)
+    loops = np.maximum(0, warp * weft)
+    height = coarse * 0.32 + fine * 0.18 + loops * 0.22
+    base = np.array((121, 109, 96), dtype=np.float64)
+    tone = (coarse - 0.5) * 28 + (fine - 0.5) * 13 + loops * 11
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + tone * (1.0 - ch * 0.08), 62, 176)
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg", quality=92)
+    save(normal_from_height(height, 4.2), f"{OUT}/{fname}-normal.jpg", quality=92)
+
+
+# ---------------------------------------------------------------- living: dense low-pile wool rug
+def gen_wool_rug(size=1024, fname="rug-wool-taupe"):
+    h = w = size
+    body = fbm((h, w), octaves=7, persistence=0.68, seed=1501)
+    fibre = fbm((h, w), octaves=9, persistence=0.76, seed=1502)
+    yy, xx = np.mgrid[0:h, 0:w]
+    weave = (np.sin(xx * np.pi / 3.2) + np.sin(yy * np.pi / 3.6)) * 0.5
+    height = body * 0.24 + fibre * 0.2 + weave * 0.05
+    base = np.array((104, 94, 84), dtype=np.float64)
+    tone = (body - 0.5) * 22 + (fibre - 0.5) * 12 + weave * 4
+    albedo = np.zeros((h, w, 3), dtype=np.float64)
+    for ch in range(3):
+        albedo[:, :, ch] = np.clip(base[ch] + tone, 56, 150)
+    save(albedo.astype(np.uint8), f"{OUT}/{fname}-albedo.jpg", quality=92)
+    save(normal_from_height(height, 3.4), f"{OUT}/{fname}-normal.jpg", quality=92)
+
 import sys
+
+if "living" in sys.argv:
+    gen_boucle_taupe()
+    gen_wool_rug()
+    print("LIVING TEXTILES DONE")
+    sys.exit(0)
 
 if "interior" in sys.argv:
     # Only the interior set; the exterior assets above stay byte-identical

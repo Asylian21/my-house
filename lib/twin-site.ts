@@ -144,6 +144,14 @@ export const SOURCES = {
     date: "22. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientRevision20260823: {
+    id: "SRC-CLIENT-20260823",
+    title: "Revízia stavebníka · obývacia a jedálenská zóna",
+    detail:
+      "Supermoderná vstavaná TV zostava medzi krbom a zadným pevným presklením s veľkým televízorom v strede; oproti L-sedačka a medzi kuchyňou a sedačkou plnohodnotný jedálenský stôl so stoličkami. Finálne materiály a výrobné detaily zostávajú interiérovým dizajnovým návrhom.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

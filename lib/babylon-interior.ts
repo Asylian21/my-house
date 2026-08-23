@@ -2,10 +2,13 @@ import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector3, Vector4 } from "@babylonjs/core/Maths/math.vector";
+import { PointLight } from "@babylonjs/core/Lights/pointLight";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
+import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
 import { ExtrudePolygon } from "@babylonjs/core/Meshes/Builders/polygonBuilder.pure";
+import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -17,7 +20,9 @@ import {
   INTERIOR_WALLS,
   INTERIOR_WALL_HEIGHT_MM,
   KITCHEN_RUN,
+  LIVING_DINING_FITOUT,
   WING_RIDGE_XMM,
+  ceilingElevationMm,
   roomBoundsMm,
   type InteriorDoor,
   type InteriorRoom,
@@ -55,6 +60,14 @@ export interface InteriorMaterials {
   readonly fireplace: PBRMaterial;
   readonly skirting: PBRMaterial;
   readonly wallTile: PBRMaterial;
+  readonly livingCabinet: PBRMaterial;
+  readonly mediaPanel: PBRMaterial;
+  readonly upholstery: PBRMaterial;
+  readonly accentFabric: PBRMaterial;
+  readonly rug: PBRMaterial;
+  readonly brushedBrass: PBRMaterial;
+  readonly warmLight: PBRMaterial;
+  readonly tvScreen: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -191,6 +204,42 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     0.28,
     0.4,
   );
+  const livingCabinet = pbr(scene, "real-interior-living-cabinet", "#91867a", 0.42);
+  const mediaPanel = pbr(scene, "real-interior-media-stone", "#57524d", 0.34);
+  const upholstery = texturedPbr(
+    scene,
+    "real-interior-upholstery",
+    "boucle-taupe-albedo",
+    "boucle-taupe-normal",
+    anisotropy,
+    0.9,
+    0.48,
+  );
+  upholstery.sheen.isEnabled = true;
+  upholstery.sheen.intensity = 0.28;
+  upholstery.sheen.color = Color3.FromHexString("#c2b7aa");
+  upholstery.sheen.roughness = 0.86;
+  const accentFabric = pbr(scene, "real-interior-accent-fabric", "#4f392f", 0.9);
+  accentFabric.sheen.isEnabled = true;
+  accentFabric.sheen.intensity = 0.18;
+  const rug = texturedPbr(
+    scene,
+    "real-interior-rug",
+    "rug-wool-taupe-albedo",
+    "rug-wool-taupe-normal",
+    anisotropy,
+    0.97,
+    0.42,
+  );
+  const brushedBrass = pbr(scene, "real-interior-brushed-brass", "#a77d4d", 0.3, 0.78);
+  const warmLight = pbr(scene, "real-interior-warm-light", "#fff0d8", 0.2);
+  warmLight.emissiveColor = Color3.FromHexString("#ffbd78");
+  warmLight.environmentIntensity = 0.25;
+  const tvScreen = pbr(scene, "real-interior-tv-screen", "#020507", 0.035, 0.08);
+  tvScreen.emissiveColor = Color3.FromHexString("#061119");
+  tvScreen.clearCoat.isEnabled = true;
+  tvScreen.clearCoat.intensity = 1;
+  tvScreen.clearCoat.roughness = 0.025;
   return {
     plaster,
     ceiling,
@@ -207,6 +256,14 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     fireplace,
     skirting,
     wallTile,
+    livingCabinet,
+    mediaPanel,
+    upholstery,
+    accentFabric,
+    rug,
+    brushedBrass,
+    warmLight,
+    tvScreen,
   };
 }
 
@@ -1021,6 +1078,505 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   };
 }
 
+function softEllipsoid(
+  context: InteriorBuildContext,
+  name: string,
+  centerMm: Point2Mm,
+  sizeM: readonly [planXM: number, heightM: number, planYM: number],
+  centerElevationM: number,
+  material: PBRMaterial,
+) {
+  const mesh = CreateSphere(name, { diameter: 2, segments: 32 }, context.scene);
+  mesh.position.set(xM(centerMm.x), centerElevationM, zM(centerMm.y));
+  mesh.scaling.set(sizeM[0] / 2, sizeM[1] / 2, sizeM[2] / 2);
+  return finish(context, mesh, material, { shadow: true, pickable: true });
+}
+
+function softCapsule(
+  context: InteriorBuildContext,
+  name: string,
+  centerMm: Point2Mm,
+  centerElevationM: number,
+  lengthM: number,
+  radiusM: number,
+  orientation: Vector3,
+  scaling: readonly [x: number, y: number, z: number],
+  material: PBRMaterial,
+) {
+  const mesh = CreateCapsule(
+    name,
+    {
+      height: lengthM,
+      radius: radiusM,
+      tessellation: 28,
+      capSubdivisions: 8,
+      subdivisions: 2,
+      orientation,
+    },
+    context.scene,
+  );
+  mesh.position.set(xM(centerMm.x), centerElevationM, zM(centerMm.y));
+  mesh.scaling.set(scaling[0], scaling[1], scaling[2]);
+  return finish(context, mesh, material, { shadow: true, pickable: true });
+}
+
+function navigationGuard(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  name: string,
+  rect: RectMm,
+) {
+  const guard = texturedBox(
+    context.scene,
+    name,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    6,
+    -2,
+    1,
+  );
+  finish(context, guard, materials.livingCabinet, { collide: true });
+  guard.isVisible = false;
+  guard.metadata = { ...(guard.metadata ?? {}), walkCollisionOnly: true };
+  return guard;
+}
+
+/**
+ * High-end living/dining concept requested on 23. 8. 2026. The source-backed
+ * plan positions live in `LIVING_DINING_FITOUT`; this builder only adds finish,
+ * soft geometry, integrated lighting and navigation-safe collision envelopes.
+ */
+export function buildLivingDiningFitout(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+) {
+  const fitout = LIVING_DINING_FITOUT;
+
+  // ---- handleless TV wall: warm greige storage, a stone media bay and oak
+  // floating console. It starts 329 mm after the flue pier and stops before
+  // the rear gable lining, so the fireplace and fixed glazing remain legible.
+  const wall = fitout.tvWall.rectMm;
+  const [bayY0, bayY1] = fitout.tvWall.centralBayYmm;
+  const bayCenterY = (bayY0 + bayY1) / 2;
+  const towerRanges = [
+    [wall.y0, bayY0, "pri krbe"],
+    [bayY1, wall.y1, "pri zadnom okne"],
+  ] as const;
+  for (const [towerY0, towerY1, label] of towerRanges) {
+    const tower = texturedBox(
+      context.scene,
+      `LIVING-103-TV-WALL · vysoká bezúchytková skriňa ${label}`,
+      { x: (wall.x0 + wall.x1) / 2, y: (towerY0 + towerY1) / 2 },
+      wall.x1 - wall.x0,
+      towerY1 - towerY0,
+      fitout.tvWall.heightMm * MM_TO_M,
+      0,
+      1.2,
+    );
+    finish(context, tower, materials.livingCabinet, { shadow: true, pickable: true });
+    for (const levelM of [0.86, 1.72]) {
+      const joint = texturedBox(
+        context.scene,
+        `LIVING-103-TV-WALL · tieňová škára skrine ${label}`,
+        { x: wall.x1 + 7, y: (towerY0 + towerY1) / 2 },
+        14,
+        towerY1 - towerY0 - 34,
+        0.009,
+        levelM,
+        1,
+      );
+      finish(context, joint, materials.fireplace);
+    }
+  }
+  const mediaPanel = texturedBox(
+    context.scene,
+    "LIVING-103-TV-WALL · veľkoformátový greige kamenný panel",
+    { x: wall.x1 + 12, y: bayCenterY },
+    24,
+    bayY1 - bayY0 - 70,
+    2.18,
+    0.18,
+    1.6,
+  );
+  finish(context, mediaPanel, materials.mediaPanel, { shadow: true, pickable: true });
+  const bridge = texturedBox(
+    context.scene,
+    "LIVING-103-TV-WALL · horný úložný most",
+    { x: (wall.x0 + wall.x1) / 2, y: bayCenterY },
+    wall.x1 - wall.x0,
+    bayY1 - bayY0,
+    0.27,
+    2.33,
+    1.2,
+  );
+  finish(context, bridge, materials.livingCabinet, { shadow: true, pickable: true });
+  const console = texturedBox(
+    context.scene,
+    "LIVING-103-TV-WALL · plávajúca dubová mediálna skrinka",
+    { x: (wall.x0 + wall.x1) / 2 + 8, y: bayCenterY },
+    wall.x1 - wall.x0 - 16,
+    bayY1 - bayY0 - 170,
+    0.28,
+    0.17,
+    1.2,
+  );
+  finish(context, console, materials.kitchenFront, { shadow: true, pickable: true });
+  const consoleShadow = texturedBox(
+    context.scene,
+    "LIVING-103-TV-WALL · tieň pod plávajúcou skrinkou",
+    { x: wall.x1 + 13, y: bayCenterY },
+    18,
+    bayY1 - bayY0 - 230,
+    0.025,
+    0.14,
+    1,
+  );
+  finish(context, consoleShadow, materials.fireplace);
+
+  const tv = fitout.tvWall.tv;
+  const tvFrame = texturedBox(
+    context.scene,
+    `LIVING-103-TV-WALL · ${tv.diagonalIn}-palcový televízor · rám`,
+    { x: wall.x1 + 42, y: bayCenterY },
+    58,
+    tv.widthMm + 28,
+    (tv.heightMm + 28) * MM_TO_M,
+    (tv.centerElevationMm - tv.heightMm / 2 - 14) * MM_TO_M,
+    1,
+  );
+  finish(context, tvFrame, materials.fireplace, { shadow: true, pickable: true });
+  const tvScreen = texturedBox(
+    context.scene,
+    `LIVING-103-TV-WALL · ${tv.diagonalIn}-palcový televízor · čierne sklo`,
+    { x: wall.x1 + 73, y: bayCenterY },
+    8,
+    tv.widthMm,
+    tv.heightMm * MM_TO_M,
+    (tv.centerElevationMm - tv.heightMm / 2) * MM_TO_M,
+    1,
+  );
+  finish(context, tvScreen, materials.tvScreen, { pickable: true });
+  const soundbar = texturedBox(
+    context.scene,
+    "LIVING-103-TV-WALL · subtílny soundbar",
+    { x: wall.x1 + 83, y: bayCenterY },
+    48,
+    1120,
+    0.065,
+    0.49,
+    1,
+  );
+  finish(context, soundbar, materials.fireplace, { shadow: true });
+  for (const [index, edgeY] of [bayY0 + 24, bayY1 - 24].entries()) {
+    const led = texturedBox(
+      context.scene,
+      `LIVING-103-TV-WALL · 2700 K vertikálna LED ${index + 1}`,
+      { x: wall.x1 + 31, y: edgeY },
+      20,
+      24,
+      2.08,
+      0.2,
+      1,
+    );
+    finish(context, led, materials.warmLight);
+  }
+  navigationGuard(context, materials, "LIVING-103-TV-WALL · hladký navigačný obrys", wall);
+
+  // ---- soft low-profile L sofa, oriented to the TV. The chaise terminates on
+  // the solid gable section east of the fixed pane rather than obscuring it.
+  const sofa = fitout.sofa;
+  const rugRect: RectMm = { x0: 22520, y0: 15580, x1: 27190, y1: 18880 };
+  const rug = texturedBox(
+    context.scene,
+    "LIVING-103-SOFA-L · ručne tkaný greige koberec",
+    rectCenter(rugRect),
+    rugRect.x1 - rugRect.x0,
+    rugRect.y1 - rugRect.y0,
+    0.012,
+    0.004,
+    1,
+  );
+  finish(context, rug, materials.rug);
+  for (const [rect, label] of [
+    [sofa.mainRectMm, "hlavný modul"],
+    [sofa.chaiseRectMm, "ležadlo"],
+  ] as const) {
+    const base = texturedBox(
+      context.scene,
+      `LIVING-103-SOFA-L · ${label} · skrytá nízka báza`,
+      rectCenter(rect),
+      rect.x1 - rect.x0,
+      rect.y1 - rect.y0,
+      0.18,
+      0.08,
+      1,
+    );
+    finish(context, base, materials.upholstery, { shadow: true, pickable: true });
+  }
+  const backRail = texturedBox(
+    context.scene,
+    "LIVING-103-SOFA-L · mäkké chrbtové jadro",
+    { x: sofa.mainRectMm.x1 - 150, y: (sofa.mainRectMm.y0 + sofa.mainRectMm.y1) / 2 },
+    300,
+    sofa.mainRectMm.y1 - sofa.mainRectMm.y0 - 180,
+    0.55,
+    0.23,
+    1,
+  );
+  finish(context, backRail, materials.upholstery, { shadow: true, pickable: true });
+  for (const [index, centerY] of [16320, 17220].entries()) {
+    softCapsule(
+      context,
+      `LIVING-103-SOFA-L · sedací vankúš ${index + 1}`,
+      { x: 26490, y: centerY },
+      0.355,
+      0.82,
+      0.22,
+      new Vector3(0, 0, 1),
+      [2.18, 0.4, 1],
+      materials.upholstery,
+    );
+  }
+  softCapsule(
+    context,
+    "LIVING-103-SOFA-L · predĺžený vankúš ležadla",
+    { x: 25830, y: 18210 },
+    0.36,
+    2.5,
+    0.22,
+    new Vector3(1, 0, 0),
+    [1, 0.42, 1.72],
+    materials.upholstery,
+  );
+  for (const [index, centerY] of [16320, 17220, 18200].entries()) {
+    const backCushion = softCapsule(
+      context,
+      `LIVING-103-SOFA-L · chrbtový vankúš ${index + 1}`,
+      { x: 27060, y: centerY },
+      0.67,
+      index === 2 ? 0.84 : 0.79,
+      0.2,
+      new Vector3(0, 0, 1),
+      [0.7, 1.5, 1],
+      materials.upholstery,
+    );
+    backCushion.rotation.z = -0.055;
+  }
+  softCapsule(
+    context,
+    "LIVING-103-SOFA-L · južná mäkká podrúčka",
+    { x: 26580, y: sofa.mainRectMm.y0 + 95 },
+    0.44,
+    1.02,
+    0.18,
+    new Vector3(1, 0, 0),
+    [1, 1.34, 0.58],
+    materials.upholstery,
+  );
+  softCapsule(
+    context,
+    "LIVING-103-SOFA-L · zadná mäkká podrúčka ležadla",
+    { x: 25860, y: sofa.chaiseRectMm.y1 - 95 },
+    0.43,
+    2.5,
+    0.18,
+    new Vector3(1, 0, 0),
+    [1, 1.28, 0.58],
+    materials.upholstery,
+  );
+  softEllipsoid(
+    context,
+    "LIVING-103-SOFA-L · akcentový vankúš koňak",
+    { x: 26820, y: 17740 },
+    [0.24, 0.5, 0.48],
+    0.66,
+    materials.accentFabric,
+  );
+  navigationGuard(
+    context,
+    materials,
+    "LIVING-103-SOFA-L · hladký navigačný obrys hlavného modulu",
+    sofa.mainRectMm,
+  );
+  navigationGuard(
+    context,
+    materials,
+    "LIVING-103-SOFA-L · hladký navigačný obrys ležadla",
+    sofa.chaiseRectMm,
+  );
+
+  // Two quiet sculptural tables sit completely inside the conversation zone.
+  for (const [index, spec] of [
+    { center: { x: 24380, y: 16680 }, diameter: 1.15, scaleX: 1.12, scaleZ: 0.7, top: 0.34 },
+    { center: { x: 25020, y: 17140 }, diameter: 0.78, scaleX: 1.05, scaleZ: 0.76, top: 0.42 },
+  ].entries()) {
+    const top = CreateCylinder(
+      `LIVING-103-SOFA-L · oválny konferenčný stolík ${index + 1}`,
+      { height: 0.045, diameter: spec.diameter, tessellation: 48 },
+      context.scene,
+    );
+    top.position.set(xM(spec.center.x), spec.top, zM(spec.center.y));
+    top.scaling.set(spec.scaleX, 1, spec.scaleZ);
+    finish(context, top, index === 0 ? materials.worktop : materials.livingCabinet, {
+      shadow: true,
+      pickable: true,
+    });
+    const pedestal = CreateCylinder(
+      `LIVING-103-SOFA-L · podnož konferenčného stolíka ${index + 1}`,
+      { height: spec.top - 0.025, diameter: index === 0 ? 0.34 : 0.24, tessellation: 32 },
+      context.scene,
+    );
+    pedestal.position.set(xM(spec.center.x), (spec.top - 0.025) / 2, zM(spec.center.y));
+    finish(context, pedestal, materials.brushedBrass, { shadow: true });
+  }
+  navigationGuard(context, materials, "LIVING-103-SOFA-L · navigačný obrys stolíkov", {
+    x0: 23700,
+    y0: 16220,
+    x1: 25480,
+    y1: 17580,
+  });
+
+  // ---- six-seat dining zone: an oval dark-stone top with two sculptural
+  // pedestals, three chairs on each long side and a restrained pendant trio.
+  const dining = fitout.dining;
+  const tableHeightM = dining.tableHeightMm * MM_TO_M;
+  const centerLengthMm = dining.tableLengthMm - dining.tableDepthMm;
+  const topThicknessM = 0.055;
+  const centerTop = texturedBox(
+    context.scene,
+    "LIVING-103-DINING · oválny kamenný stôl · stred",
+    dining.tableCenterMm,
+    centerLengthMm,
+    dining.tableDepthMm,
+    topThicknessM,
+    tableHeightM - topThicknessM,
+    1.4,
+  );
+  finish(context, centerTop, materials.worktop, { shadow: true, pickable: true });
+  for (const side of [-1, 1]) {
+    const capX = dining.tableCenterMm.x + side * centerLengthMm / 2;
+    const cap = CreateCylinder(
+      `LIVING-103-DINING · oválny kamenný stôl · ${side < 0 ? "západné" : "východné"} zaoblenie`,
+      { height: topThicknessM, diameter: dining.tableDepthMm * MM_TO_M, tessellation: 64 },
+      context.scene,
+    );
+    cap.position.set(xM(capX), tableHeightM - topThicknessM / 2, zM(dining.tableCenterMm.y));
+    finish(context, cap, materials.worktop, { shadow: true, pickable: true });
+  }
+  for (const offsetX of [-560, 560]) {
+    const pedestal = CreateCylinder(
+      "LIVING-103-DINING · rebrovaná mosadzná podnož",
+      { height: tableHeightM - topThicknessM, diameter: 0.36, tessellation: 40 },
+      context.scene,
+    );
+    pedestal.position.set(
+      xM(dining.tableCenterMm.x + offsetX),
+      (tableHeightM - topThicknessM) / 2,
+      zM(dining.tableCenterMm.y),
+    );
+    finish(context, pedestal, materials.brushedBrass, { shadow: true });
+  }
+  navigationGuard(context, materials, "LIVING-103-DINING · hladký navigačný obrys stola", {
+    x0: dining.tableCenterMm.x - dining.tableLengthMm / 2,
+    x1: dining.tableCenterMm.x + dining.tableLengthMm / 2,
+    y0: dining.tableCenterMm.y - dining.tableDepthMm / 2,
+    y1: dining.tableCenterMm.y + dining.tableDepthMm / 2,
+  });
+
+  const facingVector = (facing: (typeof dining.chairs)[number]["facing"]) => {
+    switch (facing) {
+      case "NORTH":
+        return { x: 0, y: 1 };
+      case "SOUTH":
+        return { x: 0, y: -1 };
+      case "EAST":
+        return { x: 1, y: 0 };
+      default:
+        return { x: -1, y: 0 };
+    }
+  };
+  for (const chair of dining.chairs) {
+    const forward = facingVector(chair.facing);
+    const seat = CreateCylinder(
+      `LIVING-103-DINING · ${chair.id} · čalúnený sedák`,
+      { height: 0.085, diameter: 0.52, tessellation: 40 },
+      context.scene,
+    );
+    seat.position.set(xM(chair.centerMm.x), 0.46, zM(chair.centerMm.y));
+    seat.scaling.set(
+      chair.facing === "NORTH" || chair.facing === "SOUTH" ? 1.08 : 0.94,
+      1,
+      chair.facing === "NORTH" || chair.facing === "SOUTH" ? 0.94 : 1.08,
+    );
+    finish(context, seat, materials.upholstery, { shadow: true, pickable: true });
+    const backCenter = {
+      x: chair.centerMm.x - forward.x * 225,
+      y: chair.centerMm.y - forward.y * 225,
+    };
+    const backRunsAlongX = chair.facing === "NORTH" || chair.facing === "SOUTH";
+    softCapsule(
+      context,
+      `LIVING-103-DINING · ${chair.id} · obopínajúce operadlo`,
+      backCenter,
+      0.69,
+      0.56,
+      0.17,
+      new Vector3(backRunsAlongX ? 1 : 0, 0, backRunsAlongX ? 0 : 1),
+      backRunsAlongX ? [1, 1, 0.44] : [0.44, 1, 1],
+      materials.upholstery,
+    );
+    const stem = CreateCylinder(
+      `LIVING-103-DINING · ${chair.id} · centrálna noha`,
+      { height: 0.43, diameter: 0.045, tessellation: 16 },
+      context.scene,
+    );
+    stem.position.set(xM(chair.centerMm.x), 0.225, zM(chair.centerMm.y));
+    finish(context, stem, materials.brushedBrass, { shadow: true });
+    const foot = CreateCylinder(
+      `LIVING-103-DINING · ${chair.id} · subtílna podstava`,
+      { height: 0.014, diameter: 0.39, tessellation: 32 },
+      context.scene,
+    );
+    foot.position.set(xM(chair.centerMm.x), 0.007, zM(chair.centerMm.y));
+    finish(context, foot, materials.brushedBrass);
+  }
+
+  const livingRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-03")!;
+  for (const [index, pendantX] of [23650, 24450, 25250].entries()) {
+    const lampElevationM = 2.04;
+    const ceilingM = ceilingElevationMm(livingRoom, pendantX) * MM_TO_M - 0.07;
+    const cordHeightM = Math.max(0.15, ceilingM - lampElevationM);
+    const cord = CreateCylinder(
+      `LIVING-103-DINING · závesné svietidlo ${index + 1} · kábel`,
+      { height: cordHeightM, diameter: 0.012, tessellation: 12 },
+      context.scene,
+    );
+    cord.position.set(
+      xM(pendantX),
+      lampElevationM + cordHeightM / 2,
+      zM(dining.tableCenterMm.y),
+    );
+    finish(context, cord, materials.fireplace);
+    const globe = CreateSphere(
+      `LIVING-103-DINING · závesné svietidlo ${index + 1} · 2700 K difúzor`,
+      { diameter: 0.19, segments: 24 },
+      context.scene,
+    );
+    globe.position.set(xM(pendantX), lampElevationM, zM(dining.tableCenterMm.y));
+    finish(context, globe, materials.warmLight, { shadow: true });
+    const light = new PointLight(
+      `LIVING-103-DINING · závesné svietidlo ${index + 1} · svetlo`,
+      new Vector3(xM(pendantX), lampElevationM - 0.06, zM(dining.tableCenterMm.y)),
+      context.scene,
+    );
+    light.diffuse = Color3.FromHexString("#ffd2a0");
+    light.specular = Color3.FromHexString("#8f7254");
+    light.intensity = 0.18;
+    light.range = 3.4;
+  }
+}
+
 interface Interval {
   readonly start: number;
   readonly end: number;
@@ -1173,6 +1729,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWalls(context, materials);
   for (const door of INTERIOR_DOORS) buildDoor(context, materials, door);
   buildKitchen(context, materials);
+  buildLivingDiningFitout(context, materials);
   buildWallBands(context, {
     label: "soklová lišta",
     heightM: 0.06,

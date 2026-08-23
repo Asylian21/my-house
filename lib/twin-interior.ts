@@ -83,6 +83,41 @@ export interface FireplacePier {
   readonly rectMm: RectMm;
 }
 
+export type FurnitureFacing = "NORTH" | "SOUTH" | "EAST" | "WEST";
+
+export interface LivingDiningFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly tvWall: {
+    readonly rectMm: RectMm;
+    readonly heightMm: number;
+    readonly centralBayYmm: readonly [number, number];
+    readonly tv: {
+      readonly diagonalIn: number;
+      readonly widthMm: number;
+      readonly heightMm: number;
+      readonly centerElevationMm: number;
+    };
+  };
+  readonly sofa: {
+    readonly mainRectMm: RectMm;
+    readonly chaiseRectMm: RectMm;
+    readonly seatHeightMm: number;
+  };
+  readonly dining: {
+    readonly tableCenterMm: Point2Mm;
+    readonly tableLengthMm: number;
+    readonly tableDepthMm: number;
+    readonly tableHeightMm: number;
+    readonly chairs: readonly {
+      readonly id: string;
+      readonly centerMm: Point2Mm;
+      readonly facing: FurnitureFacing;
+    }[];
+  };
+}
+
 export const INTERIOR_SOURCE_ID = SOURCES.floorPlan.id;
 export const INTERIOR_WALL_HEIGHT_MM = 3125;
 export const INTERIOR_DOOR_HEIGHT_MM = 2100;
@@ -336,6 +371,49 @@ export const KITCHEN_RUN: KitchenRun = Object.freeze({
   peninsulaRectMm: { x0: 22791, y0: 12544, x1: 27541, y1: 13144 },
   hobCenterXmm: 24090,
   upperCabinets: { bottomMm: 1450, topMm: 2250, depthMm: 350 },
+});
+
+/**
+ * Client interior concept from 23. 8. 2026. The composition deliberately uses
+ * the uninterrupted west-wall bay after the fireplace pier and stops before
+ * the fixed glazing at the rear gable. The sofa faces that wall from the east,
+ * while the dining table occupies the clear band between the kitchen peninsula
+ * and the sofa without narrowing the east-side circulation route.
+ */
+export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
+  id: "LIVING-DINING-FITOUT-2026-08-23",
+  sourceId: SOURCES.clientRevision20260823.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  tvWall: {
+    rectMm: { x0: 21543, y0: 15380, x1: 21980, y1: 18750 },
+    heightMm: 2600,
+    centralBayYmm: [15900, 18200] as const,
+    tv: {
+      diagonalIn: 98,
+      widthMm: 2170,
+      heightMm: 1220,
+      centerElevationMm: 1180,
+    },
+  },
+  sofa: {
+    mainRectMm: { x0: 26020, y0: 15850, x1: 27250, y1: 18750 },
+    chaiseRectMm: { x0: 24500, y0: 17650, x1: 27250, y1: 18750 },
+    seatHeightMm: 430,
+  },
+  dining: {
+    tableCenterMm: { x: 24450, y: 14750 },
+    tableLengthMm: 2100,
+    tableDepthMm: 950,
+    tableHeightMm: 760,
+    chairs: [
+      { id: "DINING-CHAIR-SW", centerMm: { x: 23650, y: 13720 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-SC", centerMm: { x: 24450, y: 13720 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-SE", centerMm: { x: 25250, y: 13720 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-NW", centerMm: { x: 23650, y: 15830 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-NC", centerMm: { x: 24450, y: 15830 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-NE", centerMm: { x: 25250, y: 15830 }, facing: "SOUTH" },
+    ],
+  },
 });
 
 export const INTERIOR_DOORS: readonly InteriorDoor[] = [

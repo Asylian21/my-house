@@ -133,6 +133,18 @@ posuvné dvere s pevným a posuvným krídlom na dvoch koľajniciach a vstupné
 dvere s bočným svetlíkom. Pevné sklá zastavujú chodca, posuvné a dverné
 krídla sú priechodné.
 
+Revízia interiéru stavebníka z 23. 8. 2026 dopĺňa do 1.03 ucelenú obývaciu a
+jedálenskú zónu (`LIVING_DINING_FITOUT`). Na západnej stene je za komínovým
+pilierom 3,37 m dlhá vstavaná bezúchytková TV zostava v teplej greige, dubovej
+dyhe a tmavom kameni, so zapusteným 98-palcovým TV, plávajúcou skrinkou,
+soundbarom a nepriamou 2700 K LED. Oproti stojí nízka svetlá modulová
+L-sedačka s ležadlom až na plnej časti štítovej steny, na koberci s dvojicou
+oválnych stolíkov. Medzi kuchynským polostrovom a sedačkou je oválny kamenný
+stôl 2 100 × 950 pre šesť čalúnených stoličiek a trojica subtílnych závesov.
+Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uzamknuté
+kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
+musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.
+
 Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
 obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú
 nad korunou múru šikmou hlavou až k debneniu strechy, biele lemovacie dosky
@@ -142,9 +154,10 @@ visí na východnom odkvape (x = 28 040) namiesto voľne stojaceho stĺpika v
 otvorenom čele terasy, kde žiadny žľab nie je.
 
 Interiérové PBR sady `vinyl-oak`, `tile-porcelain`, `epoxy-grey`, `tile-wall`,
-`oak-veneer` a `stone-dark`
+`oak-veneer`, `stone-dark`, `boucle-taupe` a `rug-wool-taupe`
 vznikajú rovnakým deterministickým generátorom
-(`python3 tools/generate-visual-assets.py interior`).
+(`python3 tools/generate-visual-assets.py interior`; textílie dennej zóny samostatne
+cez `python3 tools/generate-visual-assets.py living`).
 Textúra trávnika `lawn-albedo.jpg` a botanické karty
 `ornamental-grass-card.png` a `perennial-cluster-card.png` boli pre tento
 prototyp vygenerované pomocou OpenAI imagegen. Rovnako boli cez vstavaný režim
