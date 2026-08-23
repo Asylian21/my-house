@@ -65,6 +65,7 @@ export const BabylonViewport = forwardRef<
   const [walkRoom, setWalkRoom] = useState<string>("");
   const [walkView, setWalkView] = useState<"third" | "first">("third");
   const [walkBlocked, setWalkBlocked] = useState(false);
+  const [walkHudCollapsed, setWalkHudCollapsed] = useState(false);
 
   onSelectRef.current = onSelect;
   navigationModeRef.current = navigationMode;
@@ -274,35 +275,69 @@ export const BabylonViewport = forwardRef<
         </div>
       )}
       {status === "ready" && navigationMode === "walk" && (
-        <div className="flight-hud walk-hud" role="status" aria-live="polite">
-          <span>PRECHÁDZKA · {walkRoom || "INTERIÉR 1.NP"}</span>
-          <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
-          <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
-          <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
-            <button
-              type="button"
-              className={`walk-recover${walkBlocked ? " is-needed" : ""}`}
-              aria-label={walkBlocked ? "Vyslobodiť zaseknutú postavu" : "Vystrediť kameru za postavou"}
-              onClick={(event) => {
-                event.stopPropagation();
-                controllerRef.current?.recoverWalkthrough();
-              }}
-            >
-              {walkBlocked ? "Vyslobodiť" : "Vystrediť"}
-            </button>
-            {INTERIOR_ROOMS.map((room) => (
+        <div
+          className={`flight-hud walk-hud${walkHudCollapsed ? " is-collapsed" : ""}`}
+          role="region"
+          aria-label="Miestnosti a ovládanie prechádzky"
+        >
+          <span className="sr-only" aria-live="polite">
+            Aktuálna zóna: {walkRoom || "Interiér 1.NP"}
+          </span>
+          <button
+            type="button"
+            className="walk-hud-toggle"
+            aria-expanded={!walkHudCollapsed}
+            aria-controls="walk-hud-content"
+            aria-label={`${walkHudCollapsed ? "Rozbaliť" : "Zbaliť"} panel miestností a ovládania prechádzky`}
+            onClick={(event) => {
+              event.stopPropagation();
+              setWalkHudCollapsed((collapsed) => !collapsed);
+              // Pointer users can continue with WASD immediately. Keyboard
+              // users keep focus on the toggle so Enter can reopen it.
+              if (event.detail !== 0) canvasRef.current?.focus({ preventScroll: true });
+            }}
+          >
+            <span className="walk-hud-title">
+              {walkHudCollapsed
+                ? "MIESTNOSTI"
+                : `PRECHÁDZKA · ${walkRoom || "INTERIÉR 1.NP"}`}
+            </span>
+            <small>{walkHudCollapsed ? "Rozbaliť" : "Zbaliť"}</small>
+            <span className="walk-hud-chevron" aria-hidden="true" />
+          </button>
+          <div
+            id="walk-hud-content"
+            className="walk-hud-content"
+            hidden={walkHudCollapsed}
+          >
+            <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
+            <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
+            <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
               <button
-                key={room.id}
                 type="button"
-                aria-label={`Prejsť do ${room.number} ${room.name}`}
+                className={`walk-recover${walkBlocked ? " is-needed" : ""}`}
+                aria-label={walkBlocked ? "Vyslobodiť zaseknutú postavu" : "Vystrediť kameru za postavou"}
                 onClick={(event) => {
                   event.stopPropagation();
-                  controllerRef.current?.enterWalkthrough(room.id);
+                  controllerRef.current?.recoverWalkthrough();
                 }}
               >
-                {room.number}
+                {walkBlocked ? "Vyslobodiť" : "Vystrediť"}
               </button>
-            ))}
+              {INTERIOR_ROOMS.map((room) => (
+                <button
+                  key={room.id}
+                  type="button"
+                  aria-label={`Prejsť do ${room.number} ${room.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    controllerRef.current?.enterWalkthrough(room.id);
+                  }}
+                >
+                  {room.number}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -64,11 +64,12 @@ test("server-renders the Slovak digital-twin product shell", async () => {
 });
 
 test("keeps Babylon client-only and removes the disposable starter preview", async () => {
-  const [viewport, scene, page, layout, packageJson] = await Promise.all([
+  const [viewport, scene, page, layout, globals, packageJson] = await Promise.all([
     readFile(new URL("../app/babylon-viewport.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
@@ -112,6 +113,17 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.doesNotMatch(scene, /BILLBOARDMODE_Y/);
   assert.doesNotMatch(scene, /material\.unlit = true/);
   assert.match(scene, /return this\.scene\.whenReadyAsync\(\)/);
+  // The room chooser remains available without permanently covering the
+  // interior view: a real button owns the expanded state and hidden content.
+  assert.match(viewport, /const \[walkHudCollapsed, setWalkHudCollapsed\] = useState\(false\)/);
+  assert.match(viewport, /aria-expanded=\{!walkHudCollapsed\}/);
+  assert.match(viewport, /aria-controls="walk-hud-content"/);
+  assert.match(viewport, /id="walk-hud-content"/);
+  assert.match(viewport, /hidden=\{walkHudCollapsed\}/);
+  assert.match(viewport, /event\.detail !== 0/);
+  assert.match(viewport, /canvasRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(globals, /\.walk-hud\.is-collapsed/);
+  assert.match(globals, /\.walk-hud-content\[hidden\] \{ display: none; \}/);
   assert.match(page, /<TwinStudio \/>/);
   assert.match(layout, /lang="sk"/);
   assert.match(layout, /Dom 6012\/26 · Digitálne dvojča/);

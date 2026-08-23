@@ -565,7 +565,74 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   letter-spacing: .13em;
 }
 .flight-hud strong { font-size: 12px; font-weight: 580; }
-.walk-hud { pointer-events: auto; }
+.walk-hud {
+  pointer-events: auto;
+  transition: min-width .18s ease, padding .18s ease, background-color .18s ease;
+}
+.walk-hud.is-collapsed {
+  min-width: 0;
+  padding: 7px 9px;
+}
+.walk-hud-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 10px;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.walk-hud:not(.is-collapsed) .walk-hud-toggle {
+  margin-bottom: 4px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgb(197 228 207 / 12%);
+}
+.walk-hud-toggle:hover .walk-hud-title,
+.walk-hud-toggle:focus-visible .walk-hud-title { color: #c4ead0; }
+.walk-hud-toggle:focus-visible {
+  border-radius: 5px;
+  outline: 2px solid #9fd0ae;
+  outline-offset: 3px;
+}
+.walk-hud-title {
+  overflow: hidden;
+  color: #9fd0ae;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: .13em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color .18s ease;
+}
+.walk-hud-toggle small {
+  color: #91a89a;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.walk-hud-chevron {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid #9fd0ae;
+  border-bottom: 1.5px solid #9fd0ae;
+  transform: translateY(2px) rotate(225deg);
+  transition: transform .18s ease;
+}
+.walk-hud.is-collapsed .walk-hud-toggle { min-width: 145px; }
+.walk-hud.is-collapsed .walk-hud-chevron { transform: translateY(-2px) rotate(45deg); }
+.walk-hud-content {
+  display: grid;
+  gap: 3px;
+}
+.walk-hud-content[hidden] { display: none; }
 .walk-rooms {
   display: flex;
   flex-wrap: wrap;
@@ -998,6 +1065,9 @@ a:focus-visible {
     transform: none;
   }
   .flight-hud small { display: none; }
+  .walk-hud-toggle { min-height: 44px; }
+  .walk-hud.is-collapsed { padding-block: 2px; }
+  .walk-hud.is-collapsed .walk-hud-toggle { min-width: 112px; }
   .viewport.is-flight .viewport-legend,
   .viewport.is-flight .visualization-note,
   .viewport.is-flight .north-compass,
