@@ -9,6 +9,7 @@ import { CreateCapsule } from "@babylonjs/core/Meshes/Builders/capsuleBuilder.pu
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
 import { ExtrudePolygon } from "@babylonjs/core/Meshes/Builders/polygonBuilder.pure";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure";
+import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -22,6 +23,7 @@ import {
   KITCHEN_RUN,
   LIVING_DINING_FITOUT,
   TECHNICAL_HEATING_FITOUT,
+  WC_FITOUT,
   WING_RIDGE_XMM,
   ceilingElevationMm,
   roomBoundsMm,
@@ -72,6 +74,8 @@ export interface InteriorMaterials {
   readonly boilerEnamel: PBRMaterial;
   readonly tankJacket: PBRMaterial;
   readonly copperPipe: PBRMaterial;
+  readonly sanitaryCeramic: PBRMaterial;
+  readonly mirrorGlass: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -250,6 +254,14 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   boilerEnamel.clearCoat.roughness = 0.24;
   const tankJacket = pbr(scene, "real-technical-buffer-jacket", "#8b9092", 0.46, 0.2);
   const copperPipe = pbr(scene, "real-technical-copper", "#b96f43", 0.24, 0.82);
+  const sanitaryCeramic = pbr(scene, "real-sanitary-ceramic", "#f8f8f5", 0.16, 0.02);
+  sanitaryCeramic.clearCoat.isEnabled = true;
+  sanitaryCeramic.clearCoat.intensity = 0.78;
+  sanitaryCeramic.clearCoat.roughness = 0.08;
+  const mirrorGlass = pbr(scene, "real-sanitary-mirror", "#aeb9bd", 0.07, 0.48);
+  mirrorGlass.clearCoat.isEnabled = true;
+  mirrorGlass.clearCoat.intensity = 1;
+  mirrorGlass.clearCoat.roughness = 0.02;
   return {
     plaster,
     ceiling,
@@ -277,6 +289,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     boilerEnamel,
     tankJacket,
     copperPipe,
+    sanitaryCeramic,
+    mirrorGlass,
   };
 }
 
@@ -1444,6 +1458,191 @@ function buildTechnicalHeatingFitout(
   finish(context, gaugeFace, materials.kitchenUpper);
 }
 
+/** Modern compact fitout for the enlarged room 1.06. */
+function buildWcFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = WC_FITOUT;
+  const toilet = fitout.toilet;
+  const toiletCenter: Point2Mm = {
+    x: (toilet.footprintMm.x0 + toilet.footprintMm.x1) / 2,
+    y: (toilet.footprintMm.y0 + toilet.footprintMm.y1) / 2,
+  };
+
+  const cistern = texturedBox(
+    context.scene,
+    `${fitout.id} · WALL-HUNG-WC · obložený modul podomietkovej nádržky`,
+    rectCenter(toilet.concealedCisternRectMm),
+    toilet.concealedCisternRectMm.x1 - toilet.concealedCisternRectMm.x0,
+    toilet.concealedCisternRectMm.y1 - toilet.concealedCisternRectMm.y0,
+    1.15,
+    0,
+    1.2,
+  );
+  finish(context, cistern, materials.wallTile, { shadow: true, pickable: true });
+  const cisternCap = texturedBox(
+    context.scene,
+    `${fitout.id} · WALL-HUNG-WC · horná doska modulu`,
+    rectCenter(toilet.concealedCisternRectMm),
+    toilet.concealedCisternRectMm.x1 - toilet.concealedCisternRectMm.x0 + 12,
+    toilet.concealedCisternRectMm.y1 - toilet.concealedCisternRectMm.y0 + 12,
+    0.025,
+    1.15,
+    1,
+  );
+  finish(context, cisternCap, materials.sanitaryCeramic, { shadow: true });
+  const flushPlate = texturedBox(
+    context.scene,
+    `${fitout.id} · WALL-HUNG-WC · dvojité splachovacie tlačidlo`,
+    { x: toilet.concealedCisternRectMm.x0 - 5, y: toiletCenter.y },
+    10,
+    185,
+    0.11,
+    0.84,
+    1,
+  );
+  finish(context, flushPlate, materials.steel, { pickable: true });
+  for (const yOffsetMm of [-42, 42]) {
+    const button = CreateCylinder(
+      `${fitout.id} · WALL-HUNG-WC · tlačidlo splachovania`,
+      { height: 0.012, diameter: yOffsetMm < 0 ? 0.052 : 0.038, tessellation: 24 },
+      context.scene,
+    );
+    button.rotation.z = Math.PI / 2;
+    button.position.set(
+      xM(toilet.concealedCisternRectMm.x0 - 12),
+      0.895,
+      zM(toiletCenter.y + yOffsetMm),
+    );
+    finish(context, button, materials.blackGlass);
+  }
+
+  softEllipsoid(
+    context,
+    `${fitout.id} · WALL-HUNG-WC · keramická misa`,
+    { x: toiletCenter.x - 10, y: toiletCenter.y },
+    [0.52, 0.28, 0.37],
+    0.32,
+    materials.sanitaryCeramic,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · WALL-HUNG-WC · vnútro misy`,
+    { x: toiletCenter.x - 55, y: toiletCenter.y },
+    [0.31, 0.024, 0.2],
+    0.455,
+    materials.mirrorGlass,
+  );
+  const toiletSeat = CreateTorus(
+    `${fitout.id} · WALL-HUNG-WC · tenké sedadlo`,
+    { diameter: 0.355, thickness: 0.035, tessellation: 40 },
+    context.scene,
+  );
+  toiletSeat.position.set(xM(toiletCenter.x - 35), toilet.seatElevationMm * MM_TO_M, zM(toiletCenter.y));
+  toiletSeat.scaling.set(1.42, 0.68, 0.98);
+  finish(context, toiletSeat, materials.sanitaryCeramic, { shadow: true, pickable: true });
+
+  const basin = fitout.basin;
+  const basinCenter: Point2Mm = {
+    x: (basin.footprintMm.x0 + basin.footprintMm.x1) / 2,
+    y: (basin.footprintMm.y0 + basin.footprintMm.y1) / 2,
+  };
+  softEllipsoid(
+    context,
+    `${fitout.id} · COMPACT-BASIN · keramické umývadlo 450`,
+    basinCenter,
+    [0.45, 0.16, 0.32],
+    0.77,
+    materials.sanitaryCeramic,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · COMPACT-BASIN · vnútorná misa`,
+    { x: basinCenter.x, y: basinCenter.y - 18 },
+    [0.31, 0.025, 0.19],
+    basin.rimElevationMm * MM_TO_M + 0.008,
+    materials.mirrorGlass,
+  );
+  const basinRim = CreateTorus(
+    `${fitout.id} · COMPACT-BASIN · oválny keramický lem`,
+    { diameter: 0.285, thickness: 0.026, tessellation: 40 },
+    context.scene,
+  );
+  basinRim.position.set(
+    xM(basinCenter.x),
+    basin.rimElevationMm * MM_TO_M + 0.018,
+    zM(basinCenter.y - 15),
+  );
+  basinRim.scaling.set(1.45, 0.65, 0.88);
+  finish(context, basinRim, materials.sanitaryCeramic, { shadow: true });
+  const drain = CreateCylinder(
+    `${fitout.id} · COMPACT-BASIN · chrómový odtok`,
+    { height: 0.008, diameter: 0.052, tessellation: 24 },
+    context.scene,
+  );
+  drain.position.set(
+    xM(basinCenter.x),
+    basin.rimElevationMm * MM_TO_M + 0.024,
+    zM(basinCenter.y - 38),
+  );
+  finish(context, drain, materials.steel);
+  const tapRiser = CreateCylinder(
+    `${fitout.id} · COMPACT-BASIN · stojanková batéria`,
+    { height: 0.18, diameter: 0.027, tessellation: 20 },
+    context.scene,
+  );
+  tapRiser.position.set(xM(basinCenter.x), 0.95, zM(basin.footprintMm.y1 - 68));
+  finish(context, tapRiser, materials.steel);
+  const tapSpout = CreateCylinder(
+    `${fitout.id} · COMPACT-BASIN · výtok batérie`,
+    { height: 0.14, diameter: 0.021, tessellation: 20 },
+    context.scene,
+  );
+  tapSpout.rotation.x = Math.PI / 2;
+  tapSpout.position.set(xM(basinCenter.x), 1.03, zM(basin.footprintMm.y1 - 130));
+  finish(context, tapSpout, materials.steel);
+  const trap = CreateCylinder(
+    `${fitout.id} · COMPACT-BASIN · pohľadový sifón`,
+    { height: 0.28, diameter: 0.045, tessellation: 20 },
+    context.scene,
+  );
+  trap.position.set(xM(basinCenter.x), 0.56, zM(basinCenter.y + 12));
+  finish(context, trap, materials.steel);
+  const mirrorFrame = texturedBox(
+    context.scene,
+    `${fitout.id} · COMPACT-BASIN · zrkadlo s tenkým rámom`,
+    { x: basinCenter.x, y: basin.footprintMm.y1 - 6 },
+    470,
+    14,
+    0.68,
+    1.08,
+    1,
+  );
+  finish(context, mirrorFrame, materials.fireplace, { shadow: true });
+  const mirror = texturedBox(
+    context.scene,
+    `${fitout.id} · COMPACT-BASIN · zrkadlová plocha`,
+    { x: basinCenter.x, y: basin.footprintMm.y1 - 14 },
+    440,
+    7,
+    0.64,
+    1.1,
+    1,
+  );
+  finish(context, mirror, materials.mirrorGlass, { pickable: true });
+
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · WALL-HUNG-WC · hladký navigačný obrys`,
+    toilet.footprintMm,
+  );
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · COMPACT-BASIN · hladký navigačný obrys`,
+    basin.footprintMm,
+  );
+}
+
 function softEllipsoid(
   context: InteriorBuildContext,
   name: string,
@@ -2169,6 +2368,7 @@ export function buildInterior(context: InteriorBuildContext) {
   for (const door of INTERIOR_DOORS) buildDoor(context, materials, door);
   buildKitchen(context, materials);
   buildTechnicalHeatingFitout(context, materials);
+  buildWcFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {
     label: "soklová lišta",

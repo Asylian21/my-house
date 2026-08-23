@@ -176,6 +176,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientWcRevision20260823: {
+    id: "SRC-CLIENT-WC-20260823",
+    title: "Revízia stavebníka · rozšírenie samostatného WC",
+    detail:
+      "Rozšíriť miestnosť 1.06 o 300 mm posunutím deliacej priečky do technickej miestnosti 1.07, doplniť závesné WC a kompaktné umývadlo. Akumulačnú nádrž premiestniť v rámci západného technologického poľa tak, aby zostali zachované odstupy, kotol, servisný priestor aj oba vstupy technickej miestnosti.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

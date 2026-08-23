@@ -109,6 +109,26 @@ export interface TechnicalHeatingFitout {
   };
 }
 
+export interface WcFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-06";
+  readonly expansionMm: 300;
+  readonly toilet: {
+    readonly footprintMm: RectMm;
+    readonly concealedCisternRectMm: RectMm;
+    readonly facing: "WEST";
+    readonly seatElevationMm: number;
+  };
+  readonly basin: {
+    readonly footprintMm: RectMm;
+    readonly facing: "SOUTH";
+    readonly rimElevationMm: number;
+  };
+  readonly clearFloorRectMm: RectMm;
+}
+
 export interface FireplacePier {
   readonly id: string;
   readonly rectMm: RectMm;
@@ -240,7 +260,7 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     ceiling: "FLAT",
     floor: "TILE",
     wetRoom: true,
-    rectsMm: [{ x0: 22783, y0: 9112, x1: 23782, y1: 10712 }],
+    rectsMm: [{ x0: 22783, y0: 9112, x1: 24082, y1: 10712 }],
     standingPointMm: { x: 23280, y: 9800 },
   },
   {
@@ -253,7 +273,7 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     floor: "EPOXY",
     wetRoom: true,
     rectsMm: [
-      { x0: 23921, y0: 9112, x1: 25830, y1: 10712 },
+      { x0: 24221, y0: 9112, x1: 25830, y1: 10712 },
       { x0: 25830, y0: 9112, x1: 27541, y1: 11411 },
       { x0: 25543, y0: 7741, x1: 27541, y1: 9112 },
     ],
@@ -370,8 +390,9 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-BATH-105-EAST", role: "PARTITION", rectMm: { x0: 25399, y0: 7741, x1: 25543, y1: 9112 } },
   { id: "IW-BATH-105-SOUTH-E", role: "PARTITION", rectMm: { x0: 25399, y0: 7601, x1: 27541, y1: 7741 } },
   { id: "IW-BATH-105-NORTH", role: "PARTITION", rectMm: { x0: 22783, y0: 8972, x1: 25543, y1: 9112 } },
-  // WC 1.06 / technical room 1.07.
-  { id: "IW-WC-EAST", role: "PARTITION", rectMm: { x0: 23782, y0: 9112, x1: 23921, y1: 10712 } },
+  // Client revision 23. 8. 2026 shifts the WC / technical-room partition
+  // 300 mm east while retaining its original 139 mm construction thickness.
+  { id: "IW-WC-EAST", role: "PARTITION", rectMm: { x0: 24082, y0: 9112, x1: 24221, y1: 10712 } },
   // Wall behind the kitchen run (top of WC and technical room).
   { id: "IW-KITCHEN-BACK", role: "PARTITION", rectMm: { x0: 22783, y0: 10712, x1: 25830, y1: 10852 } },
   { id: "IW-TECH-WEST", role: "PARTITION", rectMm: { x0: 25691, y0: 10712, x1: 25830, y1: 11411 } },
@@ -432,11 +453,32 @@ export const TECHNICAL_HEATING_FITOUT: TechnicalHeatingFitout = Object.freeze({
     flueOutletDiameterMm: 180,
   },
   accumulator: {
-    centerMm: { x: 24732, y: 9912 },
+    centerMm: { x: 25026, y: 9912 },
     nominalVolumeL: 1000,
     outerDiameterMm: 1000,
     heightMm: 2100,
   },
+});
+
+/** Compact sanitary fitout after moving the 1.06 / 1.07 partition by 300 mm. */
+export const WC_FITOUT: WcFitout = Object.freeze({
+  id: "WC-FITOUT-2026-08-23",
+  sourceId: SOURCES.clientWcRevision20260823.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-06",
+  expansionMm: 300,
+  toilet: {
+    footprintMm: { x0: 23562, y0: 9327, x1: 24082, y1: 9697 },
+    concealedCisternRectMm: { x0: 23962, y0: 9252, x1: 24082, y1: 9772 },
+    facing: "WEST",
+    seatElevationMm: 450,
+  },
+  basin: {
+    footprintMm: { x0: 23602, y0: 10392, x1: 24052, y1: 10712 },
+    facing: "SOUTH",
+    rimElevationMm: 850,
+  },
+  clearFloorRectMm: { x0: 22783, y0: 9697, x1: 23562, y1: 10392 },
 });
 
 /**

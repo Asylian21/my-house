@@ -8,6 +8,7 @@ import {
   KITCHEN_RUN,
   LIVING_DINING_FITOUT,
   TECHNICAL_HEATING_FITOUT,
+  WC_FITOUT,
   ceilingElevationMm,
   roomAreaM2,
   roomAt,
@@ -53,7 +54,15 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     // 1.02 and 1.03 are measured differently in the legend (the corridor
     // spine and the kitchen bay are counted once, not per room); the vector
     // trace stays the geometry of record and the deviation is visible here.
-    const tolerance: Record<string, number> = { "1.02": 0.8, "1.03": 3, "1.05": 0.2 };
+    const tolerance: Record<string, number> = {
+      "1.02": 0.8,
+      "1.03": 3,
+      "1.05": 0.2,
+      // Client revision transfers 0.48 m² from 1.07 to 1.06 while the
+      // documentedAreaM2 fields retain the original D1.1.002 legend values.
+      "1.06": 0.5,
+      "1.07": 0.5,
+    };
     for (const room of INTERIOR_ROOMS) {
       const area = roomAreaM2(room);
       expect(Math.abs(area - room.documentedAreaM2), room.number).toBeLessThan(
@@ -321,7 +330,66 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(tank.heightMm).toBeLessThan(technicalRoom.clearHeightMm);
     expect(overlaps(tankBounds, boiler.footprintMm)).toBe(false);
     expect(overlaps(tankBounds, boiler.serviceRectMm)).toBe(false);
-    expect(technicalDoor.startMm - tankBounds.x1).toBeGreaterThanOrEqual(600);
+    expect(tank.centerMm).toEqual({ x: 25026, y: 9912 });
+    const technicalWestBay = technicalRoom.rectsMm[0];
+    expect(tankBounds.x0 - technicalWestBay.x0).toBeGreaterThanOrEqual(300);
+    expect(technicalWestBay.x1 - tankBounds.x1).toBeGreaterThanOrEqual(300);
+    expect(technicalDoor.startMm - tankBounds.x1).toBeGreaterThanOrEqual(350);
+    const openTechnicalLeafSouthEdge =
+      technicalDoor.wallSpanMm[0] - technicalDoor.leafWidthMm - 20;
+    expect(openTechnicalLeafSouthEdge - tankBounds.y1).toBeGreaterThanOrEqual(250);
     expect(technicalDoor.swing).toBe(-1);
+  });
+
+  it("expands room 1.06 by 300 mm and fits a wall-hung WC plus compact basin", () => {
+    const fitout = WC_FITOUT;
+    const wc = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
+    const technicalRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-07")!;
+    const wcRect = wc.rectsMm[0];
+    const technicalWestBay = technicalRoom.rectsMm[0];
+    const partition = INTERIOR_WALLS.find((wall) => wall.id === "IW-WC-EAST")!;
+    const wcDoor = INTERIOR_DOORS.find((door) => door.id === "DOOR-102-106")!;
+    const insideWc = (rect: RectMm) => [
+      { x: rect.x0, y: rect.y0 },
+      { x: rect.x1, y: rect.y0 },
+      { x: rect.x0, y: rect.y1 },
+      { x: rect.x1, y: rect.y1 },
+    ].every((point) => roomAt(point)?.id === wc.id);
+
+    expect(fitout.sourceId).toBe(SOURCES.clientWcRevision20260823.id);
+    expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
+    expect(fitout.expansionMm).toBe(300);
+    expect(wcRect).toEqual({ x0: 22783, y0: 9112, x1: 24082, y1: 10712 });
+    expect(wcRect.x1 - wcRect.x0).toBe(1299);
+    expect(roomAreaM2(wc)).toBeCloseTo(2.0784, 4);
+    expect(roomAreaM2(technicalRoom)).toBeCloseTo(9.247247, 6);
+    expect(partition.rectMm).toEqual({ x0: 24082, y0: 9112, x1: 24221, y1: 10712 });
+    expect(partition.rectMm.x0).toBe(wcRect.x1);
+    expect(partition.rectMm.x1).toBe(technicalWestBay.x0);
+    expect(partition.rectMm.x1 - partition.rectMm.x0).toBe(139);
+
+    expect(insideWc(fitout.toilet.footprintMm)).toBe(true);
+    expect(insideWc(fitout.toilet.concealedCisternRectMm)).toBe(true);
+    expect(fitout.toilet.facing).toBe("WEST");
+    expect(fitout.toilet.seatElevationMm).toBe(450);
+    expect(fitout.toilet.footprintMm.x1 - fitout.toilet.footprintMm.x0).toBe(520);
+    expect(fitout.toilet.footprintMm.y1 - fitout.toilet.footprintMm.y0).toBe(370);
+    expect(wcDoor.startMm - fitout.toilet.footprintMm.y1).toBeGreaterThanOrEqual(150);
+
+    expect(insideWc(fitout.basin.footprintMm)).toBe(true);
+    expect(fitout.basin.facing).toBe("SOUTH");
+    expect(fitout.basin.rimElevationMm).toBe(850);
+    expect(fitout.basin.footprintMm.x1 - fitout.basin.footprintMm.x0).toBe(450);
+    expect(fitout.basin.footprintMm.y1 - fitout.basin.footprintMm.y0).toBe(320);
+    expect(overlaps(fitout.toilet.footprintMm, fitout.basin.footprintMm)).toBe(false);
+
+    const openDoorLeafEastEdge = wcDoor.wallSpanMm[1] + wcDoor.leafWidthMm + 20;
+    expect(fitout.toilet.footprintMm.x0 - openDoorLeafEastEdge).toBeGreaterThanOrEqual(50);
+    expect(fitout.basin.footprintMm.x0 - openDoorLeafEastEdge).toBeGreaterThanOrEqual(90);
+    expect(insideWc(fitout.clearFloorRectMm)).toBe(true);
+    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(750);
+    expect(fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0).toBeGreaterThanOrEqual(650);
+    expect(overlaps(fitout.clearFloorRectMm, fitout.toilet.footprintMm)).toBe(false);
+    expect(overlaps(fitout.clearFloorRectMm, fitout.basin.footprintMm)).toBe(false);
   });
 });
