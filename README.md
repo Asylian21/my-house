@@ -130,8 +130,15 @@ odsávačom, rúrou pod varnou doskou a voľným presahom bez barových stoliči
 kremeň `stone-dark`). Východný koniec polostrova sa v priestore zo snímky
 prechádzky zalamuje do krátkeho 994 × 600 mm L-returnu s dvoma dubovými
 skrinkami, nadväzujúcou kremennou doskou a nízkym obkladom; končí 156 mm pred
-oknom EAST-04 a začína 260 mm za otvorom dverí technickej miestnosti. Okná a
-dvere sú stavané ako skutočné výplne
+oknom EAST-04 a začína 260 mm za otvorom dverí technickej miestnosti. Technická
+miestnosť 1.07 obsahuje vizualizačný návrh vykurovania
+(`TECHNICAL_HEATING_FITOUT`): drevosplyňovací kotol 800 × 900 × 1 450 mm v
+južnom výklenku a zvislú akumulačnú nádrž s nominálnym objemom 1 000 l,
+priemerom 1 000 mm a výškou 2 100 mm v západnom poli. Obe telesá kopírujú
+technologické zóny D1.1.002, neblokujú kuchynské dvere ani EAST-03 a zachovávajú
+900 mm servisný pás pred kotlom. Výrobca, hydraulika, prívod spaľovacieho
+vzduchu, požiarne odstupy a samostatný komín nie sú realizačne potvrdené. Okná
+a dvere sú stavané ako skutočné výplne
 (`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
 profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
 ušami a nosom, exteriérový hliníkový parapet s okapnicou a bočnicami, zdvižno‑

@@ -87,6 +87,28 @@ export interface KitchenRun {
   readonly upperCabinets: { readonly bottomMm: number; readonly topMm: number; readonly depthMm: number };
 }
 
+export interface TechnicalHeatingFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-07";
+  readonly exteriorAccessOpeningId: "EAST-03";
+  readonly boiler: {
+    readonly footprintMm: RectMm;
+    readonly heightMm: number;
+    readonly front: "NORTH";
+    readonly serviceRectMm: RectMm;
+    readonly flueOutletDiameterMm: number;
+  };
+  readonly accumulator: {
+    readonly centerMm: Point2Mm;
+    readonly nominalVolumeL: 1000;
+    readonly outerDiameterMm: number;
+    readonly heightMm: number;
+  };
+}
+
 export interface FireplacePier {
   readonly id: string;
   readonly rectMm: RectMm;
@@ -386,6 +408,35 @@ export const KITCHEN_RUN: KitchenRun = Object.freeze({
   ovenCenterXmm: 24090,
   barStoolCount: 0,
   upperCabinets: { bottomMm: 1450, topMm: 2250, depthMm: 350 },
+});
+
+/**
+ * Client heating concept placed in the equipment zones already indicated in
+ * D1.1.002: the circular accumulator in the west bay and the boiler in the
+ * south recess. Product-specific fire, combustion-air, hydraulic and chimney
+ * requirements remain a professional-design input rather than an as-built
+ * assertion of this visualization.
+ */
+export const TECHNICAL_HEATING_FITOUT: TechnicalHeatingFitout = Object.freeze({
+  id: "TECHNICAL-HEATING-FITOUT-2026-08-23",
+  sourceId: SOURCES.clientTechnicalHeatingRevision20260823.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-07",
+  exteriorAccessOpeningId: "EAST-03",
+  boiler: {
+    footprintMm: { x0: 26142, y0: 7841, x1: 26942, y1: 8741 },
+    heightMm: 1450,
+    front: "NORTH",
+    serviceRectMm: { x0: 26092, y0: 8741, x1: 26992, y1: 9641 },
+    flueOutletDiameterMm: 180,
+  },
+  accumulator: {
+    centerMm: { x: 24732, y: 9912 },
+    nominalVolumeL: 1000,
+    outerDiameterMm: 1000,
+    heightMm: 2100,
+  },
 });
 
 /**

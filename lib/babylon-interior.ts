@@ -21,6 +21,7 @@ import {
   INTERIOR_WALL_HEIGHT_MM,
   KITCHEN_RUN,
   LIVING_DINING_FITOUT,
+  TECHNICAL_HEATING_FITOUT,
   WING_RIDGE_XMM,
   ceilingElevationMm,
   roomBoundsMm,
@@ -68,6 +69,9 @@ export interface InteriorMaterials {
   readonly brushedBrass: PBRMaterial;
   readonly warmLight: PBRMaterial;
   readonly tvScreen: PBRMaterial;
+  readonly boilerEnamel: PBRMaterial;
+  readonly tankJacket: PBRMaterial;
+  readonly copperPipe: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -240,6 +244,12 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   tvScreen.clearCoat.isEnabled = true;
   tvScreen.clearCoat.intensity = 1;
   tvScreen.clearCoat.roughness = 0.025;
+  const boilerEnamel = pbr(scene, "real-technical-boiler-enamel", "#67241f", 0.38, 0.22);
+  boilerEnamel.clearCoat.isEnabled = true;
+  boilerEnamel.clearCoat.intensity = 0.35;
+  boilerEnamel.clearCoat.roughness = 0.24;
+  const tankJacket = pbr(scene, "real-technical-buffer-jacket", "#8b9092", 0.46, 0.2);
+  const copperPipe = pbr(scene, "real-technical-copper", "#b96f43", 0.24, 0.82);
   return {
     plaster,
     ceiling,
@@ -264,6 +274,9 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     brushedBrass,
     warmLight,
     tvScreen,
+    boilerEnamel,
+    tankJacket,
+    copperPipe,
   };
 }
 
@@ -1179,6 +1192,258 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   finish(context, duct, materials.steel);
 }
 
+/**
+ * Heating equipment in room 1.07. The bodies and reserved service geometry
+ * come from `TECHNICAL_HEATING_FITOUT`; detailed fittings are intentionally
+ * generic until a manufacturer and the professional heating design are known.
+ */
+function buildTechnicalHeatingFitout(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+) {
+  const fitout = TECHNICAL_HEATING_FITOUT;
+  const boiler = fitout.boiler;
+  const boilerRect = boiler.footprintMm;
+  const boilerCenter = rectCenter(boilerRect);
+  const boilerHeightM = boiler.heightMm * MM_TO_M;
+
+  const boilerPlinth = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · oceľový sokel`,
+    boilerCenter,
+    boilerRect.x1 - boilerRect.x0 - 90,
+    boilerRect.y1 - boilerRect.y0 - 90,
+    0.1,
+    0,
+    1,
+  );
+  finish(context, boilerPlinth, materials.fireplace, { shadow: true });
+  const boilerBody = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · drevosplyňovací kotol`,
+    boilerCenter,
+    boilerRect.x1 - boilerRect.x0,
+    boilerRect.y1 - boilerRect.y0,
+    boilerHeightM - 0.1,
+    0.1,
+    1,
+  );
+  finish(context, boilerBody, materials.boilerEnamel, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+  });
+
+  const frontYmm = boilerRect.y1 + 8;
+  const frontWidthMm = boilerRect.x1 - boilerRect.x0 - 90;
+  const loadingDoor = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · prikladacie dvierka`,
+    { x: boilerCenter.x, y: frontYmm },
+    frontWidthMm,
+    18,
+    0.48,
+    0.72,
+    1,
+  );
+  finish(context, loadingDoor, materials.fireplace, { shadow: true, pickable: true });
+  const combustionDoor = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · spaľovacie a popolníkové dvierka`,
+    { x: boilerCenter.x, y: frontYmm },
+    frontWidthMm,
+    18,
+    0.35,
+    0.21,
+    1,
+  );
+  finish(context, combustionDoor, materials.fireplace, { shadow: true, pickable: true });
+  const flameWindow = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · kontrolné sklo spaľovania`,
+    { x: boilerCenter.x, y: frontYmm + 12 },
+    250,
+    8,
+    0.15,
+    0.88,
+    1,
+  );
+  finish(context, flameWindow, materials.blackGlass);
+  const ember = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · žiara spaľovacej komory`,
+    { x: boilerCenter.x, y: frontYmm + 17 },
+    205,
+    4,
+    0.1,
+    0.905,
+    1,
+  );
+  finish(context, ember, materials.warmLight);
+  barHandle(
+    context,
+    materials,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · madlo prikladacích dvierok`,
+    { x: boilerCenter.x, y: frontYmm + 24 },
+    460,
+    true,
+    1.12,
+  );
+  barHandle(
+    context,
+    materials,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · madlo popolníka`,
+    { x: boilerCenter.x, y: frontYmm + 24 },
+    380,
+    true,
+    0.48,
+  );
+  const controlPanel = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · regulácia`,
+    { x: boilerCenter.x, y: frontYmm + 10 },
+    frontWidthMm,
+    12,
+    0.16,
+    1.25,
+    1,
+  );
+  finish(context, controlPanel, materials.fireplace);
+  const display = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · displej regulácie`,
+    { x: boilerCenter.x - 175, y: frontYmm + 18 },
+    185,
+    6,
+    0.07,
+    1.295,
+    1,
+  );
+  finish(context, display, materials.blackGlass);
+  for (const xMm of [boilerRect.x0 + 45, boilerRect.x1 - 45]) {
+    for (const elevationM of [0.34, 0.92]) {
+      const hinge = CreateCylinder(
+        `${fitout.id} · WOOD-GASIFICATION-BOILER · pánt`,
+        { height: 0.12, diameter: 0.026, tessellation: 16 },
+        context.scene,
+      );
+      hinge.position.set(xM(xMm), elevationM, zM(frontYmm + 24));
+      finish(context, hinge, materials.steel);
+    }
+  }
+  const flueCollar = CreateCylinder(
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · dymovodné hrdlo`,
+    { height: 0.1, diameter: 0.25, tessellation: 32 },
+    context.scene,
+  );
+  flueCollar.position.set(xM(boilerCenter.x), boilerHeightM + 0.05, zM(boilerRect.y0 + 165));
+  finish(context, flueCollar, materials.fireplace);
+  const flueStub = CreateCylinder(
+    `${fitout.id} · WOOD-GASIFICATION-BOILER · koncept napojenia dymovodu Ø${boiler.flueOutletDiameterMm}`,
+    { height: 0.36, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
+    context.scene,
+  );
+  flueStub.position.set(xM(boilerCenter.x), boilerHeightM + 0.23, zM(boilerRect.y0 + 165));
+  finish(context, flueStub, materials.fireplace);
+
+  const tank = fitout.accumulator;
+  const tankRadiusMm = tank.outerDiameterMm / 2;
+  const tankHeightM = tank.heightMm * MM_TO_M;
+  const tankBase = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · podstavec`,
+    { height: 0.08, diameter: tank.outerDiameterMm * MM_TO_M - 0.08, tessellation: 48 },
+    context.scene,
+  );
+  tankBase.position.set(xM(tank.centerMm.x), 0.04, zM(tank.centerMm.y));
+  finish(context, tankBase, materials.fireplace, { shadow: true });
+  const tankBody = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · akumulačná nádrž ${tank.nominalVolumeL} l`,
+    {
+      height: tankHeightM - 0.14,
+      diameter: tank.outerDiameterMm * MM_TO_M,
+      tessellation: 48,
+    },
+    context.scene,
+  );
+  tankBody.position.set(xM(tank.centerMm.x), 0.08 + (tankHeightM - 0.14) / 2, zM(tank.centerMm.y));
+  finish(context, tankBody, materials.tankJacket, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+  });
+  const tankTop = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · horné izolované veko`,
+    {
+      height: 0.08,
+      diameterBottom: tank.outerDiameterMm * MM_TO_M,
+      diameterTop: tank.outerDiameterMm * MM_TO_M - 0.16,
+      tessellation: 48,
+    },
+    context.scene,
+  );
+  tankTop.position.set(xM(tank.centerMm.x), tankHeightM - 0.04, zM(tank.centerMm.y));
+  finish(context, tankTop, materials.tankJacket, { shadow: true });
+  for (const elevationM of [0.58, 1.48]) {
+    const band = CreateCylinder(
+      `${fitout.id} · BUFFER-TANK-1000L · oceľová obruč`,
+      { height: 0.028, diameter: tank.outerDiameterMm * MM_TO_M + 0.018, tessellation: 48 },
+      context.scene,
+    );
+    band.position.set(xM(tank.centerMm.x), elevationM, zM(tank.centerMm.y));
+    finish(context, band, materials.steel);
+  }
+  for (const [index, elevationM, yOffsetMm] of [
+    [1, 0.34, -245],
+    [2, 0.78, 245],
+    [3, 1.22, -245],
+    [4, 1.66, 245],
+  ] as const) {
+    const nozzle = CreateCylinder(
+      `${fitout.id} · BUFFER-TANK-1000L · hydraulické hrdlo ${index}`,
+      { height: 0.18, diameter: 0.055, tessellation: 20 },
+      context.scene,
+    );
+    nozzle.rotation.z = Math.PI / 2;
+    nozzle.position.set(
+      xM(tank.centerMm.x + tankRadiusMm + 90),
+      elevationM,
+      zM(tank.centerMm.y + yOffsetMm),
+    );
+    finish(context, nozzle, materials.copperPipe);
+  }
+  const airVent = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · automatický odvzdušňovač`,
+    { height: 0.12, diameter: 0.045, tessellation: 20 },
+    context.scene,
+  );
+  airVent.position.set(xM(tank.centerMm.x), tankHeightM + 0.06, zM(tank.centerMm.y));
+  finish(context, airVent, materials.brushedBrass);
+  const gaugeRim = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · teplomer`,
+    { height: 0.045, diameter: 0.13, tessellation: 32 },
+    context.scene,
+  );
+  gaugeRim.rotation.z = Math.PI / 2;
+  gaugeRim.position.set(
+    xM(tank.centerMm.x + tankRadiusMm + 18),
+    1.45,
+    zM(tank.centerMm.y),
+  );
+  finish(context, gaugeRim, materials.steel);
+  const gaugeFace = CreateCylinder(
+    `${fitout.id} · BUFFER-TANK-1000L · ciferník teplomera`,
+    { height: 0.012, diameter: 0.102, tessellation: 32 },
+    context.scene,
+  );
+  gaugeFace.rotation.z = Math.PI / 2;
+  gaugeFace.position.set(
+    xM(tank.centerMm.x + tankRadiusMm + 43),
+    1.45,
+    zM(tank.centerMm.y),
+  );
+  finish(context, gaugeFace, materials.kitchenUpper);
+}
+
 function softEllipsoid(
   context: InteriorBuildContext,
   name: string,
@@ -1903,6 +2168,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWalls(context, materials);
   for (const door of INTERIOR_DOORS) buildDoor(context, materials, door);
   buildKitchen(context, materials);
+  buildTechnicalHeatingFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {
     label: "soklová lišta",

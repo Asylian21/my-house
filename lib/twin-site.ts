@@ -168,6 +168,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientTechnicalHeatingRevision20260823: {
+    id: "SRC-CLIENT-TECH-HEATING-20260823",
+    title: "Revízia stavebníka · technológia vykurovania",
+    detail:
+      "Do technickej miestnosti 1.07 za kuchyňou doplniť drevosplyňovací kotol a zvislú akumulačnú nádrž s nominálnym objemom 1 000 l. Rozmiestnenie rešpektuje technologické zóny naznačené v D1.1.002, oba vstupy a samostatné servisné plochy; výrobca, hydraulické zapojenie, spaľovací vzduch, požiarne odstupy a samostatný komín zostávajú na potvrdenie profesijným projektom.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
