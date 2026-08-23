@@ -940,6 +940,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
 
   // ---- peninsula with the hob (D1.1.002 symbol) and a clear serving overhang
   const pen = k.peninsulaRectMm;
+  const eastReturn = k.eastReturnRectMm;
   const penCarcass = texturedBox(
     context.scene,
     `${k.id} · polostrov ${pen.x1 - pen.x0} × ${pen.y1 - pen.y0}`,
@@ -973,6 +974,109 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     1.4,
   );
   finish(context, penTop, materials.worktop, { shadow: true });
+
+  // Short L-return in the free east-wall bay identified in the client's
+  // walkthrough screenshot. It joins the peninsula worktop, ends before
+  // window EAST-04 and stays wholly beyond the technical-room door opening.
+  const returnCarcass = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · dubová spodná kredencová linka`,
+    rectCenter(eastReturn),
+    eastReturn.x1 - eastReturn.x0,
+    eastReturn.y1 - eastReturn.y0,
+    counterM - worktopM - plinthM,
+    plinthM,
+    1.2,
+  );
+  finish(context, returnCarcass, materials.kitchenFront, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+  });
+  const returnPlinth = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · zapustený sokel`,
+    {
+      x: (eastReturn.x0 + eastReturn.x1) / 2 + 35,
+      y: (eastReturn.y0 + eastReturn.y1) / 2,
+    },
+    eastReturn.x1 - eastReturn.x0 - 70,
+    eastReturn.y1 - eastReturn.y0 - 70,
+    plinthM,
+    0,
+    1,
+  );
+  finish(context, returnPlinth, materials.fireplace);
+  const returnTop = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · nadväzujúca tmavá kremenná doska`,
+    {
+      x: (eastReturn.x0 + eastReturn.x1) / 2 - 10,
+      y: (eastReturn.y0 + eastReturn.y1) / 2 + 10,
+    },
+    eastReturn.x1 - eastReturn.x0 + 20,
+    eastReturn.y1 - eastReturn.y0 + 20,
+    worktopM,
+    counterM - worktopM,
+    1.4,
+  );
+  finish(context, returnTop, materials.worktop, { shadow: true, pickable: true });
+  const returnUpstand = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · kremenný obklad pri stene`,
+    { x: eastReturn.x1 - 6, y: (eastReturn.y0 + eastReturn.y1) / 2 },
+    12,
+    eastReturn.y1 - eastReturn.y0 - 20,
+    0.18,
+    counterM,
+    1.4,
+  );
+  finish(context, returnUpstand, materials.worktop);
+  const returnFrontJoint = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · škára dvoch frontov`,
+    { x: eastReturn.x0 - 2, y: (eastReturn.y0 + eastReturn.y1) / 2 },
+    4,
+    4,
+    counterM - worktopM - plinthM,
+    plinthM,
+    1,
+  );
+  finish(context, returnFrontJoint, materials.fireplace);
+  for (const yMm of [
+    eastReturn.y0 + (eastReturn.y1 - eastReturn.y0) / 4,
+    eastReturn.y0 + 3 * (eastReturn.y1 - eastReturn.y0) / 4,
+  ]) {
+    barHandle(
+      context,
+      materials,
+      `${k.id} · L-RETURN-EAST · úchytka kredenca`,
+      { x: eastReturn.x0 - 14, y: yMm },
+      300,
+      false,
+      0.8,
+    );
+  }
+  const returnNavigationGuard = texturedBox(
+    context.scene,
+    `${k.id} · L-RETURN-EAST · hladký navigačný obrys`,
+    {
+      x: (eastReturn.x0 + eastReturn.x1) / 2 - 10,
+      y: (eastReturn.y0 + eastReturn.y1) / 2 + 10,
+    },
+    eastReturn.x1 - eastReturn.x0 + 20,
+    eastReturn.y1 - eastReturn.y0 + 20,
+    6,
+    -2,
+    1,
+  );
+  finish(context, returnNavigationGuard, materials.kitchenFront, { collide: true });
+  returnNavigationGuard.isVisible = false;
+  returnNavigationGuard.metadata = {
+    ...(returnNavigationGuard.metadata ?? {}),
+    walkCollisionOnly: true,
+  };
+
   // Babylon's ellipsoid can slide vertically over counter-height meshes as if
   // they were a step. A single smooth, invisible vertical guard follows the
   // worktop footprint, preventing visual traversal without snag-prone detail

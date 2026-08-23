@@ -160,6 +160,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientKitchenLRevision20260823: {
+    id: "SRC-CLIENT-KITCHEN-L-20260823",
+    title: "Revízia stavebníka · zalomenie kuchyne do L",
+    detail:
+      "Podľa snímky z interiérovej prechádzky doplniť do voľného priestoru medzi oknom EAST-04 a dverami technickej miestnosti krátke zalomenie kuchynskej linky do L. Návrh nadväzuje na východný koniec polostrova, zachováva okno, celý dverný otvor aj komunikačný pás.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

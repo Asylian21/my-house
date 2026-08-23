@@ -171,6 +171,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     }
     expect(roomAt({ x: (KITCHEN_RUN.rectMm.x0 + KITCHEN_RUN.rectMm.x1) / 2, y: 11200 })?.number).toBe("1.03");
     expect(KITCHEN_RUN.designSourceId).toBe(SOURCES.clientKitchenRevision20260823.id);
+    expect(KITCHEN_RUN.eastReturnSourceId).toBe(SOURCES.clientKitchenLRevision20260823.id);
     expect(inside(KITCHEN_RUN.fridgeUnitRectMm, KITCHEN_RUN.rectMm)).toBe(true);
     expect(KITCHEN_RUN.fridgeUnitRectMm).toEqual({ x0: 22791, y0: 10949, x1: 23391, y1: 11550 });
     expect(KITCHEN_RUN.fridgeUnitRectMm.x1 - KITCHEN_RUN.fridgeUnitRectMm.x0).toBe(600);
@@ -186,6 +187,16 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(KITCHEN_RUN.ovenCenterXmm).toBe(KITCHEN_RUN.hobCenterXmm);
     expect(KITCHEN_RUN.ovenCenterXmm - 280).toBeGreaterThan(KITCHEN_RUN.peninsulaRectMm.x0);
     expect(KITCHEN_RUN.ovenCenterXmm + 280).toBeLessThan(KITCHEN_RUN.peninsulaRectMm.x1);
+    const eastReturn = KITCHEN_RUN.eastReturnRectMm;
+    const eastWindow = HOUSE.facades.east.openings.find((opening) => opening.id === "EAST-04")!;
+    expect(inside(eastReturn, INTERIOR_ROOMS.find((room) => room.number === "1.03")!.rectsMm[0])).toBe(true);
+    expect(eastReturn.x1 - eastReturn.x0).toBe(600);
+    expect(eastReturn.y1 - eastReturn.y0).toBe(994);
+    expect(eastReturn.x1).toBe(INTERIOR_ROOMS.find((room) => room.number === "1.03")!.rectsMm[0].x1);
+    expect(eastReturn.y1).toBe(KITCHEN_RUN.peninsulaRectMm.y0);
+    expect(eastReturn.x0 - (technicalDoor.startMm + technicalDoor.widthMm)).toBeGreaterThanOrEqual(250);
+    expect(eastWindow.startYmm - eastReturn.y1).toBeGreaterThanOrEqual(150);
+    expect(overlaps(eastReturn, KITCHEN_RUN.peninsulaRectMm)).toBe(false);
     expect(KITCHEN_RUN.barStoolCount).toBe(0);
   });
 

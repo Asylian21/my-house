@@ -127,7 +127,11 @@ dubovom dekore, biele horné skrinky s LED lištou a tmavý
 kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným
 odsávačom, rúrou pod varnou doskou a voľným presahom bez barových stoličiek
 (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
-kremeň `stone-dark`). Okná a dvere sú stavané ako skutočné výplne
+kremeň `stone-dark`). Východný koniec polostrova sa v priestore zo snímky
+prechádzky zalamuje do krátkeho 994 × 600 mm L-returnu s dvoma dubovými
+skrinkami, nadväzujúcou kremennou doskou a nízkym obkladom; končí 156 mm pred
+oknom EAST-04 a začína 260 mm za otvorom dverí technickej miestnosti. Okná a
+dvere sú stavané ako skutočné výplne
 (`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
 profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
 ušami a nosom, exteriérový hliníkový parapet s okapnicou a bočnicami, zdvižno‑
