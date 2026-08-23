@@ -174,6 +174,18 @@ Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uza
 kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
 musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.
 
+Pracovňa 1.04 je v nadväzujúcej klientskej revízii riešená ako minimalistický
+pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečku k zádveriu využíva
+2 550 mm vysoká greige bezúchytková skriňa s integrovanou bočnou nikou pre
+bielo-čiernu tlačiareň. Vedľa stojí subtílny dubový stôl 1 600 × 800 mm s
+57-palcovým prehnutým ultrawide monitorom 32 : 9 a čiernym ergonomickým kreslom;
+na východnej stene je priamo za používateľom bezrámová biela tabuľa na fixky.
+Rozmiestnenie necháva 60 mm pred stavebným otvorom FRONT-07 a 20 mm pred
+bočným presahom jeho vnútorného parapetu, 75 mm pred oknom EAST-01 a súvislý
+vstupný pás najmenej 1 500 × 1 000 mm. Ide o interiérový
+dizajnový koncept; ergonómiu konkrétneho monitora a kresla, elektroinštaláciu,
+kotvenie skríň a výrobnú skladbu musí potvrdiť dodávateľ interiéru.
+
 Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
 obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú
 nad korunou múru šikmou hlavou až k debneniu strechy, biele lemovacie dosky

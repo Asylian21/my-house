@@ -169,6 +169,64 @@ export interface BathroomFitout {
   readonly applianceServiceRectMm: RectMm;
 }
 
+export interface OfficeFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-04";
+  readonly cabinet: {
+    readonly wallId: "IW-ENTRY-EAST";
+    readonly footprintMm: RectMm;
+    readonly facing: "EAST";
+    readonly heightMm: number;
+    readonly printerNiche: {
+      readonly footprintMm: RectMm;
+      readonly bottomElevationMm: number;
+      readonly heightMm: number;
+    };
+  };
+  readonly desk: {
+    readonly footprintMm: RectMm;
+    readonly facing: "WEST";
+    readonly topElevationMm: number;
+    readonly monitor: {
+      readonly centerMm: Point2Mm;
+      readonly screenFacing: "EAST";
+      readonly diagonalIn: 57;
+      readonly aspectRatio: "32:9";
+      readonly widthMm: number;
+      readonly heightMm: number;
+      readonly curveRadiusMm: number;
+      readonly maxThicknessMm: number;
+      readonly centerElevationMm: number;
+    };
+  };
+  readonly chair: {
+    readonly footprintMm: RectMm;
+    readonly centerMm: Point2Mm;
+    readonly facing: "WEST";
+    readonly seatElevationMm: number;
+    readonly backTopElevationMm: number;
+  };
+  readonly printer: {
+    readonly footprintMm: RectMm;
+    readonly baseElevationMm: number;
+    readonly heightMm: number;
+    readonly facing: "EAST";
+    readonly finish: "WHITE_BLACK";
+    readonly integrated: true;
+  };
+  readonly whiteboard: {
+    readonly footprintMm: RectMm;
+    readonly facing: "WEST";
+    readonly bottomElevationMm: number;
+    readonly heightMm: number;
+    readonly openingId: "EAST-01";
+  };
+  readonly clearEntryRectMm: RectMm;
+}
+
 export interface FireplacePier {
   readonly id: string;
   readonly rectMm: RectMm;
@@ -274,7 +332,7 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
       { x0: 24192, y0: 3504, x1: 27541, y1: 5400 },
       { x0: 22842, y0: 5400, x1: 27541, y1: 6412 },
     ],
-    standingPointMm: { x: 25900, y: 4900 },
+    standingPointMm: { x: 25000, y: 5850 },
   },
   {
     id: "ROOM-1-05",
@@ -567,6 +625,65 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
   clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8322 },
   applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
 });
+
+/** Minimalist home-office composition fitted around both study windows. */
+export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
+  id: "OFFICE-FITOUT-2026-08-23",
+  sourceId: SOURCES.clientOfficeRevision20260823.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-04",
+  cabinet: {
+    wallId: "IW-ENTRY-EAST",
+    footprintMm: { x0: 24192, y0: 3504, x1: 24730, y1: 5201 },
+    facing: "EAST",
+    heightMm: 2550,
+    printerNiche: {
+      footprintMm: { x0: 24232, y0: 4590, x1: 24730, y1: 5151 },
+      bottomElevationMm: 650,
+      heightMm: 500,
+    },
+  },
+  desk: {
+    footprintMm: { x0: 25340, y0: 3630, x1: 26140, y1: 5230 },
+    facing: "WEST",
+    topElevationMm: 750,
+    monitor: {
+      centerMm: { x: 25480, y: 4430 },
+      screenFacing: "EAST",
+      diagonalIn: 57,
+      aspectRatio: "32:9",
+      widthMm: 1400,
+      heightMm: 394,
+      curveRadiusMm: 1800,
+      maxThicknessMm: 40,
+      centerElevationMm: 1180,
+    },
+  },
+  chair: {
+    footprintMm: { x0: 26220, y0: 4030, x1: 27020, y1: 4830 },
+    centerMm: { x: 26620, y: 4430 },
+    facing: "WEST",
+    seatElevationMm: 460,
+    backTopElevationMm: 1300,
+  },
+  printer: {
+    footprintMm: { x0: 24300, y0: 4650, x1: 24720, y1: 5090 },
+    baseElevationMm: 760,
+    heightMm: 230,
+    facing: "EAST",
+    finish: "WHITE_BLACK",
+    integrated: true,
+  },
+  whiteboard: {
+    footprintMm: { x0: 27526, y0: 3750, x1: 27541, y1: 4950 },
+    facing: "WEST",
+    bottomElevationMm: 950,
+    heightMm: 1000,
+    openingId: "EAST-01",
+  },
+  clearEntryRectMm: { x0: 23682, y0: 5400, x1: 25290, y1: 6412 },
+} as const);
 
 /**
  * Client interior concept from 23. 8. 2026. The composition deliberately uses

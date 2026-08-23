@@ -23,6 +23,7 @@ import {
   INTERIOR_WALL_HEIGHT_MM,
   KITCHEN_RUN,
   LIVING_DINING_FITOUT,
+  OFFICE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
   WING_RIDGE_XMM,
@@ -80,6 +81,8 @@ export interface InteriorMaterials {
   readonly showerGlass: PBRMaterial;
   readonly blackCeramic: PBRMaterial;
   readonly applianceEnamel: PBRMaterial;
+  readonly officeFabric: PBRMaterial;
+  readonly whiteboardGlass: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -284,6 +287,15 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   applianceEnamel.clearCoat.isEnabled = true;
   applianceEnamel.clearCoat.intensity = 0.45;
   applianceEnamel.clearCoat.roughness = 0.16;
+  const officeFabric = pbr(scene, "real-office-chair-fabric", "#17191b", 0.82);
+  officeFabric.sheen.isEnabled = true;
+  officeFabric.sheen.intensity = 0.22;
+  officeFabric.sheen.color = Color3.FromHexString("#4b4e50");
+  officeFabric.sheen.roughness = 0.92;
+  const whiteboardGlass = pbr(scene, "real-office-whiteboard-glass", "#f7f8f6", 0.18, 0.01);
+  whiteboardGlass.clearCoat.isEnabled = true;
+  whiteboardGlass.clearCoat.intensity = 0.72;
+  whiteboardGlass.clearCoat.roughness = 0.12;
   return {
     plaster,
     ceiling,
@@ -316,6 +328,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     showerGlass,
     blackCeramic,
     applianceEnamel,
+    officeFabric,
+    whiteboardGlass,
   };
 }
 
@@ -2122,6 +2136,582 @@ function navigationGuard(
 }
 
 /**
+ * Client home-office concept for room 1.04. The fixed geometry comes from
+ * `OFFICE_FITOUT`; this builder adds the calm greige/oak finish, convincingly
+ * thin technology and soft ergonomic forms without compromising the clear
+ * entry bay.
+ */
+function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = OFFICE_FITOUT;
+  const cabinet = fitout.cabinet;
+  const cabinetRect = cabinet.footprintMm;
+  const niche = cabinet.printerNiche;
+  const nicheRect = niche.footprintMm;
+  const cabinetHeightM = cabinet.heightMm * MM_TO_M;
+  const nicheBottomM = niche.bottomElevationMm * MM_TO_M;
+  const nicheHeightM = niche.heightMm * MM_TO_M;
+
+  // Full-height handleless wall. The printer bay is modelled as a real void
+  // between lower and upper carcasses, not as a dark decal on a solid box.
+  const closedBay: RectMm = {
+    x0: cabinetRect.x0,
+    y0: cabinetRect.y0,
+    x1: cabinetRect.x1,
+    y1: nicheRect.y0,
+  };
+  const closedBody = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · plná bezúchytková skriňová stena`,
+    rectCenter(closedBay),
+    closedBay.x1 - closedBay.x0,
+    closedBay.y1 - closedBay.y0,
+    cabinetHeightM,
+    0,
+    1.2,
+  );
+  finish(context, closedBody, materials.livingCabinet, { shadow: true, pickable: true });
+
+  const nicheLower = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · spodný blok tlačiarňového výklenku`,
+    rectCenter({ ...nicheRect, x0: cabinetRect.x0 }),
+    cabinetRect.x1 - cabinetRect.x0,
+    nicheRect.y1 - nicheRect.y0,
+    nicheBottomM,
+    0,
+    1.2,
+  );
+  finish(context, nicheLower, materials.livingCabinet, { shadow: true, pickable: true });
+
+  const upperBottomM = nicheBottomM + nicheHeightM;
+  const nicheUpper = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · horný blok nad tlačiarňou`,
+    rectCenter({ ...nicheRect, x0: cabinetRect.x0 }),
+    cabinetRect.x1 - cabinetRect.x0,
+    nicheRect.y1 - nicheRect.y0,
+    cabinetHeightM - upperBottomM,
+    upperBottomM,
+    1.2,
+  );
+  finish(context, nicheUpper, materials.livingCabinet, { shadow: true, pickable: true });
+
+  if (nicheRect.y1 < cabinetRect.y1) {
+    const endPanelRect: RectMm = {
+      x0: cabinetRect.x0,
+      y0: nicheRect.y1,
+      x1: cabinetRect.x1,
+      y1: cabinetRect.y1,
+    };
+    const endPanel = texturedBox(
+      context.scene,
+      `${fitout.id} · CABINET · severný ukončovací panel`,
+      rectCenter(endPanelRect),
+      endPanelRect.x1 - endPanelRect.x0,
+      endPanelRect.y1 - endPanelRect.y0,
+      cabinetHeightM,
+      0,
+      1.2,
+    );
+    finish(context, endPanel, materials.livingCabinet, { shadow: true });
+  }
+
+  const nicheBack = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · tmavý chrbát tlačiarňového výklenku`,
+    { x: nicheRect.x0 + 8, y: (nicheRect.y0 + nicheRect.y1) / 2 },
+    16,
+    nicheRect.y1 - nicheRect.y0 - 26,
+    nicheHeightM - 0.026,
+    nicheBottomM + 0.013,
+    1,
+  );
+  finish(context, nicheBack, materials.fireplace, { shadow: true });
+
+  for (const [index, sideY] of [nicheRect.y0 + 12, nicheRect.y1 - 12].entries()) {
+    const lining = texturedBox(
+      context.scene,
+      `${fitout.id} · CABINET · bočnica výklenku ${index + 1}`,
+      { x: (nicheRect.x0 + nicheRect.x1) / 2, y: sideY },
+      nicheRect.x1 - nicheRect.x0,
+      24,
+      nicheHeightM,
+      nicheBottomM,
+      1,
+    );
+    finish(context, lining, materials.fireplace, { shadow: true });
+  }
+  const nicheShelf = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · dubová polica pod tlačiarňou`,
+    rectCenter(nicheRect),
+    nicheRect.x1 - nicheRect.x0 + 12,
+    nicheRect.y1 - nicheRect.y0 - 8,
+    0.026,
+    nicheBottomM,
+    1.1,
+  );
+  finish(context, nicheShelf, materials.kitchenFront, { shadow: true, pickable: true });
+  const nicheLight = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · 2700 K svetlo vo výklenku`,
+    { x: nicheRect.x1 - 18, y: (nicheRect.y0 + nicheRect.y1) / 2 },
+    18,
+    nicheRect.y1 - nicheRect.y0 - 70,
+    0.018,
+    upperBottomM - 0.024,
+    1,
+  );
+  finish(context, nicheLight, materials.warmLight);
+
+  // Subtle front joints preserve the scale of the floor-to-ceiling joinery.
+  for (const [index, seamY] of [
+    closedBay.y0 + (closedBay.y1 - closedBay.y0) / 3,
+    closedBay.y0 + (2 * (closedBay.y1 - closedBay.y0)) / 3,
+  ].entries()) {
+    const seam = texturedBox(
+      context.scene,
+      `${fitout.id} · CABINET · zvislá tieňová škára ${index + 1}`,
+      { x: cabinetRect.x1 + 3, y: seamY },
+      7,
+      4,
+      cabinetHeightM - 0.12,
+      0.06,
+      1,
+    );
+    finish(context, seam, materials.fireplace);
+  }
+  const cabinetPlinth = texturedBox(
+    context.scene,
+    `${fitout.id} · CABINET · zapustená tmavá soklová línia`,
+    { x: cabinetRect.x1 + 4, y: (cabinetRect.y0 + cabinetRect.y1) / 2 },
+    12,
+    cabinetRect.y1 - cabinetRect.y0 - 28,
+    0.055,
+    0,
+    1,
+  );
+  finish(context, cabinetPlinth, materials.fireplace);
+
+  // Integrated printer: calm white body, black output slot and a minimal
+  // touch panel remain visible within the open cabinet bay.
+  const printer = fitout.printer;
+  const printerCenter = rectCenter(printer.footprintMm);
+  const printerBaseM = printer.baseElevationMm * MM_TO_M;
+  const printerHeightM = printer.heightMm * MM_TO_M;
+  const printerBody = texturedBox(
+    context.scene,
+    `${fitout.id} · PRINTER · biele telo integrovanej tlačiarne`,
+    printerCenter,
+    printer.footprintMm.x1 - printer.footprintMm.x0,
+    printer.footprintMm.y1 - printer.footprintMm.y0,
+    printerHeightM,
+    printerBaseM,
+    0.8,
+  );
+  finish(context, printerBody, materials.applianceEnamel, { shadow: true, pickable: true });
+  const outputSlot = texturedBox(
+    context.scene,
+    `${fitout.id} · PRINTER · čierny výstup papiera`,
+    { x: printer.footprintMm.x1 + 4, y: printerCenter.y },
+    10,
+    300,
+    0.052,
+    printerBaseM + 0.085,
+    1,
+  );
+  finish(context, outputSlot, materials.blackGlass, { pickable: true });
+  const printerPanel = texturedBox(
+    context.scene,
+    `${fitout.id} · PRINTER · dotykový ovládací panel`,
+    { x: printer.footprintMm.x1 + 7, y: printer.footprintMm.y0 + 78 },
+    12,
+    104,
+    0.052,
+    printerBaseM + printerHeightM - 0.072,
+    1,
+  );
+  finish(context, printerPanel, materials.blackGlass, { pickable: true });
+  const paper = texturedBox(
+    context.scene,
+    `${fitout.id} · PRINTER · čistý papier vo výstupe`,
+    { x: printer.footprintMm.x1 + 16, y: printerCenter.y },
+    130,
+    255,
+    0.006,
+    printerBaseM + 0.13,
+    1,
+  );
+  finish(context, paper, materials.kitchenUpper);
+
+  // Slim oak desk with a powder-coated frame and concealed cable tray.
+  const desk = fitout.desk;
+  const deskRect = desk.footprintMm;
+  const deskTopM = desk.topElevationMm * MM_TO_M;
+  const deskThicknessM = 0.035;
+  const desktop = texturedBox(
+    context.scene,
+    `${fitout.id} · DESK · subtílna dubová pracovná doska`,
+    rectCenter(deskRect),
+    deskRect.x1 - deskRect.x0,
+    deskRect.y1 - deskRect.y0,
+    deskThicknessM,
+    deskTopM - deskThicknessM,
+    1.2,
+  );
+  finish(context, desktop, materials.kitchenFront, { shadow: true, pickable: true });
+
+  const legHeightM = deskTopM - deskThicknessM - 0.015;
+  for (const [frameIndex, frameY] of [deskRect.y0 + 135, deskRect.y1 - 135].entries()) {
+    for (const xMm of [deskRect.x0 + 72, deskRect.x1 - 72]) {
+      const leg = texturedBox(
+        context.scene,
+        `${fitout.id} · DESK · čierna noha rámu ${frameIndex + 1}`,
+        { x: xMm, y: frameY },
+        36,
+        42,
+        legHeightM,
+        0.015,
+        1,
+      );
+      finish(context, leg, materials.fireplace, { shadow: true });
+    }
+    const frameRail = texturedBox(
+      context.scene,
+      `${fitout.id} · DESK · horná priečka rámu ${frameIndex + 1}`,
+      { x: (deskRect.x0 + deskRect.x1) / 2, y: frameY },
+      deskRect.x1 - deskRect.x0 - 126,
+      42,
+      0.036,
+      deskTopM - deskThicknessM - 0.052,
+      1,
+    );
+    finish(context, frameRail, materials.fireplace, { shadow: true });
+  }
+  const cableTray = texturedBox(
+    context.scene,
+    `${fitout.id} · DESK · skrytý káblový žľab`,
+    { x: deskRect.x0 + 150, y: (deskRect.y0 + deskRect.y1) / 2 },
+    150,
+    880,
+    0.09,
+    deskTopM - 0.14,
+    1,
+  );
+  finish(context, cableTray, materials.fireplace, { shadow: true });
+
+  // 57-inch 32:9 ultrawide. Nine tangential panels approximate the specified
+  // 1800R curve while keeping a convincingly thin 40 mm rear shell.
+  const monitor = desk.monitor;
+  const segmentCount = 9;
+  const segmentWidthMm = monitor.widthMm / segmentCount;
+  const curveRadiusMm = monitor.curveRadiusMm;
+  const shellBottomM = (monitor.centerElevationMm - monitor.heightMm / 2) * MM_TO_M;
+  for (let index = 0; index < segmentCount; index += 1) {
+    const offsetMm = -monitor.widthMm / 2 + segmentWidthMm * (index + 0.5);
+    const radiusAlongMm = Math.sqrt(Math.max(1, curveRadiusMm ** 2 - offsetMm ** 2));
+    const curveDepthMm = curveRadiusMm - radiusAlongMm;
+    const yaw = -Math.asin(offsetMm / curveRadiusMm);
+    const shellCenter: Point2Mm = {
+      x: monitor.centerMm.x + curveDepthMm,
+      y: monitor.centerMm.y + offsetMm,
+    };
+    const shell = texturedBox(
+      context.scene,
+      `${fitout.id} · MONITOR-57-32:9 · zakrivený zadný segment ${index + 1}`,
+      shellCenter,
+      monitor.maxThicknessMm,
+      segmentWidthMm + 5,
+      monitor.heightMm * MM_TO_M,
+      shellBottomM,
+      1,
+    );
+    shell.rotation.y = yaw;
+    finish(context, shell, materials.fireplace, { shadow: true, pickable: true });
+
+    const normalX = radiusAlongMm / curveRadiusMm;
+    const normalY = -offsetMm / curveRadiusMm;
+    const glassOffsetMm = monitor.maxThicknessMm / 2 + 3;
+    const glass = texturedBox(
+      context.scene,
+      `${fitout.id} · MONITOR-57-32:9 · obrazový segment ${index + 1}`,
+      {
+        x: shellCenter.x + normalX * glassOffsetMm,
+        y: shellCenter.y + normalY * glassOffsetMm,
+      },
+      4,
+      segmentWidthMm + 1,
+      (monitor.heightMm - 16) * MM_TO_M,
+      shellBottomM + 0.008,
+      1,
+    );
+    glass.rotation.y = yaw;
+    finish(context, glass, materials.tvScreen, { pickable: true });
+  }
+  const monitorBase = texturedBox(
+    context.scene,
+    `${fitout.id} · MONITOR-57-32:9 · subtílna stolová základňa`,
+    { x: monitor.centerMm.x + 35, y: monitor.centerMm.y },
+    220,
+    410,
+    0.018,
+    deskTopM + 0.002,
+    1,
+  );
+  finish(context, monitorBase, materials.fireplace, { shadow: true });
+  const screenBottomM = monitor.centerElevationMm * MM_TO_M - monitor.heightMm * MM_TO_M / 2;
+  const postHeightM = Math.max(0.12, screenBottomM - deskTopM + 0.035);
+  const monitorPost = texturedBox(
+    context.scene,
+    `${fitout.id} · MONITOR-57-32:9 · centrálny stojan`,
+    { x: monitor.centerMm.x - 20, y: monitor.centerMm.y },
+    46,
+    54,
+    postHeightM,
+    deskTopM + 0.018,
+    1,
+  );
+  finish(context, monitorPost, materials.fireplace, { shadow: true });
+
+  // Premium ergonomic chair: five-star base, adjustable arms, deep seat,
+  // articulated lumbar support and a soft high back with headrest.
+  const chair = fitout.chair;
+  const chairCenter = chair.centerMm;
+  const seatM = chair.seatElevationMm * MM_TO_M;
+  const chairWidthM = (chair.footprintMm.y1 - chair.footprintMm.y0) * MM_TO_M;
+  const chairDepthM = (chair.footprintMm.x1 - chair.footprintMm.x0) * MM_TO_M;
+  const hub = CreateCylinder(
+    `${fitout.id} · CHAIR · centrálna päťramenná báza`,
+    { height: 0.09, diameter: 0.13, tessellation: 28 },
+    context.scene,
+  );
+  hub.position.set(xM(chairCenter.x), 0.105, zM(chairCenter.y));
+  finish(context, hub, materials.fireplace, { shadow: true });
+  const lift = CreateCylinder(
+    `${fitout.id} · CHAIR · plynový piest`,
+    { height: Math.max(0.2, seatM - 0.18), diameter: 0.055, tessellation: 24 },
+    context.scene,
+  );
+  lift.position.set(xM(chairCenter.x), 0.15 + Math.max(0.2, seatM - 0.18) / 2, zM(chairCenter.y));
+  finish(context, lift, materials.steel, { shadow: true });
+
+  for (let index = 0; index < 5; index += 1) {
+    const angle = (index / 5) * Math.PI * 2;
+    const spokeLengthMm = 335;
+    const spokeCenter: Point2Mm = {
+      x: chairCenter.x + Math.cos(angle) * spokeLengthMm * 0.5,
+      y: chairCenter.y + Math.sin(angle) * spokeLengthMm * 0.5,
+    };
+    const spoke = texturedBox(
+      context.scene,
+      `${fitout.id} · CHAIR · rameno pojazdu ${index + 1}`,
+      spokeCenter,
+      spokeLengthMm,
+      34,
+      0.032,
+      0.065,
+      1,
+    );
+    spoke.rotation.y = angle;
+    finish(context, spoke, materials.fireplace, { shadow: true });
+
+    const caster = CreateTorus(
+      `${fitout.id} · CHAIR · tiché koliesko ${index + 1}`,
+      { diameter: 0.068, thickness: 0.018, tessellation: 20 },
+      context.scene,
+    );
+    caster.rotation.z = Math.PI / 2;
+    caster.rotation.y = angle;
+    caster.position.set(
+      xM(chairCenter.x + Math.cos(angle) * spokeLengthMm),
+      0.055,
+      zM(chairCenter.y + Math.sin(angle) * spokeLengthMm),
+    );
+    finish(context, caster, materials.fireplace, { shadow: true });
+  }
+
+  softEllipsoid(
+    context,
+    `${fitout.id} · CHAIR · ergonomický čalúnený sedák`,
+    { x: chairCenter.x - 45, y: chairCenter.y },
+    [chairDepthM * 0.7, 0.135, chairWidthM * 0.72],
+    seatM,
+    materials.officeFabric,
+  );
+  const seatShell = texturedBox(
+    context.scene,
+    `${fitout.id} · CHAIR · tenká nosná škrupina sedáka`,
+    { x: chairCenter.x, y: chairCenter.y },
+    chair.footprintMm.x1 - chair.footprintMm.x0 - 180,
+    chair.footprintMm.y1 - chair.footprintMm.y0 - 170,
+    0.045,
+    seatM - 0.105,
+    0.8,
+  );
+  finish(context, seatShell, materials.fireplace, { shadow: true });
+
+  const backCenterX = chairCenter.x + 250;
+  const backBottomM = seatM + 0.08;
+  const backTopM = chair.backTopElevationMm * MM_TO_M;
+  softCapsule(
+    context,
+    `${fitout.id} · CHAIR · vysoké ergonomické operadlo`,
+    { x: backCenterX, y: chairCenter.y },
+    (backBottomM + backTopM) / 2,
+    backTopM - backBottomM,
+    0.18,
+    new Vector3(0, 1, 0),
+    [0.34, 1, 1.45],
+    materials.officeFabric,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · CHAIR · nastaviteľná bedrová opora`,
+    { x: backCenterX - 72, y: chairCenter.y },
+    [0.095, 0.24, 0.48],
+    seatM + 0.26,
+    materials.accentFabric,
+  );
+  softEllipsoid(
+    context,
+    `${fitout.id} · CHAIR · mäkká hlavová opierka`,
+    { x: backCenterX + 12, y: chairCenter.y },
+    [0.13, 0.17, 0.43],
+    backTopM - 0.07,
+    materials.officeFabric,
+  );
+  for (const [index, sideY] of [chairCenter.y - 255, chairCenter.y + 255].entries()) {
+    const armPost = texturedBox(
+      context.scene,
+      `${fitout.id} · CHAIR · nastaviteľná podrúčka ${index + 1}`,
+      { x: chairCenter.x - 15, y: sideY },
+      42,
+      42,
+      0.22,
+      seatM + 0.02,
+      1,
+    );
+    finish(context, armPost, materials.fireplace, { shadow: true });
+    const armPad = softCapsule(
+      context,
+      `${fitout.id} · CHAIR · mäkká opierka ruky ${index + 1}`,
+      { x: chairCenter.x - 75, y: sideY },
+      seatM + 0.245,
+      0.31,
+      0.04,
+      new Vector3(1, 0, 0),
+      [1, 0.65, 1],
+      materials.officeFabric,
+    );
+    armPad.rotation.z = 0.02;
+  }
+
+  // Frameless marker board occupies the solid east-wall bay and stops before
+  // EAST-01. A shallow tray and three markers make its use immediately clear.
+  const whiteboard = fitout.whiteboard;
+  const boardRect = whiteboard.footprintMm;
+  const boardBottomM = whiteboard.bottomElevationMm * MM_TO_M;
+  const boardHeightM = whiteboard.heightMm * MM_TO_M;
+  const boardShadow = texturedBox(
+    context.scene,
+    `${fitout.id} · WHITEBOARD · tenký čierny tieňový podklad`,
+    { x: (boardRect.x0 + boardRect.x1) / 2 + 3, y: (boardRect.y0 + boardRect.y1) / 2 },
+    boardRect.x1 - boardRect.x0 + 8,
+    boardRect.y1 - boardRect.y0 + 28,
+    boardHeightM + 0.028,
+    boardBottomM - 0.014,
+    1,
+  );
+  finish(context, boardShadow, materials.fireplace, { shadow: true });
+  const board = texturedBox(
+    context.scene,
+    `${fitout.id} · WHITEBOARD · bezrámová magnetická plocha`,
+    rectCenter(boardRect),
+    boardRect.x1 - boardRect.x0,
+    boardRect.y1 - boardRect.y0,
+    boardHeightM,
+    boardBottomM,
+    1,
+  );
+  finish(context, board, materials.whiteboardGlass, { shadow: true, pickable: true });
+  const markerTray = texturedBox(
+    context.scene,
+    `${fitout.id} · WHITEBOARD · subtílna magnetická polička na fixky`,
+    { x: boardRect.x0 - 42, y: (boardRect.y0 + boardRect.y1) / 2 },
+    84,
+    760,
+    0.024,
+    boardBottomM - 0.052,
+    1,
+  );
+  finish(context, markerTray, materials.fireplace, { shadow: true, pickable: true });
+  const markerMaterials = [materials.blackGlass, materials.accentFabric, materials.brushedBrass];
+  for (const [index, markerY] of [
+    (boardRect.y0 + boardRect.y1) / 2 - 120,
+    (boardRect.y0 + boardRect.y1) / 2,
+    (boardRect.y0 + boardRect.y1) / 2 + 120,
+  ].entries()) {
+    const marker = texturedBox(
+      context.scene,
+      `${fitout.id} · WHITEBOARD · fixa ${index + 1}`,
+      { x: boardRect.x0 - 66, y: markerY },
+      105,
+      15,
+      0.016,
+      boardBottomM - 0.027,
+      1,
+    );
+    finish(context, marker, markerMaterials[index], { pickable: true });
+  }
+
+  // One restrained linear ceiling luminaire follows the desk axis.
+  const ceilingHousing = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · čierny lineárny stropný profil`,
+    { x: (deskRect.x0 + deskRect.x1) / 2, y: (deskRect.y0 + deskRect.y1) / 2 },
+    58,
+    1260,
+    0.035,
+    2.565,
+    1,
+  );
+  finish(context, ceilingHousing, materials.fireplace, { shadow: true });
+  const ceilingDiffuser = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · teplý súvislý difúzor`,
+    { x: (deskRect.x0 + deskRect.x1) / 2, y: (deskRect.y0 + deskRect.y1) / 2 },
+    34,
+    1210,
+    0.012,
+    2.553,
+    1,
+  );
+  finish(context, ceilingDiffuser, materials.warmLight);
+  const officeLight = new PointLight(
+    `${fitout.id} · LIGHT · mäkké pracovné svetlo`,
+    new Vector3(
+      xM((deskRect.x0 + deskRect.x1) / 2),
+      2.47,
+      zM((deskRect.y0 + deskRect.y1) / 2),
+    ),
+    context.scene,
+  );
+  officeLight.diffuse = Color3.FromHexString("#ffd5a6");
+  officeLight.specular = Color3.FromHexString("#8f7861");
+  officeLight.intensity = 0.24;
+  officeLight.range = 3.1;
+
+  navigationGuard(context, materials, `${fitout.id} · CABINET · navigačný obrys`, cabinetRect);
+  navigationGuard(context, materials, `${fitout.id} · DESK · navigačný obrys`, deskRect);
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · CHAIR · navigačný obrys pojazdu`,
+    chair.footprintMm,
+  );
+}
+
+/**
  * High-end living/dining concept requested on 23. 8. 2026. The source-backed
  * plan positions live in `LIVING_DINING_FITOUT`; this builder only adds finish,
  * soft geometry, integrated lighting and navigation-safe collision envelopes.
@@ -2784,6 +3374,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildTechnicalHeatingFitout(context, materials);
   buildWcFitout(context, materials);
   buildBathroomFitout(context, materials);
+  buildOfficeFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {
     label: "soklová lišta",

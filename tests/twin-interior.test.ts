@@ -8,6 +8,7 @@ import {
   INTERIOR_WALLS,
   KITCHEN_RUN,
   LIVING_DINING_FITOUT,
+  OFFICE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
   ceilingElevationMm,
@@ -479,5 +480,132 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     };
     expect(overlaps(leafRect, fitout.shower.footprintMm)).toBe(false);
     expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
+  });
+
+  it("fits a minimalist office around both windows and the open study door", () => {
+    const fitout = OFFICE_FITOUT;
+    const office = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
+    const officeDoor = INTERIOR_DOORS.find((door) => door.id === "DOOR-102-104")!;
+    const vestibuleWall = INTERIOR_WALLS.find((wall) => wall.id === fitout.cabinet.wallId)!;
+    const frontWindow = HOUSE.facades.front.openings.find((opening) => opening.id === "FRONT-07")!;
+    const eastWindow = HOUSE.facades.east.openings.find(
+      (opening) => opening.id === fitout.whiteboard.openingId,
+    )!;
+    const insideOffice = (rect: RectMm) => [
+      { x: rect.x0, y: rect.y0 },
+      { x: rect.x1 - 1, y: rect.y0 },
+      { x: rect.x0, y: rect.y1 - 1 },
+      { x: rect.x1 - 1, y: rect.y1 - 1 },
+    ].every((point) => roomAt(point)?.id === office.id);
+
+    expect(fitout.id).toBe("OFFICE-FITOUT-2026-08-23");
+    expect(fitout.sourceId).toBe(SOURCES.clientOfficeRevision20260823.id);
+    expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
+    expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
+    expect(roomAreaM2(office)).toBeCloseTo(11.105092, 6);
+
+    const cabinet = fitout.cabinet;
+    expect(insideOffice(cabinet.footprintMm)).toBe(true);
+    expect(cabinet.footprintMm.x0).toBe(vestibuleWall.rectMm.x1);
+    expect(cabinet.footprintMm.y0).toBe(vestibuleWall.rectMm.y0);
+    expect(cabinet.footprintMm.y1).toBe(vestibuleWall.rectMm.y1);
+    expect(cabinet.footprintMm.x1 - cabinet.footprintMm.x0).toBe(538);
+    expect(cabinet.facing).toBe("EAST");
+    expect(cabinet.heightMm).toBeLessThan(office.clearHeightMm);
+    expect(frontWindow.startXmm - cabinet.footprintMm.x1).toBe(60);
+    // The modeled postforming sill has 40 mm ears beyond the rough opening.
+    expect(frontWindow.startXmm - 40 - cabinet.footprintMm.x1).toBe(20);
+    expect(inside(cabinet.printerNiche.footprintMm, cabinet.footprintMm)).toBe(true);
+    expect(cabinet.printerNiche.bottomElevationMm + cabinet.printerNiche.heightMm)
+      .toBeLessThan(cabinet.heightMm);
+
+    const desk = fitout.desk;
+    expect(insideOffice(desk.footprintMm)).toBe(true);
+    expect(desk.footprintMm.x1 - desk.footprintMm.x0).toBe(800);
+    expect(desk.footprintMm.y1 - desk.footprintMm.y0).toBe(1600);
+    expect(desk.facing).toBe("WEST");
+    expect(desk.topElevationMm).toBe(750);
+    expect(overlaps(cabinet.footprintMm, desk.footprintMm)).toBe(false);
+
+    const monitor = desk.monitor;
+    expect(roomAt(monitor.centerMm)?.id).toBe(office.id);
+    expect(inside({
+      x0: monitor.centerMm.x,
+      y0: monitor.centerMm.y,
+      x1: monitor.centerMm.x,
+      y1: monitor.centerMm.y,
+    }, desk.footprintMm)).toBe(true);
+    expect(monitor.screenFacing).toBe("EAST");
+    expect(monitor.diagonalIn).toBe(57);
+    expect(monitor.aspectRatio).toBe("32:9");
+    expect(monitor.widthMm / monitor.heightMm).toBeCloseTo(32 / 9, 1);
+    expect(monitor.widthMm).toBeLessThan(desk.footprintMm.y1 - desk.footprintMm.y0);
+    expect(monitor.curveRadiusMm).toBeGreaterThan(monitor.widthMm);
+    expect(monitor.maxThicknessMm).toBeLessThanOrEqual(40);
+    expect(monitor.centerElevationMm - monitor.heightMm / 2).toBeGreaterThan(desk.topElevationMm);
+
+    const chair = fitout.chair;
+    expect(insideOffice(chair.footprintMm)).toBe(true);
+    expect(chair.centerMm).toEqual({ x: 26620, y: 4430 });
+    expect(chair.facing).toBe(desk.facing);
+    expect(chair.footprintMm.x0 - desk.footprintMm.x1).toBe(80);
+    expect(chair.seatElevationMm).toBe(460);
+    expect(chair.backTopElevationMm).toBeGreaterThan(chair.seatElevationMm);
+    expect(overlaps(desk.footprintMm, chair.footprintMm)).toBe(false);
+
+    const printer = fitout.printer;
+    expect(insideOffice(printer.footprintMm)).toBe(true);
+    expect(inside(printer.footprintMm, cabinet.printerNiche.footprintMm)).toBe(true);
+    expect(printer.baseElevationMm).toBeGreaterThanOrEqual(cabinet.printerNiche.bottomElevationMm);
+    expect(printer.baseElevationMm + printer.heightMm).toBeLessThanOrEqual(
+      cabinet.printerNiche.bottomElevationMm + cabinet.printerNiche.heightMm,
+    );
+    expect(printer.facing).toBe(cabinet.facing);
+    expect(printer.finish).toBe("WHITE_BLACK");
+    expect(printer.integrated).toBe(true);
+
+    const whiteboard = fitout.whiteboard;
+    expect(insideOffice(whiteboard.footprintMm)).toBe(true);
+    expect(whiteboard.footprintMm.x1).toBe(office.rectsMm[0].x1);
+    expect(whiteboard.facing).toBe("WEST");
+    expect(eastWindow.startYmm - whiteboard.footprintMm.y1).toBe(75);
+    expect(whiteboard.footprintMm.x0).toBeGreaterThan(chair.footprintMm.x1);
+    expect(whiteboard.bottomElevationMm + whiteboard.heightMm).toBeLessThan(office.clearHeightMm);
+
+    const fixedFloorRects = [
+      cabinet.footprintMm,
+      desk.footprintMm,
+      chair.footprintMm,
+      whiteboard.footprintMm,
+    ] as const;
+    for (let a = 0; a < fixedFloorRects.length; a += 1) {
+      for (let b = a + 1; b < fixedFloorRects.length; b += 1) {
+        expect(overlaps(fixedFloorRects[a], fixedFloorRects[b])).toBe(false);
+      }
+    }
+
+    const clearEntry = fitout.clearEntryRectMm;
+    expect(insideOffice(clearEntry)).toBe(true);
+    expect(clearEntry.x1 - clearEntry.x0).toBeGreaterThanOrEqual(1500);
+    expect(clearEntry.y1 - clearEntry.y0).toBeGreaterThanOrEqual(1000);
+    expect(inside({
+      x0: office.standingPointMm.x,
+      y0: office.standingPointMm.y,
+      x1: office.standingPointMm.x,
+      y1: office.standingPointMm.y,
+    }, clearEntry)).toBe(true);
+    expect(office.standingPointMm.x).toBeGreaterThan(cabinet.footprintMm.x1);
+    expect(office.standingPointMm.x).toBeLessThan(desk.footprintMm.x0);
+    const openDoorLeaf: RectMm = {
+      x0: officeDoor.wallSpanMm[1],
+      x1: officeDoor.wallSpanMm[1] + officeDoor.leafWidthMm + 20,
+      y0: officeDoor.startMm + 60,
+      y1: officeDoor.startMm + 100,
+    };
+    expect(clearEntry.x0 - openDoorLeaf.x1).toBeGreaterThanOrEqual(20);
+    for (const rect of [cabinet.footprintMm, desk.footprintMm, chair.footprintMm]) {
+      expect(overlaps(clearEntry, rect)).toBe(false);
+      expect(overlaps(openDoorLeaf, rect)).toBe(false);
+    }
   });
 });

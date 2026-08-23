@@ -200,6 +200,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientOfficeRevision20260823: {
+    id: "SRC-CLIENT-OFFICE-20260823",
+    title: "Revízia stavebníka · minimalistická domáca pracovňa",
+    detail:
+      "V pracovni 1.04 vytvoriť supermodernú minimalistickú domácu kanceláriu: celostenovú bezúchytkovú skriňu na priečke pri zádverí, vedľa nej subtílny pracovný stôl s veľkým prehnutým ultrawide monitorom, ergonomické kreslo, bočnú tlačiareň a popisovateľnú tabuľu presne za chrbtom používateľa. Návrh musí zachovať obe okná, otvorené dvere aj čistý vstupný priechod.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
