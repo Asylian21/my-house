@@ -724,10 +724,10 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   const counterM = k.counterHeightMm * MM_TO_M;
   const plinthM = 0.1;
   const worktopM = 0.04;
-  const tall = k.tallUnitRectMm;
+  const fridgeUnit = k.fridgeUnitRectMm;
 
   // ---- back run: carcass, 100 mm recessed plinth, drawer fronts, worktop
-  const runStart = tall.x1;
+  const runStart = fridgeUnit.x1;
   const carcass = texturedBox(
     context.scene,
     `${k.id} · spodné skrinky zadnej linky ${run.x1 - runStart} mm`,
@@ -782,7 +782,15 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
       finish(context, joint, materials.fireplace);
     }
     for (const level of [0.34, 0.58, 0.8]) {
-      barHandle(context, materials, `${k.id} · úchytka zásuvky`, { x: (x0 + x1) / 2, y: run.y1 + 14 }, x1 - x0 - 160, true, level);
+      barHandle(
+        context,
+        materials,
+        `${k.id} · úchytka zásuvky`,
+        { x: (x0 + x1) / 2, y: run.y1 + 14 },
+        x1 - x0 - 160,
+        true,
+        level,
+      );
     }
   }
   // Dishwasher: integrated front with a handle; sink cabinet door handle.
@@ -878,57 +886,57 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     1,
   );
   finish(context, ledStrip, materials.ceiling);
-  // Extractor hood above the hob position is on the peninsula; here a flat
-  // cooker hood is not needed. Tall column: fridge-freezer + oven stack.
-  const tallUnit = texturedBox(
+  // Dedicated 600 mm integrated fridge-freezer at the quiet west end. Its oak
+  // fronts align with the kitchen, while the freezer split, recessed handle
+  // and plinth vent make the appliance legible without a freestanding box.
+  const fridge = texturedBox(
     context.scene,
-    `${k.id} · vysoká skriňa · chladnička a rúra`,
-    rectCenter(tall),
-    tall.x1 - tall.x0,
-    tall.y1 - tall.y0 - 20,
-    2.24,
+    `${k.id} · FRIDGE-600 · vstavaná chladnička s mrazničkou`,
+    rectCenter(fridgeUnit),
+    fridgeUnit.x1 - fridgeUnit.x0,
+    fridgeUnit.y1 - fridgeUnit.y0 - 20,
+    k.fridgeCabinetHeightMm * MM_TO_M,
     0,
     1.2,
   );
-  finish(context, tallUnit, materials.kitchenFront, { collide: true, shadow: true, pickable: true });
-  const oven = texturedBox(
+  finish(context, fridge, materials.kitchenFront, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+  });
+  const freezerJoint = texturedBox(
     context.scene,
-    `${k.id} · vstavaná rúra`,
-    { x: (tall.x0 + tall.x1) / 2, y: tall.y1 - 4 },
-    560,
-    10,
-    0.595,
-    0.9,
+    `${k.id} · FRIDGE-600 · škára mrazničky`,
+    { x: (fridgeUnit.x0 + fridgeUnit.x1) / 2, y: fridgeUnit.y1 + 2 },
+    fridgeUnit.x1 - fridgeUnit.x0 - 12,
+    4,
+    0.005,
+    0.72,
     1,
   );
-  finish(context, oven, materials.blackGlass);
-  barHandle(context, materials, `${k.id} · madlo rúry`, { x: (tall.x0 + tall.x1) / 2, y: tall.y1 + 24 }, 480, true, 1.44);
-  for (const level of [0.45, 1.9]) {
-    const vertical = texturedBox(
-      context.scene,
-      `${k.id} · zvislá úchytka`,
-      { x: tall.x1 - 40, y: tall.y1 + 14 },
-      12,
-      12,
-      0.3,
-      level - 0.15,
-      1,
-    );
-    finish(context, vertical, materials.fireplace);
-  }
-  for (const level of [1.5, 0.9]) {
-    const joint = texturedBox(
-      context.scene,
-      `${k.id} · škára vysokej skrine`,
-      { x: (tall.x0 + tall.x1) / 2, y: tall.y1 + 2 },
-      tall.x1 - tall.x0 - 10,
-      4,
-      0.004,
-      level,
-      1,
-    );
-    finish(context, joint, materials.fireplace);
-  }
+  finish(context, freezerJoint, materials.fireplace);
+  const fridgeHandle = texturedBox(
+    context.scene,
+    `${k.id} · FRIDGE-600 · zapustené zvislé madlo`,
+    { x: fridgeUnit.x1 - 38, y: fridgeUnit.y1 + 14 },
+    12,
+    12,
+    0.82,
+    1.05,
+    1,
+  );
+  finish(context, fridgeHandle, materials.fireplace);
+  const fridgeVent = texturedBox(
+    context.scene,
+    `${k.id} · FRIDGE-600 · vetracia štrbina v sokli`,
+    { x: (fridgeUnit.x0 + fridgeUnit.x1) / 2, y: fridgeUnit.y1 + 3 },
+    430,
+    5,
+    0.025,
+    0.055,
+    1,
+  );
+  finish(context, fridgeVent, materials.fireplace);
 
   // ---- peninsula with the hob (D1.1.002 symbol) and a clear serving overhang
   const pen = k.peninsulaRectMm;
@@ -998,9 +1006,29 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     );
     finish(context, joint, materials.fireplace);
   }
-  for (const xMm of [pen.x0 + 450, pen.x0 + 1350, pen.x0 + 2450, pen.x0 + 3550, pen.x0 + 4375]) {
+  for (const xMm of [pen.x0 + 450, pen.x0 + 2450, pen.x0 + 3550, pen.x0 + 4375]) {
     barHandle(context, materials, `${k.id} · úchytka polostrova`, { x: xMm, y: pen.y0 - 14 }, 300, true, 0.8);
   }
+  const oven = texturedBox(
+    context.scene,
+    `${k.id} · OVEN-UNDER-HOB · vstavaná rúra pod varnou doskou`,
+    { x: k.ovenCenterXmm, y: pen.y0 - 4 },
+    560,
+    10,
+    0.595,
+    0.22,
+    1,
+  );
+  finish(context, oven, materials.blackGlass, { pickable: true });
+  barHandle(
+    context,
+    materials,
+    `${k.id} · OVEN-UNDER-HOB · madlo rúry`,
+    { x: k.ovenCenterXmm, y: pen.y0 - 24 },
+    480,
+    true,
+    0.765,
+  );
   // Induction hob: black glass flush with the worktop, four ring marks.
   const hob = texturedBox(
     context.scene,

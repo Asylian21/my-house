@@ -170,6 +170,22 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       expect(roomAt(room.standingPointMm)?.id, room.number).toBe(room.id);
     }
     expect(roomAt({ x: (KITCHEN_RUN.rectMm.x0 + KITCHEN_RUN.rectMm.x1) / 2, y: 11200 })?.number).toBe("1.03");
+    expect(KITCHEN_RUN.designSourceId).toBe(SOURCES.clientKitchenRevision20260823.id);
+    expect(inside(KITCHEN_RUN.fridgeUnitRectMm, KITCHEN_RUN.rectMm)).toBe(true);
+    expect(KITCHEN_RUN.fridgeUnitRectMm).toEqual({ x0: 22791, y0: 10949, x1: 23391, y1: 11550 });
+    expect(KITCHEN_RUN.fridgeUnitRectMm.x1 - KITCHEN_RUN.fridgeUnitRectMm.x0).toBe(600);
+    expect(KITCHEN_RUN.fridgeCabinetHeightMm).toBe(2250);
+    expect(KITCHEN_RUN.peninsulaRectMm.y0 - KITCHEN_RUN.fridgeUnitRectMm.y1).toBeGreaterThanOrEqual(900);
+    expect(KITCHEN_RUN.fridgeUnitRectMm.x1).toBeLessThan(KITCHEN_RUN.sinkCenterXmm);
+    expect(roomAt({
+      x: (KITCHEN_RUN.fridgeUnitRectMm.x0 + KITCHEN_RUN.fridgeUnitRectMm.x1) / 2,
+      y: (KITCHEN_RUN.fridgeUnitRectMm.y0 + KITCHEN_RUN.fridgeUnitRectMm.y1) / 2,
+    })?.number).toBe("1.03");
+    const technicalDoor = INTERIOR_DOORS.find((door) => door.id === "DOOR-103-107")!;
+    expect(technicalDoor.startMm - KITCHEN_RUN.fridgeUnitRectMm.x1).toBeGreaterThanOrEqual(2400);
+    expect(KITCHEN_RUN.ovenCenterXmm).toBe(KITCHEN_RUN.hobCenterXmm);
+    expect(KITCHEN_RUN.ovenCenterXmm - 280).toBeGreaterThan(KITCHEN_RUN.peninsulaRectMm.x0);
+    expect(KITCHEN_RUN.ovenCenterXmm + 280).toBeLessThan(KITCHEN_RUN.peninsulaRectMm.x1);
     expect(KITCHEN_RUN.barStoolCount).toBe(0);
   });
 

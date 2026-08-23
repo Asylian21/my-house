@@ -152,6 +152,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientKitchenRevision20260823: {
+    id: "SRC-CLIENT-KITCHEN-20260823",
+    title: "Revízia stavebníka · vstavaná chladnička",
+    detail:
+      "Doplniť chýbajúcu chladničku na vhodné miesto tak, aby prirodzene zapadla do kuchyne. Návrh ju rieši ako samostatný 600 mm vstavaný modul s mrazničkou na západnom konci zadnej linky; rúra je presunutá pod varnú dosku v polostrove, aby zostala zachovaná pracovná plocha zadnej linky.",
+    date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

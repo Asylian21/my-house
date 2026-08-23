@@ -122,9 +122,11 @@ stranou pozdĺž podhľadu a zvislou stranou na východnej hrane skla; zvyšnýc
 3 500 je modřínom obložená plná stena a celý zvyšok štítu je modřín zvonku a
 omietka zvnútra; kuchyňa
 je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
-vysoká skriňa s chladničkou a rúrou, biele horné skrinky s LED lištou a tmavý
+na jej západnom konci samostatná 600 mm vstavaná chladnička s mrazničkou v
+dubovom dekore, biele horné skrinky s LED lištou a tmavý
 kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným
-odsávačom a voľným presahom bez barových stoličiek (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
+odsávačom, rúrou pod varnou doskou a voľným presahom bez barových stoličiek
+(`KITCHEN_RUN`, dubová dyha `oak-veneer`,
 kremeň `stone-dark`). Okná a dvere sú stavané ako skutočné výplne
 (`lib/babylon-openings.ts`): rám 150 mm za lícom fasády, krídla s vlastným
 profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
