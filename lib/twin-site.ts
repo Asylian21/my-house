@@ -232,6 +232,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientBedroomFitoutRevision20260824: {
+    id: "SRC-CLIENT-BEDROOM-FITOUT-20260824",
+    title: "Revízia stavebníka · minimalistická spálňa s kúpeľňou",
+    detail:
+      "V miestnosti 1.08 s priamym vstupom do kúpeľne 1.11 vytvoriť modernú minimalistickú spálňu s posteľou dĺžky 2 200 mm a klasickou dvojlôžkovou šírkou 1 800 mm. Posteľ osadiť hlavou k južnej fasáde pod dvojicou vysokých okien a na východnú stenu doplniť veľkú vstavanú skriňu. Návrh musí zachovať oba dverné otvory, otvorené krídlo z chodby, okná a pohodlný priechod do kúpeľne.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

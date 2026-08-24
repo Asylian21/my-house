@@ -16,6 +16,7 @@ import earcut from "earcut";
 
 import {
   BATHROOM_FITOUT,
+  BEDROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_PIER,
   INTERIOR_DOORS,
@@ -84,6 +85,9 @@ export interface InteriorMaterials {
   readonly applianceEnamel: PBRMaterial;
   readonly officeFabric: PBRMaterial;
   readonly whiteboardGlass: PBRMaterial;
+  readonly bedroomLinen: PBRMaterial;
+  readonly bedroomThrow: PBRMaterial;
+  readonly wardrobeFront: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -297,6 +301,17 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   whiteboardGlass.clearCoat.isEnabled = true;
   whiteboardGlass.clearCoat.intensity = 0.72;
   whiteboardGlass.clearCoat.roughness = 0.12;
+  const bedroomLinen = pbr(scene, "real-bedroom-washed-linen", "#eee9e1", 0.94);
+  bedroomLinen.sheen.isEnabled = true;
+  bedroomLinen.sheen.intensity = 0.2;
+  bedroomLinen.sheen.color = Color3.FromHexString("#faf7f0");
+  bedroomLinen.sheen.roughness = 0.92;
+  const bedroomThrow = pbr(scene, "real-bedroom-wool-throw", "#847b70", 0.92);
+  bedroomThrow.sheen.isEnabled = true;
+  bedroomThrow.sheen.intensity = 0.18;
+  bedroomThrow.sheen.color = Color3.FromHexString("#b5aa9d");
+  bedroomThrow.sheen.roughness = 0.9;
+  const wardrobeFront = pbr(scene, "real-bedroom-wardrobe-greige", "#b8afa3", 0.5);
   return {
     plaster,
     ceiling,
@@ -331,6 +346,9 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     applianceEnamel,
     officeFabric,
     whiteboardGlass,
+    bedroomLinen,
+    bedroomThrow,
+    wardrobeFront,
   };
 }
 
@@ -2152,6 +2170,261 @@ function navigationGuard(
 }
 
 /**
+ * Calm primary-bedroom composition for the compact en-suite room 1.08. The
+ * fit-out keeps the exact 1 800 × 2 200 mm mattress requested by the client,
+ * uses a flush platform to preserve the 657 mm foot aisle, and puts all
+ * storage behind three sliding fronts so no wardrobe leaf can narrow the route
+ * between the corridor and bathroom doors.
+ */
+function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = BEDROOM_FITOUT;
+  const bed = fitout.bed;
+  const bedRect = bed.footprintMm;
+  const mattressRect = bed.mattressFootprintMm;
+
+  const rugRect: RectMm = { x0: 17742, y0: 3504, x1: 20142, y1: 5904 };
+  const rug = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · veľký vlnený koberec pod posteľou`,
+    rectCenter(rugRect),
+    rugRect.x1 - rugRect.x0,
+    rugRect.y1 - rugRect.y0,
+    0.012,
+    0.004,
+    1,
+  );
+  finish(context, rug, materials.rug);
+
+  const floatingShadow = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · tieň pod plávajúcou platformou`,
+    rectCenter({
+      x0: bedRect.x0 + 90,
+      y0: bedRect.y0 + 120,
+      x1: bedRect.x1 - 90,
+      y1: bedRect.y1 - 90,
+    }),
+    bedRect.x1 - bedRect.x0 - 180,
+    bedRect.y1 - bedRect.y0 - 210,
+    0.08,
+    0.025,
+    1,
+  );
+  finish(context, floatingShadow, materials.fireplace);
+
+  const platformTopM = bed.frameHeightMm * MM_TO_M;
+  const platform = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · subtílna čalúnená platforma 1 800 × 2 200`,
+    rectCenter(bedRect),
+    bedRect.x1 - bedRect.x0,
+    bedRect.y1 - bedRect.y0,
+    platformTopM - 0.08,
+    0.08,
+    1,
+  );
+  finish(context, platform, materials.upholstery, { shadow: true, pickable: true });
+
+  const mattressTopM = bed.mattressTopElevationMm * MM_TO_M;
+  const mattress = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · matrac ${bed.mattressWidthMm} × ${bed.mattressLengthMm}`,
+    rectCenter(mattressRect),
+    mattressRect.x1 - mattressRect.x0,
+    mattressRect.y1 - mattressRect.y0,
+    mattressTopM - platformTopM,
+    platformTopM,
+    1,
+  );
+  finish(context, mattress, materials.bedroomLinen, { shadow: true, pickable: true });
+
+  const headboard = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · nízke čalúnené čelo pod parapetom +0,900`,
+    rectCenter(bed.headboardRectMm),
+    bed.headboardRectMm.x1 - bed.headboardRectMm.x0,
+    bed.headboardRectMm.y1 - bed.headboardRectMm.y0,
+    bed.headboardTopElevationMm * MM_TO_M - 0.04,
+    0.04,
+    1,
+  );
+  finish(context, headboard, materials.upholstery, { shadow: true, pickable: true });
+  for (const [index, seamX] of [18482, 18962, 19442].entries()) {
+    const seam = texturedBox(
+      context.scene,
+      `${fitout.id} · BED · zvislé prešívanie čela ${index + 1}`,
+      { x: seamX, y: bed.headboardRectMm.y1 + 4 },
+      7,
+      8,
+      0.72,
+      0.1,
+      1,
+    );
+    finish(context, seam, materials.accentFabric);
+  }
+
+  const duvetRect: RectMm = { x0: 18092, y0: 4180, x1: 19792, y1: 5640 };
+  const duvet = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · mäkká ľanová prikrývka`,
+    rectCenter(duvetRect),
+    duvetRect.x1 - duvetRect.x0,
+    duvetRect.y1 - duvetRect.y0,
+    0.07,
+    mattressTopM - 0.005,
+    1,
+  );
+  finish(context, duvet, materials.bedroomLinen, { shadow: true, pickable: true });
+  const throwRect: RectMm = { x0: 18112, y0: 5150, x1: 19772, y1: 5595 };
+  const bedThrow = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · vlnený prehoz pri nohách`,
+    rectCenter(throwRect),
+    throwRect.x1 - throwRect.x0,
+    throwRect.y1 - throwRect.y0,
+    0.04,
+    mattressTopM + 0.064,
+    1,
+  );
+  finish(context, bedThrow, materials.bedroomThrow, { shadow: true, pickable: true });
+
+  for (const [index, pillowX] of [18520, 19404].entries()) {
+    const pillow = softEllipsoid(
+      context,
+      `${fitout.id} · BED · ergonomický vankúš ${index + 1}`,
+      { x: pillowX, y: 3850 },
+      [0.72, 0.18, 0.48],
+      mattressTopM + 0.105,
+      materials.bedroomLinen,
+    );
+    pillow.rotation.y = index === 0 ? -0.035 : 0.035;
+  }
+  const lumbar = softEllipsoid(
+    context,
+    `${fitout.id} · BED · akcentový bedrový vankúš`,
+    { x: 18962, y: 4040 },
+    [0.9, 0.2, 0.28],
+    mattressTopM + 0.145,
+    materials.bedroomThrow,
+  );
+  lumbar.rotation.y = 0.025;
+
+  const wardrobe = fitout.wardrobe;
+  const wardrobeRect = wardrobe.footprintMm;
+  const wardrobeHeightM = wardrobe.heightMm * MM_TO_M;
+  const carcase = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · vstavaná skriňa 2 100 × 600`,
+    rectCenter(wardrobeRect),
+    wardrobeRect.x1 - wardrobeRect.x0,
+    wardrobeRect.y1 - wardrobeRect.y0,
+    wardrobeHeightM,
+    0,
+    1.2,
+  );
+  finish(context, carcase, materials.wardrobeFront, { shadow: true, pickable: true });
+
+  const toeKick = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · zapustený čierny sokel`,
+    { x: wardrobeRect.x0 - 10, y: (wardrobeRect.y0 + wardrobeRect.y1) / 2 },
+    32,
+    wardrobeRect.y1 - wardrobeRect.y0 - 70,
+    0.08,
+    0,
+    1,
+  );
+  finish(context, toeKick, materials.fireplace);
+
+  const panelSpanMm = (wardrobeRect.y1 - wardrobeRect.y0) / wardrobe.slidingPanelCount;
+  for (let index = 0; index < wardrobe.slidingPanelCount; index += 1) {
+    const panelY0 = wardrobeRect.y0 + index * panelSpanMm;
+    const panelY1 = panelY0 + panelSpanMm;
+    const panel = texturedBox(
+      context.scene,
+      `${fitout.id} · WARDROBE · posuvný panel ${index + 1}${index === wardrobe.mirroredPanelIndex ? " · zrkadlo" : " · matný greige"}`,
+      { x: wardrobeRect.x0 - 15, y: (panelY0 + panelY1) / 2 },
+      30,
+      panelSpanMm - 10,
+      wardrobeHeightM - 0.09,
+      0.045,
+      1,
+    );
+    finish(
+      context,
+      panel,
+      index === wardrobe.mirroredPanelIndex ? materials.mirrorGlass : materials.wardrobeFront,
+      { shadow: true, pickable: true },
+    );
+    if (index > 0) {
+      const joint = texturedBox(
+        context.scene,
+        `${fitout.id} · WARDROBE · tieňová škára posuvných dverí ${index}`,
+        { x: wardrobeRect.x0 - 32, y: panelY0 },
+        12,
+        9,
+        wardrobeHeightM - 0.16,
+        0.08,
+        1,
+      );
+      finish(context, joint, materials.fireplace);
+    }
+  }
+  const endLed = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · vertikálne ambientné svetlo 2700 K`,
+    { x: wardrobeRect.x0 - 34, y: wardrobeRect.y0 + 16 },
+    16,
+    18,
+    2.18,
+    0.18,
+    1,
+  );
+  finish(context, endLed, materials.warmLight);
+
+  const lightCenter = { x: 18962, y: 4800 };
+  const ceilingHousing = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · subtílny čierny lineárny profil`,
+    lightCenter,
+    52,
+    1320,
+    0.035,
+    2.55,
+    1,
+  );
+  finish(context, ceilingHousing, materials.fireplace, { shadow: true });
+  const ceilingDiffuser = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · neoslňujúci teplý difúzor`,
+    lightCenter,
+    28,
+    1260,
+    0.012,
+    2.538,
+    1,
+  );
+  finish(context, ceilingDiffuser, materials.warmLight);
+  const bedroomLight = new PointLight(
+    `${fitout.id} · LIGHT · mäkké večerné svetlo`,
+    new Vector3(xM(lightCenter.x), 2.42, zM(lightCenter.y)),
+    context.scene,
+  );
+  bedroomLight.diffuse = Color3.FromHexString("#ffd3a2");
+  bedroomLight.specular = Color3.FromHexString("#8b7259");
+  bedroomLight.intensity = 0.24;
+  bedroomLight.range = 3.2;
+
+  navigationGuard(context, materials, `${fitout.id} · BED · navigačný obrys`, bedRect);
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · WARDROBE · navigačný obrys`,
+    wardrobeRect,
+  );
+}
+
+/**
  * Compact entry composition in the 1.01 recess: closed coat storage at the
  * corridor end, a low shoe cabinet/bench at the front door and an illuminated
  * oak hook niche between them. The two floor guards deliberately follow only
@@ -3602,6 +3875,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWcFitout(context, materials);
   buildBathroomFitout(context, materials);
   buildEntryFitout(context, materials);
+  buildBedroomFitout(context, materials);
   buildOfficeFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {

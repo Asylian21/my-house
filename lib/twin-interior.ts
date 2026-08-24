@@ -270,6 +270,45 @@ export interface EntryFitout {
   readonly clearFloorRectMm: RectMm;
 }
 
+export interface BedroomFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-08";
+  readonly entryDoorId: "DOOR-102-108";
+  readonly bathroomDoorId: "DOOR-108-111";
+  readonly frontWindowIds: readonly ["FRONT-04", "FRONT-05"];
+  readonly bed: {
+    /** Flush upholstered platform, kept to the exact requested bed footprint. */
+    readonly footprintMm: RectMm;
+    readonly mattressFootprintMm: RectMm;
+    readonly mattressWidthMm: 1800;
+    readonly mattressLengthMm: 2200;
+    readonly frameHeightMm: number;
+    readonly mattressTopElevationMm: number;
+    readonly headboardRectMm: RectMm;
+    readonly headboardTopElevationMm: number;
+    readonly facing: "NORTH";
+  };
+  readonly wardrobe: {
+    readonly footprintMm: RectMm;
+    readonly facing: "WEST";
+    readonly heightMm: number;
+    readonly slidingPanelCount: 3;
+    readonly mirroredPanelIndex: 1;
+  };
+  readonly clearancesMm: {
+    readonly westToBathroom: number;
+    readonly eastAtWardrobe: number;
+    readonly foot: number;
+    readonly openEntryLeaf: number;
+  };
+  readonly westBathroomAccessRectMm: RectMm;
+  readonly eastBedsideAccessRectMm: RectMm;
+  readonly footAccessRectMm: RectMm;
+}
+
 export interface FireplacePier {
   readonly id: string;
   readonly rectMm: RectMm;
@@ -430,7 +469,7 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     floor: "VINYL",
     wetRoom: false,
     rectsMm: [{ x0: 16942, y0: 3504, x1: 21242, y1: 6361 }],
-    standingPointMm: { x: 19100, y: 6000 },
+    standingPointMm: { x: 19100, y: 6030 },
   },
   {
     id: "ROOM-1-09",
@@ -775,6 +814,53 @@ export const ENTRY_FITOUT: EntryFitout = Object.freeze({
     bottomElevationMm: 1900,
   },
   clearFloorRectMm: { x0: 21543, y0: 3504, x1: 23289, y1: 5201 },
+} as const);
+
+/**
+ * Minimalist primary bedroom in 1.08. D1.1.002 gives a clear 4 300 × 2 857 mm
+ * room with two 800 mm south windows, a corridor door at the north-west and
+ * direct access to bathroom 1.11 on the west wall. The slim 1 800 × 2 200 mm
+ * bed is shifted 150 mm west of the room centre so a standard 600 mm-deep
+ * wardrobe still leaves an 800 mm bedside passage, while the wider west side
+ * remains the direct bathroom route. Its low headboard stays below the 900 mm
+ * window sills.
+ */
+export const BEDROOM_FITOUT: BedroomFitout = Object.freeze({
+  id: "BEDROOM-FITOUT-2026-08-24",
+  sourceId: SOURCES.clientBedroomFitoutRevision20260824.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-08",
+  entryDoorId: "DOOR-102-108",
+  bathroomDoorId: "DOOR-108-111",
+  frontWindowIds: ["FRONT-04", "FRONT-05"],
+  bed: {
+    footprintMm: { x0: 18042, y0: 3504, x1: 19842, y1: 5704 },
+    mattressFootprintMm: { x0: 18042, y0: 3504, x1: 19842, y1: 5704 },
+    mattressWidthMm: 1800,
+    mattressLengthMm: 2200,
+    frameHeightMm: 300,
+    mattressTopElevationMm: 540,
+    headboardRectMm: { x0: 18144, y0: 3504, x1: 19740, y1: 3584 },
+    headboardTopElevationMm: 880,
+    facing: "NORTH",
+  },
+  wardrobe: {
+    footprintMm: { x0: 20642, y0: 4161, x1: 21242, y1: 6261 },
+    facing: "WEST",
+    heightMm: 2550,
+    slidingPanelCount: 3,
+    mirroredPanelIndex: 1,
+  },
+  clearancesMm: {
+    westToBathroom: 1100,
+    eastAtWardrobe: 800,
+    foot: 657,
+    openEntryLeaf: 68,
+  },
+  westBathroomAccessRectMm: { x0: 16942, y0: 4401, x1: 18042, y1: 5704 },
+  eastBedsideAccessRectMm: { x0: 19842, y0: 4161, x1: 20642, y1: 5704 },
+  footAccessRectMm: { x0: 18042, y0: 5704, x1: 20642, y1: 6361 },
 } as const);
 
 /**

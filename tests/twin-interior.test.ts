@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   BATHROOM_FITOUT,
+  BEDROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_PIER,
   INTERIOR_DOORS,
@@ -500,6 +501,127 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     };
     expect(overlaps(leafRect, fitout.shower.footprintMm)).toBe(false);
     expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
+  });
+
+  it("fits the 1 800 × 2 200 bed and full-height wardrobe into en-suite bedroom 1.08", () => {
+    const fitout = BEDROOM_FITOUT;
+    const bedroom = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
+    const roomRect = bedroom.rectsMm[0];
+    const entryDoor = INTERIOR_DOORS.find((door) => door.id === fitout.entryDoorId)!;
+    const bathroomDoor = INTERIOR_DOORS.find((door) => door.id === fitout.bathroomDoorId)!;
+    const frontWindows = fitout.frontWindowIds.map(
+      (windowId) => HOUSE.facades.front.openings.find((opening) => opening.id === windowId)!,
+    );
+    const bed = fitout.bed;
+    const wardrobe = fitout.wardrobe;
+
+    expect(fitout.id).toBe("BEDROOM-FITOUT-2026-08-24");
+    expect(fitout.sourceId).toBe(SOURCES.clientBedroomFitoutRevision20260824.id);
+    expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
+    expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
+    expect(bedroom.number).toBe("1.08");
+    expect(bedroom.name).toBe("Spálňa");
+    expect(roomRect).toEqual({ x0: 16942, y0: 3504, x1: 21242, y1: 6361 });
+    expect(roomRect.x1 - roomRect.x0).toBe(4300);
+    expect(roomRect.y1 - roomRect.y0).toBe(2857);
+    expect(roomAreaM2(bedroom)).toBeCloseTo(12.2851, 4);
+
+    expect(entryDoor.fromRoomId).toBe("ROOM-1-02");
+    expect(entryDoor.toRoomId).toBe(bedroom.id);
+    expect(bathroomDoor.fromRoomId).toBe(bedroom.id);
+    expect(bathroomDoor.toRoomId).toBe("ROOM-1-11");
+    expect(bathroomDoor.axis).toBe("Y");
+    expect(bathroomDoor.wallSpanMm[1]).toBe(roomRect.x0);
+
+    for (const rect of [
+      bed.footprintMm,
+      bed.mattressFootprintMm,
+      bed.headboardRectMm,
+      wardrobe.footprintMm,
+      fitout.westBathroomAccessRectMm,
+      fitout.eastBedsideAccessRectMm,
+      fitout.footAccessRectMm,
+    ]) {
+      expect(inside(rect, roomRect)).toBe(true);
+    }
+
+    expect(bed.mattressWidthMm).toBe(1800);
+    expect(bed.mattressLengthMm).toBe(2200);
+    expect(bed.mattressFootprintMm.x1 - bed.mattressFootprintMm.x0)
+      .toBe(bed.mattressWidthMm);
+    expect(bed.mattressFootprintMm.y1 - bed.mattressFootprintMm.y0)
+      .toBe(bed.mattressLengthMm);
+    expect(bed.footprintMm.x1 - bed.footprintMm.x0).toBe(1800);
+    expect(bed.footprintMm.y1 - bed.footprintMm.y0).toBe(2200);
+    expect(bed.facing).toBe("NORTH");
+    expect(bed.headboardTopElevationMm).toBeLessThanOrEqual(
+      Math.min(...frontWindows.map((opening) => opening.sillMm)),
+    );
+    expect(frontWindows.map((opening) => opening.widthMm)).toEqual([800, 800]);
+    expect(frontWindows.map((opening) => opening.sillMm)).toEqual([900, 900]);
+    expect(bed.headboardRectMm.x0).toBeGreaterThanOrEqual(
+      frontWindows[0].startXmm + frontWindows[0].widthMm,
+    );
+    expect(bed.headboardRectMm.x1).toBeLessThanOrEqual(frontWindows[1].startXmm);
+
+    expect(wardrobe.facing).toBe("WEST");
+    expect(wardrobe.footprintMm.x1 - wardrobe.footprintMm.x0).toBe(600);
+    expect(wardrobe.footprintMm.y1 - wardrobe.footprintMm.y0).toBe(2100);
+    expect(wardrobe.heightMm).toBe(bedroom.clearHeightMm - 50);
+    expect(wardrobe.slidingPanelCount).toBe(3);
+    expect(wardrobe.mirroredPanelIndex).toBe(1);
+    expect(overlaps(bed.footprintMm, wardrobe.footprintMm)).toBe(false);
+    expect(wardrobe.footprintMm.x0 - Math.max(
+      ...frontWindows.map((opening) => opening.startXmm + opening.widthMm),
+    )).toBe(102);
+
+    const leafThicknessMm = 40;
+    const frameMm = 60;
+    const entryHingeX = entryDoor.startMm + entryDoor.widthMm - frameMm;
+    const entryLeafX1 = entryHingeX - (leafThicknessMm / 2 + 8) + leafThicknessMm / 2;
+    const entryLeafRect: RectMm = {
+      x0: entryLeafX1 - leafThicknessMm,
+      x1: entryLeafX1,
+      y0: entryDoor.wallSpanMm[0] - entryDoor.leafWidthMm - 20,
+      y1: entryDoor.wallSpanMm[0],
+    };
+    expect(entryDoor.axis).toBe("X");
+    expect(entryDoor.swing).toBe(-1);
+    expect(entryDoor.hinge).toBe(1);
+    expect(overlaps(entryLeafRect, bed.footprintMm)).toBe(false);
+    expect(overlaps(entryLeafRect, wardrobe.footprintMm)).toBe(false);
+
+    expect(bed.footprintMm.x0 - roomRect.x0).toBe(fitout.clearancesMm.westToBathroom);
+    expect(wardrobe.footprintMm.x0 - bed.footprintMm.x1)
+      .toBe(fitout.clearancesMm.eastAtWardrobe);
+    expect(roomRect.y1 - bed.footprintMm.y1).toBe(fitout.clearancesMm.foot);
+    expect(bed.footprintMm.x0 - entryLeafRect.x1)
+      .toBe(fitout.clearancesMm.openEntryLeaf);
+    expect(fitout.clearancesMm.westToBathroom).toBeGreaterThanOrEqual(1000);
+    expect(fitout.clearancesMm.eastAtWardrobe).toBeGreaterThanOrEqual(750);
+    expect(fitout.clearancesMm.foot).toBeGreaterThanOrEqual(600);
+    expect(fitout.clearancesMm.openEntryLeaf).toBeGreaterThanOrEqual(50);
+
+    expect(overlaps(fitout.westBathroomAccessRectMm, bed.footprintMm)).toBe(false);
+    expect(overlaps(fitout.eastBedsideAccessRectMm, bed.footprintMm)).toBe(false);
+    expect(overlaps(fitout.eastBedsideAccessRectMm, wardrobe.footprintMm)).toBe(false);
+    expect(overlaps(fitout.footAccessRectMm, bed.footprintMm)).toBe(false);
+    expect(overlaps(fitout.footAccessRectMm, wardrobe.footprintMm)).toBe(false);
+    expect(fitout.westBathroomAccessRectMm.y0).toBe(
+      bathroomDoor.startMm + bathroomDoor.widthMm,
+    );
+    expect(fitout.footAccessRectMm.y0).toBe(bed.footprintMm.y1);
+    expect(fitout.footAccessRectMm.y1).toBe(roomRect.y1);
+    expect(Math.abs(
+      bedroom.standingPointMm.y -
+      (fitout.footAccessRectMm.y0 + fitout.footAccessRectMm.y1) / 2,
+    )).toBeLessThanOrEqual(5);
+    expect(inside({
+      x0: bedroom.standingPointMm.x,
+      y0: bedroom.standingPointMm.y,
+      x1: bedroom.standingPointMm.x,
+      y1: bedroom.standingPointMm.y,
+    }, fitout.footAccessRectMm)).toBe(true);
   });
 
   it("fits coat storage, a shoe cabinet and seating into the entry recess", () => {
