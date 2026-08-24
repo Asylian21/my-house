@@ -283,6 +283,8 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(fitout.dining.tableLengthMm).toBe(1400);
     expect(fitout.dining.tableDepthMm).toBe(800);
     expect(fitout.dining.tableLengthMm * fitout.dining.tableDepthMm).toBeLessThanOrEqual(1_120_000);
+    expect(fitout.dining.chairSeatWidthMm).toBe(470);
+    expect(fitout.dining.chairSeatDepthMm).toBe(460);
     expect(fitout.dining.chairs).toHaveLength(4);
     expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(4);
     expect(new Set(fitout.dining.chairs.map((chair) => chair.facing))).toEqual(
@@ -290,10 +292,27 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     );
     const southChairs = fitout.dining.chairs.filter((chair) => chair.facing === "NORTH");
     const northChairs = fitout.dining.chairs.filter((chair) => chair.facing === "SOUTH");
-    expect(tableRect.y0 - Math.max(...southChairs.map((chair) => chair.centerMm.y))).toBe(350);
-    expect(Math.min(...northChairs.map((chair) => chair.centerMm.y)) - tableRect.y1).toBe(350);
+    expect(Math.min(...southChairs.map((chair) => chair.centerMm.y)) - tableRect.y0).toBe(100);
+    expect(tableRect.y1 - Math.max(...northChairs.map((chair) => chair.centerMm.y))).toBe(100);
     for (const chair of fitout.dining.chairs) {
       expect(roomAt(chair.centerMm)?.id, chair.id).toBe(living.id);
+
+      const seatRect: RectMm = {
+        x0: chair.centerMm.x - fitout.dining.chairSeatWidthMm / 2,
+        x1: chair.centerMm.x + fitout.dining.chairSeatWidthMm / 2,
+        y0: chair.centerMm.y - fitout.dining.chairSeatDepthMm / 2,
+        y1: chair.centerMm.y + fitout.dining.chairSeatDepthMm / 2,
+      };
+      const seatDepthUnderTableMm = Math.max(
+        0,
+        Math.min(seatRect.y1, tableRect.y1) - Math.max(seatRect.y0, tableRect.y0),
+      );
+      expect(seatDepthUnderTableMm, chair.id).toBe(330);
+      expect(seatDepthUnderTableMm, chair.id).toBeGreaterThanOrEqual(
+        fitout.dining.chairSeatDepthMm / 2,
+      );
+      expect(seatRect.x0, chair.id).toBeGreaterThan(tableRect.x0);
+      expect(seatRect.x1, chair.id).toBeLessThan(tableRect.x1);
     }
 
     expect(overlaps(tableRect, mainRectMm)).toBe(false);

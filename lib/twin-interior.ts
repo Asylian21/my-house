@@ -444,6 +444,8 @@ export interface LivingDiningFitout {
     readonly tableLengthMm: number;
     readonly tableDepthMm: number;
     readonly tableHeightMm: number;
+    readonly chairSeatWidthMm: number;
+    readonly chairSeatDepthMm: number;
     readonly chairs: readonly {
       readonly id: string;
       readonly centerMm: Point2Mm;
@@ -1166,11 +1168,13 @@ export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
     tableLengthMm: 1400,
     tableDepthMm: 800,
     tableHeightMm: 760,
+    chairSeatWidthMm: 470,
+    chairSeatDepthMm: 460,
     chairs: [
-      { id: "DINING-CHAIR-SW", centerMm: { x: 24050, y: 14000 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-SE", centerMm: { x: 24850, y: 14000 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-NW", centerMm: { x: 24050, y: 15500 }, facing: "SOUTH" },
-      { id: "DINING-CHAIR-NE", centerMm: { x: 24850, y: 15500 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-SW", centerMm: { x: 24175, y: 14450 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-SE", centerMm: { x: 24725, y: 14450 }, facing: "NORTH" },
+      { id: "DINING-CHAIR-NW", centerMm: { x: 24175, y: 15050 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-NE", centerMm: { x: 24725, y: 15050 }, facing: "SOUTH" },
     ],
   },
 });
