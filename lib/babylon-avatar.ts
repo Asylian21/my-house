@@ -24,10 +24,16 @@ import {
   stepWalkCameraBoom,
   type FlightCommand,
 } from "./twin-viewport-contract";
+import {
+  DEFAULT_WALK_AVATAR_ID,
+  walkAvatarOption,
+  type WalkAvatarId,
+  type WalkAvatarOption,
+} from "./twin-avatar";
 
-export const AVATAR_URL = "/assets/avatar/avatar.glb";
+export const AVATAR_URL = walkAvatarOption(DEFAULT_WALK_AVATAR_ID).modelUrl;
 export const AVATAR_DIFFUSE_URL =
-  "/assets/avatar/michelle-light-diffuse.png";
+  walkAvatarOption(DEFAULT_WALK_AVATAR_ID).diffuseUrl ?? "";
 
 export interface AvatarPose {
   readonly x: number;
@@ -43,6 +49,16 @@ interface CameraOccluder {
   readonly maximumX: number;
   readonly maximumY: number;
   readonly maximumZ: number;
+}
+
+interface LoadedAvatarRig {
+  readonly id: WalkAvatarId;
+  readonly root: AbstractMesh;
+  readonly meshes: AbstractMesh[];
+  readonly animationGroups: AnimationGroup[];
+  readonly idle: AnimationGroup;
+  readonly walk: AnimationGroup;
+  readonly run: AnimationGroup;
 }
 
 /** Allocation-free broad phase; exact triangle picking follows every hit. */
@@ -110,11 +126,10 @@ function rayBoundsDistance(
 }
 
 /**
- * Third-person walker: a rigged, textured human (Mixamo "Michelle" with the
- * Idle/Walk/Run locomotion clips retargeted onto her skeleton) driven by a
- * kinematic controller with acceleration, turning inertia and wall
- * collisions, and followed by an orbiting chase camera that cannot pass
- * through walls.
+ * Third-person walker: one shared kinematic controller, collider and chase
+ * camera driving a selectable visual rig. The visual choice never owns the
+ * player's position, so switching characters cannot teleport the walker or
+ * alter architectural collisions.
  */
 export class AvatarController {
   readonly root: TransformNode;
@@ -127,8 +142,10 @@ export class AvatarController {
   private idle: AnimationGroup | null = null;
   private walk: AnimationGroup | null = null;
   private run: AnimationGroup | null = null;
-  private loaded = false;
-  private loadPromise: Promise<void> | null = null;
+  private selectedAvatarId: WalkAvatarId = DEFAULT_WALK_AVATAR_ID;
+  private currentRig: LoadedAvatarRig | null = null;
+  private readonly loadedRigs = new Map<WalkAvatarId, LoadedAvatarRig>();
+  private readonly loadPromises = new Map<WalkAvatarId, Promise<LoadedAvatarRig>>();
   private active = false;
   private firstPerson = false;
   private sinceUserOrbitS = 10;
@@ -179,6 +196,7 @@ export class AvatarController {
   constructor(
     private readonly scene: Scene,
     private readonly onMeshLoaded: (mesh: AbstractMesh) => void,
+    private readonly resolveAssetUrl: (url: string) => string = (url) => url,
   ) {
     this.root = new TransformNode("Avatar · chodec", scene);
     this.collider = CreateBox(
@@ -234,68 +252,167 @@ export class AvatarController {
   }
 
   get isLoaded() {
-    return this.loaded;
+    return this.currentRig?.id === this.selectedAvatarId;
+  }
+
+  get avatarId() {
+    return this.selectedAvatarId;
+  }
+
+  get activeAvatarId() {
+    return this.currentRig?.id ?? null;
   }
 
   get isFirstPerson() {
     return this.firstPerson;
   }
 
-  /** Loads the glTF once; safe to call repeatedly. */
+  /** Loads and activates the selected glTF; safe to call repeatedly. */
   load(): Promise<void> {
-    if (!this.loadPromise) {
-      this.loadPromise = ImportMeshAsync(AVATAR_URL, this.scene)
-        .then((result) => {
-          const glbRoot = result.meshes.find((mesh) => mesh.name === "__root__") ?? result.meshes[0];
-          glbRoot.parent = this.root;
-          // Mixamo rigs face +z in glTF and this right-handed scene keeps
-          // that, which matches the controller's yaw = 0 heading (0, 0, 1).
-          glbRoot.rotation = new Vector3(0, 0, 0);
-          glbRoot.rotationQuaternion = null;
-          this.meshes = result.meshes.filter((mesh) => mesh.getTotalVertices() > 0);
-          this.avatarMeshesEnabled = null;
-          this.lastAvatarOpacity = Number.NaN;
-          const avatarDiffuse = new Texture(AVATAR_DIFFUSE_URL, this.scene, {
-            invertY: false,
-            samplingMode: Texture.TRILINEAR_SAMPLINGMODE,
-            useSRGBBuffer: true,
-          });
-          avatarDiffuse.name = "Avatar · svetlá pokožka";
-          avatarDiffuse.gammaSpace = true;
-          for (const mesh of this.meshes) {
-            mesh.isPickable = false;
-            mesh.receiveShadows = true;
-            const material = mesh.material as PBRMaterial | null;
-            if (material && "environmentIntensity" in material) {
-              material.albedoTexture = avatarDiffuse;
-              material.environmentIntensity = 0.9;
-            }
-            this.onMeshLoaded(mesh);
+    const requestedId = this.selectedAvatarId;
+    return this.loadRig(requestedId).then((rig) => {
+      if (this.selectedAvatarId === requestedId) this.activateRig(rig);
+    });
+  }
+
+  /**
+   * Selects a new visual rig. Before walkthrough entry this only records the
+   * preference; during play the old rig remains visible until the new local
+   * asset is completely ready.
+   */
+  setAvatar(id: WalkAvatarId, loadNow = this.active): Promise<void> {
+    this.selectedAvatarId = id;
+    if (!loadNow) return Promise.resolve();
+    return this.loadRig(id)
+      .then((rig) => {
+        if (this.selectedAvatarId === id) this.activateRig(rig);
+      })
+      .catch((error: unknown) => {
+        if (this.selectedAvatarId === id) {
+          this.selectedAvatarId = this.currentRig?.id ?? DEFAULT_WALK_AVATAR_ID;
+        }
+        throw error;
+      });
+  }
+
+  private loadRig(id: WalkAvatarId): Promise<LoadedAvatarRig> {
+    const cached = this.loadedRigs.get(id);
+    if (cached) return Promise.resolve(cached);
+    const pending = this.loadPromises.get(id);
+    if (pending) return pending;
+
+    const option = walkAvatarOption(id);
+    const promise = ImportMeshAsync(
+      this.resolveAssetUrl(option.modelUrl),
+      this.scene,
+    )
+      .then((result) => {
+        const glbRoot =
+          result.meshes.find((mesh) => mesh.name === "__root__") ??
+          result.meshes[0];
+        if (!glbRoot) throw new Error(`Avatar ${id} does not contain a scene root.`);
+        glbRoot.parent = this.root;
+        // All shipped choices are authored facing +z after glTF conversion.
+        // A per-rig offset remains explicit so a future model cannot silently
+        // break the controller's yaw = 0 heading contract.
+        glbRoot.rotationQuaternion = null;
+        glbRoot.rotation.set(0, option.headingOffsetRad, 0);
+        glbRoot.scaling.setAll(option.modelScale);
+
+        const meshes = result.meshes.filter(
+          (mesh) => mesh.getTotalVertices() > 0,
+        );
+        const avatarDiffuse = this.createDiffuseOverride(option);
+        for (const mesh of meshes) {
+          mesh.isPickable = false;
+          mesh.receiveShadows = true;
+          mesh.checkCollisions = false;
+          const material = mesh.material as PBRMaterial | null;
+          if (material && "environmentIntensity" in material) {
+            if (avatarDiffuse) material.albedoTexture = avatarDiffuse;
+            material.environmentIntensity = 0.9;
           }
-          const byName = (name: string) =>
-            result.animationGroups.find((group) => group.name === name) ?? null;
-          this.idle = byName("Idle");
-          this.walk = byName("Walk");
-          this.run = byName("Run");
-          for (const group of result.animationGroups) {
-            group.stop();
-            group.reset();
-            group.loopAnimation = true;
-          }
-          for (const group of [this.idle, this.walk, this.run]) {
-            if (!group) continue;
-            group.play(true);
-            group.weight = group === this.idle ? 1 : 0;
-          }
-          this.loaded = true;
-          this.setVisible(this.active && !this.firstPerson);
-        })
-        .catch((error: unknown) => {
-          this.loadPromise = null;
-          throw error;
-        });
+          this.onMeshLoaded(mesh);
+        }
+
+        const byName = (name: string) =>
+          result.animationGroups.find((group) => group.name === name) ?? null;
+        const idle = byName(option.clips.idle);
+        const walk = byName(option.clips.walk);
+        const run = byName(option.clips.run);
+        if (!idle || !walk || !run) {
+          glbRoot.dispose(false, true);
+          for (const group of result.animationGroups) group.dispose();
+          throw new Error(
+            `Avatar ${id} is missing ${option.clips.idle}/${option.clips.walk}/${option.clips.run} locomotion clips.`,
+          );
+        }
+        for (const group of result.animationGroups) {
+          group.stop();
+          group.reset();
+          group.loopAnimation = true;
+        }
+        glbRoot.setEnabled(false);
+        const rig: LoadedAvatarRig = {
+          id,
+          root: glbRoot,
+          meshes,
+          animationGroups: result.animationGroups,
+          idle,
+          walk,
+          run,
+        };
+        this.loadedRigs.set(id, rig);
+        this.occluderSceneMeshCount = -1;
+        return rig;
+      })
+      .finally(() => {
+        this.loadPromises.delete(id);
+      });
+    this.loadPromises.set(id, promise);
+    return promise;
+  }
+
+  private createDiffuseOverride(option: WalkAvatarOption) {
+    if (!option.diffuseUrl) return null;
+    const texture = new Texture(this.resolveAssetUrl(option.diffuseUrl), this.scene, {
+      invertY: false,
+      samplingMode: Texture.TRILINEAR_SAMPLINGMODE,
+      useSRGBBuffer: true,
+    });
+    texture.name = `Avatar · ${option.label} · albedo`;
+    texture.gammaSpace = true;
+    return texture;
+  }
+
+  private activateRig(rig: LoadedAvatarRig) {
+    if (this.currentRig === rig) {
+      this.setVisible(this.active && !this.firstPerson);
+      return;
     }
-    return this.loadPromise;
+    if (this.currentRig) {
+      for (const group of this.currentRig.animationGroups) group.stop();
+      this.currentRig.root.setEnabled(false);
+    }
+    this.currentRig = rig;
+    this.meshes = rig.meshes;
+    this.idle = rig.idle;
+    this.walk = rig.walk;
+    this.run = rig.run;
+    rig.root.setEnabled(true);
+    for (const group of rig.animationGroups) {
+      group.stop();
+      group.reset();
+    }
+    for (const group of [rig.idle, rig.walk, rig.run]) {
+      group.play(true);
+      group.weight = group === rig.idle ? 1 : 0;
+    }
+    this.avatarMeshesEnabled = null;
+    this.lastAvatarOpacity = Number.NaN;
+    this.occluderSceneMeshCount = -1;
+    this.setVisible(this.active && !this.firstPerson);
+    this.blendAnimations(Math.hypot(this.velocity.x, this.velocity.z));
   }
 
   setFirstPerson(firstPerson: boolean) {
@@ -920,7 +1037,11 @@ export class AvatarController {
   }
 
   dispose() {
-    for (const group of [this.idle, this.walk, this.run]) group?.dispose();
+    for (const rig of this.loadedRigs.values()) {
+      for (const group of rig.animationGroups) group.dispose();
+    }
+    this.loadedRigs.clear();
+    this.loadPromises.clear();
     this.camera.dispose();
     this.collider.dispose();
     this.root.dispose(false, true);

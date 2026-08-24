@@ -633,6 +633,129 @@ button, summary, a { -webkit-tap-highlight-color: transparent; }
   gap: 3px;
 }
 .walk-hud-content[hidden] { display: none; }
+.walk-avatar-picker {
+  min-width: 0;
+  margin: 0 0 7px;
+  padding: 0 0 9px;
+  border: 0;
+  border-bottom: 1px solid rgb(197 228 207 / 12%);
+}
+.walk-avatar-picker legend {
+  margin-bottom: 6px;
+  padding: 0;
+  color: #91a89a;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  font-weight: 720;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.walk-avatar-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.walk-avatar-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 7px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 6px 7px;
+  border: 1px solid rgb(197 228 207 / 17%);
+  border-radius: 8px;
+  color: #b8c6bd;
+  background: rgb(20 31 26 / 62%);
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease, background-color .16s ease, transform .16s ease;
+}
+.walk-avatar-option:hover {
+  border-color: rgb(159 208 174 / 48%);
+  color: #edf5ef;
+  transform: translateY(-1px);
+}
+.walk-avatar-option.is-selected {
+  border-color: rgb(159 208 174 / 72%);
+  color: #f1f8f3;
+  background: linear-gradient(145deg, rgb(53 83 65 / 94%), rgb(32 53 42 / 88%));
+  box-shadow: inset 0 0 0 1px rgb(202 239 214 / 8%), 0 7px 16px rgb(0 0 0 / 14%);
+}
+.walk-avatar-option.is-loading { cursor: wait; }
+.walk-avatar-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.walk-avatar-option:has(input:focus-visible) {
+  outline: 2px solid #b8e5c6;
+  outline-offset: 2px;
+}
+.walk-avatar-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 34px;
+  border: 1px solid rgb(205 235 214 / 17%);
+  border-radius: 7px;
+  color: #9fc6ab;
+  background: linear-gradient(165deg, rgb(74 96 81 / 50%), rgb(25 37 31 / 60%));
+}
+.walk-avatar-option.is-selected .walk-avatar-icon {
+  border-color: rgb(205 235 214 / 32%);
+  color: #d9f3e1;
+}
+.walk-avatar-option.is-loading .walk-avatar-icon { animation: avatar-pulse .85s ease-in-out infinite alternate; }
+.walk-avatar-copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.08;
+}
+.walk-avatar-copy strong {
+  overflow: hidden;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: .03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.walk-avatar-copy small {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #8ea095;
+  font-family: var(--font-geist-mono);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.walk-avatar-check {
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgb(197 228 207 / 30%);
+  border-radius: 50%;
+}
+.walk-avatar-option.is-selected .walk-avatar-check {
+  border-color: #d3efdc;
+  background: #a8d9b7;
+  box-shadow: 0 0 0 3px rgb(168 217 183 / 12%);
+}
+.walk-avatar-error {
+  display: block;
+  margin-top: 6px;
+  color: #ffd8a0;
+  font-family: var(--font-geist-mono);
+  font-size: 8px;
+  line-height: 1.35;
+}
+@keyframes avatar-pulse {
+  from { opacity: .55; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
 .walk-rooms {
   display: flex;
   flex-wrap: wrap;
@@ -1066,6 +1189,15 @@ a:focus-visible {
   }
   .flight-hud small { display: none; }
   .walk-hud-toggle { min-height: 44px; }
+  .walk-hud:not(.is-collapsed) {
+    width: min(360px, calc(100vw - 26px));
+    max-height: calc(100dvh - 190px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .walk-avatar-copy small,
+  .walk-avatar-error { display: block; }
   .walk-hud.is-collapsed { padding-block: 2px; }
   .walk-hud.is-collapsed .walk-hud-toggle { min-width: 112px; }
   .viewport.is-flight .viewport-legend,
@@ -1094,6 +1226,11 @@ a:focus-visible {
 }
 
 @media (pointer: coarse), (max-width: 760px) {
+  .walk-hud:not(.is-collapsed) {
+    max-height: calc(100dvh - 190px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .flight-control-pad {
     position: absolute;
     bottom: 18px;

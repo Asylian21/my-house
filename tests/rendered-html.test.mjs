@@ -120,10 +120,18 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /aria-controls="walk-hud-content"/);
   assert.match(viewport, /id="walk-hud-content"/);
   assert.match(viewport, /hidden=\{walkHudCollapsed\}/);
+  assert.match(viewport, /<fieldset[\s\S]*className="walk-avatar-picker"/);
+  assert.match(viewport, /WALK_AVATARS\.map/);
+  assert.match(viewport, /type="radio"/);
+  assert.match(viewport, /aria-busy=\{pendingWalkAvatarId !== null\}/);
+  assert.match(viewport, /controller\.setWalkAvatar\(id\)/);
+  assert.match(viewport, /WALK_AVATAR_STORAGE_KEY/);
   assert.match(viewport, /event\.detail !== 0/);
   assert.match(viewport, /canvasRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(globals, /\.walk-hud\.is-collapsed/);
   assert.match(globals, /\.walk-hud-content\[hidden\] \{ display: none; \}/);
+  assert.match(globals, /\.walk-avatar-options/);
+  assert.match(globals, /\.walk-avatar-option\.is-selected/);
   assert.match(page, /<TwinStudio \/>/);
   assert.match(layout, /lang="sk"/);
   assert.match(layout, /Dom 6012\/26 · Digitálne dvojča/);
@@ -168,16 +176,19 @@ test("ships and discloses every local illustrative rendering asset", async () =>
     ["../public/assets/textures/rug-wool-taupe-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/rug-wool-taupe-normal.jpg", "ffd8ff"],
     ["../public/assets/avatar/avatar.glb", "676c5446"],
+    ["../public/assets/avatar/vanguard.glb", "676c5446"],
+    ["../public/assets/avatar/robot-expressive.glb", "676c5446"],
     ["../public/assets/avatar/michelle-light-diffuse.png", "89504e470d0a1a0a"],
     ["../public/assets/textures/hedge-privet-albedo.png", "89504e470d0a1a0a"],
     ["../public/assets/textures/pool-water-normal.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/ornamental-grass-card.png", "89504e470d0a1a0a"],
     ["../public/assets/vegetation/perennial-cluster-card.png", "89504e470d0a1a0a"],
   ];
-  const [sceneSource, interiorSource, avatarSource, readme] = await Promise.all([
+  const [sceneSource, interiorSource, avatarSource, avatarContract, readme] = await Promise.all([
     readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-interior.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-avatar.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/twin-avatar.ts", import.meta.url), "utf8"),
     readFile(new URL("../README.md", import.meta.url), "utf8"),
   ]);
 
@@ -190,22 +201,25 @@ test("ships and discloses every local illustrative rendering asset", async () =>
       `${relativePath} has an unexpected file signature`,
     );
     const publicUrl = relativePath.replace("../public", "");
+    const fileName = relativePath.split("/").at(-1);
     const textureName = publicUrl
       .replace("/assets/textures/", "")
       .replace(".jpg", "");
     if (publicUrl.endsWith(".glb")) {
-      assert.ok(avatarSource.includes(publicUrl), `${publicUrl} is not wired into Babylon`);
-      assert.ok(readme.includes("avatar.glb"), `${relativePath} is not disclosed`);
+      assert.ok(
+        avatarSource.includes(publicUrl) || avatarContract.includes(publicUrl),
+        `${publicUrl} is not wired into Babylon`,
+      );
+      assert.ok(readme.includes(fileName), `${relativePath} is not disclosed`);
       continue;
     }
-    const wired = [sceneSource, interiorSource, avatarSource].some(
+    const wired = [sceneSource, interiorSource, avatarSource, avatarContract].some(
       (source) =>
         source.includes(publicUrl) ||
         source.includes(`"${textureName}"`) ||
         source.includes(`"${textureName.replace(/-(albedo|normal)$/, "")}-albedo"`),
     );
     assert.ok(wired, `${publicUrl} is not wired into Babylon`);
-    const fileName = relativePath.split("/").at(-1);
     const setName = fileName.replace(/-(albedo|normal)\.jpg$/, "");
     assert.ok(
       readme.includes(fileName) || readme.includes(`\`${setName}\``),

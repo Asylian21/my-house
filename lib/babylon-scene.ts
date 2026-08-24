@@ -95,6 +95,7 @@ import {
 import { slatCenterDistancesMm } from "./twin-fence";
 import { buildInterior } from "./babylon-interior";
 import { AvatarController } from "./babylon-avatar";
+import type { WalkAvatarId } from "./twin-avatar";
 import {
   buildOpening,
   resolveFacadeOpeningStyle,
@@ -5640,6 +5641,7 @@ export class TwinSceneController {
     this.applyWalkView();
     // Once the glTF arrives, hand over to the chase camera.
     void avatar.load().then(() => {
+      this.canvas.dataset.walkAvatar = avatar.avatarId;
       if (this.navigationMode === "walk") this.applyWalkView();
     }).catch(() => undefined);
     this.canvas.focus({ preventScroll: true });
@@ -5741,6 +5743,23 @@ export class TwinSceneController {
     return this.navigationMode;
   }
 
+  /** Changes only the walker's visual rig; pose, camera and collider persist. */
+  async setWalkAvatar(id: WalkAvatarId) {
+    this.canvas.dataset.walkAvatar = id;
+    try {
+      await this.avatar.setAvatar(id, this.navigationMode === "walk");
+      if (this.navigationMode === "walk") this.applyWalkView();
+    } catch (error) {
+      this.canvas.dataset.walkAvatar =
+        this.avatar.activeAvatarId ?? this.avatar.avatarId;
+      throw error;
+    }
+  }
+
+  getWalkAvatar() {
+    return this.avatar.avatarId;
+  }
+
   recoverWalkthrough() {
     if (this.navigationMode !== "walk") return;
     this.clearFlightInput();
@@ -5758,6 +5777,8 @@ export class TwinSceneController {
       mode: this.navigationMode,
       view: this.walkView,
       roomId: this.getWalkRoom()?.id ?? null,
+      avatarId: this.avatar.avatarId,
+      activeAvatarId: this.avatar.activeAvatarId,
       pose: this.avatar.pose,
       camera: this.avatar.cameraState,
       blocked: this.avatar.isBlocked,

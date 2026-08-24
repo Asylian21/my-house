@@ -66,9 +66,11 @@ world-up kamera s ovládaním WASD, Q/E, Shift/Alt, dotykovým ovládačom a
 bezpečným návratom do orbitálnych pohľadov.
 
 Režim **Interiér** (kláves G) je prechádzka domom s postavou z pohľadu
-tretej osoby. Postava je textúrovaná rigovaná ženská figúra Mixamo „Michelle“
-so svetlou pleťou (`public/assets/avatar/avatar.glb`, zdroj: ukážkové modely
-three.js). Svetlý albedo atlas
+tretej osoby. V rozbaľovacom paneli sa dá počas hry prepínať medzi troma
+rigovanými postavami bez zmeny pozície, kamery alebo kolízií; voľba zostáva
+uložená iba lokálne v prehliadači. Pôvodná postava je ženská figúra Mixamo
+„Michelle“ so svetlou pleťou (`public/assets/avatar/avatar.glb`, zdroj:
+ukážkové modely three.js). Svetlý albedo atlas
 `public/assets/avatar/michelle-light-diffuse.png` vznikol z pôvodnej 512 px
 diffuse mapy cielenou úpravou cez OpenAI imagegen a následným presným
 maskovaním iba plôch kože; odev, UV švy, kostra a geometria zostali bez
@@ -76,9 +78,17 @@ zmeny. Na kostru sú offline preretargetované Mixamo lokomočné klipy
 Idle/Walk/Run z
 modelu „Vanguard/Soldier“ (`tools/avatar/retarget.mjs`: zhoda svetových
 orientácií kostí oproti obom T-pózam, zarovnanie smeru postáv, preškálovaný
-posun bokov). Mixamo assety podliehajú licencii Adobe Mixamo (použitie
-v projekte áno, samostatná redistribúcia nie); textúry figúry majú 512 px, čo
-je hranica realizmu dostupných voľných rigovaných postáv. Ovládanie: W A S D
+posun bokov). Druhá voľba **Vanguard** používa pôvodný rig aj vlastné textúry
+tohto modelu (`public/assets/avatar/vanguard.glb`; SHA-256
+`dfb230fc1f942f259dd00281a1186953ad602fc5d69067ce63e24b2aa439736b`).
+Mixamo assety podliehajú licencii Adobe Mixamo (použitie v projekte áno,
+samostatná redistribúcia nie); tento Sites projekt zostáva owner-only.
+Tretia voľba **Robo** je `public/assets/avatar/robot-expressive.glb`, model
+RobotExpressive od Tomása Laulhé, upravený Donom McCurdym a vydaný ako
+[CC0 1.0](https://github.com/mrdoob/three.js/tree/21585c3021567e7284f1c881b392208a11264a63/examples/models/gltf/RobotExpressive)
+(pripnutý upstream commit `21585c3`, SHA-256
+`047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319`).
+Ovládanie: W A S D
 chôdza v smere kamery, ťahanie otáča kameru okolo postavy, Shift beh, koliesko
 priblíženie, V prepne pohľad z očí a R vystredí kameru alebo vráti zaseknutú
 postavu na posledný bezpečný bod; pohyb má krátke zrýchlenie a dobeh

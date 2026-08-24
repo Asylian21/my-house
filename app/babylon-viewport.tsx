@@ -8,6 +8,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { Bot, Shield, UserRound, type LucideIcon } from "lucide-react";
 import type {
   CameraPreset,
   TwinSceneController,
@@ -19,12 +20,28 @@ import type {
   RenderQualityProfile,
 } from "@/lib/twin-viewport-contract";
 import { INTERIOR_ROOMS } from "@/lib/twin-interior";
+import {
+  DEFAULT_WALK_AVATAR_ID,
+  WALK_AVATARS,
+  WALK_AVATAR_STORAGE_KEY,
+  isWalkAvatarId,
+  walkAvatarOption,
+  type WalkAvatarIcon,
+  type WalkAvatarId,
+} from "@/lib/twin-avatar";
+
+const WALK_AVATAR_ICONS: Readonly<Record<WalkAvatarIcon, LucideIcon>> = {
+  person: UserRound,
+  shield: Shield,
+  robot: Bot,
+};
 
 export interface BabylonViewportHandle {
   setCameraPreset: (preset: CameraPreset) => void;
   setNavigationMode: (mode: NavigationMode) => void;
   enterWalkthrough: (roomId?: string) => void;
   setWalkView: (view: "third" | "first") => void;
+  setWalkAvatar: (id: WalkAvatarId) => Promise<void>;
   recoverWalkthrough: () => void;
   setFlightCommand: (command: FlightCommand, active: boolean) => void;
   nudgeFlight: (command: FlightCommand) => void;
@@ -66,6 +83,14 @@ export const BabylonViewport = forwardRef<
   const [walkView, setWalkView] = useState<"third" | "first">("third");
   const [walkBlocked, setWalkBlocked] = useState(false);
   const [walkHudCollapsed, setWalkHudCollapsed] = useState(false);
+  const [walkAvatarId, setWalkAvatarId] = useState<WalkAvatarId>(
+    DEFAULT_WALK_AVATAR_ID,
+  );
+  const [pendingWalkAvatarId, setPendingWalkAvatarId] =
+    useState<WalkAvatarId | null>(null);
+  const [walkAvatarMessage, setWalkAvatarMessage] = useState("");
+  const [walkAvatarError, setWalkAvatarError] = useState("");
+  const avatarPointerSelectionRef = useRef<WalkAvatarId | null>(null);
 
   onSelectRef.current = onSelect;
   navigationModeRef.current = navigationMode;
@@ -84,6 +109,10 @@ export const BabylonViewport = forwardRef<
     setWalkView(view) {
       controllerRef.current?.setWalkView(view);
       setWalkView(view);
+    },
+    async setWalkAvatar(id) {
+      await controllerRef.current?.setWalkAvatar(id);
+      setWalkAvatarId(id);
     },
     recoverWalkthrough() {
       controllerRef.current?.recoverWalkthrough();
@@ -124,6 +153,17 @@ export const BabylonViewport = forwardRef<
         );
         controller = createdController;
         controllerRef.current = createdController;
+        try {
+          const storedAvatarId = window.localStorage.getItem(
+            WALK_AVATAR_STORAGE_KEY,
+          );
+          if (isWalkAvatarId(storedAvatarId)) {
+            setWalkAvatarId(storedAvatarId);
+            void createdController.setWalkAvatar(storedAvatarId);
+          }
+        } catch {
+          // The picker remains fully usable when browser storage is blocked.
+        }
         if (import.meta.env?.DEV) {
           (window as unknown as Record<string, unknown>).twinDebug =
             createdController;
@@ -219,6 +259,47 @@ export const BabylonViewport = forwardRef<
       })
     : null;
 
+  const chooseWalkAvatar = async (
+    id: WalkAvatarId,
+    restoreCanvasFocus: boolean,
+  ) => {
+    const controller = controllerRef.current;
+    if (!controller || pendingWalkAvatarId || id === walkAvatarId) {
+      if (restoreCanvasFocus) {
+        canvasRef.current?.focus({ preventScroll: true });
+      }
+      return;
+    }
+    const option = walkAvatarOption(id);
+    setPendingWalkAvatarId(id);
+    setWalkAvatarError("");
+    setWalkAvatarMessage(`Načítavam postavu ${option.label}.`);
+    try {
+      await controller.setWalkAvatar(id);
+      setWalkAvatarId(id);
+      setWalkAvatarMessage(`Postava ${option.label} je pripravená.`);
+      try {
+        window.localStorage.setItem(WALK_AVATAR_STORAGE_KEY, id);
+      } catch {
+        // A device-local preference is optional; the in-memory choice remains.
+      }
+    } catch {
+      const current = walkAvatarOption(controller.getWalkAvatar());
+      setWalkAvatarId(current.id);
+      setWalkAvatarMessage("");
+      setWalkAvatarError(
+        `Postavu ${option.label} sa nepodarilo načítať. Zostáva ${current.label}.`,
+      );
+    } finally {
+      setPendingWalkAvatarId(null);
+      if (restoreCanvasFocus) {
+        window.requestAnimationFrame(() =>
+          canvasRef.current?.focus({ preventScroll: true }),
+        );
+      }
+    }
+  };
+
   return (
     <div
       className="canvas-region"
@@ -230,7 +311,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s postavou. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
+            ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -278,7 +359,7 @@ export const BabylonViewport = forwardRef<
         <div
           className={`flight-hud walk-hud${walkHudCollapsed ? " is-collapsed" : ""}`}
           role="region"
-          aria-label="Miestnosti a ovládanie prechádzky"
+          aria-label="Postava, miestnosti a ovládanie prechádzky"
         >
           <span className="sr-only" aria-live="polite">
             Aktuálna zóna: {walkRoom || "Interiér 1.NP"}
@@ -288,7 +369,7 @@ export const BabylonViewport = forwardRef<
             className="walk-hud-toggle"
             aria-expanded={!walkHudCollapsed}
             aria-controls="walk-hud-content"
-            aria-label={`${walkHudCollapsed ? "Rozbaliť" : "Zbaliť"} panel miestností a ovládania prechádzky`}
+            aria-label={`${walkHudCollapsed ? "Rozbaliť" : "Zbaliť"} panel postavy, miestností a ovládania prechádzky`}
             onClick={(event) => {
               event.stopPropagation();
               setWalkHudCollapsed((collapsed) => !collapsed);
@@ -299,7 +380,7 @@ export const BabylonViewport = forwardRef<
           >
             <span className="walk-hud-title">
               {walkHudCollapsed
-                ? "MIESTNOSTI"
+                ? `POSTAVA · ${walkAvatarOption(walkAvatarId).label.toUpperCase()}`
                 : `PRECHÁDZKA · ${walkRoom || "INTERIÉR 1.NP"}`}
             </span>
             <small>{walkHudCollapsed ? "Rozbaliť" : "Zbaliť"}</small>
@@ -310,6 +391,59 @@ export const BabylonViewport = forwardRef<
             className="walk-hud-content"
             hidden={walkHudCollapsed}
           >
+            <fieldset
+              className="walk-avatar-picker"
+              aria-busy={pendingWalkAvatarId !== null}
+            >
+              <legend>Vyber postavu</legend>
+              <div className="walk-avatar-options">
+                {WALK_AVATARS.map((option) => {
+                  const Icon = WALK_AVATAR_ICONS[option.icon];
+                  const checked =
+                    (pendingWalkAvatarId ?? walkAvatarId) === option.id;
+                  return (
+                    <label
+                      key={option.id}
+                      className={`walk-avatar-option${checked ? " is-selected" : ""}${pendingWalkAvatarId === option.id ? " is-loading" : ""}`}
+                      title={option.description}
+                      onPointerDown={() => {
+                        avatarPointerSelectionRef.current = option.id;
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="walk-avatar"
+                        value={option.id}
+                        checked={checked}
+                        disabled={pendingWalkAvatarId !== null}
+                        onChange={() => {
+                          const pointerSelection =
+                            avatarPointerSelectionRef.current === option.id;
+                          avatarPointerSelectionRef.current = null;
+                          void chooseWalkAvatar(option.id, pointerSelection);
+                        }}
+                      />
+                      <span className="walk-avatar-icon" aria-hidden="true">
+                        <Icon size={18} strokeWidth={1.8} />
+                      </span>
+                      <span className="walk-avatar-copy">
+                        <strong>{option.label}</strong>
+                        <small>{option.tagline}</small>
+                      </span>
+                      <span className="walk-avatar-check" aria-hidden="true" />
+                    </label>
+                  );
+                })}
+              </div>
+              <span className="sr-only" aria-live="polite">
+                {walkAvatarMessage}
+              </span>
+              {walkAvatarError && (
+                <small className="walk-avatar-error" role="alert">
+                  {walkAvatarError}
+                </small>
+              )}
+            </fieldset>
             <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
             <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
             <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
