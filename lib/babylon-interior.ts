@@ -17,6 +17,7 @@ import earcut from "earcut";
 import {
   BATHROOM_FITOUT,
   BEDROOM_FITOUT,
+  CHILDRENS_BEDROOM_FITOUTS,
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_PIER,
@@ -32,6 +33,8 @@ import {
   WING_RIDGE_XMM,
   ceilingElevationMm,
   roomBoundsMm,
+  type ChildBedroomFitout,
+  type FurnitureFacing,
   type InteriorDoor,
   type InteriorRoom,
   type RectMm,
@@ -89,6 +92,11 @@ export interface InteriorMaterials {
   readonly bedroomLinen: PBRMaterial;
   readonly bedroomThrow: PBRMaterial;
   readonly wardrobeFront: PBRMaterial;
+  readonly childSage: PBRMaterial;
+  readonly childClay: PBRMaterial;
+  readonly childMidnight: PBRMaterial;
+  readonly childSand: PBRMaterial;
+  readonly childCork: PBRMaterial;
 }
 
 const HOUSE_ENTITY = HOUSE.id;
@@ -313,6 +321,23 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   bedroomThrow.sheen.color = Color3.FromHexString("#b5aa9d");
   bedroomThrow.sheen.roughness = 0.9;
   const wardrobeFront = pbr(scene, "real-bedroom-wardrobe-greige", "#b8afa3", 0.5);
+  const childSage = pbr(scene, "real-child-room-sage", "#788878", 0.72);
+  childSage.sheen.isEnabled = true;
+  childSage.sheen.intensity = 0.12;
+  childSage.sheen.color = Color3.FromHexString("#c8d0c5");
+  const childClay = pbr(scene, "real-child-room-clay", "#bd7861", 0.8);
+  childClay.sheen.isEnabled = true;
+  childClay.sheen.intensity = 0.16;
+  childClay.sheen.color = Color3.FromHexString("#e8b8a3");
+  const childMidnight = pbr(scene, "real-child-room-midnight", "#34495b", 0.58);
+  childMidnight.clearCoat.isEnabled = true;
+  childMidnight.clearCoat.intensity = 0.12;
+  childMidnight.clearCoat.roughness = 0.42;
+  const childSand = pbr(scene, "real-child-room-sand", "#d7c8b3", 0.86);
+  childSand.sheen.isEnabled = true;
+  childSand.sheen.intensity = 0.2;
+  childSand.sheen.color = Color3.FromHexString("#f1e8da");
+  const childCork = pbr(scene, "real-child-room-cork", "#a97852", 0.9);
   return {
     plaster,
     ceiling,
@@ -350,6 +375,11 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     bedroomLinen,
     bedroomThrow,
     wardrobeFront,
+    childSage,
+    childClay,
+    childMidnight,
+    childSand,
+    childCork,
   };
 }
 
@@ -2722,6 +2752,662 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
   );
 }
 
+interface ChildRoomThemeMaterials {
+  readonly primary: PBRMaterial;
+  readonly secondary: PBRMaterial;
+  readonly chair: PBRMaterial;
+  readonly lightDiffuse: string;
+  readonly lightSpecular: string;
+}
+
+function childRoomTheme(
+  fitout: ChildBedroomFitout,
+  materials: InteriorMaterials,
+): ChildRoomThemeMaterials {
+  return fitout.theme === "SAGE_GLOW"
+    ? {
+        primary: materials.childSage,
+        secondary: materials.childClay,
+        chair: materials.childSage,
+        lightDiffuse: "#ffd9b0",
+        lightSpecular: "#8f735c",
+      }
+    : {
+        primary: materials.childMidnight,
+        secondary: materials.childSand,
+        chair: materials.childMidnight,
+        lightDiffuse: "#ffe0b7",
+        lightSpecular: "#756d67",
+      };
+}
+
+function furnitureForward(facing: FurnitureFacing): Point2Mm {
+  switch (facing) {
+    case "NORTH":
+      return { x: 0, y: 1 };
+    case "SOUTH":
+      return { x: 0, y: -1 };
+    case "EAST":
+      return { x: 1, y: 0 };
+    default:
+      return { x: -1, y: 0 };
+  }
+}
+
+function furnitureRight(facing: FurnitureFacing): Point2Mm {
+  const forward = furnitureForward(facing);
+  return { x: forward.y, y: -forward.x };
+}
+
+function buildChildBed(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const room = INTERIOR_ROOMS.find((candidate) => candidate.id === fitout.roomId)!;
+  const roomRect = roomBoundsMm(room);
+  const bed = fitout.bed;
+  const bedRect = bed.footprintMm;
+  const mattressRect = bed.mattressFootprintMm;
+  const rugRect: RectMm = {
+    x0: Math.max(roomRect.x0, bedRect.x0 - 170),
+    y0: Math.max(roomRect.y0, bedRect.y0 - 150),
+    x1: Math.min(roomRect.x1, bedRect.x1 + 110),
+    y1: Math.min(roomRect.y1, bedRect.y1 + 150),
+  };
+  const rug = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · mäkký vlnený koberec`,
+    rectCenter(rugRect),
+    rugRect.x1 - rugRect.x0,
+    rugRect.y1 - rugRect.y0,
+    0.014,
+    0.003,
+    1,
+  );
+  finish(context, rug, materials.rug);
+
+  const shadowRect: RectMm = {
+    x0: bedRect.x0 + 95,
+    y0: bedRect.y0 + 80,
+    x1: bedRect.x1 - 95,
+    y1: bedRect.y1 - 80,
+  };
+  const floatingShadow = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · tieň plávajúceho rámu`,
+    rectCenter(shadowRect),
+    shadowRect.x1 - shadowRect.x0,
+    shadowRect.y1 - shadowRect.y0,
+    0.065,
+    0.018,
+    1,
+  );
+  finish(context, floatingShadow, materials.fireplace);
+
+  const frameTopM = bed.frameHeightMm * MM_TO_M;
+  const frame = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · úložná plávajúca posteľ`,
+    rectCenter(bedRect),
+    bedRect.x1 - bedRect.x0,
+    bedRect.y1 - bedRect.y0,
+    frameTopM - 0.065,
+    0.065,
+    1,
+  );
+  finish(context, frame, theme.primary, { shadow: true, pickable: true });
+
+  const mattressTopM = bed.mattressTopElevationMm * MM_TO_M;
+  const mattress = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · matrac ${bed.mattressWidthMm} × ${bed.mattressLengthMm}`,
+    rectCenter(mattressRect),
+    mattressRect.x1 - mattressRect.x0,
+    mattressRect.y1 - mattressRect.y0,
+    mattressTopM - frameTopM,
+    frameTopM,
+    1,
+  );
+  finish(context, mattress, materials.bedroomLinen, { shadow: true, pickable: true });
+
+  const headboard = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · vysoké mäkké čelo`,
+    rectCenter(bed.headboardRectMm),
+    bed.headboardRectMm.x1 - bed.headboardRectMm.x0,
+    bed.headboardRectMm.y1 - bed.headboardRectMm.y0,
+    bed.headboardTopElevationMm * MM_TO_M - 0.05,
+    0.05,
+    1,
+  );
+  finish(context, headboard, theme.secondary, { shadow: true, pickable: true });
+
+  const duvetRect: RectMm = {
+    x0: mattressRect.x0 + 70,
+    y0: mattressRect.y0 + 55,
+    x1: mattressRect.x1 - 70,
+    y1: mattressRect.y1 - 55,
+  };
+  const duvet = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · pokojná ľanová prikrývka`,
+    rectCenter(duvetRect),
+    duvetRect.x1 - duvetRect.x0,
+    duvetRect.y1 - duvetRect.y0,
+    0.055,
+    mattressTopM - 0.004,
+    1,
+  );
+  finish(context, duvet, materials.bedroomLinen, { shadow: true, pickable: true });
+
+  const forward = furnitureForward(bed.facing);
+  const mattressCenter = rectCenter(mattressRect);
+  const pillowCenter: Point2Mm = {
+    x: mattressCenter.x - forward.x * (bed.mattressLengthMm / 2 - 270),
+    y: mattressCenter.y - forward.y * (bed.mattressLengthMm / 2 - 270),
+  };
+  softEllipsoid(
+    context,
+    `${fitout.id} · BED · veľký ergonomický vankúš`,
+    pillowCenter,
+    [0.42, 0.17, 0.72],
+    mattressTopM + 0.1,
+    materials.bedroomLinen,
+  );
+
+  const throwCenter: Point2Mm = {
+    x: mattressCenter.x + forward.x * (bed.mattressLengthMm / 2 - 270),
+    y: mattressCenter.y + forward.y * (bed.mattressLengthMm / 2 - 270),
+  };
+  const throwLengthMm = 430;
+  const throwRect: RectMm = {
+    x0: throwCenter.x - throwLengthMm / 2,
+    y0: mattressRect.y0 + 65,
+    x1: throwCenter.x + throwLengthMm / 2,
+    y1: mattressRect.y1 - 65,
+  };
+  const throwBlanket = texturedBox(
+    context.scene,
+    `${fitout.id} · BED · farebný vlnený prehoz`,
+    rectCenter(throwRect),
+    throwRect.x1 - throwRect.x0,
+    throwRect.y1 - throwRect.y0,
+    0.035,
+    mattressTopM + 0.05,
+    1,
+  );
+  finish(context, throwBlanket, theme.secondary, { shadow: true, pickable: true });
+
+  navigationGuard(context, materials, `${fitout.id} · BED · navigačný obrys`, bedRect);
+}
+
+function buildChildWardrobe(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const wardrobe = fitout.wardrobe;
+  const rect = wardrobe.footprintMm;
+  const heightM = wardrobe.heightMm * MM_TO_M;
+  const bodyRect: RectMm = { ...rect, x1: rect.x1 - 34 };
+  const body = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · celovýšková vstavaná skriňa`,
+    rectCenter(bodyRect),
+    bodyRect.x1 - bodyRect.x0,
+    bodyRect.y1 - bodyRect.y0,
+    heightM,
+    0,
+    1.2,
+  );
+  finish(context, body, theme.primary, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
+
+  const frontSpanMm = (rect.y1 - rect.y0) / wardrobe.doorCount;
+  for (let index = 0; index < wardrobe.doorCount; index += 1) {
+    const y0 = rect.y0 + index * frontSpanMm;
+    const y1 = y0 + frontSpanMm;
+    const front = texturedBox(
+      context.scene,
+      `${fitout.id} · WARDROBE · bezúchytkové čelo ${index + 1}`,
+      { x: rect.x1 - 15, y: (y0 + y1) / 2 },
+      30,
+      frontSpanMm - 8,
+      heightM - 0.1,
+      0.05,
+      1,
+    );
+    finish(context, front, index === 1 ? theme.secondary : theme.primary, {
+      shadow: true,
+      pickable: true,
+    });
+    if (index > 0) {
+      const joint = texturedBox(
+        context.scene,
+        `${fitout.id} · WARDROBE · tieňová škára ${index}`,
+        { x: rect.x1 - 3, y: y0 },
+        10,
+        8,
+        heightM - 0.17,
+        0.085,
+        1,
+      );
+      finish(context, joint, materials.fireplace);
+    }
+  }
+  const plinth = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · zapustený sokel`,
+    { x: rect.x1 - 24, y: (rect.y0 + rect.y1) / 2 },
+    42,
+    rect.y1 - rect.y0 - 50,
+    0.075,
+    0,
+    1,
+  );
+  finish(context, plinth, materials.fireplace);
+  const verticalLight = texturedBox(
+    context.scene,
+    `${fitout.id} · WARDROBE · integrované ambientné svetlo`,
+    { x: rect.x1 - 4, y: rect.y0 + 16 },
+    12,
+    20,
+    2.18,
+    0.18,
+    1,
+  );
+  finish(context, verticalLight, materials.warmLight);
+
+  navigationGuard(context, materials, `${fitout.id} · WARDROBE · navigačný obrys`, rect);
+}
+
+function buildChildDesk(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const desk = fitout.desk;
+  const rect = desk.footprintMm;
+  const topM = desk.topElevationMm * MM_TO_M;
+  const topThicknessM = 0.036;
+  const desktop = texturedBox(
+    context.scene,
+    `${fitout.id} · DESK · subtílna dubová pracovná doska`,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    topThicknessM,
+    topM - topThicknessM,
+    1.2,
+  );
+  finish(context, desktop, materials.kitchenFront, { shadow: true, pickable: true });
+
+  const legHeightM = topM - topThicknessM - 0.02;
+  for (const [index, point] of [
+    { x: rect.x0 + 90, y: rect.y0 + 80 },
+    { x: rect.x1 - 90, y: rect.y0 + 80 },
+    { x: rect.x0 + 90, y: rect.y1 - 80 },
+    { x: rect.x1 - 90, y: rect.y1 - 80 },
+  ].entries()) {
+    const leg = texturedBox(
+      context.scene,
+      `${fitout.id} · DESK · štíhla kovová noha ${index + 1}`,
+      point,
+      34,
+      34,
+      legHeightM,
+      0.02,
+      1,
+    );
+    finish(context, leg, materials.fireplace, { shadow: true });
+  }
+
+  const forward = furnitureForward(desk.facing);
+  const deskCenter = rectCenter(rect);
+  const drawerCenter: Point2Mm = {
+    x: deskCenter.x - forward.x * 80,
+    y: deskCenter.y - forward.y * 80,
+  };
+  const drawer = texturedBox(
+    context.scene,
+    `${fitout.id} · DESK · plávajúca zásuvka`,
+    drawerCenter,
+    desk.facing === "SOUTH" ? 620 : 220,
+    desk.facing === "SOUTH" ? 220 : 620,
+    0.12,
+    topM - 0.17,
+    1,
+  );
+  finish(context, drawer, theme.primary, { shadow: true, pickable: true });
+
+  const lampBase = CreateCylinder(
+    `${fitout.id} · DESK · bezdrôtová stolová lampa`,
+    { height: 0.045, diameter: 0.18, tessellation: 32 },
+    context.scene,
+  );
+  const right = furnitureRight(desk.facing);
+  const lampCenter: Point2Mm = {
+    x: deskCenter.x + right.x * 520 - forward.x * 120,
+    y: deskCenter.y + right.y * 520 - forward.y * 120,
+  };
+  lampBase.position.set(xM(lampCenter.x), topM + 0.023, zM(lampCenter.y));
+  finish(context, lampBase, materials.brushedBrass, { shadow: true, pickable: true });
+  const lampGlow = CreateSphere(
+    `${fitout.id} · DESK · mäkké svetlo lampy`,
+    { diameter: 0.16, segments: 24 },
+    context.scene,
+  );
+  lampGlow.position.set(xM(lampCenter.x), topM + 0.22, zM(lampCenter.y));
+  finish(context, lampGlow, materials.warmLight);
+
+  navigationGuard(context, materials, `${fitout.id} · DESK · navigačný obrys`, rect);
+}
+
+function buildChildRollingChair(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const chair = fitout.chair;
+  const center = chair.centerMm;
+  const seatM = chair.seatElevationMm * MM_TO_M;
+  const hub = CreateCylinder(
+    `${fitout.id} · CHAIR · centrálna päťramenná báza`,
+    { height: 0.075, diameter: 0.12, tessellation: 24 },
+    context.scene,
+  );
+  hub.position.set(xM(center.x), 0.1, zM(center.y));
+  finish(context, hub, materials.fireplace, { shadow: true });
+  const liftHeightM = Math.max(0.2, seatM - 0.18);
+  const lift = CreateCylinder(
+    `${fitout.id} · CHAIR · nastaviteľný plynový piest`,
+    { height: liftHeightM, diameter: 0.05, tessellation: 20 },
+    context.scene,
+  );
+  lift.position.set(xM(center.x), 0.14 + liftHeightM / 2, zM(center.y));
+  finish(context, lift, materials.steel, { shadow: true });
+
+  for (let index = 0; index < chair.wheelCount; index += 1) {
+    const angle = (index / chair.wheelCount) * Math.PI * 2;
+    const spokeLengthMm = 315;
+    const spokeCenter: Point2Mm = {
+      x: center.x + Math.cos(angle) * spokeLengthMm * 0.5,
+      y: center.y + Math.sin(angle) * spokeLengthMm * 0.5,
+    };
+    const spoke = texturedBox(
+      context.scene,
+      `${fitout.id} · CHAIR · rameno pojazdu ${index + 1}`,
+      spokeCenter,
+      spokeLengthMm,
+      30,
+      0.028,
+      0.06,
+      1,
+    );
+    spoke.rotation.y = angle;
+    finish(context, spoke, materials.fireplace, { shadow: true });
+    const caster = CreateTorus(
+      `${fitout.id} · CHAIR · tiché koliesko ${index + 1}`,
+      { diameter: 0.064, thickness: 0.017, tessellation: 18 },
+      context.scene,
+    );
+    caster.rotation.z = Math.PI / 2;
+    caster.rotation.y = angle;
+    caster.position.set(
+      xM(center.x + Math.cos(angle) * spokeLengthMm),
+      0.052,
+      zM(center.y + Math.sin(angle) * spokeLengthMm),
+    );
+    finish(context, caster, materials.fireplace, { shadow: true });
+  }
+
+  const seat = softEllipsoid(
+    context,
+    `${fitout.id} · CHAIR · mäkký otočný sedák`,
+    center,
+    [0.55, 0.13, 0.52],
+    seatM,
+    theme.chair,
+  );
+  seat.rotation.y = chair.facing === "EAST" ? Math.PI / 2 : 0;
+  const forward = furnitureForward(chair.facing);
+  const backCenter: Point2Mm = {
+    x: center.x - forward.x * 230,
+    y: center.y - forward.y * 230,
+  };
+  const backBottomM = seatM + 0.08;
+  const backTopM = chair.backTopElevationMm * MM_TO_M;
+  const back = softCapsule(
+    context,
+    `${fitout.id} · CHAIR · ergonomické čalúnené operadlo`,
+    backCenter,
+    (backBottomM + backTopM) / 2,
+    backTopM - backBottomM,
+    0.17,
+    new Vector3(0, 1, 0),
+    [1.25, 1, 0.3],
+    theme.chair,
+  );
+  back.rotation.y = chair.facing === "EAST" ? Math.PI / 2 : 0;
+  const right = furnitureRight(chair.facing);
+  for (const [index, side] of [-1, 1].entries()) {
+    const armCenter: Point2Mm = {
+      x: center.x + right.x * side * 235,
+      y: center.y + right.y * side * 235,
+    };
+    softCapsule(
+      context,
+      `${fitout.id} · CHAIR · mäkká podrúčka ${index + 1}`,
+      armCenter,
+      seatM + 0.22,
+      0.28,
+      0.035,
+      new Vector3(forward.x, 0, forward.y),
+      [1, 0.8, 1],
+      theme.chair,
+    );
+  }
+
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · CHAIR · navigačný obrys pojazdu`,
+    chair.footprintMm,
+  );
+}
+
+function buildChildFeatureWall(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const feature = fitout.featureWall;
+  const rect = feature.footprintMm;
+  const panel = texturedBox(
+    context.scene,
+    `${fitout.id} · FEATURE · farebný akustický panel`,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    feature.topElevationMm * MM_TO_M,
+    0,
+    1,
+  );
+  finish(context, panel, theme.primary, { shadow: true, pickable: true });
+
+  const wallX = feature.facing === "WEST" ? rect.x0 - 10 : rect.x1 + 10;
+  if (feature.motif === "GLOW_HALO") {
+    for (let index = 0; index < 7; index += 1) {
+      const slatY = rect.y0 + 105 + index * ((rect.y1 - rect.y0 - 210) / 6);
+      const slat = texturedBox(
+        context.scene,
+        `${fitout.id} · FEATURE · jemná dubová lamela ${index + 1}`,
+        { x: wallX, y: slatY },
+        22,
+        34,
+        1.72,
+        0.24,
+        1,
+      );
+      finish(context, slat, materials.kitchenFront, { shadow: true });
+    }
+    const halo = CreateTorus(
+      `${fitout.id} · FEATURE · svetelný kruh`,
+      { diameter: 0.78, thickness: 0.026, tessellation: 48 },
+      context.scene,
+    );
+    halo.rotation.z = Math.PI / 2;
+    halo.position.set(xM(wallX - 12), 1.55, zM((rect.y0 + rect.y1) / 2));
+    finish(context, halo, materials.warmLight, { shadow: true, pickable: true });
+  } else {
+    for (let index = 0; index < 6; index += 1) {
+      const slatY = rect.y0 + 110 + index * ((rect.y1 - rect.y0 - 220) / 5);
+      const slat = texturedBox(
+        context.scene,
+        `${fitout.id} · FEATURE · rytmická dubová lamela ${index + 1}`,
+        { x: wallX, y: slatY },
+        24,
+        52,
+        index % 2 === 0 ? 1.72 : 1.46,
+        0.28,
+        1,
+      );
+      finish(context, slat, materials.kitchenFront, { shadow: true, pickable: true });
+    }
+    const ribbon = texturedBox(
+      context.scene,
+      `${fitout.id} · FEATURE · horizontálna svetelná stuha`,
+      { x: wallX + 4, y: (rect.y0 + rect.y1) / 2 },
+      18,
+      rect.y1 - rect.y0 - 210,
+      0.018,
+      1.63,
+      1,
+    );
+    finish(context, ribbon, materials.warmLight);
+  }
+}
+
+function buildChildPinboard(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const pinboard = fitout.pinboard;
+  const rect = pinboard.footprintMm;
+  const bottomM = pinboard.bottomElevationMm * MM_TO_M;
+  const heightM = pinboard.heightMm * MM_TO_M;
+  const board = texturedBox(
+    context.scene,
+    `${fitout.id} · DESK · veľká korková moodboard plocha`,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    heightM,
+    bottomM,
+    1,
+  );
+  finish(context, board, materials.childCork, { shadow: true, pickable: true });
+
+  const alongX = pinboard.facing === "SOUTH";
+  const longStart = alongX ? rect.x0 : rect.y0;
+  const longEnd = alongX ? rect.x1 : rect.y1;
+  const noteMaterials = [theme.secondary, materials.kitchenUpper, theme.primary];
+  for (let index = 0; index < 3; index += 1) {
+    const along = longStart + (index + 1) * ((longEnd - longStart) / 4);
+    const noteCenter: Point2Mm = alongX
+      ? { x: along, y: rect.y0 - 6 }
+      : { x: rect.x0 - 6, y: along };
+    const note = texturedBox(
+      context.scene,
+      `${fitout.id} · DESK · moodboard karta ${index + 1}`,
+      noteCenter,
+      alongX ? 180 : 8,
+      alongX ? 8 : 180,
+      0.15,
+      bottomM + 0.12 + index * 0.1,
+      1,
+    );
+    finish(context, note, noteMaterials[index], { pickable: true });
+  }
+}
+
+function buildChildRoomLighting(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitout: ChildBedroomFitout,
+  theme: ChildRoomThemeMaterials,
+) {
+  const room = INTERIOR_ROOMS.find((candidate) => candidate.id === fitout.roomId)!;
+  const bounds = roomBoundsMm(room);
+  const center = fitout.roomId === "ROOM-1-09"
+    ? { x: 17880, y: 9050 }
+    : { x: 12950, y: 9000 };
+  const alongX = bounds.x1 - bounds.x0 > bounds.y1 - bounds.y0;
+  const housing = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · minimalistický stropný profil`,
+    center,
+    alongX ? 1450 : 54,
+    alongX ? 54 : 1450,
+    0.034,
+    room.clearHeightMm * MM_TO_M - 0.04,
+    1,
+  );
+  finish(context, housing, materials.fireplace, { shadow: true });
+  const diffuser = texturedBox(
+    context.scene,
+    `${fitout.id} · LIGHT · teplý stmievateľný difúzor`,
+    center,
+    alongX ? 1380 : 28,
+    alongX ? 28 : 1380,
+    0.012,
+    room.clearHeightMm * MM_TO_M - 0.052,
+    1,
+  );
+  finish(context, diffuser, materials.warmLight);
+  const light = new PointLight(
+    `${fitout.id} · LIGHT · mäkké večerné svetlo`,
+    new Vector3(xM(center.x), 2.42, zM(center.y)),
+    context.scene,
+  );
+  light.diffuse = Color3.FromHexString(theme.lightDiffuse);
+  light.specular = Color3.FromHexString(theme.lightSpecular);
+  light.intensity = 0.22;
+  light.range = 3.4;
+}
+
+/**
+ * Premium but restrained children's rooms: one sage/clay composition and one
+ * midnight/sand composition, both using the same ergonomic furniture contract
+ * and collision envelopes while respecting their very different plans.
+ */
+function buildChildrensBedroomFitouts(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+) {
+  for (const fitout of CHILDRENS_BEDROOM_FITOUTS) {
+    const theme = childRoomTheme(fitout, materials);
+    buildChildFeatureWall(context, materials, fitout, theme);
+    buildChildBed(context, materials, fitout, theme);
+    buildChildWardrobe(context, materials, fitout, theme);
+    buildChildDesk(context, materials, fitout, theme);
+    buildChildRollingChair(context, materials, fitout, theme);
+    buildChildPinboard(context, materials, fitout, theme);
+    buildChildRoomLighting(context, materials, fitout, theme);
+  }
+}
+
 /**
  * Compact entry composition in the 1.01 recess: closed coat storage at the
  * corridor end, a low shoe cabinet/bench at the front door and an illuminated
@@ -4175,6 +4861,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildEnsuiteBathroomFitout(context, materials);
   buildEntryFitout(context, materials);
   buildBedroomFitout(context, materials);
+  buildChildrensBedroomFitouts(context, materials);
   buildOfficeFitout(context, materials);
   buildLivingDiningFitout(context, materials);
   buildWallBands(context, {

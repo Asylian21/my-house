@@ -256,6 +256,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientChildrensRoomsRevision20260824: {
+    id: "SRC-CLIENT-CHILDRENS-ROOMS-20260824",
+    title: "Revízia stavebníka · dve moderné detské izby",
+    detail:
+      "Miestnosti 1.09 a 1.10 zariadiť ako dve supermoderné, jednoduché a minimalistické detské izby s výrazným wow efektom. Každá izba má samostatnú posteľ, vstavanú skriňu, pracovný stôl a ergonomickú stoličku na kolieskach. Návrh zachováva celé otvorené dverné krídla, veľké záhradné presklenia, priamy komunikačný pás a voľnú plochu na hranie; izby sú zladené, ale používajú dve odlišné nadčasové farebné nálady.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

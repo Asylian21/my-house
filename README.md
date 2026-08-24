@@ -196,6 +196,17 @@ je mimo 900 mm oblúka vstupného krídla, bočného svetlíka aj dverí do chod
 Obe riešenia sú interiérové dizajnové koncepty; ergonómiu, elektroinštaláciu,
 kotvenie a výrobnú skladbu musí potvrdiť dodávateľ interiéru.
 
+Miestnosti 1.09 a 1.10 sú zariadené ako dve zladené, ale nezameniteľné detské
+izby (`CHILDRENS_BEDROOM_FITOUTS`). Každá má matrac 1 200 × 2 100 mm na
+plávajúcej úložnej posteli, trojdielnu 600 mm hlbokú vstavanú skriňu, pracovný
+stôl 1 600 × 600 mm a výškovo nastaviteľnú ergonomickú stoličku s piatimi
+kolieskami. Izba 1.09 kombinuje tlmenú šalviu, hlinený akcent, dubové lamely a
+svetelný kruh; izba 1.10 používa hlbokú modrú, pieskový textil a horizontálnu
+svetelnú stuhu. V oboch ostáva veľká voľná herná plocha, celé otvorené dverné
+krídlo a minimálne 899 mm hlboký prístup k 2 000 / 2 500 mm záhradnému
+preskleniu. Pôdorysné kolízie a priechod postavy s polomerom 220 mm overujú
+kontraktové testy.
+
 Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
 obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú
 nad korunou múru šikmou hlavou až k debneniu strechy, biele lemovacie dosky

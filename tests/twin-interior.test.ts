@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BATHROOM_FITOUT,
   BEDROOM_FITOUT,
+  CHILDRENS_BEDROOM_FITOUTS,
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_PIER,
@@ -21,6 +22,7 @@ import {
   type RectMm,
 } from "../lib/twin-interior";
 import { HOUSE, SOURCES } from "../lib/twin-site";
+import { WALK_COLLISION_ELLIPSOID_M } from "../lib/twin-viewport-contract";
 
 const overlaps = (a: RectMm, b: RectMm) =>
   a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
@@ -975,6 +977,223 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     for (const rect of [cabinet.footprintMm, desk.footprintMm, chair.footprintMm]) {
       expect(overlaps(clearEntry, rect)).toBe(false);
       expect(overlaps(openDoorLeaf, rect)).toBe(false);
+    }
+  });
+
+  it("fits two complete children's rooms while keeping doors, play zones and garden glazing walkable", () => {
+    expect(CHILDRENS_BEDROOM_FITOUTS).toHaveLength(2);
+    expect(new Set(CHILDRENS_BEDROOM_FITOUTS.map((fitout) => fitout.id)).size).toBe(2);
+
+    const radiusMm = WALK_COLLISION_ELLIPSOID_M.x * 1000;
+    expect(radiusMm).toBe(220);
+    const expand = (rect: RectMm, amountMm: number): RectMm => ({
+      x0: rect.x0 - amountMm,
+      y0: rect.y0 - amountMm,
+      x1: rect.x1 + amountMm,
+      y1: rect.y1 + amountMm,
+    });
+    const containsPoint = (rect: RectMm, point: { x: number; y: number }) =>
+      point.x >= rect.x0 && point.x <= rect.x1 && point.y >= rect.y0 && point.y <= rect.y1;
+    const openLeafRect = (door: (typeof INTERIOR_DOORS)[number]): RectMm => {
+      const frameMm = 60;
+      const leafThicknessMm = 40;
+      const [wallFrom, wallTo] = door.wallSpanMm;
+      const hingeAlongMm = door.hinge < 0
+        ? door.startMm + frameMm
+        : door.startMm + door.widthMm - frameMm;
+      const hingeAcrossMm = door.swing < 0 ? wallFrom : wallTo;
+      const centerAcrossMm = hingeAcrossMm + door.swing * (door.leafWidthMm / 2 + 10);
+      const centerAlongMm = hingeAlongMm + (door.hinge < 0 ? 1 : -1) * (leafThicknessMm / 2 + 8);
+      return door.axis === "X"
+        ? {
+            x0: centerAlongMm - leafThicknessMm / 2,
+            x1: centerAlongMm + leafThicknessMm / 2,
+            y0: centerAcrossMm - (door.leafWidthMm + 20) / 2,
+            y1: centerAcrossMm + (door.leafWidthMm + 20) / 2,
+          }
+        : {
+            x0: centerAcrossMm - (door.leafWidthMm + 20) / 2,
+            x1: centerAcrossMm + (door.leafWidthMm + 20) / 2,
+            y0: centerAlongMm - leafThicknessMm / 2,
+            y1: centerAlongMm + leafThicknessMm / 2,
+          };
+    };
+    const hasAvatarPath = (
+      roomRect: RectMm,
+      obstacles: readonly RectMm[],
+      start: { x: number; y: number },
+      goal: { x: number; y: number },
+    ) => {
+      const stepMm = 50;
+      const x0 = roomRect.x0 + radiusMm;
+      const y0 = roomRect.y0 + radiusMm;
+      const xCount = Math.floor((roomRect.x1 - radiusMm - x0) / stepMm) + 1;
+      const yCount = Math.floor((roomRect.y1 - radiusMm - y0) / stepMm) + 1;
+      const expandedObstacles = obstacles.map((rect) => expand(rect, radiusMm));
+      const key = (xIndex: number, yIndex: number) => `${xIndex}:${yIndex}`;
+      const pointAt = (xIndex: number, yIndex: number) => ({
+        x: x0 + xIndex * stepMm,
+        y: y0 + yIndex * stepMm,
+      });
+      const gridIndex = (point: { x: number; y: number }) => ({
+        x: Math.max(0, Math.min(xCount - 1, Math.round((point.x - x0) / stepMm))),
+        y: Math.max(0, Math.min(yCount - 1, Math.round((point.y - y0) / stepMm))),
+      });
+      const blocked = (xIndex: number, yIndex: number) => {
+        if (xIndex < 0 || yIndex < 0 || xIndex >= xCount || yIndex >= yCount) return true;
+        const point = pointAt(xIndex, yIndex);
+        return expandedObstacles.some((rect) =>
+          point.x > rect.x0 && point.x < rect.x1 && point.y > rect.y0 && point.y < rect.y1,
+        );
+      };
+      const startIndex = gridIndex(start);
+      const goalIndex = gridIndex(goal);
+      if (blocked(startIndex.x, startIndex.y) || blocked(goalIndex.x, goalIndex.y)) return false;
+      const queue = [startIndex];
+      const visited = new Set([key(startIndex.x, startIndex.y)]);
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const current = queue[cursor];
+        if (current.x === goalIndex.x && current.y === goalIndex.y) return true;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const next = { x: current.x + dx, y: current.y + dy };
+          const nextKey = key(next.x, next.y);
+          if (visited.has(nextKey) || blocked(next.x, next.y)) continue;
+          visited.add(nextKey);
+          queue.push(next);
+        }
+      }
+      return false;
+    };
+
+    const expected = [
+      {
+        roomId: "ROOM-1-09",
+        roomName: "Detská izba 1",
+        doorId: "DOOR-102-109",
+        windowId: "GARDEN-03",
+        theme: "SAGE_GLOW",
+        start: { x: 17500, y: 8000 },
+        windowGoal: { x: 17300, y: 10400 },
+      },
+      {
+        roomId: "ROOM-1-10",
+        roomName: "Detská izba 2",
+        doorId: "DOOR-102-110",
+        windowId: "GARDEN-02",
+        theme: "MIDNIGHT_SAND",
+        start: { x: 14000, y: 7800 },
+        windowGoal: { x: 13700, y: 10400 },
+      },
+    ] as const;
+
+    for (const [index, fitout] of CHILDRENS_BEDROOM_FITOUTS.entries()) {
+      const contract = expected[index];
+      const room = INTERIOR_ROOMS.find((candidate) => candidate.id === fitout.roomId)!;
+      const roomRect = room.rectsMm[0];
+      const door = INTERIOR_DOORS.find((candidate) => candidate.id === fitout.entryDoorId)!;
+      const window = HOUSE.facades.garden.openings.find(
+        (candidate) => candidate.id === fitout.gardenWindowId,
+      )!;
+      const fixtures = [
+        fitout.bed.footprintMm,
+        fitout.wardrobe.footprintMm,
+        fitout.desk.footprintMm,
+        fitout.chair.footprintMm,
+      ] as const;
+
+      expect(fitout).toMatchObject({
+        sourceId: SOURCES.clientChildrensRoomsRevision20260824.id,
+        architecturalSourceId: SOURCES.floorPlan.id,
+        status: "CLIENT_DESIGN_CONCEPT",
+        roomId: contract.roomId,
+        entryDoorId: contract.doorId,
+        gardenWindowId: contract.windowId,
+        theme: contract.theme,
+      });
+      expect(room.name).toBe(contract.roomName);
+      expect(door.toRoomId).toBe(room.id);
+      expect(window).toMatchObject({ heightMm: 2400, sillMm: 0 });
+
+      for (const rect of [
+        ...fixtures,
+        fitout.featureWall.footprintMm,
+        fitout.pinboard.footprintMm,
+        fitout.clearEntryRectMm,
+        fitout.clearPlayRectMm,
+        fitout.windowClearanceRectMm,
+      ]) {
+        expect(rect.x1).toBeGreaterThan(rect.x0);
+        expect(rect.y1).toBeGreaterThan(rect.y0);
+        expect(inside(rect, roomRect), `${fitout.id} rect inside room`).toBe(true);
+      }
+      for (let left = 0; left < fixtures.length; left += 1) {
+        for (let right = left + 1; right < fixtures.length; right += 1) {
+          expect(overlaps(fixtures[left], fixtures[right]), `${fitout.id} fixture overlap`).toBe(false);
+        }
+      }
+
+      expect(inside(fitout.bed.mattressFootprintMm, fitout.bed.footprintMm)).toBe(true);
+      expect(fitout.bed.mattressFootprintMm.x1 - fitout.bed.mattressFootprintMm.x0)
+        .toBe(fitout.bed.mattressLengthMm);
+      expect(fitout.bed.mattressFootprintMm.y1 - fitout.bed.mattressFootprintMm.y0)
+        .toBe(fitout.bed.mattressWidthMm);
+      expect(fitout.bed.mattressLengthMm).toBeGreaterThanOrEqual(2000);
+      expect(fitout.bed.mattressWidthMm).toBeGreaterThanOrEqual(900);
+      expect(inside(fitout.bed.headboardRectMm, fitout.bed.footprintMm)).toBe(true);
+      expect(fitout.bed.headboardTopElevationMm).toBeLessThan(room.clearHeightMm);
+
+      expect(fitout.wardrobe.footprintMm.x1 - fitout.wardrobe.footprintMm.x0).toBe(600);
+      expect(room.clearHeightMm - fitout.wardrobe.heightMm).toBe(50);
+      expect(fitout.wardrobe.doorCount).toBe(3);
+      expect([
+        fitout.desk.footprintMm.x1 - fitout.desk.footprintMm.x0,
+        fitout.desk.footprintMm.y1 - fitout.desk.footprintMm.y0,
+      ].sort((a, b) => a - b)).toEqual([600, 1600]);
+      expect(fitout.desk.topElevationMm).toBeGreaterThanOrEqual(720);
+      expect(fitout.desk.topElevationMm).toBeLessThanOrEqual(780);
+      expect(fitout.chair.footprintMm.x1 - fitout.chair.footprintMm.x0).toBe(800);
+      expect(fitout.chair.footprintMm.y1 - fitout.chair.footprintMm.y0).toBe(800);
+      expect(fitout.chair.wheelCount).toBe(5);
+      expect(containsPoint(fitout.chair.footprintMm, fitout.chair.centerMm)).toBe(true);
+      expect(fitout.chair.backTopElevationMm).toBeGreaterThan(fitout.chair.seatElevationMm);
+      expect([fitout.desk.facing, fitout.chair.facing]).toEqual(
+        index === 0 ? ["SOUTH", "NORTH"] : ["WEST", "EAST"],
+      );
+
+      const leafRect = openLeafRect(door);
+      for (const rect of fixtures) expect(overlaps(leafRect, rect)).toBe(false);
+      expect(overlaps(leafRect, fitout.clearEntryRectMm)).toBe(false);
+      for (const clear of [
+        fitout.clearEntryRectMm,
+        fitout.clearPlayRectMm,
+        fitout.windowClearanceRectMm,
+      ]) {
+        for (const fixture of fixtures) expect(overlaps(clear, fixture)).toBe(false);
+      }
+      expect(Math.min(
+        fitout.clearEntryRectMm.x1 - fitout.clearEntryRectMm.x0,
+        fitout.clearEntryRectMm.y1 - fitout.clearEntryRectMm.y0,
+      )).toBeGreaterThanOrEqual(800);
+      expect(
+        (fitout.clearPlayRectMm.x1 - fitout.clearPlayRectMm.x0) *
+        (fitout.clearPlayRectMm.y1 - fitout.clearPlayRectMm.y0),
+      ).toBeGreaterThan(2_500_000);
+      expect(fitout.windowClearanceRectMm).toMatchObject({
+        x0: window.startXmm,
+        x1: window.startXmm + window.widthMm,
+        y1: roomRect.y1,
+      });
+      expect(fitout.windowClearanceRectMm.y1 - fitout.windowClearanceRectMm.y0)
+        .toBeGreaterThanOrEqual(899);
+      expect(
+        containsPoint(fitout.clearEntryRectMm, room.standingPointMm) ||
+        containsPoint(fitout.clearPlayRectMm, room.standingPointMm),
+      ).toBe(true);
+      expect(containsPoint(fitout.windowClearanceRectMm, contract.windowGoal)).toBe(true);
+      expect(contract.windowGoal.x).toBeGreaterThanOrEqual(window.startXmm + window.widthMm / 2);
+      expect(contract.windowGoal.x).toBeLessThan(window.startXmm + window.widthMm);
+      expect(hasAvatarPath(roomRect, fixtures, contract.start, room.standingPointMm)).toBe(true);
+      expect(hasAvatarPath(roomRect, fixtures, contract.start, contract.windowGoal)).toBe(true);
     }
   });
 });

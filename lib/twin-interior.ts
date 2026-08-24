@@ -358,6 +358,67 @@ export interface FireplacePier {
 
 export type FurnitureFacing = "NORTH" | "SOUTH" | "EAST" | "WEST";
 
+export type ChildBedroomTheme = "SAGE_GLOW" | "MIDNIGHT_SAND";
+
+export interface ChildBedroomFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-09" | "ROOM-1-10";
+  readonly entryDoorId: "DOOR-102-109" | "DOOR-102-110";
+  readonly gardenWindowId: "GARDEN-03" | "GARDEN-02";
+  readonly theme: ChildBedroomTheme;
+  readonly bed: {
+    readonly footprintMm: RectMm;
+    readonly mattressFootprintMm: RectMm;
+    readonly mattressWidthMm: 1200;
+    readonly mattressLengthMm: 2100;
+    readonly frameHeightMm: number;
+    readonly mattressTopElevationMm: number;
+    readonly headboardRectMm: RectMm;
+    readonly headboardTopElevationMm: number;
+    readonly facing: "EAST" | "WEST";
+  };
+  readonly wardrobe: {
+    readonly footprintMm: RectMm;
+    readonly facing: "EAST";
+    readonly heightMm: number;
+    readonly doorCount: 3;
+  };
+  readonly desk: {
+    readonly footprintMm: RectMm;
+    readonly facing: "SOUTH" | "WEST";
+    readonly topElevationMm: number;
+  };
+  readonly chair: {
+    readonly footprintMm: RectMm;
+    readonly centerMm: Point2Mm;
+    readonly facing: "NORTH" | "EAST";
+    readonly seatElevationMm: number;
+    readonly backTopElevationMm: number;
+    readonly wheelCount: 5;
+  };
+  readonly featureWall: {
+    readonly footprintMm: RectMm;
+    readonly facing: "EAST" | "WEST";
+    readonly topElevationMm: number;
+    readonly motif: "GLOW_HALO" | "OAK_RIBBON";
+  };
+  readonly pinboard: {
+    readonly footprintMm: RectMm;
+    readonly facing: "SOUTH" | "WEST";
+    readonly bottomElevationMm: number;
+    readonly heightMm: number;
+  };
+  /** Clear landing immediately beyond the fully open door leaf. */
+  readonly clearEntryRectMm: RectMm;
+  /** Unfurnished floor area large enough for play and a walkthrough preset. */
+  readonly clearPlayRectMm: RectMm;
+  /** Furniture-free apron across the glazing; the walk path targets its sliding half. */
+  readonly windowClearanceRectMm: RectMm;
+}
+
 export interface LivingDiningFitout {
   readonly id: string;
   readonly sourceId: string;
@@ -516,26 +577,26 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
   {
     id: "ROOM-1-09",
     number: "1.09",
-    name: "Izba",
+    name: "Detská izba 1",
     documentedAreaM2: 16.3,
     clearHeightMm: 2600,
     ceiling: "FLAT",
     floor: "VINYL",
     wetRoom: false,
     rectsMm: [{ x0: 15143, y0: 7741, x1: 20641, y1: 10699 }],
-    standingPointMm: { x: 17900, y: 9200 },
+    standingPointMm: { x: 17450, y: 9200 },
   },
   {
     id: "ROOM-1-10",
     number: "1.10",
-    name: "Spálňa",
+    name: "Detská izba 2",
     documentedAreaM2: 15.45,
     clearHeightMm: 2600,
     ceiling: "FLAT",
     floor: "VINYL",
     wetRoom: false,
     rectsMm: [{ x0: 11143, y0: 6699, x1: 15003, y1: 10699 }],
-    standingPointMm: { x: 13070, y: 8700 },
+    standingPointMm: { x: 12650, y: 9400 },
   },
   {
     id: "ROOM-1-11",
@@ -948,6 +1009,130 @@ export const BEDROOM_FITOUT: BedroomFitout = Object.freeze({
   eastBedsideAccessRectMm: { x0: 19842, y0: 3504, x1: 20642, y1: 5704 },
   footAccessRectMm: { x0: 18042, y0: 5704, x1: 20642, y1: 6361 },
 } as const);
+
+/**
+ * Two related but non-identical children's rooms. Room 1.09 keeps the direct
+ * south-door / north-glazing axis clear and concentrates storage on the short
+ * west bay, with the bed and desk on the solid east side. Room 1.10 uses the
+ * west wall for the bed and wardrobe and the east wall north of the door for
+ * the desk. Both layouts preserve a real play zone, the open door leaf and an
+ * unobstructed approach to the 2.0 / 2.5 m garden glazing.
+ */
+export const CHILDRENS_BEDROOM_FITOUTS: readonly [
+  ChildBedroomFitout,
+  ChildBedroomFitout,
+] = Object.freeze([
+  {
+    id: "CHILD-BEDROOM-109-FITOUT-2026-08-24",
+    sourceId: SOURCES.clientChildrensRoomsRevision20260824.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-09",
+    entryDoorId: "DOOR-102-109",
+    gardenWindowId: "GARDEN-03",
+    theme: "SAGE_GLOW",
+    bed: {
+      footprintMm: { x0: 18391, y0: 7841, x1: 20641, y1: 9141 },
+      mattressFootprintMm: { x0: 18491, y0: 7891, x1: 20591, y1: 9091 },
+      mattressWidthMm: 1200,
+      mattressLengthMm: 2100,
+      frameHeightMm: 280,
+      mattressTopElevationMm: 530,
+      headboardRectMm: { x0: 20591, y0: 7841, x1: 20641, y1: 9141 },
+      headboardTopElevationMm: 1420,
+      facing: "WEST",
+    },
+    wardrobe: {
+      footprintMm: { x0: 15143, y0: 8241, x1: 15743, y1: 10699 },
+      facing: "EAST",
+      heightMm: 2550,
+      doorCount: 3,
+    },
+    desk: {
+      footprintMm: { x0: 18341, y0: 10099, x1: 19941, y1: 10699 },
+      facing: "SOUTH",
+      topElevationMm: 740,
+    },
+    chair: {
+      footprintMm: { x0: 18741, y0: 9250, x1: 19541, y1: 10050 },
+      centerMm: { x: 19141, y: 9650 },
+      facing: "NORTH",
+      seatElevationMm: 440,
+      backTopElevationMm: 1050,
+      wheelCount: 5,
+    },
+    featureWall: {
+      footprintMm: { x0: 20616, y0: 7741, x1: 20641, y1: 9341 },
+      facing: "WEST",
+      topElevationMm: 2200,
+      motif: "GLOW_HALO",
+    },
+    pinboard: {
+      footprintMm: { x0: 18341, y0: 10674, x1: 19941, y1: 10699 },
+      facing: "SOUTH",
+      bottomElevationMm: 1040,
+      heightMm: 700,
+    },
+    clearEntryRectMm: { x0: 16743, y0: 7741, x1: 18341, y1: 10099 },
+    clearPlayRectMm: { x0: 15843, y0: 8561, x1: 18341, y1: 9699 },
+    windowClearanceRectMm: { x0: 15840, y0: 9699, x1: 17840, y1: 10699 },
+  },
+  {
+    id: "CHILD-BEDROOM-110-FITOUT-2026-08-24",
+    sourceId: SOURCES.clientChildrensRoomsRevision20260824.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-10",
+    entryDoorId: "DOOR-102-110",
+    gardenWindowId: "GARDEN-02",
+    theme: "MIDNIGHT_SAND",
+    bed: {
+      footprintMm: { x0: 11243, y0: 6699, x1: 13543, y1: 7999 },
+      mattressFootprintMm: { x0: 11343, y0: 6749, x1: 13443, y1: 7949 },
+      mattressWidthMm: 1200,
+      mattressLengthMm: 2100,
+      frameHeightMm: 280,
+      mattressTopElevationMm: 530,
+      headboardRectMm: { x0: 11243, y0: 6699, x1: 11293, y1: 7999 },
+      headboardTopElevationMm: 1480,
+      facing: "EAST",
+    },
+    wardrobe: {
+      footprintMm: { x0: 11143, y0: 8299, x1: 11743, y1: 10699 },
+      facing: "EAST",
+      heightMm: 2550,
+      doorCount: 3,
+    },
+    desk: {
+      footprintMm: { x0: 14403, y0: 8400, x1: 15003, y1: 10000 },
+      facing: "WEST",
+      topElevationMm: 740,
+    },
+    chair: {
+      footprintMm: { x0: 13400, y0: 9000, x1: 14200, y1: 9800 },
+      centerMm: { x: 13800, y: 9400 },
+      facing: "EAST",
+      seatElevationMm: 440,
+      backTopElevationMm: 1050,
+      wheelCount: 5,
+    },
+    featureWall: {
+      footprintMm: { x0: 11143, y0: 6699, x1: 11168, y1: 8199 },
+      facing: "EAST",
+      topElevationMm: 2200,
+      motif: "OAK_RIBBON",
+    },
+    pinboard: {
+      footprintMm: { x0: 14978, y0: 8400, x1: 15003, y1: 9800 },
+      facing: "WEST",
+      bottomElevationMm: 1040,
+      heightMm: 700,
+    },
+    clearEntryRectMm: { x0: 13543, y0: 7601, x1: 14403, y1: 8899 },
+    clearPlayRectMm: { x0: 11843, y0: 8299, x1: 13400, y1: 10699 },
+    windowClearanceRectMm: { x0: 11840, y0: 9800, x1: 14340, y1: 10699 },
+  },
+] as const);
 
 /**
  * Client interior concept from 23. 8. 2026. The composition deliberately uses
