@@ -5,6 +5,7 @@ export interface FacadeOpeningMm {
   readonly heightMm: number;
   readonly sillMm: number;
   readonly frameStartMm?: number;
+  /** Visible face width of the perimeter frame profile. */
   readonly frameWidthMm?: number;
   readonly label?: string;
 }

@@ -381,8 +381,21 @@ describe("site evidence seed", () => {
         clientShiftMm: -200,
         sourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
       });
+    expect(HOUSE.facades.front.openings.find(({ id }) => id === "FRONT-07"))
+      .toMatchObject({
+        startXmm: 24_790,
+        widthMm: 2_000,
+        heightMm: 1_600,
+        sillMm: 900,
+        kind: "fixed",
+        frameWidthMm: 35,
+        sourceId: SOURCES.clientOfficeFixedWindowRevision20260824.id,
+      });
     expect(HOUSE.sourceIds).toContain(
       SOURCES.clientBedroomDoorWindowRevision20260824.id,
+    );
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientOfficeFixedWindowRevision20260824.id,
     );
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
     expect(HOUSE.chimneys).toEqual([

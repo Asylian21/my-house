@@ -11,6 +11,22 @@ import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
 
 export type OpeningKind = "window" | "door" | "sliding" | "fixed";
 
+export interface FacadeOpeningStyleInput {
+  readonly id: string;
+  readonly kind?: OpeningKind;
+  readonly frameWidthMm?: number;
+}
+
+export function resolveFacadeOpeningStyle(
+  opening: FacadeOpeningStyleInput,
+  doorOpeningId: string,
+): { readonly kind: OpeningKind; readonly frameWidthMm?: number } {
+  return {
+    kind: opening.id === doorOpeningId ? "door" : opening.kind ?? "window",
+    frameWidthMm: opening.frameWidthMm,
+  };
+}
+
 /**
  * Window and door joinery built the way a real aluminium/timber unit is made:
  * an outer frame seated 150 mm behind the facade face, sashes with their own
@@ -31,6 +47,8 @@ export interface OpeningSpec {
   readonly wallThicknessMm: number;
   readonly kind: OpeningKind;
   readonly frameMaterial: PBRMaterial;
+  /** Visible face width of the perimeter profile; defaults to a standard 78 mm frame. */
+  readonly frameWidthMm?: number;
   /** Entity id attached to pickable parts. */
   readonly entityId?: string;
   readonly curtains?: boolean;
@@ -228,14 +246,22 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
   const top = spec.sillMm + spec.heightMm;
   const planeAcross = inward(GLAZING_PLANE_DEPTH_MM);
   const frame = spec.frameMaterial;
+  const frameWidthMm = spec.frameWidthMm ?? FRAME_WIDTH_MM;
   const built: Mesh[] = [];
 
   if (spec.kind === "window" || spec.kind === "fixed") {
-    frameRing(context, spec, "rám", start, end, spec.sillMm, top, FRAME_WIDTH_MM, FRAME_DEPTH_MM, planeAcross, frame);
-    const innerStart = start + FRAME_WIDTH_MM;
-    const innerEnd = end - FRAME_WIDTH_MM;
-    const innerBottom = spec.sillMm + FRAME_WIDTH_MM;
-    const innerTop = top - FRAME_WIDTH_MM;
+    if (
+      !Number.isFinite(frameWidthMm) ||
+      frameWidthMm <= 0 ||
+      frameWidthMm * 2 >= Math.min(spec.widthMm, spec.heightMm)
+    ) {
+      throw new Error(`Neplatná pohľadová šírka rámu pre ${spec.name}.`);
+    }
+    frameRing(context, spec, "rám", start, end, spec.sillMm, top, frameWidthMm, FRAME_DEPTH_MM, planeAcross, frame);
+    const innerStart = start + frameWidthMm;
+    const innerEnd = end - frameWidthMm;
+    const innerBottom = spec.sillMm + frameWidthMm;
+    const innerTop = top - frameWidthMm;
     const sashes = spec.kind === "window" ? (spec.widthMm >= 1500 ? 2 : 1) : 0;
     if (sashes === 0) {
       built.push(glassPane(context, spec, "pevné", innerStart, innerEnd, innerBottom, innerTop, planeAcross));

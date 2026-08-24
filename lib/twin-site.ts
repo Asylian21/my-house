@@ -224,6 +224,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientOfficeFixedWindowRevision20260824: {
+    id: "SRC-CLIENT-OFFICE-FIXED-WINDOW-20260824",
+    title: "Revízia stavebníka · pevné ultra-slim okno v pracovni",
+    detail:
+      "Veľké južné okno FRONT-07 priamo pred pracovným stolom riešiť ako jednu pevnú neotváravú tabuľu bez krídiel, stredového stĺpika a kľučiek. Zachovať stavebný otvor 2 000 × 1 600 mm a použiť ultra-tenký rám s pohľadovou šírkou 35 mm.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientEntryFitoutRevision20260824: {
     id: "SRC-CLIENT-ENTRY-FITOUT-20260824",
     title: "Revízia stavebníka · vstavané zádverie",
@@ -662,6 +670,9 @@ export const HOUSE = Object.freeze({
           widthMm: 2000,
           heightMm: 1600,
           sillMm: 900,
+          kind: "fixed",
+          frameWidthMm: 35,
+          sourceId: SOURCES.clientOfficeFixedWindowRevision20260824.id,
         },
       ],
     },
@@ -905,6 +916,7 @@ export const HOUSE = Object.freeze({
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
+    SOURCES.clientOfficeFixedWindowRevision20260824.id,
   ],
 });
 

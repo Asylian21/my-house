@@ -95,7 +95,11 @@ import {
 import { slatCenterDistancesMm } from "./twin-fence";
 import { buildInterior } from "./babylon-interior";
 import { AvatarController } from "./babylon-avatar";
-import { buildOpening, type OpeningKind } from "./babylon-openings";
+import {
+  buildOpening,
+  resolveFacadeOpeningStyle,
+  type OpeningKind,
+} from "./babylon-openings";
 import {
   INTERIOR_ROOMS,
   roomAt,
@@ -3757,6 +3761,7 @@ export class TwinSceneController {
     }
 
     for (const opening of HOUSE.facades.front.openings) {
+      const style = resolveFacadeOpeningStyle(opening, "FRONT-ENTRY");
       this.buildWindowOnZFace(
         `Výplň otvoru ${opening.id} · D1.1.002`,
         opening.startXmm + opening.widthMm / 2,
@@ -3767,7 +3772,9 @@ export class TwinSceneController {
         -1,
         this.realisticMaterials.wall,
         this.realisticMaterials.glassFrame,
-        opening.id === "FRONT-ENTRY" ? "door" : "window",
+        style.kind,
+        530,
+        style.frameWidthMm,
       );
     }
     for (const opening of HOUSE.facades.garden.openings) {
@@ -4353,6 +4360,7 @@ export class TwinSceneController {
     frameMaterial?: PBRMaterial,
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
+    frameWidthMm?: number,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -4366,6 +4374,7 @@ export class TwinSceneController {
       wallThicknessMm,
       kind,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
+      frameWidthMm,
       entityId: HOUSE.id,
     });
   }

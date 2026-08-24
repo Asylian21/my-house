@@ -881,6 +881,23 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(roomAreaM2(office)).toBeCloseTo(11.105092, 6);
+    expect(frontWindow).toMatchObject({
+      widthMm: 2000,
+      heightMm: 1600,
+      kind: "fixed",
+      frameWidthMm: 35,
+      sourceId: SOURCES.clientOfficeFixedWindowRevision20260824.id,
+    });
+    expect(frontWindow.startXmm).toBeLessThanOrEqual(fitout.desk.monitor.centerMm.x);
+    expect(frontWindow.startXmm + frontWindow.widthMm)
+      .toBeGreaterThanOrEqual(fitout.desk.monitor.centerMm.x);
+    expect(frontWindow.widthMm - 2 * frontWindow.frameWidthMm).toBe(1930);
+    expect(frontWindow.heightMm - 2 * frontWindow.frameWidthMm).toBe(1530);
+    expect(
+      ((frontWindow.widthMm - 2 * frontWindow.frameWidthMm) *
+        (frontWindow.heightMm - 2 * frontWindow.frameWidthMm)) /
+        (frontWindow.widthMm * frontWindow.heightMm),
+    ).toBeGreaterThanOrEqual(0.92);
 
     const cabinet = fitout.cabinet;
     expect(insideOffice(cabinet.footprintMm)).toBe(true);

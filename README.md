@@ -183,7 +183,10 @@ minimalistický pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečk
 zádveriu využíva 2 550 mm vysoká greige bezúchytková skriňa s integrovanou
 bielo-čiernou tlačiarňou. Naprieč k južnému oknu stojí subtílny dubový stôl
 1 800 × 800 mm s prehnutým 40-palcovým ultrawide monitorom 21 : 9 a čiernym
-ergonomickým kreslom. Bezrámová 1 700 mm široká tabuľa na fixky je za chrbtom
+ergonomickým kreslom. Veľké okno FRONT-07 priamo v osi pohľadu ostáva v
+pôvodnom stavebnom otvore 2 000 × 1 600 mm, ale podľa nadväzujúcej klientskej
+revízie je jednou pevnou neotváravou tabuľou bez stredového stĺpika, krídel a
+kľučiek, s ultra-tenkým 35 mm pohľadovým rámom. Bezrámová 1 700 mm široká tabuľa na fixky je za chrbtom
 používateľa na severnej stene, teda vľavo po vstupe a oproti stolu; od rohu
 okna EAST-01 má približne 707 mm diagonálny odstup. Voľný vstupný pás má
 1 538 × 1 012 mm a rešpektuje celý oblúk dverí.
