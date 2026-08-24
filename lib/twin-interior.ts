@@ -59,6 +59,9 @@ export interface InteriorDoor {
   readonly swing: -1 | 1;
   /** Hinge at the lower (-1) or upper (1) end of the opening along the wall. */
   readonly hinge: -1 | 1;
+  /** Optional client revision when the handedness differs from the source plan. */
+  readonly revisionSourceId?: string;
+  readonly previousHinge?: -1 | 1;
   readonly fromRoomId: string;
   readonly toRoomId: string;
 }
@@ -820,14 +823,14 @@ export const ENTRY_FITOUT: EntryFitout = Object.freeze({
  * Minimalist primary bedroom in 1.08. D1.1.002 gives a clear 4 300 × 2 857 mm
  * room with two 800 mm south windows, a corridor door at the north-west and
  * direct access to bathroom 1.11 on the west wall. The slim 1 800 × 2 200 mm
- * bed is shifted 150 mm west of the room centre so a standard 600 mm-deep
- * wardrobe still leaves an 800 mm bedside passage, while the wider west side
- * remains the direct bathroom route. Its low headboard stays below the 900 mm
- * window sills.
+ * bed is shifted 150 mm west of the room centre so a full-wall 600 mm-deep
+ * wardrobe still leaves an 800 mm bedside passage, while the west side remains
+ * the direct bathroom route. FRONT-05 moves 200 mm west to leave a clean pier
+ * before the wardrobe; the low headboard stays below both 900 mm window sills.
  */
 export const BEDROOM_FITOUT: BedroomFitout = Object.freeze({
   id: "BEDROOM-FITOUT-2026-08-24",
-  sourceId: SOURCES.clientBedroomFitoutRevision20260824.id,
+  sourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-08",
@@ -841,12 +844,12 @@ export const BEDROOM_FITOUT: BedroomFitout = Object.freeze({
     mattressLengthMm: 2200,
     frameHeightMm: 300,
     mattressTopElevationMm: 540,
-    headboardRectMm: { x0: 18144, y0: 3504, x1: 19740, y1: 3584 },
-    headboardTopElevationMm: 880,
+    headboardRectMm: { x0: 18042, y0: 3504, x1: 19842, y1: 3584 },
+    headboardTopElevationMm: 840,
     facing: "NORTH",
   },
   wardrobe: {
-    footprintMm: { x0: 20642, y0: 4161, x1: 21242, y1: 6261 },
+    footprintMm: { x0: 20642, y0: 3504, x1: 21242, y1: 6361 },
     facing: "WEST",
     heightMm: 2550,
     slidingPanelCount: 3,
@@ -856,10 +859,10 @@ export const BEDROOM_FITOUT: BedroomFitout = Object.freeze({
     westToBathroom: 1100,
     eastAtWardrobe: 800,
     foot: 657,
-    openEntryLeaf: 68,
+    openEntryLeaf: 793,
   },
-  westBathroomAccessRectMm: { x0: 16942, y0: 4401, x1: 18042, y1: 5704 },
-  eastBedsideAccessRectMm: { x0: 19842, y0: 4161, x1: 20642, y1: 5704 },
+  westBathroomAccessRectMm: { x0: 17249, y0: 4401, x1: 18042, y1: 5704 },
+  eastBedsideAccessRectMm: { x0: 19842, y0: 3504, x1: 20642, y1: 5704 },
   footAccessRectMm: { x0: 18042, y0: 5704, x1: 20642, y1: 6361 },
 } as const);
 
@@ -985,7 +988,9 @@ export const INTERIOR_DOORS: readonly InteriorDoor[] = [
     heightMm: 2100,
     leafWidthMm: 800,
     swing: -1,
-    hinge: 1,
+    hinge: -1,
+    revisionSourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
+    previousHinge: 1,
     fromRoomId: "ROOM-1-02",
     toRoomId: "ROOM-1-08",
   },

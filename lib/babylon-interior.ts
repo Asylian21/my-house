@@ -2172,8 +2172,8 @@ function navigationGuard(
 /**
  * Calm primary-bedroom composition for the compact en-suite room 1.08. The
  * fit-out keeps the exact 1 800 × 2 200 mm mattress requested by the client,
- * uses a flush platform to preserve the 657 mm foot aisle, and puts all
- * storage behind three sliding fronts so no wardrobe leaf can narrow the route
+ * uses a flush platform to preserve the 657 mm foot aisle, and fills the east
+ * wall with three sliding fronts so no wardrobe leaf can narrow the route
  * between the corridor and bathroom doors.
  */
 function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
@@ -2249,7 +2249,7 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
     1,
   );
   finish(context, headboard, materials.upholstery, { shadow: true, pickable: true });
-  for (const [index, seamX] of [18482, 18962, 19442].entries()) {
+  for (const [index, seamX] of [18492, 18942, 19392].entries()) {
     const seam = texturedBox(
       context.scene,
       `${fitout.id} · BED · zvislé prešívanie čela ${index + 1}`,
@@ -2312,22 +2312,32 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
   const wardrobe = fitout.wardrobe;
   const wardrobeRect = wardrobe.footprintMm;
   const wardrobeHeightM = wardrobe.heightMm * MM_TO_M;
+  // The 600 mm contract includes every visible layer: a 40 mm body setback
+  // leaves the sliding fronts and black accents entirely inside the footprint.
+  const wardrobeBodyRect: RectMm = {
+    ...wardrobeRect,
+    x0: wardrobeRect.x0 + 40,
+  };
   const carcase = texturedBox(
     context.scene,
-    `${fitout.id} · WARDROBE · vstavaná skriňa 2 100 × 600`,
-    rectCenter(wardrobeRect),
-    wardrobeRect.x1 - wardrobeRect.x0,
-    wardrobeRect.y1 - wardrobeRect.y0,
+    `${fitout.id} · WARDROBE · celostenová vstavaná skriňa ${wardrobeRect.y1 - wardrobeRect.y0} × ${wardrobeRect.x1 - wardrobeRect.x0}`,
+    rectCenter(wardrobeBodyRect),
+    wardrobeBodyRect.x1 - wardrobeBodyRect.x0,
+    wardrobeBodyRect.y1 - wardrobeBodyRect.y0,
     wardrobeHeightM,
     0,
     1.2,
   );
-  finish(context, carcase, materials.wardrobeFront, { shadow: true, pickable: true });
+  finish(context, carcase, materials.wardrobeFront, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
 
   const toeKick = texturedBox(
     context.scene,
     `${fitout.id} · WARDROBE · zapustený čierny sokel`,
-    { x: wardrobeRect.x0 - 10, y: (wardrobeRect.y0 + wardrobeRect.y1) / 2 },
+    { x: wardrobeRect.x0 + 36, y: (wardrobeRect.y0 + wardrobeRect.y1) / 2 },
     32,
     wardrobeRect.y1 - wardrobeRect.y0 - 70,
     0.08,
@@ -2343,7 +2353,7 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
     const panel = texturedBox(
       context.scene,
       `${fitout.id} · WARDROBE · posuvný panel ${index + 1}${index === wardrobe.mirroredPanelIndex ? " · zrkadlo" : " · matný greige"}`,
-      { x: wardrobeRect.x0 - 15, y: (panelY0 + panelY1) / 2 },
+      { x: wardrobeRect.x0 + 17, y: (panelY0 + panelY1) / 2 },
       30,
       panelSpanMm - 10,
       wardrobeHeightM - 0.09,
@@ -2360,7 +2370,7 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
       const joint = texturedBox(
         context.scene,
         `${fitout.id} · WARDROBE · tieňová škára posuvných dverí ${index}`,
-        { x: wardrobeRect.x0 - 32, y: panelY0 },
+        { x: wardrobeRect.x0 + 6, y: panelY0 },
         12,
         9,
         wardrobeHeightM - 0.16,
@@ -2373,7 +2383,7 @@ function buildBedroomFitout(context: InteriorBuildContext, materials: InteriorMa
   const endLed = texturedBox(
     context.scene,
     `${fitout.id} · WARDROBE · vertikálne ambientné svetlo 2700 K`,
-    { x: wardrobeRect.x0 - 34, y: wardrobeRect.y0 + 16 },
+    { x: wardrobeRect.x0 + 8, y: wardrobeRect.y0 + 16 },
     16,
     18,
     2.18,

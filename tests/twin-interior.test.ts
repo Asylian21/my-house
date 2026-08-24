@@ -503,7 +503,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
   });
 
-  it("fits the 1 800 × 2 200 bed and full-height wardrobe into en-suite bedroom 1.08", () => {
+  it("fits the 1 800 × 2 200 bed, right-hand door and full-wall wardrobe into bedroom 1.08", () => {
     const fitout = BEDROOM_FITOUT;
     const bedroom = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
     const roomRect = bedroom.rectsMm[0];
@@ -516,7 +516,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     const wardrobe = fitout.wardrobe;
 
     expect(fitout.id).toBe("BEDROOM-FITOUT-2026-08-24");
-    expect(fitout.sourceId).toBe(SOURCES.clientBedroomFitoutRevision20260824.id);
+    expect(fitout.sourceId).toBe(SOURCES.clientBedroomDoorWindowRevision20260824.id);
     expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(bedroom.number).toBe("1.08");
@@ -554,40 +554,56 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(bed.footprintMm.x1 - bed.footprintMm.x0).toBe(1800);
     expect(bed.footprintMm.y1 - bed.footprintMm.y0).toBe(2200);
     expect(bed.facing).toBe("NORTH");
+    expect(bed.headboardTopElevationMm).toBe(840);
     expect(bed.headboardTopElevationMm).toBeLessThanOrEqual(
-      Math.min(...frontWindows.map((opening) => opening.sillMm)),
+      Math.min(...frontWindows.map((opening) => opening.sillMm)) - 40,
     );
     expect(frontWindows.map((opening) => opening.widthMm)).toEqual([800, 800]);
     expect(frontWindows.map((opening) => opening.sillMm)).toEqual([900, 900]);
+    expect(frontWindows[0].startXmm).toBe(17140);
+    expect(frontWindows[1]).toMatchObject({
+      startXmm: 19540,
+      originalStartXmm: 19740,
+      clientShiftMm: -200,
+      sourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
+    });
     expect(bed.headboardRectMm.x0).toBeGreaterThanOrEqual(
       frontWindows[0].startXmm + frontWindows[0].widthMm,
     );
-    expect(bed.headboardRectMm.x1).toBeLessThanOrEqual(frontWindows[1].startXmm);
+    expect(bed.headboardRectMm.x0).toBe(bed.footprintMm.x0);
+    expect(bed.headboardRectMm.x1).toBe(bed.footprintMm.x1);
+    expect(bed.headboardRectMm.x1 - frontWindows[1].startXmm).toBe(302);
 
     expect(wardrobe.facing).toBe("WEST");
     expect(wardrobe.footprintMm.x1 - wardrobe.footprintMm.x0).toBe(600);
-    expect(wardrobe.footprintMm.y1 - wardrobe.footprintMm.y0).toBe(2100);
+    expect(wardrobe.footprintMm.y0).toBe(roomRect.y0);
+    expect(wardrobe.footprintMm.y1).toBe(roomRect.y1);
+    expect(wardrobe.footprintMm.y1 - wardrobe.footprintMm.y0).toBe(2857);
     expect(wardrobe.heightMm).toBe(bedroom.clearHeightMm - 50);
     expect(wardrobe.slidingPanelCount).toBe(3);
     expect(wardrobe.mirroredPanelIndex).toBe(1);
     expect(overlaps(bed.footprintMm, wardrobe.footprintMm)).toBe(false);
     expect(wardrobe.footprintMm.x0 - Math.max(
       ...frontWindows.map((opening) => opening.startXmm + opening.widthMm),
-    )).toBe(102);
+    )).toBe(302);
 
     const leafThicknessMm = 40;
     const frameMm = 60;
-    const entryHingeX = entryDoor.startMm + entryDoor.widthMm - frameMm;
-    const entryLeafX1 = entryHingeX - (leafThicknessMm / 2 + 8) + leafThicknessMm / 2;
+    const entryHingeX = entryDoor.startMm + frameMm;
+    const entryLeafCenterX = entryHingeX + leafThicknessMm / 2 + 8;
     const entryLeafRect: RectMm = {
-      x0: entryLeafX1 - leafThicknessMm,
-      x1: entryLeafX1,
+      x0: entryLeafCenterX - leafThicknessMm / 2,
+      x1: entryLeafCenterX + leafThicknessMm / 2,
       y0: entryDoor.wallSpanMm[0] - entryDoor.leafWidthMm - 20,
       y1: entryDoor.wallSpanMm[0],
     };
     expect(entryDoor.axis).toBe("X");
     expect(entryDoor.swing).toBe(-1);
-    expect(entryDoor.hinge).toBe(1);
+    expect(entryDoor.hinge).toBe(-1);
+    expect(entryDoor.previousHinge).toBe(1);
+    expect(entryDoor.revisionSourceId)
+      .toBe(SOURCES.clientBedroomDoorWindowRevision20260824.id);
+    expect(bathroomDoor.hinge).toBe(1);
     expect(overlaps(entryLeafRect, bed.footprintMm)).toBe(false);
     expect(overlaps(entryLeafRect, wardrobe.footprintMm)).toBe(false);
 
@@ -600,9 +616,10 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(fitout.clearancesMm.westToBathroom).toBeGreaterThanOrEqual(1000);
     expect(fitout.clearancesMm.eastAtWardrobe).toBeGreaterThanOrEqual(750);
     expect(fitout.clearancesMm.foot).toBeGreaterThanOrEqual(600);
-    expect(fitout.clearancesMm.openEntryLeaf).toBeGreaterThanOrEqual(50);
+    expect(fitout.clearancesMm.openEntryLeaf).toBeGreaterThanOrEqual(750);
 
     expect(overlaps(fitout.westBathroomAccessRectMm, bed.footprintMm)).toBe(false);
+    expect(fitout.westBathroomAccessRectMm.x0).toBe(entryLeafRect.x1);
     expect(overlaps(fitout.eastBedsideAccessRectMm, bed.footprintMm)).toBe(false);
     expect(overlaps(fitout.eastBedsideAccessRectMm, wardrobe.footprintMm)).toBe(false);
     expect(overlaps(fitout.footAccessRectMm, bed.footprintMm)).toBe(false);
@@ -612,6 +629,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     );
     expect(fitout.footAccessRectMm.y0).toBe(bed.footprintMm.y1);
     expect(fitout.footAccessRectMm.y1).toBe(roomRect.y1);
+    expect(fitout.eastBedsideAccessRectMm.y0).toBe(roomRect.y0);
     expect(Math.abs(
       bedroom.standingPointMm.y -
       (fitout.footAccessRectMm.y0 + fitout.footAccessRectMm.y1) / 2,

@@ -373,6 +373,17 @@ describe("site evidence seed", () => {
     expect(HOUSE.facades.front.openings.some(({ id }) => id === "FRONT-01")).toBe(
       false,
     );
+    expect(HOUSE.facades.front.openings.find(({ id }) => id === "FRONT-05"))
+      .toMatchObject({
+        startXmm: 19_540,
+        widthMm: 800,
+        originalStartXmm: 19_740,
+        clientShiftMm: -200,
+        sourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
+      });
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientBedroomDoorWindowRevision20260824.id,
+    );
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
     expect(HOUSE.chimneys).toEqual([
       {

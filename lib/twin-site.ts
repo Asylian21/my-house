@@ -240,6 +240,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientBedroomDoorWindowRevision20260824: {
+    id: "SRC-CLIENT-BEDROOM-DOOR-WINDOW-20260824",
+    title: "Revízia stavebníka · pravé dvere a celostenová skriňa v spálni",
+    detail:
+      "Vstupné dvere z chodby do spálne 1.08 zmeniť na pravé pri pohľade zo strany chodby. Pravé južné okno FRONT-05 posunúť o 200 mm doľava a vstavanú skriňu natiahnuť po celej dĺžke východnej steny. Zachovať posteľ 1 800 × 2 200 mm, oba dverné otvory, nízke čelo pod parapetom a pohodlné priechody.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
@@ -617,10 +625,13 @@ export const HOUSE = Object.freeze({
         },
         {
           id: "FRONT-05",
-          startXmm: 19740,
+          startXmm: 19540,
           widthMm: 800,
           heightMm: 1600,
           sillMm: 900,
+          originalStartXmm: 19740,
+          clientShiftMm: -200,
+          sourceId: SOURCES.clientBedroomDoorWindowRevision20260824.id,
         },
         {
           id: "FRONT-ENTRY",
@@ -877,6 +888,7 @@ export const HOUSE = Object.freeze({
     SOURCES.coordination.id,
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
+    SOURCES.clientBedroomDoorWindowRevision20260824.id,
   ],
 });
 
