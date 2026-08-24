@@ -60,6 +60,7 @@ import {
   TERRACE_ZONES_D1,
   UTILITY_ROUTES,
   sjtskToLocalMm,
+  type CadastralParcel,
   type FoundationStrip,
   type LayerId,
   type Point2Mm,
@@ -81,6 +82,8 @@ import {
   sceneXM as xM,
   sceneYawForPlanSegment,
   sceneZM as zM,
+  parcelCameraForWidth,
+  parcelLabelScaleForRadius,
   streetCameraForWidth,
 } from "./twin-render-frame";
 import {
@@ -124,7 +127,13 @@ import {
   type RenderQualityProfile,
 } from "./twin-viewport-contract";
 
-export type CameraPreset = "garden" | "axonometric" | "top" | "street" | "focus";
+export type CameraPreset =
+  | "garden"
+  | "axonometric"
+  | "top"
+  | "parcels"
+  | "street"
+  | "focus";
 type OpeningVisualKind = OpeningKind;
 
 interface PointerGestureState {
@@ -225,6 +234,7 @@ function createFlatPolygon(
   name: string,
   ring: readonly Point2Mm[],
   elevationM: number,
+  worldUvRepeatMm?: number,
 ) {
   const openRing =
     ring.length > 1 &&
@@ -239,10 +249,15 @@ function createFlatPolygon(
   const maxX = Math.max(...openRing.map((point) => point.x));
   const minY = Math.min(...openRing.map((point) => point.y));
   const maxY = Math.max(...openRing.map((point) => point.y));
-  const uvs = openRing.flatMap((point) => [
-    (point.x - minX) / Math.max(1, maxX - minX),
-    (point.y - minY) / Math.max(1, maxY - minY),
-  ]);
+  const uvs = worldUvRepeatMm
+    ? openRing.flatMap((point) => [
+        point.x / worldUvRepeatMm,
+        point.y / worldUvRepeatMm,
+      ])
+    : openRing.flatMap((point) => [
+        (point.x - minX) / Math.max(1, maxX - minX),
+        (point.y - minY) / Math.max(1, maxY - minY),
+      ]);
   const triangulated = earcut(planar, undefined, 2);
   const indices: number[] = [];
   for (let index = 0; index < triangulated.length; index += 3) {
@@ -586,6 +601,113 @@ function segmentBox(
   };
 }
 
+function longestParcelAxisYaw(localRing: readonly Point2Mm[]) {
+  let longest = 0;
+  let yaw = 0;
+  for (let index = 1; index < localRing.length; index += 1) {
+    const start = localRing[index - 1];
+    const end = localRing[index];
+    const length = Math.hypot(end.x - start.x, end.y - start.y);
+    if (length > longest) {
+      longest = length;
+      yaw = sceneYawForPlanSegment(start, end);
+    }
+  }
+  // Ground typography is easiest to read when its baseline stays within ±90°
+  // of the local road axis rather than appearing upside down from above.
+  if (yaw > Math.PI / 2) yaw -= Math.PI;
+  if (yaw < -Math.PI / 2) yaw += Math.PI;
+  return yaw;
+}
+
+function roundedLabelPath(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + r);
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - r,
+    y + height,
+  );
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - r);
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
+}
+
+function parcelLabelMaterial(
+  scene: Scene,
+  parcel: CadastralParcel,
+  anisotropy: number,
+) {
+  const subject = parcel.isSubject;
+  const texture = new DynamicTexture(
+    `parcel-label-${parcel.parcelNumber}`,
+    { width: 768, height: 240 },
+    scene,
+    true,
+  );
+  texture.hasAlpha = true;
+  texture.anisotropicFilteringLevel = anisotropy;
+  const context = texture.getContext();
+  context.clearRect(0, 0, 768, 240);
+  context.save();
+  context.shadowColor = "rgba(8, 12, 10, 0.56)";
+  context.shadowBlur = 18;
+  context.shadowOffsetY = 8;
+  roundedLabelPath(context, 20, 20, 728, 200, 28);
+  context.fillStyle = subject
+    ? "rgba(38, 28, 24, 0.94)"
+    : "rgba(24, 30, 27, 0.86)";
+  context.fill();
+  context.shadowColor = "transparent";
+  context.lineWidth = subject ? 7 : 4;
+  context.strokeStyle = subject
+    ? "rgba(255, 103, 76, 0.98)"
+    : "rgba(244, 238, 224, 0.84)";
+  context.stroke();
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = subject ? "#ffb09f" : "#d7ded8";
+  context.font = "700 25px Arial, sans-serif";
+  context.letterSpacing = "4px";
+  context.fillText(subject ? "MOJA PARCELA" : "KATASTER", 384, 70);
+  context.letterSpacing = "0px";
+  context.fillStyle = "#fffdf6";
+  context.font = subject
+    ? "700 92px Arial, sans-serif"
+    : "700 84px Arial, sans-serif";
+  context.fillText(parcel.parcelNumber, 384, 146);
+  context.restore();
+  texture.update(false);
+
+  const material = new StandardMaterial(
+    `parcel-label-material-${parcel.parcelNumber}`,
+    scene,
+  );
+  material.diffuseTexture = texture;
+  material.diffuseColor = Color3.White();
+  material.emissiveColor = Color3.FromHexString("#92958e");
+  material.specularColor = Color3.Black();
+  material.useAlphaFromDiffuseTexture = true;
+  material.backFaceCulling = false;
+  material.disableLighting = true;
+  material.zOffset = -2;
+  return material;
+}
+
 function inwardOffsetForSegment(
   start: Point2Mm,
   end: Point2Mm,
@@ -656,6 +778,7 @@ export class TwinSceneController {
   >();
   private readonly realisticOnlyMeshes: AbstractMesh[] = [];
   private readonly technicalOverlayMeshes: AbstractMesh[] = [];
+  private readonly parcelLabelMeshes: Mesh[] = [];
   private readonly shadowGenerator: ShadowGenerator;
   private readonly cascadedShadowGenerator: CascadedShadowGenerator | null;
   private readonly selectionHighlight: HighlightLayer;
@@ -933,6 +1056,19 @@ export class TwinSceneController {
     this.materials = {
       terrain: surfaceMaterial(this.scene, "terrain", "#171d1b", 1),
       parcel: surfaceMaterial(this.scene, "parcel", "#27332c", 0.98, 0.88),
+      parcelBoundary: surfaceMaterial(
+        this.scene,
+        "parcel-boundary",
+        "#e8e0d3",
+        0.95,
+        0.9,
+      ),
+      parcelBoundarySubject: surfaceMaterial(
+        this.scene,
+        "parcel-boundary-subject",
+        "#ff654b",
+        0.82,
+      ),
       road: surfaceMaterial(this.scene, "road", "#333a3b", 0.96),
       paving: surfaceMaterial(this.scene, "paving", "#777f7f", 0.96),
       timber: surfaceMaterial(this.scene, "timber", "#9c6235", 0.92),
@@ -956,6 +1092,22 @@ export class TwinSceneController {
     this.realisticMaterials = {
       terrain: pbrMaterial(this.scene, "real-terrain", "#ffffff", 0.97),
       grass: pbrMaterial(this.scene, "real-grass", "#ffffff", 0.95),
+      parcelBoundary: pbrMaterial(
+        this.scene,
+        "real-parcel-boundary",
+        "#f1eadb",
+        0.92,
+        0,
+        0.86,
+      ),
+      parcelBoundarySubject: pbrMaterial(
+        this.scene,
+        "real-parcel-boundary-subject",
+        "#ff6b50",
+        0.78,
+        0,
+        0.98,
+      ),
       road: pbrMaterial(this.scene, "real-road", "#7c8283", 0.94),
       roadReserve: pbrMaterial(this.scene, "real-road-reserve", "#807e72", 0.98),
       paving: pbrMaterial(this.scene, "real-paving", "#c9cbc6", 0.88),
@@ -1106,38 +1258,107 @@ export class TwinSceneController {
     this.realisticMaterials.solar.clearCoat.intensity = 0.9;
     this.realisticMaterials.solar.clearCoat.roughness = 0.07;
 
-    const asphaltTexture = new DynamicTexture(
-      "asphalt-aggregate-albedo",
+    const paverTexture = new DynamicTexture(
+      "street-grey-block-paver-albedo",
       { width: 1024, height: 1024 },
       this.scene,
       true,
     );
-    const asphaltContext = asphaltTexture.getContext();
-    asphaltContext.fillStyle = "#5d6262";
-    asphaltContext.fillRect(0, 0, 1024, 1024);
-    for (let index = 0; index < 18_000; index += 1) {
+    const paverContext = paverTexture.getContext();
+    paverContext.fillStyle = "#3d4140";
+    paverContext.fillRect(0, 0, 1024, 1024);
+    const paverLengthPx = 128;
+    const paverWidthPx = 64;
+    const paverJointPx =
+      (ROAD_CONTEXT.surfaceFinish.visualJointMm /
+        ROAD_CONTEXT.surfaceFinish.visualModuleMm.length) *
+      paverLengthPx;
+    const paverJointInsetPx = paverJointPx / 2;
+    for (let row = 0; row < 16; row += 1) {
+      const offset = row % 2 === 0 ? 0 : -paverLengthPx / 2;
+      for (let column = -1; column < 9; column += 1) {
+        const x = column * paverLengthPx + offset + paverJointInsetPx;
+        const y = row * paverWidthPx + paverJointInsetPx;
+        const variation = ((row * 31 + column * 47 + 97) % 25) - 12;
+        const base = 126 + variation;
+        const gradient = paverContext.createLinearGradient(
+          x,
+          y,
+          x,
+          y + paverWidthPx,
+        );
+        gradient.addColorStop(0, `rgb(${base + 10}, ${base + 12}, ${base + 11})`);
+        gradient.addColorStop(0.42, `rgb(${base + 3}, ${base + 5}, ${base + 4})`);
+        gradient.addColorStop(1, `rgb(${base - 5}, ${base - 3}, ${base - 4})`);
+        paverContext.fillStyle = gradient;
+        paverContext.fillRect(
+          x,
+          y,
+          paverLengthPx - paverJointPx,
+          paverWidthPx - paverJointPx,
+        );
+        paverContext.strokeStyle = "rgba(229, 232, 228, 0.15)";
+        paverContext.lineWidth = 1;
+        paverContext.strokeRect(
+          x + 1,
+          y + 1,
+          paverLengthPx - paverJointPx - 2,
+          paverWidthPx - paverJointPx - 2,
+        );
+      }
+    }
+    // Deterministic mineral aggregate keeps the blocks from reading as a flat
+    // checkerboard without introducing unstable random output between loads.
+    for (let index = 0; index < 22_000; index += 1) {
       const x = (index * 73 + (index % 37) * 19) % 1024;
       const y = (index * 151 + (index % 53) * 11) % 1024;
-      const tone = 75 + ((index * 29) % 58);
-      asphaltContext.fillStyle = `rgba(${tone}, ${tone + 2}, ${tone + 1}, ${0.08 + (index % 5) * 0.018})`;
+      const tone = 84 + ((index * 29) % 72);
+      paverContext.fillStyle = `rgba(${tone}, ${tone + 2}, ${tone + 1}, ${0.035 + (index % 5) * 0.012})`;
       const size = index % 13 === 0 ? 2 : 1;
-      asphaltContext.fillRect(x, y, size, size);
+      paverContext.fillRect(x, y, size, size);
     }
-    asphaltContext.strokeStyle = "rgba(45, 49, 49, 0.22)";
-    asphaltContext.lineWidth = 2;
-    asphaltContext.beginPath();
-    asphaltContext.moveTo(0, 682);
-    asphaltContext.bezierCurveTo(260, 674, 620, 699, 1024, 687);
-    asphaltContext.stroke();
-    asphaltTexture.update(false);
-    asphaltTexture.wrapU = Texture.WRAP_ADDRESS;
-    asphaltTexture.wrapV = Texture.WRAP_ADDRESS;
-    asphaltTexture.uScale = 11;
-    asphaltTexture.vScale = 6;
-    asphaltTexture.anisotropicFilteringLevel = this.renderQuality.anisotropy;
+    paverTexture.update(false);
+    paverTexture.wrapU = Texture.WRAP_ADDRESS;
+    paverTexture.wrapV = Texture.WRAP_ADDRESS;
+    paverTexture.anisotropicFilteringLevel = this.renderQuality.anisotropy;
+
+    const paverNormal = new DynamicTexture(
+      "street-grey-block-paver-normal",
+      { width: 1024, height: 1024 },
+      this.scene,
+      true,
+    );
+    paverNormal.gammaSpace = false;
+    const normalContext = paverNormal.getContext();
+    normalContext.fillStyle = "#8080ff";
+    normalContext.fillRect(0, 0, 1024, 1024);
+    for (let row = 0; row < 16; row += 1) {
+      const offset = row % 2 === 0 ? 0 : -paverLengthPx / 2;
+      for (let column = -1; column < 9; column += 1) {
+        const x = column * paverLengthPx + offset + paverJointInsetPx;
+        const y = row * paverWidthPx + paverJointInsetPx;
+        const width = paverLengthPx - paverJointPx;
+        const height = paverWidthPx - paverJointPx;
+        normalContext.fillStyle = "#8080ff";
+        normalContext.fillRect(x, y, width, height);
+        normalContext.fillStyle = "#8096fa";
+        normalContext.fillRect(x, y, width, 3);
+        normalContext.fillStyle = "#806afa";
+        normalContext.fillRect(x, y + height - 3, width, 3);
+        normalContext.fillStyle = "#9680fa";
+        normalContext.fillRect(x, y, 3, height);
+        normalContext.fillStyle = "#6a80fa";
+        normalContext.fillRect(x + width - 3, y, 3, height);
+      }
+    }
+    paverNormal.update(false);
+    paverNormal.wrapU = Texture.WRAP_ADDRESS;
+    paverNormal.wrapV = Texture.WRAP_ADDRESS;
+    paverNormal.anisotropicFilteringLevel = this.renderQuality.anisotropy;
     this.realisticMaterials.road.albedoColor = Color3.White();
-    this.realisticMaterials.road.albedoTexture = asphaltTexture;
-    this.realisticMaterials.road.environmentIntensity = 0.34;
+    this.realisticMaterials.road.albedoTexture = paverTexture;
+    this.realisticMaterials.road.bumpTexture = paverNormal;
+    this.realisticMaterials.road.environmentIntensity = 0.42;
 
     this.poolWaterNormal = new Texture(
       "/assets/textures/pool-water-normal.png",
@@ -1322,6 +1543,7 @@ export class TwinSceneController {
     this.scene.onBeforeRenderObservable.add(() => {
       this.updateFlightMotion();
       this.updateOrbitZoomGlide();
+      this.updateParcelLabelScale();
       this.animateWaterSurface();
       if (this.canvas.dataset.navigationMode !== this.navigationMode) {
         this.canvas.dataset.navigationMode = this.navigationMode;
@@ -1355,6 +1577,18 @@ export class TwinSceneController {
         navigator as Navigator & { readonly deviceMemory?: number }
       ).deviceMemory,
     });
+  }
+
+  private updateParcelLabelScale() {
+    const scale =
+      this.navigationMode === "orbit"
+        ? parcelLabelScaleForRadius(this.orbitCamera.radius)
+        : 1;
+    for (const label of this.parcelLabelMeshes) {
+      if (!label.isDisposed() && label.scaling.x !== scale) {
+        label.scaling.set(scale, 1, scale);
+      }
+    }
   }
 
   private readonly handleFlightKeyDown = (event: KeyboardEvent) => {
@@ -1678,7 +1912,7 @@ export class TwinSceneController {
     technical: Material,
     realistic: Material,
     layer: LayerId,
-    entityId: string,
+    entityId?: string,
     castsShadow = true,
   ) {
     if (instances.length === 0) return null;
@@ -1766,15 +2000,17 @@ export class TwinSceneController {
 
     const minor = Color3.FromHexString("#313a37");
     const major = Color3.FromHexString("#55605c");
-    for (let coordinate = -30; coordinate <= 45; coordinate += 1) {
+    // The original house-only grid stopped before 6012/28 and the opposite
+    // row. Extend the technical drafting field to match the parcel overview.
+    for (let coordinate = -70; coordinate <= 85; coordinate += 1) {
       const color = coordinate % 5 === 0 ? major : minor;
       const alpha = coordinate % 5 === 0 ? 0.42 : 0.14;
       const xLine = CreateLines(
         `grid-x-${coordinate}`,
         {
           points: [
-            new Vector3(coordinate - CENTER_X_M, -0.112, -30),
-            new Vector3(coordinate - CENTER_X_M, -0.112, 31),
+            new Vector3(coordinate - CENTER_X_M, -0.112, -75),
+            new Vector3(coordinate - CENTER_X_M, -0.112, 85),
           ],
         },
         this.scene,
@@ -1787,8 +2023,8 @@ export class TwinSceneController {
         `grid-z-${coordinate}`,
         {
           points: [
-            new Vector3(-39, -0.111, zM(coordinate * 1000)),
-            new Vector3(39, -0.111, zM(coordinate * 1000)),
+            new Vector3(-90, -0.111, zM(coordinate * 1000)),
+            new Vector3(85, -0.111, zM(coordinate * 1000)),
           ],
         },
         this.scene,
@@ -1819,22 +2055,89 @@ export class TwinSceneController {
         fill.receiveShadows = true;
         this.register(fill, "cadastre");
       }
+
+      if (parcel.orientationRole) {
+        const subject = parcel.isSubject;
+        this.buildThinBoxes(
+          `Pozemné katastrálne čiary ${parcel.parcelNumber}`,
+          localRing.slice(1).map((end, index) =>
+            segmentBox(
+              localRing[index],
+              end,
+              subject ? 120 : 72,
+              subject ? 22 : 14,
+              -24,
+            ),
+          ),
+          subject
+            ? this.materials.parcelBoundarySubject
+            : this.materials.parcelBoundary,
+          subject
+            ? this.realisticMaterials.parcelBoundarySubject
+            : this.realisticMaterials.parcelBoundary,
+          "cadastre",
+          subject ? parcel.id : undefined,
+          false,
+        );
+      }
+
       const outline = CreateLines(
         `Katastrálna hranica ${parcel.nationalReference}`,
-        { points: localRing.map((point) => point3(point, -0.018)) },
+        { points: localRing.map((point) => point3(point, -0.006)) },
         this.scene,
       );
       outline.color = Color3.FromHexString(
-        parcel.isSubject ? "#ff5738" : "#715443",
+        parcel.isSubject
+          ? "#ff5d42"
+          : parcel.orientationRole
+            ? "#f1eadb"
+            : "#715443",
       );
-      outline.alpha = parcel.isSubject ? 1 : 0.46;
+      outline.alpha = parcel.isSubject
+        ? 1
+        : parcel.orientationRole
+          ? 0.84
+          : 0.46;
       outline.isPickable = parcel.isSubject;
-      this.technicalOverlay(outline);
+      if (!parcel.orientationRole) this.technicalOverlay(outline);
       this.register(outline, "cadastre", parcel.isSubject ? parcel.id : undefined);
+
+      if (parcel.labelPointSjtskMm) {
+        const officialAnchor = sjtskToLocalMm(parcel.labelPointSjtskMm);
+        // The official reference point for 6012/26 falls below the house. Keep
+        // that source point in the data model, but move only its visual plaque
+        // into the open west lawn so it remains a ground marking.
+        const anchor = parcel.isSubject
+          ? { x: 2_350, y: 15_800 }
+          : officialAnchor;
+        const label = CreateGround(
+          `Orientačný popis parcely ${parcel.parcelNumber}`,
+          {
+            width: parcel.isSubject ? 4.8 : 3.7,
+            height: parcel.isSubject ? 1.5 : 1.18,
+            subdivisions: 1,
+          },
+          this.scene,
+        );
+        label.position.set(xM(anchor.x), 0.012, zM(anchor.y));
+        label.rotation.y = parcel.isSubject ? 0 : longestParcelAxisYaw(localRing);
+        label.isPickable = false;
+        label.receiveShadows = false;
+        label.renderingGroupId = 2;
+        label.material = parcelLabelMaterial(
+          this.scene,
+          parcel,
+          this.renderQuality.anisotropy,
+        );
+        this.parcelLabelMeshes.push(label);
+        this.register(label, "cadastre");
+      }
     }
   }
 
   private buildStreetAndSite() {
+    const paverRepeatMm =
+      ROAD_CONTEXT.surfaceFinish.visualModuleMm.length * 8;
     for (const [index, ring] of ROAD_CONTEXT.frontReserveSurfacePolygonsMm.entries()) {
       const roadReserve = createGradedPolygon(
         this.scene,
@@ -1860,6 +2163,7 @@ export class TwinSceneController {
       "Miestna komunikácia 6012/1 · čelná vozovka po hranu odvodenú z C3",
       ROAD_CONTEXT.frontagePolygonMm,
       -0.115,
+      paverRepeatMm,
     );
     this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
     frontage.receiveShadows = true;
@@ -1870,6 +2174,7 @@ export class TwinSceneController {
       "Miestna komunikácia 6012/1 · rohová vetva v katastrálnom koridore",
       ROAD_CONTEXT.cornerCarriagewayPolygonMm,
       -0.114,
+      paverRepeatMm,
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
     corner.receiveShadows = true;
@@ -1898,7 +2203,7 @@ export class TwinSceneController {
     const curbTransitionLengthMm = 500;
     const frontCurbSegments = [
       {
-        x0: -15_670,
+        x0: ROAD_CONTEXT.frontParcelEdgeMm[0].x,
         x1: frontOpenings[0].x0 - curbTransitionLengthMm,
       },
       {
@@ -5449,6 +5754,15 @@ export class TwinSceneController {
       this.orbitCamera.radius = this.canvas.clientWidth < 600 ? 56 : 44;
       this.orbitCamera.fov = 0.72;
       this.orbitCamera.target.set(0, 0, 0.5);
+      return;
+    }
+    if (preset === "parcels") {
+      const parcels = parcelCameraForWidth(this.canvas.clientWidth);
+      this.orbitCamera.alpha = parcels.alpha;
+      this.orbitCamera.beta = parcels.beta;
+      this.orbitCamera.radius = parcels.radius;
+      this.orbitCamera.fov = parcels.fov;
+      this.orbitCamera.target.set(...parcels.target);
       return;
     }
     if (preset === "street") {

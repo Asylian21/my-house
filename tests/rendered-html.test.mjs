@@ -54,6 +54,10 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /class="inspector "[^>]+aria-hidden="true"[^>]+inert/);
   assert.match(html, /aria-pressed="true"[^>]*>[\s\S]{0,500}?Realita/i);
   assert.match(html, /aria-label="Kamera a navigácia"/);
+  assert.match(html, /aria-label="Prehľad parciel v mojom rade a oproti"/);
+  assert.match(html, /aria-keyshortcuts="5"/);
+  assert.match(html, />Parcely</);
+  assert.match(html, /ČÚZK · overené 24\. 8\. 2026/);
   assert.match(html, /aria-label="Spustiť voľný 3D prelet"/);
   assert.match(html, /aria-keyshortcuts="H"/);
   assert.match(html, /H spustí voľný 3D prelet a G prechádzku interiérom/);
@@ -64,8 +68,9 @@ test("server-renders the Slovak digital-twin product shell", async () => {
 });
 
 test("keeps Babylon client-only and removes the disposable starter preview", async () => {
-  const [viewport, scene, page, layout, globals, packageJson] = await Promise.all([
+  const [viewport, studio, scene, page, layout, globals, packageJson] = await Promise.all([
     readFile(new URL("../app/babylon-viewport.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/twin-studio.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -108,6 +113,13 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /pevné presklenie 2 000/);
   assert.match(scene, /pás venca/);
   assert.match(scene, /pool-water-normal\.png/);
+  assert.match(scene, /street-grey-block-paver-albedo/);
+  assert.match(scene, /street-grey-block-paver-normal/);
+  assert.match(scene, /surfaceFinish\.visualJointMm/);
+  assert.match(scene, /paverJointInsetPx = paverJointPx \/ 2/);
+  assert.match(scene, /Orientačný popis parcely/);
+  assert.match(scene, /parcelCameraForWidth/);
+  assert.match(scene, /parcelLabelScaleForRadius/);
   assert.match(scene, /hedge-privet-albedo\.png/);
   assert.match(scene, /krížená botanická karta/);
   assert.doesNotMatch(scene, /BILLBOARDMODE_Y/);
@@ -128,6 +140,9 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /WALK_AVATAR_STORAGE_KEY/);
   assert.match(viewport, /event\.detail !== 0/);
   assert.match(viewport, /canvasRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(viewport, /event\.key === "5"\) applyPreset\("parcels"\)/);
+  assert.match(viewport, /preset === "parcels"\) onParcelOverviewRequest\(\)/);
+  assert.match(studio, /preset === "parcels"[\s\S]{0,180}?cadastre: true/);
   assert.match(globals, /\.walk-hud\.is-collapsed/);
   assert.match(globals, /\.walk-hud-content\[hidden\] \{ display: none; \}/);
   assert.match(globals, /\.walk-avatar-options/);

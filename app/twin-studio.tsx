@@ -321,7 +321,7 @@ function getEntityDetail(
       eyebrow: "DOPRAVNÁ INFRAŠTRUKTÚRA",
       title: "Miestna komunikácia pri parcele",
       subtitle: "Bez potvrdeného názvu ulice v RÚIAN",
-      status: "Aktuálny KN + povrch odvodený z C3",
+      status: "Aktuálny KN + C3 rozsah + klientsky povrch",
       statusTone: "context",
       rows: [
         { label: "Parcela komunikácie", value: "6012/1" },
@@ -333,11 +333,12 @@ function getEntityDetail(
         { label: "C3 rezerva po vozovku", value: fmt(Math.abs(ROAD_CONTEXT.frontAsphaltEdgeYmm)), unit: "mm" },
         { label: "Vjazd ku garáži", value: "4 200", unit: "mm" },
         { label: "Chodník ku dverám", value: "1 500", unit: "mm" },
-        { label: "Povrch vozovky v 3D", value: "hrana odvodená z C3" },
+        { label: "Povrch vozovky v 3D", value: "sivá betónová bloková dlažba" },
+        { label: "Vzor dlažby", value: "200 × 100 · vizualizačný modul", unit: "mm" },
         { label: "Najbližšia evidovaná ulica", value: "Bezová · ≈185 m" },
       ],
-      sourceIds: [SOURCES.cadastre.id, SOURCES.coordination.id, SOURCES.networkContext.id],
-      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Hrana asfaltu a približne 3,104 m zelená cestná rezerva na čelnej aj bočnej vetve sú odvodené z napojení vo výkrese C3, nie z geodetického zamerania skutočných obrubníkov.",
+      sourceIds: [...ROAD_CONTEXT.sourceIds, SOURCES.networkContext.id],
+      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Sivá bloková dlažba vychádza z klientskej referencie; jej vizualizačný modul nie je výrobná špecifikácia. Hrana spevnenej vozovky a približne 3,104 m zelená cestná rezerva sú stále odvodené z C3, nie zo zamerania skutočných obrubníkov.",
     };
   }
 
@@ -564,6 +565,11 @@ export function TwinStudio() {
   };
 
   const showCameraPreset = (preset: CameraPreset) => {
+    if (preset === "parcels") {
+      setVisibleLayers((current) =>
+        current.cadastre ? current : { ...current, cadastre: true },
+      );
+    }
     setNavigationMode("orbit");
     viewportRef.current?.setCameraPreset(preset);
   };
@@ -848,17 +854,23 @@ export function TwinStudio() {
           navigationMode={navigationMode}
           onSelect={select}
           onNavigationModeChange={handleViewportNavigationModeChange}
+          onParcelOverviewRequest={() =>
+            setVisibleLayers((current) =>
+              current.cadastre ? current : { ...current, cadastre: true },
+            )
+          }
         />
 
         <div className="truth-card">
           <div className="truth-live"><span /> AKTUÁLNY KATASTER · ROHOVÁ</div>
           <strong>6012/26</strong>
           <div><span>753 m²</span><i /><span>EPSG:5514</span></div>
-          <small>ČÚZK · overené 21. 8. 2026</small>
+          <small>ČÚZK · overené 24. 8. 2026</small>
         </div>
 
         <div className="camera-dock" role="toolbar" aria-label="Kamera a navigácia">
           <button aria-label="Záhradný prezentačný pohľad" aria-keyshortcuts="4" onClick={() => showCameraPreset("garden")}><Trees size={17} /><span>Záhrada</span><kbd>4</kbd></button>
+          <button aria-label="Prehľad parciel v mojom rade a oproti" aria-keyshortcuts="5" onClick={() => showCameraPreset("parcels")}><MapPin size={17} /><span>Parcely</span><kbd>5</kbd></button>
           <button aria-label="Axonometrický pohľad" aria-keyshortcuts="1" onClick={() => showCameraPreset("axonometric")}><Orbit size={17} /><span>Axonometria</span><kbd>1</kbd></button>
           <button aria-label="Pôdorysný pohľad" aria-keyshortcuts="2" onClick={() => showCameraPreset("top")}><Map size={17} /><span>Pôdorys</span><kbd>2</kbd></button>
           <button aria-label="Pohľad od ulice" aria-keyshortcuts="3" onClick={() => showCameraPreset("street")}><House size={17} /><span>Od ulice</span><kbd>3</kbd></button>
@@ -920,7 +932,7 @@ export function TwinStudio() {
 
         {viewMode === "realistic" && (
           <div className="visualization-note">
-            <Trees size={13} /> D1 architektúra · ilustračná vegetácia a atmosféra
+            <Trees size={13} /> D1 architektúra · ČÚZK parcelný kontext · ilustračná vegetácia
           </div>
         )}
 
@@ -930,7 +942,7 @@ export function TwinStudio() {
             <dl>
               <div><dt>Orbit</dt><dd>ťahanie / 1 prst</dd></div>
               <div><dt>Posun a zoom</dt><dd>pravé / koliesko / pinch</dd></div>
-              <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · F</dd></div>
+              <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · 5 · F</dd></div>
               <div><dt>Voľný prelet</dt><dd>H · potom WASD</dd></div>
               <div><dt>Výška preletu</dt><dd>Q / E</dd></div>
               <div><dt>Rýchlosť</dt><dd>Shift turbo · Alt presne</dd></div>

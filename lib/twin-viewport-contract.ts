@@ -18,7 +18,9 @@ export interface WheelEventSummary {
  */
 export const ORBIT_ZOOM = Object.freeze({
   lowerRadiusLimitM: 4.5,
-  upperRadiusLimitM: 64,
+  // The cadastral overview spans two full parcel rows. Keep the ordinary
+  // house presets compact, but allow an explicit wide context view on mobile.
+  upperRadiusLimitM: 150,
   /** Two-finger scroll and physical wheel notches, per normalised pixel. */
   scrollGainPerPx: 0.0018,
   /** Browser-synthesised pinch (wheel + ctrlKey), per normalised pixel. */
