@@ -168,6 +168,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientKitchenClearanceRevision20260824: {
+    id: "SRC-CLIENT-KITCHEN-CLEARANCE-20260824",
+    title: "Revízia stavebníka · voľnejší priechod pri chladničke",
+    detail:
+      "Skrátiť západný koniec kuchynského polostrova presne o 600 mm modul oproti vstavanej chladničke. Varná doska, rúra a ostrovný odsávač zostávajú navzájom vycentrované na pôvodnej osi, takže po skrátení sú o 600 mm bližšie k novému kraju a pri chladničke vzniká širší priechod.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientTechnicalHeatingRevision20260823: {
     id: "SRC-CLIENT-TECH-HEATING-20260823",
     title: "Revízia stavebníka · technológia vykurovania",

@@ -1164,7 +1164,16 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     ...(penNavigationGuard.metadata ?? {}),
     walkCollisionOnly: true,
   };
-  for (const xMm of [pen.x0 + 900, pen.x0 + 1800, pen.x0 + 3100, pen.x0 + 4000]) {
+  // Preserve the original cabinet module grid east of the 600 mm client cut.
+  // Filtering removes only details in the deleted fridge-opposite segment.
+  const originalPeninsulaX0 = fridgeUnit.x0;
+  const peninsulaFrontJointsMm = [
+    originalPeninsulaX0 + 900,
+    originalPeninsulaX0 + 1800,
+    originalPeninsulaX0 + 3100,
+    originalPeninsulaX0 + 4000,
+  ].filter((xMm) => xMm > pen.x0 && xMm < pen.x1);
+  for (const xMm of peninsulaFrontJointsMm) {
     const joint = texturedBox(
       context.scene,
       `${k.id} · škára frontu polostrova`,
@@ -1177,7 +1186,13 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     );
     finish(context, joint, materials.fireplace);
   }
-  for (const xMm of [pen.x0 + 450, pen.x0 + 2450, pen.x0 + 3550, pen.x0 + 4375]) {
+  const peninsulaHandleCentersMm = [
+    originalPeninsulaX0 + 450,
+    originalPeninsulaX0 + 2450,
+    originalPeninsulaX0 + 3550,
+    originalPeninsulaX0 + 4375,
+  ].filter((xMm) => xMm > pen.x0 && xMm < pen.x1);
+  for (const xMm of peninsulaHandleCentersMm) {
     barHandle(context, materials, `${k.id} · úchytka polostrova`, { x: xMm, y: pen.y0 - 14 }, 300, true, 0.8);
   }
   const oven = texturedBox(
@@ -1225,8 +1240,8 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   const hood = texturedBox(
     context.scene,
     `${k.id} · ostrovný odsávač`,
-    { x: k.hobCenterXmm, y: (pen.y0 + pen.y1) / 2 },
-    900,
+    { x: k.extractorCenterXmm, y: (pen.y0 + pen.y1) / 2 },
+    k.extractorWidthMm,
     500,
     0.08,
     1.6,
@@ -1236,7 +1251,7 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   const duct = texturedBox(
     context.scene,
     `${k.id} · komín odsávača`,
-    { x: k.hobCenterXmm, y: (pen.y0 + pen.y1) / 2 },
+    { x: k.extractorCenterXmm, y: (pen.y0 + pen.y1) / 2 },
     300,
     300,
     1.1,

@@ -124,11 +124,15 @@ omietka zvnútra; kuchyňa
 je postavená podľa pôdorysu D1.1.002 — zadná linka 2 900 s drezom a umývačkou,
 na jej západnom konci samostatná 600 mm vstavaná chladnička s mrazničkou v
 dubovom dekore, biele horné skrinky s LED lištou a tmavý
-kremeňový obklad, polostrov 4 750 × 600 s indukčnou doskou, ostrovným
-odsávačom, rúrou pod varnou doskou a voľným presahom bez barových stoličiek
+kremeňový obklad, pôvodne 4 750 × 600 polostrov skrátený pri západnom konci
+o presný 600 mm modul oproti chladničke na výsledných 4 150 × 600, s indukčnou
+doskou, ostrovným odsávačom, rúrou pod varnou doskou a voľným presahom bez
+barových stoličiek
 (`KITCHEN_RUN`, dubová dyha `oak-veneer`,
-kremeň `stone-dark`). Východný koniec polostrova sa v priestore zo snímky
-prechádzky zalamuje do krátkeho 994 × 600 mm L-returnu s dvoma dubovými
+kremeň `stone-dark`). Varná doska, rúra a odsávač zostávajú na spoločnej osi,
+ktorá je po skrátení 699 mm od nového kraja; západný priechod sa rozšíril
+o 600 mm približne na 1 848 mm. Východný koniec polostrova sa v priestore zo
+snímky prechádzky zalamuje do krátkeho 994 × 600 mm L-returnu s dvoma dubovými
 skrinkami, nadväzujúcou kremennou doskou a nízkym obkladom; končí 156 mm pred
 oknom EAST-04 a začína 260 mm za otvorom dverí technickej miestnosti. Technická
 miestnosť 1.07 obsahuje vizualizačný návrh vykurovania

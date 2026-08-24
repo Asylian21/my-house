@@ -67,6 +67,7 @@ export interface KitchenRun {
   readonly id: string;
   readonly designSourceId: string;
   readonly eastReturnSourceId: string;
+  readonly clearanceRevisionSourceId: string;
   /** Back run against the 1.06/1.07 wall: sink and dishwasher (D1.1.002). */
   readonly rectMm: RectMm;
   readonly counterHeightMm: number;
@@ -82,6 +83,9 @@ export interface KitchenRun {
   readonly hobCenterXmm: number;
   /** Oven is centred directly below the peninsula hob. */
   readonly ovenCenterXmm: number;
+  /** Island extractor remains centred over the hob after the peninsula cut. */
+  readonly extractorCenterXmm: number;
+  readonly extractorWidthMm: number;
   /** Client revision keeps the peninsula overhang visually and physically free. */
   readonly barStoolCount: 0;
   readonly upperCabinets: { readonly bottomMm: number; readonly topMm: number; readonly depthMm: number };
@@ -548,22 +552,27 @@ export const FIREPLACE_PIER: FireplacePier = Object.freeze({
  * Kitchen traced from D1.1.002: a 2 900 back run (thick outline 22 791 –
  * 25 691 × 10 949 – 11 550, 600 deep) with the sink and dishwasher symbols,
  * and a 4 750 × 600 peninsula drawn 12 544 – 13 136 with the four-zone hob
- * at x ≈ 24 090. Fronts, worktop and appliances are a design finish.
+ * at x ≈ 24 090. The 24. 8. 2026 client revision removes its westernmost
+ * 600 mm, exactly opposite the fridge, while preserving the appliance axis
+ * and the eastern L-return. Fronts, worktop and appliances are a design finish.
  */
 export const KITCHEN_RUN: KitchenRun = Object.freeze({
   id: "KITCHEN-RUN",
   designSourceId: SOURCES.clientKitchenRevision20260823.id,
   eastReturnSourceId: SOURCES.clientKitchenLRevision20260823.id,
+  clearanceRevisionSourceId: SOURCES.clientKitchenClearanceRevision20260824.id,
   rectMm: { x0: 22791, y0: 10949, x1: 25691, y1: 11550 },
   counterHeightMm: 900,
   fridgeUnitRectMm: { x0: 22791, y0: 10949, x1: 23391, y1: 11550 },
   fridgeCabinetHeightMm: 2250,
   sinkCenterXmm: 24300,
   dishwasherXmm: [24700, 25300] as const,
-  peninsulaRectMm: { x0: 22791, y0: 12544, x1: 27541, y1: 13144 },
+  peninsulaRectMm: { x0: 23391, y0: 12544, x1: 27541, y1: 13144 },
   eastReturnRectMm: { x0: 26941, y0: 11550, x1: 27541, y1: 12544 },
   hobCenterXmm: 24090,
   ovenCenterXmm: 24090,
+  extractorCenterXmm: 24090,
+  extractorWidthMm: 900,
   barStoolCount: 0,
   upperCabinets: { bottomMm: 1450, topMm: 2250, depthMm: 350 },
 });
