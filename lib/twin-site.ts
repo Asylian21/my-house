@@ -248,6 +248,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientEnsuiteBathroomRevision20260824: {
+    id: "SRC-CLIENT-ENSUITE-BATHROOM-20260824",
+    title: "Revízia stavebníka · moderná druhá kúpeľňa",
+    detail:
+      "V kúpeľni 1.11 pri spálni vytvoriť jednoduchú supermodernú zostavu s veľkou vaňou pozdĺž západnej steny, závesným WC pod vysokým južným oknom a plávajúcou umývadlovou skrinkou na východnej stene. Použiť svetlý veľkoformátový obklad, bielu sanitu, matné čierne batérie, teplé drevo a jemné nepriame svetlo. Zachovať obe dovnútra otvárané dvere a čistý priechod medzi nimi.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",

@@ -176,6 +176,45 @@ export interface BathroomFitout {
   readonly applianceServiceRectMm: RectMm;
 }
 
+export interface EnsuiteBathroomFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-11";
+  readonly corridorDoorId: "DOOR-102-111";
+  readonly bedroomDoorId: "DOOR-108-111";
+  readonly frontWindowId: "FRONT-03";
+  readonly windowBacksplashTopElevationMm: number;
+  readonly bathtub: {
+    readonly footprintMm: RectMm;
+    readonly innerBasinMm: RectMm;
+    readonly facing: "EAST";
+    readonly rimElevationMm: number;
+  };
+  readonly toilet: {
+    readonly footprintMm: RectMm;
+    readonly concealedCisternRectMm: RectMm;
+    readonly facing: "NORTH";
+    readonly seatElevationMm: number;
+    readonly moduleHeightMm: number;
+  };
+  readonly vanity: {
+    readonly footprintMm: RectMm;
+    readonly basinFootprintMm: RectMm;
+    readonly mirrorPlanRectMm: RectMm;
+    readonly facing: "WEST";
+    readonly counterElevationMm: number;
+    readonly basinRimElevationMm: number;
+    readonly mirrorBottomElevationMm: number;
+    readonly mirrorTopElevationMm: number;
+  };
+  readonly clearFloorRectMm: RectMm;
+  readonly vanityClearanceRectMm: RectMm;
+  readonly corridorLandingRectMm: RectMm;
+  readonly bedroomLandingRectMm: RectMm;
+}
+
 export interface OfficeFitout {
   readonly id: string;
   readonly sourceId: string;
@@ -714,6 +753,50 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
   },
   clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8322 },
   applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
+});
+
+/**
+ * Plan-faithful en-suite bathroom in 1.11. A slim 1 800 × 700 mm bath follows
+ * the west wall, a compact wall-hung WC stays centred under FRONT-03 and the
+ * floating vanity occupies the east wall beyond both open door leaves.
+ */
+export const ENSUITE_BATHROOM_FITOUT: EnsuiteBathroomFitout = Object.freeze({
+  id: "ENSUITE-BATHROOM-FITOUT-2026-08-24",
+  sourceId: SOURCES.clientEnsuiteBathroomRevision20260824.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-11",
+  corridorDoorId: "DOOR-102-111",
+  bedroomDoorId: "DOOR-108-111",
+  frontWindowId: "FRONT-03",
+  windowBacksplashTopElevationMm: 1680,
+  bathtub: {
+    footprintMm: { x0: 13941, y0: 3563, x1: 14641, y1: 5363 },
+    innerBasinMm: { x0: 14021, y0: 3663, x1: 14581, y1: 5263 },
+    facing: "EAST",
+    rimElevationMm: 570,
+  },
+  toilet: {
+    footprintMm: { x0: 15160, y0: 3504, x1: 15520, y1: 4064 },
+    concealedCisternRectMm: { x0: 15090, y0: 3504, x1: 15590, y1: 3704 },
+    facing: "NORTH",
+    seatElevationMm: 450,
+    moduleHeightMm: 1150,
+  },
+  vanity: {
+    footprintMm: { x0: 16263, y0: 4461, x1: 16743, y1: 5361 },
+    basinFootprintMm: { x0: 16273, y0: 4561, x1: 16633, y1: 5261 },
+    mirrorPlanRectMm: { x0: 16713, y0: 4521, x1: 16727, y1: 5301 },
+    facing: "WEST",
+    counterElevationMm: 820,
+    basinRimElevationMm: 880,
+    mirrorBottomElevationMm: 1050,
+    mirrorTopElevationMm: 1950,
+  },
+  clearFloorRectMm: { x0: 15100, y0: 4064, x1: 15580, y1: 4874 },
+  vanityClearanceRectMm: { x0: 15563, y0: 4461, x1: 16263, y1: 5361 },
+  corridorLandingRectMm: { x0: 15170, y0: 4821, x1: 15610, y1: 5261 },
+  bedroomLandingRectMm: { x0: 16172.5, y0: 3781, x1: 16612.5, y1: 4221 },
 });
 
 /** Reoriented minimalist home-office composition fitted around both study windows. */

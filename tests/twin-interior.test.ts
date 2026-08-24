@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BATHROOM_FITOUT,
   BEDROOM_FITOUT,
+  ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_PIER,
   INTERIOR_DOORS,
@@ -501,6 +502,118 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     };
     expect(overlaps(leafRect, fitout.shower.footprintMm)).toBe(false);
     expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
+  });
+
+  it("fits a bath, wall-hung WC and floating vanity into the two-door bathroom 1.11", () => {
+    const fitout = ENSUITE_BATHROOM_FITOUT;
+    const bathroom = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
+    const roomRect = bathroom.rectsMm[0];
+    const corridorDoor = INTERIOR_DOORS.find((door) => door.id === fitout.corridorDoorId)!;
+    const bedroomDoor = INTERIOR_DOORS.find((door) => door.id === fitout.bedroomDoorId)!;
+    const frontWindow = HOUSE.facades.front.openings.find(
+      (opening) => opening.id === fitout.frontWindowId,
+    )!;
+    const fixtures = [
+      fitout.bathtub.footprintMm,
+      fitout.toilet.footprintMm,
+      fitout.vanity.footprintMm,
+    ];
+
+    expect(fitout.sourceId).toBe(SOURCES.clientEnsuiteBathroomRevision20260824.id);
+    expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
+    expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
+    expect(bathroom.number).toBe("1.11");
+    expect(bathroom.name).toBe("Kúpeľňa");
+    expect(roomRect).toEqual({ x0: 13941, y0: 3504, x1: 16743, y1: 5421 });
+    expect(roomRect.x1 - roomRect.x0).toBe(2802);
+    expect(roomRect.y1 - roomRect.y0).toBe(1917);
+    expect(roomAreaM2(bathroom)).toBeCloseTo(5.371434, 6);
+
+    expect(frontWindow).toMatchObject({
+      id: "FRONT-03",
+      startXmm: 14965,
+      widthMm: 750,
+      heightMm: 750,
+      sillMm: 1750,
+    });
+    expect(fitout.windowBacksplashTopElevationMm).toBeLessThanOrEqual(
+      frontWindow.sillMm - 70,
+    );
+
+    for (const rect of [
+      ...fixtures,
+      fitout.bathtub.innerBasinMm,
+      fitout.toilet.concealedCisternRectMm,
+      fitout.vanity.basinFootprintMm,
+      fitout.vanity.mirrorPlanRectMm,
+      fitout.clearFloorRectMm,
+      fitout.vanityClearanceRectMm,
+      fitout.corridorLandingRectMm,
+      fitout.bedroomLandingRectMm,
+    ]) {
+      expect(inside(rect, roomRect)).toBe(true);
+    }
+
+    expect(fitout.bathtub.facing).toBe("EAST");
+    expect(fitout.bathtub.footprintMm.x1 - fitout.bathtub.footprintMm.x0).toBe(700);
+    expect(fitout.bathtub.footprintMm.y1 - fitout.bathtub.footprintMm.y0).toBe(1800);
+    expect(inside(fitout.bathtub.innerBasinMm, fitout.bathtub.footprintMm)).toBe(true);
+    expect(fitout.bathtub.rimElevationMm).toBe(570);
+
+    expect(fitout.toilet.facing).toBe("NORTH");
+    expect(fitout.toilet.footprintMm.x1 - fitout.toilet.footprintMm.x0).toBe(360);
+    expect(fitout.toilet.footprintMm.y1 - fitout.toilet.footprintMm.y0).toBe(560);
+    expect(fitout.toilet.seatElevationMm).toBe(450);
+    expect(fitout.toilet.moduleHeightMm).toBeLessThan(frontWindow.sillMm - 500);
+    expect((fitout.toilet.footprintMm.x0 + fitout.toilet.footprintMm.x1) / 2)
+      .toBe(frontWindow.startXmm + frontWindow.widthMm / 2);
+
+    expect(fitout.vanity.facing).toBe("WEST");
+    expect(fitout.vanity.footprintMm.x1 - fitout.vanity.footprintMm.x0).toBe(480);
+    expect(fitout.vanity.footprintMm.y1 - fitout.vanity.footprintMm.y0).toBe(900);
+    expect(inside(fitout.vanity.basinFootprintMm, fitout.vanity.footprintMm)).toBe(true);
+    expect(fitout.vanity.mirrorTopElevationMm).toBeLessThan(bathroom.clearHeightMm);
+
+    for (let index = 0; index < fixtures.length; index += 1) {
+      for (let other = index + 1; other < fixtures.length; other += 1) {
+        expect(overlaps(fixtures[index], fixtures[other])).toBe(false);
+      }
+    }
+
+    const corridorLeafRect: RectMm = { x0: 15058, y0: 4701, x1: 15098, y1: 5421 };
+    const bedroomLeafRect: RectMm = { x0: 16023, y0: 4293, x1: 16743, y1: 4333 };
+    expect(corridorDoor).toMatchObject({ axis: "X", swing: -1, hinge: -1 });
+    expect(bedroomDoor).toMatchObject({ axis: "Y", swing: -1, hinge: 1 });
+    for (const fixture of fixtures) {
+      expect(overlaps(fixture, corridorLeafRect)).toBe(false);
+      expect(overlaps(fixture, bedroomLeafRect)).toBe(false);
+    }
+    expect(overlaps(fitout.clearFloorRectMm, corridorLeafRect)).toBe(false);
+    expect(overlaps(fitout.clearFloorRectMm, bedroomLeafRect)).toBe(false);
+
+    expect(fitout.toilet.footprintMm.x0 - fitout.bathtub.footprintMm.x1).toBe(519);
+    expect(bedroomLeafRect.x0 - fitout.toilet.footprintMm.x1).toBe(503);
+    expect(fitout.vanity.footprintMm.y0 - bedroomLeafRect.y1).toBe(128);
+    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(480);
+    expect(fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0).toBeGreaterThanOrEqual(800);
+    expect(fitout.vanityClearanceRectMm.x1 - fitout.vanityClearanceRectMm.x0).toBe(700);
+    expect(overlaps(fitout.clearFloorRectMm, fitout.bathtub.footprintMm)).toBe(false);
+    expect(overlaps(fitout.clearFloorRectMm, fitout.toilet.footprintMm)).toBe(false);
+    expect(overlaps(fitout.clearFloorRectMm, fitout.vanity.footprintMm)).toBe(false);
+    expect(overlaps(fitout.vanityClearanceRectMm, fitout.vanity.footprintMm)).toBe(false);
+
+    const standingClearance: RectMm = {
+      x0: bathroom.standingPointMm.x - 220,
+      y0: bathroom.standingPointMm.y - 220,
+      x1: bathroom.standingPointMm.x + 220,
+      y1: bathroom.standingPointMm.y + 220,
+    };
+    expect(inside(standingClearance, fitout.clearFloorRectMm)).toBe(true);
+    for (const landing of [fitout.corridorLandingRectMm, fitout.bedroomLandingRectMm]) {
+      expect(landing.x1 - landing.x0).toBe(440);
+      expect(landing.y1 - landing.y0).toBe(440);
+      for (const fixture of fixtures) expect(overlaps(landing, fixture)).toBe(false);
+    }
   });
 
   it("fits the 1 800 × 2 200 bed, right-hand door and full-wall wardrobe into bedroom 1.08", () => {
