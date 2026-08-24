@@ -25,6 +25,11 @@ namiesto prvého garážového okna; súkromnú záhradu uzatvára nový plot po
 na úrovni čelnej fasády, takže nezatvára nový priamy príjazd do garáže. Ostatná
 geometria D1 zostáva nedotknutá.
 
+Najnovšia interiérová revízia z 24. 8. 2026 prepisuje iba podobu hlavného
+komína: murovaný pilier pri 1.03 už v aktívnom modeli nie je. Nahrádza ho
+štíhla matne čierna trubka vedená priamo z osi valcových krbových kachlí cez
+šikmý podhľad a dvorovú rovinu strechy (`FIREPLACE_STOVE`, `HOUSE.flues[0]`).
+
 Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
 7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na
 hustý živý plot. Najnovšia doložená exteriérová revízia požaduje v otvorenom
@@ -113,7 +118,7 @@ terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástic
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
 nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,
-kachle pri komíne a soklové lišty sú ilustračný návrh, nie projektová
+valcové krbové kachle so zvislým dymovodom a soklové lišty sú ilustračný návrh, nie projektová
 špecifikácia. Sklo je od tejto revízie skutočne priehľadné (alfa prekrytie s
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
@@ -121,8 +126,9 @@ interiér a zvnútra terasu.
 Revízia stavebníka z 22. 8. 2026 (`SOURCES.clientRevision20260822`) mení tri
 veci v obytnom priestore 1.03: kachle s komínom sú menšie a stoja hneď vedľa
 dverí na bazénovú terasu opreté o západnú stenu — dymovod vedie do murovaného
-piliera 346 × 500 z výkresu D1.1.002, ktorý je teraz komínovým telesom
-(`HOUSE.chimneys[0]`, prestup strechou na dvorovej rovine, FV pole preto
+piliera 346 × 500 z výkresu D1.1.002, ktorý bol komínovým telesom v historickej
+revízii (tento pilier neskôr ruší `SOURCES.clientFireplaceRevision20260824`;
+prestup strechou na dvorovej rovine zostáva a FV pole je preto
 posunuté o ďalší stĺpcový krok 1,1 m do záhrady); štítová stena k prístrešku
 má podľa referenčnej fotografie stavebníka pri rohovom pilieri 500 mm
 murovaný pilier, potom jediné pevné presklenie 2 000 × 2 750 (bez dverí),
@@ -181,8 +187,8 @@ dvere s bočným svetlíkom. Pevné sklá zastavujú chodca, posuvné a dverné
 krídla sú priechodné.
 
 Revízia interiéru stavebníka z 23. 8. 2026 dopĺňa do 1.03 ucelenú obývaciu a
-jedálenskú zónu (`LIVING_DINING_FITOUT`). Na západnej stene je za komínovým
-pilierom 3,37 m dlhá vstavaná bezúchytková TV zostava v teplej greige, dubovej
+jedálenskú zónu (`LIVING_DINING_FITOUT`). Na západnej stene je za valcovými
+krbovými kachľami 3,37 m dlhá vstavaná bezúchytková TV zostava v teplej greige, dubovej
 dyhe a tmavom kameni, so zapusteným 98-palcovým TV, plávajúcou skrinkou,
 soundbarom a nepriamou 2700 K LED. Oproti stojí nízka svetlá modulová
 L-sedačka s ležadlom až na plnej časti štítovej steny, na koberci s dvojicou

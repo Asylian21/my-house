@@ -3143,19 +3143,22 @@ export class TwinSceneController {
       this.register(joint, "building");
     }
 
-    for (const [index, chimneySpec] of HOUSE.chimneys.entries()) {
-      const center = chimneySpec.centerMm;
+    for (const [index, flueSpec] of HOUSE.flues.entries()) {
+      const center = flueSpec.centerMm;
       const roofMount = roofMountTransform(
-        "WING_INNER",
+        flueSpec.roofFace,
         center.x,
         center.y,
         deriveJoinedRoofGeometry().parameters,
       );
-      const planWidthM = chimneySpec.planMm.widthMm * MM_TO_M;
-      const planDepthM = chimneySpec.planMm.depthMm * MM_TO_M;
-      const flashing = CreateBox(
-        `Oplechovanie prestupu komína ${index + 1}`,
-        { width: planWidthM + 0.32, depth: planDepthM + 0.32, height: 0.035 },
+      const pipeDiameterM = flueSpec.outerDiameterMm * MM_TO_M;
+      const flashing = CreateCylinder(
+        `Kruhové oplechovanie zvislého dymovodu ${index + 1}`,
+        {
+          height: 0.035,
+          diameter: flueSpec.flashingDiameterMm * MM_TO_M,
+          tessellation: 64,
+        },
         this.scene,
       );
       flashing.position.set(
@@ -3169,77 +3172,77 @@ export class TwinSceneController {
       flashing.isPickable = false;
       this.realisticOnly(flashing);
       this.castShadow(flashing);
-      this.register(flashing, "building");
+      this.register(flashing, "building", flueSpec.id);
 
-      // The flue column runs from the living-room floor (where the stove
-      // stands) through the vaulted ceiling to +6,160 above the roof.
-      const chimney = boxAtPlan(
-        this.scene,
-        `Komín ${index + 1} · ${chimneySpec.id} · +6,160 m`,
-        center,
-        chimneySpec.planMm.widthMm,
-        chimneySpec.planMm.depthMm,
-        6.16,
-        0,
-      );
-      // The overlapping interior plaster pier is the authoritative walk
-      // collider; a second full-height box here caused corner jitter.
-      chimney.checkCollisions = false;
-      this.appearance(
-        chimney,
-        this.materials.roof,
-        this.realisticMaterials.chimney,
-      );
-      this.castShadow(chimney);
-      chimney.isPickable = false;
-      this.register(chimney, "building");
-
-      const cap = boxAtPlan(
-        this.scene,
-        `Nerezové ukončenie komína ${index + 1}`,
-        center,
-        chimneySpec.planMm.widthMm + 40,
-        chimneySpec.planMm.depthMm + 40,
-        0.02,
-        HOUSE.chimneyElevationMm * MM_TO_M - 0.02,
-      );
-      cap.material = this.realisticMaterials.stone;
-      cap.isPickable = false;
-      this.realisticOnly(cap);
-      this.castShadow(cap);
-      this.register(cap, "building");
-
+      // One coaxial matte-black pipe replaces the former 347 × 500 masonry
+      // column. It starts at the stove top and runs without an elbow through
+      // the vaulted ceiling and roof to its documented termination.
+      const pipeHeightM =
+        (flueSpec.terminationElevationMm - flueSpec.baseElevationMm) * MM_TO_M;
       const flue = CreateCylinder(
-        `Nerezový prieduch komína ${index + 1}`,
-        { height: 0.3, diameter: 0.19, tessellation: 32 },
+        `Zvislý dymovod ${index + 1} · ${flueSpec.id} · Ø${flueSpec.outerDiameterMm}`,
+        { height: pipeHeightM, diameter: pipeDiameterM, tessellation: 48 },
         this.scene,
       );
       flue.position.set(
         xM(center.x),
-        HOUSE.chimneyElevationMm * MM_TO_M + 0.14,
+        (flueSpec.baseElevationMm + flueSpec.terminationElevationMm) * MM_TO_M / 2,
         zM(center.y),
       );
-      flue.material = this.realisticMaterials.chimneyMetal;
-      flue.isPickable = false;
-      this.realisticOnly(flue);
+      flue.checkCollisions = false;
+      this.appearance(
+        flue,
+        this.materials.roof,
+        this.realisticMaterials.roofEdge,
+      );
       this.castShadow(flue);
-      this.register(flue, "building");
+      flue.isPickable = false;
+      flue.metadata = {
+        ...(flue.metadata ?? {}),
+        flueShape: flueSpec.shape,
+        finish: flueSpec.finish,
+      };
+      this.register(flue, "building", flueSpec.id);
+
+      const roofCollar = CreateCylinder(
+        `Tesniaca manžeta dymovodu ${index + 1}`,
+        {
+          height: 0.12,
+          diameter: pipeDiameterM + 0.07,
+          tessellation: 48,
+        },
+        this.scene,
+      );
+      roofCollar.position.set(
+        xM(center.x),
+        roofMount.elevationMm * MM_TO_M + 0.045,
+        zM(center.y),
+      );
+      roofCollar.material = this.realisticMaterials.roofEdge;
+      roofCollar.isPickable = false;
+      this.realisticOnly(roofCollar);
+      this.castShadow(roofCollar);
+      this.register(roofCollar, "building", flueSpec.id);
 
       const rainCap = CreateCylinder(
-        `Dažďová hlavica komína ${index + 1}`,
-        { height: 0.035, diameter: 0.3, tessellation: 32 },
+        `Matne čierna dažďová hlavica dymovodu ${index + 1}`,
+        {
+          height: 0.035,
+          diameter: flueSpec.rainCapDiameterMm * MM_TO_M,
+          tessellation: 48,
+        },
         this.scene,
       );
       rainCap.position.set(
         xM(center.x),
-        HOUSE.chimneyElevationMm * MM_TO_M + 0.325,
+        flueSpec.terminationElevationMm * MM_TO_M + 0.02,
         zM(center.y),
       );
-      rainCap.material = this.realisticMaterials.chimneyMetal;
+      rainCap.material = this.realisticMaterials.roofEdge;
       rainCap.isPickable = false;
       this.realisticOnly(rainCap);
       this.castShadow(rainCap);
-      this.register(rainCap, "building");
+      this.register(rainCap, "building", flueSpec.id);
     }
 
     for (const downpipe of HOUSE.rainwaterDownpipes) {

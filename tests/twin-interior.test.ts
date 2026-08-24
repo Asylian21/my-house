@@ -6,7 +6,7 @@ import {
   CHILDRENS_BEDROOM_FITOUTS,
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
-  FIREPLACE_PIER,
+  FIREPLACE_STOVE,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -22,6 +22,7 @@ import {
   type RectMm,
 } from "../lib/twin-interior";
 import { HOUSE, SOURCES } from "../lib/twin-site";
+import { roofHeightMm } from "../lib/twin-roof";
 import { WALK_COLLISION_ELLIPSOID_M } from "../lib/twin-viewport-contract";
 
 const overlaps = (a: RectMm, b: RectMm) =>
@@ -101,10 +102,55 @@ describe("interior of 1.NP traced from D1.1.002", () => {
         expect(overlaps(wall.rectMm, rect), `${wall.id} × ${owner}`).toBe(false);
       }
     }
-    // The 347 × 500 pier stands inside 1.03 against its west wall.
-    const living = INTERIOR_ROOMS.find((room) => room.number === "1.03")!;
-    expect(inside(FIREPLACE_PIER.rectMm, living.rectsMm[0])).toBe(true);
-    expect(FIREPLACE_PIER.rectMm.x0).toBe(living.rectsMm[0].x0);
+  });
+
+  it("replaces the living-room masonry pier with a coaxial cylindrical stove and flue", () => {
+    const stove = FIREPLACE_STOVE;
+    const living = INTERIOR_ROOMS.find((room) => room.id === stove.roomId)!;
+    const livingMain = living.rectsMm[0];
+    const terraceDoorEndMm =
+      HOUSE.facades.wingWest.opening.startYmm + HOUSE.facades.wingWest.opening.widthMm;
+    const walkRadiusMm = WALK_COLLISION_ELLIPSOID_M.x / 0.001;
+    const flue = HOUSE.flues[0];
+    const ceilingMm = ceilingElevationMm(living, stove.centerMm.x);
+    const roofMm = roofHeightMm(stove.flue.roofFace, stove.centerMm.x, stove.centerMm.y);
+
+    expect(stove).toMatchObject({
+      sourceId: SOURCES.clientFireplaceRevision20260824.id,
+      status: "CLIENT_DESIGN_CONCEPT",
+      facing: "EAST",
+      centerMm: { x: 21_853, y: 14_275 },
+      bodyDiameterMm: 510,
+      bodyHeightMm: 1_550,
+      window: {
+        bottomElevationMm: 430,
+        heightMm: 600,
+        arcDegrees: 118,
+        handleSide: "GARDEN",
+      },
+    });
+    expect(inside(stove.footprintMm, livingMain)).toBe(true);
+    expect(stove.footprintMm.x0 - livingMain.x0).toBe(55);
+    expect(stove.footprintMm.y0 - terraceDoorEndMm).toBe(220);
+    expect(stove.footprintMm.y0 - walkRadiusMm).toBeGreaterThanOrEqual(terraceDoorEndMm);
+    expect(LIVING_DINING_FITOUT.tvWall.rectMm.y0 - stove.footprintMm.y1).toBe(850);
+
+    expect(flue).toMatchObject({
+      id: stove.flue.id,
+      shape: "ROUND_STOVE_PIPE",
+      centerMm: stove.centerMm,
+      outerDiameterMm: stove.flue.outerDiameterMm,
+      baseElevationMm: stove.bodyHeightMm,
+      terminationElevationMm: stove.flue.terminationElevationMm,
+      roofFace: stove.flue.roofFace,
+      finish: "MATTE_BLACK_STEEL",
+      replacesInteriorPierId: "IW-WEST-PIER-103",
+      sourceId: stove.sourceId,
+    });
+    expect(INTERIOR_WALLS.some(({ id }) => id === flue.replacesInteriorPierId)).toBe(false);
+    expect(stove.bodyHeightMm).toBeLessThan(ceilingMm);
+    expect(ceilingMm).toBeLessThan(roofMm);
+    expect(roofMm).toBeLessThan(stove.flue.terminationElevationMm);
   });
 
   it("uses the plan wall thicknesses (140 partitions, 190–300 load-bearing)", () => {
@@ -248,7 +294,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(tvWall.x0).toBe(livingMain.x0);
     expect(tvWall.x1).toBeLessThan(rearGlazing.startXmm);
-    expect(tvWall.y0 - FIREPLACE_PIER.rectMm.y1).toBeGreaterThanOrEqual(300);
+    expect(tvWall.y0 - FIREPLACE_STOVE.footprintMm.y1).toBeGreaterThanOrEqual(300);
     expect(rearInnerFaceYmm - tvWall.y1).toBeGreaterThanOrEqual(250);
     expect(inside(tvWall, livingMain)).toBe(true);
 

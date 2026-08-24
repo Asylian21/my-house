@@ -436,26 +436,25 @@ describe("site evidence seed", () => {
         HOUSE.originMm.y + HOUSE.roof.wingOverallPlanLengthMm,
       );
 
-      for (const chimney of HOUSE.chimneys) {
-        const chimneyCapHalfMm = 290;
-        const overlapsChimneyCap =
+      for (const flue of HOUSE.flues) {
+        const flashingRadiusMm = flue.flashingDiameterMm / 2;
+        const overlapsFlashing =
           center.x - frameHalfSlopePlanMm <
-            chimney.centerMm.x + chimneyCapHalfMm &&
+            flue.centerMm.x + flashingRadiusMm &&
           center.x + frameHalfSlopePlanMm >
-            chimney.centerMm.x - chimneyCapHalfMm &&
+            flue.centerMm.x - flashingRadiusMm &&
           center.y - frameHalfRidgeMm <
-            chimney.centerMm.y + chimneyCapHalfMm &&
+            flue.centerMm.y + flashingRadiusMm &&
           center.y + frameHalfRidgeMm >
-            chimney.centerMm.y - chimneyCapHalfMm;
-        expect(overlapsChimneyCap).toBe(false);
+            flue.centerMm.y - flashingRadiusMm;
+        expect(overlapsFlashing).toBe(false);
       }
     }
-    // The nearest module row starts well clear of the flue cap (pier end
-    // 15 051 + cap overhang): 15 700 − 530 − 15 051 − 40 ≥ 0.
+    // The nearest module row stays clear of the new circular roof flashing.
     expect(
       Math.min(...photovoltaicCenters.map(({ y }) => y)) -
         (HOUSE.photovoltaics.moduleRidgeWidthMm + 40) / 2 -
-        (HOUSE.chimneys[0].centerMm.y + HOUSE.chimneys[0].planMm.depthMm / 2 + 40),
+        (HOUSE.flues[0].centerMm.y + HOUSE.flues[0].flashingDiameterMm / 2),
     ).toBeGreaterThanOrEqual(0);
     expect(HOUSE.facades.front.garageDoor).toMatchObject({
       id: "GARAGE-DOOR",
@@ -502,34 +501,42 @@ describe("site evidence seed", () => {
     expect(HOUSE.sourceIds).toContain(
       SOURCES.clientOfficeFixedWindowRevision20260824.id,
     );
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientFireplaceRevision20260824.id,
+    );
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
-    expect(HOUSE.chimneys).toEqual([
+    expect(HOUSE.flues).toEqual([
       {
-        id: "CHIMNEY-LIVING-103",
-        centerMm: { x: 21_716, y: 14_801 },
-        planMm: { widthMm: 346, depthMm: 500 },
-        previousCenterMm: { x: 24_190, y: 12_700 },
-        designCenterMm: { x: 24_190, y: 11_700 },
-        gardenShiftMm: 1_000,
+        id: "FLUE-LIVING-103",
+        shape: "ROUND_STOVE_PIPE",
+        centerMm: { x: 21_853, y: 14_275 },
+        outerDiameterMm: 150,
+        baseElevationMm: 1_550,
+        terminationElevationMm: 6_160,
+        roofFace: "WING_INNER",
+        finish: "MATTE_BLACK_STEEL",
+        flashingDiameterMm: 470,
+        rainCapDiameterMm: 280,
+        previousMasonryCenterMm: { x: 21_716, y: 14_801 },
+        previousMasonryPlanMm: { widthMm: 346, depthMm: 500 },
+        replacesInteriorPierId: "IW-WEST-PIER-103",
         zone: "MAIN_LIVING_AND_KITCHEN_1_03",
         baseSourceId: SOURCES.roofPlan.id,
-        previousSourceId: SOURCES.clientRevision20260821.id,
-        sourceId: SOURCES.clientRevision20260822.id,
+        previousSourceId: SOURCES.clientRevision20260822.id,
+        sourceId: SOURCES.clientFireplaceRevision20260824.id,
       },
     ]);
-    // The flue is the D1.1.002 pier on the west wall of 1.03, next to the
-    // 2 250 terrace door (11 550 – 13 800), and stays on the wing inner plane.
-    const flue = HOUSE.chimneys[0];
-    expect(flue.centerMm.x - flue.planMm.widthMm / 2).toBe(21_543);
-    expect(flue.centerMm.y - flue.planMm.depthMm / 2).toBeGreaterThan(
+    // The active chimney is only a round pipe on the stove axis; the former
+    // rectangular masonry centre remains provenance and is never active geometry.
+    const flue = HOUSE.flues[0];
+    expect(flue.centerMm.y - flue.outerDiameterMm / 2).toBeGreaterThan(
       HOUSE.facades.wingWest.opening.startYmm + HOUSE.facades.wingWest.opening.widthMm,
     );
-    expect(flue.centerMm.x + flue.planMm.widthMm / 2).toBeLessThan(
+    expect(flue.centerMm.x + flue.outerDiameterMm / 2).toBeLessThan(
       HOUSE.originMm.x + HOUSE.wing.xMm + HOUSE.roof.wingHalfSpanMm,
     );
-    expect(
-      sceneZM(flue.previousCenterMm.y) - sceneZM(flue.designCenterMm.y),
-    ).toBe(-1);
+    expect(flue.previousMasonryPlanMm.widthMm).toBeGreaterThan(flue.outerDiameterMm);
+    expect(flue.previousMasonryPlanMm.depthMm).toBeGreaterThan(flue.outerDiameterMm);
     expect(HOUSE.removedChimneys).toEqual([
       {
         id: "CHIMNEY-ROOM-109",

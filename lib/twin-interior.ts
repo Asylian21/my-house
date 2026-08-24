@@ -377,9 +377,29 @@ export interface BedroomFitout {
   readonly footAccessRectMm: RectMm;
 }
 
-export interface FireplacePier {
+export interface FireplaceStove {
   readonly id: string;
-  readonly rectMm: RectMm;
+  readonly sourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-03";
+  readonly facing: "EAST";
+  readonly centerMm: Point2Mm;
+  readonly footprintMm: RectMm;
+  readonly bodyDiameterMm: number;
+  readonly bodyHeightMm: number;
+  readonly window: {
+    readonly bottomElevationMm: number;
+    readonly heightMm: number;
+    readonly arcDegrees: number;
+    readonly handleSide: "GARDEN";
+  };
+  readonly flue: {
+    readonly id: "FLUE-LIVING-103";
+    readonly outerDiameterMm: number;
+    readonly startElevationMm: number;
+    readonly terminationElevationMm: number;
+    readonly roofFace: "WING_INNER";
+  };
 }
 
 export type FurnitureFacing = "NORTH" | "SOUTH" | "EAST" | "WEST";
@@ -712,10 +732,34 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-TECH-NORTH", role: "PARTITION", rectMm: { x0: 26681, y0: 11411, x1: 27541, y1: 11550 } },
 ] as const;
 
-/** 347 × 500 masonry pier on the west wall of 1.03 (D1.1.002 vector outline). */
-export const FIREPLACE_PIER: FireplacePier = Object.freeze({
-  id: "IW-WEST-PIER-103",
-  rectMm: { x0: 21543, y0: 14551, x1: 21890, y1: 15051 },
+/**
+ * Client revision 24. 8. 2026: freestanding cylindrical stove in the former
+ * stove bay. The old 347 × 500 mm masonry pier is deliberately absent; the
+ * round flue shares the stove axis and rises straight through the wing roof.
+ */
+export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
+  id: "FIREPLACE-STOVE-2026-08-24",
+  sourceId: SOURCES.clientFireplaceRevision20260824.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-03",
+  facing: "EAST",
+  centerMm: { x: 21853, y: 14275 },
+  footprintMm: { x0: 21598, y0: 14020, x1: 22108, y1: 14530 },
+  bodyDiameterMm: 510,
+  bodyHeightMm: 1550,
+  window: {
+    bottomElevationMm: 430,
+    heightMm: 600,
+    arcDegrees: 118,
+    handleSide: "GARDEN",
+  },
+  flue: {
+    id: "FLUE-LIVING-103",
+    outerDiameterMm: 150,
+    startElevationMm: 1550,
+    terminationElevationMm: 6160,
+    roofFace: "WING_INNER",
+  },
 });
 
 /**
@@ -1190,7 +1234,7 @@ export const CHILDRENS_BEDROOM_FITOUTS: readonly [
 
 /**
  * Client interior concept from 23. 8. 2026. The composition deliberately uses
- * the uninterrupted west-wall bay after the fireplace pier and stops before
+ * the uninterrupted west-wall bay after the freestanding stove and stops before
  * the fixed glazing at the rear gable. The sofa faces that wall from the east,
  * while the dining table occupies the clear band between the kitchen peninsula
  * and the sofa without narrowing the east-side circulation route.

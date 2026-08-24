@@ -21,7 +21,7 @@ import {
   CHILDRENS_BEDROOM_FITOUTS,
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
-  FIREPLACE_PIER,
+  FIREPLACE_STOVE,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -70,6 +70,8 @@ export interface InteriorMaterials {
   readonly steel: PBRMaterial;
   readonly blackGlass: PBRMaterial;
   readonly fireplace: PBRMaterial;
+  readonly fireplaceGlass: PBRMaterial;
+  readonly fireplaceEmber: PBRMaterial;
   readonly skirting: PBRMaterial;
   readonly wallTile: PBRMaterial;
   readonly livingCabinet: PBRMaterial;
@@ -226,6 +228,19 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   blackGlass.clearCoat.intensity = 0.8;
   blackGlass.clearCoat.roughness = 0.05;
   const fireplace = pbr(scene, "real-interior-fireplace", "#1d2022", 0.48, 0.2);
+  const fireplaceGlass = pbr(scene, "real-interior-fireplace-glass", "#211812", 0.06, 0.08);
+  fireplaceGlass.alpha = 0.38;
+  fireplaceGlass.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
+  fireplaceGlass.needDepthPrePass = true;
+  fireplaceGlass.separateCullingPass = true;
+  fireplaceGlass.useSpecularOverAlpha = true;
+  fireplaceGlass.indexOfRefraction = 1.5;
+  fireplaceGlass.clearCoat.isEnabled = true;
+  fireplaceGlass.clearCoat.intensity = 1;
+  fireplaceGlass.clearCoat.roughness = 0.025;
+  const fireplaceEmber = pbr(scene, "real-interior-fireplace-ember", "#f06b22", 0.4);
+  fireplaceEmber.emissiveColor = Color3.FromHexString("#ff7f2a");
+  fireplaceEmber.environmentIntensity = 0.18;
   const skirting = pbr(scene, "real-interior-skirting", "#f7f6f2", 0.6);
   const wallTile = texturedPbr(
     scene,
@@ -368,6 +383,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     steel,
     blackGlass,
     fireplace,
+    fireplaceGlass,
+    fireplaceEmber,
     skirting,
     wallTile,
     livingCabinet,
@@ -661,84 +678,204 @@ function buildWalls(context: InteriorBuildContext, materials: InteriorMaterials)
   );
   finish(context, corner, materials.plaster, { collide: true });
 
-  // The pier is the plastered flue (HOUSE.chimneys[0]); its finish box sits
-  // 10 mm proud of the concrete column so the interior reads as plaster.
-  const pier = texturedBox(
-    context.scene,
-    `${FIREPLACE_PIER.id} · omietnutý komínový pilier`,
-    rectCenter(FIREPLACE_PIER.rectMm),
-    FIREPLACE_PIER.rectMm.x1 - FIREPLACE_PIER.rectMm.x0 + 20,
-    FIREPLACE_PIER.rectMm.y1 - FIREPLACE_PIER.rectMm.y0 + 20,
-    heightM,
-    0,
-    2.4,
-  );
-  finish(context, pier, materials.plaster, { collide: true, shadow: true, pickable: true });
+}
 
-  // Compact stove leaning on the west wall right beside the terrace door
-  // (22. 8. 2026 revision): 450 × 450 × 1 000 steel body, glass front, flue
-  // pipe rising and turning into the pier.
-  const stoveX0 = FIREPLACE_PIER.rectMm.x0 + 10;
-  const stoveY0 = 13900;
-  const stove = texturedBox(
+/**
+ * Slender cylindrical stove based on the client's visual reference. The dark
+ * shell stays collision-authoritative while the curved glass, embers, trim and
+ * handle remain non-colliding visual detail. The continuous flue itself is
+ * rendered by the exterior scene from this body's top to its roof termination.
+ */
+function buildLivingFireplace(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const stove = FIREPLACE_STOVE;
+  const center = stove.centerMm;
+  const diameterM = stove.bodyDiameterMm * MM_TO_M;
+  const radiusMm = stove.bodyDiameterMm / 2;
+  const bodyHeightM = stove.bodyHeightMm * MM_TO_M;
+  const shellBottomM = 0.03;
+  const shellHeightM = bodyHeightM - shellBottomM;
+
+  const body = CreateCylinder(
+    `${stove.id} · BODY · matne čierne valcové teleso Ø${stove.bodyDiameterMm}`,
+    { height: shellHeightM, diameter: diameterM, tessellation: 64 },
     context.scene,
-    "Krbové kachle vedľa dverí na terasu · ilustračný koncept",
-    { x: stoveX0 + 225, y: stoveY0 + 225 },
-    450,
-    450,
-    1.0,
-    0.06,
-    1,
   );
-  finish(context, stove, materials.fireplace, { collide: true, shadow: true });
-  const stoveGlass = texturedBox(
+  body.position.set(xM(center.x), shellBottomM + shellHeightM / 2, zM(center.y));
+  body.metadata = {
+    ...(body.metadata ?? {}),
+    designSourceId: stove.sourceId,
+    fireplaceShape: "CYLINDRICAL",
+  };
+  finish(context, body, materials.fireplace, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
+
+  const pedestal = CreateCylinder(
+    `${stove.id} · PEDESTAL · zapustený kruhový sokel`,
+    { height: 0.055, diameter: diameterM + 0.02, tessellation: 64 },
     context.scene,
-    "Krbové kachle · presklené dvierka",
-    { x: stoveX0 + 450 + 6, y: stoveY0 + 225 },
-    10,
-    320,
-    0.4,
-    0.36,
-    1,
   );
-  finish(context, stoveGlass, context.glassFrame);
-  for (const [index, legY] of [stoveY0 + 60, stoveY0 + 390].entries()) {
-    const leg = texturedBox(
+  pedestal.position.set(xM(center.x), 0.0275, zM(center.y));
+  finish(context, pedestal, materials.fireplace, { shadow: true });
+
+  const topCap = CreateCylinder(
+    `${stove.id} · TOP-CAP · horné veko`,
+    { height: 0.025, diameter: diameterM + 0.008, tessellation: 64 },
+    context.scene,
+  );
+  topCap.position.set(xM(center.x), bodyHeightM - 0.0125, zM(center.y));
+  finish(context, topCap, materials.fireplace, { shadow: true });
+
+  const arc = stove.window.arcDegrees / 360;
+  const arcRotationY = -Math.PI * arc;
+  const windowBottomM = stove.window.bottomElevationMm * MM_TO_M;
+  const windowHeightM = stove.window.heightMm * MM_TO_M;
+  const windowCenterM = windowBottomM + windowHeightM / 2;
+
+  const glow = CreateCylinder(
+    `${stove.id} · FIRE-GLOW · žeravé ohnisko`,
+    {
+      height: windowHeightM - 0.045,
+      diameter: diameterM + 0.006,
+      tessellation: 48,
+      arc,
+      cap: Mesh.NO_CAP,
+      sideOrientation: Mesh.DOUBLESIDE,
+    },
+    context.scene,
+  );
+  glow.position.set(xM(center.x), windowCenterM, zM(center.y));
+  glow.rotation.y = arcRotationY;
+  finish(context, glow, materials.fireplaceEmber, { shadow: true });
+
+  const glass = CreateCylinder(
+    `${stove.id} · CURVED-GLASS · zaoblené panoramatické dvierka ${stove.window.arcDegrees}°`,
+    {
+      height: windowHeightM,
+      diameter: diameterM + 0.018,
+      tessellation: 48,
+      arc,
+      cap: Mesh.NO_CAP,
+      sideOrientation: Mesh.DOUBLESIDE,
+    },
+    context.scene,
+  );
+  glass.position.set(xM(center.x), windowCenterM, zM(center.y));
+  glass.rotation.y = arcRotationY;
+  finish(context, glass, materials.fireplaceGlass, { shadow: true, pickable: true });
+
+  for (const [index, elevationM] of [windowBottomM, windowBottomM + windowHeightM].entries()) {
+    const trim = CreateTorus(
+      `${stove.id} · WINDOW-TRIM-${index + 1} · vodorovný rám dvierok`,
+      { diameter: diameterM + 0.018, thickness: 0.018, tessellation: 64 },
       context.scene,
-      `Krbové kachle · nožička ${index + 1}`,
-      { x: stoveX0 + 225, y: legY },
-      380,
-      30,
-      0.06,
-      0,
+    );
+    trim.position.set(xM(center.x), elevationM, zM(center.y));
+    finish(context, trim, materials.fireplace, { shadow: true });
+  }
+
+  const halfArcRad = (stove.window.arcDegrees * Math.PI) / 360;
+  for (const [index, side] of [-1, 1].entries()) {
+    const jamb = CreateCylinder(
+      `${stove.id} · WINDOW-JAMB-${index + 1} · zvislý rám dvierok`,
+      { height: windowHeightM + 0.025, diameter: 0.022, tessellation: 20 },
+      context.scene,
+    );
+    jamb.position.set(
+      xM(center.x + radiusMm * Math.cos(halfArcRad)),
+      windowCenterM,
+      zM(center.y + side * radiusMm * Math.sin(halfArcRad)),
+    );
+    finish(context, jamb, materials.fireplace, { shadow: true });
+  }
+
+  const fireFrontXmm = center.x + radiusMm + 5;
+  for (const [index, offsetYmm] of [-62, 54].entries()) {
+    const log = CreateCylinder(
+      `${stove.id} · LOG-${index + 1} · horiace poleno`,
+      { height: 0.245, diameter: 0.052, tessellation: 20 },
+      context.scene,
+    );
+    log.position.set(xM(fireFrontXmm), 0.5 + index * 0.035, zM(center.y + offsetYmm));
+    log.rotation.x = Math.PI / 2;
+    log.rotation.y = index === 0 ? -0.18 : 0.22;
+    finish(context, log, materials.fireplaceEmber, { shadow: true });
+  }
+  for (const [index, flame] of [
+    { yMm: -75, heightM: 0.2, diameterM: 0.055, elevationM: 0.62 },
+    { yMm: 0, heightM: 0.29, diameterM: 0.07, elevationM: 0.63 },
+    { yMm: 82, heightM: 0.17, diameterM: 0.048, elevationM: 0.6 },
+  ].entries()) {
+    const flameMesh = CreateCylinder(
+      `${stove.id} · FLAME-${index + 1} · plameň`,
+      {
+        height: flame.heightM,
+        diameterBottom: flame.diameterM,
+        diameterTop: 0.008,
+        tessellation: 24,
+      },
+      context.scene,
+    );
+    flameMesh.position.set(
+      xM(fireFrontXmm + 3),
+      flame.elevationM + flame.heightM / 2,
+      zM(center.y + flame.yMm),
+    );
+    finish(context, flameMesh, materials.fireplaceEmber, { shadow: true });
+  }
+
+  const handleCenter = { x: center.x + 178, y: center.y + 279 };
+  const handle = CreateCylinder(
+    `${stove.id} · DOOR-HANDLE · zvislá čierna rukoväť`,
+    { height: 0.24, diameter: 0.026, tessellation: 24 },
+    context.scene,
+  );
+  handle.position.set(xM(handleCenter.x), windowCenterM, zM(handleCenter.y));
+  finish(context, handle, materials.fireplace, { shadow: true, pickable: true });
+  for (const elevationM of [windowCenterM - 0.085, windowCenterM + 0.085]) {
+    const handleMount = texturedBox(
+      context.scene,
+      `${stove.id} · DOOR-HANDLE-MOUNT · konzola rukoväte`,
+      { x: handleCenter.x, y: center.y + 252 },
+      24,
+      58,
+      0.018,
+      elevationM - 0.009,
       1,
     );
-    finish(context, leg, materials.fireplace);
+    finish(context, handleMount, materials.fireplace, { shadow: true });
   }
-  const riser = CreateCylinder(
-    "Krbové kachle · dymovod zvislý",
-    { height: 0.55, diameter: 0.15, tessellation: 24 },
+
+  const airControl = CreateSphere(
+    `${stove.id} · AIR-CONTROL · regulácia vzduchu`,
+    { diameter: 0.027, segments: 20 },
     context.scene,
   );
-  riser.position.set(xM(stoveX0 + 225), 1.06 + 0.275, zM(stoveY0 + 225));
-  finish(context, riser, materials.fireplace);
-  const runLengthMm = FIREPLACE_PIER.rectMm.y0 + 60 - (stoveY0 + 225);
-  const run = CreateCylinder(
-    "Krbové kachle · dymovod do komína",
-    { height: runLengthMm * MM_TO_M, diameter: 0.15, tessellation: 24 },
+  airControl.position.set(xM(center.x + radiusMm + 17), 0.322, zM(center.y));
+  finish(context, airControl, context.chimneyMetal, { shadow: true, pickable: true });
+
+  const collar = CreateCylinder(
+    `${stove.id} · FLUE-COLLAR · priame horné napojenie Ø${stove.flue.outerDiameterMm}`,
+    { height: 0.05, diameter: stove.flue.outerDiameterMm * MM_TO_M + 0.035, tessellation: 40 },
     context.scene,
   );
-  run.position.set(xM(stoveX0 + 225), 1.06 + 0.55, zM(stoveY0 + 225 + runLengthMm / 2));
-  run.rotation.x = Math.PI / 2;
-  finish(context, run, materials.fireplace);
-  const elbow = CreateCylinder(
-    "Krbové kachle · koleno dymovodu",
-    { height: 0.16, diameter: 0.17, tessellation: 24 },
+  collar.position.set(xM(center.x), bodyHeightM + 0.015, zM(center.y));
+  finish(context, collar, materials.fireplace, { shadow: true });
+
+  const fireLight = new PointLight(
+    `${stove.id} · FIRE-LIGHT · teplé svetlo ohniska`,
+    new Vector3(xM(center.x + radiusMm + 320), windowCenterM, zM(center.y)),
     context.scene,
   );
-  elbow.position.set(xM(stoveX0 + 225), 1.06 + 0.55, zM(stoveY0 + 225));
-  finish(context, elbow, materials.fireplace);
+  fireLight.diffuse = Color3.FromHexString("#ff9d55");
+  fireLight.specular = Color3.FromHexString("#ffd2a0");
+  fireLight.intensity = 0.42;
+  fireLight.range = 3.2;
 }
+
 
 function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, door: InteriorDoor) {
   const [wallFrom, wallTo] = door.wallSpanMm;
@@ -5041,6 +5178,7 @@ export function buildInterior(context: InteriorBuildContext) {
   const materials = createInteriorMaterials(context);
   buildFloorsAndCeilings(context, materials);
   buildWalls(context, materials);
+  buildLivingFireplace(context, materials);
   for (const door of INTERIOR_DOORS) buildDoor(context, materials, door);
   buildKitchen(context, materials);
   buildTechnicalHeatingFitout(context, materials);

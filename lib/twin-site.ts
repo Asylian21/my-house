@@ -160,6 +160,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientFireplaceRevision20260824: {
+    id: "SRC-CLIENT-FIREPLACE-20260824",
+    title: "Revízia stavebníka · valcové krbové kachle",
+    detail:
+      "Pôvodné hranaté kachle a murovaný komínový pilier v obývacom priestore 1.03 nahradiť štíhlymi čiernymi valcovými kachľami so zaobleným presklením podľa obrazovej referencie. Dymovod má viesť bez bočného kolena z osi kachlí zvislo cez šikmý podhľad a strechu; poloha pri terasových dverách a voľný nástup do obývačky zostávajú zachované.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientKitchenRevision20260823: {
     id: "SRC-CLIENT-KITCHEN-20260823",
     title: "Revízia stavebníka · vstavaná chladnička",
@@ -705,21 +713,27 @@ export const HOUSE = Object.freeze({
   terraceAreaM2: 84.35,
   eavesElevationMm: 3125,
   ridgeElevationMm: 5560,
-  chimneyElevationMm: 6160,
-  chimneys: [
+  flues: [
     {
-      id: "CHIMNEY-LIVING-103",
-      // 22. 8. 2026: the flue is the 347 × 500 masonry pier on the west wall
-      // of 1.03, right beside the terrace door; the stove leans on that wall.
-      centerMm: { x: 21716, y: 14801 } satisfies Point2Mm,
-      planMm: { widthMm: 346, depthMm: 500 },
-      previousCenterMm: { x: 24190, y: 12700 } satisfies Point2Mm,
-      designCenterMm: { x: 24190, y: 11700 } satisfies Point2Mm,
-      gardenShiftMm: 1000,
+      id: "FLUE-LIVING-103",
+      // 24. 8. 2026: the full masonry pier is removed. A single round flue
+      // rises directly from the centre of the cylindrical stove to the roof.
+      shape: "ROUND_STOVE_PIPE",
+      centerMm: { x: 21853, y: 14275 } satisfies Point2Mm,
+      outerDiameterMm: 150,
+      baseElevationMm: 1550,
+      terminationElevationMm: 6160,
+      roofFace: "WING_INNER",
+      finish: "MATTE_BLACK_STEEL",
+      flashingDiameterMm: 470,
+      rainCapDiameterMm: 280,
+      previousMasonryCenterMm: { x: 21716, y: 14801 } satisfies Point2Mm,
+      previousMasonryPlanMm: { widthMm: 346, depthMm: 500 },
+      replacesInteriorPierId: "IW-WEST-PIER-103",
       zone: "MAIN_LIVING_AND_KITCHEN_1_03",
       baseSourceId: SOURCES.roofPlan.id,
-      previousSourceId: SOURCES.clientRevision20260821.id,
-      sourceId: SOURCES.clientRevision20260822.id,
+      previousSourceId: SOURCES.clientRevision20260822.id,
+      sourceId: SOURCES.clientFireplaceRevision20260824.id,
     },
   ] as const,
   removedChimneys: [
@@ -1047,6 +1061,7 @@ export const HOUSE = Object.freeze({
     SOURCES.coordination.id,
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
+    SOURCES.clientFireplaceRevision20260824.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
     SOURCES.clientOfficeFixedWindowRevision20260824.id,
   ],
