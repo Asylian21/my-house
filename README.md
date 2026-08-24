@@ -146,12 +146,17 @@ snímky prechádzky zalamuje do krátkeho 994 × 600 mm L-returnu s dvoma dubov�
 skrinkami, nadväzujúcou kremennou doskou a nízkym obkladom; končí 156 mm pred
 oknom EAST-04 a začína 260 mm za otvorom dverí technickej miestnosti. Technická
 miestnosť 1.07 obsahuje vizualizačný návrh vykurovania
-(`TECHNICAL_HEATING_FITOUT`): drevosplyňovací kotol 800 × 900 × 1 450 mm v
-južnom výklenku a zvislú akumulačnú nádrž s nominálnym objemom 1 000 l,
-priemerom 1 000 mm a výškou 2 100 mm v západnom poli. Obe telesá kopírujú
-technologické zóny D1.1.002, neblokujú kuchynské dvere ani EAST-03 a zachovávajú
-900 mm servisný pás pred kotlom. Výrobca, hydraulika, prívod spaľovacieho
-vzduchu, požiarne odstupy a samostatný komín nie sú realizačne potvrdené.
+(`TECHNICAL_HEATING_FITOUT`): kombinovanú zostavu typu DEFRO Firewood Duo
+15 kW pre alternatívne režimy kusové drevo alebo pelety, s uzavretou obálkou
+1 188 × 1 224 × 1 391 mm. Sivé viacdverové teleso dopĺňa samostatná približne
+180 kg násypka, šnekový podávač, pružná jantárová hadica, predný peletový horák
+a horný farebný regulátor. V západnom poli zostáva zvislá akumulačná nádrž
+s nominálnym objemom 1 000 l, priemerom 1 000 mm a výškou 2 100 mm. Zostava
+fyzicky vojde do južného výklenku, neblokuje kuchynské dvere ani EAST-03
+a pred čelom zachováva 2 000 mm čistú servisnú hĺbku. Vizualizovaných 405 mm
+po bokoch a 50 mm vzadu je menej než 500 mm odporúčanie referenčného výrobcu;
+konkrétny výkon, hydrauliku, prívod spaľovacieho vzduchu, požiarne odstupy
+a komín preto musí potvrdiť profesijný projekt.
 Klientská revízia zároveň posúva priečku medzi 1.06 a 1.07 o 300 mm do
 technickej miestnosti: WC má nový čistý rozmer 1 299 × 1 600 mm a geometrickú
 plochu približne 2,08 m². `WC_FITOUT` dopĺňa závesnú misu s podomietkovým

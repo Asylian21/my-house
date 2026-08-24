@@ -184,6 +184,14 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientHybridHeatingRevision20260824: {
+    id: "SRC-CLIENT-HYBRID-HEATING-20260824",
+    title: "Revízia stavebníka · kombinovaný kotol drevo / pelety",
+    detail:
+      "Podľa dodanej produktovej fotografie nahradiť generický kotol realistickou zostavou drevosplyňovacieho kotla a peletového modulu: sivé viacdverové teleso, samostatná násypka, šnek, pružná podávacia hadica, peletový horák a horná regulácia. Rozmerový koncept používa obálku zostavy typu DEFRO Firewood Duo 15 kW (1 188 × 1 224 × 1 391 mm), nie potvrdený realizačný výrobok. Zostava podporuje alternatívne režimy kusové drevo alebo pelety; výkon, odstupy, hydrauliku, spaľovací vzduch, komín a požiarne riešenie musí potvrdiť profesijný projekt.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientWcRevision20260823: {
     id: "SRC-CLIENT-WC-20260823",
     title: "Revízia stavebníka · rozšírenie samostatného WC",

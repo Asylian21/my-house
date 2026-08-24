@@ -10,6 +10,7 @@ import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.
 import { ExtrudePolygon } from "@babylonjs/core/Meshes/Builders/polygonBuilder.pure";
 import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure";
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder.pure";
+import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -80,6 +81,8 @@ export interface InteriorMaterials {
   readonly warmLight: PBRMaterial;
   readonly tvScreen: PBRMaterial;
   readonly boilerEnamel: PBRMaterial;
+  readonly pelletFeedHose: PBRMaterial;
+  readonly controlDisplay: PBRMaterial;
   readonly tankJacket: PBRMaterial;
   readonly copperPipe: PBRMaterial;
   readonly sanitaryCeramic: PBRMaterial;
@@ -269,10 +272,23 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   tvScreen.clearCoat.isEnabled = true;
   tvScreen.clearCoat.intensity = 1;
   tvScreen.clearCoat.roughness = 0.025;
-  const boilerEnamel = pbr(scene, "real-technical-boiler-enamel", "#67241f", 0.38, 0.22);
+  const boilerEnamel = pbr(scene, "real-technical-boiler-enamel", "#b7bdc2", 0.32, 0.28);
   boilerEnamel.clearCoat.isEnabled = true;
-  boilerEnamel.clearCoat.intensity = 0.35;
-  boilerEnamel.clearCoat.roughness = 0.24;
+  boilerEnamel.clearCoat.intensity = 0.42;
+  boilerEnamel.clearCoat.roughness = 0.2;
+  const pelletFeedHose = pbr(scene, "real-technical-pellet-feed-hose", "#a47745", 0.24, 0.18);
+  pelletFeedHose.alpha = 0.62;
+  pelletFeedHose.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
+  pelletFeedHose.needDepthPrePass = true;
+  pelletFeedHose.clearCoat.isEnabled = true;
+  pelletFeedHose.clearCoat.intensity = 0.58;
+  pelletFeedHose.clearCoat.roughness = 0.15;
+  const controlDisplay = pbr(scene, "real-technical-control-display", "#1c6178", 0.12, 0.08);
+  controlDisplay.emissiveColor = Color3.FromHexString("#39bce5");
+  controlDisplay.environmentIntensity = 0.18;
+  controlDisplay.clearCoat.isEnabled = true;
+  controlDisplay.clearCoat.intensity = 0.9;
+  controlDisplay.clearCoat.roughness = 0.04;
   const tankJacket = pbr(scene, "real-technical-buffer-jacket", "#8b9092", 0.46, 0.2);
   const copperPipe = pbr(scene, "real-technical-copper", "#b96f43", 0.24, 0.82);
   const sanitaryCeramic = pbr(scene, "real-sanitary-ceramic", "#f8f8f5", 0.16, 0.02);
@@ -363,6 +379,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     warmLight,
     tvScreen,
     boilerEnamel,
+    pelletFeedHose,
+    controlDisplay,
     tankJacket,
     copperPipe,
     sanitaryCeramic,
@@ -1311,9 +1329,9 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
 }
 
 /**
- * Heating equipment in room 1.07. The bodies and reserved service geometry
- * come from `TECHNICAL_HEATING_FITOUT`; detailed fittings are intentionally
- * generic until a manufacturer and the professional heating design are known.
+ * Heating equipment in room 1.07. The combined wood / pellet assembly follows
+ * the proportions of the client's product reference while the typed footprint
+ * remains the source of truth for fit, service floor and walk collision.
  */
 function buildTechnicalHeatingFitout(
   context: InteriorBuildContext,
@@ -1321,148 +1339,318 @@ function buildTechnicalHeatingFitout(
 ) {
   const fitout = TECHNICAL_HEATING_FITOUT;
   const boiler = fitout.boiler;
-  const boilerRect = boiler.footprintMm;
-  const boilerCenter = rectCenter(boilerRect);
-  const boilerHeightM = boiler.heightMm * MM_TO_M;
+  const assemblyRect = boiler.assemblyFootprintMm;
+  const bodyRect = boiler.body.footprintMm;
+  const bodyCenter = rectCenter(bodyRect);
+  const bodyHeightM = boiler.body.heightMm * MM_TO_M;
+  const frontYmm = bodyRect.y1 + 10;
 
-  const boilerPlinth = texturedBox(
-    context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · oceľový sokel`,
-    boilerCenter,
-    boilerRect.x1 - boilerRect.x0 - 90,
-    boilerRect.y1 - boilerRect.y0 - 90,
-    0.1,
-    0,
-    1,
-  );
-  finish(context, boilerPlinth, materials.fireplace, { shadow: true });
+  for (const xMm of [bodyRect.x0 + 42, bodyRect.x1 - 42]) {
+    for (const yMm of [bodyRect.y0 + 48, bodyRect.y1 - 48]) {
+      const foot = CreateCylinder(
+        `${fitout.id} · WOOD-PELLET-BOILER · nastaviteľná oceľová pätka`,
+        { height: 0.08, diameter: 0.052, tessellation: 20 },
+        context.scene,
+      );
+      foot.position.set(xM(xMm), 0.04, zM(yMm));
+      finish(context, foot, materials.steel, { shadow: true });
+    }
+  }
+
   const boilerBody = texturedBox(
     context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · drevosplyňovací kotol`,
-    boilerCenter,
-    boilerRect.x1 - boilerRect.x0,
-    boilerRect.y1 - boilerRect.y0,
-    boilerHeightM - 0.1,
-    0.1,
+    `${fitout.id} · WOOD-PELLET-BOILER · kombinované teleso drevo alebo pelety`,
+    bodyCenter,
+    bodyRect.x1 - bodyRect.x0,
+    bodyRect.y1 - bodyRect.y0,
+    bodyHeightM - 0.08,
+    0.08,
     1,
   );
   finish(context, boilerBody, materials.boilerEnamel, {
-    collide: true,
     shadow: true,
     pickable: true,
   });
 
-  const frontYmm = boilerRect.y1 + 8;
-  const frontWidthMm = boilerRect.x1 - boilerRect.x0 - 90;
-  const loadingDoor = texturedBox(
+  const frontWidthMm = bodyRect.x1 - bodyRect.x0 - 54;
+  const frontBackplate = texturedBox(
     context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · prikladacie dvierka`,
-    { x: boilerCenter.x, y: frontYmm },
+    `${fitout.id} · WOOD-PELLET-BOILER · antracitový čelný rám`,
+    { x: bodyCenter.x, y: frontYmm },
     frontWidthMm,
-    18,
-    0.48,
-    0.72,
-    1,
-  );
-  finish(context, loadingDoor, materials.fireplace, { shadow: true, pickable: true });
-  const combustionDoor = texturedBox(
-    context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · spaľovacie a popolníkové dvierka`,
-    { x: boilerCenter.x, y: frontYmm },
-    frontWidthMm,
-    18,
-    0.35,
-    0.21,
-    1,
-  );
-  finish(context, combustionDoor, materials.fireplace, { shadow: true, pickable: true });
-  const flameWindow = texturedBox(
-    context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · kontrolné sklo spaľovania`,
-    { x: boilerCenter.x, y: frontYmm + 12 },
-    250,
-    8,
-    0.15,
-    0.88,
-    1,
-  );
-  finish(context, flameWindow, materials.blackGlass);
-  const ember = texturedBox(
-    context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · žiara spaľovacej komory`,
-    { x: boilerCenter.x, y: frontYmm + 17 },
-    205,
-    4,
+    22,
+    1.03,
     0.1,
-    0.905,
     1,
   );
-  finish(context, ember, materials.warmLight);
-  barHandle(
-    context,
-    materials,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · madlo prikladacích dvierok`,
-    { x: boilerCenter.x, y: frontYmm + 24 },
-    460,
-    true,
-    1.12,
-  );
-  barHandle(
-    context,
-    materials,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · madlo popolníka`,
-    { x: boilerCenter.x, y: frontYmm + 24 },
-    380,
-    true,
-    0.48,
-  );
-  const controlPanel = texturedBox(
+  finish(context, frontBackplate, materials.fireplace, { shadow: true });
+
+  for (const door of [
+    { label: "horné prikladacie dvierka na kusové drevo", bottomM: 0.69, heightM: 0.37 },
+    { label: "stredné spaľovacie dvierka", bottomM: 0.36, heightM: 0.28 },
+    { label: "spodné popolníkové dvierka", bottomM: 0.12, heightM: 0.19 },
+  ] as const) {
+    const panel = texturedBox(
+      context.scene,
+      `${fitout.id} · WOOD-PELLET-BOILER · ${door.label}`,
+      { x: bodyCenter.x, y: frontYmm + 13 },
+      frontWidthMm - 24,
+      18,
+      door.heightM,
+      door.bottomM,
+      1,
+    );
+    finish(context, panel, materials.boilerEnamel, { shadow: true, pickable: true });
+    const handle = texturedBox(
+      context.scene,
+      `${fitout.id} · WOOD-PELLET-BOILER · zvislé čierne madlo ${door.label}`,
+      { x: bodyRect.x0 + 58, y: frontYmm + 29 },
+      22,
+      28,
+      Math.min(0.25, door.heightM - 0.06),
+      door.bottomM + 0.03,
+      1,
+    );
+    finish(context, handle, materials.fireplace, { shadow: true });
+  }
+
+  const controlFascia = texturedBox(
     context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · regulácia`,
-    { x: boilerCenter.x, y: frontYmm + 10 },
-    frontWidthMm,
-    12,
-    0.16,
-    1.25,
+    `${fitout.id} · WOOD-PELLET-BOILER · horná antracitová regulačná lišta`,
+    { x: bodyCenter.x, y: frontYmm + 4 },
+    bodyRect.x1 - bodyRect.x0 + 28,
+    38,
+    0.13,
+    1.075,
     1,
   );
-  finish(context, controlPanel, materials.fireplace);
+  finish(context, controlFascia, materials.fireplace, { shadow: true });
+
+  const controllerStand = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-PELLET-BOILER · konzola regulátora`,
+    { x: bodyCenter.x, y: bodyRect.y1 - 54 },
+    86,
+    92,
+    0.09,
+    bodyHeightM - 0.01,
+    1,
+  );
+  finish(context, controllerStand, materials.fireplace, { shadow: true });
+  const controllerBottomM = boiler.body.controllerTopElevationMm * MM_TO_M - 0.136;
+  const controller = texturedBox(
+    context.scene,
+    `${fitout.id} · WOOD-PELLET-BOILER · farebný regulátor palivových režimov`,
+    { x: bodyCenter.x, y: bodyRect.y1 - 42 },
+    236,
+    178,
+    0.136,
+    controllerBottomM,
+    1,
+  );
+  finish(context, controller, materials.fireplace, { shadow: true, pickable: true });
   const display = texturedBox(
     context.scene,
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · displej regulácie`,
-    { x: boilerCenter.x - 175, y: frontYmm + 18 },
-    185,
-    6,
-    0.07,
-    1.295,
+    `${fitout.id} · WOOD-PELLET-BOILER · modrý displej regulácie`,
+    { x: bodyCenter.x, y: bodyRect.y1 + 52 },
+    164,
+    10,
+    0.067,
+    controllerBottomM + 0.034,
     1,
   );
-  finish(context, display, materials.blackGlass);
-  for (const xMm of [boilerRect.x0 + 45, boilerRect.x1 - 45]) {
-    for (const elevationM of [0.34, 0.92]) {
-      const hinge = CreateCylinder(
-        `${fitout.id} · WOOD-GASIFICATION-BOILER · pánt`,
-        { height: 0.12, diameter: 0.026, tessellation: 16 },
+  finish(context, display, materials.controlDisplay);
+
+  for (const [label, xMm, diameterM, material] of [
+    ["žltá kontrolka", bodyRect.x0 + 74, 0.052, materials.warmLight],
+    ["otočný regulátor", bodyRect.x1 - 74, 0.058, materials.blackGlass],
+  ] as const) {
+    const control = CreateCylinder(
+      `${fitout.id} · WOOD-PELLET-BOILER · ${label}`,
+      { height: 0.022, diameter: diameterM, tessellation: 28 },
+      context.scene,
+    );
+    control.rotation.x = Math.PI / 2;
+    control.position.set(xM(xMm), 1.145, zM(frontYmm + 28));
+    finish(context, control, material, { shadow: true });
+  }
+
+  for (let index = 0; index < 9; index += 1) {
+    const chainLink = CreateSphere(
+      `${fitout.id} · WOOD-PELLET-BOILER · článok retiazky regulátora ťahu ${index + 1}`,
+      { diameter: 0.017, segments: 12 },
+      context.scene,
+    );
+    chainLink.position.set(
+      xM(bodyRect.x1 - 28),
+      1.08 - index * 0.072,
+      zM(frontYmm + 38 + index * 2),
+    );
+    finish(context, chainLink, materials.steel);
+  }
+
+  const hopper = boiler.hopper;
+  const hopperRect = hopper.footprintMm;
+  const hopperCenter = rectCenter(hopperRect);
+  for (const xMm of [hopperRect.x0 + 48, hopperRect.x1 - 48]) {
+    for (const yMm of [hopperRect.y0 + 66, hopperRect.y1 - 66]) {
+      const leg = texturedBox(
         context.scene,
+        `${fitout.id} · PELLET-HOPPER · oceľová noha zásobníka`,
+        { x: xMm, y: yMm },
+        38,
+        38,
+        0.69,
+        0,
+        1,
       );
-      hinge.position.set(xM(xMm), elevationM, zM(frontYmm + 24));
-      finish(context, hinge, materials.steel);
+      finish(context, leg, materials.steel, { shadow: true });
     }
   }
-  const flueCollar = CreateCylinder(
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · dymovodné hrdlo`,
-    { height: 0.1, diameter: 0.25, tessellation: 32 },
+  const hopperCone = CreateCylinder(
+    `${fitout.id} · PELLET-HOPPER · štvorboké lievikové dno`,
+    { height: 0.4, diameterTop: 1, diameterBottom: 0.34, tessellation: 4 },
     context.scene,
   );
-  flueCollar.position.set(xM(boilerCenter.x), boilerHeightM + 0.05, zM(boilerRect.y0 + 165));
+  hopperCone.rotation.y = Math.PI / 4;
+  hopperCone.scaling.set(0.58, 1, 0.82);
+  hopperCone.position.set(xM(hopperCenter.x), 0.49, zM(hopperCenter.y));
+  finish(context, hopperCone, materials.boilerEnamel, { shadow: true });
+  const hopperBody = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-HOPPER · zásobník peliet približne ${hopper.nominalPelletCapacityKg} kg`,
+    hopperCenter,
+    hopperRect.x1 - hopperRect.x0,
+    hopperRect.y1 - hopperRect.y0 - 92,
+    0.7,
+    0.69,
+    1,
+  );
+  finish(context, hopperBody, materials.boilerEnamel, { shadow: true, pickable: true });
+  const hopperLid = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-HOPPER · výklopné plniace veko`,
+    { x: hopperCenter.x, y: hopperCenter.y - 12 },
+    hopperRect.x1 - hopperRect.x0 - 34,
+    hopperRect.y1 - hopperRect.y0 - 126,
+    0.045,
+    hopper.heightMm * MM_TO_M - 0.045,
+    1,
+  );
+  hopperLid.rotation.x = -0.055;
+  finish(context, hopperLid, materials.boilerEnamel, { shadow: true, pickable: true });
+  const hopperGrip = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-HOPPER · madlo plniaceho veka`,
+    { x: hopperCenter.x, y: hopperRect.y1 - 76 },
+    190,
+    24,
+    0.025,
+    hopper.heightMm * MM_TO_M + 0.004,
+    1,
+  );
+  finish(context, hopperGrip, materials.fireplace, { shadow: true });
+
+  const augerPath = [
+    new Vector3(xM(hopperCenter.x + 22), 0.34, zM(hopperCenter.y + 10)),
+    new Vector3(xM(hopperRect.x1 + 118), 1.09, zM(bodyRect.y0 + 250)),
+  ];
+  const auger = CreateTube(
+    `${fitout.id} · PELLET-AUGER · šikmý šnekový podávač`,
+    { path: augerPath, radius: 0.055, tessellation: 22, cap: Mesh.CAP_ALL },
+    context.scene,
+  );
+  finish(context, auger, materials.steel, { shadow: true, pickable: true });
+  const augerMotor = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-AUGER · motor s prevodovkou`,
+    { x: hopperRect.x1 + 116, y: bodyRect.y0 + 250 },
+    155,
+    155,
+    0.19,
+    0.98,
+    1,
+  );
+  finish(context, augerMotor, materials.fireplace, { shadow: true, pickable: true });
+
+  const burnerRect = boiler.burner.footprintMm;
+  const burnerCenter = rectCenter(burnerRect);
+  const burnerBody = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-BURNER · automaticky čistený peletový horák`,
+    burnerCenter,
+    burnerRect.x1 - burnerRect.x0,
+    burnerRect.y1 - burnerRect.y0,
+    0.34,
+    0.34,
+    1,
+  );
+  finish(context, burnerBody, materials.fireplace, { shadow: true, pickable: true });
+  const burnerFace = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-BURNER · čelný servisný kryt`,
+    { x: burnerCenter.x, y: burnerRect.y1 + 10 },
+    burnerRect.x1 - burnerRect.x0 - 44,
+    20,
+    0.25,
+    0.385,
+    1,
+  );
+  finish(context, burnerFace, materials.boilerEnamel, { shadow: true, pickable: true });
+  const burnerWindow = texturedBox(
+    context.scene,
+    `${fitout.id} · PELLET-BURNER · kontrolné okienko plameňa`,
+    { x: burnerCenter.x - 82, y: burnerRect.y1 + 23 },
+    80,
+    8,
+    0.055,
+    0.47,
+    1,
+  );
+  finish(context, burnerWindow, materials.blackGlass);
+
+  const hoseStart = { x: bodyRect.x0 + 18, elevationM: 1.08, y: frontYmm + 32 };
+  const hoseControl = { x: bodyRect.x1 + 86, elevationM: 1.03, y: frontYmm + 74 };
+  const hoseEnd = { x: burnerCenter.x, elevationM: 0.68, y: burnerRect.y0 + 195 };
+  const hosePath = Array.from({ length: 13 }, (_, index) => {
+    const t = index / 12;
+    const oneMinusT = 1 - t;
+    return new Vector3(
+      xM(oneMinusT ** 2 * hoseStart.x + 2 * oneMinusT * t * hoseControl.x + t ** 2 * hoseEnd.x),
+      oneMinusT ** 2 * hoseStart.elevationM
+        + 2 * oneMinusT * t * hoseControl.elevationM
+        + t ** 2 * hoseEnd.elevationM,
+      zM(oneMinusT ** 2 * hoseStart.y + 2 * oneMinusT * t * hoseControl.y + t ** 2 * hoseEnd.y),
+    );
+  });
+  const feedHose = CreateTube(
+    `${fitout.id} · PELLET-FEED-HOSE · pružná jantárová podávacia hadica`,
+    { path: hosePath, radius: 0.038, tessellation: 24, cap: Mesh.CAP_ALL },
+    context.scene,
+  );
+  finish(context, feedHose, materials.pelletFeedHose, { shadow: true, pickable: true });
+
+  const flueCollar = CreateCylinder(
+    `${fitout.id} · WOOD-PELLET-BOILER · dymovodné hrdlo`,
+    { height: 0.06, diameter: 0.23, tessellation: 32 },
+    context.scene,
+  );
+  flueCollar.position.set(xM(bodyCenter.x), bodyHeightM + 0.03, zM(bodyRect.y0 + 145));
   finish(context, flueCollar, materials.fireplace);
   const flueStub = CreateCylinder(
-    `${fitout.id} · WOOD-GASIFICATION-BOILER · koncept napojenia dymovodu Ø${boiler.flueOutletDiameterMm}`,
-    { height: 0.36, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
+    `${fitout.id} · WOOD-PELLET-BOILER · koncept napojenia dymovodu Ø${boiler.flueOutletDiameterMm}`,
+    { height: 0.14, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
     context.scene,
   );
-  flueStub.position.set(xM(boilerCenter.x), boilerHeightM + 0.23, zM(boilerRect.y0 + 165));
+  flueStub.position.set(xM(bodyCenter.x), bodyHeightM + 0.1, zM(bodyRect.y0 + 145));
   finish(context, flueStub, materials.fireplace);
+
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · WOOD-PELLET-ASSEMBLY · navigačný obrys celej zostavy`,
+    assemblyRect,
+  );
 
   const tank = fitout.accumulator;
   const tankRadiusMm = tank.outerDiameterMm / 2;

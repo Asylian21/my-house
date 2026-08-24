@@ -102,11 +102,37 @@ export interface TechnicalHeatingFitout {
   readonly roomId: "ROOM-1-07";
   readonly exteriorAccessOpeningId: "EAST-03";
   readonly boiler: {
-    readonly footprintMm: RectMm;
-    readonly heightMm: number;
+    readonly kind: "WOOD_GASIFICATION_OR_PELLETS";
+    readonly referenceProductFamily: "DEFRO_FIREWOOD_DUO";
+    readonly referenceOutputKw: 15;
+    readonly fuelModes: readonly ["WOOD_GASIFICATION", "PELLETS"];
+    /** Closed physical envelope used by the visualization and walk collision. */
+    readonly assemblyFootprintMm: RectMm;
+    readonly heightMm: 1391;
     readonly front: "NORTH";
+    readonly body: {
+      readonly footprintMm: RectMm;
+      readonly heightMm: 1213;
+      readonly controllerTopElevationMm: 1389;
+    };
+    readonly hopper: {
+      readonly footprintMm: RectMm;
+      readonly heightMm: 1391;
+      readonly nominalPelletCapacityKg: 180;
+      readonly side: "WEST";
+    };
+    readonly burner: {
+      readonly footprintMm: RectMm;
+    };
+    /** Clear floor needed in front of the loading and service doors. */
     readonly serviceRectMm: RectMm;
-    readonly flueOutletDiameterMm: number;
+    readonly frontServiceClearanceMm: 2000;
+    readonly openDoorEnvelopeWidthMm: 1566;
+    readonly manufacturerSideAndRearRecommendationMm: 500;
+    readonly modeledSideClearanceMm: 405;
+    readonly modeledRearClearanceMm: 50;
+    readonly professionalInstallationReviewRequired: true;
+    readonly flueOutletDiameterMm: 159;
   };
   readonly accumulator: {
     readonly centerMm: Point2Mm;
@@ -723,24 +749,50 @@ export const KITCHEN_RUN: KitchenRun = Object.freeze({
 
 /**
  * Client heating concept placed in the equipment zones already indicated in
- * D1.1.002: the circular accumulator in the west bay and the boiler in the
- * south recess. Product-specific fire, combustion-air, hydraulic and chimney
- * requirements remain a professional-design input rather than an as-built
- * assertion of this visualization.
+ * D1.1.002: the circular accumulator in the west bay and a combined wood /
+ * pellet assembly in the south recess. The 15 kW reference envelope fits
+ * physically and leaves a full 2 m clear floor in front, but the modeled 405 mm
+ * side and 50 mm rear gaps do not satisfy the reference manufacturer's 500 mm
+ * recommendation. Fire, combustion-air, hydraulic and chimney requirements
+ * therefore remain professional-design inputs, not an as-built assertion.
  */
 export const TECHNICAL_HEATING_FITOUT: TechnicalHeatingFitout = Object.freeze({
-  id: "TECHNICAL-HEATING-FITOUT-2026-08-23",
-  sourceId: SOURCES.clientTechnicalHeatingRevision20260823.id,
+  id: "TECHNICAL-HYBRID-HEATING-FITOUT-2026-08-24",
+  sourceId: SOURCES.clientHybridHeatingRevision20260824.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-07",
   exteriorAccessOpeningId: "EAST-03",
   boiler: {
-    footprintMm: { x0: 26142, y0: 7841, x1: 26942, y1: 8741 },
-    heightMm: 1450,
+    kind: "WOOD_GASIFICATION_OR_PELLETS",
+    referenceProductFamily: "DEFRO_FIREWOOD_DUO",
+    referenceOutputKw: 15,
+    fuelModes: ["WOOD_GASIFICATION", "PELLETS"] as const,
+    assemblyFootprintMm: { x0: 25948, y0: 7791, x1: 27136, y1: 9015 },
+    heightMm: 1391,
     front: "NORTH",
-    serviceRectMm: { x0: 26092, y0: 8741, x1: 26992, y1: 9641 },
-    flueOutletDiameterMm: 180,
+    body: {
+      footprintMm: { x0: 26654, y0: 7930, x1: 27136, y1: 8586 },
+      heightMm: 1213,
+      controllerTopElevationMm: 1389,
+    },
+    hopper: {
+      footprintMm: { x0: 25948, y0: 7861, x1: 26562, y1: 8885 },
+      heightMm: 1391,
+      nominalPelletCapacityKg: 180,
+      side: "WEST",
+    },
+    burner: {
+      footprintMm: { x0: 26702, y0: 8586, x1: 27088, y1: 9015 },
+    },
+    serviceRectMm: { x0: 26445, y0: 9015, x1: 27345, y1: 11015 },
+    frontServiceClearanceMm: 2000,
+    openDoorEnvelopeWidthMm: 1566,
+    manufacturerSideAndRearRecommendationMm: 500,
+    modeledSideClearanceMm: 405,
+    modeledRearClearanceMm: 50,
+    professionalInstallationReviewRequired: true,
+    flueOutletDiameterMm: 159,
   },
   accumulator: {
     centerMm: { x: 25026, y: 9912 },

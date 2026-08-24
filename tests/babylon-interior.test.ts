@@ -5,10 +5,10 @@ import { Scene } from "@babylonjs/core/scene";
 import { describe, expect, it } from "vitest";
 
 import { buildInterior } from "../lib/babylon-interior";
-import { CHILDRENS_BEDROOM_FITOUTS } from "../lib/twin-interior";
+import { CHILDRENS_BEDROOM_FITOUTS, TECHNICAL_HEATING_FITOUT } from "../lib/twin-interior";
 
 describe("Babylon interior fit-out", () => {
-  it("builds every required children's-room object with a collision envelope", () => {
+  it("builds the required room objects and measured collision envelopes", () => {
     const engine = new NullEngine({
       renderHeight: 256,
       renderWidth: 256,
@@ -52,6 +52,41 @@ describe("Babylon interior fit-out", () => {
           expect(guard.isVisible).toBe(false);
         }
       }
+
+      const heatingMeshes = scene.meshes.filter((mesh) =>
+        mesh.name.startsWith(TECHNICAL_HEATING_FITOUT.id),
+      );
+      for (const required of [
+        "· WOOD-PELLET-BOILER ·",
+        "· PELLET-HOPPER ·",
+        "· PELLET-AUGER ·",
+        "· PELLET-FEED-HOSE ·",
+        "· PELLET-BURNER ·",
+        "· BUFFER-TANK-1000L ·",
+      ]) {
+        expect(
+          heatingMeshes.some((mesh) => mesh.name.includes(required)),
+          `technical heating renders ${required}`,
+        ).toBe(true);
+      }
+
+      const hose = heatingMeshes.find((mesh) => mesh.name.includes("· PELLET-FEED-HOSE ·"));
+      expect(hose?.getTotalVertices()).toBeGreaterThan(0);
+      expect(
+        heatingMeshes.find((mesh) => mesh.name.includes("kombinované teleso"))?.isPickable,
+      ).toBe(true);
+      expect(
+        heatingMeshes.find((mesh) => mesh.name.includes("zásobník peliet približne"))
+          ?.isPickable,
+      ).toBe(true);
+
+      const heatingGuards = heatingMeshes.filter(
+        (mesh) => mesh.metadata?.walkCollisionOnly === true,
+      );
+      expect(heatingGuards).toHaveLength(1);
+      expect(heatingGuards[0].name).toContain("· WOOD-PELLET-ASSEMBLY · navigačný obrys");
+      expect(heatingGuards[0].checkCollisions).toBe(true);
+      expect(heatingGuards[0].isVisible).toBe(false);
     } finally {
       scene.dispose();
       engine.dispose();

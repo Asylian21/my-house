@@ -328,7 +328,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     })).toBe(false);
   });
 
-  it("fits the wood boiler and 1 000 l accumulator into room 1.07 without blocking either access", () => {
+  it("fits the combined wood / pellet boiler and 1 000 l accumulator into room 1.07", () => {
     const fitout = TECHNICAL_HEATING_FITOUT;
     const technicalRoom = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
     const technicalDoor = INTERIOR_DOORS.find((door) => door.id === "DOOR-103-107")!;
@@ -342,23 +342,64 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       { x: rect.x1, y: rect.y1 },
     ].every((point) => roomAt(point)?.id === technicalRoom.id);
 
-    expect(fitout.sourceId).toBe(SOURCES.clientTechnicalHeatingRevision20260823.id);
+    expect(fitout.sourceId).toBe(SOURCES.clientHybridHeatingRevision20260824.id);
     expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(technicalRoom.number).toBe("1.07");
 
     const boiler = fitout.boiler;
-    expect(cornersInsideTechnicalRoom(boiler.footprintMm)).toBe(true);
-    expect(boiler.footprintMm.x1 - boiler.footprintMm.x0).toBe(800);
-    expect(boiler.footprintMm.y1 - boiler.footprintMm.y0).toBe(900);
-    expect(boiler.heightMm).toBe(1450);
+    const assembly = boiler.assemblyFootprintMm;
+    const southRecess = technicalRoom.rectsMm[2];
+    expect(boiler.kind).toBe("WOOD_GASIFICATION_OR_PELLETS");
+    expect(boiler.referenceProductFamily).toBe("DEFRO_FIREWOOD_DUO");
+    expect(boiler.referenceOutputKw).toBe(15);
+    expect(boiler.fuelModes).toEqual(["WOOD_GASIFICATION", "PELLETS"]);
+    expect(cornersInsideTechnicalRoom(assembly)).toBe(true);
+    expect(assembly.x1 - assembly.x0).toBe(1188);
+    expect(assembly.y1 - assembly.y0).toBe(1224);
+    expect(boiler.heightMm).toBe(1391);
     expect(boiler.front).toBe("NORTH");
+
+    expect(inside(boiler.body.footprintMm, assembly)).toBe(true);
+    expect(inside(boiler.hopper.footprintMm, assembly)).toBe(true);
+    expect(inside(boiler.burner.footprintMm, assembly)).toBe(true);
+    expect(boiler.body.footprintMm.x1 - boiler.body.footprintMm.x0).toBe(482);
+    expect(boiler.body.footprintMm.y1 - boiler.body.footprintMm.y0).toBe(656);
+    expect(boiler.body.heightMm).toBe(1213);
+    expect(boiler.body.controllerTopElevationMm).toBe(1389);
+    expect(boiler.hopper.footprintMm.x1 - boiler.hopper.footprintMm.x0).toBe(614);
+    expect(boiler.body.footprintMm.x0 - boiler.hopper.footprintMm.x1).toBe(92);
+    expect(boiler.hopper.heightMm).toBe(1391);
+    expect(boiler.hopper.nominalPelletCapacityKg).toBe(180);
+    expect(boiler.hopper.side).toBe("WEST");
+    expect(boiler.burner.footprintMm.y1 - boiler.burner.footprintMm.y0).toBe(429);
+
+    expect(assembly.x0 - southRecess.x0).toBe(405);
+    expect(southRecess.x1 - assembly.x1).toBe(405);
+    expect(assembly.y0 - southRecess.y0).toBe(50);
+    expect(southRecess.y1 - assembly.y1).toBe(97);
+    expect(technicalRoom.rectsMm[1].y1 - assembly.y1).toBe(2396);
+    expect(eastDoor.startYmm - assembly.y1).toBe(635);
+
     expect(cornersInsideTechnicalRoom(boiler.serviceRectMm)).toBe(true);
     expect(boiler.serviceRectMm.x1 - boiler.serviceRectMm.x0).toBe(900);
-    expect(boiler.serviceRectMm.y1 - boiler.serviceRectMm.y0).toBe(900);
-    expect(overlaps(boiler.footprintMm, boiler.serviceRectMm)).toBe(false);
-    expect(boiler.serviceRectMm.y1).toBeLessThan(eastDoor.startYmm);
+    expect(boiler.serviceRectMm.y1 - boiler.serviceRectMm.y0).toBe(2000);
+    expect(boiler.frontServiceClearanceMm).toBe(2000);
+    expect(boiler.openDoorEnvelopeWidthMm).toBe(1566);
+    expect(overlaps(assembly, boiler.serviceRectMm)).toBe(false);
+    expect(technicalRoom.rectsMm[1].y1 - boiler.serviceRectMm.y1).toBe(396);
     expect(boiler.heightMm).toBeLessThan(technicalRoom.clearHeightMm);
+
+    expect(boiler.manufacturerSideAndRearRecommendationMm).toBe(500);
+    expect(boiler.modeledSideClearanceMm).toBe(405);
+    expect(boiler.modeledRearClearanceMm).toBe(50);
+    expect(boiler.modeledSideClearanceMm).toBeLessThan(
+      boiler.manufacturerSideAndRearRecommendationMm,
+    );
+    expect(boiler.modeledRearClearanceMm).toBeLessThan(
+      boiler.manufacturerSideAndRearRecommendationMm,
+    );
+    expect(boiler.professionalInstallationReviewRequired).toBe(true);
 
     const tank = fitout.accumulator;
     const tankRadiusMm = tank.outerDiameterMm / 2;
@@ -373,7 +414,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(tank.heightMm).toBe(2100);
     expect(cornersInsideTechnicalRoom(tankBounds)).toBe(true);
     expect(tank.heightMm).toBeLessThan(technicalRoom.clearHeightMm);
-    expect(overlaps(tankBounds, boiler.footprintMm)).toBe(false);
+    expect(overlaps(tankBounds, assembly)).toBe(false);
     expect(overlaps(tankBounds, boiler.serviceRectMm)).toBe(false);
     expect(tank.centerMm).toEqual({ x: 25026, y: 9912 });
     const technicalWestBay = technicalRoom.rectsMm[0];
@@ -383,6 +424,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     const openTechnicalLeafSouthEdge =
       technicalDoor.wallSpanMm[0] - technicalDoor.leafWidthMm - 20;
     expect(openTechnicalLeafSouthEdge - tankBounds.y1).toBeGreaterThanOrEqual(250);
+    expect(openTechnicalLeafSouthEdge - assembly.y1).toBeGreaterThanOrEqual(1600);
     expect(technicalDoor.swing).toBe(-1);
   });
 
