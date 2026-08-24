@@ -34,7 +34,7 @@ describe("orbit zoom contract", () => {
   it("uses an exponential trackpad model and owns browser gestures", () => {
     expect(ORBIT_ZOOM).toEqual({
       lowerRadiusLimitM: 4.5,
-      upperRadiusLimitM: 64,
+      upperRadiusLimitM: 150,
       scrollGainPerPx: 0.0018,
       pinchGainPerPx: 0.009,
       lineModePx: 16,

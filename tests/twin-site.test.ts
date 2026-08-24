@@ -27,6 +27,8 @@ import {
   arcRotateCameraHeightM,
   focusRadiusForBoundingSphere,
   gardenCameraForWidth,
+  parcelCameraForWidth,
+  parcelLabelScaleForRadius,
   sceneDeltaForPlanSegment,
   sceneXM,
   sceneYawForPlanSegment,
@@ -36,6 +38,23 @@ import {
 import { segmentFacadeMm } from "../lib/twin-facade";
 import { slatCenterDistancesMm } from "../lib/twin-fence";
 import { roofHeightMm, roofMountTransform } from "../lib/twin-roof";
+
+function pointInRing(
+  point: { readonly x: number; readonly y: number },
+  ring: readonly { readonly x: number; readonly y: number }[],
+) {
+  let inside = false;
+  for (let current = 0, previous = ring.length - 1; current < ring.length; previous = current++) {
+    const a = ring[current];
+    const b = ring[previous];
+    const crosses =
+      a.y > point.y !== b.y > point.y &&
+      point.x <
+        ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
 
 describe("site evidence seed", () => {
   it("projects official GP points into the road-aligned local frame", () => {
@@ -47,6 +66,60 @@ describe("site evidence seed", () => {
     expect(local?.[6]).toEqual({ x: 31_109, y: 24_497 });
     expect(local?.[7]).toEqual({ x: -946, y: 23_200 });
     expect(SOURCES.cadastre.href).toContain("inspire-cp-wfs");
+  });
+
+  it("keeps the requested parcel rows tied to live WFS features and label points", () => {
+    const requested = CADASTRAL_PARCELS.filter(
+      ({ orientationRole }) => orientationRole,
+    );
+    expect(requested.map(({ parcelNumber }) => parcelNumber).sort()).toEqual(
+      [
+        "6012/16",
+        "6012/23",
+        "6012/24",
+        "6012/25",
+        "6012/26",
+        "6012/27",
+        "6012/28",
+        "6035/37",
+        "6035/38",
+        "6035/45",
+        "6035/46",
+      ],
+    );
+    expect(
+      Object.fromEntries(
+        requested.map(({ parcelNumber, featureId }) => [parcelNumber, featureId]),
+      ),
+    ).toMatchObject({
+      "6012/23": "CP.94487877010",
+      "6012/26": "CP.94487880010",
+      "6012/28": "CP.94487882010",
+      "6035/37": "CP.94487918010",
+      "6035/46": "CP.94487927010",
+    });
+
+    const localLabelPoints = Object.fromEntries(
+      requested.map((parcel) => [
+        parcel.parcelNumber,
+        sjtskToLocalMm(parcel.labelPointSjtskMm!),
+      ]),
+    );
+    expect(localLabelPoints).toMatchObject({
+      "6012/23": { x: -27_870, y: -31_288 },
+      "6012/26": { x: 14_480, y: 10_468 },
+      "6012/28": { x: -46_902, y: 8_580 },
+      "6035/46": { x: 54_929, y: 7_179 },
+    });
+
+    for (const parcel of requested) {
+      expect(parcel.sjtskRingMm[0]).toEqual(parcel.sjtskRingMm.at(-1));
+      expect(parcel.labelPointSjtskMm).toBeDefined();
+      expect(pointInRing(parcel.labelPointSjtskMm!, parcel.sjtskRingMm)).toBe(
+        true,
+      );
+    }
+    expect(SOURCES.cadastre.date).toBe("24. 8. 2026");
   });
 
   it("uses the later D1 floor plan without reflection and retains C3 as provenance", () => {
@@ -97,14 +170,29 @@ describe("site evidence seed", () => {
     expect(ROAD_CONTEXT.pavedSurfaceStatus).toBe(
       "C3_DERIVED_NOT_AS_BUILT_SURVEY",
     );
+    expect(ROAD_CONTEXT.orientationExtensionStatus).toBe(
+      "WFS_BOUNDARY_WITH_C3_OFFSET_CONTINUATION",
+    );
+    expect(ROAD_CONTEXT.surfaceFinish).toEqual({
+      kind: "GREY_CONCRETE_BLOCK_PAVERS",
+      visualModuleMm: { length: 200, width: 100 },
+      visualJointMm: 5,
+      layingPattern: "STAGGERED_RUNNING_BOND",
+      specificationStatus: "CLIENT_REFERENCE_WITHOUT_MANUFACTURER_SPEC",
+      sourceId: SOURCES.clientStreetPaversRevision20260824.id,
+    });
+    expect(ROAD_CONTEXT.sourceIds).toContain(
+      SOURCES.clientStreetPaversRevision20260824.id,
+    );
     expect(ROAD_CONTEXT.frontAsphaltEdgeYmm).toBe(-3_104);
     expect(ROAD_CONTEXT.frontReservePolygonMm).toEqual([
-      { x: -15_670, y: 5 },
+      { x: -60_262, y: 14 },
+      { x: -30_127, y: 10 },
       { x: 0, y: 0 },
       { x: 28_194, y: 0 },
       { x: 28_194, y: -3_104 },
-      { x: -15_670, y: -3_104 },
-      { x: -15_670, y: 5 },
+      { x: -60_262, y: -3_104 },
+      { x: -60_262, y: 14 },
     ]);
     expect(
       ROAD_CONTEXT.frontReserveSurfacePolygonsMm.map((ring) => {
@@ -112,7 +200,7 @@ describe("site evidence seed", () => {
         return [Math.min(...xs), Math.max(...xs)];
       }),
     ).toEqual([
-      [-15_670, 6_490],
+      [-60_262, 6_490],
       [10_690, 21_415],
       [22_915, 28_194],
     ]);
@@ -206,6 +294,23 @@ describe("site evidence seed", () => {
     expect(streetCameraForWidth(390).radius).toBeGreaterThan(
       streetCameraForWidth(1600).radius,
     );
+    expect(parcelCameraForWidth(1600)).toEqual({
+      alpha: Math.PI / 2,
+      beta: 0.065,
+      radius: 80,
+      fov: 0.82,
+      target: [-29, 0, 22],
+    });
+    expect(parcelCameraForWidth(390)).toMatchObject({
+      radius: 132,
+      fov: 0.9,
+      target: [-29, 0, 22],
+    });
+    expect(parcelLabelScaleForRadius(20)).toBe(1);
+    expect(parcelLabelScaleForRadius(80)).toBeCloseTo(80 / 28, 10);
+    expect(parcelLabelScaleForRadius(132)).toBeCloseTo(132 / 28, 10);
+    expect(parcelLabelScaleForRadius(150)).toBe(4.75);
+    expect(parcelLabelScaleForRadius(Number.NaN)).toBe(1);
     expect(focusRadiusForBoundingSphere(4, 0.68, 16 / 9)).toBeLessThan(
       focusRadiusForBoundingSphere(4, 0.68, 9 / 16),
     );

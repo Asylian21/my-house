@@ -55,6 +55,7 @@ interface BabylonViewportProps {
   navigationMode: NavigationMode;
   onSelect: (id: string) => void;
   onNavigationModeChange: (mode: NavigationMode) => void;
+  onParcelOverviewRequest: () => void;
 }
 
 export const BabylonViewport = forwardRef<
@@ -69,6 +70,7 @@ export const BabylonViewport = forwardRef<
     navigationMode,
     onSelect,
     onNavigationModeChange,
+    onParcelOverviewRequest,
   },
   ref,
 ) {
@@ -233,6 +235,7 @@ export const BabylonViewport = forwardRef<
   };
 
   const applyPreset = (preset: CameraPreset) => {
+    if (preset === "parcels") onParcelOverviewRequest();
     setMode("orbit");
     controllerRef.current?.setCameraPreset(preset);
   };
@@ -312,7 +315,7 @@ export const BabylonViewport = forwardRef<
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
             ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
-            : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 4 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
+            : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 5 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
         ref={canvasRef}
@@ -324,6 +327,7 @@ export const BabylonViewport = forwardRef<
           if (event.key === "2") applyPreset("top");
           if (event.key === "3") applyPreset("street");
           if (event.key === "4") applyPreset("garden");
+          if (event.key === "5") applyPreset("parcels");
           if (event.key.toLowerCase() === "f") applyPreset("focus");
           if (event.key.toLowerCase() === "h") {
             event.preventDefault();

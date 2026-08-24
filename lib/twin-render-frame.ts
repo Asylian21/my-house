@@ -11,6 +11,9 @@ export const MM_TO_M = 0.001;
 export const SCENE_CENTER_MM = Object.freeze({ x: 15_200, y: 10_800 });
 
 export const TOP_CAMERA_ALPHA = Math.PI / 2;
+export const PARCEL_CAMERA_ALPHA = Math.PI / 2;
+export const PARCEL_LABEL_REFERENCE_RADIUS_M = 28;
+export const PARCEL_LABEL_MAX_SCALE = 4.75;
 export const STREET_CAMERA_ALPHA = 1.42;
 export const AXONOMETRIC_CAMERA_ALPHA = Math.PI * 0.72;
 // Human-scale hero view from inside the rear hedge. The old preset placed the
@@ -75,6 +78,37 @@ export function streetCameraForWidth(widthPx: number): GardenCameraConfig {
     fov: mobile ? 0.8 : 0.66,
     target,
   };
+}
+
+/**
+ * Cadastral orientation view centred between the subject row 6012/26–28 and
+ * the opposite row 6012/23–25. It intentionally frames cadastral context,
+ * while the existing top preset remains a tighter architectural floor-plan
+ * view of the house.
+ */
+export function parcelCameraForWidth(widthPx: number): GardenCameraConfig {
+  const mobile = widthPx < 600;
+  return {
+    alpha: PARCEL_CAMERA_ALPHA,
+    beta: 0.065,
+    radius: mobile ? 132 : 80,
+    fov: mobile ? 0.9 : 0.82,
+    target: [-29, 0, 22],
+  };
+}
+
+/**
+ * Ground labels grow with an overview camera's distance so their typography
+ * keeps a useful screen size on both a desktop canvas and a narrow phone.
+ * Close architectural views retain the true-size plaque, while the cap keeps
+ * neighbouring parcel numbers from overlapping at the maximum orbit radius.
+ */
+export function parcelLabelScaleForRadius(radiusM: number): number {
+  if (!Number.isFinite(radiusM)) return 1;
+  return Math.min(
+    PARCEL_LABEL_MAX_SCALE,
+    Math.max(1, radiusM / PARCEL_LABEL_REFERENCE_RADIUS_M),
+  );
 }
 
 export function focusRadiusForBoundingSphere(
