@@ -174,17 +174,23 @@ Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uza
 kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
 musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.
 
-Pracovňa 1.04 je v nadväzujúcej klientskej revízii riešená ako minimalistický
-pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečku k zádveriu využíva
-2 550 mm vysoká greige bezúchytková skriňa s integrovanou bočnou nikou pre
-bielo-čiernu tlačiareň. Vedľa stojí subtílny dubový stôl 1 600 × 800 mm s
-57-palcovým prehnutým ultrawide monitorom 32 : 9 a čiernym ergonomickým kreslom;
-na východnej stene je priamo za používateľom bezrámová biela tabuľa na fixky.
-Rozmiestnenie necháva 60 mm pred stavebným otvorom FRONT-07 a 20 mm pred
-bočným presahom jeho vnútorného parapetu, 75 mm pred oknom EAST-01 a súvislý
-vstupný pás najmenej 1 500 × 1 000 mm. Ide o interiérový
-dizajnový koncept; ergonómiu konkrétneho monitora a kresla, elektroinštaláciu,
-kotvenie skríň a výrobnú skladbu musí potvrdiť dodávateľ interiéru.
+Pracovňa 1.04 je v klientskej revízii z 24. 8. 2026 preskladaná ako
+minimalistický pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečku k
+zádveriu využíva 2 550 mm vysoká greige bezúchytková skriňa s integrovanou
+bielo-čiernou tlačiarňou. Naprieč k južnému oknu stojí subtílny dubový stôl
+1 800 × 800 mm s prehnutým 40-palcovým ultrawide monitorom 21 : 9 a čiernym
+ergonomickým kreslom. Bezrámová 1 700 mm široká tabuľa na fixky je za chrbtom
+používateľa na severnej stene, teda vľavo po vstupe a oproti stolu; od rohu
+okna EAST-01 má približne 707 mm diagonálny odstup. Voľný vstupný pás má
+1 538 × 1 012 mm a rešpektuje celý oblúk dverí.
+
+Výrez na východnej stene zádveria 1.01 vypĺňa samostatná vstavaná zostava
+`ENTRY_FITOUT`: celovýšková 950 mm skriňa na kabáty, dvojzásuvkový botník,
+660 mm čalúnená lavica, dubový panel s tromi háčikmi a horná skriňa s nepriamym
+2700 K svetlom. Pred zostavou ostáva komunikačný pás 1 746 × 1 697 mm; zostava
+je mimo 900 mm oblúka vstupného krídla, bočného svetlíka aj dverí do chodby.
+Obe riešenia sú interiérové dizajnové koncepty; ergonómiu, elektroinštaláciu,
+kotvenie a výrobnú skladbu musí potvrdiť dodávateľ interiéru.
 
 Krytá terasa pod štítom krídla je modelovaná ako súvislý portálový rám P04:
 obe biele podpory (rohový pilier 500 × 500 a koniec východnej steny) pokračujú

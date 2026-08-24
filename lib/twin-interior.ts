@@ -188,13 +188,13 @@ export interface OfficeFitout {
   };
   readonly desk: {
     readonly footprintMm: RectMm;
-    readonly facing: "WEST";
+    readonly facing: "SOUTH";
     readonly topElevationMm: number;
     readonly monitor: {
       readonly centerMm: Point2Mm;
-      readonly screenFacing: "EAST";
-      readonly diagonalIn: 57;
-      readonly aspectRatio: "32:9";
+      readonly screenFacing: "NORTH";
+      readonly diagonalIn: 40;
+      readonly aspectRatio: "21:9";
       readonly widthMm: number;
       readonly heightMm: number;
       readonly curveRadiusMm: number;
@@ -205,7 +205,7 @@ export interface OfficeFitout {
   readonly chair: {
     readonly footprintMm: RectMm;
     readonly centerMm: Point2Mm;
-    readonly facing: "WEST";
+    readonly facing: "SOUTH";
     readonly seatElevationMm: number;
     readonly backTopElevationMm: number;
   };
@@ -218,13 +218,52 @@ export interface OfficeFitout {
     readonly integrated: true;
   };
   readonly whiteboard: {
+    readonly wallId: "IW-STUDY-NORTH";
     readonly footprintMm: RectMm;
-    readonly facing: "WEST";
+    readonly facing: "SOUTH";
     readonly bottomElevationMm: number;
     readonly heightMm: number;
     readonly openingId: "EAST-01";
   };
   readonly clearEntryRectMm: RectMm;
+}
+
+export interface EntryFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-01";
+  readonly wallId: "IW-ENTRY-EAST";
+  readonly exteriorOpeningId: "FRONT-ENTRY";
+  readonly corridorDoorId: "DOOR-101-102";
+  readonly facing: "WEST";
+  readonly footprintMm: RectMm;
+  readonly heightMm: number;
+  readonly wardrobe: {
+    readonly footprintMm: RectMm;
+    readonly doorCount: 2;
+    readonly coatRailElevationMm: number;
+    readonly upperShelfElevationMm: number;
+  };
+  readonly bench: {
+    readonly footprintMm: RectMm;
+    readonly seatElevationMm: number;
+    readonly cushionThicknessMm: number;
+    readonly shoeDrawerCount: 2;
+  };
+  readonly hookPanel: {
+    readonly footprintMm: RectMm;
+    readonly bottomElevationMm: number;
+    readonly topElevationMm: number;
+    readonly hookCentersMm: readonly [Point2Mm, Point2Mm, Point2Mm];
+    readonly hookElevationMm: number;
+  };
+  readonly overheadCabinet: {
+    readonly footprintMm: RectMm;
+    readonly bottomElevationMm: number;
+  };
+  readonly clearFloorRectMm: RectMm;
 }
 
 export interface FireplacePier {
@@ -626,10 +665,10 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
   applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
 });
 
-/** Minimalist home-office composition fitted around both study windows. */
+/** Reoriented minimalist home-office composition fitted around both study windows. */
 export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
-  id: "OFFICE-FITOUT-2026-08-23",
-  sourceId: SOURCES.clientOfficeRevision20260823.id,
+  id: "OFFICE-FITOUT-2026-08-24",
+  sourceId: SOURCES.clientOfficeRelayoutRevision20260824.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-04",
@@ -645,25 +684,25 @@ export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
     },
   },
   desk: {
-    footprintMm: { x0: 25340, y0: 3630, x1: 26140, y1: 5230 },
-    facing: "WEST",
+    footprintMm: { x0: 25330, y0: 3600, x1: 27130, y1: 4400 },
+    facing: "SOUTH",
     topElevationMm: 750,
     monitor: {
-      centerMm: { x: 25480, y: 4430 },
-      screenFacing: "EAST",
-      diagonalIn: 57,
-      aspectRatio: "32:9",
-      widthMm: 1400,
-      heightMm: 394,
-      curveRadiusMm: 1800,
-      maxThicknessMm: 40,
-      centerElevationMm: 1180,
+      centerMm: { x: 26230, y: 3850 },
+      screenFacing: "NORTH",
+      diagonalIn: 40,
+      aspectRatio: "21:9",
+      widthMm: 934,
+      heightMm: 400,
+      curveRadiusMm: 2500,
+      maxThicknessMm: 35,
+      centerElevationMm: 1120,
     },
   },
   chair: {
-    footprintMm: { x0: 26220, y0: 4030, x1: 27020, y1: 4830 },
-    centerMm: { x: 26620, y: 4430 },
-    facing: "WEST",
+    footprintMm: { x0: 25830, y0: 4520, x1: 26630, y1: 5320 },
+    centerMm: { x: 26230, y: 4920 },
+    facing: "SOUTH",
     seatElevationMm: 460,
     backTopElevationMm: 1300,
   },
@@ -676,13 +715,57 @@ export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
     integrated: true,
   },
   whiteboard: {
-    footprintMm: { x0: 27526, y0: 3750, x1: 27541, y1: 4950 },
-    facing: "WEST",
+    wallId: "IW-STUDY-NORTH",
+    footprintMm: { x0: 25240, y0: 6397, x1: 26940, y1: 6412 },
+    facing: "SOUTH",
     bottomElevationMm: 950,
     heightMm: 1000,
     openingId: "EAST-01",
   },
-  clearEntryRectMm: { x0: 23682, y0: 5400, x1: 25290, y1: 6412 },
+  clearEntryRectMm: { x0: 23682, y0: 5400, x1: 25220, y1: 6412 },
+} as const);
+
+/** Full-height coat, shoe and seating composition in the 1.01 wall recess. */
+export const ENTRY_FITOUT: EntryFitout = Object.freeze({
+  id: "ENTRY-FITOUT-2026-08-24",
+  sourceId: SOURCES.clientEntryFitoutRevision20260824.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  roomId: "ROOM-1-01",
+  wallId: "IW-ENTRY-EAST",
+  exteriorOpeningId: "FRONT-ENTRY",
+  corridorDoorId: "DOOR-101-102",
+  facing: "WEST",
+  footprintMm: { x0: 23409, y0: 3504, x1: 23989, y1: 5201 },
+  heightMm: 2550,
+  wardrobe: {
+    footprintMm: { x0: 23409, y0: 4251, x1: 23989, y1: 5201 },
+    doorCount: 2,
+    coatRailElevationMm: 1650,
+    upperShelfElevationMm: 2050,
+  },
+  bench: {
+    footprintMm: { x0: 23529, y0: 3544, x1: 23989, y1: 4204 },
+    seatElevationMm: 460,
+    cushionThicknessMm: 35,
+    shoeDrawerCount: 2,
+  },
+  hookPanel: {
+    footprintMm: { x0: 23965, y0: 3544, x1: 23989, y1: 4204 },
+    bottomElevationMm: 460,
+    topElevationMm: 1900,
+    hookCentersMm: [
+      { x: 23925, y: 3690 },
+      { x: 23925, y: 3874 },
+      { x: 23925, y: 4058 },
+    ],
+    hookElevationMm: 1550,
+  },
+  overheadCabinet: {
+    footprintMm: { x0: 23409, y0: 3504, x1: 23989, y1: 4251 },
+    bottomElevationMm: 1900,
+  },
+  clearFloorRectMm: { x0: 21543, y0: 3504, x1: 23289, y1: 5201 },
 } as const);
 
 /**

@@ -208,6 +208,22 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientOfficeRelayoutRevision20260824: {
+    id: "SRC-CLIENT-OFFICE-RELAYOUT-20260824",
+    title: "Revízia stavebníka · otočenie domácej pracovne",
+    detail:
+      "Pracovný stôl v miestnosti 1.04 otočiť naprieč k južnému oknu, osadiť prehnutý 40-palcový ultrawide monitor 21:9 a ergonomické kreslo smerujúce k stolu. Tabuľu na fixky umiestniť za chrbtom používateľa na severnú stenu, teda vľavo po vstupe, oproti stolu a s výrazným odstupom od okna EAST-01. Zachovať celostenovú skriňu, integrovanú tlačiareň, otvorené dvere a čistý vstupný pás.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientEntryFitoutRevision20260824: {
+    id: "SRC-CLIENT-ENTRY-FITOUT-20260824",
+    title: "Revízia stavebníka · vstavané zádverie",
+    detail:
+      "Do výrezu miestnosti 1.01 pri priečke k pracovni doplniť kompaktnú vstavanú zostavu: uzavretú skriňu na kabáty, botník, pohodlnú čalúnenú lavicu, otvorený panel s háčikmi a hornú úložnú skrinku. Zostava musí ponechať voľný vstup, bočné svetlo FRONT-ENTRY, celý pohyb vstupných dverí aj dverí do chodby.",
+    date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFenceMarkup20260821: {
     id: "SRC-CLIENT-FENCE-20260821",
     title: "Náčrt oplotenia stavebníka",
