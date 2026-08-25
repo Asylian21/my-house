@@ -118,6 +118,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /surfaceFinish\.visualJointMm/);
   assert.match(scene, /paverJointInsetPx = paverJointPx \/ 2/);
   assert.match(scene, /Orientačný popis parcely/);
+  assert.match(
+    scene,
+    /if \(parcel\.labelPointSjtskMm && !parcel\.isSubject\)/,
+  );
   assert.match(scene, /parcelCameraForWidth/);
   assert.match(scene, /parcelLabelScaleForRadius/);
   assert.match(scene, /hedge-privet-albedo\.png/);
