@@ -6,9 +6,10 @@ Interaktívny technický model parcely a navrhovaného rodinného domu v Březí
 
 - hranica parcely, výmera 753 m² a koridor cestnej parcely 6012/1 s výmerou
   10 647 m² vychádzajú z aktuálnej služby ČÚZK/CP a geometrického plánu,
-- zelená cestná rezerva a hrana asfaltu vo vzdialenosti približne 3,104 m od
-  parcely sú odvodené z napojení C3 na čelnej aj bočnej vetve; nejde o
-  geodetické zameranie skutočných obrubníkov,
+- nespevnená cestná rezerva a hrana vozovky vo vzdialenosti približne 3,104 m
+  od parcely sú odvodené z napojení C3 na čelnej aj bočnej vetve; vzhľad
+  hlinenej krajnice, obrubníka a dlažby potvrdzuje fotografia z 25. 8. 2026,
+  nejde však o geodetické zameranie skutočných obrubníkov,
 - situačná revízia C3 a neskoršia detailná revízia D1.1 sú uložené oddelene; ich rozpor sa neskrýva,
 - prípojky vody, splaškovej a dažďovej kanalizácie sú projektovaný stav podľa IO 01–03,
 - verejný vodovod a splašková stoka pri parcele sú len kontext z verejnej DMVS,
@@ -24,6 +25,12 @@ namiesto prvého garážového okna; súkromnú záhradu uzatvára nový plot po
 žltého náčrtu s 4,2 m bránou v zelenom otvore pôvodného ľavého zjazdu. Plot je
 na úrovni čelnej fasády, takže nezatvára nový priamy príjazd do garáže. Ostatná
 geometria D1 zostáva nedotknutá.
+
+Fotografická revízia ulice z 25. 8. 2026 mení zelený trávnik v cestnej rezerve
+na nepravidelnú hlinenú krajnicu s riedkou náletovou vegetáciou, zosvetľuje
+sivú blokovú dlažbu, zachováva zvýšený prefabrikovaný obrubník bez chodníka a
+dopĺňa štíhle sivé stožiare verejného osvetlenia. Presný rozstup stožiarov a
+geodetická poloha obrubníka zostávajú otvorene označené ako ilustračné.
 
 Revízia z 25. 8. 2026 dopĺňa na západný bočný štít garáže zo strany označenej
 na referenčnej snímke okno `WEST-GARAGE-01`. Má rovnaký otvor 1 250 × 750 mm,
@@ -65,7 +72,9 @@ rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozl�
 filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektrický
 Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
 skutočné odlesky a animovaný filmový grain. Presety Záhrada a Ulica majú
-fyzickú výšku kamery 3,05 m a 1,85 m namiesto pôvodného leteckého pohľadu.
+fyzickú výšku kamery 3,05 m a 1,90 m namiesto pôvodného leteckého pohľadu;
+uličný preset stojí priamo na vozovke a mieri mierne nadol, aby bola dlažba
+viditeľná v spodnej tretine záberu.
 Orbitálny zoom používa exponenciálny model vlastnej implementácie: každá
 udalosť kolieska násobí cieľový polomer faktorom `exp(gain · px)`, pričom
 touchpad scroll, momentum, fyzické koliesko aj pinch (wheel + ctrl) sú

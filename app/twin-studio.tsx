@@ -335,10 +335,12 @@ function getEntityDetail(
         { label: "Chodník ku dverám", value: "1 500", unit: "mm" },
         { label: "Povrch vozovky v 3D", value: "sivá betónová bloková dlažba" },
         { label: "Vzor dlažby", value: "200 × 100 · vizualizačný modul", unit: "mm" },
+        { label: "Krajnica", value: "hlina + riedka náletová vegetácia" },
+        { label: "Verejné osvetlenie", value: "štíhle sivé LED stožiare · ilustračné" },
         { label: "Najbližšia evidovaná ulica", value: "Bezová · ≈185 m" },
       ],
       sourceIds: [...ROAD_CONTEXT.sourceIds, SOURCES.networkContext.id],
-      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Sivá bloková dlažba vychádza z klientskej referencie; jej vizualizačný modul nie je výrobná špecifikácia. Hrana spevnenej vozovky a približne 3,104 m zelená cestná rezerva sú stále odvodené z C3, nie zo zamerania skutočných obrubníkov.",
+      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Sivá bloková dlažba, hlinená krajnica, obrubník a štíhle LED stožiare vychádzajú z fotografie stavebníka z 25. 8. 2026; modul dlažby ani rozstup stožiarov nie sú realizačnou špecifikáciou. Hrana vozovky a približne 3,104 m nespevnená cestná rezerva sú stále odvodené z C3, nie zo zamerania skutočných obrubníkov.",
     };
   }
 

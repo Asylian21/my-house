@@ -67,15 +67,18 @@ export function gardenCameraForWidth(widthPx: number): GardenCameraConfig {
 
 export function streetCameraForWidth(widthPx: number): GardenCameraConfig {
   const mobile = widthPx < 600;
-  const radius = mobile ? 26 : 22.5;
+  // Put the eye on the outer edge of the photographed carriageway, not on the
+  // green terrain behind it. A deliberately low target tilts the lens through
+  // the pavers and kerb so the road occupies the lower third of the frame.
+  const radius = mobile ? 23 : 21;
   const target: readonly [number, number, number] = mobile
-    ? [0, 1.4, 4.4]
-    : [-0.6, 1.4, 3.9];
+    ? [0.2, -0.55, -2]
+    : [-0.4, -0.65, 0];
   return {
     alpha: STREET_CAMERA_ALPHA,
-    beta: betaForEyeHeight(target[1], radius, mobile ? 2 : 1.85),
+    beta: betaForEyeHeight(target[1], radius, mobile ? 2.05 : 1.9),
     radius,
-    fov: mobile ? 0.8 : 0.66,
+    fov: mobile ? 0.92 : 0.78,
     target,
   };
 }

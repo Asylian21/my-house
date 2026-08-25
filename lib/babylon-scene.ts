@@ -1265,7 +1265,7 @@ export class TwinSceneController {
       true,
     );
     const paverContext = paverTexture.getContext();
-    paverContext.fillStyle = "#3d4140";
+    paverContext.fillStyle = "#525755";
     paverContext.fillRect(0, 0, 1024, 1024);
     const paverLengthPx = 128;
     const paverWidthPx = 64;
@@ -1280,7 +1280,7 @@ export class TwinSceneController {
         const x = column * paverLengthPx + offset + paverJointInsetPx;
         const y = row * paverWidthPx + paverJointInsetPx;
         const variation = ((row * 31 + column * 47 + 97) % 25) - 12;
-        const base = 126 + variation;
+        const base = 151 + variation;
         const gradient = paverContext.createLinearGradient(
           x,
           y,
@@ -1358,7 +1358,12 @@ export class TwinSceneController {
     this.realisticMaterials.road.albedoColor = Color3.White();
     this.realisticMaterials.road.albedoTexture = paverTexture;
     this.realisticMaterials.road.bumpTexture = paverNormal;
-    this.realisticMaterials.road.environmentIntensity = 0.42;
+    this.realisticMaterials.road.environmentIntensity = 0.56;
+    // These triangulated ground rings use a flipped plan-to-world Z axis. Keep
+    // both faces visible so the realistic PBR pass cannot cull the carriageway
+    // and reveal the broad green terrain below it.
+    this.realisticMaterials.road.backFaceCulling = false;
+    this.realisticMaterials.roadReserve.backFaceCulling = false;
 
     this.poolWaterNormal = new Texture(
       "/assets/textures/pool-water-normal.png",
@@ -1399,6 +1404,9 @@ export class TwinSceneController {
     this.realisticMaterials.deck.albedoColor = Color3.FromHexString("#d7c4aa");
     this.realisticMaterials.grass.albedoColor = Color3.FromHexString("#c6d2bc");
     this.realisticMaterials.terrain.albedoColor = Color3.FromHexString("#aebca5");
+    this.realisticMaterials.roadReserve.albedoColor =
+      Color3.FromHexString("#d6c9ae");
+    this.realisticMaterials.roadReserve.environmentIntensity = 0.72;
     this.applyTexture(
       this.realisticMaterials.fenceMetal,
       "metal-anthracite-albedo",
@@ -2135,7 +2143,7 @@ export class TwinSceneController {
     for (const [index, ring] of ROAD_CONTEXT.frontReserveSurfacePolygonsMm.entries()) {
       const roadReserve = createGradedPolygon(
         this.scene,
-        `Cestná rezerva 6012/1 · zelený diel ${index + 1} s otvormi pre vstupy`,
+        `Cestná rezerva 6012/1 · hlinená krajnica ${index + 1} s otvormi pre vstupy`,
         ring,
         (point) =>
           -0.02 -
@@ -2146,7 +2154,7 @@ export class TwinSceneController {
       this.appearance(
         roadReserve,
         this.materials.road,
-        this.realisticMaterials.grass,
+        this.realisticMaterials.roadReserve,
       );
       roadReserve.receiveShadows = true;
       this.register(roadReserve, "street", ROAD_CONTEXT.id);
@@ -2177,17 +2185,100 @@ export class TwinSceneController {
     for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
       const sideReserve = createFlatPolygon(
         this.scene,
-        `Bočná cestná rezerva 6012/1 · zelený diel ${index + 1} s otvorom EAST-03`,
+        `Bočná cestná rezerva 6012/1 · hlinená krajnica ${index + 1} s otvorom EAST-03`,
         ring,
         -0.02,
       );
       this.appearance(
         sideReserve,
         this.materials.road,
-        this.realisticMaterials.grass,
+        this.realisticMaterials.roadReserve,
       );
       sideReserve.receiveShadows = true;
       this.register(sideReserve, "street", ROAD_CONTEXT.id);
+    }
+
+    for (const [index, cluster] of ROAD_CONTEXT.visualReference.vergeClustersMm.entries()) {
+      this.buildPlantCard(
+        `Riedka náletová vegetácia krajnice ${index + 1} · fotografia stavebníka`,
+        cluster.x,
+        cluster.y,
+        0.46 * cluster.scale,
+        0.68 * cluster.scale,
+        this.realisticMaterials.plantGrass,
+        index * 0.73,
+      );
+    }
+
+    for (const [index, pole] of ROAD_CONTEXT.streetLighting.polesMm.entries()) {
+      const lighting = ROAD_CONTEXT.streetLighting;
+      const poleHeightM = lighting.poleHeightMm * MM_TO_M;
+      const poleMesh = CreateCylinder(
+        `Stožiar verejného osvetlenia ${index + 1} · fotografia stavebníka`,
+        {
+          height: poleHeightM,
+          diameter: lighting.poleDiameterMm * MM_TO_M,
+          tessellation: 24,
+        },
+        this.scene,
+      );
+      poleMesh.position.set(
+        xM(pole.x),
+        -0.11 + poleHeightM / 2,
+        zM(pole.y),
+      );
+      poleMesh.isPickable = false;
+      this.appearance(
+        poleMesh,
+        this.materials.paving,
+        this.realisticMaterials.fenceTrack,
+      );
+      this.castShadow(poleMesh);
+      this.register(poleMesh, "street", ROAD_CONTEXT.id);
+
+      const arm = boxAtPlan(
+        this.scene,
+        `Rameno verejného osvetlenia ${index + 1}`,
+        { x: pole.x, y: pole.y + lighting.armLengthMm / 2 },
+        lighting.poleDiameterMm,
+        lighting.armLengthMm,
+        0.075,
+        -0.11 + poleHeightM - 0.04,
+      );
+      arm.isPickable = false;
+      this.appearance(
+        arm,
+        this.materials.paving,
+        this.realisticMaterials.fenceTrack,
+      );
+      this.castShadow(arm);
+      this.register(arm, "street", ROAD_CONTEXT.id);
+
+      const luminaire = boxAtPlan(
+        this.scene,
+        `LED hlavica verejného osvetlenia ${index + 1}`,
+        {
+          x: pole.x,
+          y:
+            pole.y +
+            lighting.armLengthMm +
+            lighting.luminaireLengthMm / 2 -
+            90,
+        },
+        165,
+        lighting.luminaireLengthMm,
+        0.085,
+        -0.11 + poleHeightM - 0.065,
+      );
+      luminaire.rotation.x = -0.035;
+      luminaire.isPickable = false;
+      this.appearance(
+        luminaire,
+        this.materials.fence,
+        this.realisticMaterials.fenceMetal,
+      );
+      this.castShadow(luminaire);
+      this.register(luminaire, "street", ROAD_CONTEXT.id);
     }
 
     const frontOpenings = [

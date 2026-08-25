@@ -876,7 +876,6 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
   fireLight.range = 3.2;
 }
 
-
 function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, door: InteriorDoor) {
   const [wallFrom, wallTo] = door.wallSpanMm;
   const thicknessMm = wallTo - wallFrom;

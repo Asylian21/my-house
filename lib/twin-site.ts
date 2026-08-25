@@ -344,6 +344,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientStreetPhoto20260825: {
+    id: "SRC-CLIENT-STREET-PHOTO-20260825",
+    title: "Fotografia stavebníka · skutočný vzhľad ulice",
+    detail:
+      "Fotografia potvrdzuje svetlosivú betónovú blokovú dlažbu bez vodorovného značenia, súvislý prefabrikovaný obrubník, nespevnenú hlinenú krajnicu s riedkou náletovou vegetáciou a štíhle sivé stožiare verejného osvetlenia. Fotografia je vizuálnym podkladom; neurčuje geodetickú polohu ani presný rozstup svietidiel.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   fenceDesignProposal20260821: {
     id: "SRC-FENCE-DESIGN-20260821",
     title: "Dizajnový návrh oplotenia",
@@ -1099,17 +1107,20 @@ export const HOUSE = Object.freeze({
 // below are clipped directly from ČÚZK feature CP.94487856010. The 3.10 m front
 // reserve between the legal boundary and the C3 access endpoints is rendered
 // separately from the carriageway so the entrances no longer appear painted
-// over it. The exact as-built kerb profile is still not surveyed.
+// over it. The client photo from 25. 8. 2026 now controls the visual finish of
+// the blocks, kerb, rough verge and lamps; their exact as-built positions are
+// still not surveyed.
 export const ROAD_CONTEXT = Object.freeze({
   id: "ROAD-6012-1",
   featureId: "CP.94487856010",
   nationalReference: "613908-6012/1",
   registeredAreaM2: 10_647,
-  observedAt: "2026-08-24",
+  observedAt: "2026-08-25",
   sourceIds: [
     SOURCES.cadastre.id,
     SOURCES.coordination.id,
     SOURCES.clientStreetPaversRevision20260824.id,
+    SOURCES.clientStreetPhoto20260825.id,
   ],
   legalBoundaryStatus: "CURRENT_REGISTER",
   surfaceEnvelopeStatus: "CURRENT_REGISTER_CLIPPED_CONTEXT",
@@ -1120,8 +1131,49 @@ export const ROAD_CONTEXT = Object.freeze({
     visualModuleMm: { length: 200, width: 100 },
     visualJointMm: 5,
     layingPattern: "STAGGERED_RUNNING_BOND",
-    specificationStatus: "CLIENT_REFERENCE_WITHOUT_MANUFACTURER_SPEC",
-    sourceId: SOURCES.clientStreetPaversRevision20260824.id,
+    specificationStatus: "CLIENT_PHOTO_WITHOUT_MANUFACTURER_SPEC",
+    sourceId: SOURCES.clientStreetPhoto20260825.id,
+  },
+  visualReference: {
+    roadMarkings: "NONE",
+    shoulder: {
+      kind: "ROUGH_SOIL_WITH_SPARSE_WEEDS",
+      placementStatus: "C3_DERIVED_WIDTH_WITH_CLIENT_PHOTO_FINISH",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    },
+    curb: {
+      kind: "RAISED_PRECAST_CONCRETE_WITH_DROPPED_ACCESS_SEGMENTS",
+      nominalHeightMm: 100,
+      nominalDepthMm: 120,
+      placementStatus: "C3_DERIVED_NOT_AS_BUILT_SURVEY",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    },
+    vergeClustersMm: [
+      { x: -52_000, y: -1_250, scale: 0.82 },
+      { x: -31_500, y: -2_250, scale: 1.06 },
+      { x: -11_500, y: -1_150, scale: 0.9 },
+      { x: -1_200, y: -1_850, scale: 1.02 },
+      { x: 3_300, y: -900, scale: 0.78 },
+      { x: 13_400, y: -2_150, scale: 0.96 },
+      { x: 18_700, y: -1_050, scale: 0.84 },
+      { x: 25_300, y: -1_850, scale: 1.08 },
+      { x: 27_500, y: -650, scale: 0.72 },
+    ],
+  },
+  streetLighting: {
+    kind: "SLIM_GREY_LED_POLES",
+    poleHeightMm: 5_400,
+    poleDiameterMm: 95,
+    armLengthMm: 650,
+    luminaireLengthMm: 720,
+    placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
+    sourceId: SOURCES.clientStreetPhoto20260825.id,
+    polesMm: [
+      { x: -50_000, y: -10_250 },
+      { x: -27_000, y: -10_250 },
+      { x: -4_000, y: -10_250 },
+      { x: 19_000, y: -10_250 },
+    ],
   },
   touchedBoundarySegments: ["160–136", "136–135–134–133–132–131–130"],
   frontAsphaltEdgeYmm: -3_104,

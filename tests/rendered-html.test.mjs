@@ -117,6 +117,12 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /street-grey-block-paver-normal/);
   assert.match(scene, /surfaceFinish\.visualJointMm/);
   assert.match(scene, /paverJointInsetPx = paverJointPx \/ 2/);
+  assert.match(scene, /realisticMaterials\.roadReserve/);
+  assert.match(scene, /road\.backFaceCulling = false/);
+  assert.match(scene, /roadReserve\.backFaceCulling = false/);
+  assert.match(scene, /Riedka náletová vegetácia krajnice/);
+  assert.match(scene, /Stožiar verejného osvetlenia/);
+  assert.match(scene, /LED hlavica verejného osvetlenia/);
   assert.match(scene, /Orientačný popis parcely/);
   assert.match(
     scene,

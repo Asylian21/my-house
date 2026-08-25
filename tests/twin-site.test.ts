@@ -178,12 +178,47 @@ describe("site evidence seed", () => {
       visualModuleMm: { length: 200, width: 100 },
       visualJointMm: 5,
       layingPattern: "STAGGERED_RUNNING_BOND",
-      specificationStatus: "CLIENT_REFERENCE_WITHOUT_MANUFACTURER_SPEC",
-      sourceId: SOURCES.clientStreetPaversRevision20260824.id,
+      specificationStatus: "CLIENT_PHOTO_WITHOUT_MANUFACTURER_SPEC",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
     });
     expect(ROAD_CONTEXT.sourceIds).toContain(
       SOURCES.clientStreetPaversRevision20260824.id,
     );
+    expect(ROAD_CONTEXT.sourceIds).toContain(
+      SOURCES.clientStreetPhoto20260825.id,
+    );
+    expect(ROAD_CONTEXT.observedAt).toBe("2026-08-25");
+    expect(ROAD_CONTEXT.visualReference).toMatchObject({
+      roadMarkings: "NONE",
+      shoulder: {
+        kind: "ROUGH_SOIL_WITH_SPARSE_WEEDS",
+        placementStatus: "C3_DERIVED_WIDTH_WITH_CLIENT_PHOTO_FINISH",
+        sourceId: SOURCES.clientStreetPhoto20260825.id,
+      },
+      curb: {
+        kind: "RAISED_PRECAST_CONCRETE_WITH_DROPPED_ACCESS_SEGMENTS",
+        nominalHeightMm: 100,
+        nominalDepthMm: 120,
+        sourceId: SOURCES.clientStreetPhoto20260825.id,
+      },
+    });
+    expect(ROAD_CONTEXT.visualReference.vergeClustersMm).toHaveLength(9);
+    expect(ROAD_CONTEXT.streetLighting).toMatchObject({
+      kind: "SLIM_GREY_LED_POLES",
+      poleHeightMm: 5_400,
+      poleDiameterMm: 95,
+      armLengthMm: 650,
+      luminaireLengthMm: 720,
+      placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    });
+    expect(ROAD_CONTEXT.streetLighting.polesMm).toHaveLength(4);
+    const outerRoadEdgeYmm = Math.min(
+      ...ROAD_CONTEXT.frontOppositeParcelEdgeMm.map(({ y }) => y),
+    );
+    expect(
+      ROAD_CONTEXT.streetLighting.polesMm.every(({ y }) => y < outerRoadEdgeYmm),
+    ).toBe(true);
     expect(ROAD_CONTEXT.frontAsphaltEdgeYmm).toBe(-3_104);
     expect(ROAD_CONTEXT.frontReservePolygonMm).toEqual([
       { x: -60_262, y: 14 },
@@ -204,6 +239,27 @@ describe("site evidence seed", () => {
       [10_690, 21_415],
       [22_915, 28_194],
     ]);
+    for (const x of [0, 15_000, 27_000]) {
+      const roadPoint = { x, y: -5_000 };
+      expect(pointInRing(roadPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(true);
+      expect(
+        ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
+          pointInRing(roadPoint, ring),
+        ),
+      ).toBe(false);
+    }
+    for (const x of [0, 15_000, 25_000]) {
+      const shoulderPoint = { x, y: -1_500 };
+      expect(pointInRing(shoulderPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(
+        false,
+      );
+      expect(
+        ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
+          pointInRing(shoulderPoint, ring),
+        ),
+      ).toBe(true);
+    }
+    expect(DEFAULT_LAYER_VISIBILITY.street).toBe(true);
     expect(ROAD_CONTEXT.touchedBoundarySegments).toEqual([
       "160–136",
       "136–135–134–133–132–131–130",
@@ -284,13 +340,39 @@ describe("site evidence seed", () => {
       10,
     );
     expect(arcRotateCameraHeightM(streetCameraForWidth(1600))).toBeCloseTo(
-      1.85,
+      1.9,
       10,
     );
     expect(arcRotateCameraHeightM(streetCameraForWidth(390))).toBeCloseTo(
-      2,
+      2.05,
       10,
     );
+    expect(streetCameraForWidth(1600)).toMatchObject({
+      radius: 21,
+      fov: 0.78,
+      target: [-0.4, -0.65, 0],
+    });
+    expect(streetCameraForWidth(390)).toMatchObject({
+      radius: 23,
+      fov: 0.92,
+      target: [0.2, -0.55, -2],
+    });
+    expect(arcRotateCameraHeightM(streetCameraForWidth(1600))).toBeGreaterThan(
+      streetCameraForWidth(1600).target[1] + 2.5,
+    );
+    const roadWorldZ = [
+      sceneZM(ROAD_CONTEXT.frontAsphaltEdgeYmm),
+      ...ROAD_CONTEXT.frontOppositeParcelEdgeMm.map(({ y }) => sceneZM(y)),
+    ];
+    for (const width of [1600, 390]) {
+      const street = streetCameraForWidth(width);
+      const eyeWorldZ =
+        street.target[2] +
+        street.radius * Math.sin(street.beta) * Math.sin(street.alpha);
+      expect(eyeWorldZ).toBeGreaterThanOrEqual(Math.min(...roadWorldZ));
+      expect(eyeWorldZ).toBeLessThanOrEqual(Math.max(...roadWorldZ));
+      expect(street.target[2]).toBeLessThan(sceneZM(0));
+    }
     expect(streetCameraForWidth(390).radius).toBeGreaterThan(
       streetCameraForWidth(1600).radius,
     );
