@@ -37,14 +37,15 @@ import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
+import { Ray } from "@babylonjs/core/Culling/ray";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/edgesRenderer";
-import "@babylonjs/core/Culling/ray";
 import "@babylonjs/core/Collisions/collisionCoordinator";
 import { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -103,12 +104,30 @@ import {
   buildOpening,
   resolveFacadeOpeningStyle,
   type OpeningKind,
+  type OpeningInteraction,
 } from "./babylon-openings";
+import {
+  ARCHITECTURAL_DOOR_INVENTORY,
+  BabylonDoorController,
+  type AnimatedDoorRegistration,
+  type DoorInteractionSnapshot,
+} from "./babylon-doors";
 import {
   INTERIOR_ROOMS,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
+import {
+  GARAGE_SEQUENCE,
+  GARAGE_VEHICLE,
+  garageActionForState,
+  garageAnimationFrame,
+  garageDoorPanelPose,
+  garageVehicleSurfaceElevationM,
+  type GarageAnimationFrame,
+  type GarageParkingState,
+  type GarageVehicleAction,
+} from "./twin-garage";
 import {
   ORBIT_ZOOM,
   clampOrbitRadius,
@@ -782,6 +801,7 @@ export class TwinSceneController {
   private readonly shadowGenerator: ShadowGenerator;
   private readonly cascadedShadowGenerator: CascadedShadowGenerator | null;
   private readonly selectionHighlight: HighlightLayer;
+  private readonly doors: BabylonDoorController;
   private readonly postPipeline: DefaultRenderingPipeline;
   private readonly ssaoPipeline: SSAO2RenderingPipeline | null;
   private readonly poolWaterNormal: Texture;
@@ -809,6 +829,18 @@ export class TwinSceneController {
   private orbitZoomActive = false;
   private resizeFrame = 0;
   private snapshot: SceneSnapshot | null = null;
+  private readonly garageDoorPanels: Mesh[] = [];
+  private garageVehicleRoot: TransformNode | null = null;
+  private readonly garageVehicleWheelSpins: TransformNode[] = [];
+  private readonly garageVehicleFrontSteering: TransformNode[] = [];
+  private garageVehicleBrakeMaterial: PBRMaterial | null = null;
+  private garageParkingState: GarageParkingState = "away";
+  private garageVehicleAction: GarageVehicleAction | null = null;
+  private garageVehicleElapsedMs = 0;
+  private garageDoorProgress = 0;
+  private garageVehicleLastPose: GarageAnimationFrame["vehiclePose"] | null = null;
+  private garageVehicleWheelAngle = 0;
+  private garageVehicleSteeringAngle = 0;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -829,6 +861,9 @@ export class TwinSceneController {
       this.renderQuality.hardwareScalingLevel,
     );
     this.scene = new Scene(this.engine);
+    this.doors = new BabylonDoorController(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.18 : 1,
+    );
     this.scene.useRightHandedSystem = true;
     this.scene.skipPointerMovePicking = true;
     this.scene.clearColor = Color4.FromHexString("#c6cfd2ff");
@@ -1461,6 +1496,7 @@ export class TwinSceneController {
     this.buildCadastre();
     this.buildStreetAndSite();
     this.buildHouse();
+    this.doors.assertInventory(ARCHITECTURAL_DOOR_INVENTORY);
     this.buildFence();
     this.buildLandscape();
     this.buildUtilities();
@@ -1537,6 +1573,22 @@ export class TwinSceneController {
       ) {
         const id = pick?.pickedMesh?.metadata?.entityId;
         if (typeof id === "string") this.onSelect(id);
+      } else if (
+        this.navigationMode === "walk" &&
+        isSelectionTap({
+          travelPx: gesture.travelPx,
+          durationMs: performance.now() - gesture.startedAt,
+          maximumPointers: gesture.maximumPointers,
+          button: gesture.button,
+        })
+      ) {
+        const doorId = pick?.pickedMesh?.metadata?.doorId;
+        if (
+          typeof doorId === "string" &&
+          this.doors.getInteraction()?.id === doorId
+        ) {
+          this.toggleDoorInteraction();
+        }
       }
       this.pointerGesture = null;
     };
@@ -1549,6 +1601,8 @@ export class TwinSceneController {
       passive: false,
     });
     this.scene.onBeforeRenderObservable.add(() => {
+      this.updateGarageParkingAnimation();
+      this.updateDoorMotion();
       this.updateFlightMotion();
       this.updateOrbitZoomGlide();
       this.updateParcelLabelScale();
@@ -1607,6 +1661,11 @@ export class TwinSceneController {
     ) {
       return;
     }
+    if (this.navigationMode === "walk" && event.code === "KeyE") {
+      if (!event.repeat) this.toggleDoorInteraction();
+      event.preventDefault();
+      return;
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.add(event.code);
       event.preventDefault();
@@ -1619,6 +1678,10 @@ export class TwinSceneController {
   };
 
   private readonly handleFlightKeyUp = (event: KeyboardEvent) => {
+    if (this.navigationMode === "walk" && event.code === "KeyE") {
+      event.preventDefault();
+      return;
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.delete(event.code);
       return;
@@ -1700,6 +1763,156 @@ export class TwinSceneController {
   private cancelOrbitZoomGlide() {
     this.orbitZoomActive = false;
     this.orbitZoomTargetM = this.orbitCamera.radius;
+  }
+
+  private applyGarageAnimationFrame(frame: GarageAnimationFrame) {
+    const previousState = this.garageParkingState;
+    const stateChanged = frame.state !== previousState;
+    if (
+      stateChanged &&
+      (frame.state === "opening-to-park" ||
+        frame.state === "opening-to-leave")
+    ) {
+      this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, true);
+    }
+    if (
+      stateChanged &&
+      (frame.state === "closing-after-park" ||
+        frame.state === "closing-after-leave")
+    ) {
+      this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false);
+    }
+
+    const root = this.garageVehicleRoot;
+    if (root) {
+      root.setEnabled(frame.vehicleVisible);
+      if (frame.vehicleVisible) {
+        const current = frame.vehiclePose;
+        const previous = this.garageVehicleLastPose;
+        if (previous) {
+          const distanceM =
+            Math.hypot(
+              current.centerMm.x - previous.centerMm.x,
+              current.centerMm.y - previous.centerMm.y,
+            ) * MM_TO_M;
+          const direction = current.motion === "reverse" ? -1 : 1;
+          this.garageVehicleWheelAngle +=
+            (distanceM / 0.345) * direction;
+          if (distanceM > 0.005 && current.motion !== "still") {
+            let headingDelta = current.headingRad - previous.headingRad;
+            while (headingDelta > Math.PI) headingDelta -= Math.PI * 2;
+            while (headingDelta < -Math.PI) headingDelta += Math.PI * 2;
+            const wheelbaseM = GARAGE_VEHICLE.dimensionsMm.wheelbase * MM_TO_M;
+            this.garageVehicleSteeringAngle = Math.max(
+              -0.48,
+              Math.min(
+                0.48,
+                Math.atan((wheelbaseM * headingDelta) / (distanceM * direction)),
+              ),
+            );
+          }
+        } else {
+          this.garageVehicleSteeringAngle = 0;
+        }
+        root.position.set(
+          xM(current.centerMm.x),
+          garageVehicleSurfaceElevationM(current.centerMm) -
+            GARAGE_VEHICLE.wheelGroundOffsetM,
+          zM(current.centerMm.y),
+        );
+        root.rotation.y = current.headingRad;
+        for (const steering of this.garageVehicleFrontSteering) {
+          steering.rotation.y = this.garageVehicleSteeringAngle;
+        }
+        for (const wheel of this.garageVehicleWheelSpins) {
+          wheel.rotation.z = this.garageVehicleWheelAngle;
+        }
+      }
+    }
+    if (this.garageVehicleBrakeMaterial) {
+      const intensity =
+        frame.vehicleVisible && frame.vehiclePose.motion === "still"
+          ? 0.94
+          : 0.4;
+      this.garageVehicleBrakeMaterial.emissiveColor =
+        Color3.FromHexString("#d3121c").scale(intensity);
+    }
+    this.garageVehicleLastPose = frame.vehicleVisible
+      ? frame.vehiclePose
+      : null;
+    this.garageParkingState = frame.state;
+    this.garageDoorProgress = frame.doorProgress;
+    this.canvas.dataset.garageParkingState = frame.state;
+    this.canvas.dataset.garageVehicleVisible = frame.vehicleVisible
+      ? "true"
+      : "false";
+  }
+
+  /** Render-loop sequence; capped frame deltas prevent jumps after tab sleep. */
+  private updateGarageParkingAnimation() {
+    const action = this.garageVehicleAction;
+    if (!action) {
+      this.canvas.dataset.garageParkingState = this.garageParkingState;
+      return;
+    }
+    this.garageVehicleElapsedMs += Math.min(
+      50,
+      Math.max(0, this.engine.getDeltaTime()),
+    );
+    const frame = garageAnimationFrame(action, this.garageVehicleElapsedMs);
+    this.applyGarageAnimationFrame(frame);
+    if (!frame.complete) return;
+
+    const door = this.doors
+      .debugState()
+      .find(({ id }) => id === GARAGE_VEHICLE.garageDoorId);
+    if (door && door.progress > 0.0001) {
+      // If a person stood in the closing plane, preserve the safety stop and
+      // retry only after the doorway becomes clear. Never restart an active
+      // close animation on every frame.
+      this.garageParkingState =
+        action === "park" ? "closing-after-park" : "closing-after-leave";
+      this.canvas.dataset.garageParkingState = this.garageParkingState;
+      if (door.phase === "OPEN") {
+        this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false);
+      }
+      return;
+    }
+    this.garageVehicleAction = null;
+  }
+
+  /** Door transforms and collision matrices settle before walker movement. */
+  private updateDoorMotion() {
+    if (this.navigationMode === "walk") {
+      const pose = this.avatar.pose;
+      const fallback = new Vector3(
+        Math.sin(pose.yaw),
+        0,
+        Math.cos(pose.yaw),
+      );
+      const cameraForward =
+        this.scene.activeCamera?.getForwardRay(1).direction ?? fallback;
+      const horizontalLength = Math.hypot(cameraForward.x, cameraForward.z);
+      this.doors.setActor({
+        position: { x: pose.x, z: pose.z },
+        facing:
+          horizontalLength > 1e-6
+            ? {
+                x: cameraForward.x / horizontalLength,
+                z: cameraForward.z / horizontalLength,
+              }
+            : { x: fallback.x, z: fallback.z },
+      });
+    } else {
+      this.doors.setActor(null);
+    }
+    if (this.doors.update(this.engine.getDeltaTime())) {
+      this.avatar.invalidateDynamicCameraOccluders();
+    }
+    const interaction = this.doors.getInteraction();
+    this.canvas.dataset.doorCount = this.doors.count.toString();
+    this.canvas.dataset.doorTarget = interaction?.id ?? "";
+    this.canvas.dataset.doorPhase = interaction?.phase ?? "";
   }
 
   private updateFlightMotion() {
@@ -3187,46 +3400,8 @@ export class TwinSceneController {
       }
     }
 
-    const garageDoorSpec = HOUSE.facades.front.garageDoor;
-    const garageDoor = boxAtPlan(
-      this.scene,
-      "Garážová brána od ulice · 3 300 × 2 400 mm · RAL 7016",
-      {
-        x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
-        y: HOUSE.facades.front.faceYmm - 36,
-      },
-      garageDoorSpec.widthMm,
-      80,
-      2.4,
-      0,
-    );
-    this.appearance(
-      garageDoor,
-      this.materials.glass,
-      this.realisticMaterials.roofEdge,
-    );
-    garageDoor.receiveShadows = true;
-    garageDoor.isPickable = false;
-    this.register(garageDoor, "building");
-
-    for (let levelM = 0.3; levelM < 2.4; levelM += 0.3) {
-      const joint = boxAtPlan(
-        this.scene,
-        `Horizontálna škára garážovej brány ${levelM.toFixed(1)}`,
-        {
-          x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
-          y: HOUSE.facades.front.faceYmm - 82,
-        },
-        garageDoorSpec.widthMm - 60,
-        34,
-        0.018,
-        levelM,
-      );
-      joint.material = this.realisticMaterials.glassFrame;
-      joint.isPickable = false;
-      this.realisticOnly(joint);
-      this.register(joint, "building");
-    }
+    this.buildInteractiveGarageDoor();
+    this.buildGarageVehicle();
 
     for (const [index, flueSpec] of HOUSE.flues.entries()) {
       const center = flueSpec.centerMm;
@@ -3419,6 +3594,317 @@ export class TwinSceneController {
       elbow.isPickable = false;
       this.realisticOnly(elbow);
       this.register(elbow, "building");
+    }
+  }
+
+  /** Sectional door follows vertical tracks, a curved rail and the garage ceiling. */
+  private buildInteractiveGarageDoor() {
+    const spec = HOUSE.facades.front.garageDoor;
+    const door = GARAGE_VEHICLE.door;
+    const panelCount = door.panelCount;
+    const panelPitchM = door.panelHeightM;
+    const closedWorldZ = zM(door.faceYmm);
+
+    for (let index = 0; index < panelCount; index += 1) {
+      const panel = boxAtPlan(
+        this.scene,
+        `GARAGE-DOOR · sekcia ${index + 1} z ${panelCount}`,
+        {
+          x: spec.startXmm + spec.widthMm / 2,
+          y: HOUSE.facades.front.faceYmm - 36,
+        },
+        spec.widthMm,
+        76,
+        panelPitchM - 0.009,
+        index * panelPitchM + 0.0045,
+      );
+      this.appearance(
+        panel,
+        this.materials.glass,
+        this.realisticMaterials.roofEdge,
+      );
+      panel.receiveShadows = true;
+      panel.isPickable = true;
+      panel.checkCollisions = true;
+      panel.metadata = {
+        ...(panel.metadata ?? {}),
+        entityId: spec.id,
+        doorId: spec.id,
+        doorMotion: "OVERHEAD",
+        cameraOccluder: true,
+        dynamicCameraOccluder: true,
+      };
+      this.castShadow(panel);
+      this.register(panel, "building", spec.id);
+      this.garageDoorPanels.push(panel);
+    }
+
+    const apply = (progress: number) => {
+      for (const [index, panel] of this.garageDoorPanels.entries()) {
+        const pose = garageDoorPanelPose(index, progress);
+        panel.position.y = pose.elevationM;
+        panel.position.z = closedWorldZ - pose.inwardOffsetM;
+        panel.rotation.x = -pose.pitchRad;
+        panel.computeWorldMatrix(true);
+      }
+    };
+
+    this.doors.register({
+      id: spec.id,
+      label: "Sekčná garážová brána",
+      kind: "OVERHEAD",
+      interactionPoint: {
+        x: xM(spec.startXmm + spec.widthMm / 2),
+        z: closedWorldZ,
+      },
+      apply,
+      canClose: (actor) => {
+        const halfWidthM = spec.widthMm * MM_TO_M / 2 + 0.38;
+        const centerX = xM(spec.startXmm + spec.widthMm / 2);
+        // A sectional leaf travels above head height once it leaves the
+        // threshold. Only the descending facade plane can sweep through the
+        // walker; standing safely inside the garage must not block closing.
+        const insideTrack =
+          actor.position.z <= closedWorldZ + 0.42 &&
+          actor.position.z >= closedWorldZ - 0.62;
+        return !(
+          Math.abs(actor.position.x - centerX) < halfWidthM && insideTrack
+        );
+      },
+    });
+  }
+
+  /** Local, dependency-free visual model with the proportions of a Superb. */
+  private buildGarageVehicle() {
+    const vehicle = GARAGE_VEHICLE;
+    const root = new TransformNode(
+      `${vehicle.label} · automatické parkovanie`,
+      this.scene,
+    );
+    root.metadata = {
+      vehicleId: vehicle.id,
+      vehicleModel: vehicle.label,
+      parkingRoomId: vehicle.roomId,
+    };
+    root.position.set(
+      xM(vehicle.route.streetStartMm.x),
+      garageVehicleSurfaceElevationM(vehicle.route.streetStartMm) -
+        vehicle.wheelGroundOffsetM,
+      zM(vehicle.route.streetStartMm.y),
+    );
+    root.setEnabled(false);
+    this.garageVehicleRoot = root;
+
+    const paint = pbrMaterial(
+      this.scene,
+      "Superb · metalická modrá karoséria",
+      "#183a54",
+      0.18,
+      0.78,
+    );
+    paint.clearCoat.isEnabled = true;
+    paint.clearCoat.intensity = 1;
+    paint.clearCoat.roughness = 0.075;
+    paint.environmentIntensity = 1.45;
+    const glass = pbrMaterial(
+      this.scene,
+      "Superb · tónované sklá",
+      "#18262d",
+      0.06,
+      0.08,
+      0.62,
+    );
+    glass.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
+    glass.environmentIntensity = 1.6;
+    glass.clearCoat.isEnabled = true;
+    glass.clearCoat.intensity = 0.85;
+    glass.clearCoat.roughness = 0.035;
+    const dark = pbrMaterial(
+      this.scene,
+      "Superb · lesklé čierne detaily",
+      "#111517",
+      0.28,
+      0.34,
+    );
+    const tire = pbrMaterial(
+      this.scene,
+      "Superb · pneumatiky",
+      "#101112",
+      0.94,
+      0.02,
+    );
+    const alloy = pbrMaterial(
+      this.scene,
+      "Superb · brúsené disky",
+      "#aeb6ba",
+      0.24,
+      0.9,
+    );
+    const chrome = pbrMaterial(
+      this.scene,
+      "Superb · chróm",
+      "#d9e0e2",
+      0.12,
+      0.94,
+    );
+    const headlight = pbrMaterial(
+      this.scene,
+      "Superb · LED svetlomety",
+      "#eaf7ff",
+      0.08,
+      0.16,
+    );
+    headlight.emissiveColor = Color3.FromHexString("#bddfff").scale(0.72);
+    const brake = pbrMaterial(
+      this.scene,
+      "Superb · zadné LED svetlá",
+      "#8b1016",
+      0.16,
+      0.12,
+    );
+    brake.emissiveColor = Color3.FromHexString("#b20f18").scale(0.46);
+    this.garageVehicleBrakeMaterial = brake;
+    const plate = pbrMaterial(
+      this.scene,
+      "Superb · evidenčné tabuľky",
+      "#f2f3ed",
+      0.58,
+      0,
+    );
+
+    const addBox = (
+      name: string,
+      size: { readonly x: number; readonly y: number; readonly z: number },
+      position: { readonly x: number; readonly y: number; readonly z: number },
+      material: Material,
+      rotationZ = 0,
+      shadow = true,
+      collision = false,
+    ) => {
+      const mesh = CreateBox(
+        `${vehicle.label} · ${name}`,
+        { width: size.x, height: size.y, depth: size.z },
+        this.scene,
+      );
+      mesh.parent = root;
+      mesh.position.set(position.x, position.y, position.z);
+      mesh.rotation.z = rotationZ;
+      mesh.material = material;
+      mesh.isPickable = false;
+      mesh.checkCollisions = collision;
+      mesh.receiveShadows = shadow;
+      if (shadow) this.castShadow(mesh);
+      this.realisticOnly(mesh);
+      this.register(mesh, "building", vehicle.id);
+      return mesh;
+    };
+
+    const halfVehicleLengthM = vehicle.dimensionsMm.length * MM_TO_M / 2;
+    const halfVehicleWidthM = vehicle.dimensionsMm.width * MM_TO_M / 2;
+    const vehicleHeightM = vehicle.dimensionsMm.height * MM_TO_M;
+
+    // Long bonnet, crisp shoulder and fastback cabin retain the Superb's calm
+    // limousine silhouette while the rounded light clusters soften the boxes.
+    addBox("spodný prah karosérie", { x: halfVehicleLengthM * 2 - 0.02, y: 0.28, z: 1.82 }, { x: 0, y: 0.43, z: 0 }, paint, 0, true, true);
+    addBox("hlavný bok karosérie", { x: 4.47, y: 0.39, z: 1.76 }, { x: 0.02, y: 0.7, z: 0 }, paint, 0, true, true);
+    addBox("dlhá predná kapota", { x: 1.42, y: 0.17, z: 1.68 }, { x: 1.47, y: 0.96, z: 0 }, paint, -0.025);
+    addBox("zadné veko", { x: 0.98, y: 0.16, z: 1.66 }, { x: -1.72, y: 0.94, z: 0 }, paint, 0.035);
+    addBox("kabína", { x: 2.18, y: 0.56, z: 1.53 }, { x: -0.1, y: 1.22, z: 0 }, glass, 0, false);
+    addBox("strecha", { x: 1.55, y: 0.075, z: 1.51 }, { x: -0.18, y: vehicle.wheelGroundOffsetM + vehicleHeightM - 0.0375, z: 0 }, paint);
+    addBox("čelné sklo", { x: 0.035, y: 0.58, z: 1.5 }, { x: 0.99, y: 1.23, z: 0 }, glass, -0.39, false);
+    addBox("zadné sklo", { x: 0.035, y: 0.54, z: 1.48 }, { x: -1.18, y: 1.22, z: 0 }, glass, 0.43, false);
+
+    for (const side of [-1, 1] as const) {
+      addBox(
+        `bočné sklá ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 1.86, y: 0.43, z: 0.022 },
+        { x: -0.1, y: 1.24, z: side * 0.778 },
+        glass,
+        0,
+        false,
+      );
+      addBox(
+        `B stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.095, y: 0.5, z: 0.035 },
+        { x: -0.18, y: 1.24, z: side * 0.794 },
+        dark,
+      );
+      addBox(
+        `spätné zrkadlo ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.24, y: 0.12, z: 0.19 },
+        { x: 0.63, y: 1.2, z: side * (halfVehicleWidthM - 0.095) },
+        paint,
+      );
+      addBox(
+        `predný LED svetlomet ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.035, y: 0.2, z: 0.47 },
+        { x: halfVehicleLengthM - 0.023, y: 0.8, z: side * 0.55 },
+        headlight,
+        0,
+        false,
+      );
+      addBox(
+        `zadné LED svetlo ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.035, y: 0.21, z: 0.5 },
+        { x: -halfVehicleLengthM + 0.023, y: 0.79, z: side * 0.57 },
+        brake,
+        0,
+        false,
+      );
+    }
+
+    addBox("predná maska", { x: 0.035, y: 0.34, z: 1.03 }, { x: halfVehicleLengthM - 0.022, y: 0.59, z: 0 }, dark);
+    for (const z of [-0.38, -0.19, 0, 0.19, 0.38]) {
+      addBox("zvislá lamela masky", { x: 0.012, y: 0.26, z: 0.018 }, { x: halfVehicleLengthM - 0.008, y: 0.59, z }, chrome, 0, false);
+    }
+    addBox("predná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: halfVehicleLengthM - 0.014, y: 0.39, z: 0 }, plate, 0, false);
+    addBox("zadná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: -halfVehicleLengthM + 0.014, y: 0.51, z: 0 }, plate, 0, false);
+    addBox("chrómová línia okien vľavo", { x: 2.08, y: 0.018, z: 0.018 }, { x: -0.11, y: 1.03, z: -0.796 }, chrome, 0, false);
+    addBox("chrómová línia okien vpravo", { x: 2.08, y: 0.018, z: 0.018 }, { x: -0.11, y: 1.03, z: 0.796 }, chrome, 0, false);
+
+    const axleX = vehicle.dimensionsMm.wheelbase / 2 / 1_000;
+    for (const axle of [-1, 1] as const) {
+      for (const side of [-1, 1] as const) {
+        const steeringAnchor = new TransformNode(
+          `${vehicle.label} · koleso ${axle > 0 ? "predné" : "zadné"} ${side < 0 ? "ľavé" : "pravé"}`,
+          this.scene,
+        );
+        steeringAnchor.parent = root;
+        steeringAnchor.position.set(axle * axleX, 0.36, side * 0.875);
+        if (axle > 0) this.garageVehicleFrontSteering.push(steeringAnchor);
+
+        const wheelSpin = new TransformNode(
+          `${steeringAnchor.name} · rotácia pneumatiky`,
+          this.scene,
+        );
+        wheelSpin.parent = steeringAnchor;
+        this.garageVehicleWheelSpins.push(wheelSpin);
+
+        const wheel = CreateCylinder(
+          `${steeringAnchor.name} · pneumatika`,
+          { height: 0.23, diameter: 0.69, tessellation: 32 },
+          this.scene,
+        );
+        wheel.parent = wheelSpin;
+        wheel.rotation.x = Math.PI / 2;
+        wheel.material = tire;
+        wheel.isPickable = false;
+        this.castShadow(wheel);
+        this.realisticOnly(wheel);
+        this.register(wheel, "building", vehicle.id);
+
+        const rim = CreateCylinder(
+          `${steeringAnchor.name} · disk`,
+          { height: 0.236, diameter: 0.43, tessellation: 20 },
+          this.scene,
+        );
+        rim.parent = wheelSpin;
+        rim.rotation.x = Math.PI / 2;
+        rim.material = alloy;
+        rim.isPickable = false;
+        this.realisticOnly(rim);
+        this.register(rim, "building", vehicle.id);
+      }
     }
   }
 
@@ -4176,6 +4662,9 @@ export class TwinSceneController {
         style.kind,
         530,
         style.frameWidthMm,
+        opening.id === "FRONT-ENTRY"
+          ? { id: opening.id, label: "Hlavné vstupné dvere" }
+          : undefined,
       );
     }
     for (const opening of HOUSE.facades.garden.openings) {
@@ -4191,6 +4680,9 @@ export class TwinSceneController {
         this.realisticMaterials.wall,
         this.realisticMaterials.glassFrameWood,
         "sliding",
+        530,
+        undefined,
+        { id: opening.id, label: `Terasové posuvné dvere ${opening.id}` },
       );
     }
     for (const opening of eastOpenings) {
@@ -4205,6 +4697,10 @@ export class TwinSceneController {
         this.realisticMaterials.wall,
         this.realisticMaterials.glassFrame,
         opening.id === "EAST-03" ? "door" : "window",
+        530,
+        opening.id === "EAST-03"
+          ? { id: opening.id, label: "Bočné dvere technickej miestnosti" }
+          : undefined,
       );
     }
     const garageSideWindow = HOUSE.facades.west.garageWindow;
@@ -4233,6 +4729,10 @@ export class TwinSceneController {
       this.realisticMaterials.glassFrameWood,
       "sliding",
       500,
+      {
+        id: HOUSE.facades.wingWest.opening.id,
+        label: "Posuvné dvere z obývacej izby na terasu",
+      },
     );
   }
 
@@ -4249,6 +4749,8 @@ export class TwinSceneController {
       register: (mesh, layer, entityId) => this.register(mesh, layer, entityId),
       realisticOnly: (mesh) => this.realisticOnly(mesh),
       castShadow: (mesh) => this.castShadow(mesh),
+      registerAnimatedDoor: (door: AnimatedDoorRegistration) =>
+        this.doors.register(door),
     });
   }
 
@@ -4320,6 +4822,9 @@ export class TwinSceneController {
       this.realisticMaterials.wall,
       this.realisticMaterials.glassFrameWood,
       "door",
+      530,
+      undefined,
+      { id: loggia.backDoor.id, label: "Dvere zo záhradnej lodžie" },
     );
 
     // East inner cheek of the loggia (room 1.10 west wall).
@@ -4759,6 +5264,8 @@ export class TwinSceneController {
       castShadow: (mesh: AbstractMesh) => this.castShadow(mesh),
       appearance: (mesh: AbstractMesh, technical: Material, realistic: Material) =>
         this.appearance(mesh, technical, realistic),
+      registerAnimatedDoor: (door: AnimatedDoorRegistration) =>
+        this.doors.register(door),
     };
   }
 
@@ -4775,6 +5282,7 @@ export class TwinSceneController {
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
     frameWidthMm?: number,
+    interaction?: OpeningInteraction,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -4789,7 +5297,8 @@ export class TwinSceneController {
       kind,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
       frameWidthMm,
-      entityId: HOUSE.id,
+      entityId: interaction?.id ?? HOUSE.id,
+      interaction,
     });
   }
 
@@ -4805,6 +5314,7 @@ export class TwinSceneController {
     frameMaterial?: PBRMaterial,
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
+    interaction?: OpeningInteraction,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -4818,7 +5328,8 @@ export class TwinSceneController {
       wallThicknessMm,
       kind,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
-      entityId: HOUSE.id,
+      entityId: interaction?.id ?? HOUSE.id,
+      interaction,
     });
   }
 
@@ -6159,6 +6670,143 @@ export class TwinSceneController {
       deltaMs: 220,
     });
     this.flightCamera.position.set(next.x, next.y, next.z);
+  }
+
+  getDoorInteraction(): DoorInteractionSnapshot | null {
+    if (this.navigationMode !== "walk") return null;
+    const interaction = this.doors.getInteraction();
+    if (interaction && !this.doorInteractionHasLineOfSight(interaction)) {
+      return null;
+    }
+    if (
+      interaction &&
+      this.garageVehicleAction &&
+      interaction.id === GARAGE_VEHICLE.garageDoorId
+    ) {
+      return { ...interaction, action: null };
+    }
+    return interaction;
+  }
+
+  /** A nearby leaf behind an unrelated wall must never steal the E prompt. */
+  private doorInteractionHasLineOfSight(
+    interaction: DoorInteractionSnapshot,
+  ) {
+    const pose = this.avatar.pose;
+    const origin = new Vector3(pose.x, 1.22, pose.z);
+    const target = new Vector3(
+      interaction.interactionPoint.x,
+      1.22,
+      interaction.interactionPoint.z,
+    );
+    const direction = target.subtract(origin);
+    const distance = direction.length();
+    if (distance < 0.02) return true;
+    direction.scaleInPlace(1 / distance);
+    const pick = this.scene.pickWithRay(
+      new Ray(origin, direction, distance + 0.08),
+      (mesh) =>
+        mesh.isEnabled() &&
+        mesh.isVisible &&
+        mesh.visibility > 0.02 &&
+        mesh.isPickable,
+    );
+    if (!pick?.hit || !pick.pickedMesh) return true;
+    const metadata = pick.pickedMesh.metadata as {
+      readonly doorId?: string;
+      readonly entityId?: string;
+    } | null;
+    return (
+      metadata?.doorId === interaction.id ||
+      metadata?.entityId === interaction.id
+    );
+  }
+
+  /** Shared action for E, a nearby leaf tap and the accessible touch button. */
+  toggleDoorInteraction(restoreCanvasFocus = true) {
+    if (this.navigationMode !== "walk") return false;
+    const interaction = this.getDoorInteraction();
+    if (!interaction?.action) return false;
+    if (
+      this.garageVehicleAction &&
+      interaction.id === GARAGE_VEHICLE.garageDoorId
+    ) {
+      return false;
+    }
+    const changed = this.doors.toggle(interaction.id);
+    if (changed && interaction.action === "OPEN") {
+      this.avatar.clearBlockedIndicator();
+    }
+    if (restoreCanvasFocus) this.canvas.focus({ preventScroll: true });
+    return changed;
+  }
+
+  setDoorOpen(id: string, open: boolean, immediate = false) {
+    const changed = this.doors.setOpen(id, open, immediate);
+    if (changed && immediate) this.avatar.invalidateDynamicCameraOccluders();
+    return changed;
+  }
+
+  getDoorDebugState() {
+    return this.doors.debugState();
+  }
+
+  getGarageParkingState(): GarageParkingState {
+    return this.garageParkingState;
+  }
+
+  requestGarageVehicleAction(action: GarageVehicleAction) {
+    if (
+      this.garageVehicleAction ||
+      garageActionForState(this.garageParkingState) !== action
+    ) {
+      return false;
+    }
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reducedMotion) {
+      const totalMs =
+        action === "park"
+          ? GARAGE_SEQUENCE.park.totalMs
+          : GARAGE_SEQUENCE.unpark.totalMs;
+      // Reduced motion resolves atomically to the safe closed-door state.
+      if (!this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false, true)) {
+        return false;
+      }
+      this.applyGarageAnimationFrame(
+        garageAnimationFrame(action, totalMs),
+      );
+      this.garageVehicleAction = null;
+      this.canvas.dataset.garageReducedMotion = "true";
+      return true;
+    }
+
+    this.garageVehicleAction = action;
+    this.garageVehicleElapsedMs = 0;
+    this.garageVehicleLastPose = null;
+    this.canvas.dataset.garageReducedMotion = "false";
+    this.applyGarageAnimationFrame(garageAnimationFrame(action, 0));
+    return true;
+  }
+
+  getGarageParkingDebugState() {
+    const door = this.doors
+      .debugState()
+      .find(({ id }) => id === GARAGE_VEHICLE.garageDoorId);
+    return {
+      state: this.garageParkingState,
+      action: this.garageVehicleAction,
+      elapsedMs: this.garageVehicleElapsedMs,
+      vehicleVisible: this.garageVehicleRoot?.isEnabled() ?? false,
+      vehiclePose: this.garageVehicleLastPose,
+      wheelAngle: this.garageVehicleWheelAngle,
+      steeringAngle: this.garageVehicleSteeringAngle,
+      commandedDoorProgress: this.garageDoorProgress,
+      actualDoorProgress: door?.progress ?? 0,
+      actualDoorPhase: door?.phase ?? "CLOSED",
+    } as const;
   }
 
   getNavigationMode() {

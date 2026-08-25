@@ -12,6 +12,7 @@ import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder.pure";
 import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
 
@@ -43,6 +44,10 @@ import {
 } from "./twin-interior";
 import { HOUSE, type LayerId, type Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
+import {
+  hingedDoorSweepIsClear,
+  type AnimatedDoorRegistration,
+} from "./babylon-doors";
 
 export interface InteriorBuildContext {
   readonly scene: Scene;
@@ -55,6 +60,7 @@ export interface InteriorBuildContext {
   register(mesh: AbstractMesh, layer: LayerId, entityId?: string): AbstractMesh;
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
+  registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
 }
 
 export interface InteriorMaterials {
@@ -494,6 +500,7 @@ function finish(
     shadow?: boolean;
     pickable?: boolean;
     cameraOccluder?: boolean;
+    entityId?: string;
   } = {},
 ) {
   mesh.material = material;
@@ -505,7 +512,7 @@ function finish(
   }
   context.realisticOnly(mesh);
   if (options.shadow) context.castShadow(mesh);
-  context.register(mesh, "building", HOUSE_ENTITY);
+  context.register(mesh, "building", options.entityId ?? HOUSE_ENTITY);
   return mesh;
 }
 
@@ -932,38 +939,134 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
   );
   finish(context, lintel, materials.plaster, { cameraOccluder: true });
 
-  // Leaf standing open at 90°, hinged on the `hinge` end and swung into the
-  // `swing` side, so every room stays walkable.
+  // A real pivot at the documented hinge replaces the former permanently open
+  // decorative slab. The controller owns the state; Babylon owns the live
+  // transform, collision and shadow at every animation frame.
   const leafThicknessMm = 40;
   const hingeAlongMm =
     door.hinge < 0 ? door.startMm + frameMm : door.startMm + door.widthMm - frameMm;
   const hingeAcrossMm = door.swing < 0 ? wallFrom : wallTo;
-  const leafCenterAcross = hingeAcrossMm + door.swing * (door.leafWidthMm / 2 + 10);
-  const leafCenterAlong = hingeAlongMm + (door.hinge < 0 ? 1 : -1) * (leafThicknessMm / 2 + 8);
+  const alongDirection = door.hinge < 0 ? 1 : -1;
+  const leafCenterAlong = hingeAlongMm + alongDirection * door.leafWidthMm / 2;
+  const hingePlan = plan(hingeAlongMm, hingeAcrossMm);
+  const leafCenterPlan = plan(leafCenterAlong, hingeAcrossMm);
+  const hinge = new TransformNode(`${door.id} · pánt animovaných dverí`, context.scene);
+  hinge.position.set(xM(hingePlan.x), 0, zM(hingePlan.y));
+  hinge.metadata = { doorId: door.id, doorMotion: "HINGED" };
   const leaf = texturedBox(
     context.scene,
-    `${door.label} · otvorené krídlo`,
-    plan(leafCenterAlong, leafCenterAcross),
-    door.axis === "X" ? leafThicknessMm : door.leafWidthMm + 20,
-    door.axis === "X" ? door.leafWidthMm + 20 : leafThicknessMm,
+    `${door.label} · animované krídlo`,
+    leafCenterPlan,
+    door.axis === "X" ? door.leafWidthMm : leafThicknessMm,
+    door.axis === "X" ? leafThicknessMm : door.leafWidthMm,
     heightM - 0.07,
     0.02,
     1,
   );
-  finish(context, leaf, materials.doorLeaf, { shadow: true, pickable: true });
-  const handle = CreateCylinder(
-    `${door.label} · kľučka`,
-    { height: 0.12, diameter: 0.018, tessellation: 12 },
-    context.scene,
+  const leafWorld = leaf.position.clone();
+  leaf.parent = hinge;
+  leaf.position.copyFrom(leafWorld.subtract(hinge.position));
+  leaf.metadata = {
+    ...(leaf.metadata ?? {}),
+    cameraOccluder: true,
+    dynamicCameraOccluder: true,
+    doorId: door.id,
+    doorMotion: "HINGED",
+  };
+  finish(context, leaf, materials.doorLeaf, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+    entityId: door.id,
+  });
+
+  const handleDistanceMm = Math.max(180, door.leafWidthMm - 105);
+  const handleAlongMm = hingeAlongMm + alongDirection * handleDistanceMm;
+  const handleLevers: Mesh[] = [];
+  for (const side of [-1, 1] as const) {
+    const handleAcrossMm =
+      hingeAcrossMm + side * (leafThicknessMm / 2 + 15);
+    const handlePlan = plan(handleAlongMm, handleAcrossMm);
+    const handle = CreateCylinder(
+      `${door.label} · kľučka ${side < 0 ? "A" : "B"}`,
+      { height: 0.13, diameter: 0.018, tessellation: 16 },
+      context.scene,
+    );
+    handle.position.set(xM(handlePlan.x), 1.05, zM(handlePlan.y));
+    if (door.axis === "X") handle.rotation.z = Math.PI / 2;
+    else handle.rotation.x = Math.PI / 2;
+    const handleWorld = handle.position.clone();
+    handle.parent = hinge;
+    handle.position.copyFrom(handleWorld.subtract(hinge.position));
+    handle.metadata = {
+      ...(handle.metadata ?? {}),
+      doorId: door.id,
+      doorMotion: "HINGED",
+    };
+    finish(context, handle, context.chimneyMetal, {
+      shadow: true,
+      pickable: true,
+      entityId: door.id,
+    });
+    handleLevers.push(handle);
+  }
+
+  const openAngleRad =
+    door.axis === "X"
+      ? door.swing * -door.hinge * (Math.PI / 2)
+      : door.swing * door.hinge * (Math.PI / 2);
+  const closedEndPlan = plan(
+    hingeAlongMm + alongDirection * door.leafWidthMm,
+    hingeAcrossMm,
   );
-  const handleAcross = hingeAcrossMm + door.swing * (door.leafWidthMm - 60);
-  const handleAlong = leafCenterAlong + (door.hinge < 0 ? 1 : -1) * 0.04 * 1000;
-  const handlePlan = plan(handleAlong, handleAcross);
-  handle.position.set(xM(handlePlan.x), 1.05, zM(handlePlan.y));
-  // Lever parallel to the open leaf: along plan y for X-axis walls.
-  handle.rotation.x = door.axis === "X" ? Math.PI / 2 : 0;
-  handle.rotation.z = door.axis === "X" ? 0 : Math.PI / 2;
-  finish(context, handle, context.chimneyMetal);
+  const hingeWorld = { x: xM(hingePlan.x), z: zM(hingePlan.y) };
+  const closedEndWorld = {
+    x: xM(closedEndPlan.x),
+    z: zM(closedEndPlan.y),
+  };
+  const interactionPlan = plan(
+    door.startMm + door.widthMm / 2,
+    wallCenter,
+  );
+  context.registerAnimatedDoor?.({
+    id: door.id,
+    label: door.label.replace(/^Dvere\s+/u, "").replace(/\s+·.*$/u, ""),
+    kind: "HINGED",
+    interactionPoint: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+    apply: (progress, handleDepression) => {
+      hinge.rotation.y = openAngleRad * progress;
+      for (const handle of handleLevers) {
+        if (door.axis === "X") {
+          handle.rotation.z = Math.PI / 2 + handleDepression * 0.34;
+        } else {
+          handle.rotation.x = Math.PI / 2 - handleDepression * 0.34;
+        }
+        handle.computeWorldMatrix(true);
+      }
+      leaf.computeWorldMatrix(true);
+    },
+    canOpen: (actor, progress = 0) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        leafThicknessMm * MM_TO_M,
+        progress,
+        1,
+      ),
+    canClose: (actor, progress = 1) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        leafThicknessMm * MM_TO_M,
+        progress,
+        0,
+      ),
+  });
 }
 
 /** Slim black bar handle on a front. */
@@ -2748,11 +2851,6 @@ function buildEnsuiteBathroomFitout(
   );
 }
 
-/**
- * Realistic working corner for garage 1.12. The visible small parts stay
- * non-colliding; three smooth guards represent the sink, floor rack and mower
- * so the walkthrough can slide past them without snagging on handles or legs.
- */
 function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
   const fitout = GARAGE_FITOUT;
   const sink = fitout.utilitySink;

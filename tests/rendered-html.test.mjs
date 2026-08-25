@@ -68,10 +68,11 @@ test("server-renders the Slovak digital-twin product shell", async () => {
 });
 
 test("keeps Babylon client-only and removes the disposable starter preview", async () => {
-  const [viewport, studio, scene, page, layout, globals, packageJson] = await Promise.all([
+  const [viewport, studio, scene, garage, page, layout, globals, packageJson] = await Promise.all([
     readFile(new URL("../app/babylon-viewport.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/twin-studio.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/babylon-scene.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/twin-garage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -108,6 +109,12 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /enterWalkthrough\(/);
   assert.match(scene, /Collisions\/collisionCoordinator/);
   assert.match(scene, /AvatarController/);
+  assert.match(scene, /assertInventory\(ARCHITECTURAL_DOOR_INVENTORY\)/);
+  assert.match(scene, /event\.code === "KeyE"/);
+  assert.match(scene, /getDoorInteraction\(\)/);
+  assert.match(scene, /doorInteractionHasLineOfSight/);
+  assert.match(scene, /pickWithRay/);
+  assert.match(scene, /toggleDoorInteraction\(restoreCanvasFocus = true\)/);
   assert.match(scene, /buildPorchCurtainWall\(/);
   assert.match(scene, /Štítový trojuholníkový svetlík · zasklenie/);
   assert.match(scene, /pevné presklenie 2 000/);
@@ -150,6 +157,23 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /WALK_AVATAR_STORAGE_KEY/);
   assert.match(viewport, /event\.detail !== 0/);
   assert.match(viewport, /canvasRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(viewport, /controllerRef\.current\?\.getDoorInteraction\(\)/);
+  assert.match(viewport, /className=\{`door-interaction-prompt/);
+  assert.match(viewport, /aria-keyshortcuts="E"/);
+  assert.match(viewport, /aria-live="polite"/);
+  assert.match(viewport, /E alebo dotyk na výzvu otvorí a zavrie blízke dvere/);
+  assert.match(studio, /Dvere v prechádzke/);
+  assert.match(viewport, /walkRoomId === GARAGE_VEHICLE\.roomId/);
+  assert.match(viewport, /aria-label="Ovládanie auta v garáži"/);
+  assert.match(viewport, /disabled=\{!garageAction\}/);
+  assert.match(viewport, /requestGarageVehicleAction\(garageAction\)/);
+  assert.match(scene, /buildInteractiveGarageDoor\(\)/);
+  assert.match(scene, /buildGarageVehicle\(\)/);
+  assert.match(scene, /garageVehicleSurfaceElevationM/);
+  assert.match(scene, /prefers-reduced-motion: reduce/);
+  assert.match(garage, /GARAGE-VEHICLE-SKODA-SUPERB/);
+  assert.match(garage, /state: "closing-after-park"/);
+  assert.match(garage, /state: "closing-after-leave"/);
   assert.match(viewport, /event\.key === "5"\) applyPreset\("parcels"\)/);
   assert.match(viewport, /preset === "parcels"\) onParcelOverviewRequest\(\)/);
   assert.match(studio, /preset === "parcels"[\s\S]{0,180}?cadastre: true/);
@@ -157,6 +181,8 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(globals, /\.walk-hud-content\[hidden\] \{ display: none; \}/);
   assert.match(globals, /\.walk-avatar-options/);
   assert.match(globals, /\.walk-avatar-option\.is-selected/);
+  assert.match(globals, /\.door-interaction-prompt/);
+  assert.match(globals, /bottom: 194px/);
   assert.match(page, /<TwinStudio \/>/);
   assert.match(layout, /lang="sk"/);
   assert.match(layout, /Dom 6012\/26 · Digitálne dvojča/);

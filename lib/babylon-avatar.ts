@@ -511,6 +511,13 @@ export class AvatarController {
     return this.recoveryNeeded;
   }
 
+  /** A successfully opening door explains the expected collision; no rewind. */
+  clearBlockedIndicator() {
+    this.blockedForS = 0;
+    this.recoveryNeeded = false;
+    this.recoveryClearTravelM = 0;
+  }
+
   get cameraState() {
     return {
       desiredRadiusM: this.preferredCameraRadiusM,
@@ -837,6 +844,38 @@ export class AvatarController {
     this.occluderSceneMeshCount = this.scene.meshes.length;
     this.lastOccluderStateSignature = 0;
     this.lastProbeTarget.setAll(Number.POSITIVE_INFINITY);
+  }
+
+  /** Refreshes only moving-door bounds without rescanning the full house. */
+  invalidateDynamicCameraOccluders() {
+    let refreshed = false;
+    this.cameraOccluders = this.cameraOccluders.map((occluder) => {
+      const metadata = occluder.mesh.metadata as {
+        readonly dynamicCameraOccluder?: boolean;
+      } | null;
+      if (
+        metadata?.dynamicCameraOccluder !== true ||
+        occluder.mesh.isDisposed()
+      ) {
+        return occluder;
+      }
+      occluder.mesh.computeWorldMatrix(true);
+      const bounds = occluder.mesh.getBoundingInfo().boundingBox;
+      refreshed = true;
+      return {
+        mesh: occluder.mesh,
+        minimumX: bounds.minimumWorld.x,
+        minimumY: bounds.minimumWorld.y,
+        minimumZ: bounds.minimumWorld.z,
+        maximumX: bounds.maximumWorld.x,
+        maximumY: bounds.maximumWorld.y,
+        maximumZ: bounds.maximumWorld.z,
+      };
+    });
+    if (refreshed) {
+      this.lastProbeTarget.setAll(Number.POSITIVE_INFINITY);
+      this.lastCameraHitDistanceM = null;
+    }
   }
 
   private cameraHitDistance() {

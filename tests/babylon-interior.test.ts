@@ -1,14 +1,17 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { describe, expect, it } from "vitest";
 
 import { buildInterior } from "../lib/babylon-interior";
+import type { AnimatedDoorRegistration } from "../lib/babylon-doors";
 import {
   CHILDRENS_BEDROOM_FITOUTS,
   FIREPLACE_STOVE,
   GARAGE_FITOUT,
+  INTERIOR_DOORS,
   TECHNICAL_HEATING_FITOUT,
 } from "../lib/twin-interior";
 
@@ -21,6 +24,7 @@ describe("Babylon interior fit-out", () => {
     });
     const scene = new Scene(engine);
     const material = (name: string) => new PBRMaterial(name, scene);
+    const doors: AnimatedDoorRegistration[] = [];
     try {
       buildInterior({
         scene,
@@ -33,7 +37,56 @@ describe("Babylon interior fit-out", () => {
         register: (mesh: AbstractMesh) => mesh,
         realisticOnly: (mesh: AbstractMesh) => mesh,
         castShadow: (mesh: AbstractMesh) => mesh,
+        registerAnimatedDoor: (door) => doors.push(door),
       });
+
+      expect(doors.map(({ id }) => id).sort()).toEqual(
+        INTERIOR_DOORS.map(({ id }) => id).sort(),
+      );
+      expect(doors).toHaveLength(11);
+      for (const door of doors) {
+        const leaf = scene.meshes.find(
+          (mesh) =>
+            mesh.metadata?.doorId === door.id &&
+            mesh.name.includes("animované krídlo"),
+        );
+        expect(leaf, `${door.id} has one moving leaf`).toBeDefined();
+        expect(leaf?.checkCollisions).toBe(true);
+        expect(leaf?.isPickable).toBe(true);
+        expect(leaf?.metadata).toMatchObject({
+          doorId: door.id,
+          doorMotion: "HINGED",
+          dynamicCameraOccluder: true,
+        });
+        const handles = scene.meshes.filter(
+          (mesh) =>
+            mesh.parent === leaf?.parent && mesh.name.includes("kľučka"),
+        );
+        expect(handles, `${door.id} has a lever on both faces`).toHaveLength(2);
+        door.apply(1, 1);
+        expect(
+          Math.abs((leaf?.parent as TransformNode | null)?.rotation.y ?? 0),
+        ).toBeCloseTo(
+          Math.PI / 2,
+          8,
+        );
+        expect(
+          door.canOpen?.({
+            position: door.interactionPoint,
+            facing: { x: 1, z: 0 },
+          }),
+        ).toBe(false);
+        expect(
+          door.canClose?.({
+            position: {
+              x: door.interactionPoint.x + 5,
+              z: door.interactionPoint.z + 5,
+            },
+            facing: { x: 1, z: 0 },
+          }),
+        ).toBe(true);
+        door.apply(0, 0);
+      }
 
       for (const fitout of CHILDRENS_BEDROOM_FITOUTS) {
         const roomMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(fitout.id));
@@ -92,7 +145,6 @@ describe("Babylon interior fit-out", () => {
       expect(heatingGuards[0].name).toContain("· WOOD-PELLET-ASSEMBLY · navigačný obrys");
       expect(heatingGuards[0].checkCollisions).toBe(true);
       expect(heatingGuards[0].isVisible).toBe(false);
-
       const garageMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(GARAGE_FITOUT.id));
       for (const required of [
         "· UTILITY-SINK ·",

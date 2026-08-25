@@ -8,11 +8,12 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Bot, Shield, UserRound, type LucideIcon } from "lucide-react";
+import { Bot, CarFront, Shield, UserRound, type LucideIcon } from "lucide-react";
 import type {
   CameraPreset,
   TwinSceneController,
 } from "@/lib/babylon-scene";
+import type { DoorInteractionSnapshot } from "@/lib/babylon-doors";
 import type { FoundationStrip, LayerId, ViewMode } from "@/lib/twin-site";
 import type {
   FlightCommand,
@@ -20,6 +21,13 @@ import type {
   RenderQualityProfile,
 } from "@/lib/twin-viewport-contract";
 import { INTERIOR_ROOMS } from "@/lib/twin-interior";
+import {
+  GARAGE_VEHICLE,
+  garageActionForState,
+  garageActionLabel,
+  garageParkingStatus,
+  type GarageParkingState,
+} from "@/lib/twin-garage";
 import {
   DEFAULT_WALK_AVATAR_ID,
   WALK_AVATARS,
@@ -82,8 +90,13 @@ export const BabylonViewport = forwardRef<
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
   const [walkRoom, setWalkRoom] = useState<string>("");
+  const [walkRoomId, setWalkRoomId] = useState<string | null>(null);
+  const [garageParkingState, setGarageParkingState] =
+    useState<GarageParkingState>("away");
   const [walkView, setWalkView] = useState<"third" | "first">("third");
   const [walkBlocked, setWalkBlocked] = useState(false);
+  const [doorInteraction, setDoorInteraction] =
+    useState<DoorInteractionSnapshot | null>(null);
   const [walkHudCollapsed, setWalkHudCollapsed] = useState(false);
   const [walkAvatarId, setWalkAvatarId] = useState<WalkAvatarId>(
     DEFAULT_WALK_AVATAR_ID,
@@ -216,13 +229,22 @@ export const BabylonViewport = forwardRef<
   useEffect(() => {
     if (status !== "ready" || navigationMode !== "walk") {
       setWalkRoom("");
+      setWalkRoomId(null);
       setWalkBlocked(false);
+      setDoorInteraction(null);
       return;
     }
     const read = () => {
       const room = controllerRef.current?.getWalkRoom();
       setWalkRoom(room ? `${room.number} · ${room.name}` : "Exteriér · terasa a záhrada");
+      setWalkRoomId(room?.id ?? null);
       setWalkBlocked(controllerRef.current?.isWalkBlocked() ?? false);
+      setDoorInteraction(
+        controllerRef.current?.getDoorInteraction() ?? null,
+      );
+      setGarageParkingState(
+        controllerRef.current?.getGarageParkingState() ?? "away",
+      );
     };
     read();
     const timer = window.setInterval(read, 200);
@@ -261,6 +283,19 @@ export const BabylonViewport = forwardRef<
         maximumFractionDigits: 1,
       })
     : null;
+
+  const doorPromptStatus = doorInteraction
+    ? doorInteraction.blockedMessage ??
+      (doorInteraction.phase === "OPENING"
+        ? "Otváram dvere…"
+        : doorInteraction.phase === "CLOSING"
+          ? "Zatváram dvere…"
+          : doorInteraction.action === "OPEN"
+            ? "Otvoriť dvere"
+            : doorInteraction.action === "CLOSE"
+              ? "Zavrieť dvere"
+              : "Dvere ovláda automatický manéver")
+    : "";
 
   const chooseWalkAvatar = async (
     id: WalkAvatarId,
@@ -303,6 +338,16 @@ export const BabylonViewport = forwardRef<
     }
   };
 
+  const garageAction = garageActionForState(garageParkingState);
+  const garageStatus = garageParkingStatus(garageParkingState);
+
+  const requestGarageVehicleAction = () => {
+    if (!garageAction) return;
+    const controller = controllerRef.current;
+    if (!controller?.requestGarageVehicleAction(garageAction)) return;
+    setGarageParkingState(controller.getGarageParkingState());
+  };
+
   return (
     <div
       className="canvas-region"
@@ -314,7 +359,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu, steny zastavia pohyb, otvorené dvere a presklené steny terás sú priechodné, Escape ukončí prechádzku."
+            ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu otvorí a zavrie blízke dvere, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov má animovaný pohyb a fyzickú kolíziu."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 5 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -448,8 +493,8 @@ export const BabylonViewport = forwardRef<
                 </small>
               )}
             </fieldset>
-            <strong>WASD chôdza · ťahanie otáča kameru · Shift beh</strong>
-            <small>Koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
+            <strong>WASD chôdza · E dvere · ťahanie otáča kameru</strong>
+            <small>Shift beh · koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
             <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
               <button
                 type="button"
@@ -477,8 +522,70 @@ export const BabylonViewport = forwardRef<
               ))}
             </div>
           </div>
+          {walkRoomId === GARAGE_VEHICLE.roomId && (
+            <div
+              className={`garage-vehicle-cta${garageAction ? "" : " is-busy"}`}
+              role="region"
+              aria-label="Ovládanie auta v garáži"
+              aria-busy={!garageAction}
+            >
+              <span className="sr-only" aria-live="polite">
+                {garageStatus}
+              </span>
+              <span className="garage-vehicle-icon" aria-hidden="true">
+                <CarFront size={20} strokeWidth={1.8} />
+              </span>
+              <span className="garage-vehicle-copy">
+                <small>ŠKODA SUPERB · GARÁŽ 1.12</small>
+                <strong>{garageStatus}</strong>
+              </span>
+              <button
+                type="button"
+                disabled={!garageAction}
+                aria-label={garageAction ? garageActionLabel(garageAction) : garageStatus}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  requestGarageVehicleAction();
+                }}
+              >
+                {garageAction ? garageActionLabel(garageAction) : "Prebieha…"}
+              </button>
+            </div>
+          )}
         </div>
       )}
+      {status === "ready" &&
+        navigationMode === "walk" &&
+        doorInteraction && (
+          <button
+            type="button"
+            className={`door-interaction-prompt is-${doorInteraction.phase.toLowerCase()}${doorInteraction.blockedMessage ? " is-blocked" : ""}`}
+            aria-keyshortcuts="E"
+            aria-disabled={!doorInteraction.action}
+            aria-busy={
+              doorInteraction.phase === "OPENING" ||
+              doorInteraction.phase === "CLOSING"
+            }
+            aria-label={`${doorPromptStatus}. ${doorInteraction.label}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!doorInteraction.action) return;
+              const controller = controllerRef.current;
+              const restoreCanvasFocus = event.detail !== 0;
+              controller?.toggleDoorInteraction(restoreCanvasFocus);
+              setDoorInteraction(controller?.getDoorInteraction() ?? null);
+            }}
+          >
+            <kbd aria-hidden="true">E</kbd>
+            <span className="door-interaction-copy">
+              <strong>{doorPromptStatus}</strong>
+              <small>{doorInteraction.label}</small>
+            </span>
+            <span className="door-interaction-live sr-only" aria-live="polite">
+              {doorPromptStatus}. {doorInteraction.label}.
+            </span>
+          </button>
+        )}
       {status === "ready" && (navigationMode === "flight" || navigationMode === "walk") && (
         <>
           {navigationMode === "flight" && (

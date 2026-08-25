@@ -111,8 +111,9 @@ RobotExpressive od Tomása Laulhé, upravený Donom McCurdym a vydaný ako
 `047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319`).
 Ovládanie: W A S D
 chôdza v smere kamery, ťahanie otáča kameru okolo postavy, Shift beh, koliesko
-priblíženie, V prepne pohľad z očí a R vystredí kameru alebo vráti zaseknutú
-postavu na posledný bezpečný bod; pohyb má krátke zrýchlenie a dobeh
+priblíženie, E alebo dotyk na kontextovú výzvu otvorí a zavrie blízke dvere,
+V prepne pohľad z očí a R vystredí kameru alebo vráti zaseknutú postavu na
+posledný bezpečný bod; pohyb má krátke zrýchlenie a dobeh
 (`WALK_CAMERA` v `lib/twin-viewport-contract.ts`), postava sa otáča do smeru
 skutočného posunu a kamera sa po 0,58 s bez ťahania plynulo vracia za postavu.
 Päťlúčová vnútorná sonda pred stenou okamžite skráti kamerové rameno bez
@@ -122,15 +123,18 @@ nezacloní malé WC ani úzku chodbu. Animácie Idle/Walk/Run sa
 miešajú podľa rýchlosti a klipy sú časovo škálované, aby nohy nekĺzali.
 Staršia verzia režimu bola iba kamera vo výške očí 1,65 m; tá zostáva ako
 pohľad z očí (V). Vnútorné
-nosné steny, priečky 140 mm, dvere so zárubňami a otvorenými krídlami,
+nosné steny, priečky 140 mm, 11 interiérových dverí so zárubňami, kľučkami a
+animovanými kolíznymi krídlami,
 podlahy podľa legendy miestností (keramická dlažba, vinyl, epoxidová stierka),
 SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
 2 750 → 4 850 mm sú odčítané z vektorov výkresu D1.1.002 (`lib/twin-interior.ts`,
 hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
 prelet (WASD, ťahanie, Shift/Alt), steny ho zastavia cez kolízny elipsoid
 s polomermi 0,22 × 0,80 × 0,22 m a pohyb sa delí na najviac 50 mm kroky.
-Otvorené interiérové dvere a presklené steny
-terás zostávajú priechodné; HUD ponúka priamy vstup do každej z dvanástich
+Spoločný kontrolér pokrýva presne 18 systémov: 11 interiérových, tri exteriérové
+krídlové, tri zdvižno-posuvné a sekčnú garážovú bránu. Zatvorené krídlo chodca
+zastaví, po animovanom otvorení uvoľní reálny priechod a pri vstupe postavy do
+dráhy sa pohyb bezpečne pozastaví. HUD ponúka priamy vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
 nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,
@@ -183,7 +187,7 @@ Klientská revízia zároveň posúva priečku medzi 1.06 a 1.07 o 300 mm do
 technickej miestnosti: WC má nový čistý rozmer 1 299 × 1 600 mm a geometrickú
 plochu približne 2,08 m². `WC_FITOUT` dopĺňa závesnú misu s podomietkovým
 modulom, kompaktné 450 mm umývadlo, batériu a zrkadlo; pred misou ostáva 779 mm
-a otvorené dverné krídlo je bez kolízie. Akumulačná nádrž je v zmenšenom
+a plne otvorené dverné krídlo má overenú voľnú dráhu. Akumulačná nádrž je v zmenšenom
 západnom poli technickej miestnosti nanovo vycentrovaná.
 Finálna klientská revízia kúpeľne a práčovne 1.05 ponecháva všetky priečky aj
 vysoké okno EAST-02. Na konci východného výklenku je 1 250 × 900 mm walk-in
@@ -191,7 +195,7 @@ sprcha. Celý 2 616 mm široký zadný výrez tvorí jedna 650 mm hlboká vstava
 zostava (`BATHROOM_FITOUT`): veľké 1 100 × 450 mm matne čierne umývadlo,
 viditeľná biela práčka a biela sušička vedľa seba a horné uzavreté skrinky až
 do výšky 2 350 mm. Pred zostavou ostáva súvislý pás 2 616 × 869 mm a pred
-spotrebičmi 900 mm servisná hĺbka; otvorené dvere ani malé okno nie sú v
+spotrebičmi 900 mm servisná hĺbka; plne otvorená poloha dverí ani malé okno nie sú v
 kolízii. Ide o interiérový dizajnový koncept; hydroizoláciu, odvetranie a
 výrobné napojenia musí potvrdiť profesijný projekt. Okná a dvere sú
 stavané ako skutočné výplne
@@ -200,7 +204,7 @@ profilom a kľučkou, izolačné dvojsklo, vnútorný postformingový parapet s
 ušami a nosom, exteriérový hliníkový parapet s okapnicou a bočnicami, zdvižno‑
 posuvné dvere s pevným a posuvným krídlom na dvoch koľajniciach a vstupné
 dvere s bočným svetlíkom. Pevné sklá zastavujú chodca, posuvné a dverné
-krídla sú priechodné.
+krídla majú vlastnú kolíziu a priechod uvoľnia až po otvorení.
 
 Revízia interiéru stavebníka z 23. 8. 2026 dopĺňa do 1.03 ucelenú obývaciu a
 jedálenskú zónu (`LIVING_DINING_FITOUT`). Na západnej stene je za valcovými
@@ -312,6 +316,7 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 - `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy, pohyb voľnej kamery a chodca,
 - `lib/babylon-interior.ts` — stavba interiérového vybavenia zo záznamu miestností,
 - `lib/babylon-openings.ts` — okná, parapety, posuvné a vstupné dvere,
+- `lib/babylon-doors.ts` — inventár 18 dverových systémov, cielenie, stavový automat a bezpečnostné obálky pohybu,
 - `lib/babylon-avatar.ts` — postava prechádzky, jej kolízie, animácie a sledovacia kamera,
 - `lib/babylon-scene.ts` — jediná hranica medzi milimetrami domény a metrami Babylon scény,
 - `app/twin-studio.tsx` — prístupný DOM prieskumník, inspector a stav pracovného priestoru,
