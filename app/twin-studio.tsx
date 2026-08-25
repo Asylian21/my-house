@@ -954,7 +954,7 @@ export function TwinStudio() {
               <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · 5 · F</dd></div>
               <div><dt>Voľný prelet</dt><dd>H · potom WASD</dd></div>
               <div><dt>Výška preletu</dt><dd>Q / E</dd></div>
-              <div><dt>Dvere v prechádzke</dt><dd>E · dotyk na výzvu</dd></div>
+              <div><dt>Dvere a dvierka v prechádzke</dt><dd>E · dotyk na výzvu</dd></div>
               <div><dt>Rýchlosť</dt><dd>Shift turbo · Alt presne</dd></div>
               <div><dt>Ukončiť prelet</dt><dd>Esc</dd></div>
             </dl>

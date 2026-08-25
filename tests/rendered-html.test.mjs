@@ -112,12 +112,12 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /enterWalkthrough\(/);
   assert.match(scene, /Collisions\/collisionCoordinator/);
   assert.match(scene, /AvatarController/);
-  assert.match(scene, /assertInventory\(ARCHITECTURAL_DOOR_INVENTORY\)/);
+  assert.match(scene, /assertInventory\(INTERACTIVE_DOOR_INVENTORY\)/);
   assert.match(scene, /event\.code === "KeyE"/);
-  assert.match(scene, /getDoorInteraction\(\)/);
+  assert.match(scene, /getDoorInteraction\(id\?: string\)/);
   assert.match(scene, /doorInteractionHasLineOfSight/);
   assert.match(scene, /pickWithRay/);
-  assert.match(scene, /toggleDoorInteraction\(restoreCanvasFocus = true\)/);
+  assert.match(scene, /toggleDoorInteraction\(restoreCanvasFocus = true, id\?: string\)/);
   assert.match(scene, /buildPorchCurtainWall\(/);
   assert.match(scene, /Štítový trojuholníkový svetlík · zasklenie/);
   assert.match(scene, /pevné presklenie 2 000/);
@@ -167,8 +167,9 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /className=\{`door-interaction-prompt/);
   assert.match(viewport, /aria-keyshortcuts="E"/);
   assert.match(viewport, /aria-live="polite"/);
-  assert.match(viewport, /E alebo dotyk na výzvu otvorí a zavrie blízke dvere/);
-  assert.match(studio, /Dvere v prechádzke/);
+  assert.match(viewport, /E alebo dotyk na výzvu otvorí a zavrie blízke dvere alebo dvierka spotrebičov/);
+  assert.match(viewport, /obe dvierka spotrebičov majú animovaný pohyb a fyzickú kolíziu/);
+  assert.match(studio, /Dvere a dvierka v prechádzke/);
   assert.match(viewport, /walkRoomId === GARAGE_VEHICLE\.roomId/);
   assert.match(viewport, /aria-label="Ovládanie auta v garáži"/);
   assert.match(viewport, /disabled=\{!garageAction\}/);

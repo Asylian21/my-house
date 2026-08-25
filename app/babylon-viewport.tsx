@@ -366,7 +366,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu otvorí a zavrie blízke dvere, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov má animovaný pohyb a fyzickú kolíziu."
+            ? "Prechádzka domom s voliteľnou postavou. V paneli môžete vybrať Michelle, Vanguard alebo Robo. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu otvorí a zavrie blízke dvere alebo dvierka spotrebičov, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov aj obe dvierka spotrebičov majú animovaný pohyb a fyzickú kolíziu."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 5 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -502,7 +502,7 @@ export const BabylonViewport = forwardRef<
                 </small>
               )}
             </fieldset>
-            <strong>WASD chôdza · E dvere · ťahanie otáča kameru</strong>
+            <strong>WASD chôdza · E dvere / dvierka · ťahanie otáča kameru</strong>
             <small>Shift beh · koliesko priblíženie · Alt pomaly · V {walkView === "third" ? "pohľad z očí" : "tretia osoba"} · R vyslobodiť · Esc koniec</small>
             <div className="walk-rooms" role="group" aria-label="Prejsť do miestnosti">
               <button

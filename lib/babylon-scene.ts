@@ -56,6 +56,7 @@ import {
   GARDEN_POOL,
   HOUSE,
   LAYERS,
+  PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -108,8 +109,8 @@ import {
   type OpeningInteraction,
 } from "./babylon-openings";
 import {
-  ARCHITECTURAL_DOOR_INVENTORY,
   BabylonDoorController,
+  INTERACTIVE_DOOR_INVENTORY,
   type AnimatedDoorRegistration,
   type DoorInteractionSnapshot,
 } from "./babylon-doors";
@@ -138,6 +139,7 @@ import {
   type VehicleLoftStation,
 } from "./twin-garage-model";
 import {
+  EXTERIOR_RENDER_STABILITY,
   ORBIT_ZOOM,
   clampOrbitRadius,
   deriveRenderQualityProfile,
@@ -153,6 +155,7 @@ import {
   type FlightCommand,
   type NavigationMode,
   type RenderQualityProfile,
+  type WalkSurfaceKind,
 } from "./twin-viewport-contract";
 
 export type CameraPreset =
@@ -183,6 +186,22 @@ export interface SceneSnapshot {
 
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
+
+function markWalkSurface<T extends AbstractMesh>(
+  mesh: T,
+  kind: WalkSurfaceKind,
+  id = mesh.name,
+  elevationOffsetM = 0,
+) {
+  mesh.metadata = {
+    ...(mesh.metadata ?? {}),
+    walkSurface: true,
+    walkSurfaceKind: kind,
+    walkSurfaceId: id,
+    walkSurfaceElevationOffsetM: elevationOffsetM,
+  };
+  return mesh;
+}
 const EAVES_M = HOUSE.eavesElevationMm * MM_TO_M;
 
 export const PARCEL_LABEL_RENDERING_GROUP_ID = 2;
@@ -251,6 +270,8 @@ function pbrMaterial(
   material.alpha = alpha;
   material.backFaceCulling = true;
   material.environmentIntensity = 1;
+  material.enableSpecularAntiAliasing =
+    EXTERIOR_RENDER_STABILITY.pbrSpecularAntiAliasingEnabled;
   if (alpha < 1) {
     material.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
     material.useAlphaFromAlbedoTexture = false;
@@ -464,7 +485,7 @@ function createGradedPolygonEdgeSkirt(
   return mesh;
 }
 
-function createFlatPolygonWithHoles(
+export function createFlatPolygonWithHoles(
   scene: Scene,
   name: string,
   outerRing: readonly Point2Mm[],
@@ -1000,7 +1021,7 @@ export class TwinSceneController {
     this.orbitCamera.panningSensibility = 95;
     this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
     this.orbitCamera.inertia = 0.72;
-    this.orbitCamera.minZ = 0.18;
+    this.orbitCamera.minZ = EXTERIOR_RENDER_STABILITY.orbitNearClipM;
     this.orbitCamera.maxZ = 220;
     this.orbitCamera.fov = gardenCamera.fov;
     this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
@@ -1079,7 +1100,8 @@ export class TwinSceneController {
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.numCascades = 4;
       this.cascadedShadowGenerator.stabilizeCascades = true;
-      this.cascadedShadowGenerator.cascadeBlendPercentage = 0.12;
+      this.cascadedShadowGenerator.cascadeBlendPercentage =
+        EXTERIOR_RENDER_STABILITY.shadowCascadeBlendPercentage;
       this.cascadedShadowGenerator.lambda = 0.72;
       this.cascadedShadowGenerator.shadowMaxZ = 78;
       this.cascadedShadowGenerator.depthClamp = true;
@@ -1089,8 +1111,9 @@ export class TwinSceneController {
       this.renderQuality.tier === "ULTRA"
       ? ShadowGenerator.QUALITY_HIGH
       : ShadowGenerator.QUALITY_MEDIUM;
-    this.shadowGenerator.bias = 0.00018;
-    this.shadowGenerator.normalBias = 0.0018;
+    this.shadowGenerator.bias = EXTERIOR_RENDER_STABILITY.shadowBias;
+    this.shadowGenerator.normalBias =
+      EXTERIOR_RENDER_STABILITY.shadowNormalBiasM;
     this.shadowGenerator.transparencyShadow = true;
     this.shadowGenerator.setDarkness(0.14);
 
@@ -1131,11 +1154,14 @@ export class TwinSceneController {
     this.postPipeline.sharpen.edgeAmount =
       this.renderQuality.sharpenEdgeAmount;
     this.postPipeline.sharpen.colorAmount = 1;
-    // Animated fine grain gives flat outdoor gradients a photographic
-    // texture; it is enabled together with bloom in realistic mode only.
-    this.postPipeline.grainEnabled = false;
+    // Temporal film noise reads as texture shimmer on large architectural
+    // planes. Keep the pipeline configured, but gate it behind the explicit
+    // stability contract so reality mode remains frame-to-frame deterministic.
+    this.postPipeline.grainEnabled =
+      EXTERIOR_RENDER_STABILITY.filmGrainEnabled;
     this.postPipeline.grain.intensity = 9;
-    this.postPipeline.grain.animated = true;
+    this.postPipeline.grain.animated =
+      EXTERIOR_RENDER_STABILITY.filmGrainAnimated;
     const renderCameras = [
       this.orbitCamera,
       this.flightCamera,
@@ -1593,12 +1619,13 @@ export class TwinSceneController {
     this.buildCadastre();
     this.buildStreetAndSite();
     this.buildHouse();
-    this.doors.assertInventory(ARCHITECTURAL_DOOR_INVENTORY);
+    this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
     this.buildFence();
     this.buildLandscape();
     this.buildUtilities();
     if (this.cascadedShadowGenerator) {
-      this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo = true;
+      this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo =
+        EXTERIOR_RENDER_STABILITY.freezeDynamicShadowCasterBounds;
     }
 
     this.scene.onPointerDown = (event) => {
@@ -1685,9 +1712,9 @@ export class TwinSceneController {
         const doorId = pick?.pickedMesh?.metadata?.doorId;
         if (
           typeof doorId === "string" &&
-          this.doors.getInteraction()?.id === doorId
+          this.doors.getInteraction(doorId)?.id === doorId
         ) {
-          this.toggleDoorInteraction();
+          this.toggleDoorInteraction(true, doorId);
         }
       }
       this.pointerGesture = null;
@@ -2131,16 +2158,21 @@ export class TwinSceneController {
       const cameraForward = this.garageCinematicActive
         ? fallback
         : (this.scene.activeCamera?.getForwardRay(1).direction ?? fallback);
-      const horizontalLength = Math.hypot(cameraForward.x, cameraForward.z);
+      const facingLength = Math.hypot(
+        cameraForward.x,
+        cameraForward.y,
+        cameraForward.z,
+      );
       this.doors.setActor({
-        position: { x: pose.x, z: pose.z },
+        position: { x: pose.x, y: this.avatar.eyePosition.y, z: pose.z },
         facing:
-          horizontalLength > 1e-6
+          facingLength > 1e-6
             ? {
-                x: cameraForward.x / horizontalLength,
-                z: cameraForward.z / horizontalLength,
+                x: cameraForward.x / facingLength,
+                y: cameraForward.y / facingLength,
+                z: cameraForward.z / facingLength,
               }
-            : { x: fallback.x, z: fallback.z },
+            : { x: fallback.x, y: 0, z: fallback.z },
       });
     } else {
       this.doors.setActor(null);
@@ -2450,7 +2482,11 @@ export class TwinSceneController {
       { width: 240, height: 200, subdivisions: 2 },
       this.scene,
     );
-    terrain.position.set(0, -0.13, 0);
+    terrain.position.set(
+      0,
+      EXTERIOR_RENDER_STABILITY.contextTerrainElevationM,
+      0,
+    );
     this.appearance(
       terrain,
       this.materials.terrain,
@@ -2458,6 +2494,7 @@ export class TwinSceneController {
     );
     terrain.receiveShadows = true;
     terrain.isPickable = false;
+    markWalkSurface(terrain, "terrain", "terrain-context");
 
     const minor = Color3.FromHexString("#313a37");
     const major = Color3.FromHexString("#55605c");
@@ -2505,8 +2542,8 @@ export class TwinSceneController {
           this.scene,
           "Parcela 6012/26 · 753 m²",
           localRing,
-          [SITE_SURFACES.sideEntryApproach.privatePolygonMm],
-          GROUND_Y,
+          PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
+          EXTERIOR_RENDER_STABILITY.parcelGrassElevationM,
         );
         this.appearance(
           fill,
@@ -2514,6 +2551,7 @@ export class TwinSceneController {
           this.realisticMaterials.grass,
         );
         fill.receiveShadows = true;
+        markWalkSurface(fill, "exterior", "parcel-6012-26");
         this.register(fill, "cadastre");
       }
 
@@ -2610,6 +2648,11 @@ export class TwinSceneController {
         this.realisticMaterials.roadReserve,
       );
       roadReserve.receiveShadows = true;
+      markWalkSurface(
+        roadReserve,
+        "exterior",
+        `front-road-reserve-${index + 1}`,
+      );
       this.register(roadReserve, "street", ROAD_CONTEXT.id);
     }
 
@@ -2622,6 +2665,7 @@ export class TwinSceneController {
     );
     this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
     frontage.receiveShadows = true;
+    markWalkSurface(frontage, "exterior", "front-road");
     this.register(frontage, "street", ROAD_CONTEXT.id);
 
     const corner = createFlatPolygon(
@@ -2633,6 +2677,7 @@ export class TwinSceneController {
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
     corner.receiveShadows = true;
+    markWalkSurface(corner, "exterior", "corner-road");
     this.register(corner, "street", ROAD_CONTEXT.id);
 
     for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
@@ -2648,6 +2693,11 @@ export class TwinSceneController {
         this.realisticMaterials.roadReserve,
       );
       sideReserve.receiveShadows = true;
+      markWalkSurface(
+        sideReserve,
+        "exterior",
+        `side-road-reserve-${index + 1}`,
+      );
       this.register(sideReserve, "street", ROAD_CONTEXT.id);
     }
 
@@ -2961,6 +3011,7 @@ export class TwinSceneController {
           : this.realisticMaterials.pavingEntry,
       );
       paving.receiveShadows = true;
+      markWalkSurface(paving, "exterior", `site-surface-${surface.id}`);
       this.register(paving, "street", surface.id);
 
       if (isStreetRamp || isSideStreetRamp) {
@@ -5595,6 +5646,11 @@ export class TwinSceneController {
       stepMesh.material = this.realisticMaterials.concrete;
       stepMesh.receiveShadows = true;
       stepMesh.isPickable = false;
+      markWalkSurface(
+        stepMesh,
+        "exterior",
+        `porch-step-${index + 1}`,
+      );
       this.realisticOnly(stepMesh);
       this.register(stepMesh, "building");
     }
@@ -5790,6 +5846,9 @@ export class TwinSceneController {
       );
       underlay.material = this.realisticMaterials.interiorDark;
       underlay.isPickable = false;
+      // The continuous underlay closes plank gaps for the height probe; its
+      // metadata offset resolves the visible board top exactly at +20 mm.
+      markWalkSurface(underlay, "exterior", `deck-${zone.id}`, 0.029);
       this.realisticOnly(underlay);
       this.register(underlay, "street", zone.id);
     }
@@ -6739,9 +6798,11 @@ export class TwinSceneController {
     // Photographic finish belongs to the reality view; the technical model
     // stays a clean, grain-free linework document.
     this.postPipeline.bloomEnabled = realistic;
-    this.postPipeline.grainEnabled = realistic && !this.renderQuality.fxaaEnabled;
+    this.postPipeline.grainEnabled =
+      realistic && EXTERIOR_RENDER_STABILITY.filmGrainEnabled;
     this.postPipeline.grain.intensity = 9;
-    this.postPipeline.grain.animated = true;
+    this.postPipeline.grain.animated =
+      EXTERIOR_RENDER_STABILITY.filmGrainAnimated;
     this.scene.fogMode = realistic ? Scene.FOGMODE_EXP2 : Scene.FOGMODE_NONE;
     this.scene.fogDensity = 0.0026;
     this.scene.fogColor = Color3.FromHexString("#c2cccc");
@@ -7117,9 +7178,9 @@ export class TwinSceneController {
     this.flightCamera.position.set(next.x, next.y, next.z);
   }
 
-  getDoorInteraction(): DoorInteractionSnapshot | null {
+  getDoorInteraction(id?: string): DoorInteractionSnapshot | null {
     if (this.navigationMode !== "walk") return null;
-    const interaction = this.doors.getInteraction();
+    const interaction = this.doors.getInteraction(id);
     if (interaction && !this.doorInteractionHasLineOfSight(interaction)) {
       return null;
     }
@@ -7141,7 +7202,7 @@ export class TwinSceneController {
     const origin = new Vector3(pose.x, 1.22, pose.z);
     const target = new Vector3(
       interaction.interactionPoint.x,
-      1.22,
+      interaction.interactionPoint.y ?? 1.22,
       interaction.interactionPoint.z,
     );
     const direction = target.subtract(origin);
@@ -7168,11 +7229,11 @@ export class TwinSceneController {
   }
 
   /** Shared action for E, a nearby leaf tap and the accessible touch button. */
-  toggleDoorInteraction(restoreCanvasFocus = true) {
+  toggleDoorInteraction(restoreCanvasFocus = true, id?: string) {
     if (this.navigationMode !== "walk" || this.garageCinematicActive) {
       return false;
     }
-    const interaction = this.getDoorInteraction();
+    const interaction = this.getDoorInteraction(id);
     if (!interaction?.action) return false;
     if (
       this.garageVehicleAction &&
@@ -7315,6 +7376,7 @@ export class TwinSceneController {
       pose: this.avatar.pose,
       camera: this.avatar.cameraState,
       blocked: this.avatar.isBlocked,
+      recovery: this.avatar.recoveryState,
     } as const;
   }
 

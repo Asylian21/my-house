@@ -712,7 +712,9 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       { x: rect.x1 - 1, y: rect.y1 - 1 },
     ].every((point) => roomAt(point)?.id === bathroom.id);
 
-    expect(fitout.sourceId).toBe(SOURCES.clientBathroomBuiltInRevision20260823.id);
+    expect(fitout.sourceId).toBe(
+      SOURCES.clientBathroomStackedLaundryRevision20260825.id,
+    );
     expect(fitout.boundaryRevisionSourceId).toBe(
       SOURCES.clientBathroomServiceCoreRevision20260825.id,
     );
@@ -752,15 +754,33 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(builtIn.basin.finish).toBe("MATTE_BLACK");
     expect(builtIn.basin.rimElevationMm).toBe(builtIn.counterHeightMm);
 
+    expect(builtIn.appliances.map((appliance) => appliance.id)).toEqual([
+      "BATH-105-WASHER",
+      "BATH-105-DRYER",
+    ]);
     expect(builtIn.appliances.map((appliance) => appliance.kind)).toEqual(["WASHER", "DRYER"]);
     expect(builtIn.appliances.map((appliance) => appliance.finish)).toEqual(["WHITE", "WHITE"]);
     for (const appliance of builtIn.appliances) {
       expect(inside(appliance.footprintMm, builtIn.footprintMm), appliance.kind).toBe(true);
       expect(appliance.footprintMm.x1 - appliance.footprintMm.x0, appliance.kind).toBe(600);
       expect(appliance.footprintMm.y1 - appliance.footprintMm.y0, appliance.kind).toBe(600);
+      expect(appliance.heightMm, appliance.kind).toBe(850);
+      expect(appliance.door.diameterMm, appliance.kind).toBe(470);
+      expect(appliance.door.hinge, appliance.kind).toBe("LEFT");
+      expect(appliance.door.openAngleDegrees, appliance.kind).toBe(90);
     }
-    expect(overlaps(builtIn.appliances[0].footprintMm, builtIn.appliances[1].footprintMm)).toBe(false);
-    expect(builtIn.appliances[0].footprintMm.x1).toBeLessThan(builtIn.appliances[1].footprintMm.x0);
+    const [washer, dryer] = builtIn.appliances;
+    expect(washer.footprintMm).toEqual(dryer.footprintMm);
+    expect(overlaps(washer.footprintMm, dryer.footprintMm)).toBe(true);
+    expect(washer.baseElevationMm + washer.heightMm + builtIn.stackingGapMm).toBe(
+      dryer.baseElevationMm,
+    );
+    expect(dryer.baseElevationMm + dryer.heightMm).toBeLessThanOrEqual(
+      builtIn.overheadCabinetBottomMm,
+    );
+    expect(builtIn.overheadCabinetBottomMm).toBeLessThan(builtIn.heightMm);
+    expect(washer.door.centerElevationMm).toBeLessThan(dryer.door.centerElevationMm);
+    expect(new Set(builtIn.appliances.map(({ door }) => door.id)).size).toBe(2);
 
     expect(insideBathroom(fitout.clearFloorRectMm)).toBe(true);
     expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(2600);
@@ -783,7 +803,30 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       (WALK_COLLISION_ELLIPSOID_M.z + WALK_CAMERA.minCollisionSolveDistanceM) * 1_000 + 100,
     );
     expect(insideBathroom(fitout.applianceServiceRectMm)).toBe(true);
+    expect(fitout.applianceServiceRectMm.x1 - fitout.applianceServiceRectMm.x0).toBe(870);
     expect(fitout.applianceServiceRectMm.y1 - fitout.applianceServiceRectMm.y0).toBe(900);
+
+    const radiator = fitout.towelRadiator;
+    const radiatorWall = INTERIOR_WALLS.find((wall) => wall.id === radiator.wallId)!;
+    expect(radiatorWall).toBeDefined();
+    expect(radiatorWall.rectMm.y1).toBe(radiator.footprintMm.y0);
+    expect(insideBathroom(radiator.footprintMm)).toBe(true);
+    expect(radiator.facing).toBe("NORTH");
+    expect(radiator.finish).toBe("MATTE_BLACK");
+    expect(radiator.footprintMm.x1 - radiator.footprintMm.x0).toBe(radiator.widthMm);
+    expect(radiator.footprintMm.y1 - radiator.footprintMm.y0).toBe(
+      radiator.projectionMm,
+    );
+    expect(radiator.bottomElevationMm + radiator.heightMm).toBeLessThan(
+      bathroom.clearHeightMm,
+    );
+    expect(radiator.rungCount).toBe(15);
+    expect(builtIn.footprintMm.y0 - radiator.footprintMm.y1).toBe(1420);
+    expect(fitout.shower.footprintMm.x0 - radiator.footprintMm.x1).toBe(1241);
+    expect(overlaps(radiator.footprintMm, fitout.clearFloorRectMm)).toBe(false);
+    expect(overlaps(radiator.footprintMm, fitout.applianceServiceRectMm)).toBe(false);
+    expect(overlaps(radiator.footprintMm, fitout.shower.footprintMm)).toBe(false);
+    expect(overlaps(radiator.footprintMm, builtIn.footprintMm)).toBe(false);
 
     for (const [label, rect] of [
       ["sprcha", fitout.shower.footprintMm],
@@ -801,6 +844,8 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     };
     expect(overlaps(leafRect, fitout.shower.footprintMm)).toBe(false);
     expect(overlaps(leafRect, builtIn.footprintMm)).toBe(false);
+    expect(radiator.footprintMm.x0 - leafRect.x1).toBe(947);
+    expect(overlaps(leafRect, radiator.footprintMm)).toBe(false);
   });
 
   it("fits a bath, wall-hung WC and floating vanity into the two-door bathroom 1.11", () => {

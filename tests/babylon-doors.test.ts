@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  APPLIANCE_DOOR_INVENTORY,
   ARCHITECTURAL_DOOR_INVENTORY,
   BabylonDoorController,
   doorHandleDepression,
   doorInteractionPromptLabel,
   doorMotionDurationMs,
   hingedDoorSweepIsClear,
+  INTERACTIVE_DOOR_INVENTORY,
   liftSlideSashLiftM,
   LIFT_SLIDE_MOTION,
   selectDoorInteractionTarget,
@@ -26,7 +28,7 @@ const actor = (
 });
 
 describe("animated architectural doors", () => {
-  it("defines one exact controller contract for all 18 architectural systems", () => {
+  it("keeps 18 architectural systems and adds exactly two appliance doors", () => {
     expect(ARCHITECTURAL_DOOR_INVENTORY).toHaveLength(18);
     expect(new Set(ARCHITECTURAL_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(18);
     expect(
@@ -36,8 +38,15 @@ describe("animated architectural doors", () => {
       ),
     ).toEqual({ HINGED: 14, SLIDING: 3, OVERHEAD: 1 });
 
+    expect(APPLIANCE_DOOR_INVENTORY).toEqual([
+      { id: "BATH-105-WASHER-DOOR", kind: "HINGED" },
+      { id: "BATH-105-DRYER-DOOR", kind: "HINGED" },
+    ]);
+    expect(INTERACTIVE_DOOR_INVENTORY).toHaveLength(20);
+    expect(new Set(INTERACTIVE_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(20);
+
     const controller = new BabylonDoorController();
-    for (const door of ARCHITECTURAL_DOOR_INVENTORY) {
+    for (const door of INTERACTIVE_DOOR_INVENTORY) {
       controller.register({
         ...door,
         label: door.id,
@@ -99,6 +108,24 @@ describe("animated architectural doors", () => {
     );
     expect(
       doorInteractionPromptLabel({
+        kind: "HINGED",
+        subject: "APPLIANCE_DOOR",
+        phase: "CLOSED",
+        action: "OPEN",
+        blockedMessage: null,
+      }),
+    ).toBe("Otvoriť dvierka");
+    expect(
+      doorInteractionPromptLabel({
+        kind: "HINGED",
+        subject: "APPLIANCE_DOOR",
+        phase: "OPEN",
+        action: "CLOSE",
+        blockedMessage: null,
+      }),
+    ).toBe("Zavrieť dvierka");
+    expect(
+      doorInteractionPromptLabel({
         kind: "SLIDING",
         phase: "CLOSING",
         action: null,
@@ -121,6 +148,53 @@ describe("animated architectural doors", () => {
         actor(0, 0),
       )?.door.id,
     ).toBe("NEAR-BEHIND");
+  });
+
+  it("uses vertical gaze and an explicit picked id to reach both stacked doors", () => {
+    const stacked = [
+      {
+        id: "BATH-105-WASHER-DOOR",
+        interactionPoint: { x: 1, y: 0.5, z: 0 },
+      },
+      {
+        id: "BATH-105-DRYER-DOOR",
+        interactionPoint: { x: 1, y: 1.39, z: 0 },
+      },
+    ];
+    const eye = { x: 0, y: 1.55, z: 0 };
+    expect(
+      selectDoorInteractionTarget(stacked, {
+        position: eye,
+        facing: { x: 0.69, y: -0.72, z: 0 },
+      })?.door.id,
+    ).toBe("BATH-105-WASHER-DOOR");
+    expect(
+      selectDoorInteractionTarget(stacked, {
+        position: eye,
+        facing: { x: 0.99, y: -0.16, z: 0 },
+      })?.door.id,
+    ).toBe("BATH-105-DRYER-DOOR");
+
+    const controller = new BabylonDoorController();
+    for (const door of stacked) {
+      controller.register({
+        ...door,
+        label: door.id,
+        kind: "HINGED",
+        subject: "APPLIANCE_DOOR",
+        apply: () => undefined,
+      });
+    }
+    controller.setActor({
+      position: eye,
+      facing: { x: 1, y: 0, z: 0 },
+    });
+    expect(controller.toggleInteractionTarget("BATH-105-WASHER-DOOR")).toBe(true);
+    for (let elapsed = 0; elapsed < 850; elapsed += 20) controller.update(20);
+    expect(controller.debugState()).toEqual([
+      expect.objectContaining({ id: "BATH-105-DRYER-DOOR", progress: 0 }),
+      expect.objectContaining({ id: "BATH-105-WASHER-DOOR", progress: 1 }),
+    ]);
   });
 
   it("reaches the same open state for every motion kind at 60, 144 and 240 Hz", () => {

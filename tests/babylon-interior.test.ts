@@ -44,11 +44,50 @@ describe("Babylon interior fit-out", () => {
         registerAnimatedDoor: (door) => doors.push(door),
       });
 
-      expect(doors.map(({ id }) => id).sort()).toEqual(
+      const architecturalDoors = doors.filter((door) =>
+        INTERIOR_DOORS.some(({ id }) => id === door.id),
+      );
+      const applianceDoors = doors.filter((door) =>
+        BATHROOM_FITOUT.builtIn.appliances.some(
+          (appliance) => appliance.door.id === door.id,
+        ),
+      );
+      expect(architecturalDoors.map(({ id }) => id).sort()).toEqual(
         INTERIOR_DOORS.map(({ id }) => id).sort(),
       );
-      expect(doors).toHaveLength(11);
-      for (const door of doors) {
+      expect(architecturalDoors).toHaveLength(11);
+      expect(applianceDoors.map(({ id }) => id).sort()).toEqual(
+        BATHROOM_FITOUT.builtIn.appliances.map(({ door }) => door.id).sort(),
+      );
+      expect(doors).toHaveLength(13);
+
+      const walkSurfaces = scene.meshes.filter(
+        (mesh) => mesh.metadata?.walkSurface === true,
+      );
+      expect(walkSurfaces.length).toBeGreaterThan(INTERIOR_DOORS.length);
+      expect(
+        walkSurfaces.every(
+          (mesh) =>
+            mesh.metadata?.walkSurfaceKind === "interior" &&
+            typeof mesh.metadata?.walkSurfaceId === "string",
+        ),
+      ).toBe(true);
+      for (const overheadMarker of [
+        "· horné skrinky",
+        "· horná skrinka nad zrkadlom",
+        "· LAUNDRY-TOWER · vetraná horná skrinka",
+        "· OVERHEAD · horná úložná skriňa",
+        "· CABINET · horný blok",
+        "LIVING-103-TV-WALL · horný úložný most",
+      ]) {
+        const overhead = scene.meshes.find((mesh) =>
+          mesh.name.includes(overheadMarker),
+        );
+        expect(overhead, `${overheadMarker} protects the chase camera`).toBeDefined();
+        expect(overhead?.metadata?.cameraOccluder).toBe(true);
+      }
+
+      for (const door of architecturalDoors) {
         const leaf = scene.meshes.find(
           (mesh) =>
             mesh.metadata?.doorId === door.id &&
@@ -91,6 +130,58 @@ describe("Babylon interior fit-out", () => {
         ).toBe(true);
         door.apply(0, 0);
       }
+
+      const applianceHinges = new Map(
+        BATHROOM_FITOUT.builtIn.appliances.map((appliance) => [
+          appliance.door.id,
+          scene.transformNodes.find(
+            (node) => node.metadata?.doorId === appliance.door.id,
+          ) as TransformNode | undefined,
+        ]),
+      );
+      for (const appliance of BATHROOM_FITOUT.builtIn.appliances) {
+        const registration = applianceDoors.find(
+          (door) => door.id === appliance.door.id,
+        )!;
+        const hinge = applianceHinges.get(appliance.door.id);
+        expect(registration).toMatchObject({
+          id: appliance.door.id,
+          label: appliance.kind === "WASHER" ? "Práčka" : "Sušička",
+          kind: "HINGED",
+          subject: "APPLIANCE_DOOR",
+        });
+        expect(registration.interactionPoint.y).toBeCloseTo(
+          appliance.door.centerElevationMm * MM_TO_M,
+          8,
+        );
+        expect(hinge, `${appliance.kind} has a real pivot`).toBeDefined();
+        expect(hinge?.rotation.y).toBe(0);
+        const movingMeshes = scene.meshes.filter(
+          (mesh) =>
+            mesh.parent === hinge && mesh.metadata?.doorId === appliance.door.id,
+        );
+        expect(movingMeshes).toHaveLength(3);
+        expect(movingMeshes.every((mesh) => mesh.isPickable)).toBe(true);
+        expect(
+          movingMeshes.every(
+            (mesh) => mesh.metadata?.dynamicCameraOccluder === true,
+          ),
+        ).toBe(true);
+        expect(
+          movingMeshes.find((mesh) => mesh.name.includes("· rám"))
+            ?.checkCollisions,
+        ).toBe(true);
+        registration.apply(1, 0);
+        expect(hinge?.rotation.y).toBeCloseTo(-Math.PI / 2, 8);
+        registration.apply(0, 0);
+      }
+      const [washerHinge, dryerHinge] = BATHROOM_FITOUT.builtIn.appliances.map(
+        (appliance) => applianceHinges.get(appliance.door.id)!,
+      );
+      applianceDoors.find(({ id }) => id === "BATH-105-WASHER-DOOR")!.apply(1, 0);
+      expect(washerHinge.rotation.y).toBeCloseTo(-Math.PI / 2, 8);
+      expect(dryerHinge.rotation.y).toBeCloseTo(0, 12);
+      applianceDoors.find(({ id }) => id === "BATH-105-WASHER-DOOR")!.apply(0, 0);
 
       for (const fitout of CHILDRENS_BEDROOM_FITOUTS) {
         const roomMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(fitout.id));
@@ -173,7 +264,7 @@ describe("Babylon interior fit-out", () => {
       const bathroomGuards = bathroomMeshes.filter(
         (mesh) => mesh.metadata?.walkCollisionOnly === true,
       );
-      expect(bathroomGuards).toHaveLength(2);
+      expect(bathroomGuards).toHaveLength(3);
       expect(
         bathroomGuards.every((guard) => guard.checkCollisions && !guard.isVisible),
       ).toBe(true);
@@ -191,6 +282,46 @@ describe("Babylon interior fit-out", () => {
       );
       expect((builtInGuard?.position.z ?? 0) - sceneZM(oldBuiltInCenterYmm)).toBeCloseTo(
         0.2,
+        8,
+      );
+
+      for (const appliance of BATHROOM_FITOUT.builtIn.appliances) {
+        const body = bathroomMeshes.find((mesh) =>
+          mesh.name.includes(`· ${appliance.kind} ·`),
+        );
+        expect(body, `${appliance.kind} renders in the laundry tower`).toBeDefined();
+        body?.computeWorldMatrix(true);
+        expect(body?.getBoundingInfo().boundingBox.minimumWorld.y).toBeCloseTo(
+          appliance.baseElevationMm * MM_TO_M,
+          6,
+        );
+        expect(body?.getBoundingInfo().boundingBox.maximumWorld.y).toBeCloseTo(
+          (appliance.baseElevationMm + appliance.heightMm) * MM_TO_M,
+          6,
+        );
+      }
+
+      const radiatorCollectors = bathroomMeshes.filter((mesh) =>
+        mesh.name.includes("· TOWEL-RADIATOR-600 · zvislý kolektor"),
+      );
+      const radiatorRungs = bathroomMeshes.filter((mesh) =>
+        mesh.name.includes("· TOWEL-RADIATOR-600 · vodorovná priečka"),
+      );
+      expect(radiatorCollectors).toHaveLength(2);
+      expect(radiatorRungs).toHaveLength(BATHROOM_FITOUT.towelRadiator.rungCount);
+      expect(
+        radiatorCollectors.every((mesh) => mesh.isPickable && !mesh.checkCollisions),
+      ).toBe(true);
+      const radiatorGuard = bathroomGuards.find((guard) =>
+        guard.name.includes("· TOWEL-RADIATOR-600 · hladký navigačný obrys"),
+      );
+      expect(radiatorGuard).toBeDefined();
+      expect(radiatorGuard?.position.z).toBeCloseTo(
+        sceneZM(
+          (BATHROOM_FITOUT.towelRadiator.footprintMm.y0 +
+            BATHROOM_FITOUT.towelRadiator.footprintMm.y1) /
+            2,
+        ),
         8,
       );
 

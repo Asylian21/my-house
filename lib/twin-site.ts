@@ -272,6 +272,14 @@ export const SOURCES = {
     date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientBathroomStackedLaundryRevision20260825: {
+    id: "SRC-CLIENT-BATHROOM-STACKED-LAUNDRY-20260825",
+    title: "Revízia stavebníka · práčovňová veža a rebríkový radiátor",
+    detail:
+      "V kúpeľni a práčovni 1.05 uložiť bielu práčku a sušičku do jednej vetranej veže nad seba, uvoľnenú šírku využiť na väčšiu plávajúcu umývadlovú skrinku a celú zostavu zjednotiť. Okrúhle dvierka oboch spotrebičov musia byť samostatne otvárateľné a zatvárateľné rovnakým ovládaním ako ostatné dvere v 3D prehliadke. Na voľnú južnú stenu doplniť matne čierny rebríkový radiátor bez zásahu do vstupu, sprchy alebo voľného priechodu.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientOfficeRevision20260823: {
     id: "SRC-CLIENT-OFFICE-20260823",
     title: "Revízia stavebníka · minimalistická domáca pracovňa",
@@ -2087,6 +2095,19 @@ export const GARDEN_POOL = Object.freeze({
     SOURCES.asBuiltGap.id,
   ],
 });
+
+/**
+ * Interior parcel areas where the grass mesh must not exist at all.
+ *
+ * Hardscape that reaches the cadastral edge remains vertically separated:
+ * Earcut holes must stay strictly inside their outer ring. The pool and side
+ * approach are closed interior rings and can therefore remove the underlying
+ * lawn instead of relying on sub-centimetre depth offsets.
+ */
+export const PARCEL_LAWN_INTERIOR_CUTOUTS_MM = Object.freeze([
+  SITE_SURFACES.sideEntryApproach.privatePolygonMm,
+  GARDEN_POOL.copingFootprintMm,
+] as const);
 
 const route = (
   id: string,

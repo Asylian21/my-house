@@ -181,6 +181,7 @@ export interface BathroomFitout {
     readonly heightMm: number;
     readonly counterHeightMm: number;
     readonly overheadCabinetBottomMm: number;
+    readonly stackingGapMm: number;
     readonly basin: {
       readonly footprintMm: RectMm;
       readonly finish: "MATTE_BLACK";
@@ -188,16 +189,49 @@ export interface BathroomFitout {
     };
     readonly appliances: readonly [
       {
+        readonly id: "BATH-105-WASHER";
         readonly kind: "WASHER";
         readonly footprintMm: RectMm;
         readonly finish: "WHITE";
+        readonly baseElevationMm: number;
+        readonly heightMm: number;
+        readonly door: {
+          readonly id: "BATH-105-WASHER-DOOR";
+          readonly centerElevationMm: number;
+          readonly diameterMm: number;
+          readonly hinge: "LEFT";
+          readonly openAngleDegrees: 90;
+        };
       },
       {
+        readonly id: "BATH-105-DRYER";
         readonly kind: "DRYER";
         readonly footprintMm: RectMm;
         readonly finish: "WHITE";
+        readonly baseElevationMm: number;
+        readonly heightMm: number;
+        readonly door: {
+          readonly id: "BATH-105-DRYER-DOOR";
+          readonly centerElevationMm: number;
+          readonly diameterMm: number;
+          readonly hinge: "LEFT";
+          readonly openAngleDegrees: 90;
+        };
       },
     ];
+  };
+  readonly towelRadiator: {
+    readonly id: "BATH-105-TOWEL-RADIATOR";
+    readonly wallId: "IW-STUDY-NORTH";
+    readonly footprintMm: RectMm;
+    readonly facing: "NORTH";
+    readonly finish: "MATTE_BLACK";
+    readonly widthMm: number;
+    readonly projectionMm: number;
+    readonly bottomElevationMm: number;
+    readonly heightMm: number;
+    readonly railDiameterMm: number;
+    readonly rungCount: number;
   };
   readonly clearFloorRectMm: RectMm;
   readonly applianceServiceRectMm: RectMm;
@@ -1013,11 +1047,12 @@ export const WC_FITOUT: WcFitout = Object.freeze({
 /**
  * Final client layout for the L-shaped room 1.05. The east leg remains the
  * walk-in wet zone; the complete north recess is one 2 616 mm built-in wall.
- * The 25. 8. revision moves that wall and its partition 200 mm toward the room.
+ * The 25. 8. revisions move that wall 200 mm toward the room, stack the two
+ * full-depth appliances in one ventilated tower and add a south-wall radiator.
  */
 export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
-  id: "BATHROOM-FITOUT-BUILTIN-2026-08-23",
-  sourceId: SOURCES.clientBathroomBuiltInRevision20260823.id,
+  id: "BATHROOM-FITOUT-STACKED-LAUNDRY-2026-08-25",
+  sourceId: SOURCES.clientBathroomStackedLaundryRevision20260825.id,
   boundaryRevisionSourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
@@ -1035,27 +1070,61 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
     facing: "SOUTH",
     heightMm: 2350,
     counterHeightMm: 900,
-    overheadCabinetBottomMm: 1100,
+    overheadCabinetBottomMm: 1850,
+    stackingGapMm: 40,
     basin: {
-      footprintMm: { x0: 22883, y0: 8222, x1: 23983, y1: 8672 },
+      footprintMm: { x0: 23083, y0: 8222, x1: 24413, y1: 8672 },
       finish: "MATTE_BLACK",
       rimElevationMm: 900,
     },
     appliances: [
       {
+        id: "BATH-105-WASHER",
         kind: "WASHER",
-        footprintMm: { x0: 24049, y0: 8152, x1: 24649, y1: 8752 },
+        footprintMm: { x0: 24749, y0: 8152, x1: 25349, y1: 8752 },
         finish: "WHITE",
+        baseElevationMm: 80,
+        heightMm: 850,
+        door: {
+          id: "BATH-105-WASHER-DOOR",
+          centerElevationMm: 500,
+          diameterMm: 470,
+          hinge: "LEFT",
+          openAngleDegrees: 90,
+        },
       },
       {
+        id: "BATH-105-DRYER",
         kind: "DRYER",
         footprintMm: { x0: 24749, y0: 8152, x1: 25349, y1: 8752 },
         finish: "WHITE",
+        baseElevationMm: 970,
+        heightMm: 850,
+        door: {
+          id: "BATH-105-DRYER-DOOR",
+          centerElevationMm: 1390,
+          diameterMm: 470,
+          hinge: "LEFT",
+          openAngleDegrees: 90,
+        },
       },
     ],
   },
+  towelRadiator: {
+    id: "BATH-105-TOWEL-RADIATOR",
+    wallId: "IW-STUDY-NORTH",
+    footprintMm: { x0: 24450, y0: 6602, x1: 25050, y1: 6702 },
+    facing: "NORTH",
+    finish: "MATTE_BLACK",
+    widthMm: 600,
+    projectionMm: 100,
+    bottomElevationMm: 200,
+    heightMm: 1500,
+    railDiameterMm: 32,
+    rungCount: 15,
+  },
   clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8122 },
-  applianceServiceRectMm: { x0: 24049, y0: 7222, x1: 25349, y1: 8122 },
+  applianceServiceRectMm: { x0: 24529, y0: 7222, x1: 25399, y1: 8122 },
 });
 
 /**

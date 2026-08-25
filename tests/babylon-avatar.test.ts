@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
+import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
+import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder.pure";
 import { Scene } from "@babylonjs/core/scene";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +16,69 @@ async function assetDataUrl(publicUrl: string) {
     : "model/gltf-binary";
   return `data:${mime};base64,${bytes.toString("base64")}`;
 }
+
+describe("Babylon adaptive walk surfaces", () => {
+  it("places the feet on tagged interior and terrain geometry only", () => {
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
+
+    const interior = CreateGround(
+      "test interior floor",
+      { width: 3, height: 3 },
+      scene,
+    );
+    interior.position.set(-3, 0.08, 0);
+    interior.metadata = {
+      walkSurface: true,
+      walkSurfaceKind: "interior",
+      walkSurfaceId: "test-room",
+    };
+    const terrain = CreateGround(
+      "test terrain",
+      { width: 3, height: 3 },
+      scene,
+    );
+    terrain.position.set(3, -0.13, 0);
+    terrain.metadata = {
+      walkSurface: true,
+      walkSurfaceKind: "terrain",
+      walkSurfaceId: "test-terrain",
+    };
+    const decorativeTexture = CreateBox(
+      "untagged decorative texture",
+      { width: 1.5, height: 0.04, depth: 1.5 },
+      scene,
+    );
+    decorativeTexture.position.set(-3, 0.14, 0);
+
+    const avatar = new AvatarController(scene, () => undefined);
+    try {
+      avatar.place(-3, 0, 0);
+      expect(avatar.pose.y).toBeCloseTo(0.08, 6);
+      expect(avatar.cameraState).toMatchObject({
+        surfaceKind: "interior",
+        surfaceId: "test-room",
+        surfaceValid: true,
+      });
+      expect(avatar.cameraState.surfaceY).toBeCloseTo(0.08, 6);
+      expect(avatar.cameraState.cameraSurfaceY).toBeCloseTo(0.08, 6);
+
+      avatar.place(3, 0, 0);
+      expect(avatar.pose.y).toBeCloseTo(-0.13, 6);
+      expect(avatar.eyePosition.y).toBeCloseTo(1.49, 6);
+      expect(avatar.cameraState).toMatchObject({
+        surfaceKind: "terrain",
+        surfaceId: "test-terrain",
+        surfaceValid: true,
+      });
+    } finally {
+      avatar.dispose();
+      scene.dispose();
+      engine.dispose();
+    }
+  });
+});
 
 describe("Babylon avatar rig switching", () => {
   it("keeps one controller pose, camera and collider while all three visual rigs switch", async () => {

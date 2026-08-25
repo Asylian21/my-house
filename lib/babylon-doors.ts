@@ -1,4 +1,4 @@
-import { INTERIOR_DOORS } from "./twin-interior";
+import { BATHROOM_FITOUT, INTERIOR_DOORS } from "./twin-interior";
 
 export type DoorMotionKind = "HINGED" | "SLIDING" | "OVERHEAD";
 export type DoorPhase = "CLOSED" | "OPENING" | "OPEN" | "CLOSING";
@@ -6,7 +6,11 @@ export type DoorPhase = "CLOSED" | "OPENING" | "OPEN" | "CLOSING";
 export interface DoorPlanarPoint {
   readonly x: number;
   readonly z: number;
+  /** Optional world elevation for stacked or otherwise vertically separated closures. */
+  readonly y?: number;
 }
+
+export type DoorInteractionSubject = "DOOR" | "APPLIANCE_DOOR";
 
 export interface DoorActorState {
   readonly position: DoorPlanarPoint;
@@ -19,6 +23,7 @@ export interface AnimatedDoorRegistration {
   readonly label: string;
   readonly kind: DoorMotionKind;
   readonly interactionPoint: DoorPlanarPoint;
+  readonly subject?: DoorInteractionSubject;
   readonly initiallyOpen?: boolean;
   apply(progress: number, handleDepression: number): void;
   canOpen?(actor: DoorActorState, progress?: number): boolean;
@@ -30,6 +35,7 @@ export interface DoorInteractionSnapshot {
   readonly label: string;
   readonly kind: DoorMotionKind;
   readonly interactionPoint: DoorPlanarPoint;
+  readonly subject?: DoorInteractionSubject;
   readonly phase: DoorPhase;
   readonly action: "OPEN" | "CLOSE" | null;
   readonly distanceM: number;
@@ -90,6 +96,25 @@ export const ARCHITECTURAL_DOOR_INVENTORY: readonly {
   { id: "GARAGE-DOOR", kind: "OVERHEAD" },
 ]);
 
+/** Interactive drum doors share the architectural controller but not its inventory. */
+export const APPLIANCE_DOOR_INVENTORY: readonly {
+  readonly id: string;
+  readonly kind: DoorMotionKind;
+}[] = Object.freeze(
+  BATHROOM_FITOUT.builtIn.appliances.map(({ door }) => ({
+    id: door.id,
+    kind: "HINGED" as const,
+  })),
+);
+
+export const INTERACTIVE_DOOR_INVENTORY: readonly {
+  readonly id: string;
+  readonly kind: DoorMotionKind;
+}[] = Object.freeze([
+  ...ARCHITECTURAL_DOOR_INVENTORY,
+  ...APPLIANCE_DOOR_INVENTORY,
+]);
+
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 /** Quintic ease with zero velocity and acceleration at both physical stops. */
@@ -114,10 +139,17 @@ export function liftSlideSashLiftM(progress: number): number {
 export function doorInteractionPromptLabel(
   interaction: Pick<
     DoorInteractionSnapshot,
-    "kind" | "phase" | "action" | "blockedMessage"
+    "kind" | "subject" | "phase" | "action" | "blockedMessage"
   >,
 ): string {
   if (interaction.blockedMessage) return interaction.blockedMessage;
+  if (interaction.subject === "APPLIANCE_DOOR") {
+    if (interaction.phase === "OPENING") return "Otváram dvierka…";
+    if (interaction.phase === "CLOSING") return "Zatváram dvierka…";
+    if (interaction.action === "OPEN") return "Otvoriť dvierka";
+    if (interaction.action === "CLOSE") return "Zavrieť dvierka";
+    return "Dvierka sa práve pohybujú";
+  }
   if (interaction.kind === "SLIDING") {
     if (interaction.phase === "OPENING") return "Odsúvam panel…";
     if (interaction.phase === "CLOSING") return "Zasúvam panel…";
@@ -164,10 +196,14 @@ export function doorMotionDurationMs(
 }
 
 function normalizedFacing(facing: DoorPlanarPoint): DoorPlanarPoint {
-  const length = Math.hypot(facing.x, facing.z);
+  const length = Math.hypot(facing.x, facing.y ?? 0, facing.z);
   return length > 1e-6
-    ? { x: facing.x / length, z: facing.z / length }
-    : { x: 0, z: 1 };
+    ? {
+        x: facing.x / length,
+        y: (facing.y ?? 0) / length,
+        z: facing.z / length,
+      }
+    : { x: 0, y: 0, z: 1 };
 }
 
 /** Deterministic, forgiving GTA-style target selection in front of the player. */
@@ -179,11 +215,16 @@ export function selectDoorInteractionTarget<T extends {
   let best: { door: T; distanceM: number; score: number } | null = null;
   for (const door of doors) {
     const dx = door.interactionPoint.x - actor.position.x;
+    const dy =
+      door.interactionPoint.y !== undefined && actor.position.y !== undefined
+        ? door.interactionPoint.y - actor.position.y
+        : 0;
     const dz = door.interactionPoint.z - actor.position.z;
     const distanceM = Math.hypot(dx, dz);
     if (distanceM > DOOR_INTERACTION.maxDistanceM) continue;
-    const facingDot = distanceM > 1e-6
-      ? (dx * facing.x + dz * facing.z) / distanceM
+    const aimDistanceM = Math.hypot(dx, dy, dz);
+    const facingDot = aimDistanceM > 1e-6
+      ? (dx * facing.x + dy * (facing.y ?? 0) + dz * facing.z) / aimDistanceM
       : 1;
     if (
       distanceM > DOOR_INTERACTION.nearOmnidirectionalDistanceM &&
@@ -418,18 +459,22 @@ export class BabylonDoorController {
     return this.setOpen(id, door.progress < 0.5);
   }
 
-  toggleInteractionTarget(): boolean {
-    const target = this.targetRuntime();
+  toggleInteractionTarget(id?: string): boolean {
+    const target = this.targetRuntime(id);
     return target ? this.toggle(target.door.id) : false;
   }
 
-  private targetRuntime() {
+  private targetRuntime(id?: string) {
     if (!this.actor) return null;
+    if (id) {
+      const door = this.doors.get(id);
+      return door ? selectDoorInteractionTarget([door], this.actor) : null;
+    }
     return selectDoorInteractionTarget([...this.doors.values()], this.actor);
   }
 
-  getInteraction(): DoorInteractionSnapshot | null {
-    const target = this.targetRuntime();
+  getInteraction(id?: string): DoorInteractionSnapshot | null {
+    const target = this.targetRuntime(id);
     if (!target) return null;
     const phase = doorPhase(target.door.progress, target.door.targetProgress);
     return {
@@ -437,12 +482,15 @@ export class BabylonDoorController {
       label: target.door.label,
       kind: target.door.kind,
       interactionPoint: target.door.interactionPoint,
+      subject: target.door.subject ?? "DOOR",
       phase,
       action: phase === "CLOSED" ? "OPEN" : phase === "OPEN" ? "CLOSE" : null,
       distanceM: target.distanceM,
       blockedMessage:
         target.door.blockedUntilMs > this.clockMs
-          ? "Ustúpte z dráhy dverí"
+          ? target.door.subject === "APPLIANCE_DOOR"
+            ? "Ustúpte z dráhy dvierok"
+            : "Ustúpte z dráhy dverí"
           : null,
     };
   }
@@ -455,7 +503,7 @@ export class BabylonDoorController {
     expected: readonly {
       readonly id: string;
       readonly kind: DoorMotionKind;
-    }[] = ARCHITECTURAL_DOOR_INVENTORY,
+    }[] = INTERACTIVE_DOOR_INVENTORY,
   ) {
     const expectedById = new Map(expected.map((door) => [door.id, door.kind]));
     const missing = [...expectedById.keys()].filter((id) => !this.doors.has(id));
