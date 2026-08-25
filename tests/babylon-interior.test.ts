@@ -338,7 +338,6 @@ describe("Babylon interior fit-out", () => {
         "· UTILITY-SINK ·",
         "· GARAGE-RACK ·",
         "· GARAGE-SHELF ·",
-        "· REAR-SHELF ·",
         "· PEGBOARD ·",
         "· GARAGE-CLUTTER ·",
         "· LONG-TOOL ·",
@@ -366,6 +365,14 @@ describe("Babylon interior fit-out", () => {
       expect(
         garageMeshes.filter((mesh) => mesh.name.includes("plechovka farby")),
       ).toHaveLength(GARAGE_FITOUT.storageRack.paintCanCount);
+      expect(
+        garageMeshes.some(
+          (mesh) =>
+            mesh.name.includes("· REAR-SHELF ·") ||
+            mesh.name.includes("· GARAGE-CLUTTER · zadný box"),
+        ),
+        "the garden-loggia door head stays free of rear shelves and stored boxes",
+      ).toBe(false);
       expect(
         garageMeshes.filter((mesh) => /· MOWER · gumové koleso \d/.test(mesh.name)),
       ).toHaveLength(4);
@@ -395,7 +402,6 @@ describe("Babylon interior fit-out", () => {
       expect(garageCameraProxies.map((proxy) => proxy.name)).toEqual([
         expect.stringContaining("· GARAGE-RACK ·"),
         expect.stringContaining("· GARAGE-SHELF ·"),
-        expect.stringContaining("· REAR-SHELF ·"),
       ]);
       for (const proxy of garageCameraProxies) {
         expect(proxy.metadata?.cameraOccluder).toBe(true);

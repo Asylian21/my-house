@@ -547,7 +547,7 @@ export const BabylonViewport = forwardRef<
                 <CarFront size={20} strokeWidth={1.8} />
               </span>
               <span className="garage-vehicle-copy">
-                <small>ŠKODA SUPERB IV · GARÁŽ 1.12</small>
+                <small>ŠKODA SUPERB COMBI IV · GARÁŽ 1.12</small>
                 <strong>{garageStatus}</strong>
               </span>
               <button

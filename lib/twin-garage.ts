@@ -1,4 +1,8 @@
 import { HOUSE, SITE_SURFACES, type Point2Mm } from "./twin-site";
+import {
+  GARAGE_SUPERB_AXLES_M,
+  GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
+} from "./twin-superb-combi";
 
 export type GarageVehicleAction = "park" | "unpark";
 
@@ -40,18 +44,19 @@ const DRIVEWAY = SITE_SURFACES.driveway;
 
 export const GARAGE_VEHICLE = Object.freeze({
   id: "GARAGE-VEHICLE-SKODA-SUPERB",
-  label: "Škoda Superb",
+  label: "Škoda Superb Combi IV",
   roomId: "ROOM-1-12",
   garageDoorId: GARAGE_DOOR.id,
   dimensionsMm: {
-    // A restrained visual envelope tuned to the documented 4.785 m available
-    // between the garage-door plane and the rear wall. The recognisable Superb
-    // proportions are retained without clipping either closing leaf or wall.
+    // The plan is 155 mm too short for the production 4,902 mm car behind the
+    // closed leaf. A uniform longitudinal scale preserves authentic Combi
+    // proportions without clipping the architectural model.
     length: 4_640,
-    // Width includes the mirrors; height is the complete visible envelope.
-    width: 2_090,
-    height: 1_481,
-    wheelbase: 2_840,
+    width: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.mirrorWidth,
+    height: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.height,
+    wheelbase: Math.round(
+      (GARAGE_SUPERB_AXLES_M.frontX - GARAGE_SUPERB_AXLES_M.rearX) * 1_000,
+    ),
   },
   /** Lowest tyre point sits this far above the vehicle root. */
   wheelGroundOffsetM: 0.015,

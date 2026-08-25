@@ -307,12 +307,6 @@ export interface GarageFitout {
     readonly footprintMm: RectMm;
     readonly elevationsMm: readonly [number, number];
   };
-  /** High shelves in the rear return keep the vehicle nose clear below. */
-  readonly rearWallShelves: {
-    readonly footprintMm: RectMm;
-    readonly elevationsMm: readonly [number, number];
-    readonly clearBelowMm: number;
-  };
   readonly mower: {
     readonly footprintMm: RectMm;
     readonly parkedFacing: "SOUTH";
@@ -1175,9 +1169,10 @@ export const ENSUITE_BATHROOM_FITOUT: EnsuiteBathroomFitout = Object.freeze({
  * Used-but-orderly garage fit-out requested on 25. 8. 2026. The compact sink
  * and shallow rack occupy the garage face of the partition directly behind
  * the 1.11 bath, stopping before the inward-swinging corridor door. A folded
- * mower and high rear shelves use the L-shaped return without narrowing the
- * 3 300 mm vehicle lane below shelf level. Plumbing remains a client concept
- * until the ZTI designer coordinates supply, waste and frost protection.
+ * mower uses the L-shaped return without narrowing the 3 300 mm vehicle lane.
+ * The wall and head of the glazed garden-loggia door stay completely free.
+ * Plumbing remains a client concept until the ZTI designer coordinates supply,
+ * waste and frost protection.
  */
 export const GARAGE_FITOUT: GarageFitout = Object.freeze({
   id: "GARAGE-FITOUT-2026-08-25",
@@ -1208,11 +1203,6 @@ export const GARAGE_FITOUT: GarageFitout = Object.freeze({
     footprintMm: { x0: 13452, y0: 4713, x1: 13742, y1: 5413 },
     elevationsMm: [1510, 1990],
   },
-  rearWallShelves: {
-    footprintMm: { x0: 7600, y0: 7549, x1: 10000, y1: 7749 },
-    elevationsMm: [1710, 2180],
-    clearBelowMm: 1675,
-  },
   mower: {
     footprintMm: { x0: 10342, y0: 6660, x1: 10822, y1: 7360 },
     parkedFacing: "SOUTH",
@@ -1222,7 +1212,7 @@ export const GARAGE_FITOUT: GarageFitout = Object.freeze({
   sinkServiceRectMm: { x0: 12442, y0: 4763, x1: 13242, y1: 5363 },
   vehicleClearRectsMm: [
     { x0: 6944, y0: 3504, x1: 10240, y1: 6462 },
-    { x0: 6944, y0: 6462, x1: 10240, y1: 7549 },
+    { x0: 6944, y0: 6462, x1: 10240, y1: 7749 },
   ],
   entryApproachRectMm: { x0: 10842, y0: 5669, x1: 13742, y1: 6462 },
 });

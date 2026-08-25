@@ -17,10 +17,17 @@ import {
   GARAGE_SUPERB_AXLES_M,
   GARAGE_SUPERB_BODY_STATIONS,
   GARAGE_SUPERB_CABIN_STATIONS,
+  GARAGE_SUPERB_HALF_TRACKS_M,
+  GARAGE_SUPERB_LOFT_RING_POINT_COUNT,
+  GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
+  GARAGE_SUPERB_ROOF_STATIONS,
+  GARAGE_SUPERB_SIDE_WINDOWS,
+  GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+  GARAGE_SUPERB_WHEEL_M,
   vehicleLoftBounds,
   vehicleLoftGeometry,
-} from "../lib/twin-garage-model";
-import { GARAGE_FITOUT, INTERIOR_ROOMS } from "../lib/twin-interior";
+} from "../lib/twin-superb-combi";
+import { INTERIOR_ROOMS } from "../lib/twin-interior";
 import { HOUSE, SITE_SURFACES } from "../lib/twin-site";
 
 describe("garage vehicle contract", () => {
@@ -46,9 +53,6 @@ describe("garage vehicle contract", () => {
     expect(Math.max(...ys)).toBeLessThan(7_749 - 40);
     expect(Math.min(...xs)).toBeGreaterThan(6_944);
     expect(Math.max(...xs)).toBeLessThan(10_842);
-    expect(GARAGE_VEHICLE.dimensionsMm.height).toBeLessThan(
-      GARAGE_FITOUT.rearWallShelves.clearBelowMm,
-    );
   });
 
   it("keeps the arrival queue centered in the documented driveway", () => {
@@ -123,9 +127,14 @@ describe("modern Superb visual geometry", () => {
     for (const stations of [
       GARAGE_SUPERB_BODY_STATIONS,
       GARAGE_SUPERB_CABIN_STATIONS,
+      GARAGE_SUPERB_ROOF_STATIONS,
     ]) {
       const geometry = vehicleLoftGeometry(stations);
-      expect(geometry.positions.length).toBe(stations.length * 10 * 3);
+      const vertexCount =
+        stations.length * GARAGE_SUPERB_LOFT_RING_POINT_COUNT +
+        2 * (GARAGE_SUPERB_LOFT_RING_POINT_COUNT + 1);
+      expect(geometry.positions.length).toBe(vertexCount * 3);
+      expect(geometry.uvs.length).toBe(vertexCount * 2);
       expect(geometry.positions.every(Number.isFinite)).toBe(true);
       expect(geometry.uvs.every(Number.isFinite)).toBe(true);
       expect(geometry.indices.length % 3).toBe(0);
@@ -136,7 +145,7 @@ describe("modern Superb visual geometry", () => {
     }
   });
 
-  it("matches modern proportions while staying inside the garage envelope", () => {
+  it("preserves official Combi proportions inside the explicit garage compromise", () => {
     const body = vehicleLoftBounds(
       vehicleLoftGeometry(GARAGE_SUPERB_BODY_STATIONS),
     );
@@ -144,6 +153,7 @@ describe("modern Superb visual geometry", () => {
       vehicleLoftGeometry(GARAGE_SUPERB_CABIN_STATIONS),
     );
     expect(body.maximum[2] - body.minimum[2]).toBeCloseTo(1.849, 6);
+    expect(body.maximum[0] - body.minimum[0]).toBeCloseTo(4.64, 6);
     expect(Math.max(Math.abs(body.minimum[0]), body.maximum[0])).toBeLessThanOrEqual(
       GARAGE_VEHICLE.dimensionsMm.length / 2_000,
     );
@@ -154,22 +164,95 @@ describe("modern Superb visual geometry", () => {
       GARAGE_VEHICLE.dimensionsMm.height / 1_000,
       6,
     );
-    expect(GARAGE_VEHICLE.dimensionsMm.width).toBe(2_090);
+    expect(GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM).toMatchObject({
+      length: 4_902,
+      bodyWidth: 1_849,
+      mirrorWidth: 2_090,
+      height: 1_482,
+      wheelbase: 2_841,
+      frontTrack: 1_580,
+      rearTrack: 1_566,
+    });
+    expect(GARAGE_VEHICLE.dimensionsMm.width).toBe(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.mirrorWidth,
+    );
+    expect(GARAGE_VEHICLE.dimensionsMm.height).toBe(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.height,
+    );
+    expect(GARAGE_SUPERB_VISUAL_LENGTH_SCALE).toBeCloseTo(4_640 / 4_902, 12);
     expect(GARAGE_SUPERB_AXLES_M.frontX - GARAGE_SUPERB_AXLES_M.rearX).toBeCloseTo(
       GARAGE_VEHICLE.dimensionsMm.wheelbase / 1_000,
-      6,
+      3,
     );
+    expect(2.32 - GARAGE_SUPERB_AXLES_M.frontX).toBeCloseTo(
+      (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.frontOverhang / 1_000) *
+        GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+      9,
+    );
+    expect(GARAGE_SUPERB_AXLES_M.rearX + 2.32).toBeCloseTo(
+      (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.rearOverhang / 1_000) *
+        GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+      9,
+    );
+  });
+
+  it("uses production track, 19-inch wheel and estate glazing contracts", () => {
+    expect(GARAGE_SUPERB_HALF_TRACKS_M.front * 2).toBeCloseTo(1.58, 9);
+    expect(GARAGE_SUPERB_HALF_TRACKS_M.rear * 2).toBeCloseTo(1.566, 9);
+    expect(GARAGE_SUPERB_WHEEL_M).toMatchObject({
+      outerDiameter: 0.671,
+      tireWidth: 0.235,
+    });
+    expect(GARAGE_SUPERB_WHEEL_M.rimDiameter).toBeCloseTo(0.4826, 9);
+    expect(GARAGE_SUPERB_SIDE_WINDOWS.map(({ id }) => id)).toEqual([
+      "front",
+      "rear",
+      "quarter",
+    ]);
+    for (const window of GARAGE_SUPERB_SIDE_WINDOWS) {
+      expect(window.points).toHaveLength(4);
+      expect(window.points.flatMap(({ x, y }) => [x, y]).every(Number.isFinite)).toBe(
+        true,
+      );
+    }
+  });
+
+  it("orients both duplicated loft caps toward the exterior", () => {
+    const stations = GARAGE_SUPERB_BODY_STATIONS;
+    const geometry = vehicleLoftGeometry(stations);
+    const sideIndexCount =
+      (stations.length - 1) * GARAGE_SUPERB_LOFT_RING_POINT_COUNT * 6;
+    const normalX = (indexOffset: number) => {
+      const [a, b, c] = geometry.indices.slice(indexOffset, indexOffset + 3);
+      const point = (index: number) =>
+        geometry.positions.slice(index * 3, index * 3 + 3);
+      const [, ay, az] = point(a);
+      const [, by, bz] = point(b);
+      const [, cy, cz] = point(c);
+      return (by - ay) * (cz - az) - (bz - az) * (cy - ay);
+    };
+    expect(normalX(sideIndexCount)).toBeLessThan(0);
+    expect(
+      normalX(
+        sideIndexCount + GARAGE_SUPERB_LOFT_RING_POINT_COUNT * 3,
+      ),
+    ).toBeGreaterThan(0);
   });
 
   it("keeps every loft cross-section exactly symmetric around vehicle Z", () => {
     for (const stations of [
       GARAGE_SUPERB_BODY_STATIONS,
       GARAGE_SUPERB_CABIN_STATIONS,
+      GARAGE_SUPERB_ROOF_STATIONS,
     ]) {
       const { positions } = vehicleLoftGeometry(stations);
       for (let station = 0; station < stations.length; station += 1) {
-        const zValues = Array.from({ length: 10 }, (_, ring) =>
-          positions[(station * 10 + ring) * 3 + 2].toFixed(6),
+        const zValues = Array.from(
+          { length: GARAGE_SUPERB_LOFT_RING_POINT_COUNT },
+          (_, ring) =>
+            positions[
+              (station * GARAGE_SUPERB_LOFT_RING_POINT_COUNT + ring) * 3 + 2
+            ].toFixed(6),
         );
         for (const value of zValues) {
           expect(zValues).toContain((-Number(value)).toFixed(6));

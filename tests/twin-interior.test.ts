@@ -155,7 +155,6 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       ...floorObstacles,
       fitout.sinkServiceRectMm,
       fitout.overSinkShelves.footprintMm,
-      fitout.rearWallShelves.footprintMm,
       fitout.entryApproachRectMm,
       ...fitout.vehicleClearRectsMm,
     ]) {
@@ -212,9 +211,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       ),
     );
     expect(fitout.mower.handleTopElevationMm).toBeLessThan(garage.clearHeightMm);
-    expect(fitout.rearWallShelves.clearBelowMm).toBeGreaterThanOrEqual(1600);
-    expect(fitout.rearWallShelves.elevationsMm[0])
-      .toBeGreaterThan(fitout.rearWallShelves.clearBelowMm);
+    expect("rearWallShelves" in fitout).toBe(false);
 
     expect(fitout.vehicleClearRectsMm[0]).toEqual({
       x0: mainBay.x0,
@@ -226,7 +223,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       x0: rearReturn.x0,
       y0: rearReturn.y0,
       x1: garageDoor.startXmm + garageDoor.widthMm,
-      y1: fitout.rearWallShelves.footprintMm.y0,
+      y1: rearReturn.y1,
     });
     for (const clearRect of fitout.vehicleClearRectsMm) {
       for (const obstacle of floorObstacles) expect(overlaps(clearRect, obstacle)).toBe(false);

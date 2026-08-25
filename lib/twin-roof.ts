@@ -104,6 +104,38 @@ export interface JoinedRoofGeometry {
   readonly surfaceAreaMm2: number;
 }
 
+/**
+ * A renderer-ready quadrilateral. The authoritative roof keeps its documented
+ * overhangs, while these patches partition visible finishes so two opaque
+ * materials never claim the same depth-buffer pixels.
+ */
+export interface RoofRenderFace {
+  readonly id: string;
+  readonly faceId: RoofFaceId;
+  readonly vertices: readonly [
+    RoofVertexMm,
+    RoofVertexMm,
+    RoofVertexMm,
+    RoofVertexMm,
+  ];
+}
+
+export interface JoinedRoofRenderPlan {
+  readonly topFaces: readonly RoofRenderFace[];
+  readonly genericUndersideFaces: readonly RoofRenderFace[];
+  readonly seamSegments: readonly RoofSeamSegment[];
+  readonly wingPorch: {
+    /** Metal roof stops where the opaque P04 rake begins. */
+    readonly roofTopEndYmm: number;
+    /** The generic white underside stops before the dedicated larch soffit. */
+    readonly genericUndersideEndYmm: number;
+    readonly larchSoffitStartYmm: number;
+    readonly larchSoffitEndYmm: number;
+    readonly portalRakeStartYmm: number;
+    readonly portalRakeEndYmm: number;
+  };
+}
+
 export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze({
   minXmm: HOUSE.originMm.x,
   maxXmm: HOUSE.originMm.x + HOUSE.lowerBar.widthMm,
@@ -346,6 +378,94 @@ export function deriveJoinedRoofGeometry(
       (total, roofTriangle) => total + triangleAreaMm2(roofTriangle, vertices),
       0,
     ),
+  };
+}
+
+/**
+ * Splits the visual roof at the covered wing porch.
+ *
+ * The architectural roof still ends at the documented 50 mm overhang. In the
+ * rendered assembly, however, the P04 rake owns that end strip and the larch
+ * soffit owns the porch ceiling. Clipping the generic metal/white surfaces at
+ * those two construction joints removes coplanar and intersecting opaque
+ * layers instead of relying on camera-dependent depth bias.
+ */
+export function deriveJoinedRoofRenderPlan(
+  roof: JoinedRoofGeometry = deriveJoinedRoofGeometry(),
+): JoinedRoofRenderPlan {
+  const porch = HOUSE.porches.wingEnd;
+  const roofTopEndYmm = porch.portalFrame.rakeBackFaceYmm;
+  const genericUndersideEndYmm = porch.glazingFaceYmm;
+
+  if (
+    porch.frontYmm !== roofTopEndYmm ||
+    genericUndersideEndYmm >= roofTopEndYmm ||
+    roofTopEndYmm > roof.parameters.wingEndYmm ||
+    roof.parameters.wingEndYmm > porch.portalFrame.rakeFrontFaceYmm
+  ) {
+    throw new Error("Invalid wing-porch roof finish partition");
+  }
+
+  const renderFace = (
+    face: RoofFace,
+    maximumWingYmm: number,
+    purpose: "top" | "generic-underside",
+  ): RoofRenderFace => {
+    const wing = face.id === "WING_INNER" || face.id === "WING_OUTER";
+    const renderVertex = (vertexIndex: number): RoofVertexMm => {
+      const source = roof.vertices[vertexIndex];
+      if (!wing || source.yMm <= maximumWingYmm) return source;
+      return {
+        ...source,
+        id: `${source.id}_${purpose.toUpperCase()}_CLIP`,
+        yMm: maximumWingYmm,
+        elevationMm: roofHeightMm(
+          face.id,
+          source.xMm,
+          maximumWingYmm,
+          roof.parameters,
+        ),
+      };
+    };
+    const [first, second, third, fourth] = face.vertexIndices;
+    const vertices = [
+      renderVertex(first),
+      renderVertex(second),
+      renderVertex(third),
+      renderVertex(fourth),
+    ] as const;
+    return {
+      id: `${face.id}_${purpose.toUpperCase()}`,
+      faceId: face.id,
+      vertices,
+    };
+  };
+
+  const topFaces = roof.faces.map((face) =>
+    renderFace(face, roofTopEndYmm, "top"),
+  );
+  const genericUndersideFaces = roof.faces.map((face) =>
+    renderFace(face, genericUndersideEndYmm, "generic-underside"),
+  );
+  const seamSegments = roof.seamSegments.filter(
+    (segment) =>
+      (segment.faceId !== "WING_INNER" &&
+        segment.faceId !== "WING_OUTER") ||
+      segment.coordinateMm < roofTopEndYmm,
+  );
+
+  return {
+    topFaces,
+    genericUndersideFaces,
+    seamSegments,
+    wingPorch: {
+      roofTopEndYmm,
+      genericUndersideEndYmm,
+      larchSoffitStartYmm: porch.glazingFaceYmm,
+      larchSoffitEndYmm: porch.frontYmm,
+      portalRakeStartYmm: porch.portalFrame.rakeBackFaceYmm,
+      portalRakeEndYmm: porch.portalFrame.rakeFrontFaceYmm,
+    },
   };
 }
 

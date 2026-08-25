@@ -3592,55 +3592,6 @@ function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMat
     if (index === 0) finish(context, head, tool.blade, { shadow: true, pickable: true });
   }
 
-  const rearShelves = fitout.rearWallShelves;
-  for (const shelfMm of rearShelves.elevationsMm) {
-    const shelf = texturedBox(
-      context.scene,
-      `${fitout.id} · REAR-SHELF · vysoká polica v zadnom výseku +${shelfMm}`,
-      rectCenter(rearShelves.footprintMm),
-      rearShelves.footprintMm.x1 - rearShelves.footprintMm.x0,
-      rearShelves.footprintMm.y1 - rearShelves.footprintMm.y0,
-      0.045,
-      shelfMm * MM_TO_M,
-      1,
-    );
-    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
-    for (const xMm of [7800, 8350, 8900, 9450, 9850]) {
-      const brace = CreateTube(
-        `${fitout.id} · REAR-SHELF · nástenná konzola`,
-        {
-          path: [
-            new Vector3(xM(xMm), shelfMm * MM_TO_M - 0.23, zM(rearShelves.footprintMm.y1 - 18)),
-            new Vector3(xM(xMm), shelfMm * MM_TO_M - 0.025, zM(rearShelves.footprintMm.y0 + 22)),
-          ],
-          radius: 0.014,
-          tessellation: 16,
-          cap: Mesh.CAP_ALL,
-        },
-        context.scene,
-      );
-      finish(context, brace, materials.fireplace, { shadow: true });
-    }
-  }
-  for (const [index, item] of [
-    { x: 7880, w: 500, h: 0.35, bottom: 1.755, material: materials.childSand, label: "staré diely" },
-    { x: 8500, w: 580, h: 0.32, bottom: 1.755, material: materials.childMidnight, label: "sezónny box" },
-    { x: 9180, w: 520, h: 0.38, bottom: 1.755, material: materials.childSage, label: "záhradné veci" },
-    { x: 9730, w: 430, h: 0.28, bottom: 2.225, material: materials.childClay, label: "rezerva" },
-  ].entries()) {
-    const itemMesh = texturedBox(
-      context.scene,
-      `${fitout.id} · GARAGE-CLUTTER · zadný box ${index + 1} · ${item.label}`,
-      { x: item.x, y: 7645 },
-      item.w,
-      155,
-      item.h,
-      item.bottom,
-      0.6,
-    );
-    finish(context, itemMesh, item.material, { shadow: true, pickable: true });
-  }
-
   const mower = fitout.mower;
   const mowerRect = mower.footprintMm;
   const mowerCenter = rectCenter(mowerRect);
@@ -3748,14 +3699,6 @@ function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMat
     overSink.footprintMm,
     Math.min(...overSink.elevationsMm) * MM_TO_M - 0.04,
     Math.max(...overSink.elevationsMm) * MM_TO_M + 0.08,
-  );
-  cameraOcclusionProxy(
-    context,
-    materials,
-    `${fitout.id} · REAR-SHELF · súvislý objem pre kameru`,
-    rearShelves.footprintMm,
-    Math.min(...rearShelves.elevationsMm) * MM_TO_M - 0.04,
-    Math.max(...rearShelves.elevationsMm) * MM_TO_M + 0.45,
   );
 }
 

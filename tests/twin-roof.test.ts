@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ACTIVE_JOINED_ROOF_PARAMETERS,
   deriveJoinedRoofGeometry,
+  deriveJoinedRoofRenderPlan,
   mainFrontRoofHeightMm,
   mainGardenRoofHeightMm,
   roofHeightMm,
@@ -11,6 +12,7 @@ import {
   type RoofTriangle,
   type RoofVertexMm,
 } from "../lib/twin-roof";
+import { HOUSE } from "../lib/twin-site";
 
 const roof = deriveJoinedRoofGeometry();
 
@@ -204,6 +206,71 @@ describe("joined roof plane continuity", () => {
   });
 });
 
+describe("covered-porch roof render partition", () => {
+  const renderPlan = deriveJoinedRoofRenderPlan(roof);
+
+  it("gives every opaque wing finish a non-overlapping plan interval", () => {
+    const { wingPorch } = renderPlan;
+
+    expect(wingPorch).toEqual({
+      roofTopEndYmm: HOUSE.porches.wingEnd.portalFrame.rakeBackFaceYmm,
+      genericUndersideEndYmm: HOUSE.porches.wingEnd.glazingFaceYmm,
+      larchSoffitStartYmm: HOUSE.porches.wingEnd.glazingFaceYmm,
+      larchSoffitEndYmm: HOUSE.porches.wingEnd.frontYmm,
+      portalRakeStartYmm:
+        HOUSE.porches.wingEnd.portalFrame.rakeBackFaceYmm,
+      portalRakeEndYmm:
+        HOUSE.porches.wingEnd.portalFrame.rakeFrontFaceYmm,
+    });
+    expect(
+      positiveIntervalOverlapMm(
+        Number.NEGATIVE_INFINITY,
+        wingPorch.genericUndersideEndYmm,
+        wingPorch.larchSoffitStartYmm,
+        wingPorch.larchSoffitEndYmm,
+      ),
+    ).toBe(0);
+    expect(
+      positiveIntervalOverlapMm(
+        Number.NEGATIVE_INFINITY,
+        wingPorch.roofTopEndYmm,
+        wingPorch.portalRakeStartYmm,
+        wingPorch.portalRakeEndYmm,
+      ),
+    ).toBe(0);
+  });
+
+  it("clips only renderer surfaces while preserving the documented overhang", () => {
+    expect(roof.parameters.wingEndYmm).toBe(22_085);
+    expect(renderPlan.wingPorch.roofTopEndYmm).toBe(22_035);
+
+    for (const faceId of ["WING_INNER", "WING_OUTER"] as const) {
+      const top = renderPlan.topFaces.find((face) => face.faceId === faceId);
+      const underside = renderPlan.genericUndersideFaces.find(
+        (face) => face.faceId === faceId,
+      );
+      expect(top).toBeDefined();
+      expect(underside).toBeDefined();
+      expect(Math.max(...top!.vertices.map(({ yMm }) => yMm))).toBe(22_035);
+      expect(
+        Math.max(...underside!.vertices.map(({ yMm }) => yMm)),
+      ).toBe(19_535);
+    }
+
+    expect(
+      renderPlan.seamSegments
+        .filter(
+          ({ faceId }) =>
+            faceId === "WING_INNER" || faceId === "WING_OUTER",
+        )
+        .every(
+          ({ coordinateMm }) =>
+            coordinateMm < renderPlan.wingPorch.roofTopEndYmm,
+        ),
+    ).toBe(true);
+  });
+});
+
 describe("joined roof standing seams", () => {
   it("clips all seams to their individual roof polygons", () => {
     expect(roof.seamSegments).toHaveLength(100);
@@ -264,6 +331,19 @@ describe("joined roof standing seams", () => {
     expect(inner.end).toEqual({ xMm: 24_540, yMm: 7_620, elevationMm: 5_560 });
   });
 });
+
+function positiveIntervalOverlapMm(
+  firstStartMm: number,
+  firstEndMm: number,
+  secondStartMm: number,
+  secondEndMm: number,
+) {
+  return Math.max(
+    0,
+    Math.min(firstEndMm, secondEndMm) -
+      Math.max(firstStartMm, secondStartMm),
+  );
+}
 
 function edgeIncidence(triangles: readonly RoofTriangle[]): Map<string, number> {
   const incidence = new Map<string, number>();

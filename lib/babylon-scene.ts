@@ -91,6 +91,7 @@ import {
 } from "./twin-render-frame";
 import {
   deriveJoinedRoofGeometry,
+  deriveJoinedRoofRenderPlan,
   roofMountTransform,
   wingInnerRoofHeightMm,
   wingOuterRoofHeightMm,
@@ -114,6 +115,7 @@ import {
   type AnimatedDoorRegistration,
   type DoorInteractionSnapshot,
 } from "./babylon-doors";
+import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
   roomAt,
@@ -131,13 +133,6 @@ import {
   type GarageParkingState,
   type GarageVehicleAction,
 } from "./twin-garage";
-import {
-  GARAGE_SUPERB_AXLES_M,
-  GARAGE_SUPERB_BODY_STATIONS,
-  GARAGE_SUPERB_CABIN_STATIONS,
-  vehicleLoftGeometry,
-  type VehicleLoftStation,
-} from "./twin-garage-model";
 import {
   EXTERIOR_RENDER_STABILITY,
   ORBIT_ZOOM,
@@ -277,28 +272,6 @@ function pbrMaterial(
     material.useAlphaFromAlbedoTexture = false;
   }
   return material;
-}
-
-function createVehicleLoftMesh(
-  scene: Scene,
-  name: string,
-  stations: readonly VehicleLoftStation[],
-  material: Material,
-) {
-  const geometry = vehicleLoftGeometry(stations);
-  const positions = [...geometry.positions];
-  const indices = [...geometry.indices];
-  const mesh = new Mesh(name, scene);
-  const normals = new Array(positions.length).fill(0);
-  VertexData.ComputeNormals(positions, indices, normals);
-  const data = new VertexData();
-  data.positions = positions;
-  data.indices = indices;
-  data.normals = normals;
-  data.uvs = [...geometry.uvs];
-  data.applyToMesh(mesh);
-  mesh.material = material;
-  return mesh;
 }
 
 function createVerticalTriangle(
@@ -3965,430 +3938,36 @@ export class TwinSceneController {
     });
   }
 
-  /** Local, dependency-free visual model with the proportions of a Superb. */
+  /** Detailed procedural 2024+ Superb Combi visual on the parking root. */
   private buildGarageVehicle() {
-    const vehicle = GARAGE_VEHICLE;
-    const root = new TransformNode(
-      `${vehicle.label} · automatické parkovanie`,
-      this.scene,
+    const visual = buildGarageSuperbVehicle(this.scene, {
+      realisticOnly: (mesh) => this.realisticOnly(mesh),
+      castShadow: (mesh) => this.castShadow(mesh),
+      register: (mesh) =>
+        this.register(mesh, "building", GARAGE_VEHICLE.id),
+    });
+    visual.root.position.set(
+      xM(GARAGE_VEHICLE.route.streetStartMm.x),
+      garageVehicleSurfaceElevationM(GARAGE_VEHICLE.route.streetStartMm) -
+        GARAGE_VEHICLE.wheelGroundOffsetM,
+      zM(GARAGE_VEHICLE.route.streetStartMm.y),
     );
-    root.metadata = {
-      vehicleId: vehicle.id,
-      vehicleModel: vehicle.label,
-      parkingRoomId: vehicle.roomId,
-    };
-    root.position.set(
-      xM(vehicle.route.streetStartMm.x),
-      garageVehicleSurfaceElevationM(vehicle.route.streetStartMm) -
-        vehicle.wheelGroundOffsetM,
-      zM(vehicle.route.streetStartMm.y),
-    );
-    root.setEnabled(false);
-    this.garageVehicleRoot = root;
-
-    const paint = pbrMaterial(
-      this.scene,
-      "Superb · metalická modrá karoséria",
-      "#123047",
-      0.24,
-      0.56,
-    );
-    paint.clearCoat.isEnabled = true;
-    paint.clearCoat.intensity = 1;
-    paint.clearCoat.roughness = 0.055;
-    paint.environmentIntensity = 0.88;
-    const glass = pbrMaterial(
-      this.scene,
-      "Superb · tónované sklá",
-      "#07151d",
-      0.1,
-      0.04,
-      0.9,
-    );
-    glass.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
-    glass.environmentIntensity = 1.6;
-    glass.clearCoat.isEnabled = true;
-    glass.clearCoat.intensity = 0.85;
-    glass.clearCoat.roughness = 0.035;
-    const dark = pbrMaterial(
-      this.scene,
-      "Superb · lesklé čierne detaily",
-      "#111517",
-      0.28,
-      0.34,
-    );
-    const tire = pbrMaterial(
-      this.scene,
-      "Superb · pneumatiky",
-      "#101112",
-      0.94,
-      0.02,
-    );
-    const alloy = pbrMaterial(
-      this.scene,
-      "Superb · brúsené disky",
-      "#aeb6ba",
-      0.24,
-      0.9,
-    );
-    const chrome = pbrMaterial(
-      this.scene,
-      "Superb · chróm",
-      "#d9e0e2",
-      0.12,
-      0.94,
-    );
-    const darkChrome = pbrMaterial(
-      this.scene,
-      "Superb · Unique Dark Chrome",
-      "#4e565a",
-      0.18,
-      0.95,
-    );
-    const headlight = pbrMaterial(
-      this.scene,
-      "Superb · LED svetlomety",
-      "#eaf7ff",
-      0.08,
-      0.16,
-    );
-    headlight.emissiveColor = Color3.FromHexString("#bddfff").scale(0.72);
-    this.garageVehicleHeadlightMaterial = headlight;
-    const brake = pbrMaterial(
-      this.scene,
-      "Superb · zadné LED svetlá",
-      "#8b1016",
-      0.16,
-      0.12,
-    );
-    brake.emissiveColor = Color3.FromHexString("#b20f18").scale(0.46);
-    this.garageVehicleBrakeMaterial = brake;
-    const plate = pbrMaterial(
-      this.scene,
-      "Superb · evidenčné tabuľky",
-      "#f2f3ed",
-      0.58,
-      0,
-    );
-
-    const addBox = (
-      name: string,
-      size: { readonly x: number; readonly y: number; readonly z: number },
-      position: { readonly x: number; readonly y: number; readonly z: number },
-      material: Material,
-      rotationZ = 0,
-      shadow = true,
-      collision = false,
-    ) => {
-      const mesh = CreateBox(
-        `${vehicle.label} · ${name}`,
-        { width: size.x, height: size.y, depth: size.z },
-        this.scene,
-      );
-      mesh.parent = root;
-      mesh.position.set(position.x, position.y, position.z);
-      mesh.rotation.z = rotationZ;
-      mesh.material = material;
-      mesh.isPickable = false;
-      mesh.checkCollisions = collision;
-      mesh.receiveShadows = shadow;
-      if (shadow) this.castShadow(mesh);
-      this.realisticOnly(mesh);
-      this.register(mesh, "building", vehicle.id);
-      return mesh;
-    };
-
-    const halfVehicleLengthM = vehicle.dimensionsMm.length * MM_TO_M / 2;
-    const halfVehicleWidthM = vehicle.dimensionsMm.width * MM_TO_M / 2;
-    const registerVisual = (mesh: Mesh, shadow = true) => {
-      mesh.parent = root;
-      mesh.isPickable = false;
-      mesh.receiveShadows = shadow;
-      if (shadow) this.castShadow(mesh);
-      this.realisticOnly(mesh);
-      this.register(mesh, "building", vehicle.id);
-      return mesh;
-    };
-
-    const body = createVehicleLoftMesh(
-      this.scene,
-      `${vehicle.label} · hladká karoséria Modern Solid`,
-      GARAGE_SUPERB_BODY_STATIONS,
-      paint,
-    );
-    body.metadata = { vehicleGeneration: "SUPERB-IV-INSPIRED" };
-    registerVisual(body);
-    const cabin = createVehicleLoftMesh(
-      this.scene,
-      `${vehicle.label} · plynulá presklená kabína`,
-      GARAGE_SUPERB_CABIN_STATIONS,
-      glass,
-    );
-    cabin.metadata = { vehicleGeneration: "SUPERB-IV-INSPIRED" };
-    registerVisual(cabin, false);
-
-    // Simple hidden colliders keep walkthrough response stable; the smooth
-    // display shell is intentionally never used for per-triangle collision.
-    for (const [name, size, position] of [
-      [
-        "spodný kolízny obal",
-        { x: 4.54, y: 0.68, z: 1.82 },
-        { x: 0, y: 0.55, z: 0 },
-      ],
-      [
-        "horný kolízny obal",
-        { x: 2.38, y: 0.5, z: 1.46 },
-        { x: -0.15, y: 1.22, z: 0 },
-      ],
-    ] as const) {
-      const collider = CreateBox(
-        `${vehicle.label} · ${name}`,
-        { width: size.x, height: size.y, depth: size.z },
-        this.scene,
-      );
-      collider.parent = root;
-      collider.position.set(position.x, position.y, position.z);
-      collider.isPickable = false;
-      collider.isVisible = false;
-      collider.checkCollisions = true;
-      collider.metadata = {
-        vehicleCollider: true,
-        cameraOccluder: true,
-        dynamicCameraOccluder: true,
-      };
-      this.register(collider, "building", vehicle.id);
-    }
-
-    for (const side of [-1, 1] as const) {
-      addBox(
-        `A stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.075, y: 0.5, z: 0.026 },
-        { x: 0.78, y: 1.22, z: side * 0.69 },
-        paint,
-        -0.58,
-      );
-      addBox(
-        `B stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.075, y: 0.47, z: 0.026 },
-        { x: -0.2, y: 1.235, z: side * 0.752 },
-        dark,
-      );
-      addBox(
-        `C stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.11, y: 0.38, z: 0.026 },
-        { x: -1.03, y: 1.18, z: side * 0.707 },
-        paint,
-        0.33,
-      );
-      addBox(
-        `spätné zrkadlo ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.23, y: 0.105, z: 0.19 },
-        { x: 0.63, y: 1.2, z: side * (halfVehicleWidthM - 0.095) },
-        paint,
-      );
-      for (let segment = 0; segment < 3; segment += 1) {
-        addBox(
-          `Matrix LED ${side < 0 ? "vľavo" : "vpravo"} · segment ${segment + 1}`,
-          { x: 0.026, y: 0.09, z: 0.13 },
-          {
-            x: halfVehicleLengthM - 0.018,
-            y: 0.765 + segment * 0.008,
-            z: side * (0.45 + segment * 0.145),
-          },
-          headlight,
-          0,
-          false,
-        );
-      }
-      addBox(
-        `zadné LED svetlo ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.026, y: 0.14, z: 0.5 },
-        { x: -halfVehicleLengthM + 0.018, y: 0.745, z: side * 0.59 },
-        brake,
-        0,
-        false,
-      );
-      for (const x of [-0.92, 0.24]) {
-        addBox(
-          `kľučka dverí ${side < 0 ? "vľavo" : "vpravo"}`,
-          { x: 0.17, y: 0.024, z: 0.018 },
-          { x, y: 0.9, z: side * 0.929 },
-          darkChrome,
-          0,
-          false,
-        );
-      }
-      for (const x of [-1.38, -0.2, 0.83]) {
-        addBox(
-          `škára dverí ${side < 0 ? "vľavo" : "vpravo"}`,
-          { x: 0.012, y: 0.5, z: 0.01 },
-          { x, y: 0.67, z: side * 0.927 },
-          dark,
-          0,
-          false,
-        );
-      }
-    }
-
-    addBox(
-      "zadná svetelná línia",
-      { x: 0.024, y: 0.035, z: 1.32 },
-      { x: -halfVehicleLengthM + 0.016, y: 0.755, z: 0 },
-      brake,
-      0,
-      false,
-    );
-    addBox("predná maska", { x: 0.028, y: 0.34, z: 1.04 }, { x: halfVehicleLengthM - 0.018, y: 0.58, z: 0 }, dark);
-    const grilleOutline = CreateTube(
-      `${vehicle.label} · oktagonálny rám masky`,
-      {
-        path: [
-          new Vector3(halfVehicleLengthM - 0.014, 0.75, -0.52),
-          new Vector3(halfVehicleLengthM - 0.014, 0.79, -0.43),
-          new Vector3(halfVehicleLengthM - 0.014, 0.79, 0.43),
-          new Vector3(halfVehicleLengthM - 0.014, 0.75, 0.52),
-          new Vector3(halfVehicleLengthM - 0.014, 0.43, 0.52),
-          new Vector3(halfVehicleLengthM - 0.014, 0.38, 0.43),
-          new Vector3(halfVehicleLengthM - 0.014, 0.38, -0.43),
-          new Vector3(halfVehicleLengthM - 0.014, 0.43, -0.52),
-          new Vector3(halfVehicleLengthM - 0.014, 0.75, -0.52),
-        ],
-        radius: 0.012,
-        tessellation: 8,
-      },
-      this.scene,
-    );
-    grilleOutline.material = darkChrome;
-    registerVisual(grilleOutline, false);
-    for (const z of [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4]) {
-      addBox("zvislá lamela masky", { x: 0.012, y: 0.27, z: 0.012 }, { x: halfVehicleLengthM - 0.012, y: 0.585, z }, darkChrome, 0, false);
-    }
-    addBox("predná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: halfVehicleLengthM - 0.014, y: 0.39, z: 0 }, plate, 0, false);
-    addBox("zadná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: -halfVehicleLengthM + 0.014, y: 0.51, z: 0 }, plate, 0, false);
-    addBox("chrómová línia okien vľavo", { x: 2.28, y: 0.018, z: 0.018 }, { x: -0.16, y: 1.015, z: -0.754 }, chrome, 0, false);
-    addBox("chrómová línia okien vpravo", { x: 2.28, y: 0.018, z: 0.018 }, { x: -0.16, y: 1.015, z: 0.754 }, chrome, 0, false);
-
-    for (const axleX of [
-      GARAGE_SUPERB_AXLES_M.rearX,
-      GARAGE_SUPERB_AXLES_M.frontX,
-    ]) {
-      for (const side of [-1, 1] as const) {
-        const arch = CreateCylinder(
-          `${vehicle.label} · podbeh ${axleX > 0 ? "predný" : "zadný"} ${side < 0 ? "vľavo" : "vpravo"}`,
-          { height: 0.018, diameter: 0.76, tessellation: 40 },
-          this.scene,
-        );
-        arch.parent = root;
-        arch.position.set(axleX, 0.36, side * 0.931);
-        arch.rotation.x = Math.PI / 2;
-        arch.material = dark;
-        arch.isPickable = false;
-        this.realisticOnly(arch);
-        this.register(arch, "building", vehicle.id);
-      }
-    }
-
-    for (const axleX of [
-      GARAGE_SUPERB_AXLES_M.rearX,
-      GARAGE_SUPERB_AXLES_M.frontX,
-    ]) {
-      for (const side of [-1, 1] as const) {
-        const steeringAnchor = new TransformNode(
-          `${vehicle.label} · koleso ${axleX > 0 ? "predné" : "zadné"} ${side < 0 ? "ľavé" : "pravé"}`,
-          this.scene,
-        );
-        steeringAnchor.parent = root;
-        steeringAnchor.position.set(axleX, 0.36, side * 0.85);
-        if (axleX > 0) this.garageVehicleFrontSteering.push(steeringAnchor);
-
-        const wheelSpin = new TransformNode(
-          `${steeringAnchor.name} · rotácia pneumatiky`,
-          this.scene,
-        );
-        wheelSpin.parent = steeringAnchor;
-        this.garageVehicleWheelSpins.push(wheelSpin);
-
-        const wheel = CreateCylinder(
-          `${steeringAnchor.name} · pneumatika`,
-          { height: 0.23, diameter: 0.69, tessellation: 32 },
-          this.scene,
-        );
-        wheel.parent = wheelSpin;
-        wheel.rotation.x = Math.PI / 2;
-        wheel.material = tire;
-        wheel.isPickable = false;
-        this.castShadow(wheel);
-        this.realisticOnly(wheel);
-        this.register(wheel, "building", vehicle.id);
-
-        const rim = CreateCylinder(
-          `${steeringAnchor.name} · disk`,
-          { height: 0.236, diameter: 0.43, tessellation: 20 },
-          this.scene,
-        );
-        rim.parent = wheelSpin;
-        rim.rotation.x = Math.PI / 2;
-        rim.material = alloy;
-        rim.isPickable = false;
-        this.realisticOnly(rim);
-        this.register(rim, "building", vehicle.id);
-
-        const brakeDisc = CreateCylinder(
-          `${steeringAnchor.name} · brzdový kotúč`,
-          { height: 0.242, diameter: 0.31, tessellation: 28 },
-          this.scene,
-        );
-        brakeDisc.parent = wheelSpin;
-        brakeDisc.rotation.x = Math.PI / 2;
-        brakeDisc.material = darkChrome;
-        brakeDisc.isPickable = false;
-        this.realisticOnly(brakeDisc);
-        this.register(brakeDisc, "building", vehicle.id);
-
-        const hub = CreateCylinder(
-          `${steeringAnchor.name} · stred disku`,
-          { height: 0.248, diameter: 0.08, tessellation: 20 },
-          this.scene,
-        );
-        hub.parent = wheelSpin;
-        hub.rotation.x = Math.PI / 2;
-        hub.material = alloy;
-        hub.isPickable = false;
-        this.realisticOnly(hub);
-        this.register(hub, "building", vehicle.id);
-
-        for (let spokeIndex = 0; spokeIndex < 10; spokeIndex += 1) {
-          const angle = (spokeIndex / 10) * Math.PI * 2;
-          const spoke = CreateBox(
-            `${steeringAnchor.name} · lúč disku ${spokeIndex + 1}`,
-            { width: 0.18, height: 0.018, depth: 0.246 },
-            this.scene,
-          );
-          spoke.parent = wheelSpin;
-          spoke.position.set(
-            Math.cos(angle) * 0.105,
-            Math.sin(angle) * 0.105,
-            0,
-          );
-          spoke.rotation.z = angle;
-          spoke.material = alloy;
-          spoke.isPickable = false;
-          this.realisticOnly(spoke);
-          this.register(spoke, "building", vehicle.id);
-        }
-      }
-    }
+    this.garageVehicleRoot = visual.root;
+    this.garageVehicleWheelSpins.push(...visual.wheelSpins);
+    this.garageVehicleFrontSteering.push(...visual.frontSteering);
+    this.garageVehicleHeadlightMaterial = visual.headlightMaterial;
+    this.garageVehicleBrakeMaterial = visual.brakeMaterial;
   }
 
   private buildJoinedRoof() {
     const roof = deriveJoinedRoofGeometry();
+    const renderPlan = deriveJoinedRoofRenderPlan(roof);
 
-    for (const face of roof.faces) {
-      const faceVertices = face.vertexIndices.map((index) => roof.vertices[index]);
+    for (const face of renderPlan.topFaces) {
       const panel = createRoofFace(
         this.scene,
-        `Spojená strešná rovina · ${face.id}`,
-        faceVertices,
+        `Spojená strešná rovina · ${face.faceId}`,
+        face.vertices,
       );
       this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
       panel.metadata = { ...(panel.metadata ?? {}), cameraOccluder: true };
@@ -4398,11 +3977,13 @@ export class TwinSceneController {
       panel.edgesColor = Color4.FromHexString("#aeb8bb66");
       panel.edgesWidth = 0.65;
       this.register(panel, "building", HOUSE.id);
+    }
 
+    for (const face of renderPlan.genericUndersideFaces) {
       const underside = createRoofFace(
         this.scene,
-        `Súvislý podhľad strešnej roviny · ${face.id}`,
-        faceVertices.map((vertex) => ({
+        `Súvislý podhľad strešnej roviny · ${face.faceId}`,
+        face.vertices.map((vertex) => ({
           ...vertex,
           elevationMm: vertex.elevationMm - 70,
         })),
@@ -4419,7 +4000,7 @@ export class TwinSceneController {
       this.register(underside, "building", HOUSE.id);
     }
 
-    for (const seamSegment of roof.seamSegments) {
+    for (const seamSegment of renderPlan.seamSegments) {
       const seam = this.createRoofLine(
         `Orezaný falc · ${seamSegment.id}`,
         seamSegment.start,
@@ -5509,7 +5090,9 @@ export class TwinSceneController {
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
   private buildWingPorch() {
     const porch = HOUSE.porches.wingEnd;
-    const roofParameters = deriveJoinedRoofGeometry().parameters;
+    const roof = deriveJoinedRoofGeometry();
+    const roofParameters = roof.parameters;
+    const roofRenderPlan = deriveJoinedRoofRenderPlan(roof);
     const clearanceMm = porch.ceilingClearanceMm;
 
     this.buildPorchCurtainWall();
@@ -5541,8 +5124,13 @@ export class TwinSceneController {
     // The porch is open to the roof: instead of a flat ceiling, two boarded
     // panels follow the wing roof planes up to the ridge, so the space reads
     // as tall and uncovered from the garden.
-    const porchDepthMm = porch.frontYmm - porch.glazingFaceYmm;
-    const porchCenterYmm = (porch.glazingFaceYmm + porch.frontYmm) / 2;
+    const porchDepthMm =
+      roofRenderPlan.wingPorch.larchSoffitEndYmm -
+      roofRenderPlan.wingPorch.larchSoffitStartYmm;
+    const porchCenterYmm =
+      (roofRenderPlan.wingPorch.larchSoffitStartYmm +
+        roofRenderPlan.wingPorch.larchSoffitEndYmm) /
+      2;
     for (const [index, slope] of [
       {
         name: "západná",
