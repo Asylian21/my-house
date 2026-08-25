@@ -2102,25 +2102,19 @@ export class TwinSceneController {
       if (!parcel.orientationRole) this.technicalOverlay(outline);
       this.register(outline, "cadastre", parcel.isSubject ? parcel.id : undefined);
 
-      if (parcel.labelPointSjtskMm) {
-        const officialAnchor = sjtskToLocalMm(parcel.labelPointSjtskMm);
-        // The official reference point for 6012/26 falls below the house. Keep
-        // that source point in the data model, but move only its visual plaque
-        // into the open west lawn so it remains a ground marking.
-        const anchor = parcel.isSubject
-          ? { x: 2_350, y: 15_800 }
-          : officialAnchor;
+      if (parcel.labelPointSjtskMm && !parcel.isSubject) {
+        const anchor = sjtskToLocalMm(parcel.labelPointSjtskMm);
         const label = CreateGround(
           `Orientačný popis parcely ${parcel.parcelNumber}`,
           {
-            width: parcel.isSubject ? 4.8 : 3.7,
-            height: parcel.isSubject ? 1.5 : 1.18,
+            width: 3.7,
+            height: 1.18,
             subdivisions: 1,
           },
           this.scene,
         );
         label.position.set(xM(anchor.x), 0.012, zM(anchor.y));
-        label.rotation.y = parcel.isSubject ? 0 : longestParcelAxisYaw(localRing);
+        label.rotation.y = longestParcelAxisYaw(localRing);
         label.isPickable = false;
         label.receiveShadows = false;
         label.renderingGroupId = 2;
