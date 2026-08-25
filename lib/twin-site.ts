@@ -160,6 +160,14 @@ export const SOURCES = {
     date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientGarageFitoutRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-FITOUT-20260825",
+    title: "Revízia stavebníka · realistický pracovný výsek garáže",
+    detail:
+      "V garáži 1.12 hneď vedľa dverí z chodby, na opačnej strane priečky za vaňou kúpeľne 1.11, doplniť malé hlboké pracovné umývadlo. Okolitý výsek zariadiť ako používanú garáž: kovovým regálom, hornými policami, boxmi, farbami, náradím, záhradnou hadicou, metlou, lopatou a zaparkovanou kosačkou. Zachovať celý otvor a pohyb dverí, priamy príjazd vozidla aj bezpečný prístup k umývadlu.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientRevision20260823: {
     id: "SRC-CLIENT-20260823",
     title: "Revízia stavebníka · obývacia a jedálenská zóna",

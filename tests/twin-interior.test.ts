@@ -7,6 +7,7 @@ import {
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_STOVE,
+  GARAGE_FITOUT,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -121,6 +122,122 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(opening.startYmm).toBeGreaterThan(mainBay.y0);
     expect(openingEndYmm).toBeLessThan(mainBay.y1);
     expect(opening.startYmm - mainBay.y0).toBe(mainBay.y1 - openingEndYmm);
+  });
+
+  it("fits a realistic sink, storage and mower behind the bath without blocking either garage door", () => {
+    const fitout = GARAGE_FITOUT;
+    const garage = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
+    const [mainBay, rearReturn] = garage.rectsMm;
+    const entryDoor = INTERIOR_DOORS.find((door) => door.id === fitout.entryDoorId)!;
+    const bath = ENSUITE_BATHROOM_FITOUT.bathtub.footprintMm;
+    const garageDoor = HOUSE.facades.front.garageDoor;
+    const floorObstacles = [
+      fitout.utilitySink.footprintMm,
+      fitout.storageRack.footprintMm,
+      fitout.mower.footprintMm,
+    ];
+    const insideGarage = (rect: RectMm) => garage.rectsMm.some((part) => inside(rect, part));
+
+    expect(fitout).toMatchObject({
+      sourceId: SOURCES.clientGarageFitoutRevision20260825.id,
+      architecturalSourceId: SOURCES.floorPlan.id,
+      status: "CLIENT_DESIGN_CONCEPT",
+      plumbingStatus: "CLIENT_CONCEPT_REQUIRES_ZTI_COORDINATION",
+      adjacentBathroomFitoutId: ENSUITE_BATHROOM_FITOUT.id,
+    });
+    expect(garage.number).toBe("1.12");
+    expect(garage.floor).toBe("EPOXY");
+    expect(entryDoor).toMatchObject({ axis: "Y", swing: -1, hinge: -1 });
+
+    for (const rect of [
+      ...floorObstacles,
+      fitout.sinkServiceRectMm,
+      fitout.overSinkShelves.footprintMm,
+      fitout.rearWallShelves.footprintMm,
+      fitout.entryApproachRectMm,
+      ...fitout.vehicleClearRectsMm,
+    ]) {
+      expect(insideGarage(rect)).toBe(true);
+    }
+
+    const sink = fitout.utilitySink;
+    expect(sink.facing).toBe("WEST");
+    expect(sink.footprintMm.x1).toBe(mainBay.x1);
+    expect(sink.footprintMm.x1 - sink.footprintMm.x0).toBe(500);
+    expect(sink.footprintMm.y1 - sink.footprintMm.y0).toBe(600);
+    expect(inside(sink.innerBasinMm, sink.footprintMm)).toBe(true);
+    expect(bath.x0 - sink.footprintMm.x1).toBe(199);
+    expect(sink.footprintMm.y0).toBeGreaterThan(bath.y0);
+    expect(sink.footprintMm.y1).toBe(bath.y1);
+    expect(entryDoor.startMm - sink.footprintMm.y1).toBe(198);
+    expect(sink.rimElevationMm).toBeGreaterThanOrEqual(900);
+    expect(sink.backsplashTopElevationMm).toBeGreaterThan(sink.rimElevationMm);
+
+    const leafThicknessMm = 40;
+    const frameMm = 60;
+    const leafCenterX = entryDoor.wallSpanMm[0] - (entryDoor.leafWidthMm / 2 + 10);
+    const leafCenterY = entryDoor.startMm + frameMm + leafThicknessMm / 2 + 8;
+    const openLeafRect: RectMm = {
+      x0: leafCenterX - (entryDoor.leafWidthMm + 20) / 2,
+      x1: leafCenterX + (entryDoor.leafWidthMm + 20) / 2,
+      y0: leafCenterY - leafThicknessMm / 2,
+      y1: leafCenterY + leafThicknessMm / 2,
+    };
+    expect(openLeafRect).toEqual({ x0: 12922, y0: 5629, x1: 13742, y1: 5669 });
+    expect(overlaps(openLeafRect, sink.footprintMm)).toBe(false);
+    expect(overlaps(openLeafRect, fitout.sinkServiceRectMm)).toBe(false);
+    expect(overlaps(openLeafRect, fitout.entryApproachRectMm)).toBe(false);
+    expect(fitout.entryApproachRectMm.y0).toBe(openLeafRect.y1);
+    expect(fitout.entryApproachRectMm.x1 - fitout.entryApproachRectMm.x0)
+      .toBeGreaterThanOrEqual(2800);
+
+    const rack = fitout.storageRack;
+    expect(rack.facing).toBe("WEST");
+    expect(rack.footprintMm.x1).toBeLessThanOrEqual(mainBay.x1);
+    expect(rack.footprintMm.y0).toBeGreaterThanOrEqual(bath.y0);
+    expect(rack.footprintMm.y1).toBeLessThan(sink.footprintMm.y0);
+    expect(rack.heightMm).toBeLessThan(garage.clearHeightMm);
+    expect(rack.shelfElevationsMm).toHaveLength(4);
+    expect(rack.shelfElevationsMm.at(-1)).toBeLessThan(rack.heightMm);
+    expect(rack.cardboardBoxCount + rack.plasticBinCount + rack.paintCanCount)
+      .toBeGreaterThanOrEqual(10);
+
+    expect(inside(fitout.mower.footprintMm, rearReturn)).toBe(true);
+    expect(fitout.mower.deckDiameterMm).toBeLessThanOrEqual(
+      Math.min(
+        fitout.mower.footprintMm.x1 - fitout.mower.footprintMm.x0,
+        fitout.mower.footprintMm.y1 - fitout.mower.footprintMm.y0,
+      ),
+    );
+    expect(fitout.mower.handleTopElevationMm).toBeLessThan(garage.clearHeightMm);
+    expect(fitout.rearWallShelves.clearBelowMm).toBeGreaterThanOrEqual(1600);
+    expect(fitout.rearWallShelves.elevationsMm[0])
+      .toBeGreaterThan(fitout.rearWallShelves.clearBelowMm);
+
+    expect(fitout.vehicleClearRectsMm[0]).toEqual({
+      x0: mainBay.x0,
+      y0: mainBay.y0,
+      x1: garageDoor.startXmm + garageDoor.widthMm,
+      y1: mainBay.y1,
+    });
+    expect(fitout.vehicleClearRectsMm[1]).toEqual({
+      x0: rearReturn.x0,
+      y0: rearReturn.y0,
+      x1: garageDoor.startXmm + garageDoor.widthMm,
+      y1: fitout.rearWallShelves.footprintMm.y0,
+    });
+    for (const clearRect of fitout.vehicleClearRectsMm) {
+      for (const obstacle of floorObstacles) expect(overlaps(clearRect, obstacle)).toBe(false);
+    }
+    for (let index = 0; index < floorObstacles.length; index += 1) {
+      for (let other = index + 1; other < floorObstacles.length; other += 1) {
+        expect(overlaps(floorObstacles[index], floorObstacles[other])).toBe(false);
+      }
+    }
+
+    const frontWindow = HOUSE.facades.front.openings.find(({ id }) => id === "FRONT-02")!;
+    expect(rack.footprintMm.x0 - (frontWindow.startXmm + frontWindow.widthMm))
+      .toBeGreaterThanOrEqual(250);
   });
 
   it("replaces the living-room masonry pier with a coaxial cylindrical stove and flue", () => {

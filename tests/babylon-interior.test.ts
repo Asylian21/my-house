@@ -8,6 +8,7 @@ import { buildInterior } from "../lib/babylon-interior";
 import {
   CHILDRENS_BEDROOM_FITOUTS,
   FIREPLACE_STOVE,
+  GARAGE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
 } from "../lib/twin-interior";
 
@@ -91,6 +92,62 @@ describe("Babylon interior fit-out", () => {
       expect(heatingGuards[0].name).toContain("· WOOD-PELLET-ASSEMBLY · navigačný obrys");
       expect(heatingGuards[0].checkCollisions).toBe(true);
       expect(heatingGuards[0].isVisible).toBe(false);
+
+      const garageMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(GARAGE_FITOUT.id));
+      for (const required of [
+        "· UTILITY-SINK ·",
+        "· GARAGE-RACK ·",
+        "· GARAGE-SHELF ·",
+        "· REAR-SHELF ·",
+        "· PEGBOARD ·",
+        "· GARAGE-CLUTTER ·",
+        "· LONG-TOOL ·",
+        "· MOWER ·",
+      ]) {
+        expect(
+          garageMeshes.some((mesh) => mesh.name.includes(required)),
+          `garage renders ${required}`,
+        ).toBe(true);
+      }
+
+      expect(
+        garageMeshes.find((mesh) => mesh.name.includes("hlboká nerezová pracovná vaňa"))
+          ?.metadata,
+      ).toMatchObject({
+        designSourceId: GARAGE_FITOUT.sourceId,
+        plumbingStatus: GARAGE_FITOUT.plumbingStatus,
+      });
+      expect(
+        garageMeshes.filter((mesh) => mesh.name.includes("kartónová krabica")),
+      ).toHaveLength(GARAGE_FITOUT.storageRack.cardboardBoxCount);
+      expect(
+        garageMeshes.filter((mesh) => mesh.name.includes("plastový box")),
+      ).toHaveLength(GARAGE_FITOUT.storageRack.plasticBinCount);
+      expect(
+        garageMeshes.filter((mesh) => mesh.name.includes("plechovka farby")),
+      ).toHaveLength(GARAGE_FITOUT.storageRack.paintCanCount);
+      expect(
+        garageMeshes.filter((mesh) => /· MOWER · gumové koleso \d/.test(mesh.name)),
+      ).toHaveLength(4);
+      expect(
+        garageMeshes.find((mesh) => mesh.name.includes("· MOWER · sklopná oceľová rukoväť"))
+          ?.getTotalVertices(),
+      ).toBeGreaterThan(0);
+
+      const garageGuards = garageMeshes.filter(
+        (mesh) => mesh.metadata?.walkCollisionOnly === true,
+      );
+      expect(garageGuards.map((guard) => guard.name)).toEqual(expect.arrayContaining([
+        expect.stringContaining("· UTILITY-SINK · navigačný obrys"),
+        expect.stringContaining("· GARAGE-RACK · navigačný obrys"),
+        expect.stringContaining("· MOWER · navigačný obrys"),
+      ]));
+      expect(garageGuards).toHaveLength(3);
+      expect(garageMeshes.filter((mesh) => mesh.checkCollisions)).toEqual(garageGuards);
+      for (const guard of garageGuards) {
+        expect(guard.checkCollisions).toBe(true);
+        expect(guard.isVisible).toBe(false);
+      }
     } finally {
       scene.dispose();
       engine.dispose();

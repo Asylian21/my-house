@@ -241,6 +241,54 @@ export interface EnsuiteBathroomFitout {
   readonly bedroomLandingRectMm: RectMm;
 }
 
+export interface GarageFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly plumbingStatus: "CLIENT_CONCEPT_REQUIRES_ZTI_COORDINATION";
+  readonly roomId: "ROOM-1-12";
+  readonly entryDoorId: "DOOR-102-112";
+  readonly adjacentBathroomFitoutId: "ENSUITE-BATHROOM-FITOUT-2026-08-24";
+  /** Deep wall-mounted service sink on the garage face of the bath partition. */
+  readonly utilitySink: {
+    readonly footprintMm: RectMm;
+    readonly innerBasinMm: RectMm;
+    readonly facing: "WEST";
+    readonly rimElevationMm: number;
+    readonly backsplashTopElevationMm: number;
+  };
+  /** Galvanized rack south of the sink, fully outside the vehicle lane. */
+  readonly storageRack: {
+    readonly footprintMm: RectMm;
+    readonly facing: "WEST";
+    readonly heightMm: number;
+    readonly shelfElevationsMm: readonly [number, number, number, number];
+    readonly cardboardBoxCount: number;
+    readonly plasticBinCount: number;
+    readonly paintCanCount: number;
+  };
+  readonly overSinkShelves: {
+    readonly footprintMm: RectMm;
+    readonly elevationsMm: readonly [number, number];
+  };
+  /** High shelves in the rear return keep the vehicle nose clear below. */
+  readonly rearWallShelves: {
+    readonly footprintMm: RectMm;
+    readonly elevationsMm: readonly [number, number];
+    readonly clearBelowMm: number;
+  };
+  readonly mower: {
+    readonly footprintMm: RectMm;
+    readonly parkedFacing: "SOUTH";
+    readonly deckDiameterMm: number;
+    readonly handleTopElevationMm: number;
+  };
+  readonly sinkServiceRectMm: RectMm;
+  readonly vehicleClearRectsMm: readonly [RectMm, RectMm];
+  readonly entryApproachRectMm: RectMm;
+}
+
 export interface OfficeFitout {
   readonly id: string;
   readonly sourceId: string;
@@ -958,6 +1006,62 @@ export const ENSUITE_BATHROOM_FITOUT: EnsuiteBathroomFitout = Object.freeze({
   vanityClearanceRectMm: { x0: 15563, y0: 4461, x1: 16263, y1: 5361 },
   corridorLandingRectMm: { x0: 15170, y0: 4821, x1: 15610, y1: 5261 },
   bedroomLandingRectMm: { x0: 16172.5, y0: 3781, x1: 16612.5, y1: 4221 },
+});
+
+/**
+ * Used-but-orderly garage fit-out requested on 25. 8. 2026. The compact sink
+ * and shallow rack occupy the garage face of the partition directly behind
+ * the 1.11 bath, stopping before the inward-swinging corridor door. A folded
+ * mower and high rear shelves use the L-shaped return without narrowing the
+ * 3 300 mm vehicle lane below shelf level. Plumbing remains a client concept
+ * until the ZTI designer coordinates supply, waste and frost protection.
+ */
+export const GARAGE_FITOUT: GarageFitout = Object.freeze({
+  id: "GARAGE-FITOUT-2026-08-25",
+  sourceId: SOURCES.clientGarageFitoutRevision20260825.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  plumbingStatus: "CLIENT_CONCEPT_REQUIRES_ZTI_COORDINATION",
+  roomId: "ROOM-1-12",
+  entryDoorId: "DOOR-102-112",
+  adjacentBathroomFitoutId: "ENSUITE-BATHROOM-FITOUT-2026-08-24",
+  utilitySink: {
+    footprintMm: { x0: 13242, y0: 4763, x1: 13742, y1: 5363 },
+    innerBasinMm: { x0: 13297, y0: 4833, x1: 13677, y1: 5293 },
+    facing: "WEST",
+    rimElevationMm: 930,
+    backsplashTopElevationMm: 1280,
+  },
+  storageRack: {
+    footprintMm: { x0: 13242, y0: 3600, x1: 13712, y1: 4480 },
+    facing: "WEST",
+    heightMm: 2100,
+    shelfElevationsMm: [150, 720, 1290, 1860],
+    cardboardBoxCount: 4,
+    plasticBinCount: 3,
+    paintCanCount: 4,
+  },
+  overSinkShelves: {
+    footprintMm: { x0: 13452, y0: 4713, x1: 13742, y1: 5413 },
+    elevationsMm: [1510, 1990],
+  },
+  rearWallShelves: {
+    footprintMm: { x0: 7600, y0: 7549, x1: 10000, y1: 7749 },
+    elevationsMm: [1710, 2180],
+    clearBelowMm: 1675,
+  },
+  mower: {
+    footprintMm: { x0: 10342, y0: 6660, x1: 10822, y1: 7360 },
+    parkedFacing: "SOUTH",
+    deckDiameterMm: 460,
+    handleTopElevationMm: 1380,
+  },
+  sinkServiceRectMm: { x0: 12442, y0: 4763, x1: 13242, y1: 5363 },
+  vehicleClearRectsMm: [
+    { x0: 6944, y0: 3504, x1: 10240, y1: 6462 },
+    { x0: 6944, y0: 6462, x1: 10240, y1: 7549 },
+  ],
+  entryApproachRectMm: { x0: 10842, y0: 5669, x1: 13742, y1: 6462 },
 });
 
 /** Reoriented minimalist home-office composition fitted around both study windows. */

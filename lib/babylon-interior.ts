@@ -22,6 +22,7 @@ import {
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_STOVE,
+  GARAGE_FITOUT,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -2747,6 +2748,573 @@ function buildEnsuiteBathroomFitout(
   );
 }
 
+/**
+ * Realistic working corner for garage 1.12. The visible small parts stay
+ * non-colliding; three smooth guards represent the sink, floor rack and mower
+ * so the walkthrough can slide past them without snagging on handles or legs.
+ */
+function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = GARAGE_FITOUT;
+  const sink = fitout.utilitySink;
+  const sinkRect = sink.footprintMm;
+  const sinkCenter = rectCenter(sinkRect);
+  const sinkTopM = sink.rimElevationMm * MM_TO_M;
+
+  const sinkBody = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · hlboká nerezová pracovná vaňa`,
+    sinkCenter,
+    sinkRect.x1 - sinkRect.x0,
+    sinkRect.y1 - sinkRect.y0,
+    0.285,
+    sinkTopM - 0.285,
+    1,
+  );
+  sinkBody.metadata = {
+    ...(sinkBody.metadata ?? {}),
+    designSourceId: fitout.sourceId,
+    plumbingStatus: fitout.plumbingStatus,
+  };
+  finish(context, sinkBody, materials.steel, { shadow: true, pickable: true });
+
+  const inner = sink.innerBasinMm;
+  const innerCenter = rectCenter(inner);
+  const basinShadow = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · zapustené tmavé vnútro`,
+    innerCenter,
+    inner.x1 - inner.x0,
+    inner.y1 - inner.y0,
+    0.035,
+    sinkTopM - 0.075,
+    1,
+  );
+  finish(context, basinShadow, materials.blackGlass, { pickable: true });
+  const basinWater = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · tenká vrstva vody`,
+    { x: innerCenter.x - 12, y: innerCenter.y },
+    inner.x1 - inner.x0 - 42,
+    inner.y1 - inner.y0 - 42,
+    0.009,
+    sinkTopM - 0.045,
+    1,
+  );
+  finish(context, basinWater, materials.showerGlass, { pickable: true });
+
+  const rimPieces = [
+    { label: "predný", center: { x: sinkRect.x0 + 22, y: sinkCenter.y }, width: 44, depth: sinkRect.y1 - sinkRect.y0 },
+    { label: "zadný", center: { x: sinkRect.x1 - 22, y: sinkCenter.y }, width: 44, depth: sinkRect.y1 - sinkRect.y0 },
+    { label: "južný", center: { x: sinkCenter.x, y: sinkRect.y0 + 22 }, width: sinkRect.x1 - sinkRect.x0 - 88, depth: 44 },
+    { label: "severný", center: { x: sinkCenter.x, y: sinkRect.y1 - 22 }, width: sinkRect.x1 - sinkRect.x0 - 88, depth: 44 },
+  ] as const;
+  for (const piece of rimPieces) {
+    const rim = texturedBox(
+      context.scene,
+      `${fitout.id} · UTILITY-SINK · ${piece.label} zosilnený lem`,
+      piece.center,
+      piece.width,
+      piece.depth,
+      0.035,
+      sinkTopM - 0.012,
+      1,
+    );
+    finish(context, rim, materials.steel, { shadow: true });
+  }
+
+  const backsplash = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · nerezový chrbtový lem pri mokrej stene`,
+    { x: sinkRect.x1 - 14, y: sinkCenter.y },
+    28,
+    sinkRect.y1 - sinkRect.y0,
+    (sink.backsplashTopElevationMm - sink.rimElevationMm) * MM_TO_M,
+    sinkTopM,
+    1,
+  );
+  finish(context, backsplash, materials.steel, { shadow: true, pickable: true });
+
+  for (const yMm of [sinkRect.y0 + 92, sinkRect.y1 - 92]) {
+    const leg = CreateCylinder(
+      `${fitout.id} · UTILITY-SINK · nastaviteľná predná noha`,
+      { height: sinkTopM - 0.26, diameter: 0.042, tessellation: 20 },
+      context.scene,
+    );
+    leg.position.set(xM(sinkRect.x0 + 56), (sinkTopM - 0.26) / 2, zM(yMm));
+    finish(context, leg, materials.steel, { shadow: true });
+    const foot = CreateCylinder(
+      `${fitout.id} · UTILITY-SINK · gumová pätka`,
+      { height: 0.035, diameter: 0.075, tessellation: 20 },
+      context.scene,
+    );
+    foot.position.set(xM(sinkRect.x0 + 56), 0.0175, zM(yMm));
+    finish(context, foot, materials.fireplace, { shadow: true });
+  }
+
+  const sinkDrain = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · sitkový odtok`,
+    { height: 0.012, diameter: 0.072, tessellation: 28 },
+    context.scene,
+  );
+  sinkDrain.position.set(xM(innerCenter.x - 35), sinkTopM - 0.031, zM(innerCenter.y));
+  finish(context, sinkDrain, materials.steel, { pickable: true });
+
+  const trap = CreateTube(
+    `${fitout.id} · UTILITY-SINK · pohľadový sifón a odpad`,
+    {
+      path: [
+        new Vector3(xM(innerCenter.x), sinkTopM - 0.23, zM(innerCenter.y)),
+        new Vector3(xM(innerCenter.x), 0.47, zM(innerCenter.y)),
+        new Vector3(xM(innerCenter.x + 95), 0.4, zM(innerCenter.y)),
+        new Vector3(xM(sinkRect.x1 - 18), 0.4, zM(innerCenter.y)),
+      ],
+      radius: 0.026,
+      tessellation: 20,
+      cap: Mesh.CAP_ALL,
+    },
+    context.scene,
+  );
+  finish(context, trap, materials.steel, { shadow: true });
+
+  const tapRiser = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · robustná nástenná batéria`,
+    { height: 0.25, diameter: 0.034, tessellation: 24 },
+    context.scene,
+  );
+  tapRiser.position.set(xM(sinkRect.x1 - 38), 1.19, zM(sinkCenter.y));
+  finish(context, tapRiser, materials.steel, { shadow: true, pickable: true });
+  const tapSpout = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · dlhý otočný výtok`,
+    { height: 0.22, diameter: 0.027, tessellation: 24 },
+    context.scene,
+  );
+  tapSpout.rotation.z = Math.PI / 2;
+  tapSpout.position.set(xM(sinkRect.x1 - 135), 1.285, zM(sinkCenter.y));
+  finish(context, tapSpout, materials.steel, { shadow: true });
+  for (const yOffsetMm of [-72, 72]) {
+    const valve = CreateTorus(
+      `${fitout.id} · UTILITY-SINK · krížová rukoväť batérie`,
+      { diameter: 0.072, thickness: 0.012, tessellation: 24 },
+      context.scene,
+    );
+    valve.rotation.z = Math.PI / 2;
+    valve.position.set(xM(sinkRect.x1 - 52), 1.18, zM(sinkCenter.y + yOffsetMm));
+    finish(context, valve, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const bucket = CreateCylinder(
+    `${fitout.id} · GARAGE-CLUTTER · vedro pod umývadlom`,
+    { height: 0.32, diameterTop: 0.3, diameterBottom: 0.24, tessellation: 28 },
+    context.scene,
+  );
+  bucket.position.set(xM(sinkCenter.x + 60), 0.16, zM(sinkCenter.y - 95));
+  finish(context, bucket, materials.childMidnight, { shadow: true, pickable: true });
+
+  const rack = fitout.storageRack;
+  const rackRect = rack.footprintMm;
+  const rackHeightM = rack.heightMm * MM_TO_M;
+  for (const xMm of [rackRect.x0 + 20, rackRect.x1 - 20]) {
+    for (const yMm of [rackRect.y0 + 20, rackRect.y1 - 20]) {
+      const post = texturedBox(
+        context.scene,
+        `${fitout.id} · GARAGE-RACK · pozinkovaný stojan`,
+        { x: xMm, y: yMm },
+        36,
+        36,
+        rackHeightM,
+        0,
+        1,
+      );
+      finish(context, post, materials.steel, { shadow: true });
+    }
+  }
+  for (const shelfMm of rack.shelfElevationsMm) {
+    const shelf = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-RACK · nosná polica +${shelfMm}`,
+      rectCenter(rackRect),
+      rackRect.x1 - rackRect.x0,
+      rackRect.y1 - rackRect.y0,
+      0.045,
+      shelfMm * MM_TO_M,
+      1,
+    );
+    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
+  }
+
+  const cardboardBoxes = [
+    { x: 13465, y: 3780, w: 360, d: 270, h: 0.31, bottom: 0.765 },
+    { x: 13485, y: 4160, w: 330, d: 310, h: 0.37, bottom: 0.765 },
+    { x: 13465, y: 3790, w: 350, d: 280, h: 0.32, bottom: 1.905 },
+    { x: 13480, y: 4180, w: 320, d: 300, h: 0.28, bottom: 1.905 },
+  ] as const;
+  for (const [index, box] of cardboardBoxes.entries()) {
+    const carton = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · kartónová krabica ${index + 1}`,
+      { x: box.x, y: box.y },
+      box.w,
+      box.d,
+      box.h,
+      box.bottom,
+      0.55,
+    );
+    finish(context, carton, materials.childSand, { shadow: true, pickable: true });
+    const tape = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · páska krabice ${index + 1}`,
+      { x: box.x, y: box.y },
+      42,
+      box.d + 4,
+      0.008,
+      box.bottom + box.h,
+      1,
+    );
+    finish(context, tape, materials.kitchenFront);
+  }
+
+  const bins = [
+    { y: 3775, material: materials.childMidnight },
+    { y: 4070, material: materials.childClay },
+    { y: 4320, material: materials.childSage },
+  ] as const;
+  for (const [index, bin] of bins.entries()) {
+    const body = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · plastový box ${index + 1}`,
+      { x: 13475, y: bin.y },
+      370,
+      220,
+      0.29,
+      1.335,
+      1,
+    );
+    finish(context, body, bin.material, { shadow: true, pickable: true });
+    const lid = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · veko boxu ${index + 1}`,
+      { x: 13475, y: bin.y },
+      390,
+      236,
+      0.028,
+      1.625,
+      1,
+    );
+    finish(context, lid, materials.fireplace, { shadow: true });
+  }
+
+  for (const [index, yMm] of [3735, 3945, 4155, 4365].entries()) {
+    const can = CreateCylinder(
+      `${fitout.id} · GARAGE-CLUTTER · plechovka farby ${index + 1}`,
+      { height: 0.205, diameter: 0.17, tessellation: 28 },
+      context.scene,
+    );
+    can.position.set(xM(13460), 1.4175, zM(yMm));
+    finish(context, can, index % 2 === 0 ? materials.applianceEnamel : materials.childClay, {
+      shadow: true,
+      pickable: true,
+    });
+    const lid = CreateCylinder(
+      `${fitout.id} · GARAGE-CLUTTER · veko farby ${index + 1}`,
+      { height: 0.012, diameter: 0.176, tessellation: 28 },
+      context.scene,
+    );
+    lid.position.set(xM(13460), 1.526, zM(yMm));
+    finish(context, lid, materials.steel);
+  }
+
+  for (const [index, elevationM] of [0.235, 0.365].entries()) {
+    const tyre = CreateTorus(
+      `${fitout.id} · GARAGE-CLUTTER · rezervná pneumatika ${index + 1}`,
+      { diameter: 0.31, thickness: 0.075, tessellation: 32 },
+      context.scene,
+    );
+    tyre.position.set(xM(13465), elevationM, zM(4040));
+    finish(context, tyre, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const toolbox = texturedBox(
+    context.scene,
+    `${fitout.id} · GARAGE-CLUTTER · červený kufrík na náradie`,
+    { x: 13470, y: 4320 },
+    365,
+    230,
+    0.17,
+    0.765,
+    1,
+  );
+  finish(context, toolbox, materials.childClay, { shadow: true, pickable: true });
+  barHandle(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-CLUTTER · madlo kufríka`,
+    { x: 13278, y: 4320 },
+    130,
+    false,
+    0.9,
+  );
+
+  const overSink = fitout.overSinkShelves;
+  for (const shelfMm of overSink.elevationsMm) {
+    const shelf = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-SHELF · polica nad pracovným umývadlom +${shelfMm}`,
+      rectCenter(overSink.footprintMm),
+      overSink.footprintMm.x1 - overSink.footprintMm.x0,
+      overSink.footprintMm.y1 - overSink.footprintMm.y0,
+      0.04,
+      shelfMm * MM_TO_M,
+      1,
+    );
+    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
+    for (const yMm of [overSink.footprintMm.y0 + 70, overSink.footprintMm.y1 - 70]) {
+      const bracket = CreateTube(
+        `${fitout.id} · GARAGE-SHELF · trojuholníková konzola`,
+        {
+          path: [
+            new Vector3(xM(overSink.footprintMm.x1 - 18), shelfMm * MM_TO_M - 0.24, zM(yMm)),
+            new Vector3(xM(overSink.footprintMm.x0 + 24), shelfMm * MM_TO_M - 0.025, zM(yMm)),
+          ],
+          radius: 0.014,
+          tessellation: 16,
+          cap: Mesh.CAP_ALL,
+        },
+        context.scene,
+      );
+      finish(context, bracket, materials.fireplace, { shadow: true });
+    }
+  }
+
+  const pegboard = texturedBox(
+    context.scene,
+    `${fitout.id} · PEGBOARD · dierovaná stena na ručné náradie`,
+    { x: sinkRect.x1 - 12, y: sinkCenter.y },
+    24,
+    sinkRect.y1 - sinkRect.y0 + 40,
+    0.66,
+    1.29,
+    0.35,
+  );
+  finish(context, pegboard, materials.childCork, { shadow: true, pickable: true });
+  for (const elevationM of [1.39, 1.54, 1.69, 1.84]) {
+    for (const yMm of [sinkCenter.y - 210, sinkCenter.y - 70, sinkCenter.y + 70, sinkCenter.y + 210]) {
+      const hole = CreateCylinder(
+        `${fitout.id} · PEGBOARD · otvor`,
+        { height: 0.012, diameter: 0.018, tessellation: 12 },
+        context.scene,
+      );
+      hole.rotation.z = Math.PI / 2;
+      hole.position.set(xM(sinkRect.x1 - 27), elevationM, zM(yMm));
+      finish(context, hole, materials.fireplace);
+    }
+  }
+  for (const [index, tool] of [
+    { y: sinkCenter.y - 165, elevation: 1.55, length: 0.34 },
+    { y: sinkCenter.y + 15, elevation: 1.61, length: 0.45 },
+    { y: sinkCenter.y + 180, elevation: 1.58, length: 0.28 },
+  ].entries()) {
+    const handTool = texturedBox(
+      context.scene,
+      `${fitout.id} · PEGBOARD · zavesené ručné náradie ${index + 1}`,
+      { x: sinkRect.x1 - 34, y: tool.y },
+      26,
+      38,
+      tool.length,
+      tool.elevation,
+      1,
+    );
+    finish(context, handTool, index === 1 ? materials.childClay : materials.fireplace, {
+      shadow: true,
+      pickable: true,
+    });
+  }
+
+  const hose = CreateTorus(
+    `${fitout.id} · GARAGE-CLUTTER · navinutá záhradná hadica`,
+    { diameter: 0.4, thickness: 0.032, tessellation: 40 },
+    context.scene,
+  );
+  hose.rotation.z = Math.PI / 2;
+  hose.position.set(xM(13688), 2.32, zM(4060));
+  finish(context, hose, materials.childSage, { shadow: true, pickable: true });
+
+  for (const [index, tool] of [
+    { y: 4540, shaft: materials.kitchenFront, blade: materials.fireplace },
+    { y: 4630, shaft: materials.steel, blade: materials.childClay },
+  ].entries()) {
+    const shaft = CreateCylinder(
+      `${fitout.id} · LONG-TOOL · ${index === 0 ? "metla" : "lopata"} · násada`,
+      { height: 1.58, diameter: 0.03, tessellation: 16 },
+      context.scene,
+    );
+    shaft.position.set(xM(13680), 0.88, zM(tool.y));
+    shaft.rotation.z = index === 0 ? 0.04 : -0.035;
+    finish(context, shaft, tool.shaft, { shadow: true, pickable: true });
+    const head = index === 0
+      ? texturedBox(
+        context.scene,
+        `${fitout.id} · LONG-TOOL · metla · pracovná hlava`,
+        { x: 13655, y: tool.y },
+        100,
+        170,
+        0.1,
+        0.04,
+        1,
+      )
+      : softEllipsoid(
+        context,
+        `${fitout.id} · LONG-TOOL · lopata · oceľový list`,
+        { x: 13655, y: tool.y },
+        [0.16, 0.035, 0.22],
+        0.15,
+        tool.blade,
+      );
+    if (index === 0) finish(context, head, tool.blade, { shadow: true, pickable: true });
+  }
+
+  const rearShelves = fitout.rearWallShelves;
+  for (const shelfMm of rearShelves.elevationsMm) {
+    const shelf = texturedBox(
+      context.scene,
+      `${fitout.id} · REAR-SHELF · vysoká polica v zadnom výseku +${shelfMm}`,
+      rectCenter(rearShelves.footprintMm),
+      rearShelves.footprintMm.x1 - rearShelves.footprintMm.x0,
+      rearShelves.footprintMm.y1 - rearShelves.footprintMm.y0,
+      0.045,
+      shelfMm * MM_TO_M,
+      1,
+    );
+    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
+    for (const xMm of [7800, 8350, 8900, 9450, 9850]) {
+      const brace = CreateTube(
+        `${fitout.id} · REAR-SHELF · nástenná konzola`,
+        {
+          path: [
+            new Vector3(xM(xMm), shelfMm * MM_TO_M - 0.23, zM(rearShelves.footprintMm.y1 - 18)),
+            new Vector3(xM(xMm), shelfMm * MM_TO_M - 0.025, zM(rearShelves.footprintMm.y0 + 22)),
+          ],
+          radius: 0.014,
+          tessellation: 16,
+          cap: Mesh.CAP_ALL,
+        },
+        context.scene,
+      );
+      finish(context, brace, materials.fireplace, { shadow: true });
+    }
+  }
+  for (const [index, item] of [
+    { x: 7880, w: 500, h: 0.35, bottom: 1.755, material: materials.childSand, label: "staré diely" },
+    { x: 8500, w: 580, h: 0.32, bottom: 1.755, material: materials.childMidnight, label: "sezónny box" },
+    { x: 9180, w: 520, h: 0.38, bottom: 1.755, material: materials.childSage, label: "záhradné veci" },
+    { x: 9730, w: 430, h: 0.28, bottom: 2.225, material: materials.childClay, label: "rezerva" },
+  ].entries()) {
+    const itemMesh = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · zadný box ${index + 1} · ${item.label}`,
+      { x: item.x, y: 7645 },
+      item.w,
+      155,
+      item.h,
+      item.bottom,
+      0.6,
+    );
+    finish(context, itemMesh, item.material, { shadow: true, pickable: true });
+  }
+
+  const mower = fitout.mower;
+  const mowerRect = mower.footprintMm;
+  const mowerCenter = rectCenter(mowerRect);
+  const deckCenter = { x: mowerCenter.x, y: mowerRect.y0 + 205 };
+  const deck = CreateCylinder(
+    `${fitout.id} · MOWER · zelené oceľové šasi`,
+    { height: 0.13, diameter: mower.deckDiameterMm * MM_TO_M, tessellation: 48 },
+    context.scene,
+  );
+  deck.position.set(xM(deckCenter.x), 0.155, zM(deckCenter.y));
+  deck.scaling.z = 1.08;
+  finish(context, deck, materials.childSage, { shadow: true, pickable: true });
+  const engine = CreateCylinder(
+    `${fitout.id} · MOWER · motor s čiernym krytom`,
+    { height: 0.22, diameterBottom: 0.29, diameterTop: 0.24, tessellation: 32 },
+    context.scene,
+  );
+  engine.position.set(xM(deckCenter.x), 0.33, zM(deckCenter.y - 10));
+  finish(context, engine, materials.fireplace, { shadow: true, pickable: true });
+  const fuelCap = CreateCylinder(
+    `${fitout.id} · MOWER · uzáver palivovej nádrže`,
+    { height: 0.028, diameter: 0.075, tessellation: 24 },
+    context.scene,
+  );
+  fuelCap.position.set(xM(deckCenter.x + 62), 0.454, zM(deckCenter.y - 15));
+  finish(context, fuelCap, materials.childClay, { shadow: true, pickable: true });
+
+  for (const [index, wheel] of [
+    { x: mowerRect.x0 + 36, y: deckCenter.y - 135 },
+    { x: mowerRect.x1 - 36, y: deckCenter.y - 135 },
+    { x: mowerRect.x0 + 36, y: deckCenter.y + 145 },
+    { x: mowerRect.x1 - 36, y: deckCenter.y + 145 },
+  ].entries()) {
+    const wheelMesh = CreateCylinder(
+      `${fitout.id} · MOWER · gumové koleso ${index + 1}`,
+      { height: 0.072, diameter: index < 2 ? 0.15 : 0.18, tessellation: 28 },
+      context.scene,
+    );
+    wheelMesh.rotation.z = Math.PI / 2;
+    wheelMesh.position.set(xM(wheel.x), index < 2 ? 0.12 : 0.14, zM(wheel.y));
+    finish(context, wheelMesh, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const grassBag = texturedBox(
+    context.scene,
+    `${fitout.id} · MOWER · textilný zberný kôš`,
+    { x: mowerCenter.x, y: deckCenter.y + 235 },
+    330,
+    245,
+    0.255,
+    0.23,
+    0.45,
+  );
+  grassBag.rotation.x = -0.08;
+  finish(context, grassBag, materials.officeFabric, { shadow: true, pickable: true });
+
+  const handleTopY = mowerRect.y1 - 45;
+  for (const side of [-1, 1] as const) {
+    const handle = CreateTube(
+      `${fitout.id} · MOWER · sklopná oceľová rukoväť ${side < 0 ? "ľavá" : "pravá"}`,
+      {
+        path: [
+          new Vector3(xM(mowerCenter.x + side * 135), 0.39, zM(deckCenter.y + 135)),
+          new Vector3(xM(mowerCenter.x + side * 185), 0.85, zM(deckCenter.y + 330)),
+          new Vector3(xM(mowerCenter.x + side * 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+        ],
+        radius: 0.017,
+        tessellation: 18,
+        cap: Mesh.CAP_ALL,
+      },
+      context.scene,
+    );
+    finish(context, handle, materials.steel, { shadow: true, pickable: true });
+  }
+  const mowerGrip = CreateTube(
+    `${fitout.id} · MOWER · mäkké priečne madlo`,
+    {
+      path: [
+        new Vector3(xM(mowerCenter.x - 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+        new Vector3(xM(mowerCenter.x + 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+      ],
+      radius: 0.025,
+      tessellation: 20,
+      cap: Mesh.CAP_ALL,
+    },
+    context.scene,
+  );
+  finish(context, mowerGrip, materials.fireplace, { shadow: true, pickable: true });
+
+  navigationGuard(context, materials, `${fitout.id} · UTILITY-SINK · navigačný obrys`, sinkRect);
+  navigationGuard(context, materials, `${fitout.id} · GARAGE-RACK · navigačný obrys`, rackRect);
+  navigationGuard(context, materials, `${fitout.id} · MOWER · navigačný obrys`, mowerRect);
+}
+
 function softEllipsoid(
   context: InteriorBuildContext,
   name: string,
@@ -5185,6 +5753,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWcFitout(context, materials);
   buildBathroomFitout(context, materials);
   buildEnsuiteBathroomFitout(context, materials);
+  buildGarageFitout(context, materials);
   buildEntryFitout(context, materials);
   buildBedroomFitout(context, materials);
   buildChildrensBedroomFitouts(context, materials);
