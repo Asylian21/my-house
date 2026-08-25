@@ -49,8 +49,8 @@ export const GARAGE_VEHICLE = Object.freeze({
     // proportions are retained without clipping either closing leaf or wall.
     length: 4_640,
     // Width includes the mirrors; height is the complete visible envelope.
-    width: 2_070,
-    height: 1_560,
+    width: 2_090,
+    height: 1_481,
     wheelbase: 2_840,
   },
   /** Lowest tyre point sits this far above the vehicle root. */
@@ -264,6 +264,35 @@ export function garageVehiclePlanCorners(pose: GarageVehiclePose) {
         widthSign * halfWidth * sideY,
     })),
   );
+}
+
+/**
+ * The walker must not be frozen in the car's swept parking lane or in the
+ * sectional-door safety strip while the street cinematic is running.
+ */
+export function garageCinematicRequiresSafePosition(
+  pointMm: Point2Mm,
+  avatarClearanceMm = 400,
+) {
+  const clearance = Math.max(0, avatarClearanceMm);
+  const laneHalfWidth = GARAGE_VEHICLE.dimensionsMm.width / 2 + clearance;
+  const laneMinimumY = GARAGE_VEHICLE.door.faceYmm - clearance;
+  const laneMaximumY =
+    GARAGE_VEHICLE.route.parkedMm.y +
+    GARAGE_VEHICLE.dimensionsMm.length / 2 +
+    clearance;
+  const inVehicleLane =
+    Math.abs(pointMm.x - GARAGE_VEHICLE.route.parkedMm.x) <= laneHalfWidth &&
+    pointMm.y >= laneMinimumY &&
+    pointMm.y <= laneMaximumY;
+
+  const doorMinimumX =
+    GARAGE_VEHICLE.route.parkedMm.x - GARAGE_VEHICLE.door.widthMm / 2;
+  const inDoorSafetyStrip =
+    pointMm.x >= doorMinimumX - clearance &&
+    pointMm.x <= doorMinimumX + GARAGE_VEHICLE.door.widthMm + clearance &&
+    Math.abs(pointMm.y - GARAGE_VEHICLE.door.faceYmm) <= 700 + clearance;
+  return inVehicleLane || inDoorSafetyStrip;
 }
 
 export function garageAnimationFrame(

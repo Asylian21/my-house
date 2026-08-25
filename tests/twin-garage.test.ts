@@ -6,13 +6,21 @@ import {
   garageActionForState,
   garageActionLabel,
   garageAnimationFrame,
+  garageCinematicRequiresSafePosition,
   garageDoorPanelPose,
   garageParkingStatus,
   garageVehiclePlanCorners,
   garageVehicleSurfaceElevationM,
   type GarageVehicleAction,
 } from "../lib/twin-garage";
-import { GARAGE_FITOUT } from "../lib/twin-interior";
+import {
+  GARAGE_SUPERB_AXLES_M,
+  GARAGE_SUPERB_BODY_STATIONS,
+  GARAGE_SUPERB_CABIN_STATIONS,
+  vehicleLoftBounds,
+  vehicleLoftGeometry,
+} from "../lib/twin-garage-model";
+import { GARAGE_FITOUT, INTERIOR_ROOMS } from "../lib/twin-interior";
 import { HOUSE, SITE_SURFACES } from "../lib/twin-site";
 
 describe("garage vehicle contract", () => {
@@ -89,6 +97,83 @@ describe("garage vehicle contract", () => {
         expect(corner.x).toBeLessThanOrEqual(
           GARAGE_VEHICLE.driveway.xMaxMm,
         );
+      }
+    }
+  });
+
+  it("relocates only walkers in the swept lane or door safety strip", () => {
+    const safeGaragePoint = INTERIOR_ROOMS.find(
+      ({ id }) => id === GARAGE_VEHICLE.roomId,
+    )!.standingPointMm;
+    expect(garageCinematicRequiresSafePosition(safeGaragePoint)).toBe(false);
+    expect(
+      garageCinematicRequiresSafePosition(GARAGE_VEHICLE.route.parkedMm),
+    ).toBe(true);
+    expect(
+      garageCinematicRequiresSafePosition({
+        x: HOUSE.facades.front.garageDoor.startXmm + 120,
+        y: HOUSE.facades.front.faceYmm,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("modern Superb visual geometry", () => {
+  it("builds finite, capped and index-safe smooth lofts", () => {
+    for (const stations of [
+      GARAGE_SUPERB_BODY_STATIONS,
+      GARAGE_SUPERB_CABIN_STATIONS,
+    ]) {
+      const geometry = vehicleLoftGeometry(stations);
+      expect(geometry.positions.length).toBe(stations.length * 10 * 3);
+      expect(geometry.positions.every(Number.isFinite)).toBe(true);
+      expect(geometry.uvs.every(Number.isFinite)).toBe(true);
+      expect(geometry.indices.length % 3).toBe(0);
+      expect(Math.min(...geometry.indices)).toBe(0);
+      expect(Math.max(...geometry.indices)).toBeLessThan(
+        geometry.positions.length / 3,
+      );
+    }
+  });
+
+  it("matches modern proportions while staying inside the garage envelope", () => {
+    const body = vehicleLoftBounds(
+      vehicleLoftGeometry(GARAGE_SUPERB_BODY_STATIONS),
+    );
+    const cabin = vehicleLoftBounds(
+      vehicleLoftGeometry(GARAGE_SUPERB_CABIN_STATIONS),
+    );
+    expect(body.maximum[2] - body.minimum[2]).toBeCloseTo(1.849, 6);
+    expect(Math.max(Math.abs(body.minimum[0]), body.maximum[0])).toBeLessThanOrEqual(
+      GARAGE_VEHICLE.dimensionsMm.length / 2_000,
+    );
+    expect(Math.max(Math.abs(body.minimum[2]), body.maximum[2])).toBeLessThanOrEqual(
+      GARAGE_VEHICLE.dimensionsMm.width / 2_000,
+    );
+    expect(cabin.maximum[1] - GARAGE_VEHICLE.wheelGroundOffsetM).toBeCloseTo(
+      GARAGE_VEHICLE.dimensionsMm.height / 1_000,
+      6,
+    );
+    expect(GARAGE_VEHICLE.dimensionsMm.width).toBe(2_090);
+    expect(GARAGE_SUPERB_AXLES_M.frontX - GARAGE_SUPERB_AXLES_M.rearX).toBeCloseTo(
+      GARAGE_VEHICLE.dimensionsMm.wheelbase / 1_000,
+      6,
+    );
+  });
+
+  it("keeps every loft cross-section exactly symmetric around vehicle Z", () => {
+    for (const stations of [
+      GARAGE_SUPERB_BODY_STATIONS,
+      GARAGE_SUPERB_CABIN_STATIONS,
+    ]) {
+      const { positions } = vehicleLoftGeometry(stations);
+      for (let station = 0; station < stations.length; station += 1) {
+        const zValues = Array.from({ length: 10 }, (_, ring) =>
+          positions[(station * 10 + ring) * 3 + 2].toFixed(6),
+        );
+        for (const value of zValues) {
+          expect(zValues).toContain((-Number(value)).toFixed(6));
+        }
       }
     }
   });

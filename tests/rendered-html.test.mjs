@@ -99,7 +99,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   // The glide step lives in the contract (`stepOrbitZoom` wraps
   // `easeOrbitRadius`) so the scene only consumes the settled result.
   assert.match(scene, /stepOrbitZoom\(/);
-  assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
+  assert.match(
+    scene,
+    /const cameras = \[\s*this\.orbitCamera,\s*this\.flightCamera,\s*this\.garageCinematicCamera,\s*this\.avatar\.camera,\s*\];/,
+  );
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   // Water keeps true refraction; glazing is alpha-blended so the interior
   // fit-out shows through from outside and the terrace from inside.
@@ -159,7 +162,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /<fieldset[\s\S]*className="walk-avatar-picker"/);
   assert.match(viewport, /WALK_AVATARS\.map/);
   assert.match(viewport, /type="radio"/);
-  assert.match(viewport, /aria-busy=\{pendingWalkAvatarId !== null\}/);
+  assert.match(
+    viewport,
+    /aria-busy=\{pendingWalkAvatarId !== null \|\| !garageAction\}/,
+  );
   assert.match(viewport, /controller\.setWalkAvatar\(id\)/);
   assert.match(viewport, /WALK_AVATAR_STORAGE_KEY/);
   assert.match(viewport, /event\.detail !== 0/);

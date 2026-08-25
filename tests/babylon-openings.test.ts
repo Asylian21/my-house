@@ -218,10 +218,21 @@ describe("Babylon facade openings", () => {
       ]);
       expect(doors.filter(({ kind }) => kind === "HINGED")).toHaveLength(3);
       expect(doors.filter(({ kind }) => kind === "SLIDING")).toHaveLength(3);
+      const expectedHingedAngles: Readonly<Record<string, number>> = {
+        "FRONT-ENTRY": Math.PI / 2,
+        "EAST-03": Math.PI / 2,
+        "LOGGIA-DOOR": -Math.PI / 2,
+      };
+      const expectedSlidingTravelM: Readonly<Record<string, number>> = {
+        "GARDEN-02": 1.147,
+        "GARDEN-03": 0.897,
+        "WING-WEST-01": 1.022,
+      };
       for (const door of doors) {
         const movingLeaf = scene.meshes.find(
           (mesh) =>
-            mesh.metadata?.doorId === door.id && mesh.checkCollisions,
+            mesh.metadata?.doorId === door.id &&
+            mesh.metadata?.dynamicCameraOccluder,
         );
         expect(movingLeaf, `${door.id} has a moving collision leaf`).toBeDefined();
         expect(movingLeaf?.checkCollisions).toBe(true);
@@ -238,6 +249,56 @@ describe("Babylon facade openings", () => {
         door.apply(1, 1);
         movingLeaf?.computeWorldMatrix(true);
         door.apply(0, 0);
+
+        if (door.kind === "HINGED") {
+          const hinge = scene.transformNodes.find(
+            ({ name }) => name === `${door.id} · exteriérový pánt`,
+          );
+          expect(hinge, `${door.id} has an exterior hinge`).toBeDefined();
+          door.apply(1, 0);
+          expect(hinge!.rotation.y).toBeCloseTo(
+            expectedHingedAngles[door.id],
+            10,
+          );
+          door.apply(0, 0);
+          expect(hinge!.rotation.y).toBeCloseTo(0, 10);
+        }
+
+        if (door.kind === "SLIDING") {
+          const movingRoot = scene.transformNodes.find(
+            ({ name }) => name === `${door.id} · posuvný vozík`,
+          );
+          expect(movingRoot, `${door.id} has a sliding carriage`).toBeDefined();
+          const closedPosition = movingRoot!.position.clone();
+
+          door.apply(0.5, 1);
+          expect(movingRoot!.position.y).toBeCloseTo(0.008, 8);
+
+          door.apply(1, 0);
+          const openPosition = movingRoot!.position.clone();
+          expect(openPosition.y).toBeCloseTo(0.008, 8);
+          expect(
+            Math.hypot(
+              openPosition.x - closedPosition.x,
+              openPosition.z - closedPosition.z,
+            ),
+          ).toBeCloseTo(expectedSlidingTravelM[door.id], 6);
+
+          const movingFrame = scene.meshes.filter(
+            (mesh) =>
+              mesh.metadata?.doorId === door.id &&
+              mesh.name.includes("posuvné krídlo"),
+          );
+          expect(movingFrame.length).toBeGreaterThanOrEqual(5);
+          expect(movingFrame.every(({ checkCollisions }) => checkCollisions)).toBe(
+            true,
+          );
+
+          door.apply(0, 0);
+          expect(movingRoot!.position.asArray()).toEqual(
+            closedPosition.asArray(),
+          );
+        }
       }
 
       const frontDoor = doors.find(({ id }) => id === "FRONT-ENTRY")!;

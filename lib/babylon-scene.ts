@@ -122,12 +122,20 @@ import {
   GARAGE_VEHICLE,
   garageActionForState,
   garageAnimationFrame,
+  garageCinematicRequiresSafePosition,
   garageDoorPanelPose,
   garageVehicleSurfaceElevationM,
   type GarageAnimationFrame,
   type GarageParkingState,
   type GarageVehicleAction,
 } from "./twin-garage";
+import {
+  GARAGE_SUPERB_AXLES_M,
+  GARAGE_SUPERB_BODY_STATIONS,
+  GARAGE_SUPERB_CABIN_STATIONS,
+  vehicleLoftGeometry,
+  type VehicleLoftStation,
+} from "./twin-garage-model";
 import {
   ORBIT_ZOOM,
   clampOrbitRadius,
@@ -215,6 +223,28 @@ function pbrMaterial(
     material.useAlphaFromAlbedoTexture = false;
   }
   return material;
+}
+
+function createVehicleLoftMesh(
+  scene: Scene,
+  name: string,
+  stations: readonly VehicleLoftStation[],
+  material: Material,
+) {
+  const geometry = vehicleLoftGeometry(stations);
+  const positions = [...geometry.positions];
+  const indices = [...geometry.indices];
+  const mesh = new Mesh(name, scene);
+  const normals = new Array(positions.length).fill(0);
+  VertexData.ComputeNormals(positions, indices, normals);
+  const data = new VertexData();
+  data.positions = positions;
+  data.indices = indices;
+  data.normals = normals;
+  data.uvs = [...geometry.uvs];
+  data.applyToMesh(mesh);
+  mesh.material = material;
+  return mesh;
 }
 
 function createVerticalTriangle(
@@ -785,6 +815,7 @@ export class TwinSceneController {
   private readonly scene: Scene;
   private readonly orbitCamera: ArcRotateCamera;
   private readonly flightCamera: UniversalCamera;
+  private readonly garageCinematicCamera: UniversalCamera;
   private readonly layerMeshes = new Map<LayerId, AbstractMesh[]>();
   private readonly entityMeshes = new Map<string, AbstractMesh[]>();
   private readonly foundationMeshes = new Map<string, Mesh>();
@@ -834,6 +865,7 @@ export class TwinSceneController {
   private readonly garageVehicleWheelSpins: TransformNode[] = [];
   private readonly garageVehicleFrontSteering: TransformNode[] = [];
   private garageVehicleBrakeMaterial: PBRMaterial | null = null;
+  private garageVehicleHeadlightMaterial: PBRMaterial | null = null;
   private garageParkingState: GarageParkingState = "away";
   private garageVehicleAction: GarageVehicleAction | null = null;
   private garageVehicleElapsedMs = 0;
@@ -841,6 +873,11 @@ export class TwinSceneController {
   private garageVehicleLastPose: GarageAnimationFrame["vehiclePose"] | null = null;
   private garageVehicleWheelAngle = 0;
   private garageVehicleSteeringAngle = 0;
+  private garageCinematicActive = false;
+  private garageCinematicReturnCamera:
+    | ArcRotateCamera
+    | UniversalCamera
+    | null = null;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -955,7 +992,21 @@ export class TwinSceneController {
     this.flightCamera.fov = this.orbitCamera.fov;
     this.flightCamera.setTarget(this.orbitCamera.target);
     this.flightCamera.detachControl();
+
+    this.garageCinematicCamera = new UniversalCamera(
+      "garage-street-cinematic-camera",
+      new Vector3(0, 3, 28),
+      this.scene,
+    );
+    this.garageCinematicCamera.inputs.clear();
+    this.garageCinematicCamera.minZ = 0.12;
+    this.garageCinematicCamera.maxZ = 220;
+    this.garageCinematicCamera.detachControl();
+    this.configureGarageCinematicCamera(
+      garageAnimationFrame("park", 0).vehiclePose,
+    );
     this.scene.activeCamera = this.orbitCamera;
+    this.canvas.dataset.garageCameraView = "garage";
     // The walker's chase camera exists from the start so every post-process
     // pipeline can own it; the rigged glTF itself loads on the first walk.
     this.avatar = new AvatarController(this.scene, (mesh) => {
@@ -1022,7 +1073,12 @@ export class TwinSceneController {
       "architectural-photo-pipeline",
       true,
       this.scene,
-      [this.orbitCamera, this.flightCamera, this.avatar.camera],
+      [
+        this.orbitCamera,
+        this.flightCamera,
+        this.garageCinematicCamera,
+        this.avatar.camera,
+      ],
     );
     this.postPipeline.samples = this.renderQuality.msaaSamples;
     this.postPipeline.fxaaEnabled = this.renderQuality.fxaaEnabled;
@@ -1043,7 +1099,11 @@ export class TwinSceneController {
     this.postPipeline.grainEnabled = false;
     this.postPipeline.grain.intensity = 9;
     this.postPipeline.grain.animated = true;
-    const renderCameras = [this.orbitCamera, this.flightCamera];
+    const renderCameras = [
+      this.orbitCamera,
+      this.flightCamera,
+      this.garageCinematicCamera,
+    ];
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
     // Construct once even when the initial mobile tier is HIGH. This allows a
     // later resize/promotion to ULTRA to attach SSAO instead of silently losing
@@ -1505,6 +1565,7 @@ export class TwinSceneController {
     }
 
     this.scene.onPointerDown = (event) => {
+      if (this.garageCinematicActive) return;
       if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
       if (
         this.navigationMode === "walk" &&
@@ -1531,6 +1592,7 @@ export class TwinSceneController {
       };
     };
     this.scene.onPointerMove = (event) => {
+      if (this.garageCinematicActive) return;
       const gesture = this.pointerGesture;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       if (
@@ -1552,6 +1614,7 @@ export class TwinSceneController {
       );
     };
     this.scene.onPointerUp = (event, pick) => {
+      if (this.garageCinematicActive) return;
       const gesture = this.pointerGesture;
       this.activePointers.delete(event.pointerId);
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -1654,6 +1717,17 @@ export class TwinSceneController {
   }
 
   private readonly handleFlightKeyDown = (event: KeyboardEvent) => {
+    if (this.garageCinematicActive) {
+      if (
+        event.code === "KeyE" ||
+        event.code.startsWith("Shift") ||
+        event.code.startsWith("Alt") ||
+        flightCommandForCode(event.code)
+      ) {
+        event.preventDefault();
+      }
+      return;
+    }
     if (
       (this.navigationMode !== "flight" && this.navigationMode !== "walk") ||
       event.metaKey ||
@@ -1678,6 +1752,10 @@ export class TwinSceneController {
   };
 
   private readonly handleFlightKeyUp = (event: KeyboardEvent) => {
+    if (this.garageCinematicActive) {
+      this.clearFlightInput();
+      return;
+    }
     if (this.navigationMode === "walk" && event.code === "KeyE") {
       event.preventDefault();
       return;
@@ -1714,6 +1792,7 @@ export class TwinSceneController {
   private readonly handleCanvasWheel = (event: WheelEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (this.garageCinematicActive) return;
     const pixels = normalizeWheelPixels(event);
     if (!pixels) return;
     if (this.navigationMode === "walk") {
@@ -1763,6 +1842,107 @@ export class TwinSceneController {
   private cancelOrbitZoomGlide() {
     this.orbitZoomActive = false;
     this.orbitZoomTargetM = this.orbitCamera.radius;
+  }
+
+  /** Fixed eye on the street with a pan that keeps the moving car in frame. */
+  private configureGarageCinematicCamera(
+    pose: GarageAnimationFrame["vehiclePose"],
+  ) {
+    const mobile = this.canvas.clientWidth < 600;
+    this.garageCinematicCamera.position.set(
+      xM(GARAGE_VEHICLE.route.queueMm.x) + (mobile ? 2.2 : 3.4),
+      mobile ? 3.25 : 2.85,
+      zM(GARAGE_VEHICLE.route.streetStartMm.y) + (mobile ? 11.2 : 7.2),
+    );
+    this.garageCinematicCamera.fov = mobile ? 0.72 : 0.58;
+    this.garageCinematicCamera.setTarget(
+      new Vector3(
+        xM(pose.centerMm.x),
+        garageVehicleSurfaceElevationM(pose.centerMm) + 0.82,
+        zM(pose.centerMm.y),
+      ),
+    );
+  }
+
+  private ensureGarageCinematicAvatarClearance() {
+    const pose = this.avatar.pose;
+    const pointMm = {
+      x: Math.round(pose.x * 1_000 + SCENE_CENTER_MM.x),
+      y: Math.round(SCENE_CENTER_MM.y - pose.z * 1_000),
+    };
+    if (!garageCinematicRequiresSafePosition(pointMm)) {
+      this.canvas.dataset.garageAvatarRelocated = "false";
+      return;
+    }
+    const garage = INTERIOR_ROOMS.find(
+      (room) => room.id === GARAGE_VEHICLE.roomId,
+    );
+    if (!garage) return;
+    const standing = garage.standingPointMm;
+    const look = walkLookTargetMm(garage);
+    const yaw = Math.atan2(
+      xM(look.x) - xM(standing.x),
+      zM(look.y) - zM(standing.y),
+    );
+    this.avatar.place(xM(standing.x), zM(standing.y), yaw);
+    this.flightHeading = { x: Math.sin(yaw), z: Math.cos(yaw) };
+    this.applyWalkView();
+    this.canvas.dataset.garageAvatarRelocated = "true";
+  }
+
+  private beginGarageCinematic() {
+    if (
+      this.garageCinematicActive ||
+      this.navigationMode !== "walk" ||
+      this.getWalkRoom()?.id !== GARAGE_VEHICLE.roomId
+    ) {
+      return false;
+    }
+    this.ensureGarageCinematicAvatarClearance();
+    const active = this.scene.activeCamera;
+    if (active !== this.avatar.camera && active !== this.flightCamera) {
+      return false;
+    }
+    this.clearFlightInput();
+    this.activePointers.clear();
+    this.pointerGesture = null;
+    active.detachControl();
+    this.garageCinematicReturnCamera = active;
+    this.garageCinematicActive = true;
+    this.configureGarageCinematicCamera(
+      garageAnimationFrame(
+        garageActionForState(this.garageParkingState) ?? "park",
+        0,
+      ).vehiclePose,
+    );
+    this.scene.activeCamera = this.garageCinematicCamera;
+    this.canvas.dataset.garageCameraView = "street";
+    return true;
+  }
+
+  private endGarageCinematic(restoreControl = true) {
+    if (!this.garageCinematicActive) return;
+    const returnCamera = this.garageCinematicReturnCamera;
+    this.garageCinematicActive = false;
+    this.garageCinematicReturnCamera = null;
+    this.garageCinematicCamera.detachControl();
+    this.clearFlightInput();
+    this.activePointers.clear();
+    this.pointerGesture = null;
+    this.canvas.dataset.garageCameraView = "garage";
+    if (!restoreControl || !returnCamera) return;
+    if (returnCamera === this.avatar.camera) {
+      this.flightCamera.detachControl();
+      this.avatar.setFirstPerson(false);
+      this.scene.activeCamera = returnCamera;
+      returnCamera.attachControl(this.canvas, true);
+    } else {
+      this.avatar.camera.detachControl();
+      this.avatar.setFirstPerson(true);
+      this.scene.activeCamera = returnCamera;
+      returnCamera.attachControl(false);
+    }
+    this.canvas.focus({ preventScroll: true });
   }
 
   private applyGarageAnimationFrame(frame: GarageAnimationFrame) {
@@ -1827,15 +2007,32 @@ export class TwinSceneController {
         for (const wheel of this.garageVehicleWheelSpins) {
           wheel.rotation.z = this.garageVehicleWheelAngle;
         }
+        this.avatar.invalidateDynamicCameraOccluders();
       }
     }
     if (this.garageVehicleBrakeMaterial) {
-      const intensity =
-        frame.vehicleVisible && frame.vehiclePose.motion === "still"
+      const sequenceRunning = Boolean(this.garageVehicleAction) && !frame.complete;
+      const intensity = !frame.vehicleVisible
+        ? 0
+        : sequenceRunning && frame.vehiclePose.motion === "still"
           ? 0.94
-          : 0.4;
+          : sequenceRunning
+            ? 0.28
+            : frame.state === "parked"
+              ? 0.08
+              : 0;
       this.garageVehicleBrakeMaterial.emissiveColor =
         Color3.FromHexString("#d3121c").scale(intensity);
+    }
+    if (this.garageVehicleHeadlightMaterial) {
+      const intensity =
+        frame.vehicleVisible && this.garageVehicleAction && !frame.complete
+          ? 0.72
+          : frame.state === "parked"
+            ? 0.06
+            : 0;
+      this.garageVehicleHeadlightMaterial.emissiveColor =
+        Color3.FromHexString("#bddfff").scale(intensity);
     }
     this.garageVehicleLastPose = frame.vehicleVisible
       ? frame.vehiclePose
@@ -1846,6 +2043,9 @@ export class TwinSceneController {
     this.canvas.dataset.garageVehicleVisible = frame.vehicleVisible
       ? "true"
       : "false";
+    if (this.garageCinematicActive) {
+      this.configureGarageCinematicCamera(frame.vehiclePose);
+    }
   }
 
   /** Render-loop sequence; capped frame deltas prevent jumps after tab sleep. */
@@ -1879,6 +2079,7 @@ export class TwinSceneController {
       return;
     }
     this.garageVehicleAction = null;
+    this.endGarageCinematic();
   }
 
   /** Door transforms and collision matrices settle before walker movement. */
@@ -1890,8 +2091,9 @@ export class TwinSceneController {
         0,
         Math.cos(pose.yaw),
       );
-      const cameraForward =
-        this.scene.activeCamera?.getForwardRay(1).direction ?? fallback;
+      const cameraForward = this.garageCinematicActive
+        ? fallback
+        : (this.scene.activeCamera?.getForwardRay(1).direction ?? fallback);
       const horizontalLength = Math.hypot(cameraForward.x, cameraForward.z);
       this.doors.setActor({
         position: { x: pose.x, z: pose.z },
@@ -1916,6 +2118,7 @@ export class TwinSceneController {
   }
 
   private updateFlightMotion() {
+    if (this.garageCinematicActive) return;
     if (this.navigationMode === "walk") {
       this.updateWalkMotion();
       return;
@@ -3696,21 +3899,21 @@ export class TwinSceneController {
     const paint = pbrMaterial(
       this.scene,
       "Superb · metalická modrá karoséria",
-      "#183a54",
-      0.18,
-      0.78,
+      "#123047",
+      0.24,
+      0.56,
     );
     paint.clearCoat.isEnabled = true;
     paint.clearCoat.intensity = 1;
-    paint.clearCoat.roughness = 0.075;
-    paint.environmentIntensity = 1.45;
+    paint.clearCoat.roughness = 0.055;
+    paint.environmentIntensity = 0.88;
     const glass = pbrMaterial(
       this.scene,
       "Superb · tónované sklá",
-      "#18262d",
-      0.06,
-      0.08,
-      0.62,
+      "#07151d",
+      0.1,
+      0.04,
+      0.9,
     );
     glass.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
     glass.environmentIntensity = 1.6;
@@ -3745,6 +3948,13 @@ export class TwinSceneController {
       0.12,
       0.94,
     );
+    const darkChrome = pbrMaterial(
+      this.scene,
+      "Superb · Unique Dark Chrome",
+      "#4e565a",
+      0.18,
+      0.95,
+    );
     const headlight = pbrMaterial(
       this.scene,
       "Superb · LED svetlomety",
@@ -3753,6 +3963,7 @@ export class TwinSceneController {
       0.16,
     );
     headlight.emissiveColor = Color3.FromHexString("#bddfff").scale(0.72);
+    this.garageVehicleHeadlightMaterial = headlight;
     const brake = pbrMaterial(
       this.scene,
       "Superb · zadné LED svetlá",
@@ -3799,77 +4010,206 @@ export class TwinSceneController {
 
     const halfVehicleLengthM = vehicle.dimensionsMm.length * MM_TO_M / 2;
     const halfVehicleWidthM = vehicle.dimensionsMm.width * MM_TO_M / 2;
-    const vehicleHeightM = vehicle.dimensionsMm.height * MM_TO_M;
+    const registerVisual = (mesh: Mesh, shadow = true) => {
+      mesh.parent = root;
+      mesh.isPickable = false;
+      mesh.receiveShadows = shadow;
+      if (shadow) this.castShadow(mesh);
+      this.realisticOnly(mesh);
+      this.register(mesh, "building", vehicle.id);
+      return mesh;
+    };
 
-    // Long bonnet, crisp shoulder and fastback cabin retain the Superb's calm
-    // limousine silhouette while the rounded light clusters soften the boxes.
-    addBox("spodný prah karosérie", { x: halfVehicleLengthM * 2 - 0.02, y: 0.28, z: 1.82 }, { x: 0, y: 0.43, z: 0 }, paint, 0, true, true);
-    addBox("hlavný bok karosérie", { x: 4.47, y: 0.39, z: 1.76 }, { x: 0.02, y: 0.7, z: 0 }, paint, 0, true, true);
-    addBox("dlhá predná kapota", { x: 1.42, y: 0.17, z: 1.68 }, { x: 1.47, y: 0.96, z: 0 }, paint, -0.025);
-    addBox("zadné veko", { x: 0.98, y: 0.16, z: 1.66 }, { x: -1.72, y: 0.94, z: 0 }, paint, 0.035);
-    addBox("kabína", { x: 2.18, y: 0.56, z: 1.53 }, { x: -0.1, y: 1.22, z: 0 }, glass, 0, false);
-    addBox("strecha", { x: 1.55, y: 0.075, z: 1.51 }, { x: -0.18, y: vehicle.wheelGroundOffsetM + vehicleHeightM - 0.0375, z: 0 }, paint);
-    addBox("čelné sklo", { x: 0.035, y: 0.58, z: 1.5 }, { x: 0.99, y: 1.23, z: 0 }, glass, -0.39, false);
-    addBox("zadné sklo", { x: 0.035, y: 0.54, z: 1.48 }, { x: -1.18, y: 1.22, z: 0 }, glass, 0.43, false);
+    const body = createVehicleLoftMesh(
+      this.scene,
+      `${vehicle.label} · hladká karoséria Modern Solid`,
+      GARAGE_SUPERB_BODY_STATIONS,
+      paint,
+    );
+    body.metadata = { vehicleGeneration: "SUPERB-IV-INSPIRED" };
+    registerVisual(body);
+    const cabin = createVehicleLoftMesh(
+      this.scene,
+      `${vehicle.label} · plynulá presklená kabína`,
+      GARAGE_SUPERB_CABIN_STATIONS,
+      glass,
+    );
+    cabin.metadata = { vehicleGeneration: "SUPERB-IV-INSPIRED" };
+    registerVisual(cabin, false);
+
+    // Simple hidden colliders keep walkthrough response stable; the smooth
+    // display shell is intentionally never used for per-triangle collision.
+    for (const [name, size, position] of [
+      [
+        "spodný kolízny obal",
+        { x: 4.54, y: 0.68, z: 1.82 },
+        { x: 0, y: 0.55, z: 0 },
+      ],
+      [
+        "horný kolízny obal",
+        { x: 2.38, y: 0.5, z: 1.46 },
+        { x: -0.15, y: 1.22, z: 0 },
+      ],
+    ] as const) {
+      const collider = CreateBox(
+        `${vehicle.label} · ${name}`,
+        { width: size.x, height: size.y, depth: size.z },
+        this.scene,
+      );
+      collider.parent = root;
+      collider.position.set(position.x, position.y, position.z);
+      collider.isPickable = false;
+      collider.isVisible = false;
+      collider.checkCollisions = true;
+      collider.metadata = {
+        vehicleCollider: true,
+        cameraOccluder: true,
+        dynamicCameraOccluder: true,
+      };
+      this.register(collider, "building", vehicle.id);
+    }
 
     for (const side of [-1, 1] as const) {
       addBox(
-        `bočné sklá ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 1.86, y: 0.43, z: 0.022 },
-        { x: -0.1, y: 1.24, z: side * 0.778 },
-        glass,
-        0,
-        false,
+        `A stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.075, y: 0.5, z: 0.026 },
+        { x: 0.78, y: 1.22, z: side * 0.69 },
+        paint,
+        -0.58,
       );
       addBox(
         `B stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.095, y: 0.5, z: 0.035 },
-        { x: -0.18, y: 1.24, z: side * 0.794 },
+        { x: 0.075, y: 0.47, z: 0.026 },
+        { x: -0.2, y: 1.235, z: side * 0.752 },
         dark,
       );
       addBox(
+        `C stĺpik ${side < 0 ? "vľavo" : "vpravo"}`,
+        { x: 0.11, y: 0.38, z: 0.026 },
+        { x: -1.03, y: 1.18, z: side * 0.707 },
+        paint,
+        0.33,
+      );
+      addBox(
         `spätné zrkadlo ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.24, y: 0.12, z: 0.19 },
+        { x: 0.23, y: 0.105, z: 0.19 },
         { x: 0.63, y: 1.2, z: side * (halfVehicleWidthM - 0.095) },
         paint,
       );
-      addBox(
-        `predný LED svetlomet ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.035, y: 0.2, z: 0.47 },
-        { x: halfVehicleLengthM - 0.023, y: 0.8, z: side * 0.55 },
-        headlight,
-        0,
-        false,
-      );
+      for (let segment = 0; segment < 3; segment += 1) {
+        addBox(
+          `Matrix LED ${side < 0 ? "vľavo" : "vpravo"} · segment ${segment + 1}`,
+          { x: 0.026, y: 0.09, z: 0.13 },
+          {
+            x: halfVehicleLengthM - 0.018,
+            y: 0.765 + segment * 0.008,
+            z: side * (0.45 + segment * 0.145),
+          },
+          headlight,
+          0,
+          false,
+        );
+      }
       addBox(
         `zadné LED svetlo ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.035, y: 0.21, z: 0.5 },
-        { x: -halfVehicleLengthM + 0.023, y: 0.79, z: side * 0.57 },
+        { x: 0.026, y: 0.14, z: 0.5 },
+        { x: -halfVehicleLengthM + 0.018, y: 0.745, z: side * 0.59 },
         brake,
         0,
         false,
       );
+      for (const x of [-0.92, 0.24]) {
+        addBox(
+          `kľučka dverí ${side < 0 ? "vľavo" : "vpravo"}`,
+          { x: 0.17, y: 0.024, z: 0.018 },
+          { x, y: 0.9, z: side * 0.929 },
+          darkChrome,
+          0,
+          false,
+        );
+      }
+      for (const x of [-1.38, -0.2, 0.83]) {
+        addBox(
+          `škára dverí ${side < 0 ? "vľavo" : "vpravo"}`,
+          { x: 0.012, y: 0.5, z: 0.01 },
+          { x, y: 0.67, z: side * 0.927 },
+          dark,
+          0,
+          false,
+        );
+      }
     }
 
-    addBox("predná maska", { x: 0.035, y: 0.34, z: 1.03 }, { x: halfVehicleLengthM - 0.022, y: 0.59, z: 0 }, dark);
-    for (const z of [-0.38, -0.19, 0, 0.19, 0.38]) {
-      addBox("zvislá lamela masky", { x: 0.012, y: 0.26, z: 0.018 }, { x: halfVehicleLengthM - 0.008, y: 0.59, z }, chrome, 0, false);
+    addBox(
+      "zadná svetelná línia",
+      { x: 0.024, y: 0.035, z: 1.32 },
+      { x: -halfVehicleLengthM + 0.016, y: 0.755, z: 0 },
+      brake,
+      0,
+      false,
+    );
+    addBox("predná maska", { x: 0.028, y: 0.34, z: 1.04 }, { x: halfVehicleLengthM - 0.018, y: 0.58, z: 0 }, dark);
+    const grilleOutline = CreateTube(
+      `${vehicle.label} · oktagonálny rám masky`,
+      {
+        path: [
+          new Vector3(halfVehicleLengthM - 0.014, 0.75, -0.52),
+          new Vector3(halfVehicleLengthM - 0.014, 0.79, -0.43),
+          new Vector3(halfVehicleLengthM - 0.014, 0.79, 0.43),
+          new Vector3(halfVehicleLengthM - 0.014, 0.75, 0.52),
+          new Vector3(halfVehicleLengthM - 0.014, 0.43, 0.52),
+          new Vector3(halfVehicleLengthM - 0.014, 0.38, 0.43),
+          new Vector3(halfVehicleLengthM - 0.014, 0.38, -0.43),
+          new Vector3(halfVehicleLengthM - 0.014, 0.43, -0.52),
+          new Vector3(halfVehicleLengthM - 0.014, 0.75, -0.52),
+        ],
+        radius: 0.012,
+        tessellation: 8,
+      },
+      this.scene,
+    );
+    grilleOutline.material = darkChrome;
+    registerVisual(grilleOutline, false);
+    for (const z of [-0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4]) {
+      addBox("zvislá lamela masky", { x: 0.012, y: 0.27, z: 0.012 }, { x: halfVehicleLengthM - 0.012, y: 0.585, z }, darkChrome, 0, false);
     }
     addBox("predná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: halfVehicleLengthM - 0.014, y: 0.39, z: 0 }, plate, 0, false);
     addBox("zadná tabuľka", { x: 0.018, y: 0.13, z: 0.52 }, { x: -halfVehicleLengthM + 0.014, y: 0.51, z: 0 }, plate, 0, false);
-    addBox("chrómová línia okien vľavo", { x: 2.08, y: 0.018, z: 0.018 }, { x: -0.11, y: 1.03, z: -0.796 }, chrome, 0, false);
-    addBox("chrómová línia okien vpravo", { x: 2.08, y: 0.018, z: 0.018 }, { x: -0.11, y: 1.03, z: 0.796 }, chrome, 0, false);
+    addBox("chrómová línia okien vľavo", { x: 2.28, y: 0.018, z: 0.018 }, { x: -0.16, y: 1.015, z: -0.754 }, chrome, 0, false);
+    addBox("chrómová línia okien vpravo", { x: 2.28, y: 0.018, z: 0.018 }, { x: -0.16, y: 1.015, z: 0.754 }, chrome, 0, false);
 
-    const axleX = vehicle.dimensionsMm.wheelbase / 2 / 1_000;
-    for (const axle of [-1, 1] as const) {
+    for (const axleX of [
+      GARAGE_SUPERB_AXLES_M.rearX,
+      GARAGE_SUPERB_AXLES_M.frontX,
+    ]) {
+      for (const side of [-1, 1] as const) {
+        const arch = CreateCylinder(
+          `${vehicle.label} · podbeh ${axleX > 0 ? "predný" : "zadný"} ${side < 0 ? "vľavo" : "vpravo"}`,
+          { height: 0.018, diameter: 0.76, tessellation: 40 },
+          this.scene,
+        );
+        arch.parent = root;
+        arch.position.set(axleX, 0.36, side * 0.931);
+        arch.rotation.x = Math.PI / 2;
+        arch.material = dark;
+        arch.isPickable = false;
+        this.realisticOnly(arch);
+        this.register(arch, "building", vehicle.id);
+      }
+    }
+
+    for (const axleX of [
+      GARAGE_SUPERB_AXLES_M.rearX,
+      GARAGE_SUPERB_AXLES_M.frontX,
+    ]) {
       for (const side of [-1, 1] as const) {
         const steeringAnchor = new TransformNode(
-          `${vehicle.label} · koleso ${axle > 0 ? "predné" : "zadné"} ${side < 0 ? "ľavé" : "pravé"}`,
+          `${vehicle.label} · koleso ${axleX > 0 ? "predné" : "zadné"} ${side < 0 ? "ľavé" : "pravé"}`,
           this.scene,
         );
         steeringAnchor.parent = root;
-        steeringAnchor.position.set(axle * axleX, 0.36, side * 0.875);
-        if (axle > 0) this.garageVehicleFrontSteering.push(steeringAnchor);
+        steeringAnchor.position.set(axleX, 0.36, side * 0.85);
+        if (axleX > 0) this.garageVehicleFrontSteering.push(steeringAnchor);
 
         const wheelSpin = new TransformNode(
           `${steeringAnchor.name} · rotácia pneumatiky`,
@@ -3902,6 +4242,50 @@ export class TwinSceneController {
         rim.isPickable = false;
         this.realisticOnly(rim);
         this.register(rim, "building", vehicle.id);
+
+        const brakeDisc = CreateCylinder(
+          `${steeringAnchor.name} · brzdový kotúč`,
+          { height: 0.242, diameter: 0.31, tessellation: 28 },
+          this.scene,
+        );
+        brakeDisc.parent = wheelSpin;
+        brakeDisc.rotation.x = Math.PI / 2;
+        brakeDisc.material = darkChrome;
+        brakeDisc.isPickable = false;
+        this.realisticOnly(brakeDisc);
+        this.register(brakeDisc, "building", vehicle.id);
+
+        const hub = CreateCylinder(
+          `${steeringAnchor.name} · stred disku`,
+          { height: 0.248, diameter: 0.08, tessellation: 20 },
+          this.scene,
+        );
+        hub.parent = wheelSpin;
+        hub.rotation.x = Math.PI / 2;
+        hub.material = alloy;
+        hub.isPickable = false;
+        this.realisticOnly(hub);
+        this.register(hub, "building", vehicle.id);
+
+        for (let spokeIndex = 0; spokeIndex < 10; spokeIndex += 1) {
+          const angle = (spokeIndex / 10) * Math.PI * 2;
+          const spoke = CreateBox(
+            `${steeringAnchor.name} · lúč disku ${spokeIndex + 1}`,
+            { width: 0.18, height: 0.018, depth: 0.246 },
+            this.scene,
+          );
+          spoke.parent = wheelSpin;
+          spoke.position.set(
+            Math.cos(angle) * 0.105,
+            Math.sin(angle) * 0.105,
+            0,
+          );
+          spoke.rotation.z = angle;
+          spoke.material = alloy;
+          spoke.isPickable = false;
+          this.realisticOnly(spoke);
+          this.register(spoke, "building", vehicle.id);
+        }
       }
     }
   }
@@ -6347,6 +6731,7 @@ export class TwinSceneController {
   }
 
   setCameraPreset(preset: CameraPreset) {
+    if (this.garageCinematicActive) return;
     this.setNavigationMode("orbit");
     this.resetOrbitInertia();
     this.applyCameraPreset(preset);
@@ -6455,6 +6840,7 @@ export class TwinSceneController {
   }
 
   setNavigationMode(mode: NavigationMode) {
+    if (this.garageCinematicActive) return;
     if (mode === this.navigationMode) return;
     if (mode === "walk") {
       this.enterWalkthrough();
@@ -6544,6 +6930,7 @@ export class TwinSceneController {
    * doors and the glazed terrace doors stay passable.
    */
   enterWalkthrough(roomId?: string) {
+    if (this.garageCinematicActive) return;
     const room =
       INTERIOR_ROOMS.find((candidate) => candidate.id === roomId) ??
       INTERIOR_ROOMS.find((candidate) => candidate.id === "ROOM-1-03") ??
@@ -6573,7 +6960,9 @@ export class TwinSceneController {
     // Once the glTF arrives, hand over to the chase camera.
     void avatar.load().then(() => {
       this.canvas.dataset.walkAvatar = avatar.avatarId;
-      if (this.navigationMode === "walk") this.applyWalkView();
+      if (this.navigationMode === "walk" && !this.garageCinematicActive) {
+        this.applyWalkView();
+      }
     }).catch(() => undefined);
     this.canvas.focus({ preventScroll: true });
     this.onNavigationModeChange(this.navigationMode);
@@ -6605,7 +6994,7 @@ export class TwinSceneController {
       void this.avatar.load().catch(() => {
         // Without the glTF the walkthrough silently stays first-person.
         this.walkView = "first";
-        this.applyWalkView();
+        if (!this.garageCinematicActive) this.applyWalkView();
       });
     }
     return this.avatar;
@@ -6613,6 +7002,7 @@ export class TwinSceneController {
 
   /** Switches between the chase camera and the walker's own eyes. */
   setWalkView(view: "third" | "first") {
+    if (this.garageCinematicActive) return;
     this.walkView = view;
     if (this.navigationMode === "walk") this.applyWalkView();
   }
@@ -6622,6 +7012,7 @@ export class TwinSceneController {
   }
 
   private applyWalkView() {
+    if (this.garageCinematicActive) return;
     const avatar = this.ensureAvatar();
     const third = this.walkView === "third" && avatar.isLoaded;
     if (third) {
@@ -6649,11 +7040,16 @@ export class TwinSceneController {
   }
 
   setFlightCommand(command: FlightCommand, active: boolean) {
+    if (this.garageCinematicActive) {
+      this.manualFlightCommands.delete(command);
+      return;
+    }
     if (active) this.manualFlightCommands.add(command);
     else this.manualFlightCommands.delete(command);
   }
 
   nudgeFlight(command: FlightCommand) {
+    if (this.garageCinematicActive) return;
     if (this.navigationMode === "walk") {
       // A tap is a short step: hold the command for a few frames.
       this.manualFlightCommands.add(command);
@@ -6722,7 +7118,9 @@ export class TwinSceneController {
 
   /** Shared action for E, a nearby leaf tap and the accessible touch button. */
   toggleDoorInteraction(restoreCanvasFocus = true) {
-    if (this.navigationMode !== "walk") return false;
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) {
+      return false;
+    }
     const interaction = this.getDoorInteraction();
     if (!interaction?.action) return false;
     if (
@@ -6755,6 +7153,8 @@ export class TwinSceneController {
 
   requestGarageVehicleAction(action: GarageVehicleAction) {
     if (
+      this.navigationMode !== "walk" ||
+      this.getWalkRoom()?.id !== GARAGE_VEHICLE.roomId ||
       this.garageVehicleAction ||
       garageActionForState(this.garageParkingState) !== action
     ) {
@@ -6765,6 +7165,7 @@ export class TwinSceneController {
       "(prefers-reduced-motion: reduce)",
     ).matches;
     if (reducedMotion) {
+      this.ensureGarageCinematicAvatarClearance();
       const totalMs =
         action === "park"
           ? GARAGE_SEQUENCE.park.totalMs
@@ -6781,6 +7182,7 @@ export class TwinSceneController {
       return true;
     }
 
+    if (!this.beginGarageCinematic()) return false;
     this.garageVehicleAction = action;
     this.garageVehicleElapsedMs = 0;
     this.garageVehicleLastPose = null;
@@ -6804,7 +7206,17 @@ export class TwinSceneController {
       commandedDoorProgress: this.garageDoorProgress,
       actualDoorProgress: door?.progress ?? 0,
       actualDoorPhase: door?.phase ?? "CLOSED",
+      cinematicActive: this.garageCinematicActive,
+      cameraView: this.canvas.dataset.garageCameraView ?? "garage",
+      activeCameraName: this.scene.activeCamera?.name ?? null,
+      returnCameraName: this.garageCinematicReturnCamera?.name ?? null,
+      navigationMode: this.navigationMode,
+      avatarPose: this.avatar.pose,
     } as const;
+  }
+
+  isGarageCinematicActive() {
+    return this.garageCinematicActive;
   }
 
   getNavigationMode() {
@@ -6816,7 +7228,9 @@ export class TwinSceneController {
     this.canvas.dataset.walkAvatar = id;
     try {
       await this.avatar.setAvatar(id, this.navigationMode === "walk");
-      if (this.navigationMode === "walk") this.applyWalkView();
+      if (this.navigationMode === "walk" && !this.garageCinematicActive) {
+        this.applyWalkView();
+      }
     } catch (error) {
       this.canvas.dataset.walkAvatar =
         this.avatar.activeAvatarId ?? this.avatar.avatarId;
@@ -6829,7 +7243,7 @@ export class TwinSceneController {
   }
 
   recoverWalkthrough() {
-    if (this.navigationMode !== "walk") return;
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) return;
     this.clearFlightInput();
     this.avatar.recover();
     this.applyWalkView();
@@ -6898,7 +7312,12 @@ export class TwinSceneController {
         if (previous.tier !== next.tier) {
           this.ssaoPipeline.samples = next.tier === "ULTRA" ? 16 : 12;
         }
-        const cameras = [this.orbitCamera, this.flightCamera, this.avatar.camera];
+        const cameras = [
+          this.orbitCamera,
+          this.flightCamera,
+          this.garageCinematicCamera,
+          this.avatar.camera,
+        ];
         if (next.ssaoEnabled && !this.ssaoAttached) {
           this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline(
             this.ssaoPipeline.name,
@@ -6915,6 +7334,9 @@ export class TwinSceneController {
         }
       }
       if (!scalingChanged) this.engine.resize();
+      if (this.garageCinematicActive && this.garageVehicleLastPose) {
+        this.configureGarageCinematicCamera(this.garageVehicleLastPose);
+      }
       this.renderQuality = next;
       this.onRenderQualityChange(next);
     });
@@ -6929,6 +7351,7 @@ export class TwinSceneController {
     this.canvas.removeEventListener("pointercancel", this.cancelPointerGesture);
     this.canvas.removeEventListener("wheel", this.handleCanvasWheel);
     this.clearFlightInput();
+    this.endGarageCinematic(false);
     this.clearSelection();
     this.avatar.dispose();
     this.scene.dispose();

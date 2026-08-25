@@ -65,6 +65,13 @@ export const DOOR_INTERACTION = Object.freeze({
   blockedMessageMs: 1_800,
 });
 
+export const LIFT_SLIDE_MOTION = Object.freeze({
+  /** Real lift-and-slide hardware raises the loaded sash only a few millimetres. */
+  sashLiftM: 0.008,
+  /** Finish lifting before the visible horizontal travel becomes dominant. */
+  liftCompleteProgress: 0.05,
+});
+
 /**
  * Authoritative runtime contract: every architectural door that has a real
  * movable leaf in the current house model must register exactly once.
@@ -88,7 +95,48 @@ const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 /** Quintic ease with zero velocity and acceleration at both physical stops. */
 export function smootherStep01(value: number): number {
   const t = clamp01(value);
-  return t * t * t * (t * (t * 6 - 15) + 10);
+  // Floating-point evaluation can overshoot the terminal value by ~1e-15,
+  // which would make the following exact stop look like a backwards frame.
+  return clamp01(t * t * t * (t * (t * 6 - 15) + 10));
+}
+
+/**
+ * Mechanical lift for a lift-and-slide sash. It settles completely into the
+ * floor track only at the closed stop and stays lifted while it rolls.
+ */
+export function liftSlideSashLiftM(progress: number): number {
+  const liftProgress = clamp01(
+    progress / LIFT_SLIDE_MOTION.liftCompleteProgress,
+  );
+  return LIFT_SLIDE_MOTION.sashLiftM * smootherStep01(liftProgress);
+}
+
+export function doorInteractionPromptLabel(
+  interaction: Pick<
+    DoorInteractionSnapshot,
+    "kind" | "phase" | "action" | "blockedMessage"
+  >,
+): string {
+  if (interaction.blockedMessage) return interaction.blockedMessage;
+  if (interaction.kind === "SLIDING") {
+    if (interaction.phase === "OPENING") return "Odsúvam panel…";
+    if (interaction.phase === "CLOSING") return "Zasúvam panel…";
+    if (interaction.action === "OPEN") return "Odsunúť panel";
+    if (interaction.action === "CLOSE") return "Zasunúť panel";
+    return "Panel ovláda automatický manéver";
+  }
+  if (interaction.kind === "OVERHEAD") {
+    if (interaction.phase === "OPENING") return "Zdvíham garážovú bránu…";
+    if (interaction.phase === "CLOSING") return "Spúšťam garážovú bránu…";
+    if (interaction.action === "OPEN") return "Otvoriť garážovú bránu";
+    if (interaction.action === "CLOSE") return "Zavrieť garážovú bránu";
+    return "Bránu ovláda automatický manéver";
+  }
+  if (interaction.phase === "OPENING") return "Otváram dvere…";
+  if (interaction.phase === "CLOSING") return "Zatváram dvere…";
+  if (interaction.action === "OPEN") return "Otvoriť dvere";
+  if (interaction.action === "CLOSE") return "Zavrieť dvere";
+  return "Dvere ovláda automatický manéver";
 }
 
 /** Handle travels first, then returns while the leaf continues moving. */
@@ -102,6 +150,17 @@ export function doorPhase(progress: number, targetProgress: 0 | 1): DoorPhase {
   if (progress <= 0.0001 && targetProgress === 0) return "CLOSED";
   if (progress >= 0.9999 && targetProgress === 1) return "OPEN";
   return targetProgress === 1 ? "OPENING" : "CLOSING";
+}
+
+export function doorMotionDurationMs(
+  kind: DoorMotionKind,
+  targetProgress: 0 | 1,
+): number {
+  const baseDuration = targetProgress === 1
+    ? DOOR_INTERACTION.openingDurationMs
+    : DOOR_INTERACTION.closingDurationMs;
+  const kindScale = kind === "OVERHEAD" ? 1.65 : kind === "SLIDING" ? 1.25 : 1;
+  return baseDuration * kindScale;
 }
 
 function normalizedFacing(facing: DoorPlanarPoint): DoorPlanarPoint {
@@ -303,8 +362,10 @@ export class BabylonDoorController {
       );
       const normalized = door.animationElapsedMs / door.animationDurationMs;
       const eased = smootherStep01(normalized);
-      door.progress =
-        door.startProgress + (door.targetProgress - door.startProgress) * eased;
+      door.progress = clamp01(
+        door.startProgress +
+          (door.targetProgress - door.startProgress) * eased,
+      );
       if (door.animationElapsedMs >= door.animationDurationMs) {
         door.progress = door.targetProgress;
         door.animationDurationMs = 0;
@@ -325,16 +386,13 @@ export class BabylonDoorController {
       door.apply(door.progress, 0);
       return;
     }
-    const baseDuration = targetProgress === 1
-      ? DOOR_INTERACTION.openingDurationMs
-      : DOOR_INTERACTION.closingDurationMs;
-    const kindScale =
-      door.kind === "OVERHEAD" ? 1.65 : door.kind === "SLIDING" ? 1.25 : 1;
     const reducedScale = Math.max(0.12, Math.min(1, this.motionScale));
     door.animationDurationMs = Math.max(
       90,
       DOOR_INTERACTION.minimumReversalDurationMs * reducedScale,
-      baseDuration * kindScale * reducedScale * Math.abs(targetProgress - door.progress),
+      doorMotionDurationMs(door.kind, targetProgress) *
+        reducedScale *
+        Math.abs(targetProgress - door.progress),
     );
   }
 
