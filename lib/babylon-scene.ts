@@ -1,6 +1,7 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { PhotoDome } from "@babylonjs/core/Helpers/photoDome";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
@@ -183,6 +184,38 @@ export interface SceneSnapshot {
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
 const EAVES_M = HOUSE.eavesElevationMm * MM_TO_M;
+
+export const PARCEL_LABEL_RENDERING_GROUP_ID = 2;
+
+/**
+ * Parcel plaques render after the architectural scene for crisp alpha edges,
+ * but they must keep the depth written by walls and roofs. Babylon clears the
+ * depth buffer between rendering groups by default, which otherwise turns an
+ * outdoor plaque into an x-ray overlay when the camera is inside the house.
+ */
+export function preserveParcelLabelOcclusion(scene: Scene) {
+  scene.setRenderingAutoClearDepthStencil(
+    PARCEL_LABEL_RENDERING_GROUP_ID,
+    false,
+  );
+}
+
+export function createTwinRenderScene(engine: AbstractEngine) {
+  const scene = new Scene(engine);
+  preserveParcelLabelOcclusion(scene);
+  return scene;
+}
+
+export function setSelectionHighlightForNavigation(
+  highlight: Pick<HighlightLayer, "isEnabled">,
+  mode: NavigationMode,
+) {
+  // The glow is useful while selecting the model from orbit, but an effect
+  // layer has no wall-depth context and can reveal an exterior selection from
+  // an interior camera. Immersive cameras therefore render only real geometry.
+  highlight.isEnabled = mode === "orbit";
+}
+
 const point3 = (point: Point2Mm, elevationM = GROUND_Y) =>
   new Vector3(xM(point.x), elevationM, zM(point.y));
 
@@ -897,7 +930,7 @@ export class TwinSceneController {
     this.engine.setHardwareScalingLevel(
       this.renderQuality.hardwareScalingLevel,
     );
-    this.scene = new Scene(this.engine);
+    this.scene = createTwinRenderScene(this.engine);
     this.doors = new BabylonDoorController(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.18 : 1,
     );
@@ -1068,6 +1101,10 @@ export class TwinSceneController {
     );
     this.selectionHighlight.innerGlow = false;
     this.selectionHighlight.outerGlow = true;
+    setSelectionHighlightForNavigation(
+      this.selectionHighlight,
+      this.navigationMode,
+    );
 
     this.postPipeline = new DefaultRenderingPipeline(
       "architectural-photo-pipeline",
@@ -2541,7 +2578,7 @@ export class TwinSceneController {
         label.rotation.y = longestParcelAxisYaw(localRing);
         label.isPickable = false;
         label.receiveShadows = false;
-        label.renderingGroupId = 2;
+        label.renderingGroupId = PARCEL_LABEL_RENDERING_GROUP_ID;
         label.material = parcelLabelMaterial(
           this.scene,
           parcel,
@@ -6895,6 +6932,10 @@ export class TwinSceneController {
         this.flightCamera.attachControl(false);
       }
       this.navigationMode = "flight";
+      setSelectionHighlightForNavigation(
+        this.selectionHighlight,
+        this.navigationMode,
+      );
       this.canvas.focus({ preventScroll: true });
     } else {
       if (this.scene.activeCamera === this.avatar.camera) {
@@ -6921,6 +6962,10 @@ export class TwinSceneController {
         !ORBIT_ZOOM.preventBrowserGesture,
       );
       this.navigationMode = "orbit";
+      setSelectionHighlightForNavigation(
+        this.selectionHighlight,
+        this.navigationMode,
+      );
     }
     this.onNavigationModeChange(this.navigationMode);
   }
@@ -6957,6 +7002,10 @@ export class TwinSceneController {
     this.flightCamera.fov = 1.05;
     this.scene.collisionsEnabled = true;
     this.navigationMode = "walk";
+    setSelectionHighlightForNavigation(
+      this.selectionHighlight,
+      this.navigationMode,
+    );
     this.walkRoomId = room.id;
     this.applyWalkView();
     // Once the glTF arrives, hand over to the chase camera.
