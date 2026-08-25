@@ -1,9 +1,4 @@
 import { BREZI_6012_26_SJTSK_RING_MM } from "./twin-domain";
-import {
-  CADASTRAL_FRAME_SOURCES,
-  type CadastralOrientationRole,
-  type CadastralOverviewVisibility,
-} from "./cadastral-context";
 
 export type LayerId =
   | "cadastre"
@@ -47,14 +42,15 @@ export interface CadastralParcel {
   readonly id: string;
   readonly parcelNumber: string;
   readonly nationalReference: string;
-  readonly featureId: string;
+  readonly featureId?: string;
   readonly areaM2: number;
   readonly sjtskRingMm: readonly Point2Mm[];
-  readonly sjtskHoleRingsMm?: readonly (readonly Point2Mm[])[];
-  readonly referencePointSjtskMm: Point2Mm;
-  readonly displayLabel: boolean;
-  readonly overviewVisibility: CadastralOverviewVisibility;
-  readonly orientationRole?: CadastralOrientationRole;
+  readonly labelPointSjtskMm?: Point2Mm;
+  readonly orientationRole?:
+    | "SUBJECT"
+    | "SAME_ROW"
+    | "OPPOSITE_ROW"
+    | "CORNER_CONTEXT";
   readonly sourceId: string;
   readonly isSubject: boolean;
 }
@@ -90,19 +86,10 @@ export const SOURCES = {
     id: "SRC-CUZK-CP",
     title: "ČÚZK · INSPIRE Cadastral Parcels",
     detail:
-      "Aktuálna geometria cieľovej parcely, celého zobrazeného rámca susedov a cestných parciel 613908-6012/1 a 613908-6013 · EPSG:5514",
-    date: "25. 8. 2026",
+      "Aktuálna geometria cieľovej parcely, orientačného radu susedov a cestnej parcely 613908-6012/1 · EPSG:5514",
+    date: "24. 8. 2026",
     kind: "CURRENT_REGISTER",
     href: "https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp",
-  },
-  ruianParcels: {
-    id: "SRC-CUZK-RUIAN-PARCELS",
-    title: "ČÚZK · RÚIAN parcely",
-    detail:
-      "Účel pozemku 6013: ostatná plocha · ostatná komunikácia; 6014: ostatná plocha · iná plocha",
-    date: "25. 8. 2026",
-    kind: "CURRENT_REGISTER",
-    href: "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/5",
   },
   geometricPlan: {
     id: "SRC-GP-1631",
@@ -488,29 +475,25 @@ const parcel = (
   id: string,
   areaM2: number,
   ring: readonly (readonly [number, number])[],
-  context: {
+  orientation?: {
     readonly featureId: string;
-    readonly referencePoint: readonly [number, number];
-    readonly orientationRole?: Exclude<CadastralOrientationRole, "SUBJECT">;
-    readonly overviewVisibility?: CadastralOverviewVisibility;
-    readonly displayLabel?: boolean;
+    readonly labelPoint: readonly [number, number];
+    readonly role:
+      | "SAME_ROW"
+      | "OPPOSITE_ROW"
+      | "CORNER_CONTEXT";
   },
 ): CadastralParcel => ({
   id: `PARCEL-${id}`,
   parcelNumber: id,
   nationalReference: `613908-${id}`,
-  featureId: context.featureId,
+  featureId: orientation?.featureId,
   areaM2,
   sjtskRingMm: ring.map(([x, y]) => mmPoint(x, y)),
-  referencePointSjtskMm: mmPoint(
-    context.referencePoint[0],
-    context.referencePoint[1],
-  ),
-  displayLabel: context.displayLabel ?? Boolean(context.orientationRole),
-  overviewVisibility:
-    context.overviewVisibility ??
-    (context.orientationRole ? "ORIENTATION" : "FRAME"),
-  orientationRole: context.orientationRole,
+  labelPointSjtskMm: orientation
+    ? mmPoint(orientation.labelPoint[0], orientation.labelPoint[1])
+    : undefined,
+  orientationRole: orientation?.role,
   sourceId: SOURCES.cadastre.id,
   isSubject: false,
 });
@@ -526,9 +509,7 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
       x: xMm,
       y: yMm,
     })),
-    referencePointSjtskMm: mmPoint(-606703.38, -1202038.88),
-    displayLabel: false,
-    overviewVisibility: "ORIENTATION",
+    labelPointSjtskMm: mmPoint(-606703.38, -1202038.88),
     orientationRole: "SUBJECT",
     sourceId: SOURCES.cadastre.id,
     isSubject: true,
@@ -541,8 +522,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606681.99, -1202098.13],
   ], {
     featureId: "CP.94487878010",
-    referencePoint: [-606685.55, -1202080.2],
-    orientationRole: "OPPOSITE_ROW",
+    labelPoint: [-606685.55, -1202080.2],
+    role: "OPPOSITE_ROW",
   }),
   parcel("6012/25", 814, [
     [-606650.91, -1202063.06],
@@ -557,8 +538,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606650.91, -1202063.06],
   ], {
     featureId: "CP.94487879010",
-    referencePoint: [-606669.74, -1202063.04],
-    orientationRole: "OPPOSITE_ROW",
+    labelPoint: [-606669.74, -1202063.04],
+    role: "OPPOSITE_ROW",
   }),
   parcel("6012/27", 680, [
     [-606742.18, -1202065.3],
@@ -568,8 +549,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606742.18, -1202065.3],
   ], {
     featureId: "CP.94487881010",
-    referencePoint: [-606722.35, -1202062.59],
-    orientationRole: "SAME_ROW",
+    labelPoint: [-606722.35, -1202062.59],
+    role: "SAME_ROW",
   }),
   parcel("6012/28", 645, [
     [-606725.14, -1202079.2],
@@ -580,8 +561,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606725.14, -1202079.2],
   ], {
     featureId: "CP.94487882010",
-    referencePoint: [-606742.68, -1202086.07],
-    orientationRole: "SAME_ROW",
+    labelPoint: [-606742.68, -1202086.07],
+    role: "SAME_ROW",
   }),
   parcel("6012/23", 816, [
     [-606681.99, -1202098.13],
@@ -591,8 +572,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606681.99, -1202098.13],
   ], {
     featureId: "CP.94487877010",
-    referencePoint: [-606700.22, -1202098.27],
-    orientationRole: "OPPOSITE_ROW",
+    labelPoint: [-606700.22, -1202098.27],
+    role: "OPPOSITE_ROW",
   }),
   parcel("6012/16", 816, [
     [-606640.37, -1202103.7],
@@ -602,8 +583,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606640.37, -1202103.7],
   ], {
     featureId: "CP.94487870010",
-    referencePoint: [-606660.25, -1202102.79],
-    orientationRole: "OPPOSITE_ROW",
+    labelPoint: [-606660.25, -1202102.79],
+    role: "OPPOSITE_ROW",
   }),
   parcel("6035/46", 700, [
     [-606655.83, -1202012.4],
@@ -613,8 +594,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606655.83, -1202012.4],
   ], {
     featureId: "CP.94487927010",
-    referencePoint: [-606674.09, -1202010.79],
-    orientationRole: "CORNER_CONTEXT",
+    labelPoint: [-606674.09, -1202010.79],
+    role: "CORNER_CONTEXT",
   }),
   parcel("6035/45", 718, [
     [-606641.63, -1201996.38],
@@ -625,8 +606,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606641.63, -1201996.38],
   ], {
     featureId: "CP.94487926010",
-    referencePoint: [-606659.24, -1201995.53],
-    orientationRole: "CORNER_CONTEXT",
+    labelPoint: [-606659.24, -1201995.53],
+    role: "CORNER_CONTEXT",
   }),
   parcel("6035/38", 255, [
     [-606631.03, -1202048.48],
@@ -636,8 +617,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606631.03, -1202048.48],
   ], {
     featureId: "CP.94487919010",
-    referencePoint: [-606638.46, -1202037.29],
-    orientationRole: "CORNER_CONTEXT",
+    labelPoint: [-606638.46, -1202037.29],
+    role: "CORNER_CONTEXT",
   }),
   parcel("6035/37", 322, [
     [-606638.16, -1202056.52],
@@ -647,8 +628,8 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606638.16, -1202056.52],
   ], {
     featureId: "CP.94487918010",
-    referencePoint: [-606645.09, -1202044.71],
-    orientationRole: "CORNER_CONTEXT",
+    labelPoint: [-606645.09, -1202044.71],
+    role: "CORNER_CONTEXT",
   }),
   parcel("6013", 1839, [
     [-606529.6, -1202164.11],
@@ -671,12 +652,7 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606617.1, -1202086.17],
     [-606534.68, -1202159.29],
     [-606529.6, -1202164.11],
-  ], {
-    featureId: "CP.1205215736",
-    referencePoint: [-606601.47, -1202096.37],
-    overviewVisibility: "FRAME",
-    displayLabel: false,
-  }),
+  ]),
   parcel("6014", 2312, [
     [-606746.58, -1202070.69],
     [-606742.18, -1202065.3],
@@ -704,34 +680,7 @@ export const CADASTRAL_PARCELS: readonly CadastralParcel[] = [
     [-606780.45, -1202111.79],
     [-606761.3, -1202088.55],
     [-606746.58, -1202070.69],
-  ], {
-    featureId: "CP.1205216736",
-    referencePoint: [-606886.57, -1202235.48],
-    overviewVisibility: "FRAME",
-    displayLabel: false,
-  }),
-  ...CADASTRAL_FRAME_SOURCES.map(
-    (source): CadastralParcel => ({
-      id: `PARCEL-${source.parcelNumber}`,
-      parcelNumber: source.parcelNumber,
-      nationalReference: `613908-${source.parcelNumber}`,
-      featureId: source.featureId,
-      areaM2: source.areaM2,
-      sjtskRingMm: source.sjtskRingM.map(([x, y]) => mmPoint(x, y)),
-      sjtskHoleRingsMm: source.sjtskHoleRingsM?.map((ring) =>
-        ring.map(([x, y]) => mmPoint(x, y)),
-      ),
-      referencePointSjtskMm: mmPoint(
-        source.referencePointSjtskM[0],
-        source.referencePointSjtskM[1],
-      ),
-      displayLabel: source.displayLabel,
-      overviewVisibility: source.overviewVisibility,
-      orientationRole: source.orientationRole,
-      sourceId: SOURCES.cadastre.id,
-      isSubject: false,
-    }),
-  ),
+  ]),
 ] as const;
 
 // The local scene frame follows the road-facing cadastral edge. Raw legal
@@ -1161,39 +1110,22 @@ export const HOUSE = Object.freeze({
   ],
 });
 
-// The subject is the end/corner parcel where road parcels 6012/1 and 6013 meet.
-// Their displayed communication corridor is one continuous, seam-free surface:
-// current ČÚZK boundaries constrain the extent, while the 3.10 m C3 offset keeps
-// the private entrances outside the carriageway. The grey-block finish follows
-// the client's visual direction and photo; it is not an as-built material survey.
+// The subject is the end/corner parcel: road parcel 6012/1 meets both its
+// straight 160–136 frontage and the rounded 136–…–130 edge. The road fragments
+// below are clipped directly from ČÚZK feature CP.94487856010. The 3.10 m front
+// reserve between the legal boundary and the C3 access endpoints is rendered
+// separately from the carriageway so the entrances no longer appear painted
+// over it. The client photo from 25. 8. 2026 now controls the visual finish of
+// the blocks, kerb, rough verge and lamps; their exact as-built positions are
+// still not surveyed.
 export const ROAD_CONTEXT = Object.freeze({
   id: "ROAD-6012-1",
   featureId: "CP.94487856010",
   nationalReference: "613908-6012/1",
   registeredAreaM2: 10_647,
-  connectedRoadParcel: {
-    featureId: "CP.1205215736",
-    nationalReference: "613908-6013",
-    registeredAreaM2: 1_839,
-    landKindCode: 14,
-    landUseCode: 17,
-    classification: "OSTATNA_PLOCHA_OSTATNI_KOMUNIKACE",
-    sourceId: SOURCES.ruianParcels.id,
-  },
-  excludedAdjacentParcel: {
-    featureId: "CP.1205216736",
-    nationalReference: "613908-6014",
-    registeredAreaM2: 2_312,
-    landKindCode: 14,
-    landUseCode: 26,
-    classification: "OSTATNA_PLOCHA_JINA_PLOCHA",
-    paved: false,
-    sourceId: SOURCES.ruianParcels.id,
-  },
   observedAt: "2026-08-25",
   sourceIds: [
     SOURCES.cadastre.id,
-    SOURCES.ruianParcels.id,
     SOURCES.coordination.id,
     SOURCES.clientStreetPaversRevision20260824.id,
     SOURCES.clientStreetPhoto20260825.id,
@@ -1202,7 +1134,6 @@ export const ROAD_CONTEXT = Object.freeze({
   surfaceEnvelopeStatus: "CURRENT_REGISTER_CLIPPED_CONTEXT",
   pavedSurfaceStatus: "C3_DERIVED_NOT_AS_BUILT_SURVEY",
   orientationExtensionStatus: "WFS_BOUNDARY_WITH_C3_OFFSET_CONTINUATION",
-  pavedCoverageStatus: "FULL_DISPLAYED_CONTEXT_6012_1_AND_6013",
   surfaceFinish: {
     kind: "GREY_CONCRETE_BLOCK_PAVERS",
     visualModuleMm: { length: 200, width: 100 },
@@ -1226,9 +1157,6 @@ export const ROAD_CONTEXT = Object.freeze({
       sourceId: SOURCES.clientStreetPhoto20260825.id,
     },
     vergeClustersMm: [
-      { x: -98_300, y: -1_550, scale: 0.76 },
-      { x: -82_500, y: -1_200, scale: 0.88 },
-      { x: -68_200, y: -2_050, scale: 0.8 },
       { x: -52_000, y: -1_250, scale: 0.82 },
       { x: -31_500, y: -2_250, scale: 1.06 },
       { x: -11_500, y: -1_150, scale: 0.9 },
@@ -1249,8 +1177,6 @@ export const ROAD_CONTEXT = Object.freeze({
     placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
     sourceId: SOURCES.clientStreetPhoto20260825.id,
     polesMm: [
-      { x: -96_000, y: -10_250 },
-      { x: -73_000, y: -10_250 },
       { x: -50_000, y: -10_250 },
       { x: -27_000, y: -10_250 },
       { x: -4_000, y: -10_250 },
@@ -1260,17 +1186,12 @@ export const ROAD_CONTEXT = Object.freeze({
   touchedBoundarySegments: ["160–136", "136–135–134–133–132–131–130"],
   frontAsphaltEdgeYmm: -3_104,
   frontParcelEdgeMm: [
-    { x: -105_000, y: -8 },
-    { x: -90_397, y: 18 },
     { x: -60_262, y: 14 },
     { x: -30_127, y: 10 },
     { x: 0, y: 0 },
     { x: 28_194, y: 0 },
   ] as const satisfies readonly Point2Mm[],
   frontOppositeParcelEdgeMm: [
-    { x: -105_000, y: -9_995 },
-    { x: -90_397, y: -9_996 },
-    { x: -85_971, y: -9_997 },
     { x: -62_523, y: -9_994 },
     { x: -39_103, y: -9_989 },
     { x: -15_670, y: -10_000 },
@@ -1278,35 +1199,23 @@ export const ROAD_CONTEXT = Object.freeze({
     { x: 28_193, y: -10_009 },
   ] as const satisfies readonly Point2Mm[],
   frontReservePolygonMm: [
-    { x: -105_000, y: -8 },
-    { x: -90_397, y: 18 },
     { x: -60_262, y: 14 },
     { x: -30_127, y: 10 },
     { x: 0, y: 0 },
     { x: 28_194, y: 0 },
     { x: 28_194, y: -3_104 },
-    { x: 0, y: -3_104 },
-    { x: -30_127, y: -3_094 },
-    { x: -60_262, y: -3_090 },
-    { x: -90_397, y: -3_086 },
-    { x: -105_000, y: -3_112 },
-    { x: -105_000, y: -8 },
+    { x: -60_262, y: -3_104 },
+    { x: -60_262, y: 14 },
   ] as const satisfies readonly Point2Mm[],
   frontReserveSurfacePolygonsMm: [
     [
-      { x: -105_000, y: -8 },
-      { x: -90_397, y: 18 },
       { x: -60_262, y: 14 },
       { x: -30_127, y: 10 },
       { x: 0, y: 0 },
       { x: 6_490, y: 0 },
       { x: 6_490, y: -3_104 },
-      { x: 0, y: -3_104 },
-      { x: -30_127, y: -3_094 },
-      { x: -60_262, y: -3_090 },
-      { x: -90_397, y: -3_086 },
-      { x: -105_000, y: -3_112 },
-      { x: -105_000, y: -8 },
+      { x: -60_262, y: -3_104 },
+      { x: -60_262, y: 14 },
     ],
     [
       { x: 10_690, y: 0 },
@@ -1323,48 +1232,15 @@ export const ROAD_CONTEXT = Object.freeze({
       { x: 22_915, y: 0 },
     ],
   ] as const satisfies readonly (readonly Point2Mm[])[],
-  // One clockwise polygon avoids the former frontage/corner overlap seam.
-  // Its eastern/top branch follows cadastral communication parcel 6013; the
-  // southern and western ends are clipped to the complete parcel-overview frame.
-  visibleCarriagewayPolygonMm: [
-    { x: -105_000, y: -3_112 },
-    { x: -90_397, y: -3_086 },
-    { x: -60_262, y: -3_090 },
-    { x: -30_127, y: -3_094 },
-    { x: 0, y: -3_104 },
+  frontagePolygonMm: [
+    { x: -60_262, y: -3_104 },
     { x: 28_194, y: -3_104 },
-    { x: 29_677, y: -2_913 },
-    { x: 31_301, y: -2_254 },
-    { x: 33_120, y: -595 },
-    { x: 34_068, y: 1_342 },
-    { x: 34_291, y: 3_000 },
-    { x: 34_213, y: 24_497 },
-    { x: 36_371, y: 24_711 },
-    { x: 36_366, y: 29_784 },
-    { x: 35_828, y: 46_357 },
-    { x: 30_442, y: 51_967 },
-    { x: 41_997, y: 52_920 },
-    { x: 41_858, y: 44_031 },
-    { x: 42_152, y: 29_647 },
-    { x: 42_147, y: 24_873 },
-    { x: 42_319, y: -58_394 },
-    { x: 42_269, y: -90_000 },
-    { x: 31_185, y: -90_000 },
-    { x: 31_186, y: -44_837 },
-    { x: 31_169, y: -12_930 },
-    { x: 30_977, y: -11_885 },
-    { x: 30_585, y: -11_216 },
-    { x: 29_855, y: -10_514 },
-    { x: 29_022, y: -10_116 },
     { x: 28_193, y: -10_009 },
     { x: 7_756, y: -10_003 },
     { x: -15_670, y: -10_000 },
     { x: -39_103, y: -9_989 },
     { x: -62_523, y: -9_994 },
-    { x: -85_971, y: -9_997 },
-    { x: -90_397, y: -9_996 },
-    { x: -105_000, y: -9_995 },
-    { x: -105_000, y: -3_112 },
+    { x: -60_262, y: -3_104 },
   ] as const satisfies readonly Point2Mm[],
   cornerParcelEdgeMm: [
     { x: 28_194, y: 0 },
@@ -1428,17 +1304,9 @@ export const ROAD_CONTEXT = Object.freeze({
       { x: 31_158, y: 11_050 },
     ],
   ] as const satisfies readonly (readonly Point2Mm[])[],
-  overviewOuterRoadEdgeMm: [
+  cornerOuterEdgeMm: [
     { x: 36_371, y: 24_711 },
-    { x: 36_366, y: 29_784 },
-    { x: 35_828, y: 46_357 },
-    { x: 30_442, y: 51_967 },
-    { x: 41_997, y: 52_920 },
-    { x: 41_858, y: 44_031 },
-    { x: 42_152, y: 29_647 },
-    { x: 42_147, y: 24_873 },
-    { x: 42_319, y: -58_394 },
-    { x: 42_269, y: -90_000 },
+    { x: 36_352, y: -12_930 },
   ] as const satisfies readonly Point2Mm[],
   cornerPolygonMm: [
     { x: 28194, y: 0 },
@@ -1457,6 +1325,24 @@ export const ROAD_CONTEXT = Object.freeze({
     { x: 29022, y: -10116 },
     { x: 28193, y: -10009 },
     { x: 28194, y: 0 },
+  ] as const satisfies readonly Point2Mm[],
+  cornerCarriagewayPolygonMm: [
+    { x: 28_194, y: -3_104 },
+    { x: 29_677, y: -2_913 },
+    { x: 31_301, y: -2_254 },
+    { x: 33_120, y: -595 },
+    { x: 34_068, y: 1_342 },
+    { x: 34_291, y: 3_000 },
+    { x: 34_213, y: 24_497 },
+    { x: 36_371, y: 24_711 },
+    { x: 36_352, y: -12_930 },
+    { x: 31_169, y: -12_930 },
+    { x: 30_977, y: -11_885 },
+    { x: 30_585, y: -11_216 },
+    { x: 29_855, y: -10_514 },
+    { x: 29_022, y: -10_116 },
+    { x: 28_193, y: -10_009 },
+    { x: 28_194, y: -3_104 },
   ] as const satisfies readonly Point2Mm[],
 });
 

@@ -99,7 +99,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   // The glide step lives in the contract (`stepOrbitZoom` wraps
   // `easeOrbitRadius`) so the scene only consumes the settled result.
   assert.match(scene, /stepOrbitZoom\(/);
-  assert.match(scene, /\[this\.orbitCamera, this\.flightCamera\]/);
+  assert.match(
+    scene,
+    /const cameras = \[\s*this\.orbitCamera,\s*this\.flightCamera,\s*this\.garageCinematicCamera,\s*this\.avatar\.camera,\s*\];/,
+  );
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   // Water keeps true refraction; glazing is alpha-blended so the interior
   // fit-out shows through from outside and the terrace from inside.
@@ -131,17 +134,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /Stožiar verejného osvetlenia/);
   assert.match(scene, /LED hlavica verejného osvetlenia/);
   assert.match(scene, /Orientačný popis parcely/);
-  assert.match(scene, /parcel\.overviewVisibility === "ORIENTATION"/);
-  assert.match(scene, /if \(parcel\.displayLabel\)/);
-  assert.match(scene, /parcel\.sjtskHoleRingsMm/);
-  assert.match(scene, /ROAD_CONTEXT\.visibleCarriagewayPolygonMm/);
-  assert.match(scene, /ROAD_CONTEXT\.overviewOuterRoadEdgeMm/);
   assert.match(
     scene,
-    /Miestna komunikácia 6012\/1 \+ 6013 · súvislá vozovka cez celý parcelný prehľad/,
+    /if \(parcel\.labelPointSjtskMm && !parcel\.isSubject\)/,
   );
-  assert.doesNotMatch(scene, /ROAD_CONTEXT\.frontagePolygonMm/);
-  assert.doesNotMatch(scene, /ROAD_CONTEXT\.cornerCarriagewayPolygonMm/);
   assert.match(scene, /parcelCameraForWidth/);
   assert.match(scene, /parcelLabelScaleForRadius/);
   assert.match(scene, /hedge-privet-albedo\.png/);
@@ -159,7 +155,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /<fieldset[\s\S]*className="walk-avatar-picker"/);
   assert.match(viewport, /WALK_AVATARS\.map/);
   assert.match(viewport, /type="radio"/);
-  assert.match(viewport, /aria-busy=\{pendingWalkAvatarId !== null\}/);
+  assert.match(
+    viewport,
+    /aria-busy=\{pendingWalkAvatarId !== null \|\| !garageAction\}/,
+  );
   assert.match(viewport, /controller\.setWalkAvatar\(id\)/);
   assert.match(viewport, /WALK_AVATAR_STORAGE_KEY/);
   assert.match(viewport, /event\.detail !== 0/);

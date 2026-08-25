@@ -13,7 +13,10 @@ import type {
   CameraPreset,
   TwinSceneController,
 } from "@/lib/babylon-scene";
-import type { DoorInteractionSnapshot } from "@/lib/babylon-doors";
+import {
+  doorInteractionPromptLabel,
+  type DoorInteractionSnapshot,
+} from "@/lib/babylon-doors";
 import type { FoundationStrip, LayerId, ViewMode } from "@/lib/twin-site";
 import type {
   FlightCommand,
@@ -53,6 +56,7 @@ export interface BabylonViewportHandle {
   recoverWalkthrough: () => void;
   setFlightCommand: (command: FlightCommand, active: boolean) => void;
   nudgeFlight: (command: FlightCommand) => void;
+  isGarageCinematicActive: () => boolean;
 }
 
 interface BabylonViewportProps {
@@ -137,6 +141,9 @@ export const BabylonViewport = forwardRef<
     },
     nudgeFlight(command) {
       controllerRef.current?.nudgeFlight(command);
+    },
+    isGarageCinematicActive() {
+      return controllerRef.current?.isGarageCinematicActive() ?? false;
     },
   }), []);
 
@@ -252,13 +259,17 @@ export const BabylonViewport = forwardRef<
   }, [status, navigationMode]);
 
   const setMode = (mode: NavigationMode) => {
-    controllerRef.current?.setNavigationMode(mode);
+    const controller = controllerRef.current;
+    if (controller?.isGarageCinematicActive()) return false;
+    controller?.setNavigationMode(mode);
     onNavigationModeChangeRef.current(mode);
+    return true;
   };
 
   const applyPreset = (preset: CameraPreset) => {
+    if (controllerRef.current?.isGarageCinematicActive()) return;
     if (preset === "parcels") onParcelOverviewRequest();
-    setMode("orbit");
+    if (!setMode("orbit")) return;
     controllerRef.current?.setCameraPreset(preset);
   };
 
@@ -285,16 +296,7 @@ export const BabylonViewport = forwardRef<
     : null;
 
   const doorPromptStatus = doorInteraction
-    ? doorInteraction.blockedMessage ??
-      (doorInteraction.phase === "OPENING"
-        ? "Otváram dvere…"
-        : doorInteraction.phase === "CLOSING"
-          ? "Zatváram dvere…"
-          : doorInteraction.action === "OPEN"
-            ? "Otvoriť dvere"
-            : doorInteraction.action === "CLOSE"
-              ? "Zavrieť dvere"
-              : "Dvere ovláda automatický manéver")
+    ? doorInteractionPromptLabel(doorInteraction)
     : "";
 
   const chooseWalkAvatar = async (
@@ -302,7 +304,12 @@ export const BabylonViewport = forwardRef<
     restoreCanvasFocus: boolean,
   ) => {
     const controller = controllerRef.current;
-    if (!controller || pendingWalkAvatarId || id === walkAvatarId) {
+    if (
+      !controller ||
+      controller.isGarageCinematicActive() ||
+      pendingWalkAvatarId ||
+      id === walkAvatarId
+    ) {
       if (restoreCanvasFocus) {
         canvasRef.current?.focus({ preventScroll: true });
       }
@@ -385,6 +392,7 @@ export const BabylonViewport = forwardRef<
           }
           if (event.key.toLowerCase() === "v" && navigationMode === "walk") {
             event.preventDefault();
+            if (controllerRef.current?.isGarageCinematicActive()) return;
             const next = walkView === "third" ? "first" : "third";
             controllerRef.current?.setWalkView(next);
             setWalkView(next);
@@ -442,7 +450,8 @@ export const BabylonViewport = forwardRef<
           >
             <fieldset
               className="walk-avatar-picker"
-              aria-busy={pendingWalkAvatarId !== null}
+              aria-busy={pendingWalkAvatarId !== null || !garageAction}
+              disabled={!garageAction}
             >
               <legend>Vyber postavu</legend>
               <div className="walk-avatar-options">
@@ -464,7 +473,7 @@ export const BabylonViewport = forwardRef<
                         name="walk-avatar"
                         value={option.id}
                         checked={checked}
-                        disabled={pendingWalkAvatarId !== null}
+                        disabled={pendingWalkAvatarId !== null || !garageAction}
                         onChange={() => {
                           const pointerSelection =
                             avatarPointerSelectionRef.current === option.id;
@@ -499,6 +508,7 @@ export const BabylonViewport = forwardRef<
               <button
                 type="button"
                 className={`walk-recover${walkBlocked ? " is-needed" : ""}`}
+                disabled={!garageAction}
                 aria-label={walkBlocked ? "Vyslobodiť zaseknutú postavu" : "Vystrediť kameru za postavou"}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -511,6 +521,7 @@ export const BabylonViewport = forwardRef<
                 <button
                   key={room.id}
                   type="button"
+                  disabled={!garageAction}
                   aria-label={`Prejsť do ${room.number} ${room.name}`}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -536,7 +547,7 @@ export const BabylonViewport = forwardRef<
                 <CarFront size={20} strokeWidth={1.8} />
               </span>
               <span className="garage-vehicle-copy">
-                <small>ŠKODA SUPERB · GARÁŽ 1.12</small>
+                <small>ŠKODA SUPERB IV · GARÁŽ 1.12</small>
                 <strong>{garageStatus}</strong>
               </span>
               <button
@@ -613,6 +624,7 @@ export const BabylonViewport = forwardRef<
               <button
                 key={command}
                 className={`flight-command flight-${command}`}
+                disabled={navigationMode === "walk" && !garageAction}
                 aria-label={
                   navigationMode === "walk"
                     ? label.replace("Letieť", "Kráčať")
@@ -632,6 +644,7 @@ export const BabylonViewport = forwardRef<
             ))}
             <button
               className="flight-exit"
+              disabled={navigationMode === "walk" && !garageAction}
               onClick={(event) => {
                 event.stopPropagation();
                 setMode("orbit");
