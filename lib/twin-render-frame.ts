@@ -12,8 +12,8 @@ export const SCENE_CENTER_MM = Object.freeze({ x: 15_200, y: 10_800 });
 
 export const TOP_CAMERA_ALPHA = Math.PI / 2;
 export const PARCEL_CAMERA_ALPHA = Math.PI / 2;
-export const PARCEL_LABEL_REFERENCE_RADIUS_M = 60;
-export const PARCEL_LABEL_MAX_SCALE = 2.5;
+export const PARCEL_LABEL_REFERENCE_RADIUS_M = 28;
+export const PARCEL_LABEL_MAX_SCALE = 4.75;
 export const STREET_CAMERA_ALPHA = 1.42;
 export const AXONOMETRIC_CAMERA_ALPHA = Math.PI * 0.72;
 // Human-scale hero view from inside the rear hedge. The old preset placed the
@@ -84,27 +84,19 @@ export function streetCameraForWidth(widthPx: number): GardenCameraConfig {
 }
 
 /**
- * Cadastral orientation view centred on all labelled parcels entering the
- * supplied overview. The phone preset deliberately uses a wide top-down field
- * of view so both rows remain visible without hiding any cadastral labels.
+ * Cadastral orientation view centred between the subject row 6012/26–28 and
+ * the opposite row 6012/23–25. It intentionally frames cadastral context,
+ * while the existing top preset remains a tighter architectural floor-plan
+ * view of the house.
  */
 export function parcelCameraForWidth(widthPx: number): GardenCameraConfig {
   const mobile = widthPx < 600;
-  if (mobile) {
-    return {
-      alpha: PARCEL_CAMERA_ALPHA,
-      beta: 0.055,
-      radius: 150,
-      fov: 1.72,
-      target: [-13.3, 0, 14.4],
-    };
-  }
   return {
     alpha: PARCEL_CAMERA_ALPHA,
-    beta: 0.055,
-    radius: 125,
-    fov: 0.99,
-    target: [0, 0, 14.4],
+    beta: 0.065,
+    radius: mobile ? 132 : 80,
+    fov: mobile ? 0.9 : 0.82,
+    target: [-29, 0, 22],
   };
 }
 

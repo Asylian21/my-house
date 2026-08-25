@@ -8,12 +8,16 @@ import { describe, expect, it } from "vitest";
 import { buildInterior } from "../lib/babylon-interior";
 import type { AnimatedDoorRegistration } from "../lib/babylon-doors";
 import {
+  BATHROOM_FITOUT,
   CHILDRENS_BEDROOM_FITOUTS,
   FIREPLACE_STOVE,
   GARAGE_FITOUT,
   INTERIOR_DOORS,
+  INTERIOR_WALLS,
   TECHNICAL_HEATING_FITOUT,
+  WC_FITOUT,
 } from "../lib/twin-interior";
+import { MM_TO_M, sceneZM } from "../lib/twin-render-frame";
 
 describe("Babylon interior fit-out", () => {
   it("builds the required room objects and measured collision envelopes", () => {
@@ -145,6 +149,59 @@ describe("Babylon interior fit-out", () => {
       expect(heatingGuards[0].name).toContain("· WOOD-PELLET-ASSEMBLY · navigačný obrys");
       expect(heatingGuards[0].checkCollisions).toBe(true);
       expect(heatingGuards[0].isVisible).toBe(false);
+
+      const serviceCoreWall = INTERIOR_WALLS.find(
+        (wall) => wall.id === "IW-BATH-105-NORTH",
+      )!;
+      const serviceCoreWallMesh = scene.meshes.find((mesh) =>
+        mesh.name.includes(`Vnútorná stena ${serviceCoreWall.id}`),
+      );
+      expect(serviceCoreWallMesh?.checkCollisions).toBe(true);
+      expect(serviceCoreWallMesh?.isPickable).toBe(true);
+      serviceCoreWallMesh?.computeWorldMatrix(true);
+      expect(serviceCoreWallMesh?.position.z).toBeCloseTo(
+        sceneZM((serviceCoreWall.rectMm.y0 + serviceCoreWall.rectMm.y1) / 2),
+        8,
+      );
+      expect(
+        (serviceCoreWallMesh?.getBoundingInfo().boundingBox.extendSizeWorld.z ?? 0) * 2,
+      ).toBeCloseTo(140 * MM_TO_M, 8);
+
+      const bathroomMeshes = scene.meshes.filter((mesh) =>
+        mesh.name.startsWith(BATHROOM_FITOUT.id),
+      );
+      const bathroomGuards = bathroomMeshes.filter(
+        (mesh) => mesh.metadata?.walkCollisionOnly === true,
+      );
+      expect(bathroomGuards).toHaveLength(2);
+      expect(
+        bathroomGuards.every((guard) => guard.checkCollisions && !guard.isVisible),
+      ).toBe(true);
+      const builtInGuard = bathroomGuards.find((guard) =>
+        guard.name.includes("· BUILT-IN-2616 · hladký navigačný obrys"),
+      );
+      const oldBuiltInCenterYmm = (8322 + 8972) / 2;
+      expect(builtInGuard?.position.z).toBeCloseTo(
+        sceneZM(
+          (BATHROOM_FITOUT.builtIn.footprintMm.y0 +
+            BATHROOM_FITOUT.builtIn.footprintMm.y1) /
+            2,
+        ),
+        8,
+      );
+      expect((builtInGuard?.position.z ?? 0) - sceneZM(oldBuiltInCenterYmm)).toBeCloseTo(
+        0.2,
+        8,
+      );
+
+      const wcGuards = scene.meshes.filter(
+        (mesh) =>
+          mesh.name.startsWith(WC_FITOUT.id) &&
+          mesh.metadata?.walkCollisionOnly === true,
+      );
+      expect(wcGuards).toHaveLength(2);
+      expect(wcGuards.every((guard) => guard.checkCollisions && !guard.isVisible)).toBe(true);
+
       const garageMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(GARAGE_FITOUT.id));
       for (const required of [
         "· UTILITY-SINK ·",

@@ -134,17 +134,10 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /Stožiar verejného osvetlenia/);
   assert.match(scene, /LED hlavica verejného osvetlenia/);
   assert.match(scene, /Orientačný popis parcely/);
-  assert.match(scene, /parcel\.overviewVisibility === "ORIENTATION"/);
-  assert.match(scene, /if \(parcel\.displayLabel\)/);
-  assert.match(scene, /parcel\.sjtskHoleRingsMm/);
-  assert.match(scene, /ROAD_CONTEXT\.visibleCarriagewayPolygonMm/);
-  assert.match(scene, /ROAD_CONTEXT\.overviewOuterRoadEdgeMm/);
   assert.match(
     scene,
-    /Miestna komunikácia 6012\/1 \+ 6013 · súvislá vozovka cez celý parcelný prehľad/,
+    /if \(parcel\.labelPointSjtskMm && !parcel\.isSubject\)/,
   );
-  assert.doesNotMatch(scene, /ROAD_CONTEXT\.frontagePolygonMm/);
-  assert.doesNotMatch(scene, /ROAD_CONTEXT\.cornerCarriagewayPolygonMm/);
   assert.match(scene, /parcelCameraForWidth/);
   assert.match(scene, /parcelLabelScaleForRadius/);
   assert.match(scene, /hedge-privet-albedo\.png/);

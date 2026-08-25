@@ -340,8 +340,11 @@ async function run() {
         avatarLoaded: controller.avatar.isLoaded,
         avatarSceneReady,
         environmentReady: Boolean(controller.scene.environmentTexture),
+        // Effect-layer render targets are frame-local GPU surfaces, not source
+        // assets. They can report not-ready while the continuous loop is
+        // intentionally paused; keep the gate strict for every content texture.
         texturesNotReady: controller.scene.textures
-          .filter((texture) => !texture.isReady())
+          .filter((texture) => !texture.isRenderTarget && !texture.isReady())
           .map((texture) => texture.name || texture.url || "unnamed"),
         collidables: controller.scene.meshes.filter((mesh) => mesh.checkCollisions)
           .length,
@@ -386,8 +389,9 @@ async function run() {
           id: "wcForward",
           roomId: "ROOM-1-06",
           command: "forward",
-          frames: harness.framesFrom60Hz(55),
+          frames: harness.framesFrom60Hz(80),
           expectedRoomId: "ROOM-1-02",
+          openDoorId: "DOOR-102-106",
         },
         {
           id: "wcBackward",
@@ -395,6 +399,14 @@ async function run() {
           command: "backward",
           frames: harness.framesFrom60Hz(40),
           expectedRoomId: "ROOM-1-06",
+        },
+        {
+          id: "bathroomBuiltInLeft",
+          roomId: "ROOM-1-05",
+          command: "left",
+          frames: harness.framesFrom60Hz(40),
+          expectedRoomId: "ROOM-1-05",
+          expectedBlocked: true,
         },
         {
           id: "livingForward",
@@ -412,6 +424,10 @@ async function run() {
         },
       ];
       const movements = movementCases.map((testCase) => {
+        if (testCase.openDoorId) {
+          harness.begin("ROOM-1-03", `${testCase.id} pre-open`);
+          controller.setDoorOpen(testCase.openDoorId, true, true);
+        }
         const settled = harness.begin(testCase.roomId, testCase.id);
         const cameraErrors = [...settled.cameraErrors];
         const start = harness.pose();
@@ -546,6 +562,9 @@ async function run() {
           const yaw = Math.atan2(unit.x, unit.z);
           const cameraErrors = [];
 
+          const preOpen = harness.begin("ROOM-1-03", `${door.id} pre-open`);
+          cameraErrors.push(...preOpen.cameraErrors);
+          controller.setDoorOpen(door.id, true, true);
           const settled = harness.begin(direction.startRoomId, `${door.id} ${direction.id}`);
           cameraErrors.push(...settled.cameraErrors);
           controller.avatar.place(startScene.x, startScene.z, yaw);
@@ -740,7 +759,7 @@ async function run() {
       return { movements, doors, recovery };
     });
 
-    assert.equal(suite.movements.length, 4);
+    assert.equal(suite.movements.length, 5);
     for (const movement of suite.movements) {
       assert.ok(
         movement.travelled > 0.04,
@@ -761,8 +780,15 @@ async function run() {
       assert.equal(
         movement.endRoomId,
         movement.expectedRoomId,
-        `${movement.id}: ended in ${movement.endRoomId}, expected ${movement.expectedRoomId}`,
+        `${movement.id}: ended in ${movement.endRoomId}, expected ${movement.expectedRoomId}; travelled ${movement.travelled.toFixed(3)} m, blocked=${movement.blocked}`,
       );
+      if (typeof movement.expectedBlocked === "boolean") {
+        assert.equal(
+          movement.blocked,
+          movement.expectedBlocked,
+          `${movement.id}: blocked=${movement.blocked}, expected ${movement.expectedBlocked}`,
+        );
+      }
       assertNoCameraErrors(movement, movement.id);
     }
 

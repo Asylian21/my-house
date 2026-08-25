@@ -165,6 +165,7 @@ export interface WcFitout {
 export interface BathroomFitout {
   readonly id: string;
   readonly sourceId: string;
+  readonly boundaryRevisionSourceId: string;
   readonly architecturalSourceId: string;
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly roomId: "ROOM-1-05";
@@ -579,6 +580,28 @@ export const INTERIOR_WALL_HEIGHT_MM = 3125;
 export const INTERIOR_DOOR_HEIGHT_MM = 2100;
 export const WING_RIDGE_XMM = 24540;
 
+/**
+ * Client revision 25. 8. 2026: move the complete partition behind the 1.05
+ * basin / washer / dryer wall 200 mm toward the bathroom. The unchanged
+ * 140 mm wall therefore gives both WC 1.06 and technical room 1.07 exactly
+ * 200 mm more clear depth behind the kitchen.
+ */
+export const BATHROOM_SERVICE_CORE_BOUNDARY_REVISION = Object.freeze({
+  id: "BATHROOM-SERVICE-CORE-BOUNDARY-2026-08-25",
+  sourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT" as const,
+  axis: "Y" as const,
+  shiftTowardRoomId: "ROOM-1-05" as const,
+  shiftMm: 200,
+  wallThicknessMm: 140,
+  originalBathroomFaceYmm: 8972,
+  revisedBathroomFaceYmm: 8772,
+  originalWcTechnicalFaceYmm: 9112,
+  revisedWcTechnicalFaceYmm: 8912,
+  affectedRoomIds: ["ROOM-1-05", "ROOM-1-06", "ROOM-1-07"] as const,
+});
+
 export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
   {
     id: "ROOM-1-01",
@@ -651,10 +674,15 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     floor: "TILE",
     wetRoom: true,
     rectsMm: [
-      { x0: 22783, y0: 6602, x1: 25399, y1: 8972 },
+      {
+        x0: 22783,
+        y0: 6602,
+        x1: 25399,
+        y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedBathroomFaceYmm,
+      },
       { x0: 25399, y0: 6602, x1: 27541, y1: 7601 },
     ],
-    standingPointMm: { x: 23600, y: 7900 },
+    standingPointMm: { x: 23600, y: 7788 },
   },
   {
     id: "ROOM-1-06",
@@ -665,7 +693,12 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     ceiling: "FLAT",
     floor: "TILE",
     wetRoom: true,
-    rectsMm: [{ x0: 22783, y0: 9112, x1: 24082, y1: 10712 }],
+    rectsMm: [{
+      x0: 22783,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+      x1: 24082,
+      y1: 10712,
+    }],
     standingPointMm: { x: 23280, y: 9800 },
   },
   {
@@ -681,6 +714,12 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
       { x0: 24221, y0: 9112, x1: 25830, y1: 10712 },
       { x0: 25830, y0: 9112, x1: 27541, y1: 11411 },
       { x0: 25543, y0: 7741, x1: 27541, y1: 9112 },
+      {
+        x0: 24221,
+        y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+        x1: 25543,
+        y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.originalWcTechnicalFaceYmm,
+      },
     ],
     standingPointMm: { x: 25800, y: 9900 },
   },
@@ -791,13 +830,41 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-SPINE-EAST-3", role: "PARTITION", rectMm: { x0: 22639, y0: 10666, x1: 22783, y1: 11550 } },
   // 190 mm load-bearing wall study 1.04 / bathroom 1.05.
   { id: "IW-STUDY-NORTH", role: "LOAD_BEARING", rectMm: { x0: 22783, y0: 6412, x1: 27541, y1: 6602 } },
-  // Bathroom 1.05 east wall and its return above the technical room.
-  { id: "IW-BATH-105-EAST", role: "PARTITION", rectMm: { x0: 25399, y0: 7741, x1: 25543, y1: 9112 } },
+  // Bathroom 1.05 east wall and its return above the technical room. The
+  // 25. 8. service-core revision shortens the return by the same 200 mm.
+  {
+    id: "IW-BATH-105-EAST",
+    role: "PARTITION",
+    rectMm: {
+      x0: 25399,
+      y0: 7741,
+      x1: 25543,
+      y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+    },
+  },
   { id: "IW-BATH-105-SOUTH-E", role: "PARTITION", rectMm: { x0: 25399, y0: 7601, x1: 27541, y1: 7741 } },
-  { id: "IW-BATH-105-NORTH", role: "PARTITION", rectMm: { x0: 22783, y0: 8972, x1: 25543, y1: 9112 } },
+  {
+    id: "IW-BATH-105-NORTH",
+    role: "PARTITION",
+    rectMm: {
+      x0: 22783,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedBathroomFaceYmm,
+      x1: 25543,
+      y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+    },
+  },
   // Client revision 23. 8. 2026 shifts the WC / technical-room partition
   // 300 mm east while retaining its original 139 mm construction thickness.
-  { id: "IW-WC-EAST", role: "PARTITION", rectMm: { x0: 24082, y0: 9112, x1: 24221, y1: 10712 } },
+  {
+    id: "IW-WC-EAST",
+    role: "PARTITION",
+    rectMm: {
+      x0: 24082,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+      x1: 24221,
+      y1: 10712,
+    },
+  },
   // Wall behind the kitchen run (top of WC and technical room).
   { id: "IW-KITCHEN-BACK", role: "PARTITION", rectMm: { x0: 22783, y0: 10712, x1: 25830, y1: 10852 } },
   { id: "IW-TECH-WEST", role: "PARTITION", rectMm: { x0: 25691, y0: 10712, x1: 25830, y1: 11411 } },
@@ -944,13 +1011,14 @@ export const WC_FITOUT: WcFitout = Object.freeze({
 });
 
 /**
- * Final client layout for the L-shaped room 1.05. The fixed architecture stays
- * unchanged: the east leg is the walk-in wet zone and the complete north
- * recess becomes one 2 616 mm built-in wall with a basin and two appliances.
+ * Final client layout for the L-shaped room 1.05. The east leg remains the
+ * walk-in wet zone; the complete north recess is one 2 616 mm built-in wall.
+ * The 25. 8. revision moves that wall and its partition 200 mm toward the room.
  */
 export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
   id: "BATHROOM-FITOUT-BUILTIN-2026-08-23",
   sourceId: SOURCES.clientBathroomBuiltInRevision20260823.id,
+  boundaryRevisionSourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-05",
@@ -963,31 +1031,31 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
     linearDrainMm: { x0: 27391, y0: 6752, x1: 27471, y1: 7452 },
   },
   builtIn: {
-    footprintMm: { x0: 22783, y0: 8322, x1: 25399, y1: 8972 },
+    footprintMm: { x0: 22783, y0: 8122, x1: 25399, y1: 8772 },
     facing: "SOUTH",
     heightMm: 2350,
     counterHeightMm: 900,
     overheadCabinetBottomMm: 1100,
     basin: {
-      footprintMm: { x0: 22883, y0: 8422, x1: 23983, y1: 8872 },
+      footprintMm: { x0: 22883, y0: 8222, x1: 23983, y1: 8672 },
       finish: "MATTE_BLACK",
       rimElevationMm: 900,
     },
     appliances: [
       {
         kind: "WASHER",
-        footprintMm: { x0: 24049, y0: 8352, x1: 24649, y1: 8952 },
+        footprintMm: { x0: 24049, y0: 8152, x1: 24649, y1: 8752 },
         finish: "WHITE",
       },
       {
         kind: "DRYER",
-        footprintMm: { x0: 24749, y0: 8352, x1: 25349, y1: 8952 },
+        footprintMm: { x0: 24749, y0: 8152, x1: 25349, y1: 8752 },
         finish: "WHITE",
       },
     ],
   },
-  clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8322 },
-  applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
+  clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8122 },
+  applianceServiceRectMm: { x0: 24049, y0: 7222, x1: 25349, y1: 8122 },
 });
 
 /**

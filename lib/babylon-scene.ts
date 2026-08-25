@@ -2424,17 +2424,17 @@ export class TwinSceneController {
 
     const minor = Color3.FromHexString("#313a37");
     const major = Color3.FromHexString("#55605c");
-    // Cover the complete road and cadastral overview, including its extended
-    // western frontage and the southern continuation of parcel 6013.
-    for (let coordinate = -105; coordinate <= 100; coordinate += 1) {
+    // The original house-only grid stopped before 6012/28 and the opposite
+    // row. Extend the technical drafting field to match the parcel overview.
+    for (let coordinate = -70; coordinate <= 85; coordinate += 1) {
       const color = coordinate % 5 === 0 ? major : minor;
       const alpha = coordinate % 5 === 0 ? 0.42 : 0.14;
       const xLine = CreateLines(
         `grid-x-${coordinate}`,
         {
           points: [
-            new Vector3(coordinate - CENTER_X_M, -0.112, -95),
-            new Vector3(coordinate - CENTER_X_M, -0.112, 100),
+            new Vector3(coordinate - CENTER_X_M, -0.112, -75),
+            new Vector3(coordinate - CENTER_X_M, -0.112, 85),
           ],
         },
         this.scene,
@@ -2447,8 +2447,8 @@ export class TwinSceneController {
         `grid-z-${coordinate}`,
         {
           points: [
-            new Vector3(-120, -0.111, zM(coordinate * 1000)),
-            new Vector3(110, -0.111, zM(coordinate * 1000)),
+            new Vector3(-90, -0.111, zM(coordinate * 1000)),
+            new Vector3(85, -0.111, zM(coordinate * 1000)),
           ],
         },
         this.scene,
@@ -2463,8 +2463,6 @@ export class TwinSceneController {
   private buildCadastre() {
     for (const parcel of CADASTRAL_PARCELS) {
       const localRing = parcel.sjtskRingMm.map(sjtskToLocalMm);
-      const localHoleRings =
-        parcel.sjtskHoleRingsMm?.map((ring) => ring.map(sjtskToLocalMm)) ?? [];
       if (parcel.isSubject) {
         const fill = createFlatPolygonWithHoles(
           this.scene,
@@ -2482,7 +2480,7 @@ export class TwinSceneController {
         this.register(fill, "cadastre");
       }
 
-      if (parcel.overviewVisibility === "ORIENTATION") {
+      if (parcel.orientationRole) {
         const subject = parcel.isSubject;
         this.buildThinBoxes(
           `Pozemné katastrálne čiary ${parcel.parcelNumber}`,
@@ -2507,36 +2505,29 @@ export class TwinSceneController {
         );
       }
 
-      for (const [ringIndex, ring] of [localRing, ...localHoleRings].entries()) {
-        const outline = CreateLines(
-          ringIndex === 0
-            ? `Katastrálna hranica ${parcel.nationalReference}`
-            : `Katastrálny vnútorný obvod ${parcel.nationalReference} · ${ringIndex}`,
-          { points: ring.map((point) => point3(point, -0.006)) },
-          this.scene,
-        );
-        outline.color = Color3.FromHexString(
-          parcel.isSubject
-            ? "#ff5d42"
-            : parcel.overviewVisibility === "ORIENTATION"
-              ? "#f1eadb"
-              : "#c8c0b1",
-        );
-        outline.alpha = parcel.isSubject
-          ? 1
-          : parcel.overviewVisibility === "ORIENTATION"
-            ? 0.84
-            : 0.42;
-        outline.isPickable = parcel.isSubject && ringIndex === 0;
-        this.register(
-          outline,
-          "cadastre",
-          parcel.isSubject && ringIndex === 0 ? parcel.id : undefined,
-        );
-      }
+      const outline = CreateLines(
+        `Katastrálna hranica ${parcel.nationalReference}`,
+        { points: localRing.map((point) => point3(point, -0.006)) },
+        this.scene,
+      );
+      outline.color = Color3.FromHexString(
+        parcel.isSubject
+          ? "#ff5d42"
+          : parcel.orientationRole
+            ? "#f1eadb"
+            : "#715443",
+      );
+      outline.alpha = parcel.isSubject
+        ? 1
+        : parcel.orientationRole
+          ? 0.84
+          : 0.46;
+      outline.isPickable = parcel.isSubject;
+      if (!parcel.orientationRole) this.technicalOverlay(outline);
+      this.register(outline, "cadastre", parcel.isSubject ? parcel.id : undefined);
 
-      if (parcel.displayLabel) {
-        const anchor = sjtskToLocalMm(parcel.referencePointSjtskMm);
+      if (parcel.labelPointSjtskMm && !parcel.isSubject) {
+        const anchor = sjtskToLocalMm(parcel.labelPointSjtskMm);
         const label = CreateGround(
           `Orientačný popis parcely ${parcel.parcelNumber}`,
           {
@@ -2585,16 +2576,27 @@ export class TwinSceneController {
       this.register(roadReserve, "street", ROAD_CONTEXT.id);
     }
 
-    const road = createFlatPolygon(
+    const frontage = createFlatPolygon(
       this.scene,
-      "Miestna komunikácia 6012/1 + 6013 · súvislá vozovka cez celý parcelný prehľad",
-      ROAD_CONTEXT.visibleCarriagewayPolygonMm,
+      "Miestna komunikácia 6012/1 · čelná vozovka po hranu odvodenú z C3",
+      ROAD_CONTEXT.frontagePolygonMm,
       -0.115,
       paverRepeatMm,
     );
-    this.appearance(road, this.materials.road, this.realisticMaterials.road);
-    road.receiveShadows = true;
-    this.register(road, "street", ROAD_CONTEXT.id);
+    this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
+    frontage.receiveShadows = true;
+    this.register(frontage, "street", ROAD_CONTEXT.id);
+
+    const corner = createFlatPolygon(
+      this.scene,
+      "Miestna komunikácia 6012/1 · rohová vetva v katastrálnom koridore",
+      ROAD_CONTEXT.cornerCarriagewayPolygonMm,
+      -0.114,
+      paverRepeatMm,
+    );
+    this.appearance(corner, this.materials.road, this.realisticMaterials.road);
+    corner.receiveShadows = true;
+    this.register(corner, "street", ROAD_CONTEXT.id);
 
     for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
       const sideReserve = createFlatPolygon(
@@ -2851,7 +2853,7 @@ export class TwinSceneController {
 
     const outerCadastralEdges = [
       ROAD_CONTEXT.frontOppositeParcelEdgeMm,
-      ROAD_CONTEXT.overviewOuterRoadEdgeMm,
+      ROAD_CONTEXT.cornerPolygonMm.slice(7, 15),
     ];
     for (const [index, edge] of outerCadastralEdges.entries()) {
       const boundary = CreateLines(

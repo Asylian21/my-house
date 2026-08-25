@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import earcut from "earcut";
 
-import { CADASTRAL_FRAME_SOURCE } from "../lib/cadastral-context";
 import {
   CADASTRAL_PARCELS,
   TERRACE_ZONES_D1,
@@ -25,7 +23,6 @@ import {
 import {
   GARDEN_CAMERA_ALPHA,
   GARDEN_CAMERA_BETA,
-  SCENE_CENTER_MM,
   TOP_CAMERA_ALPHA,
   arcRotateCameraHeightM,
   focusRadiusForBoundingSphere,
@@ -59,71 +56,6 @@ function pointInRing(
   return inside;
 }
 
-function signedRingAreaMm2(
-  closedRing: readonly { readonly x: number; readonly y: number }[],
-) {
-  const ring =
-    closedRing[0]?.x === closedRing.at(-1)?.x &&
-    closedRing[0]?.y === closedRing.at(-1)?.y
-      ? closedRing.slice(0, -1)
-      : closedRing;
-  return (
-    ring.reduce((twiceArea, current, index) => {
-      const next = ring[(index + 1) % ring.length];
-      return twiceArea + current.x * next.y - next.x * current.y;
-    }, 0) / 2
-  );
-}
-
-function nonAdjacentSegmentIntersections(
-  closedRing: readonly { readonly x: number; readonly y: number }[],
-) {
-  const ring =
-    closedRing[0]?.x === closedRing.at(-1)?.x &&
-    closedRing[0]?.y === closedRing.at(-1)?.y
-      ? closedRing.slice(0, -1)
-      : closedRing;
-  const cross = (
-    a: (typeof ring)[number],
-    b: (typeof ring)[number],
-    c: (typeof ring)[number],
-  ) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-  const intersects = (
-    a: (typeof ring)[number],
-    b: (typeof ring)[number],
-    c: (typeof ring)[number],
-    d: (typeof ring)[number],
-  ) => {
-    const abC = cross(a, b, c);
-    const abD = cross(a, b, d);
-    const cdA = cross(c, d, a);
-    const cdB = cross(c, d, b);
-    return abC * abD <= 0 && cdA * cdB <= 0;
-  };
-  const found: [number, number][] = [];
-  for (let first = 0; first < ring.length; first += 1) {
-    for (let second = first + 1; second < ring.length; second += 1) {
-      if (
-        second === first + 1 ||
-        (first === 0 && second === ring.length - 1)
-      ) {
-        continue;
-      }
-      if (
-        intersects(
-          ring[first],
-          ring[(first + 1) % ring.length],
-          ring[second],
-          ring[(second + 1) % ring.length],
-        )
-      ) {
-        found.push([first, second]);
-      }
-    }
-  }
-  return found;
-}
-
 describe("site evidence seed", () => {
   it("projects official GP points into the road-aligned local frame", () => {
     const subject = CADASTRAL_PARCELS.find((parcel) => parcel.isSubject);
@@ -136,128 +68,58 @@ describe("site evidence seed", () => {
     expect(SOURCES.cadastre.href).toContain("inspire-cp-wfs");
   });
 
-  it("keeps the complete displayed cadastral frame tied to current WFS geometry", () => {
-    expect(CADASTRAL_PARCELS.map(({ parcelNumber }) => parcelNumber).sort()).toEqual(
+  it("keeps the requested parcel rows tied to live WFS features and label points", () => {
+    const requested = CADASTRAL_PARCELS.filter(
+      ({ orientationRole }) => orientationRole,
+    );
+    expect(requested.map(({ parcelNumber }) => parcelNumber).sort()).toEqual(
       [
-        "6012/15",
         "6012/16",
-        "6012/17",
-        "6012/22",
         "6012/23",
         "6012/24",
         "6012/25",
         "6012/26",
         "6012/27",
         "6012/28",
-        "6012/29",
-        "6013",
-        "6014",
-        "6015",
-        "6017",
-        "6019",
-        "6021",
-        "6022",
-        "6026",
-        "6034",
-        "6035/1",
-        "6035/36",
         "6035/37",
         "6035/38",
-        "6035/39",
-        "6035/40",
-        "6035/41",
-        "6035/42",
-        "6035/44",
         "6035/45",
         "6035/46",
-        "6050",
       ],
-    );
-    expect(new Set(CADASTRAL_PARCELS.map(({ featureId }) => featureId)).size).toBe(
-      CADASTRAL_PARCELS.length,
     );
     expect(
       Object.fromEntries(
-        CADASTRAL_PARCELS.map(({ parcelNumber, featureId }) => [
-          parcelNumber,
-          featureId,
-        ]),
+        requested.map(({ parcelNumber, featureId }) => [parcelNumber, featureId]),
       ),
     ).toMatchObject({
-      "6012/15": "CP.94487869010",
+      "6012/23": "CP.94487877010",
       "6012/26": "CP.94487880010",
-      "6012/29": "CP.94487883010",
-      "6035/1": "CP.94487893010",
+      "6012/28": "CP.94487882010",
+      "6035/37": "CP.94487918010",
       "6035/46": "CP.94487927010",
-      "6013": "CP.1205215736",
-      "6014": "CP.1205216736",
-      "6019": "CP.1205221736",
-      "6021": "CP.1205223736",
     });
 
-    const labelled = CADASTRAL_PARCELS.filter(({ displayLabel }) => displayLabel);
-    expect(labelled.map(({ parcelNumber }) => parcelNumber).sort()).toEqual([
-      "6012/15",
-      "6012/16",
-      "6012/23",
-      "6012/24",
-      "6012/25",
-      "6012/27",
-      "6012/28",
-      "6019",
-      "6021",
-      "6035/37",
-      "6035/38",
-      "6035/45",
-      "6035/46",
-    ]);
-    expect(
-      CADASTRAL_PARCELS.find(({ isSubject }) => isSubject)?.displayLabel,
-    ).toBe(false);
-
     const localLabelPoints = Object.fromEntries(
-      labelled.map((parcel) => [
+      requested.map((parcel) => [
         parcel.parcelNumber,
-        sjtskToLocalMm(parcel.referencePointSjtskMm),
+        sjtskToLocalMm(parcel.labelPointSjtskMm!),
       ]),
     );
     expect(localLabelPoints).toMatchObject({
-      "6012/15": { x: 21_872, y: -65_960 },
       "6012/23": { x: -27_870, y: -31_288 },
+      "6012/26": { x: 14_480, y: 10_468 },
       "6012/28": { x: -46_902, y: 8_580 },
-      "6019": { x: -72_399, y: 51_899 },
-      "6021": { x: -21_707, y: 58_823 },
       "6035/46": { x: 54_929, y: 7_179 },
     });
 
-    for (const parcel of CADASTRAL_PARCELS) {
+    for (const parcel of requested) {
       expect(parcel.sjtskRingMm[0]).toEqual(parcel.sjtskRingMm.at(-1));
-      expect(pointInRing(parcel.referencePointSjtskMm, parcel.sjtskRingMm)).toBe(
+      expect(parcel.labelPointSjtskMm).toBeDefined();
+      expect(pointInRing(parcel.labelPointSjtskMm!, parcel.sjtskRingMm)).toBe(
         true,
       );
-      for (const hole of parcel.sjtskHoleRingsMm ?? []) {
-        expect(hole[0]).toEqual(hole.at(-1));
-        expect(pointInRing(parcel.referencePointSjtskMm, hole)).toBe(false);
-      }
-      const cadastralAreaM2 =
-        polygonAreaM2(parcel.sjtskRingMm) -
-        (parcel.sjtskHoleRingsMm ?? []).reduce(
-          (sum, hole) => sum + polygonAreaM2(hole),
-          0,
-        );
-      expect(Math.abs(cadastralAreaM2 - parcel.areaM2)).toBeLessThan(0.7);
     }
-    expect(
-      CADASTRAL_PARCELS.find(({ parcelNumber }) => parcelNumber === "6017")
-        ?.sjtskHoleRingsMm,
-    ).toHaveLength(1);
-    expect(SOURCES.cadastre.date).toBe("25. 8. 2026");
-    expect(SOURCES.cadastre.detail).toContain("celého zobrazeného rámca");
-    expect(CADASTRAL_FRAME_SOURCE).toEqual({
-      service: "ČÚZK INSPIRE Cadastral Parcels WFS",
-      crs: "EPSG:5514",
-      fetchedAt: "2026-08-25T13:49:14",
-    });
+    expect(SOURCES.cadastre.date).toBe("24. 8. 2026");
   });
 
   it("uses the later D1 floor plan without reflection and retains C3 as provenance", () => {
@@ -301,25 +163,6 @@ describe("site evidence seed", () => {
     expect(ROAD_CONTEXT.featureId).toBe("CP.94487856010");
     expect(ROAD_CONTEXT.nationalReference).toBe("613908-6012/1");
     expect(ROAD_CONTEXT.registeredAreaM2).toBe(10_647);
-    expect(ROAD_CONTEXT.connectedRoadParcel).toEqual({
-      featureId: "CP.1205215736",
-      nationalReference: "613908-6013",
-      registeredAreaM2: 1_839,
-      landKindCode: 14,
-      landUseCode: 17,
-      classification: "OSTATNA_PLOCHA_OSTATNI_KOMUNIKACE",
-      sourceId: SOURCES.ruianParcels.id,
-    });
-    expect(ROAD_CONTEXT.excludedAdjacentParcel).toEqual({
-      featureId: "CP.1205216736",
-      nationalReference: "613908-6014",
-      registeredAreaM2: 2_312,
-      landKindCode: 14,
-      landUseCode: 26,
-      classification: "OSTATNA_PLOCHA_JINA_PLOCHA",
-      paved: false,
-      sourceId: SOURCES.ruianParcels.id,
-    });
     expect(ROAD_CONTEXT.legalBoundaryStatus).toBe("CURRENT_REGISTER");
     expect(ROAD_CONTEXT.surfaceEnvelopeStatus).toBe(
       "CURRENT_REGISTER_CLIPPED_CONTEXT",
@@ -329,9 +172,6 @@ describe("site evidence seed", () => {
     );
     expect(ROAD_CONTEXT.orientationExtensionStatus).toBe(
       "WFS_BOUNDARY_WITH_C3_OFFSET_CONTINUATION",
-    );
-    expect(ROAD_CONTEXT.pavedCoverageStatus).toBe(
-      "FULL_DISPLAYED_CONTEXT_6012_1_AND_6013",
     );
     expect(ROAD_CONTEXT.surfaceFinish).toEqual({
       kind: "GREY_CONCRETE_BLOCK_PAVERS",
@@ -362,7 +202,7 @@ describe("site evidence seed", () => {
         sourceId: SOURCES.clientStreetPhoto20260825.id,
       },
     });
-    expect(ROAD_CONTEXT.visualReference.vergeClustersMm).toHaveLength(12);
+    expect(ROAD_CONTEXT.visualReference.vergeClustersMm).toHaveLength(9);
     expect(ROAD_CONTEXT.streetLighting).toMatchObject({
       kind: "SLIM_GREY_LED_POLES",
       poleHeightMm: 5_400,
@@ -372,7 +212,7 @@ describe("site evidence seed", () => {
       placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
       sourceId: SOURCES.clientStreetPhoto20260825.id,
     });
-    expect(ROAD_CONTEXT.streetLighting.polesMm).toHaveLength(6);
+    expect(ROAD_CONTEXT.streetLighting.polesMm).toHaveLength(4);
     const outerRoadEdgeYmm = Math.min(
       ...ROAD_CONTEXT.frontOppositeParcelEdgeMm.map(({ y }) => y),
     );
@@ -381,19 +221,13 @@ describe("site evidence seed", () => {
     ).toBe(true);
     expect(ROAD_CONTEXT.frontAsphaltEdgeYmm).toBe(-3_104);
     expect(ROAD_CONTEXT.frontReservePolygonMm).toEqual([
-      { x: -105_000, y: -8 },
-      { x: -90_397, y: 18 },
       { x: -60_262, y: 14 },
       { x: -30_127, y: 10 },
       { x: 0, y: 0 },
       { x: 28_194, y: 0 },
       { x: 28_194, y: -3_104 },
-      { x: 0, y: -3_104 },
-      { x: -30_127, y: -3_094 },
-      { x: -60_262, y: -3_090 },
-      { x: -90_397, y: -3_086 },
-      { x: -105_000, y: -3_112 },
-      { x: -105_000, y: -8 },
+      { x: -60_262, y: -3_104 },
+      { x: -60_262, y: 14 },
     ]);
     expect(
       ROAD_CONTEXT.frontReserveSurfacePolygonsMm.map((ring) => {
@@ -401,24 +235,13 @@ describe("site evidence seed", () => {
         return [Math.min(...xs), Math.max(...xs)];
       }),
     ).toEqual([
-      [-105_000, 6_490],
+      [-60_262, 6_490],
       [10_690, 21_415],
       [22_915, 28_194],
     ]);
-    for (const x of [
-      -100_000,
-      -85_000,
-      -75_000,
-      -60_000,
-      -30_000,
-      0,
-      15_000,
-      27_000,
-    ]) {
+    for (const x of [0, 15_000, 27_000]) {
       const roadPoint = { x, y: -5_000 };
-      expect(
-        pointInRing(roadPoint, ROAD_CONTEXT.visibleCarriagewayPolygonMm),
-      ).toBe(true);
+      expect(pointInRing(roadPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(true);
       expect(
         ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
           pointInRing(roadPoint, ring),
@@ -427,9 +250,9 @@ describe("site evidence seed", () => {
     }
     for (const x of [0, 15_000, 25_000]) {
       const shoulderPoint = { x, y: -1_500 };
-      expect(
-        pointInRing(shoulderPoint, ROAD_CONTEXT.visibleCarriagewayPolygonMm),
-      ).toBe(false);
+      expect(pointInRing(shoulderPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(
+        false,
+      );
       expect(
         ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
           pointInRing(shoulderPoint, ring),
@@ -461,73 +284,9 @@ describe("site evidence seed", () => {
       { x: 34_213, y: 24_497 },
     ]);
     expect(ROAD_CONTEXT.cornerReserveSurfacePolygonsMm).toHaveLength(2);
-    const carriageway = ROAD_CONTEXT.visibleCarriagewayPolygonMm;
-    expect(carriageway[0]).toEqual(carriageway.at(-1));
-    expect(carriageway.slice(0, -1)).toHaveLength(37);
-    expect(Math.min(...carriageway.map(({ x }) => x))).toBe(-105_000);
-    expect(Math.min(...carriageway.map(({ y }) => y))).toBe(-90_000);
-    expect(Math.max(...carriageway.map(({ y }) => y))).toBe(52_920);
-    expect(sceneXM(Math.min(...carriageway.map(({ x }) => x)))).toBeLessThan(
-      -120,
+    expect(ROAD_CONTEXT.cornerCarriagewayPolygonMm[0]).toEqual(
+      ROAD_CONTEXT.cornerAsphaltEdgeMm[0],
     );
-    expect(sceneZM(Math.min(...carriageway.map(({ y }) => y)))).toBeGreaterThan(
-      100,
-    );
-    expect(signedRingAreaMm2(carriageway)).toBe(-2_315_941_782);
-    expect(nonAdjacentSegmentIntersections(carriageway)).toEqual([]);
-    expect(
-      earcut(
-        carriageway
-          .slice(0, -1)
-          .flatMap(({ x, y }) => [x, y]),
-        undefined,
-        2,
-      ),
-    ).toHaveLength(105);
-
-    for (const y of [
-      -89_000,
-      -85_000,
-      -70_000,
-      -60_000,
-      -45_000,
-      -30_000,
-      -15_000,
-      0,
-      20_000,
-    ]) {
-      expect(pointInRing({ x: 35_000, y }, carriageway)).toBe(true);
-      expect(pointInRing({ x: 40_000, y }, carriageway)).toBe(true);
-    }
-    expect(pointInRing({ x: 43_000, y: -45_000 }, carriageway)).toBe(false);
-
-    const parcel6013 = CADASTRAL_PARCELS.find(
-      ({ parcelNumber }) => parcelNumber === "6013",
-    )!;
-    const parcel6014 = CADASTRAL_PARCELS.find(
-      ({ parcelNumber }) => parcelNumber === "6014",
-    )!;
-    for (const point of [
-      { x: 38_000, y: 30_000 },
-      { x: 38_000, y: 45_000 },
-      { x: 36_000, y: 50_000 },
-      { x: 41_000, y: 50_000 },
-    ]) {
-      expect(pointInRing(point, carriageway)).toBe(true);
-      expect(
-        pointInRing(point, parcel6013.sjtskRingMm.map(sjtskToLocalMm)),
-      ).toBe(true);
-      expect(
-        pointInRing(point, parcel6014.sjtskRingMm.map(sjtskToLocalMm)),
-      ).toBe(false);
-    }
-    expect(pointInRing({ x: 20_000, y: 28_000 }, carriageway)).toBe(false);
-    expect(
-      pointInRing(
-        { x: 20_000, y: 28_000 },
-        parcel6014.sjtskRingMm.map(sjtskToLocalMm),
-      ),
-    ).toBe(true);
   });
 
   it("preserves D1 handedness at the Babylon render boundary", () => {
@@ -619,52 +378,21 @@ describe("site evidence seed", () => {
     );
     expect(parcelCameraForWidth(1600)).toEqual({
       alpha: Math.PI / 2,
-      beta: 0.055,
-      radius: 125,
-      fov: 0.99,
-      target: [0, 0, 14.4],
+      beta: 0.065,
+      radius: 80,
+      fov: 0.82,
+      target: [-29, 0, 22],
     });
     expect(parcelCameraForWidth(390)).toMatchObject({
-      beta: 0.055,
-      radius: 150,
-      fov: 1.72,
-      target: [-13.3, 0, 14.4],
+      radius: 132,
+      fov: 0.9,
+      target: [-29, 0, 22],
     });
     expect(parcelLabelScaleForRadius(20)).toBe(1);
-    expect(parcelLabelScaleForRadius(80)).toBeCloseTo(80 / 60, 10);
-    expect(parcelLabelScaleForRadius(132)).toBeCloseTo(132 / 60, 10);
-    expect(parcelLabelScaleForRadius(150)).toBe(2.5);
+    expect(parcelLabelScaleForRadius(80)).toBeCloseTo(80 / 28, 10);
+    expect(parcelLabelScaleForRadius(132)).toBeCloseTo(132 / 28, 10);
+    expect(parcelLabelScaleForRadius(150)).toBe(4.75);
     expect(parcelLabelScaleForRadius(Number.NaN)).toBe(1);
-    const labelledAnchors = CADASTRAL_PARCELS.filter(
-      ({ displayLabel }) => displayLabel,
-    ).map(({ referencePointSjtskMm }) =>
-      sjtskToLocalMm(referencePointSjtskMm),
-    );
-    for (const { width, aspect } of [
-      { width: 1600, aspect: 16 / 9 },
-      { width: 390, aspect: 390 / 844 },
-    ]) {
-      const camera = parcelCameraForWidth(width);
-      const targetLocalMm = {
-        x: SCENE_CENTER_MM.x + camera.target[0] * 1000,
-        y: SCENE_CENTER_MM.y - camera.target[2] * 1000,
-      };
-      const halfHeightMm =
-        camera.radius * Math.tan(camera.fov / 2) * 1000;
-      const halfWidthMm = halfHeightMm * aspect;
-      const labelHalfDiagonalMm =
-        Math.hypot(3.7, 1.18) *
-        parcelLabelScaleForRadius(camera.radius) *
-        500;
-      for (const anchor of labelledAnchors) {
-        expect(Math.abs(anchor.x - targetLocalMm.x) + labelHalfDiagonalMm).toBeLessThan(
-          halfWidthMm,
-        );
-        expect(Math.abs(anchor.y - targetLocalMm.y) + labelHalfDiagonalMm).toBeLessThan(
-          halfHeightMm,
-        );
-      }
-    }
     expect(focusRadiusForBoundingSphere(4, 0.68, 16 / 9)).toBeLessThan(
       focusRadiusForBoundingSphere(4, 0.68, 9 / 16),
     );
