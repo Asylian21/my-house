@@ -240,6 +240,17 @@ je mimo 900 mm oblúka vstupného krídla, bočného svetlíka aj dverí do chod
 Obe riešenia sú interiérové dizajnové koncepty; ergonómiu, elektroinštaláciu,
 kotvenie a výrobnú skladbu musí potvrdiť dodávateľ interiéru.
 
+Dve niky chodby 1.02 vyznačené stavebníkom vypĺňajú samostatné celovýškové
+drevené vstavané skrine (`HALLWAY_BUILT_IN_WARDROBES`). Dlhá zostava pri izbe
+1.09 má presný pôdorys 601 × 2 797 mm a štyri koplanárne posuvné čelá; kratšia
+zostava medzi spálňou 1.08 a kúpeľňou 1.11 má 601 × 859 mm a dve čelá. Obe sú
+vysoké 2 550 mm, používajú bezúchytkové zrkadlovo radené dubové dyhy, zapustený
+dymový sokel, 8 mm tieňové škáry a integrované 2 700 K svetlo. Čelá lícujú s
+hranou pôvodných ník, takže pred nimi zostáva celý 1 096 / 999 mm široký
+komunikačný pás; koplanárne posúvanie nevytvára ďalší dverný oblúk v chodbe.
+Geometrické testy zachovávajú všetky interiérové dvere aj priechod postavy s
+polomerom 220 mm.
+
 Miestnosti 1.09 a 1.10 sú zariadené ako dve zladené, ale nezameniteľné detské
 izby (`CHILDRENS_BEDROOM_FITOUTS`). Každá má matrac 1 200 × 2 100 mm na
 plávajúcej úložnej posteli, trojdielnu 600 mm hlbokú vstavanú skriňu, pracovný

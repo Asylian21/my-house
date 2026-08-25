@@ -386,6 +386,32 @@ export interface EntryFitout {
   readonly clearFloorRectMm: RectMm;
 }
 
+export interface HallwayBuiltInWardrobe {
+  readonly id: string;
+  readonly label: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-02";
+  /** Index of the exact corridor rectangle occupied by the architectural niche. */
+  readonly nicheRectIndex: 2 | 5;
+  readonly footprintMm: RectMm;
+  readonly facing: "EAST" | "WEST";
+  readonly heightMm: 2550;
+  readonly doorCount: 2 | 4;
+  readonly frontClearanceRectMm: RectMm;
+  readonly style: {
+    readonly finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT";
+    readonly opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING";
+    readonly panelRevealMm: 8;
+    readonly plinthHeightMm: 80;
+    readonly ledCctK: 2700;
+    readonly ledEdges: readonly ("NORTH" | "SOUTH")[];
+    readonly reededPanelIndices: readonly number[];
+    readonly reededGrooveCountPerPanel: 5;
+  };
+}
+
 export interface BedroomFitout {
   readonly id: string;
   readonly sourceId: string;
@@ -1166,6 +1192,68 @@ export const ENTRY_FITOUT: EntryFitout = Object.freeze({
   },
   clearFloorRectMm: { x0: 21543, y0: 3504, x1: 23289, y1: 5201 },
 } as const);
+
+/**
+ * Two full-height wardrobes fitted into the green-marked corridor niches from
+ * the client plan. Their 601 mm depth is the depth of the existing recesses:
+ * the fronts finish exactly on the corridor line, so neither cabinet reduces
+ * the 999 / 1 096 mm clear circulation strips in front of it. The long four-
+ * panel composition sits beside room 1.09; the compact two-panel composition
+ * uses the return between bedroom 1.08 and bathroom 1.11.
+ */
+export const HALLWAY_BUILT_IN_WARDROBES: readonly [
+  HallwayBuiltInWardrobe,
+  HallwayBuiltInWardrobe,
+] = Object.freeze([
+  {
+    id: "HALL-WARDROBE-109-NICHE-2026-08-25",
+    label: "Dlhá vstavaná skriňa pri izbe 1.09",
+    sourceId: SOURCES.clientHallwayWardrobesRevision20260825.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-02",
+    nicheRectIndex: 5,
+    footprintMm: { x0: 20942, y0: 7902, x1: 21543, y1: 10699 },
+    facing: "EAST",
+    heightMm: 2550,
+    doorCount: 4,
+    frontClearanceRectMm: { x0: 21543, y0: 7902, x1: 22639, y1: 10699 },
+    style: {
+      finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT",
+      opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING",
+      panelRevealMm: 8,
+      plinthHeightMm: 80,
+      ledCctK: 2700,
+      ledEdges: ["SOUTH", "NORTH"],
+      reededPanelIndices: [1, 2],
+      reededGrooveCountPerPanel: 5,
+    },
+  },
+  {
+    id: "HALL-WARDROBE-108-NICHE-2026-08-25",
+    label: "Vstavaná skriňa pri spálni 1.08 a kúpeľni 1.11",
+    sourceId: SOURCES.clientHallwayWardrobesRevision20260825.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-02",
+    nicheRectIndex: 2,
+    footprintMm: { x0: 16142, y0: 5561, x1: 16743, y1: 6420 },
+    facing: "WEST",
+    heightMm: 2550,
+    doorCount: 2,
+    frontClearanceRectMm: { x0: 15143, y0: 5561, x1: 16142, y1: 6420 },
+    style: {
+      finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT",
+      opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING",
+      panelRevealMm: 8,
+      plinthHeightMm: 80,
+      ledCctK: 2700,
+      ledEdges: ["NORTH"],
+      reededPanelIndices: [],
+      reededGrooveCountPerPanel: 5,
+    },
+  },
+] as const);
 
 /**
  * Minimalist primary bedroom in 1.08. D1.1.002 gives a clear 4 300 × 2 857 mm
