@@ -177,6 +177,11 @@ export const EXTERIOR_RENDER_STABILITY = Object.freeze({
   /** Film grain must never animate over architectural materials. */
   filmGrainEnabled: false,
   filmGrainAnimated: false,
+  /**
+   * A screen-space AO kernel crosses the thin roof/eave depth layers and turns
+   * their real 70–105 mm separation into crawling black tiles while orbiting.
+   */
+  screenSpaceAmbientOcclusionEnabled: false,
   /** Suppress highlight sparkle on roof seams and normal-mapped materials. */
   pbrSpecularAntiAliasingEnabled: true,
   /** Doors and the garage gate move, so CSM caster bounds must stay live. */
@@ -264,8 +269,10 @@ export function deriveRenderQualityProfile({
     // A restrained pass preserves joinery edges without amplifying roof,
     // paving and foliage mip transitions during camera motion.
     sharpenEdgeAmount: tier === "ULTRA" ? 0.05 : 0.035,
-    ssaoEnabled: tier === "ULTRA",
-    ssaoRatio: tier === "ULTRA" ? 1 : 0,
+    ssaoEnabled: EXTERIOR_RENDER_STABILITY.screenSpaceAmbientOcclusionEnabled,
+    ssaoRatio: EXTERIOR_RENDER_STABILITY.screenSpaceAmbientOcclusionEnabled
+      ? 1
+      : 0,
     // Four stabilized cascades provide materially more useful texel density
     // than one oversized map. 2K/1K per cascade also keeps GPU memory bounded.
     shadowMapSize: tier === "ULTRA" ? 2048 : 1024,

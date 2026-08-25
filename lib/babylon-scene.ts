@@ -1141,10 +1141,10 @@ export class TwinSceneController {
       this.garageCinematicCamera,
     ];
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
-    // Construct once even when the initial mobile tier is HIGH. This allows a
-    // later resize/promotion to ULTRA to attach SSAO instead of silently losing
-    // contact shading for the rest of the session.
-    if (SSAO2RenderingPipeline.IsSupported) {
+    // SSAO is intentionally omitted by the exterior stability contract. Its
+    // screen-space kernel spans the roof's 70–105 mm eave stack and creates
+    // false, camera-dependent self-occlusion tiles on the white soffit.
+    if (this.renderQuality.ssaoEnabled && SSAO2RenderingPipeline.IsSupported) {
       try {
         ssaoPipeline = new SSAO2RenderingPipeline(
           "architectural-ssao",

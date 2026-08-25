@@ -19,17 +19,36 @@ import {
   GARAGE_SUPERB_CABIN_STATIONS,
   GARAGE_SUPERB_HALF_LENGTH_M,
   GARAGE_SUPERB_HALF_TRACKS_M,
+  GARAGE_SUPERB_LOWER_BODY_SEGMENTS,
   GARAGE_SUPERB_LOFT_RING_POINT_COUNT,
   GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
   GARAGE_SUPERB_ROOF_STATIONS,
   GARAGE_SUPERB_SIDE_WINDOWS,
   GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+  GARAGE_SUPERB_WHEEL_ARCH_RADIUS_M,
   GARAGE_SUPERB_WHEEL_M,
   vehicleLoftBounds,
   vehicleLoftGeometry,
 } from "../lib/twin-superb-combi";
 import { INTERIOR_ROOMS } from "../lib/twin-interior";
 import { GARAGE_DEPTH_REVISION, HOUSE, SITE_SURFACES } from "../lib/twin-site";
+
+const maximumStationGapM = (stations: readonly { readonly x: number }[]) =>
+  Math.max(
+    ...stations
+      .slice(1)
+      .map((station, index) => station.x - stations[index].x),
+  );
+
+const polygonAreaM2 = (
+  points: readonly { readonly x: number; readonly y: number }[],
+) =>
+  Math.abs(
+    points.reduce((sum, point, index) => {
+      const next = points[(index + 1) % points.length];
+      return sum + point.x * next.y - next.x * point.y;
+    }, 0),
+  ) / 2;
 
 describe("garage vehicle contract", () => {
   it("uses the direct street garage door rather than the garden gate", () => {
@@ -186,8 +205,14 @@ describe("modern Superb visual geometry", () => {
       mirrorWidth: 2_090,
       height: 1_482,
       wheelbase: 2_841,
+      frontOverhang: 950,
+      rearOverhang: 1_111,
       frontTrack: 1_580,
       rearTrack: 1_566,
+      groundClearance: 139,
+      tireWidth: 235,
+      wheelOuterDiameter: 671,
+      rimDiameter: 482.6,
     });
     expect(GARAGE_VEHICLE.dimensionsMm.width).toBe(
       GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.mirrorWidth,
@@ -227,11 +252,97 @@ describe("modern Superb visual geometry", () => {
       "quarter",
     ]);
     for (const window of GARAGE_SUPERB_SIDE_WINDOWS) {
-      expect(window.points).toHaveLength(4);
+      expect(window.points.length).toBeGreaterThanOrEqual(4);
       expect(window.points.flatMap(({ x, y }) => [x, y]).every(Number.isFinite)).toBe(
         true,
       );
     }
+  });
+
+  it("samples a smooth low modern-estate silhouette instead of a faceted box", () => {
+    expect(GARAGE_SUPERB_BODY_STATIONS.length).toBeGreaterThanOrEqual(18);
+    expect(GARAGE_SUPERB_CABIN_STATIONS.length).toBeGreaterThanOrEqual(12);
+    expect(GARAGE_SUPERB_ROOF_STATIONS.length).toBeGreaterThanOrEqual(10);
+    expect(GARAGE_SUPERB_LOFT_RING_POINT_COUNT).toBeGreaterThanOrEqual(20);
+    expect(GARAGE_SUPERB_LOFT_RING_POINT_COUNT % 2).toBe(0);
+
+    for (const stations of [
+      GARAGE_SUPERB_BODY_STATIONS,
+      GARAGE_SUPERB_CABIN_STATIONS,
+      GARAGE_SUPERB_ROOF_STATIONS,
+    ]) {
+      expect(maximumStationGapM(stations)).toBeLessThanOrEqual(0.45);
+    }
+
+    const bodyCrown = Math.max(
+      ...GARAGE_SUPERB_BODY_STATIONS.map(({ crownY }) => crownY),
+    );
+    const cabinCrown = Math.max(
+      ...GARAGE_SUPERB_CABIN_STATIONS.map(({ crownY }) => crownY),
+    );
+    expect(bodyCrown).toBeLessThanOrEqual(0.95);
+    expect(cabinCrown - bodyCrown).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it("keeps the long bonnet, level Combi roof and low raked glasshouse", () => {
+    const roofPeak = Math.max(
+      ...GARAGE_SUPERB_ROOF_STATIONS.map(({ crownY }) => crownY),
+    );
+    const roofPlateau = GARAGE_SUPERB_ROOF_STATIONS.filter(
+      ({ crownY }) => crownY >= roofPeak - 0.025,
+    );
+    expect(roofPlateau.at(-1)!.x - roofPlateau[0].x).toBeGreaterThanOrEqual(
+      1.7,
+    );
+
+    const cabinXs = GARAGE_SUPERB_CABIN_STATIONS.map(({ x }) => x);
+    expect(
+      GARAGE_SUPERB_HALF_LENGTH_M - Math.max(...cabinXs),
+    ).toBeGreaterThanOrEqual(1.15);
+    expect(
+      Math.min(...cabinXs) + GARAGE_SUPERB_HALF_LENGTH_M,
+    ).toBeLessThanOrEqual(0.35);
+
+    const glassPoints = GARAGE_SUPERB_SIDE_WINDOWS.flatMap(
+      ({ points }) => points,
+    );
+    const glassLength =
+      Math.max(...glassPoints.map(({ x }) => x)) -
+      Math.min(...glassPoints.map(({ x }) => x));
+    const glassHeight =
+      Math.max(...glassPoints.map(({ y }) => y)) -
+      Math.min(...glassPoints.map(({ y }) => y));
+    expect(
+      glassLength /
+        (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000),
+    ).toBeGreaterThanOrEqual(0.62);
+    expect(
+      glassLength /
+        (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000),
+    ).toBeLessThanOrEqual(0.66);
+    expect(glassHeight).toBeGreaterThanOrEqual(0.58);
+    expect(glassHeight).toBeLessThanOrEqual(0.63);
+
+    for (const window of GARAGE_SUPERB_SIDE_WINDOWS) {
+      expect(polygonAreaM2(window.points), window.id).toBeGreaterThanOrEqual(
+        0.25,
+      );
+    }
+  });
+
+  it("uses three lower shells to form real wheel openings around exact 19-inch wheels", () => {
+    expect(GARAGE_SUPERB_LOWER_BODY_SEGMENTS).toHaveLength(3);
+    for (const segment of GARAGE_SUPERB_LOWER_BODY_SEGMENTS) {
+      expect(segment.length).toBeGreaterThanOrEqual(4);
+      expect(maximumStationGapM(segment)).toBeLessThanOrEqual(0.45);
+    }
+    expect(
+      GARAGE_SUPERB_WHEEL_ARCH_RADIUS_M -
+        GARAGE_SUPERB_WHEEL_M.outerDiameter / 2,
+    ).toBeCloseTo(0.0545, 6);
+    expect(
+      Math.min(...GARAGE_SUPERB_BODY_STATIONS.map(({ baseY }) => baseY)),
+    ).toBeGreaterThan(0.5);
   });
 
   it("orients both duplicated loft caps toward the exterior", () => {

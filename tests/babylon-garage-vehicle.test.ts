@@ -2,10 +2,31 @@ import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
 import { Scene } from "@babylonjs/core/scene";
+import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { buildGarageSuperbVehicle } from "../lib/babylon-garage-vehicle";
 import { GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM } from "../lib/twin-superb-combi";
+
+const boundsOf = (meshes: readonly AbstractMesh[]) => {
+  for (const mesh of meshes) mesh.computeWorldMatrix(true);
+  const boxes = meshes.map((mesh) => mesh.getBoundingInfo().boundingBox);
+  const minimum = {
+    x: Math.min(...boxes.map(({ minimumWorld }) => minimumWorld.x)),
+    y: Math.min(...boxes.map(({ minimumWorld }) => minimumWorld.y)),
+    z: Math.min(...boxes.map(({ minimumWorld }) => minimumWorld.z)),
+  };
+  const maximum = {
+    x: Math.max(...boxes.map(({ maximumWorld }) => maximumWorld.x)),
+    y: Math.max(...boxes.map(({ maximumWorld }) => maximumWorld.y)),
+    z: Math.max(...boxes.map(({ maximumWorld }) => maximumWorld.z)),
+  };
+  return {
+    x: maximum.x - minimum.x,
+    y: maximum.y - minimum.y,
+    z: maximum.z - minimum.z,
+  };
+};
 
 describe("Babylon Superb Combi visual", () => {
   let engine: NullEngine | null = null;
@@ -39,6 +60,9 @@ describe("Babylon Superb Combi visual", () => {
       vehicleGeneration: "SUPERB-IV-COMBI",
       productionDimensionsMm: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
       visualLengthScale: 1,
+      visualReference: "client-supplied-2024-plus-superb-combi-photos-2026-08-25",
+      referenceViews: ["side-profile", "front-three-quarter"],
+      bodyConstruction: "split-wheel-arch-shell",
     });
     expect(visual.wheelSpins).toHaveLength(4);
     expect(visual.frontSteering).toHaveLength(2);
@@ -58,12 +82,76 @@ describe("Babylon Superb Combi visual", () => {
       ]),
     );
 
+    const byPart = (part: string) =>
+      scene!.meshes.filter(({ metadata }) => metadata?.vehiclePart === part);
+    expect(byPart("lower-body-shell")).toHaveLength(3);
+    expect(byPart("glasshouse-envelope")).toHaveLength(1);
+    expect(byPart("side-window")).toHaveLength(6);
+    expect(byPart("external-mirror")).toHaveLength(2);
+    expect(byPart("door-handle")).toHaveLength(4);
+    expect(byPart("door-seam")).toHaveLength(8);
+    expect(byPart("roof-rail")).toHaveLength(2);
+    expect(byPart("wheel-well")).toHaveLength(4);
+    expect(byPart("wheel-arch")).toHaveLength(4);
+    expect(byPart("front-grille")).toHaveLength(1);
+    expect(byPart("front-grille-slat")).toHaveLength(15);
+    expect(byPart("headlamp")).toHaveLength(2);
+    expect(byPart("headlamp-module")).toHaveLength(8);
+    expect(byPart("drl")).toHaveLength(2);
+    expect(byPart("lower-intake")).toHaveLength(1);
+    expect(byPart("side-intake")).toHaveLength(2);
+    expect(byPart("rear-lamp")).toHaveLength(2);
+    expect(byPart("rear-wrap-lamp")).toHaveLength(2);
+    expect(byPart("tire")).toHaveLength(4);
+    expect(byPart("rim")).toHaveLength(4);
+    expect(byPart("wheel-spoke")).toHaveLength(40);
+
+    for (const tire of byPart("tire")) {
+      const size = boundsOf([tire]);
+      expect(size.x).toBeCloseTo(0.671, 2);
+      expect(size.y).toBeCloseTo(0.671, 2);
+      expect(size.z).toBeCloseTo(0.235, 2);
+    }
+
+    const visibleEnvelope = boundsOf(
+      scene.meshes.filter(
+        (mesh) =>
+          mesh.isEnabled() &&
+          mesh.isVisible &&
+          mesh.metadata?.vehicleCollider !== true &&
+          mesh.getTotalVertices() > 0,
+      ),
+    );
+    expect(visibleEnvelope.x).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000,
+      1,
+    );
+    expect(visibleEnvelope.y).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.height / 1_000,
+      1,
+    );
+    expect(visibleEnvelope.z).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.mirrorWidth / 1_000,
+      1,
+    );
+
     const colliders = scene.meshes.filter(
       ({ metadata }) => metadata?.vehicleCollider === true,
     );
     expect(colliders).toHaveLength(2);
     expect(colliders.every(({ isVisible }) => !isVisible)).toBe(true);
     expect(colliders.every(({ checkCollisions }) => checkCollisions)).toBe(true);
+    expect(scene.meshes.filter(({ checkCollisions }) => checkCollisions)).toEqual(
+      colliders,
+    );
+    expect(colliders.every(({ parent }) => parent === visual.root)).toBe(true);
+    expect(
+      colliders.every(
+        ({ metadata }) =>
+          metadata?.cameraOccluder === true &&
+          metadata?.dynamicCameraOccluder === true,
+      ),
+    ).toBe(true);
     const lowerCollider = colliders.find(({ name }) =>
       name.includes("spodný kolízny obal"),
     )!;
@@ -72,6 +160,12 @@ describe("Babylon Superb Combi visual", () => {
       GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000,
       6,
     );
+    for (const collider of colliders) {
+      const size = boundsOf([collider]);
+      expect(size.x).toBeLessThanOrEqual(4.902 + 1e-6);
+      expect(size.y).toBeLessThanOrEqual(1.482 + 1e-6);
+      expect(size.z).toBeLessThanOrEqual(1.849 + 1e-6);
+    }
 
     for (const mesh of scene.meshes.filter((candidate) => candidate.getTotalVertices() > 0)) {
       mesh.computeWorldMatrix(true);
