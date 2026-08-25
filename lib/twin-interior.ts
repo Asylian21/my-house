@@ -736,15 +736,17 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
  * Client revision 24. 8. 2026: freestanding cylindrical stove in the former
  * stove bay. The old 347 × 500 mm masonry pier is deliberately absent; the
  * round flue shares the stove axis and rises straight through the wing roof.
+ * The 25. 8. follow-up shifts the complete coaxial assembly 200 mm toward the
+ * TV wall while increasing the clear distance from the terrace door.
  */
 export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
   id: "FIREPLACE-STOVE-2026-08-24",
-  sourceId: SOURCES.clientFireplaceRevision20260824.id,
+  sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-03",
   facing: "EAST",
-  centerMm: { x: 21853, y: 14275 },
-  footprintMm: { x0: 21598, y0: 14020, x1: 22108, y1: 14530 },
+  centerMm: { x: 21853, y: 14475 },
+  footprintMm: { x0: 21598, y0: 14220, x1: 22108, y1: 14730 },
   bodyDiameterMm: 510,
   bodyHeightMm: 1550,
   window: {

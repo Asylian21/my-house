@@ -116,10 +116,10 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     const roofMm = roofHeightMm(stove.flue.roofFace, stove.centerMm.x, stove.centerMm.y);
 
     expect(stove).toMatchObject({
-      sourceId: SOURCES.clientFireplaceRevision20260824.id,
+      sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
       status: "CLIENT_DESIGN_CONCEPT",
       facing: "EAST",
-      centerMm: { x: 21_853, y: 14_275 },
+      centerMm: { x: 21_853, y: 14_475 },
       bodyDiameterMm: 510,
       bodyHeightMm: 1_550,
       window: {
@@ -131,9 +131,9 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     });
     expect(inside(stove.footprintMm, livingMain)).toBe(true);
     expect(stove.footprintMm.x0 - livingMain.x0).toBe(55);
-    expect(stove.footprintMm.y0 - terraceDoorEndMm).toBe(220);
+    expect(stove.footprintMm.y0 - terraceDoorEndMm).toBe(420);
     expect(stove.footprintMm.y0 - walkRadiusMm).toBeGreaterThanOrEqual(terraceDoorEndMm);
-    expect(LIVING_DINING_FITOUT.tvWall.rectMm.y0 - stove.footprintMm.y1).toBe(850);
+    expect(LIVING_DINING_FITOUT.tvWall.rectMm.y0 - stove.footprintMm.y1).toBe(650);
 
     expect(flue).toMatchObject({
       id: stove.flue.id,

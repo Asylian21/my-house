@@ -168,6 +168,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientFireplacePositionRevision20260825: {
+    id: "SRC-CLIENT-FIREPLACE-POSITION-20260825",
+    title: "Revízia stavebníka · krb bližšie k TV",
+    detail:
+      "Posunúť celú zostavu valcových krbových kachlí aj priameho dymovodu o 200 mm smerom k TV stene. Zachovať spoločnú os kachlí a rúry, voľný priechod pri terasových dverách a murovaný komínový pilier naďalej odstránený.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientKitchenRevision20260823: {
     id: "SRC-CLIENT-KITCHEN-20260823",
     title: "Revízia stavebníka · vstavaná chladnička",
@@ -719,7 +727,7 @@ export const HOUSE = Object.freeze({
       // 24. 8. 2026: the full masonry pier is removed. A single round flue
       // rises directly from the centre of the cylindrical stove to the roof.
       shape: "ROUND_STOVE_PIPE",
-      centerMm: { x: 21853, y: 14275 } satisfies Point2Mm,
+      centerMm: { x: 21853, y: 14475 } satisfies Point2Mm,
       outerDiameterMm: 150,
       baseElevationMm: 1550,
       terminationElevationMm: 6160,
@@ -732,8 +740,8 @@ export const HOUSE = Object.freeze({
       replacesInteriorPierId: "IW-WEST-PIER-103",
       zone: "MAIN_LIVING_AND_KITCHEN_1_03",
       baseSourceId: SOURCES.roofPlan.id,
-      previousSourceId: SOURCES.clientRevision20260822.id,
-      sourceId: SOURCES.clientFireplaceRevision20260824.id,
+      previousSourceId: SOURCES.clientFireplaceRevision20260824.id,
+      sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
     },
   ] as const,
   removedChimneys: [
@@ -1062,6 +1070,7 @@ export const HOUSE = Object.freeze({
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
     SOURCES.clientFireplaceRevision20260824.id,
+    SOURCES.clientFireplacePositionRevision20260825.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
     SOURCES.clientOfficeFixedWindowRevision20260824.id,
   ],

@@ -29,6 +29,8 @@ Najnovšia interiérová revízia z 24. 8. 2026 prepisuje iba podobu hlavného
 komína: murovaný pilier pri 1.03 už v aktívnom modeli nie je. Nahrádza ho
 štíhla matne čierna trubka vedená priamo z osi valcových krbových kachlí cez
 šikmý podhľad a dvorovú rovinu strechy (`FIREPLACE_STOVE`, `HOUSE.flues[0]`).
+Polohová korekcia z 25. 8. 2026 posúva celú os kachlí a rúry o 200 mm smerom
+k TV zostave; medzi telesom krbu a TV stenou zostáva 650 mm.
 
 Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
 7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na

@@ -504,12 +504,15 @@ describe("site evidence seed", () => {
     expect(HOUSE.sourceIds).toContain(
       SOURCES.clientFireplaceRevision20260824.id,
     );
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientFireplacePositionRevision20260825.id,
+    );
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
     expect(HOUSE.flues).toEqual([
       {
         id: "FLUE-LIVING-103",
         shape: "ROUND_STOVE_PIPE",
-        centerMm: { x: 21_853, y: 14_275 },
+        centerMm: { x: 21_853, y: 14_475 },
         outerDiameterMm: 150,
         baseElevationMm: 1_550,
         terminationElevationMm: 6_160,
@@ -522,8 +525,8 @@ describe("site evidence seed", () => {
         replacesInteriorPierId: "IW-WEST-PIER-103",
         zone: "MAIN_LIVING_AND_KITCHEN_1_03",
         baseSourceId: SOURCES.roofPlan.id,
-        previousSourceId: SOURCES.clientRevision20260822.id,
-        sourceId: SOURCES.clientFireplaceRevision20260824.id,
+        previousSourceId: SOURCES.clientFireplaceRevision20260824.id,
+        sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
       },
     ]);
     // The active chimney is only a round pipe on the stove axis; the former
