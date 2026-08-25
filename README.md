@@ -25,6 +25,11 @@ namiesto prvého garážového okna; súkromnú záhradu uzatvára nový plot po
 na úrovni čelnej fasády, takže nezatvára nový priamy príjazd do garáže. Ostatná
 geometria D1 zostáva nedotknutá.
 
+Revízia z 25. 8. 2026 dopĺňa na západný bočný štít garáže zo strany označenej
+na referenčnej snímke okno `WEST-GARAGE-01`. Má rovnaký otvor 1 250 × 750 mm,
+parapet 1 750 mm aj antracitové rámovanie ako zostávajúce garážové okno
+`FRONT-02` a je vycentrované v hlavnom vnútornom poli garáže 1.12.
+
 Najnovšia interiérová revízia z 24. 8. 2026 prepisuje iba podobu hlavného
 komína: murovaný pilier pri 1.03 už v aktívnom modeli nie je. Nahrádza ho
 štíhla matne čierna trubka vedená priamo z osi valcových krbových kachlí cez

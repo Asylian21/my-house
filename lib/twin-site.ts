@@ -152,6 +152,14 @@ export const SOURCES = {
     date: "22. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientGarageSideWindowRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-SIDE-WINDOW-20260825",
+    title: "Revízia stavebníka · malé bočné okno garáže",
+    detail:
+      "Na západný bočný štít garáže zo strany označenej na referenčnej snímke doplniť jedno malé okno rovnakého typu a rozmerov ako zostávajúce garážové okno FRONT-02. Otvor 1 250 × 750 mm s parapetom 1 750 mm je vycentrovaný v hlavnom vnútornom poli garáže 1.12.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientRevision20260823: {
     id: "SRC-CLIENT-20260823",
     title: "Revízia stavebníka · obývacia a jedálenská zóna",
@@ -897,6 +905,15 @@ export const HOUSE = Object.freeze({
     west: {
       faceXmm: 6440,
       finish: "OFF_WHITE_ETICS",
+      garageWindow: {
+        id: "WEST-GARAGE-01",
+        startYmm: 4358,
+        widthMm: 1250,
+        heightMm: 750,
+        sillMm: 1750,
+        referenceOpeningId: "FRONT-02",
+        sourceId: SOURCES.clientGarageSideWindowRevision20260825.id,
+      },
       loggiaOpening: {
         id: "WEST-01",
         startYmm: 9300,
@@ -1069,6 +1086,7 @@ export const HOUSE = Object.freeze({
     SOURCES.coordination.id,
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
+    SOURCES.clientGarageSideWindowRevision20260825.id,
     SOURCES.clientFireplaceRevision20260824.id,
     SOURCES.clientFireplacePositionRevision20260825.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,

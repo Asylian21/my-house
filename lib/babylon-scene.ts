@@ -3956,6 +3956,13 @@ export class TwinSceneController {
     ];
     const westOpenings: readonly FacadeOpeningMm[] = [
       {
+        id: HOUSE.facades.west.garageWindow.id,
+        startMm: HOUSE.facades.west.garageWindow.startYmm,
+        widthMm: HOUSE.facades.west.garageWindow.widthMm,
+        heightMm: HOUSE.facades.west.garageWindow.heightMm,
+        sillMm: HOUSE.facades.west.garageWindow.sillMm,
+      },
+      {
         id: HOUSE.facades.west.loggiaOpening.id,
         startMm: HOUSE.facades.west.loggiaOpening.startYmm,
         widthMm: HOUSE.facades.west.loggiaOpening.widthMm,
@@ -4109,6 +4116,19 @@ export class TwinSceneController {
         opening.id === "EAST-03" ? "door" : "window",
       );
     }
+    const garageSideWindow = HOUSE.facades.west.garageWindow;
+    this.buildWindowOnXFace(
+      `Bočné garážové okno ${garageSideWindow.id} · podľa FRONT-02`,
+      HOUSE.facades.west.faceXmm,
+      garageSideWindow.startYmm + garageSideWindow.widthMm / 2,
+      garageSideWindow.widthMm,
+      garageSideWindow.heightMm,
+      garageSideWindow.sillMm,
+      -1,
+      this.realisticMaterials.wall,
+      this.realisticMaterials.glassFrame,
+      "window",
+    );
     // Wing west sliding glazing onto the terrace walkway.
     this.buildWindowOnXFace(
       "Terasové posuvné presklenie 2 250 · D1.1.002",

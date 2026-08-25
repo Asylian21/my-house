@@ -477,6 +477,20 @@ describe("site evidence seed", () => {
     expect(HOUSE.facades.front.openings.some(({ id }) => id === "FRONT-01")).toBe(
       false,
     );
+    expect(HOUSE.facades.west.garageWindow).toEqual({
+      id: "WEST-GARAGE-01",
+      startYmm: 4_358,
+      widthMm: 1_250,
+      heightMm: 750,
+      sillMm: 1_750,
+      referenceOpeningId: "FRONT-02",
+      sourceId: SOURCES.clientGarageSideWindowRevision20260825.id,
+    });
+    expect(HOUSE.facades.west.garageWindow).toMatchObject({
+      widthMm: HOUSE.facades.front.openings[0].widthMm,
+      heightMm: HOUSE.facades.front.openings[0].heightMm,
+      sillMm: HOUSE.facades.front.openings[0].sillMm,
+    });
     expect(HOUSE.facades.front.openings.find(({ id }) => id === "FRONT-05"))
       .toMatchObject({
         startXmm: 19_540,
@@ -500,6 +514,9 @@ describe("site evidence seed", () => {
     );
     expect(HOUSE.sourceIds).toContain(
       SOURCES.clientOfficeFixedWindowRevision20260824.id,
+    );
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientGarageSideWindowRevision20260825.id,
     );
     expect(HOUSE.sourceIds).toContain(
       SOURCES.clientFireplaceRevision20260824.id,
@@ -1342,6 +1359,45 @@ describe("data to geometry contract", () => {
       0,
     );
     expect(solidAreaMm2).toBe(31_825_000);
+  });
+
+  it("cuts the matching small garage window out of the photographed west gable", () => {
+    const window = HOUSE.facades.west.garageWindow;
+    const loggia = HOUSE.facades.west.loggiaOpening;
+    const segments = segmentFacadeMm(
+      HOUSE.originMm.y,
+      HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
+      HOUSE.eavesElevationMm,
+      [window, loggia].map((opening) => ({
+        id: opening.id,
+        startMm: opening.startYmm,
+        widthMm: opening.widthMm,
+        heightMm: opening.heightMm,
+        sillMm: opening.sillMm,
+      })),
+    );
+
+    expect(segments).toContainEqual({
+      startMm: window.startYmm,
+      endMm: window.startYmm + window.widthMm,
+      bottomMm: 0,
+      topMm: window.sillMm,
+    });
+    expect(segments).toContainEqual({
+      startMm: window.startYmm,
+      endMm: window.startYmm + window.widthMm,
+      bottomMm: window.sillMm + window.heightMm,
+      topMm: HOUSE.eavesElevationMm,
+    });
+    expect(
+      segments.some(
+        ({ startMm, endMm, bottomMm, topMm }) =>
+          startMm < window.startYmm + window.widthMm &&
+          endMm > window.startYmm &&
+          bottomMm < window.sillMm + window.heightMm &&
+          topMm > window.sillMm,
+      ),
+    ).toBe(false);
   });
 
   it("uses the rough wing opening while preserving the 2 400 mm clear frame", () => {

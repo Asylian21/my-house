@@ -5082,6 +5082,7 @@ function exteriorOpeningsOn(axis: "X" | "Y", faceMm: number): Interval[] {
     for (const opening of east.openings) holes.push({ start: opening.startYmm, end: opening.startYmm + opening.widthMm });
   }
   if (axis === "Y" && near(faceMm, west.faceXmm + 530)) {
+    holes.push({ start: west.garageWindow.startYmm, end: west.garageWindow.startYmm + west.garageWindow.widthMm });
     holes.push({ start: west.loggiaOpening.startYmm, end: west.loggiaOpening.startYmm + west.loggiaOpening.widthMm });
   }
   if (axis === "Y" && near(faceMm, wingWest.faceXmm + 500)) {

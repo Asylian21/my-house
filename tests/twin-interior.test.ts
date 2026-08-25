@@ -104,6 +104,25 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     }
   });
 
+  it("centers the new matching side window in the clear west wall of garage 1.12", () => {
+    const garage = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-12")!;
+    const mainBay = garage.rectsMm[0];
+    const opening = HOUSE.facades.west.garageWindow;
+    const frontReference = HOUSE.facades.front.openings.find(
+      ({ id }) => id === opening.referenceOpeningId,
+    )!;
+    const openingEndYmm = opening.startYmm + opening.widthMm;
+
+    expect(opening).toMatchObject({
+      widthMm: frontReference.widthMm,
+      heightMm: frontReference.heightMm,
+      sillMm: frontReference.sillMm,
+    });
+    expect(opening.startYmm).toBeGreaterThan(mainBay.y0);
+    expect(openingEndYmm).toBeLessThan(mainBay.y1);
+    expect(opening.startYmm - mainBay.y0).toBe(mainBay.y1 - openingEndYmm);
+  });
+
   it("replaces the living-room masonry pier with a coaxial cylindrical stove and flue", () => {
     const stove = FIREPLACE_STOVE;
     const living = INTERIOR_ROOMS.find((room) => room.id === stove.roomId)!;
