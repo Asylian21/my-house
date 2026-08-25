@@ -49,6 +49,8 @@ describe("exterior render stability contract", () => {
       filmGrainAnimated: false,
       pbrSpecularAntiAliasingEnabled: true,
       freezeDynamicShadowCasterBounds: false,
+      roadContextSurfaceElevationM: -0.115,
+      roofSeamVisibilityDistanceM: 36,
     });
     expect(EXTERIOR_RENDER_STABILITY.shadowNormalBiasM).toBeLessThanOrEqual(
       0.03,
@@ -57,7 +59,8 @@ describe("exterior render stability contract", () => {
 
   it("separates the broad terrain, lawn and replacement surfaces", () => {
     const terrainToRoadM =
-      -0.115 - EXTERIOR_RENDER_STABILITY.contextTerrainElevationM;
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM -
+      EXTERIOR_RENDER_STABILITY.contextTerrainElevationM;
     const lawnToLowestReplacementM =
       -0.045 - EXTERIOR_RENDER_STABILITY.parcelGrassElevationM;
 
@@ -752,6 +755,11 @@ describe("adaptive indoor chase camera", () => {
     expect(walkCameraRadiusForEnvironment(WALK_CAMERA.radiusM, 0)).toBe(
       WALK_CAMERA.radiusM,
     );
+    expect(walkCameraRadiusForEnvironment(WALK_CAMERA.radiusM, 0.5)).toBeCloseTo(
+      (WALK_CAMERA.radiusM + WALK_SURFACE.indoorCameraMaxRadiusM) / 2,
+      10,
+    );
+    expect(walkCameraRadiusForEnvironment(1.25, 0.5)).toBe(1.25);
 
     const blendAfter = (fps: number, indoors: boolean) => {
       let blend = indoors ? 0 : 1;

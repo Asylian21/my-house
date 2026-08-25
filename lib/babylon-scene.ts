@@ -2660,7 +2660,7 @@ export class TwinSceneController {
       this.scene,
       "Miestna komunikácia 6012/1 · čelná vozovka po hranu odvodenú z C3",
       ROAD_CONTEXT.frontagePolygonMm,
-      -0.115,
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM,
       paverRepeatMm,
     );
     this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
@@ -2672,7 +2672,7 @@ export class TwinSceneController {
       this.scene,
       "Miestna komunikácia 6012/1 · rohová vetva v katastrálnom koridore",
       ROAD_CONTEXT.cornerCarriagewayPolygonMm,
-      -0.114,
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM,
       paverRepeatMm,
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
@@ -4429,6 +4429,10 @@ export class TwinSceneController {
       );
       seam.material = this.realisticMaterials.roofEdge;
       seam.isPickable = false;
+      seam.addLODLevel(
+        EXTERIOR_RENDER_STABILITY.roofSeamVisibilityDistanceM,
+        null,
+      );
       this.realisticOnly(seam);
       this.register(seam, "building");
     }
@@ -5834,7 +5838,7 @@ export class TwinSceneController {
       material.bumpTexture = bump;
     }
 
-    for (const rect of zone.rectsMm) {
+    for (const [rectIndex, rect] of zone.rectsMm.entries()) {
       const underlay = boxAtPlan(
         this.scene,
         `${zone.label} · podkladový rošt`,
@@ -5848,7 +5852,12 @@ export class TwinSceneController {
       underlay.isPickable = false;
       // The continuous underlay closes plank gaps for the height probe; its
       // metadata offset resolves the visible board top exactly at +20 mm.
-      markWalkSurface(underlay, "exterior", `deck-${zone.id}`, 0.029);
+      markWalkSurface(
+        underlay,
+        "exterior",
+        `deck-${zone.id}-${rectIndex + 1}`,
+        0.029,
+      );
       this.realisticOnly(underlay);
       this.register(underlay, "street", zone.id);
     }
@@ -6235,11 +6244,11 @@ export class TwinSceneController {
     this.buildGardenPool();
 
     // Gravel maintenance strip along the plastered facades.
-    for (const strip of [
+    for (const [index, strip] of [
       { name: "Kačírek · južná fasáda", x0: 6440, x1: 21040, y0: 2550, y1: 3000 },
       { name: "Kačírek · východná fasáda", x0: 28040, x1: 28490, y0: 3000, y1: 22035 },
       { name: "Kačírek · severný štít", x0: 21040, x1: 28040, y0: 22035, y1: 22485 },
-    ]) {
+    ].entries()) {
       const gravel = boxAtPlan(
         this.scene,
         strip.name,
@@ -6262,16 +6271,17 @@ export class TwinSceneController {
       gravel.material = gravelMaterial;
       gravel.receiveShadows = true;
       gravel.isPickable = false;
+      markWalkSurface(gravel, "exterior", `gravel-strip-${index + 1}`);
       this.realisticOnly(gravel);
       this.register(gravel, "street");
     }
 
-    for (const stone of [
+    for (const [index, stone] of [
       { x: 4100, y: 12250, w: 900, d: 520, r: -0.08 },
       { x: 4750, y: 13050, w: 840, d: 500, r: 0.12 },
       { x: 5450, y: 13820, w: 980, d: 540, r: -0.04 },
       { x: 6100, y: 14620, w: 900, d: 510, r: 0.1 },
-    ]) {
+    ].entries()) {
       const step = boxAtPlan(
         this.scene,
         "Záhradný nášľap · ilustračný koncept",
@@ -6285,6 +6295,7 @@ export class TwinSceneController {
       step.material = this.realisticMaterials.stone;
       step.receiveShadows = true;
       step.isPickable = false;
+      markWalkSurface(step, "exterior", `garden-step-${index + 1}`);
       this.realisticOnly(step);
       this.register(step, "street");
     }
@@ -6331,6 +6342,7 @@ export class TwinSceneController {
       bed.material = this.realisticMaterials.mulch;
       bed.receiveShadows = true;
       bed.isPickable = false;
+      markWalkSurface(bed, "terrain", `mulch-bed-${index + 1}`);
       this.realisticOnly(bed);
       this.register(bed, "street");
     }

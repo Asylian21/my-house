@@ -388,6 +388,25 @@ describe("Babylon interior fit-out", () => {
         expect(guard.checkCollisions).toBe(true);
         expect(guard.isVisible).toBe(false);
       }
+
+      const garageCameraProxies = garageMeshes.filter(
+        (mesh) => mesh.metadata?.cameraOcclusionProxy === true,
+      );
+      expect(garageCameraProxies.map((proxy) => proxy.name)).toEqual([
+        expect.stringContaining("· GARAGE-RACK ·"),
+        expect.stringContaining("· GARAGE-SHELF ·"),
+        expect.stringContaining("· REAR-SHELF ·"),
+      ]);
+      for (const proxy of garageCameraProxies) {
+        expect(proxy.metadata?.cameraOccluder).toBe(true);
+        expect(proxy.isVisible).toBe(false);
+        expect(proxy.isPickable).toBe(false);
+        expect(proxy.checkCollisions).toBe(false);
+      }
+      expect(
+        garageMeshes.find((mesh) => mesh.name.includes("· PEGBOARD · dierovaná stena"))
+          ?.metadata?.cameraOccluder,
+      ).toBe(true);
     } finally {
       scene.dispose();
       engine.dispose();

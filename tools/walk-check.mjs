@@ -208,6 +208,7 @@ async function run() {
         const target = camera.target;
         const lower = camera.lowerRadiusLimit ?? 0;
         const upper = camera.upperRadiusLimit ?? Number.POSITIVE_INFINITY;
+        const requested = state.camera.requestedRadiusM;
         const desired = state.camera.desiredRadiusM;
         const effective = state.camera.effectiveRadiusM;
         const targetDistance = position
@@ -219,6 +220,7 @@ async function run() {
           : Number.NaN;
         const finiteValues = {
           poseX: state.pose.x,
+          poseY: state.pose.y,
           poseZ: state.pose.z,
           poseYaw: state.pose.yaw,
           cameraX: position?.x,
@@ -229,8 +231,12 @@ async function run() {
           targetZ: target.z,
           alpha: camera.alpha,
           beta: camera.beta,
+          requested,
           desired,
           effective,
+          indoorBlend: state.camera.indoorBlend,
+          surfaceY: state.camera.surfaceY,
+          cameraSurfaceY: state.camera.cameraSurfaceY,
           renderedRadius: camera.radius,
           targetDistance,
         };
@@ -245,6 +251,35 @@ async function run() {
         if (state.view !== "third") {
           addError(errors, `${label}: view is ${state.view}, expected third`);
         }
+        if (!state.camera.surfaceValid) {
+          addError(
+            errors,
+            `${label}: no valid walk surface at ${state.pose.x}, ${state.pose.z}`,
+          );
+        }
+        if (
+          state.camera.indoorBlend < -0.001 ||
+          state.camera.indoorBlend > 1.001
+        ) {
+          addError(
+            errors,
+            `${label}: indoor blend ${state.camera.indoorBlend} is outside [0, 1]`,
+          );
+        }
+        if (Math.abs(state.pose.y - state.camera.surfaceY) > 0.006) {
+          addError(
+            errors,
+            `${label}: avatar Y ${state.pose.y} does not follow surface Y ${state.camera.surfaceY}`,
+          );
+        }
+        if (
+          Math.abs(state.camera.cameraSurfaceY - state.camera.surfaceY) > 0.161
+        ) {
+          addError(
+            errors,
+            `${label}: camera surface lag ${Math.abs(state.camera.cameraSurfaceY - state.camera.surfaceY)} m exceeds contract`,
+          );
+        }
         if (active !== camera || active?.name !== "avatar-camera") {
           addError(
             errors,
@@ -255,6 +290,12 @@ async function run() {
           addError(
             errors,
             `${label}: desired radius ${desired} is outside [${lower}, ${upper}]`,
+          );
+        }
+        if (desired > requested + 0.001) {
+          addError(
+            errors,
+            `${label}: desired radius ${desired} exceeds requested ${requested}`,
           );
         }
         if (effective < lower - 0.015 || effective > desired + 0.015) {
@@ -318,7 +359,6 @@ async function run() {
           cameraErrors,
         };
       };
-
       window.__walkCheckHarness = {
         controller,
         pose,
@@ -493,6 +533,7 @@ async function run() {
         cameraErrors: [],
         entries: [],
       };
+      let toScene = null;
 
       if (interiorModule) {
         const rooms = [...interiorModule.INTERIOR_ROOMS];
@@ -505,7 +546,7 @@ async function run() {
           x: referencePose.x - reference.standingPointMm.x / 1000,
           z: referencePose.z + reference.standingPointMm.y / 1000,
         };
-        const toScene = (point) => ({
+        toScene = (point) => ({
           x: point.x / 1000 + offset.x,
           z: -point.y / 1000 + offset.z,
         });
@@ -696,6 +737,84 @@ async function run() {
         }
       }
 
+      const adaptive = {
+        importError: null,
+        indoor: null,
+        outdoor: null,
+        driveway: null,
+        cameraErrors: [],
+      };
+      const indoorStart = harness.begin("ROOM-1-03", "adaptive indoor profile");
+      adaptive.cameraErrors.push(...indoorStart.cameraErrors);
+      adaptive.indoor = controller.getWalkDebugState().camera;
+
+      let siteModule = null;
+      const siteImportFailures = [];
+      for (const candidate of ["/lib/twin-site.ts", "/lib/twin-site"]) {
+        try {
+          const loaded = await import(candidate);
+          if (loaded.SITE_SURFACES?.driveway?.polygonMm) {
+            siteModule = loaded;
+            break;
+          }
+          siteImportFailures.push(`${candidate}: SITE_SURFACES.driveway missing`);
+        } catch (error) {
+          siteImportFailures.push(
+            `${candidate}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+      if (!siteModule || !toScene) {
+        adaptive.importError = [
+          ...siteImportFailures,
+          ...(toScene ? [] : ["plan-to-scene transform unavailable"]),
+        ].join(" | ");
+      } else {
+        const driveway = siteModule.SITE_SURFACES.driveway;
+        const openRing =
+          driveway.polygonMm.length > 1 &&
+          driveway.polygonMm[0].x === driveway.polygonMm.at(-1).x &&
+          driveway.polygonMm[0].y === driveway.polygonMm.at(-1).y
+            ? driveway.polygonMm.slice(0, -1)
+            : driveway.polygonMm;
+        const minX = Math.min(...openRing.map((point) => point.x));
+        const maxX = Math.max(...openRing.map((point) => point.x));
+        const minY = Math.min(...openRing.map((point) => point.y));
+        const maxY = Math.max(...openRing.map((point) => point.y));
+        // This real point is well inside both triangles of the live graded
+        // driveway mesh, not on an edge or on the flat terrain below it.
+        const planPoint = {
+          x: (minX + maxX) / 2,
+          y: Math.max(minY + 1, Math.min(maxY - 1, -2500)),
+        };
+        const scenePoint = toScene(planPoint);
+        // createGradedPolygon linearly interpolates its endpoint elevations.
+        const expectedSurfaceY =
+          -0.11 + ((planPoint.y - minY) / Math.max(1, maxY - minY)) * 0.095;
+        controller.avatar.place(scenePoint.x, scenePoint.z, 0);
+        controller.setWalkView("third");
+        if (typeof controller.applyWalkView === "function") {
+          controller.applyWalkView();
+        }
+        harness.render(
+          harness.framesFrom60Hz(8),
+          "graded driveway sample",
+          adaptive.cameraErrors,
+        );
+        const drivewayState = controller.getWalkDebugState();
+        adaptive.outdoor = drivewayState.camera;
+        adaptive.driveway = {
+          id: driveway.id,
+          planPoint,
+          scenePoint,
+          expectedSurfaceY,
+          pose: drivewayState.pose,
+          surfaceId: drivewayState.camera.surfaceId,
+          surfaceKind: drivewayState.camera.surfaceKind,
+          surfaceY: drivewayState.camera.surfaceY,
+        };
+      }
+
       const recoveryStart = harness.begin("ROOM-1-06", "recovery");
       const recoveryCameraErrors = [...recoveryStart.cameraErrors];
       // ROOM-1-06 normally faces its open door. Face the chase camera east so
@@ -710,25 +829,26 @@ async function run() {
         recoveryCameraErrors,
       );
       const beforeInput = harness.pose();
+      const autoRecoveryCountBefore =
+        controller.getWalkDebugState().recovery.autoRecoveryCount;
       controller.setFlightCommand("forward", true);
       let blockedPose;
       let recovered;
       let afterRecovery;
       let blockedReached = false;
-      let blockedFrames = 0;
+      let firstBlockedFrame = null;
+      const singleWallHoldFrames = harness.framesFrom60Hz(100);
+      let singleWallState;
       try {
-        for (
-          blockedFrames = 1;
-          blockedFrames <= harness.framesFrom60Hz(100);
-          blockedFrames += 1
-        ) {
+        for (let frame = 1; frame <= singleWallHoldFrames; frame += 1) {
           harness.render(1, "recovery blocked precondition", recoveryCameraErrors);
-          if (controller.isWalkBlocked()) {
+          if (controller.isWalkBlocked() && !blockedReached) {
             blockedReached = true;
-            break;
+            firstBlockedFrame = frame;
           }
         }
         blockedPose = harness.pose();
+        singleWallState = controller.getWalkDebugState();
         controller.recoverWalkthrough();
         recovered = harness.pose();
         harness.render(
@@ -742,7 +862,16 @@ async function run() {
       }
       const recovery = {
         blockedReached,
-        blockedFrames,
+        blockedFrames: firstBlockedFrame,
+        singleWallHoldFrames,
+        autoRecoveryCountBefore,
+        autoRecoveryCountAfter:
+          singleWallState.recovery.autoRecoveryCount,
+        attemptedDirectionMask:
+          singleWallState.recovery.attemptedDirectionMask,
+        attemptedDirectionCount: singleWallState.recovery.attemptedDirectionMask
+          .toString(2)
+          .replaceAll("0", "").length,
         preconditionTravelled: harness.distance(beforeInput, blockedPose),
         rewindDistance: harness.distance(blockedPose, recovered),
         blockedPose,
@@ -754,9 +883,125 @@ async function run() {
         cameraErrors: recoveryCameraErrors,
       };
 
-      console.info("[walk-check] movement, door and recovery scenarios sampled");
+      const autoRecovery = {
+        setupError: null,
+        cameraErrors: [],
+        start: null,
+        trapped: null,
+        recovered: null,
+        afterRelease: null,
+        firstHeadingFrames: 0,
+        secondHeadingFrames: 0,
+        firstBlocked: false,
+        countBefore: null,
+        countAfter: null,
+        firstDirectionMask: 0,
+        finalState: null,
+      };
+      const wcRoom = interiorModule?.INTERIOR_ROOMS.find(
+        (room) => room.id === "ROOM-1-06",
+      );
+      if (!wcRoom || !toScene) {
+        autoRecovery.setupError = "ROOM-1-06 geometry or plan transform unavailable";
+      } else {
+        const rect = wcRoom.rectsMm[0];
+        // Approach the solid south-west WC corner along two distinct headings.
+        // The point remains outside the fixture envelopes and below the door.
+        const startPlan = { x: rect.x0 + 420, y: rect.y0 + 420 };
+        const startScene = toScene(startPlan);
+        const firstDirection = { x: -0.95, z: 0.31 };
+        const alphaForDirection = (direction) =>
+          Math.atan2(-direction.z, -direction.x);
+        const setup = harness.begin("ROOM-1-06", "multi-direction trap");
+        autoRecovery.cameraErrors.push(...setup.cameraErrors);
+        controller.avatar.place(startScene.x, startScene.z, 0);
+        controller.setWalkView("third");
+        if (typeof controller.applyWalkView === "function") {
+          controller.applyWalkView();
+        }
+        controller.avatar.camera.alpha = alphaForDirection(firstDirection);
+        controller.avatar.camera.inertialAlphaOffset = 0;
+        controller.avatar.noteCameraInput();
+        harness.render(
+          harness.framesFrom60Hz(2),
+          "multi-direction trap placed",
+          autoRecovery.cameraErrors,
+        );
+        autoRecovery.start = harness.pose();
+        autoRecovery.countBefore =
+          controller.getWalkDebugState().recovery.autoRecoveryCount;
 
-      return { movements, doors, recovery };
+        controller.setFlightCommand("forward", true);
+        try {
+          for (
+            autoRecovery.firstHeadingFrames = 1;
+            autoRecovery.firstHeadingFrames <= harness.framesFrom60Hz(120);
+            autoRecovery.firstHeadingFrames += 1
+          ) {
+            harness.render(
+              1,
+              "multi-direction first blocked heading",
+              autoRecovery.cameraErrors,
+            );
+            if (controller.isWalkBlocked()) break;
+          }
+          const firstState = controller.getWalkDebugState();
+          autoRecovery.firstBlocked = firstState.blocked;
+          autoRecovery.firstDirectionMask =
+            firstState.recovery.attemptedDirectionMask;
+          autoRecovery.trapped = harness.pose();
+
+          // Escape diversity is intentionally based on physical commands, not
+          // camera-relative world headings. Release W for one neutral frame,
+          // then make physical Left push west into the second corner wall.
+          controller.setFlightCommand("forward", false);
+          harness.render(
+            harness.framesFrom60Hz(1),
+            "multi-direction neutral release",
+            autoRecovery.cameraErrors,
+          );
+          controller.avatar.camera.alpha = Math.PI / 2;
+          controller.avatar.camera.inertialAlphaOffset = 0;
+          controller.avatar.noteCameraInput();
+          controller.setFlightCommand("left", true);
+          for (
+            autoRecovery.secondHeadingFrames = 1;
+            autoRecovery.secondHeadingFrames <= harness.framesFrom60Hz(70);
+            autoRecovery.secondHeadingFrames += 1
+          ) {
+            harness.render(
+              1,
+              "multi-direction second blocked heading",
+              autoRecovery.cameraErrors,
+            );
+            const state = controller.getWalkDebugState();
+            if (
+              state.recovery.autoRecoveryCount > autoRecovery.countBefore
+            ) {
+              break;
+            }
+          }
+          autoRecovery.recovered = harness.pose();
+          autoRecovery.finalState = controller.getWalkDebugState();
+          autoRecovery.countAfter =
+            autoRecovery.finalState.recovery.autoRecoveryCount;
+        } finally {
+          controller.setFlightCommand("forward", false);
+          controller.setFlightCommand("left", false);
+        }
+        harness.render(
+          harness.framesFrom60Hz(30),
+          "multi-direction recovery released",
+          autoRecovery.cameraErrors,
+        );
+        autoRecovery.afterRelease = harness.pose();
+      }
+
+      console.info(
+        "[walk-check] movement, doors, surfaces and recovery scenarios sampled",
+      );
+
+      return { movements, doors, adaptive, recovery, autoRecovery };
     });
 
     assert.equal(suite.movements.length, 5);
@@ -843,9 +1088,87 @@ async function run() {
     }
 
     assert.equal(
+      suite.adaptive.importError,
+      null,
+      `adaptive surface setup failed: ${suite.adaptive.importError}`,
+    );
+    assert.equal(
+      suite.adaptive.indoor.surfaceKind,
+      "interior",
+      `indoor profile resolved ${suite.adaptive.indoor.surfaceKind}`,
+    );
+    assert.ok(
+      suite.adaptive.indoor.surfaceId?.startsWith("interior-"),
+      `indoor profile resolved ${suite.adaptive.indoor.surfaceId}`,
+    );
+    assert.ok(
+      suite.adaptive.indoor.indoorBlend > 0.99,
+      `indoor blend is only ${suite.adaptive.indoor.indoorBlend}`,
+    );
+    assert.ok(
+      Math.abs(suite.adaptive.indoor.desiredRadiusM - 1.9) < 0.01,
+      `indoor desired radius is ${suite.adaptive.indoor.desiredRadiusM}, expected 1.9 m`,
+    );
+    assert.ok(
+      suite.adaptive.indoor.requestedRadiusM -
+        suite.adaptive.indoor.desiredRadiusM >
+        0.5,
+      "indoor profile did not reduce the requested outdoor camera radius",
+    );
+    assert.equal(
+      suite.adaptive.driveway.surfaceId,
+      "site-surface-SITE-DRIVEWAY",
+      `driveway sample resolved ${suite.adaptive.driveway.surfaceId}`,
+    );
+    assert.equal(suite.adaptive.driveway.surfaceKind, "exterior");
+    assert.ok(
+      Math.abs(
+        suite.adaptive.driveway.surfaceY -
+          suite.adaptive.driveway.expectedSurfaceY,
+      ) < 0.004,
+      `driveway surface Y ${suite.adaptive.driveway.surfaceY} differs from graded mesh ${suite.adaptive.driveway.expectedSurfaceY}`,
+    );
+    assert.ok(
+      Math.abs(
+        suite.adaptive.driveway.pose.y -
+          suite.adaptive.driveway.expectedSurfaceY,
+      ) < 0.004,
+      `avatar Y ${suite.adaptive.driveway.pose.y} does not follow the driveway grade`,
+    );
+    assert.ok(
+      suite.adaptive.outdoor.indoorBlend < 0.01,
+      `outdoor blend remained ${suite.adaptive.outdoor.indoorBlend}`,
+    );
+    assert.ok(
+      Math.abs(
+        suite.adaptive.outdoor.desiredRadiusM -
+          suite.adaptive.outdoor.requestedRadiusM,
+      ) < 0.01,
+      `outdoor desired radius ${suite.adaptive.outdoor.desiredRadiusM} did not restore requested ${suite.adaptive.outdoor.requestedRadiusM}`,
+    );
+    assert.ok(
+      Math.abs(
+        suite.adaptive.outdoor.requestedRadiusM -
+          suite.adaptive.indoor.requestedRadiusM,
+      ) < 0.001,
+      "environment adaptation overwrote the user's requested radius",
+    );
+    assertNoCameraErrors(suite.adaptive, "adaptive surface/camera profile");
+
+    assert.equal(
       suite.recovery.blockedReached,
       true,
       `recovery smoke did not latch blocked state in ${suite.recovery.blockedFrames} frames`,
+    );
+    assert.equal(
+      suite.recovery.autoRecoveryCountAfter,
+      suite.recovery.autoRecoveryCountBefore,
+      "holding one wall heading triggered an automatic rewind",
+    );
+    assert.equal(
+      suite.recovery.attemptedDirectionCount,
+      1,
+      `single-wall hold recorded ${suite.recovery.attemptedDirectionCount} direction sectors`,
     );
     assert.ok(suite.recovery.preconditionTravelled > 0.03, "recovery did not move toward wall");
     assert.ok(
@@ -859,15 +1182,124 @@ async function run() {
     assert.equal(suite.recovery.blocked, false, "recovery left the blocked state latched");
     assertNoCameraErrors(suite.recovery, "recovery");
 
+    assert.equal(
+      suite.autoRecovery.setupError,
+      null,
+      `auto-recovery setup failed: ${suite.autoRecovery.setupError}`,
+    );
+    assert.equal(
+      suite.autoRecovery.firstBlocked,
+      true,
+      `first trap heading did not latch after ${suite.autoRecovery.firstHeadingFrames} frames`,
+    );
+    assert.ok(
+      suite.autoRecovery.firstDirectionMask !== 0 &&
+        (suite.autoRecovery.firstDirectionMask &
+          (suite.autoRecovery.firstDirectionMask - 1)) ===
+          0,
+      `first trap heading recorded a non-single mask ${suite.autoRecovery.firstDirectionMask}`,
+    );
+    assert.equal(
+      suite.autoRecovery.countAfter,
+      suite.autoRecovery.countBefore + 1,
+      `multi-direction trap changed recovery count ${suite.autoRecovery.countBefore} -> ${suite.autoRecovery.countAfter}; ${JSON.stringify(suite.autoRecovery)}`,
+    );
+    const autoRewindDistance = Math.hypot(
+      suite.autoRecovery.trapped.x - suite.autoRecovery.recovered.x,
+      suite.autoRecovery.trapped.z - suite.autoRecovery.recovered.z,
+    );
+    assert.ok(
+      autoRewindDistance > 0.08 && autoRewindDistance < 0.7,
+      `automatic rewind ${autoRewindDistance.toFixed(4)} m is outside the local checkpoint contract`,
+    );
+    assert.equal(
+      suite.autoRecovery.finalState.blocked,
+      false,
+      "automatic recovery left the blocked state latched",
+    );
+    assert.equal(
+      suite.autoRecovery.finalState.recovery.awaitingRelease,
+      true,
+      "automatic recovery did not suppress the still-held movement key",
+    );
+    assert.ok(
+      suite.autoRecovery.finalState.recovery.cooldownS > 0,
+      "automatic recovery did not arm its cooldown",
+    );
+    assert.ok(
+      Math.hypot(
+        suite.autoRecovery.recovered.x - suite.autoRecovery.afterRelease.x,
+        suite.autoRecovery.recovered.z - suite.autoRecovery.afterRelease.z,
+      ) < 0.003,
+      "automatic recovery left residual movement after input release",
+    );
+    assertNoCameraErrors(suite.autoRecovery, "multi-direction auto-recovery");
+
+    // The scenario matrix above intentionally owns the main thread for many
+    // synchronous manual renders. Let queued React work settle before testing
+    // a trusted browser key, then focus the live controller canvas again.
+    await page.evaluate(
+      () => new Promise((resolve) => window.setTimeout(resolve, 0)),
+    );
     const canvas = page.locator("canvas").first();
     const keyboardStart = await page.evaluate(() =>
       window.__walkCheckHarness.begin("ROOM-1-03", "keyboard input"),
     );
     assertNoCameraErrors(keyboardStart, "keyboard input setup");
+    await page.evaluate(
+      () => new Promise((resolve) => window.setTimeout(resolve, 0)),
+    );
     await canvas.focus();
+    const keyboardTarget = await page.evaluate(() => {
+      const harness = window.__walkCheckHarness;
+      const canvasElement = document.querySelector("canvas");
+      window.__walkCheckLastKeyW = null;
+      canvasElement?.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.code !== "KeyW") return;
+          window.__walkCheckLastKeyW = {
+            code: event.code,
+            key: event.key,
+            trusted: event.isTrusted,
+            defaultPrevented: event.defaultPrevented,
+            focused: document.activeElement === canvasElement,
+          };
+        },
+        { once: true },
+      );
+      return {
+        focused: document.activeElement === canvasElement,
+        connected: Boolean(canvasElement?.isConnected),
+        harnessIsCurrentController: harness.controller === window.twinDebug,
+        controllerCanvasIsDocumentCanvas:
+          harness.controller.canvas === canvasElement,
+      };
+    });
+    assert.deepEqual(
+      keyboardTarget,
+      {
+        focused: true,
+        connected: true,
+        harnessIsCurrentController: true,
+        controllerCanvasIsDocumentCanvas: true,
+      },
+      `KeyW target became stale after the synchronous suite: ${JSON.stringify(keyboardTarget)}`,
+    );
     let keyboardMotion;
+    let keyWEvent;
     try {
-      await page.keyboard.down("w");
+      await page.keyboard.down("KeyW");
+      keyWEvent = await page.evaluate(() => ({
+        event: window.__walkCheckLastKeyW,
+        accepted: Boolean(
+          window.__walkCheckHarness.controller.keyboardFlightCommands?.has(
+            "forward",
+          ),
+        ),
+        focused:
+          document.activeElement === document.querySelector("canvas"),
+      }));
       keyboardMotion = await page.evaluate(() =>
         window.__walkCheckHarness.measureFrames(
           window.__walkCheckHarness.framesFrom60Hz(40),
@@ -875,11 +1307,26 @@ async function run() {
         ),
       );
     } finally {
-      await page.keyboard.up("w");
+      await page.keyboard.up("KeyW");
     }
+    assert.deepEqual(
+      keyWEvent,
+      {
+        event: {
+          code: "KeyW",
+          key: "w",
+          trusted: true,
+          defaultPrevented: true,
+          focused: true,
+        },
+        accepted: true,
+        focused: true,
+      },
+      `trusted KeyW did not reach the live canvas/controller: ${JSON.stringify(keyWEvent)}`,
+    );
     assert.ok(
       keyboardMotion.travelled > 0.04,
-      `real KeyW input travelled only ${keyboardMotion.travelled.toFixed(4)} m`,
+      `real KeyW input travelled only ${keyboardMotion.travelled.toFixed(4)} m; target=${JSON.stringify(keyboardTarget)} event=${JSON.stringify(keyWEvent)}`,
     );
     assertNoCameraErrors(keyboardMotion, "real KeyW input");
 
@@ -891,7 +1338,7 @@ async function run() {
     let blurMotion;
     let blurReleased;
     try {
-      await page.keyboard.down("w");
+      await page.keyboard.down("KeyW");
       blurMotion = await page.evaluate(() =>
         window.__walkCheckHarness.measureFrames(
           window.__walkCheckHarness.framesFrom60Hz(18),
@@ -912,7 +1359,7 @@ async function run() {
         ),
       );
     } finally {
-      await page.keyboard.up("w");
+      await page.keyboard.up("KeyW");
     }
     assert.ok(
       blurMotion.travelled > 0.02,
@@ -961,17 +1408,35 @@ async function run() {
           projectedM: Number(entry.maxProjectedM.toFixed(3)),
         })),
       },
+      adaptive: {
+        indoorDesiredRadiusM: Number(
+          suite.adaptive.indoor.desiredRadiusM.toFixed(3),
+        ),
+        outdoorDesiredRadiusM: Number(
+          suite.adaptive.outdoor.desiredRadiusM.toFixed(3),
+        ),
+        drivewaySurfaceId: suite.adaptive.driveway.surfaceId,
+        drivewaySurfaceYM: Number(
+          suite.adaptive.driveway.surfaceY.toFixed(4),
+        ),
+      },
       recovery: {
         blockedReached: suite.recovery.blockedReached,
         blockedFrames: suite.recovery.blockedFrames,
+        singleWallHoldFrames: suite.recovery.singleWallHoldFrames,
+        singleWallDirectionCount: suite.recovery.attemptedDirectionCount,
         preconditionTravelledM: Number(
           suite.recovery.preconditionTravelled.toFixed(3),
         ),
         rewindDistanceM: Number(suite.recovery.rewindDistance.toFixed(3)),
         postRecoveryDriftM: Number(suite.recovery.postRecoveryDrift.toFixed(4)),
+        autoRecoveryCount: suite.autoRecovery.countAfter,
+        autoRewindDistanceM: Number(autoRewindDistance.toFixed(3)),
       },
       input: {
         keyWTravelledM: Number(keyboardMotion.travelled.toFixed(3)),
+        keyWTrusted: keyWEvent.event.trusted,
+        keyWAccepted: keyWEvent.accepted,
         blurTailTravelledM: Number(blurReleased.tailTravelled.toFixed(4)),
       },
       backToOrbit,

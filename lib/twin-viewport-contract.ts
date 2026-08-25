@@ -183,10 +183,14 @@ export const EXTERIOR_RENDER_STABILITY = Object.freeze({
   freezeDynamicShadowCasterBounds: false,
   /** Broad context surface below roads, lawns and every designed hardscape. */
   contextTerrainElevationM: -0.2,
+  /** One shared road datum prevents a 1 mm seam between adjacent polygons. */
+  roadContextSurfaceElevationM: -0.115,
   /** Lawn base is recessed below gravel, mulch and graded access surfaces. */
   parcelGrassElevationM: -0.065,
   /** Minimum intentional gap for overlapping opaque landscape layers. */
   minimumOpaqueLayerSeparationM: 0.018,
+  /** Sub-pixel standing seams disappear before they can sparkle at parcel scale. */
+  roofSeamVisibilityDistanceM: 36,
 });
 
 const MAX_PIXEL_RATIO = 2;
@@ -549,10 +553,11 @@ export function walkCameraRadiusForEnvironment(
     WALK_CAMERA.maxRadiusM,
   );
   const indoors = clamp(Number.isFinite(indoorBlend) ? indoorBlend : 0, 0, 1);
-  const environmentMaximum =
-    WALK_CAMERA.maxRadiusM +
-    (WALK_SURFACE.indoorCameraMaxRadiusM - WALK_CAMERA.maxRadiusM) * indoors;
-  return Math.min(requested, environmentMaximum);
+  const indoorTarget = Math.min(
+    requested,
+    WALK_SURFACE.indoorCameraMaxRadiusM,
+  );
+  return requested + (indoorTarget - requested) * indoors;
 }
 
 /** Frame-rate-independent eye/target height over a surface transition. */

@@ -71,7 +71,8 @@ rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozl�
 (8× MSAA na kompaktných plochách ULTRA vrstvy), plné mipmapy, 16× anizotropné
 filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektrický
 Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
-skutočné odlesky a animovaný filmový grain. Presety Záhrada a Ulica majú
+skutočné odlesky, PBR specular anti-aliasing a časovo stabilný obraz bez
+animovaného filmového grainu. Presety Záhrada a Ulica majú
 fyzickú výšku kamery 3,05 m a 1,90 m namiesto pôvodného leteckého pohľadu;
 uličný preset stojí priamo na vozovke a mieri mierne nadol, aby bola dlažba
 viditeľná v spodnej tretine záberu.

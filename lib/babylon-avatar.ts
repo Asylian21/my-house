@@ -70,6 +70,8 @@ interface WalkSurface {
   readonly maximumZ: number;
 }
 
+type WalkSurfaceSnapResult = "resolved" | "blocked-rise" | "missing";
+
 interface LoadedAvatarRig {
   readonly id: WalkAvatarId;
   readonly root: AbstractMesh;
@@ -79,6 +81,8 @@ interface LoadedAvatarRig {
   readonly walk: AnimationGroup;
   readonly run: AnimationGroup;
 }
+
+const EMPTY_FLIGHT_COMMANDS: ReadonlySet<FlightCommand> = new Set();
 
 /** Allocation-free broad phase; exact triangle picking follows every hit. */
 function rayBoundsDistance(
@@ -215,6 +219,7 @@ export class AvatarController {
   private collisionBatchAccountedSecondsS = 0;
   private readonly movementSubstep = new Vector3();
   private readonly positionBeforeMove = new Vector3();
+  private readonly positionBeforeSubstep = new Vector3();
   private readonly actualMovement = new Vector3();
   private adaptiveVisibility = 1;
   private avatarMeshesEnabled: boolean | null = null;
@@ -229,6 +234,7 @@ export class AvatarController {
   private blockedAttemptWindowS = 0;
   private autoRecoveryCooldownS = 0;
   private autoRecoveryCount = 0;
+  private autoRecoveryAwaitingRelease = false;
 
   constructor(
     private readonly scene: Scene,
@@ -510,18 +516,22 @@ export class AvatarController {
 
   /**
    * Finds the highest tagged walk surface within one human-sized step/drop
-   * window. Visual detail never becomes floor collision, and disabled drawing
+   * window. A taller probe also rejects an exact raised-surface hit
+   * inside the walker's body clearance, even when lower terrain exists below
+   * it. Visual detail never becomes floor collision, and disabled drawing
    * layers remain valid geometry for walking.
    */
-  private snapToWalkSurface() {
+  private snapToWalkSurface(): WalkSurfaceSnapResult {
     this.refreshWalkSurfaces();
     const currentY = Number.isFinite(this.surfaceY)
       ? this.surfaceY
       : this.collider.position.y;
+    const standingClearanceM =
+      WALK_COLLISION_OFFSET_M.y + WALK_COLLISION_ELLIPSOID_M.y;
     const originY =
-      currentY + WALK_SURFACE.maxStepUpM + WALK_SURFACE.probeHeadroomM;
+      currentY + standingClearanceM + WALK_SURFACE.probeHeadroomM;
     const probeLength =
-      WALK_SURFACE.maxStepUpM +
+      standingClearanceM +
       WALK_SURFACE.probeHeadroomM +
       WALK_SURFACE.maxDropM;
     this.surfaceProbeRay.origin.set(
@@ -533,6 +543,7 @@ export class AvatarController {
 
     let resolvedY = Number.NEGATIVE_INFINITY;
     let resolved: WalkSurface | null = null;
+    let blockedByRise = false;
     for (const surface of this.walkSurfaces) {
       if (surface.mesh.isDisposed()) continue;
       if (
@@ -548,9 +559,17 @@ export class AvatarController {
       const hitY =
         (hit.pickedPoint?.y ?? originY - hit.distance) +
         surface.elevationOffsetM;
+      if (hitY > currentY + WALK_SURFACE.maxStepUpM + 1e-4) {
+        // AABB membership is only the broad phase: this branch is reached only
+        // after an exact triangle hit at the proposed X/Z. Ignore a true
+        // overhead that leaves the collision ellipsoid standing clearance.
+        if (hitY <= currentY + standingClearanceM + 1e-4) {
+          blockedByRise = true;
+        }
+        continue;
+      }
       if (
         hitY < currentY - WALK_SURFACE.maxDropM - 1e-4 ||
-        hitY > currentY + WALK_SURFACE.maxStepUpM + 1e-4 ||
         hitY <= resolvedY
       ) {
         continue;
@@ -559,17 +578,21 @@ export class AvatarController {
       resolved = surface;
     }
 
+    if (blockedByRise) {
+      this.collider.position.y = currentY;
+      return "blocked-rise";
+    }
     if (!resolved || !Number.isFinite(resolvedY)) {
       this.surfaceValid = this.walkSurfaces.length === 0;
       this.collider.position.y = currentY;
-      return false;
+      return "missing";
     }
     this.surfaceY = resolvedY;
     this.surfaceKind = resolved.kind;
     this.surfaceId = resolved.id;
     this.surfaceValid = true;
     this.collider.position.y = resolvedY;
-    return true;
+    return "resolved";
   }
 
   /** Places the walker and turns the chase camera behind it. */
@@ -596,6 +619,7 @@ export class AvatarController {
     this.blockedDirectionMask = 0;
     this.blockedAttemptWindowS = 0;
     this.autoRecoveryCooldownS = 0;
+    this.autoRecoveryAwaitingRelease = false;
     this.indoorBlend = this.surfaceKind === "interior" ? 1 : 0;
     this.desiredCameraRadiusM = walkCameraRadiusForEnvironment(
       this.preferredCameraRadiusM,
@@ -649,6 +673,7 @@ export class AvatarController {
     this.recoveryClearTravelM = 0;
     this.blockedDirectionMask = 0;
     this.blockedAttemptWindowS = 0;
+    this.autoRecoveryAwaitingRelease = false;
   }
 
   noteCameraInput() {
@@ -689,6 +714,7 @@ export class AvatarController {
       autoRecoveryCount: this.autoRecoveryCount,
       cooldownS: this.autoRecoveryCooldownS,
       attemptedDirectionMask: this.blockedDirectionMask,
+      awaitingRelease: this.autoRecoveryAwaitingRelease,
     } as const;
   }
 
@@ -711,6 +737,7 @@ export class AvatarController {
     this.recoveryClearTravelM = 0;
     this.blockedDirectionMask = 0;
     this.blockedAttemptWindowS = 0;
+    this.autoRecoveryAwaitingRelease = false;
     this.safeTravelM = 0;
     this.safeCandidatePosition.copyFrom(this.collider.position);
     this.cameraSurfaceY = this.surfaceY;
@@ -766,11 +793,22 @@ export class AvatarController {
     modifiers: { boost: boolean; precision: boolean },
     headingOverride?: { x: number; z: number },
   ) {
+    const rawDirectionalInput =
+      commands.has("forward") ||
+      commands.has("backward") ||
+      commands.has("left") ||
+      commands.has("right");
+    if (this.autoRecoveryAwaitingRelease && !rawDirectionalInput) {
+      this.autoRecoveryAwaitingRelease = false;
+    }
+    const movementCommands = this.autoRecoveryAwaitingRelease
+      ? EMPTY_FLIGHT_COMMANDS
+      : commands;
     const forward = headingOverride ?? this.cameraForward();
     const next = integrateAvatarVelocity({
       velocity: { x: this.velocity.x, z: this.velocity.z },
       forward,
-      commands,
+      commands: movementCommands,
       deltaMs,
       boost: modifiers.boost,
       precision: modifiers.precision,
@@ -786,10 +824,7 @@ export class AvatarController {
     );
     if (this.blockedAttemptWindowS <= 0) this.blockedDirectionMask = 0;
     const hasDirectionalInput =
-      commands.has("forward") ||
-      commands.has("backward") ||
-      commands.has("left") ||
-      commands.has("right");
+      rawDirectionalInput && !this.autoRecoveryAwaitingRelease;
     const intended = this.intendedMovement;
     const resetCollisionCarry = shouldResetWalkCollisionCarry(
       hasDirectionalInput,
@@ -839,12 +874,24 @@ export class AvatarController {
       intended.scaleToRef(1 / substeps, this.movementSubstep);
       this.collider.computeWorldMatrix(true);
       for (let index = 0; index < substeps; index += 1) {
+        this.positionBeforeSubstep.copyFrom(this.collider.position);
         this.collider.moveWithCollisions(this.movementSubstep);
         // moveWithCollisions mutates position in place; force the hidden
         // collider's absolute matrix before the next substep/frame. Without
         // this, Babylon can resolve every step from a stale start and tunnel
         // through furniture during a sprint or a deterministic QA loop.
-        this.snapToWalkSurface();
+        const surfaceResult = this.snapToWalkSurface();
+        if (
+          surfaceResult === "blocked-rise" ||
+          (surfaceResult === "missing" && !this.surfaceValid)
+        ) {
+          // A missing floor or an unwalkable rise is an impassable edge, just
+          // like a wall. Rewind the individual substep so a lower fallback
+          // terrain can never carry the walker through raised geometry.
+          this.collider.position.copyFrom(this.positionBeforeSubstep);
+          this.surfaceY = this.positionBeforeSubstep.y;
+          this.snapToWalkSurface();
+        }
         this.collider.computeWorldMatrix(true);
       }
       moved = this.actualMovement
@@ -909,7 +956,14 @@ export class AvatarController {
         this.blockedAttemptWindowS = WALK_SURFACE.autoRecoveryAttemptWindowS;
         this.blockedDirectionMask = addWalkEscapeDirection(
           this.blockedDirectionMask,
-          next,
+          {
+            x:
+              Number(commands.has("right")) -
+              Number(commands.has("left")),
+            z:
+              Number(commands.has("forward")) -
+              Number(commands.has("backward")),
+          },
         );
       } else {
         this.blockedForS = Math.max(
@@ -986,6 +1040,7 @@ export class AvatarController {
         this.blockedAttemptWindowS = 0;
         this.autoRecoveryCooldownS = WALK_SURFACE.autoRecoveryCooldownS;
         this.autoRecoveryCount += 1;
+        this.autoRecoveryAwaitingRelease = true;
         this.safeTravelM = 0;
         this.safeCandidatePosition.copyFrom(this.collider.position);
         actualX = 0;

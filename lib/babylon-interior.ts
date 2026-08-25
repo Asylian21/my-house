@@ -593,6 +593,7 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
     finish(context, slab, materials.epoxy, {
       walkSurface: true,
       walkSurfaceId: `interior-base-${index + 1}`,
+      walkSurfaceElevationOffsetM: 0.002,
     });
   }
   // Door thresholds carry the floor of the room the door opens from.
@@ -3510,7 +3511,11 @@ function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMat
     1.29,
     0.35,
   );
-  finish(context, pegboard, materials.childCork, { shadow: true, pickable: true });
+  finish(context, pegboard, materials.childCork, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
   for (const elevationM of [1.39, 1.54, 1.69, 1.84]) {
     for (const yMm of [sinkCenter.y - 210, sinkCenter.y - 70, sinkCenter.y + 70, sinkCenter.y + 210]) {
       const hole = CreateCylinder(
@@ -3728,6 +3733,30 @@ function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMat
   navigationGuard(context, materials, `${fitout.id} · UTILITY-SINK · navigačný obrys`, sinkRect);
   navigationGuard(context, materials, `${fitout.id} · GARAGE-RACK · navigačný obrys`, rackRect);
   navigationGuard(context, materials, `${fitout.id} · MOWER · navigačný obrys`, mowerRect);
+  cameraOcclusionProxy(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-RACK · súvislý objem pre kameru`,
+    rackRect,
+    0,
+    rackHeightM,
+  );
+  cameraOcclusionProxy(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-SHELF · súvislý objem pre kameru`,
+    overSink.footprintMm,
+    Math.min(...overSink.elevationsMm) * MM_TO_M - 0.04,
+    Math.max(...overSink.elevationsMm) * MM_TO_M + 0.08,
+  );
+  cameraOcclusionProxy(
+    context,
+    materials,
+    `${fitout.id} · REAR-SHELF · súvislý objem pre kameru`,
+    rearShelves.footprintMm,
+    Math.min(...rearShelves.elevationsMm) * MM_TO_M - 0.04,
+    Math.max(...rearShelves.elevationsMm) * MM_TO_M + 0.45,
+  );
 }
 
 function softEllipsoid(
@@ -3792,6 +3821,41 @@ function navigationGuard(
   guard.isVisible = false;
   guard.metadata = { ...(guard.metadata ?? {}), walkCollisionOnly: true };
   return guard;
+}
+
+/**
+ * One stable camera volume for a visually busy storage assembly. Individual
+ * shelves and boxes stay pickable, while the chase boom cannot thread through
+ * their gaps and end up inside a texture.
+ */
+function cameraOcclusionProxy(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  name: string,
+  rect: RectMm,
+  bottomM: number,
+  topM: number,
+) {
+  const proxy = texturedBox(
+    context.scene,
+    name,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    Math.max(0.01, topM - bottomM),
+    bottomM,
+    1,
+  );
+  finish(context, proxy, materials.livingCabinet, {
+    cameraOccluder: true,
+  });
+  proxy.isVisible = false;
+  proxy.receiveShadows = false;
+  proxy.metadata = {
+    ...(proxy.metadata ?? {}),
+    cameraOcclusionProxy: true,
+  };
+  return proxy;
 }
 
 function hallwayWardrobeFrontX(
