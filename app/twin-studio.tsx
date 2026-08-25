@@ -493,6 +493,10 @@ export function TwinStudio() {
         requestAnimationFrame(() => searchRef.current?.focus());
       }
       if (event.key === "Escape" && !isTyping) {
+        if (viewportRef.current?.isGarageCinematicActive()) {
+          event.preventDefault();
+          return;
+        }
         if (navigationMode === "flight" || navigationMode === "walk") {
           event.preventDefault();
           setNavigationMode("orbit");
@@ -567,6 +571,7 @@ export function TwinStudio() {
   };
 
   const showCameraPreset = (preset: CameraPreset) => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
     if (preset === "parcels") {
       setVisibleLayers((current) =>
         current.cadastre ? current : { ...current, cadastre: true },
@@ -587,12 +592,14 @@ export function TwinStudio() {
   };
 
   const toggleFlight = () => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
     const next = navigationMode === "flight" ? "orbit" : "flight";
     setNavigationMode(next);
     viewportRef.current?.setNavigationMode(next);
   };
 
   const toggleWalk = () => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
     const next = navigationMode === "walk" ? "orbit" : "walk";
     setNavigationMode(next);
     if (next === "walk") {

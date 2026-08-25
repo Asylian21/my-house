@@ -9,6 +9,7 @@ import type { Scene } from "@babylonjs/core/scene";
 
 import {
   hingedDoorSweepIsClear,
+  liftSlideSashLiftM,
   slidingDoorPathIsClear,
   type AnimatedDoorRegistration,
 } from "./babylon-doors";
@@ -435,6 +436,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
       ? new TransformNode(`${spec.interaction.id} · posuvný vozík`, context.scene)
       : null;
     const movingMeshes: Mesh[] = [];
+    const movingCollisionMeshes: Mesh[] = [];
     let movingGlass: Mesh | null = null;
     for (const leaf of leaves) {
       const leafEnd = leaf.startAlong + leafWidth;
@@ -465,6 +467,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
       if (leaf.moving && movingRoot) {
         movingGlass = glass;
         movingMeshes.push(...leafMeshes, glass);
+        movingCollisionMeshes.push(...leafMeshes, glass);
       }
     }
     // Vertical pull handle on the sliding leaf, both faces.
@@ -482,6 +485,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     }
     if (movingRoot && movingGlass && spec.interaction) {
       parentAtWorldTransform(movingMeshes, movingRoot);
+      for (const mesh of movingCollisionMeshes) mesh.checkCollisions = true;
       for (const mesh of movingMeshes) {
         mesh.metadata = {
           ...(mesh.metadata ?? {}),
@@ -516,6 +520,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
         apply: (progress) => {
           movingRoot.position.x = travel.x * progress;
+          movingRoot.position.y = liftSlideSashLiftM(progress);
           movingRoot.position.z = travel.z * progress;
           for (const mesh of movingMeshes) mesh.computeWorldMatrix(true);
         },
@@ -625,7 +630,9 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         kind: "HINGED",
         interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
         apply: (progress) => {
-          hinge.rotation.y = openAngleRad * progress;
+          // Keep the closed transform canonically +0 even on leaves whose
+          // opening direction is negative; strict scene contracts compare it.
+          hinge.rotation.y = progress === 0 ? 0 : openAngleRad * progress;
           for (const mesh of handleMeshes) {
             mesh.computeWorldMatrix(true);
           }
