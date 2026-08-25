@@ -61,9 +61,11 @@ realizáciou.
 
 Režim **Realita** používa projektové rozmery a materiály D1 vrátane oboch
 krytých terás odčítaných z vektorov výkresu D1.1.002: zapustenej presklenej
-steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (súčasť TERASY
-34,80 m²). Tri drevené terasové zóny (34,80 + 33,10 + 16,45 = 84,35 m²) sa
-generujú doska po doske z `TERRACE_ZONES_D1`. Vegetácia, nábytok a
+steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (pôvodne súčasť
+TERASY 34,80 m²). Aktívna revízia predlžuje garáž 1.12 o 1 000 mm do lodžie,
+preto má záhradná zóna 30,60 m² a súčet terás klesá z pôvodných 84,35 m² na
+80,15 m². Drevené zóny sa generujú doska po doske z `TERRACE_ZONES_D1`.
+Vegetácia, nábytok a
 panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 
 WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelový

@@ -20,10 +20,11 @@ import {
   ceilingElevationMm,
   roomAreaM2,
   roomAt,
+  totalActiveFloorAreaM2,
   totalDocumentedFloorAreaM2,
   type RectMm,
 } from "../lib/twin-interior";
-import { HOUSE, SOURCES } from "../lib/twin-site";
+import { GARAGE_DEPTH_REVISION, HOUSE, SOURCES } from "../lib/twin-site";
 import { roofHeightMm } from "../lib/twin-roof";
 import { WALK_CAMERA, WALK_COLLISION_ELLIPSOID_M } from "../lib/twin-viewport-contract";
 
@@ -57,7 +58,11 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       "1.01", "1.02", "1.03", "1.04", "1.05", "1.06",
       "1.07", "1.08", "1.09", "1.10", "1.11", "1.12",
     ]);
-    expect(totalDocumentedFloorAreaM2()).toBeCloseTo(HOUSE.floorAreaM2, 2);
+    expect(totalDocumentedFloorAreaM2()).toBeCloseTo(
+      HOUSE.originalFloorAreaM2,
+      2,
+    );
+    expect(totalActiveFloorAreaM2()).toBeCloseTo(HOUSE.floorAreaM2, 3);
   });
 
   it("reproduces the legend areas from the traced wall faces", () => {
@@ -76,13 +81,37 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     };
     for (const room of INTERIOR_ROOMS) {
       const area = roomAreaM2(room);
-      expect(Math.abs(area - room.documentedAreaM2), room.number).toBeLessThan(
+      const designArea = room.activeDesignAreaM2 ?? room.documentedAreaM2;
+      expect(Math.abs(area - designArea), room.number).toBeLessThan(
         tolerance[room.number] ?? 0.05,
       );
     }
     // 1.03 legend = 6 000 × 8 075 clear span; the trace adds the kitchen bay.
     const living = INTERIOR_ROOMS.find((room) => room.number === "1.03")!;
     expect(roomAreaM2(living)).toBeGreaterThan(living.documentedAreaM2);
+  });
+
+  it("extends garage 1.12 by exactly one metre into the garden loggia", () => {
+    const garage = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-12")!;
+    const rearReturn = garage.rectsMm[1];
+    const returnWall = INTERIOR_WALLS.find(
+      (wall) => wall.id === "IW-GARAGE-LOGGIA",
+    )!;
+
+    expect(
+      rearReturn.y1 - GARAGE_DEPTH_REVISION.originalGarageRearInnerFaceYmm,
+    ).toBe(GARAGE_DEPTH_REVISION.extensionMm);
+    expect(rearReturn.y1).toBe(
+      GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+    );
+    expect(roomAreaM2(garage)).toBeCloseTo(29.02321, 5);
+    expect(garage.activeDesignAreaM2).toBeCloseTo(29.023, 3);
+    expect(returnWall.rectMm.y1).toBe(
+      GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm + 2,
+    );
+    expect(HOUSE.porches.gardenLoggia.backFaceYmm - rearReturn.y1).toBe(498);
+    expect(roomAt({ x: 8_000, y: 8_300 })?.id).toBe(garage.id);
+    expect(roomAt({ x: 8_000, y: 9_400 })).toBeNull();
   });
 
   it("keeps every room and wall inside the D1 footprint with no overlaps", () => {

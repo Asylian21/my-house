@@ -176,6 +176,14 @@ export const SOURCES = {
     date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientGarageDepthRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-DEPTH-20260825",
+    title: "Revízia stavebníka · garáž dlhšia o 1 000 mm",
+    detail:
+      "Predĺžiť garáž 1.12 o presných 1 000 mm smerom do záhrady. Posunúť celú zadnú stenu vrátane dverí LOGGIA-DOOR na úkor malej zapustenej lodžie v terase 34,80 m²; uličná fasáda, garážová brána, príjazd, vonkajší pôdorys domu a strecha zostávajú bez zmeny. Existujúci základový výkres sa nemení potichu a nové založenie musí potvrdiť statik/projektant.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientRevision20260823: {
     id: "SRC-CLIENT-20260823",
     title: "Revízia stavebníka · obývacia a jedálenská zóna",
@@ -485,6 +493,27 @@ export const SOURCES = {
   },
 } as const satisfies Record<string, SourceRecord>;
 
+/**
+ * Active client revision that converts a one-metre strip of the covered
+ * garden loggia into garage 1.12. The outer house and roof envelopes stay
+ * fixed; only the internal rear wall and the terrace split move along +Y.
+ */
+export const GARAGE_DEPTH_REVISION = Object.freeze({
+  sourceId: SOURCES.clientGarageDepthRevision20260825.id,
+  extensionMm: 1_000,
+  axis: "LOCAL_Y_TOWARD_GARDEN",
+  originalGarageRearInnerFaceYmm: 7_749,
+  revisedGarageRearInnerFaceYmm: 8_749,
+  originalLoggiaBackFaceYmm: 8_247,
+  revisedLoggiaBackFaceYmm: 9_247,
+  originalGarageAreaM2: 25.15,
+  revisedGarageAreaM2: 29.023,
+  originalFloorAreaM2: 175.15,
+  revisedFloorAreaM2: 179.023,
+  originalTerraceAreaM2: 84.35,
+  revisedTerraceAreaM2: 80.15,
+} as const);
+
 const mmPoint = (xM: number, yM: number): Point2Mm => ({
   x: Math.round(xM * 1000),
   y: Math.round(yM * 1000),
@@ -765,8 +794,10 @@ export const HOUSE = Object.freeze({
   ] as const satisfies readonly Point2Mm[],
   maximumDepthMm: 19035,
   derivedFootprintAreaM2: 252.965,
-  floorAreaM2: 175.15,
-  terraceAreaM2: 84.35,
+  originalFloorAreaM2: GARAGE_DEPTH_REVISION.originalFloorAreaM2,
+  floorAreaM2: GARAGE_DEPTH_REVISION.revisedFloorAreaM2,
+  originalTerraceAreaM2: GARAGE_DEPTH_REVISION.originalTerraceAreaM2,
+  terraceAreaM2: GARAGE_DEPTH_REVISION.revisedTerraceAreaM2,
   eavesElevationMm: 3125,
   ridgeElevationMm: 5560,
   flues: [
@@ -956,10 +987,16 @@ export const HOUSE = Object.freeze({
       },
       loggiaOpening: {
         id: "WEST-01",
-        startYmm: 9300,
-        widthMm: 1400,
+        // The one-metre garage extension shortens the side portal together
+        // with the loggia, retaining a useful 553 mm rear return and the
+        // existing 500 mm front corner pier.
+        startYmm: 9800,
+        widthMm: 900,
         heightMm: 2400,
         sillMm: 0,
+        originalStartYmm: 9300,
+        originalWidthMm: 1400,
+        revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
       },
     },
     wingWest: {
@@ -978,8 +1015,8 @@ export const HOUSE = Object.freeze({
   },
   // Both covered porches come straight from the D1.1.002 vector geometry: the
   // wing gable porch (TERASA 16,45 m²) has its glazed wall recessed 2 500 mm
-  // behind the gable plane, and the garden loggia (part of TERASA 34,80 m²)
-  // sits 2 953 mm behind the garden facade line.
+  // behind the gable plane. The garden loggia was part of the original TERASA
+  // 34,80 m² and is now 1 953 mm deep after the active garage revision.
   porches: {
     wingEnd: {
       id: "PORCH-WING-END",
@@ -1042,7 +1079,10 @@ export const HOUSE = Object.freeze({
     gardenLoggia: {
       id: "PORCH-GARDEN-LOGGIA",
       faceYmm: 11200,
-      backFaceYmm: 8247,
+      backFaceYmm: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+      originalBackFaceYmm: GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
+      garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
+      revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
       openingStartXmm: 7440,
       openingEndXmm: 10640,
       cornerPier: { startXmm: 6440, endXmm: 7440, startYmm: 10700, endYmm: 11200 },
@@ -1119,6 +1159,7 @@ export const HOUSE = Object.freeze({
     active: true,
     placementStatus: "INFERRED_ALIGNMENT",
     alignmentNote: "Bez zrkadlenia zarovnané na pravú hranu, zalomenie a hornú hranu C3; garážový koniec sa predlžuje o 800 mm.",
+    garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
   },
   sourceIds: [
     SOURCES.floorPlan.id,
@@ -1127,6 +1168,7 @@ export const HOUSE = Object.freeze({
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
     SOURCES.clientGarageSideWindowRevision20260825.id,
+    SOURCES.clientGarageDepthRevision20260825.id,
     SOURCES.clientFireplaceRevision20260824.id,
     SOURCES.clientFireplacePositionRevision20260825.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
@@ -1981,30 +2023,41 @@ export interface TerraceZoneRectMm {
 export interface TerraceZoneD1 {
   readonly id: string;
   readonly label: string;
+  /** Original area from the D1.1.002 room legend, m². */
   readonly documentedAreaM2: number;
+  /** Active area after a later client revision, when it differs from D1. */
+  readonly activeDesignAreaM2?: number;
   readonly covered: boolean;
   /** Axis-aligned rectangles in plan millimetres; boards run along X. */
   readonly rectsMm: readonly TerraceZoneRectMm[];
+  readonly baseSourceId?: string;
   readonly sourceId: string;
 }
 
 /**
- * The three documented D1.1.002 timber terrace zones (34,80 + 33,10 + 16,45 =
- * 84,35 m² per the room legend). They supersede the older C3 53 m² surface,
- * which is kept above as provenance. Rectangles are traced from the deck
- * hatch vectors of the drawing.
+ * The three original D1.1.002 timber terrace zones total 84,35 m². The active
+ * client revision converts a one-metre strip of TERR-D1-GARDEN into garage
+ * 1.12, reducing that zone by 4,20 m² while preserving the D1 values as
+ * provenance. They supersede the older C3 53 m² surface, which is kept above.
  */
 export const TERRACE_ZONES_D1: readonly TerraceZoneD1[] = [
   {
     id: "TERR-D1-GARDEN",
-    label: "Terasa D1 · záhradná časť s lodžiou · 34,80 m²",
+    label: "Záhradná terasa · aktívne 30,60 m² · D1 34,80 m²",
     documentedAreaM2: 34.8,
+    activeDesignAreaM2: 30.6,
     covered: false,
     rectsMm: [
-      { x0: 6440, y0: 8247, x1: 10640, y1: 11200 },
+      {
+        x0: 6440,
+        y0: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+        x1: 10640,
+        y1: 11200,
+      },
       { x0: 6440, y0: 11200, x1: 18040, y1: 13100 },
     ],
-    sourceId: SOURCES.floorPlan.id,
+    baseSourceId: SOURCES.floorPlan.id,
+    sourceId: SOURCES.clientGarageDepthRevision20260825.id,
   },
   {
     id: "TERR-D1-WING",
@@ -2034,6 +2087,11 @@ export function terraceZoneAreaM2(zone: TerraceZoneD1): number {
       0,
     ) / 1_000_000
   );
+}
+
+/** Active design area, falling back to the original D1 room-legend value. */
+export function terraceZoneDesignAreaM2(zone: TerraceZoneD1): number {
+  return zone.activeDesignAreaM2 ?? zone.documentedAreaM2;
 }
 
 export const GARDEN_POOL = Object.freeze({

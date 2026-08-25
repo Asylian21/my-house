@@ -310,7 +310,7 @@ function getEntityDetail(
         { label: "Výškový systém", value: "±0,000 = 184,00", unit: "m Bpv" },
       ],
       sourceIds: HOUSE.sourceIds,
-      note: "3D hmota vychádza z neskoršieho pôdorysu D1.1.002 bez zrkadlenia: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Žltá terasa je zatiaľ samostatná georeferencovaná revízia C3 s plochou 53 m², nie zlúčená plocha 84,35 m² zo súpisu D1.",
+      note: "3D hmota vychádza z neskoršieho pôdorysu D1.1.002 bez zrkadlenia: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Aktívna revízia predlžuje garáž o 1 000 mm na úkor záhradnej lodžie a znižuje D1 terasy z pôvodných 84,35 m² na 80,15 m². Žltá plocha C3 53 m² ostáva samostatnou staršou georeferencovanou revíziou.",
     };
   }
 

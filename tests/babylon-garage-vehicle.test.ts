@@ -38,6 +38,7 @@ describe("Babylon Superb Combi visual", () => {
     expect(visual.root.metadata).toMatchObject({
       vehicleGeneration: "SUPERB-IV-COMBI",
       productionDimensionsMm: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
+      visualLengthScale: 1,
     });
     expect(visual.wheelSpins).toHaveLength(4);
     expect(visual.frontSteering).toHaveLength(2);
@@ -63,6 +64,14 @@ describe("Babylon Superb Combi visual", () => {
     expect(colliders).toHaveLength(2);
     expect(colliders.every(({ isVisible }) => !isVisible)).toBe(true);
     expect(colliders.every(({ checkCollisions }) => checkCollisions)).toBe(true);
+    const lowerCollider = colliders.find(({ name }) =>
+      name.includes("spodný kolízny obal"),
+    )!;
+    const lowerBounds = lowerCollider.getBoundingInfo().boundingBox;
+    expect(lowerBounds.maximum.x - lowerBounds.minimum.x).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000,
+      6,
+    );
 
     for (const mesh of scene.meshes.filter((candidate) => candidate.getTotalVertices() > 0)) {
       mesh.computeWorldMatrix(true);

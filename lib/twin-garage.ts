@@ -1,4 +1,9 @@
-import { HOUSE, SITE_SURFACES, type Point2Mm } from "./twin-site";
+import {
+  GARAGE_DEPTH_REVISION,
+  HOUSE,
+  SITE_SURFACES,
+  type Point2Mm,
+} from "./twin-site";
 import {
   GARAGE_SUPERB_AXLES_M,
   GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
@@ -48,10 +53,9 @@ export const GARAGE_VEHICLE = Object.freeze({
   roomId: "ROOM-1-12",
   garageDoorId: GARAGE_DOOR.id,
   dimensionsMm: {
-    // The plan is 155 mm too short for the production 4,902 mm car behind the
-    // closed leaf. A uniform longitudinal scale preserves authentic Combi
-    // proportions without clipping the architectural model.
-    length: 4_640,
+    // The active +1,000 mm garage revision provides the depth needed for the
+    // complete production-size Superb Combi behind the closed sectional leaf.
+    length: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length,
     width: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.mirrorWidth,
     height: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.height,
     wheelbase: Math.round(
@@ -77,7 +81,9 @@ export const GARAGE_VEHICLE = Object.freeze({
     } satisfies Point2Mm,
     parkedMm: {
       x: GARAGE_DOOR.startXmm + GARAGE_DOOR.widthMm / 2,
-      y: 5_370,
+      // This centres the full-length car between the closed garage leaf and
+      // the swept envelope of the fully open LOGGIA-DOOR.
+      y: 5_600,
     } satisfies Point2Mm,
     // A 5.55 m quarter-turn keeps the street approach calm and has the car
     // fully aligned with the driveway at the asphalt edge.
@@ -96,6 +102,11 @@ export const GARAGE_VEHICLE = Object.freeze({
     xMaxMm: Math.max(...DRIVEWAY.polygonMm.map(({ x }) => x)),
     asphaltEdgeYmm: DRIVEWAY.streetConnection.asphaltEdgeYmm,
     houseFaceYmm: DRIVEWAY.streetConnection.houseFaceYmm,
+  },
+  garageRevision: {
+    sourceId: GARAGE_DEPTH_REVISION.sourceId,
+    extensionMm: GARAGE_DEPTH_REVISION.extensionMm,
+    rearInnerFaceYmm: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
   },
 } as const);
 

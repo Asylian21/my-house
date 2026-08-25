@@ -1,4 +1,8 @@
-import { SOURCES, type Point2Mm } from "./twin-site";
+import {
+  GARAGE_DEPTH_REVISION,
+  SOURCES,
+  type Point2Mm,
+} from "./twin-site";
 
 /**
  * Interior of 1.NP traced from the D1.1.002 wall vectors (1:100, 1.44 pt wall
@@ -27,6 +31,8 @@ export interface InteriorRoom {
   readonly name: string;
   /** Area from the D1.1.002 room legend, m². */
   readonly documentedAreaM2: number;
+  /** Active clear area after a later client revision, when it differs. */
+  readonly activeDesignAreaM2?: number;
   /** Clear height (S.V.) from the room legend, mm. */
   readonly clearHeightMm: number;
   readonly ceiling: CeilingKind;
@@ -804,13 +810,19 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     number: "1.12",
     name: "Garáž",
     documentedAreaM2: 25.15,
+    activeDesignAreaM2: GARAGE_DEPTH_REVISION.revisedGarageAreaM2,
     clearHeightMm: 2600,
     ceiling: "FLAT",
     floor: "EPOXY",
     wetRoom: false,
     rectsMm: [
       { x0: 6944, y0: 3504, x1: 13742, y1: 6462 },
-      { x0: 6944, y0: 6462, x1: 10842, y1: 7749 },
+      {
+        x0: 6944,
+        y0: 6462,
+        x1: 10842,
+        y1: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+      },
     ],
     standingPointMm: { x: 10300, y: 5000 },
   },
@@ -826,7 +838,16 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-GARAGE-EAST", role: "PARTITION", rectMm: { x0: 13742, y0: 3504, x1: 13941, y1: 5561 } },
   // 240 mm load-bearing wall garage / bedroom 1.10 and its 300 mm return.
   { id: "IW-GARAGE-NORTH", role: "LOAD_BEARING", rectMm: { x0: 10842, y0: 6462, x1: 15143, y1: 6699 } },
-  { id: "IW-GARAGE-LOGGIA", role: "LOAD_BEARING", rectMm: { x0: 10842, y0: 6699, x1: 11143, y1: 8249 } },
+  {
+    id: "IW-GARAGE-LOGGIA",
+    role: "LOAD_BEARING",
+    rectMm: {
+      x0: 10842,
+      y0: 6699,
+      x1: 11143,
+      y1: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm + 2,
+    },
+  },
   // Bathroom 1.11 top wall with the corridor door gap 14 990 – 15 790.
   { id: "IW-BATH-111-TOP-W", role: "PARTITION", rectMm: { x0: 13742, y0: 5421, x1: 14990, y1: 5561 } },
   { id: "IW-BATH-111-TOP-E", role: "PARTITION", rectMm: { x0: 15790, y0: 5421, x1: 16743, y1: 5561 } },
@@ -1212,7 +1233,12 @@ export const GARAGE_FITOUT: GarageFitout = Object.freeze({
   sinkServiceRectMm: { x0: 12442, y0: 4763, x1: 13242, y1: 5363 },
   vehicleClearRectsMm: [
     { x0: 6944, y0: 3504, x1: 10240, y1: 6462 },
-    { x0: 6944, y0: 6462, x1: 10240, y1: 7749 },
+    {
+      x0: 6944,
+      y0: 6462,
+      x1: 10240,
+      y1: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+    },
   ],
   entryApproachRectMm: { x0: 10842, y0: 5669, x1: 13742, y1: 6462 },
 });
@@ -1812,4 +1838,12 @@ export function roomAt(point: Point2Mm): InteriorRoom | null {
 
 export function totalDocumentedFloorAreaM2(): number {
   return INTERIOR_ROOMS.reduce((sum, room) => sum + room.documentedAreaM2, 0);
+}
+
+/** Active client-design total while retaining the original D1 room legend. */
+export function totalActiveFloorAreaM2(): number {
+  return INTERIOR_ROOMS.reduce(
+    (sum, room) => sum + (room.activeDesignAreaM2 ?? room.documentedAreaM2),
+    0,
+  );
 }

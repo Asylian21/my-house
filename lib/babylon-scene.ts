@@ -4811,7 +4811,7 @@ export class TwinSceneController {
     });
   }
 
-  /** Garden loggia recessed 2 953 mm behind the garden facade (D1.1.002). */
+  /** Active garden loggia, shortened to 1 953 mm by the garage-depth revision. */
   private buildGardenLoggia() {
     const loggia = HOUSE.porches.gardenLoggia;
     const soffitM = loggia.soffitElevationMm * MM_TO_M;

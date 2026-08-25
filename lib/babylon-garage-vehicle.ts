@@ -23,6 +23,7 @@ import {
   GARAGE_SUPERB_SIDE_WINDOWS,
   GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
   GARAGE_SUPERB_WHEEL_M,
+  garageSuperbLongitudinalM,
   vehicleLoftGeometry,
   type VehicleLoftStation,
   type VehicleProfilePoint,
@@ -122,6 +123,7 @@ export function buildGarageSuperbVehicle(
   hooks: GarageVehicleBuildHooks,
 ): GarageVehicleVisual {
   const vehicle = GARAGE_VEHICLE;
+  const lx = garageSuperbLongitudinalM;
   const root = new TransformNode(
     `${vehicle.label} · automatické parkovanie`,
     scene,
@@ -311,8 +313,8 @@ export function buildGarageSuperbVehicle(
 
   addBox(
     "aerodynamicky zakrytý podvozok",
-    { x: 4.22, y: 0.08, z: 1.64 },
-    { x: -0.02, y: 0.18, z: 0 },
+    { x: lx(4.22), y: 0.08, z: 1.64 },
+    { x: lx(-0.02), y: 0.18, z: 0 },
     pianoBlack,
   );
 
@@ -321,15 +323,15 @@ export function buildGarageSuperbVehicle(
   // the previous opaque rectangular bubble.
   addBox(
     "podlaha kabíny",
-    { x: 2.74, y: 0.1, z: 1.34 },
-    { x: -0.34, y: 0.88, z: 0 },
+    { x: lx(2.74), y: 0.1, z: 1.34 },
+    { x: lx(-0.34), y: 0.88, z: 0 },
     interior,
     false,
   );
   addBox(
     "prístrojová doska",
-    { x: 0.38, y: 0.09, z: 1.18 },
-    { x: 0.72, y: 0.955, z: 0 },
+    { x: lx(0.38), y: 0.09, z: 1.18 },
+    { x: lx(0.72), y: 0.955, z: 0 },
     interior,
     false,
   );
@@ -340,15 +342,15 @@ export function buildGarageSuperbVehicle(
     for (const side of [-1, 1] as const) {
       addBox(
         `${row} sedák ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.47, y: 0.14, z: 0.48 },
-        { x, y: 0.86, z: side * 0.37 },
+        { x: lx(0.47), y: 0.14, z: 0.48 },
+        { x: lx(x), y: 0.86, z: side * 0.37 },
         interior,
         false,
       );
       addBox(
         `${row} operadlo ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.18, y: 0.48, z: 0.46 },
-        { x: x - 0.13, y: 1.08, z: side * 0.37 },
+        { x: lx(0.18), y: 0.48, z: 0.46 },
+        { x: lx(x - 0.13), y: 1.08, z: side * 0.37 },
         interior,
         false,
       );
@@ -357,8 +359,8 @@ export function buildGarageSuperbVehicle(
         { diameter: 1, segments: 16 },
         scene,
       );
-      headrest.position.set(x - 0.16, 1.36, side * 0.37);
-      headrest.scaling.set(0.13, 0.11, 0.18);
+      headrest.position.set(lx(x - 0.16), 1.36, side * 0.37);
+      headrest.scaling.set(lx(0.13), 0.11, 0.18);
       headrest.material = interior;
       registerVisual(headrest, false);
     }
@@ -387,11 +389,11 @@ export function buildGarageSuperbVehicle(
     addTube(
       `tornado línia ${side < 0 ? "vľavo" : "vpravo"}`,
       [
-        new Vector3(-2.02, 0.905, side * 0.9),
-        new Vector3(-1.3, 0.955, side * 0.925),
-        new Vector3(-0.2, 0.965, side * 0.928),
-        new Vector3(0.95, 0.945, side * 0.925),
-        new Vector3(1.7, 0.86, side * 0.895),
+        new Vector3(lx(-2.02), 0.905, side * 0.9),
+        new Vector3(lx(-1.3), 0.955, side * 0.925),
+        new Vector3(lx(-0.2), 0.965, side * 0.928),
+        new Vector3(lx(0.95), 0.945, side * 0.925),
+        new Vector3(lx(1.7), 0.86, side * 0.895),
       ],
       0.004,
       darkChrome,
@@ -399,9 +401,9 @@ export function buildGarageSuperbVehicle(
     addTube(
       `spodná chrómová línia okien ${side < 0 ? "vľavo" : "vpravo"}`,
       [
-        new Vector3(-1.7, 1.0, side * 0.79),
-        new Vector3(-0.55, 1.008, side * 0.793),
-        new Vector3(0.9, 1.006, side * 0.78),
+        new Vector3(lx(-1.7), 1.0, side * 0.79),
+        new Vector3(lx(-0.55), 1.008, side * 0.793),
+        new Vector3(lx(0.9), 1.006, side * 0.78),
       ],
       0.009,
       darkChrome,
@@ -410,8 +412,8 @@ export function buildGarageSuperbVehicle(
     for (const [index, x] of [-0.66, 0.3].entries()) {
       addBox(
         `zapustená kľučka ${index + 1} ${side < 0 ? "vľavo" : "vpravo"}`,
-        { x: 0.18, y: 0.022, z: 0.018 },
-        { x, y: 0.895, z: side * 0.929 },
+        { x: lx(0.18), y: 0.022, z: 0.018 },
+        { x: lx(x), y: 0.895, z: side * 0.929 },
         darkChrome,
         false,
       );
@@ -420,8 +422,8 @@ export function buildGarageSuperbVehicle(
       addTube(
         `škára dverí ${x.toFixed(2)} ${side < 0 ? "vľavo" : "vpravo"}`,
         [
-          new Vector3(x, 0.37, side * 0.926),
-          new Vector3(x, 0.96, side * 0.926),
+          new Vector3(lx(x), 0.37, side * 0.926),
+          new Vector3(lx(x), 0.96, side * 0.926),
         ],
         0.003,
         pianoBlack,
@@ -430,8 +432,8 @@ export function buildGarageSuperbVehicle(
 
     const mirrorStem = addBox(
       `držiak spätného zrkadla ${side < 0 ? "vľavo" : "vpravo"}`,
-      { x: 0.11, y: 0.055, z: 0.15 },
-      { x: 0.72, y: 1.17, z: side * 0.84 },
+      { x: lx(0.11), y: 0.055, z: 0.15 },
+      { x: lx(0.72), y: 1.17, z: side * 0.84 },
       pianoBlack,
     );
     mirrorStem.rotation.z = -0.14;
@@ -440,17 +442,17 @@ export function buildGarageSuperbVehicle(
       { diameter: 1, segments: 20 },
       scene,
     );
-    mirror.position.set(0.72, 1.19, side * 0.98);
-    mirror.scaling.set(0.15, 0.065, 0.105);
+    mirror.position.set(lx(0.72), 1.19, side * 0.98);
+    mirror.scaling.set(lx(0.15), 0.065, 0.105);
     mirror.material = paint;
     registerVisual(mirror);
 
     const rail = addTube(
       `strešná lyžina ${side < 0 ? "vľavo" : "vpravo"}`,
       [
-        new Vector3(-1.68, 1.468, side * 0.59),
-        new Vector3(-0.75, 1.52, side * 0.61),
-        new Vector3(0.42, 1.5, side * 0.6),
+        new Vector3(lx(-1.68), 1.468, side * 0.59),
+        new Vector3(lx(-0.75), 1.52, side * 0.61),
+        new Vector3(lx(0.42), 1.5, side * 0.6),
       ],
       0.012,
       darkChrome,
@@ -463,10 +465,10 @@ export function buildGarageSuperbVehicle(
     scene,
     `${vehicle.label} · akustické čelné sklo`,
     [
-      new Vector3(1.1, 1.0, -0.68),
-      new Vector3(1.1, 1.0, 0.68),
-      new Vector3(0.68, 1.405, 0.64),
-      new Vector3(0.68, 1.405, -0.64),
+      new Vector3(lx(1.1), 1.0, -0.68),
+      new Vector3(lx(1.1), 1.0, 0.68),
+      new Vector3(lx(0.68), 1.405, 0.64),
+      new Vector3(lx(0.68), 1.405, -0.64),
     ],
     glass,
   );
@@ -476,10 +478,10 @@ export function buildGarageSuperbVehicle(
     scene,
     `${vehicle.label} · vyhrievané sklo piatych dverí`,
     [
-      new Vector3(-1.89, 1.0, 0.69),
-      new Vector3(-1.89, 1.0, -0.69),
-      new Vector3(-1.74, 1.385, -0.64),
-      new Vector3(-1.74, 1.385, 0.64),
+      new Vector3(lx(-1.89), 1.0, 0.69),
+      new Vector3(lx(-1.89), 1.0, -0.69),
+      new Vector3(lx(-1.74), 1.385, -0.64),
+      new Vector3(lx(-1.74), 1.385, 0.64),
     ],
     glass,
   );
@@ -488,15 +490,15 @@ export function buildGarageSuperbVehicle(
 
   addBox(
     "predĺžený strešný spojler",
-    { x: 0.22, y: 0.038, z: 1.34 },
-    { x: -1.98, y: 1.405, z: 0 },
+    { x: lx(0.22), y: 0.038, z: 1.34 },
+    { x: lx(-1.98), y: 1.405, z: 0 },
     paint,
   );
   for (const side of [-1, 1] as const) {
     const fin = addBox(
       `bočný finlet spojlera ${side < 0 ? "vľavo" : "vpravo"}`,
-      { x: 0.19, y: 0.055, z: 0.025 },
-      { x: -1.94, y: 1.38, z: side * 0.65 },
+      { x: lx(0.19), y: 0.055, z: 0.025 },
+      { x: lx(-1.94), y: 1.38, z: side * 0.65 },
       pianoBlack,
     );
     fin.rotation.z = 0.08;
@@ -590,13 +592,13 @@ export function buildGarageSuperbVehicle(
   }
   addTube(
     "centrálny hrebeň kapoty vľavo",
-    [new Vector3(1.08, 1.005, -0.13), new Vector3(2.13, 0.82, -0.18)],
+    [new Vector3(lx(1.08), 1.005, -0.13), new Vector3(lx(2.13), 0.82, -0.18)],
     0.004,
     paint,
   );
   addTube(
     "centrálny hrebeň kapoty vpravo",
-    [new Vector3(1.08, 1.005, 0.13), new Vector3(2.13, 0.82, 0.18)],
+    [new Vector3(lx(1.08), 1.005, 0.13), new Vector3(lx(2.13), 0.82, 0.18)],
     0.004,
     paint,
   );
@@ -773,13 +775,17 @@ export function buildGarageSuperbVehicle(
   for (const [name, size, position] of [
     [
       "spodný kolízny obal",
-      { x: 4.54, y: 0.68, z: 1.82 },
+      {
+        x: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 1_000,
+        y: 0.68,
+        z: 1.82,
+      },
       { x: 0, y: 0.55, z: 0 },
     ],
     [
       "horný kolízny obal",
-      { x: 2.92, y: 0.5, z: 1.5 },
-      { x: -0.32, y: 1.22, z: 0 },
+      { x: lx(2.92), y: 0.5, z: 1.5 },
+      { x: lx(-0.32), y: 1.22, z: 0 },
     ],
   ] as const) {
     const collider = CreateBox(

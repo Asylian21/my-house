@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CADASTRAL_PARCELS,
+  GARAGE_DEPTH_REVISION,
   TERRACE_ZONES_D1,
   terraceZoneAreaM2,
+  terraceZoneDesignAreaM2,
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
   GARDEN_POOL,
@@ -1576,29 +1578,53 @@ describe("documented D1 covered porches and terrace zones", () => {
     expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(3_200);
     expect(loggia.backDoor.widthMm).toBe(1_250);
     expect(loggia.backLarch.endXmm).toBe(loggia.backDoor.startXmm);
-    expect(loggia.faceYmm - loggia.backFaceYmm).toBe(2_953);
-    expect(HOUSE.facades.west.loggiaOpening.startYmm).toBeGreaterThan(
-      loggia.backFaceYmm,
+    expect(loggia.originalBackFaceYmm).toBe(
+      GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
     );
+    expect(loggia.backFaceYmm - loggia.originalBackFaceYmm).toBe(1_000);
+    expect(loggia.faceYmm - loggia.backFaceYmm).toBe(1_953);
+    expect(loggia.revisionSourceId).toBe(
+      SOURCES.clientGarageDepthRevision20260825.id,
+    );
+    expect(
+      HOUSE.facades.west.loggiaOpening.startYmm - loggia.backFaceYmm,
+    ).toBeGreaterThanOrEqual(500);
+    expect(HOUSE.facades.west.loggiaOpening.widthMm).toBe(900);
     expect(
       HOUSE.facades.west.loggiaOpening.startYmm +
         HOUSE.facades.west.loggiaOpening.widthMm,
-    ).toBeLessThan(loggia.faceYmm);
+    ).toBe(loggia.cornerPier.startYmm);
   });
 
-  it("matches the documented 84,35 m² terrace total within drawing tolerance", () => {
+  it("preserves the D1 terrace legend and applies the active one-metre revision", () => {
     const documented = TERRACE_ZONES_D1.reduce(
       (sum, zone) => sum + zone.documentedAreaM2,
       0,
     );
     expect(documented).toBeCloseTo(84.35, 10);
+    expect(HOUSE.originalTerraceAreaM2).toBeCloseTo(documented, 10);
+    const active = TERRACE_ZONES_D1.reduce(
+      (sum, zone) => sum + terraceZoneDesignAreaM2(zone),
+      0,
+    );
+    expect(active).toBeCloseTo(80.15, 10);
+    expect(HOUSE.terraceAreaM2).toBeCloseTo(active, 10);
     for (const zone of TERRACE_ZONES_D1) {
       const derived = terraceZoneAreaM2(zone);
       expect(
-        Math.abs(derived - zone.documentedAreaM2),
+        Math.abs(derived - terraceZoneDesignAreaM2(zone)),
         zone.id,
       ).toBeLessThan(0.75);
     }
+    const garden = TERRACE_ZONES_D1.find(
+      (zone) => zone.id === "TERR-D1-GARDEN",
+    )!;
+    expect(garden.rectsMm[0].y0).toBe(
+      GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+    );
+    expect(garden.activeDesignAreaM2).toBe(30.6);
+    expect(garden.baseSourceId).toBe(SOURCES.floorPlan.id);
+    expect(garden.sourceId).toBe(SOURCES.clientGarageDepthRevision20260825.id);
     const porchZone = TERRACE_ZONES_D1.find((zone) => zone.covered);
     expect(porchZone?.id).toBe("TERR-D1-PORCH");
   });

@@ -34,18 +34,30 @@ export const GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM = Object.freeze({
   rimDiameter: 482.6,
 } as const);
 
+/** The revised garage holds the complete 4,902 mm production-length estate. */
+export const GARAGE_SUPERB_VISUAL_LENGTH_SCALE = 1;
+export const GARAGE_SUPERB_HALF_LENGTH_M =
+  GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length / 2_000;
+
 /**
- * The closed-leaf garage envelope is 155 mm shorter than the production car.
- * Longitudinal dimensions alone use one uniform scale; all transverse and
- * vertical production dimensions remain 1:1.
+ * The detailed body was authored around the previous ±2.32 m envelope.
+ * Expanding every longitudinal station through one helper keeps all panels,
+ * glazing and trim registered while transverse and vertical dimensions stay
+ * at their production values.
  */
-export const GARAGE_SUPERB_VISUAL_LENGTH_SCALE = 4_640 / 4_902;
-const scaledX = (millimetres: number) =>
-  (millimetres / 1_000) * GARAGE_SUPERB_VISUAL_LENGTH_SCALE;
+export const GARAGE_SUPERB_AUTHORING_HALF_LENGTH_M = 2.32;
+export const GARAGE_SUPERB_LONGITUDINAL_FACTOR =
+  GARAGE_SUPERB_HALF_LENGTH_M / GARAGE_SUPERB_AUTHORING_HALF_LENGTH_M;
+export const garageSuperbLongitudinalM = (authoredMetres: number) =>
+  authoredMetres * GARAGE_SUPERB_LONGITUDINAL_FACTOR;
 
 export const GARAGE_SUPERB_AXLES_M = Object.freeze({
-  rearX: -2.32 + scaledX(GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.rearOverhang),
-  frontX: 2.32 - scaledX(GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.frontOverhang),
+  rearX:
+    -GARAGE_SUPERB_HALF_LENGTH_M +
+    GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.rearOverhang / 1_000,
+  frontX:
+    GARAGE_SUPERB_HALF_LENGTH_M -
+    GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.frontOverhang / 1_000,
 });
 
 export const GARAGE_SUPERB_HALF_TRACKS_M = Object.freeze({
@@ -64,10 +76,10 @@ export const GARAGE_SUPERB_WHEEL_M = Object.freeze({
 
 /** Painted lower body: long bonnet, low shoulder and asymmetric estate rear. */
 export const GARAGE_SUPERB_BODY_STATIONS = Object.freeze([
-  { x: -2.32, halfWidth: 0.71, baseY: 0.24, shoulderY: 0.63, crownY: 0.75 },
-  { x: -2.27, halfWidth: 0.82, baseY: 0.2, shoulderY: 0.78, crownY: 0.87 },
-  { x: -2.08, halfWidth: 0.89, baseY: 0.18, shoulderY: 0.87, crownY: 0.94 },
-  { x: -1.72, halfWidth: 0.921, baseY: 0.164, shoulderY: 0.92, crownY: 0.99 },
+  { x: garageSuperbLongitudinalM(-2.32), halfWidth: 0.71, baseY: 0.24, shoulderY: 0.63, crownY: 0.75 },
+  { x: garageSuperbLongitudinalM(-2.27), halfWidth: 0.82, baseY: 0.2, shoulderY: 0.78, crownY: 0.87 },
+  { x: garageSuperbLongitudinalM(-2.08), halfWidth: 0.89, baseY: 0.18, shoulderY: 0.87, crownY: 0.94 },
+  { x: garageSuperbLongitudinalM(-1.72), halfWidth: 0.921, baseY: 0.164, shoulderY: 0.92, crownY: 0.99 },
   {
     x: GARAGE_SUPERB_AXLES_M.rearX,
     halfWidth: 0.9245,
@@ -75,9 +87,9 @@ export const GARAGE_SUPERB_BODY_STATIONS = Object.freeze([
     shoulderY: 0.945,
     crownY: 1.012,
   },
-  { x: -0.72, halfWidth: 0.9245, baseY: 0.154, shoulderY: 0.96, crownY: 1.025 },
-  { x: 0.18, halfWidth: 0.9245, baseY: 0.154, shoulderY: 0.965, crownY: 1.02 },
-  { x: 0.92, halfWidth: 0.923, baseY: 0.158, shoulderY: 0.945, crownY: 0.995 },
+  { x: garageSuperbLongitudinalM(-0.72), halfWidth: 0.9245, baseY: 0.154, shoulderY: 0.96, crownY: 1.025 },
+  { x: garageSuperbLongitudinalM(0.18), halfWidth: 0.9245, baseY: 0.154, shoulderY: 0.965, crownY: 1.02 },
+  { x: garageSuperbLongitudinalM(0.92), halfWidth: 0.923, baseY: 0.158, shoulderY: 0.945, crownY: 0.995 },
   {
     x: GARAGE_SUPERB_AXLES_M.frontX,
     halfWidth: 0.918,
@@ -85,61 +97,61 @@ export const GARAGE_SUPERB_BODY_STATIONS = Object.freeze([
     shoulderY: 0.91,
     crownY: 0.95,
   },
-  { x: 1.77, halfWidth: 0.892, baseY: 0.18, shoulderY: 0.82, crownY: 0.875 },
-  { x: 2.08, halfWidth: 0.84, baseY: 0.205, shoulderY: 0.72, crownY: 0.79 },
-  { x: 2.27, halfWidth: 0.75, baseY: 0.24, shoulderY: 0.61, crownY: 0.7 },
-  { x: 2.32, halfWidth: 0.63, baseY: 0.29, shoulderY: 0.52, crownY: 0.61 },
+  { x: garageSuperbLongitudinalM(1.77), halfWidth: 0.892, baseY: 0.18, shoulderY: 0.82, crownY: 0.875 },
+  { x: garageSuperbLongitudinalM(2.08), halfWidth: 0.84, baseY: 0.205, shoulderY: 0.72, crownY: 0.79 },
+  { x: garageSuperbLongitudinalM(2.27), halfWidth: 0.75, baseY: 0.24, shoulderY: 0.61, crownY: 0.7 },
+  { x: garageSuperbLongitudinalM(2.32), halfWidth: 0.63, baseY: 0.29, shoulderY: 0.52, crownY: 0.61 },
 ] as const satisfies readonly VehicleLoftStation[]);
 
 /** Glasshouse envelope used to verify the exact production height. */
 export const GARAGE_SUPERB_CABIN_STATIONS = Object.freeze([
-  { x: -2.02, halfWidth: 0.61, baseY: 0.98, shoulderY: 1.09, crownY: 1.35 },
-  { x: -1.82, halfWidth: 0.69, baseY: 0.98, shoulderY: 1.16, crownY: 1.43 },
-  { x: -1.35, halfWidth: 0.748, baseY: 0.985, shoulderY: 1.25, crownY: 1.475 },
-  { x: -0.55, halfWidth: 0.775, baseY: 0.99, shoulderY: 1.29, crownY: 1.497 },
-  { x: 0.2, halfWidth: 0.775, baseY: 0.99, shoulderY: 1.29, crownY: 1.49 },
-  { x: 0.68, halfWidth: 0.735, baseY: 0.985, shoulderY: 1.24, crownY: 1.43 },
-  { x: 1.02, halfWidth: 0.66, baseY: 0.98, shoulderY: 1.13, crownY: 1.28 },
-  { x: 1.18, halfWidth: 0.57, baseY: 0.975, shoulderY: 1.04, crownY: 1.1 },
+  { x: garageSuperbLongitudinalM(-2.02), halfWidth: 0.61, baseY: 0.98, shoulderY: 1.09, crownY: 1.35 },
+  { x: garageSuperbLongitudinalM(-1.82), halfWidth: 0.69, baseY: 0.98, shoulderY: 1.16, crownY: 1.43 },
+  { x: garageSuperbLongitudinalM(-1.35), halfWidth: 0.748, baseY: 0.985, shoulderY: 1.25, crownY: 1.475 },
+  { x: garageSuperbLongitudinalM(-0.55), halfWidth: 0.775, baseY: 0.99, shoulderY: 1.29, crownY: 1.497 },
+  { x: garageSuperbLongitudinalM(0.2), halfWidth: 0.775, baseY: 0.99, shoulderY: 1.29, crownY: 1.49 },
+  { x: garageSuperbLongitudinalM(0.68), halfWidth: 0.735, baseY: 0.985, shoulderY: 1.24, crownY: 1.43 },
+  { x: garageSuperbLongitudinalM(1.02), halfWidth: 0.66, baseY: 0.98, shoulderY: 1.13, crownY: 1.28 },
+  { x: garageSuperbLongitudinalM(1.18), halfWidth: 0.57, baseY: 0.975, shoulderY: 1.04, crownY: 1.1 },
 ] as const satisfies readonly VehicleLoftStation[]);
 
 /** Thin painted roof shell. Glazing is modeled as independent panes. */
 export const GARAGE_SUPERB_ROOF_STATIONS = Object.freeze([
-  { x: -1.98, halfWidth: 0.55, baseY: 1.315, shoulderY: 1.345, crownY: 1.375 },
-  { x: -1.76, halfWidth: 0.66, baseY: 1.39, shoulderY: 1.42, crownY: 1.45 },
-  { x: -1.25, halfWidth: 0.71, baseY: 1.445, shoulderY: 1.472, crownY: 1.49 },
-  { x: -0.5, halfWidth: 0.72, baseY: 1.452, shoulderY: 1.48, crownY: 1.497 },
-  { x: 0.18, halfWidth: 0.72, baseY: 1.445, shoulderY: 1.475, crownY: 1.49 },
-  { x: 0.66, halfWidth: 0.68, baseY: 1.39, shoulderY: 1.415, crownY: 1.44 },
-  { x: 0.91, halfWidth: 0.61, baseY: 1.27, shoulderY: 1.3, crownY: 1.33 },
+  { x: garageSuperbLongitudinalM(-1.98), halfWidth: 0.55, baseY: 1.315, shoulderY: 1.345, crownY: 1.375 },
+  { x: garageSuperbLongitudinalM(-1.76), halfWidth: 0.66, baseY: 1.39, shoulderY: 1.42, crownY: 1.45 },
+  { x: garageSuperbLongitudinalM(-1.25), halfWidth: 0.71, baseY: 1.445, shoulderY: 1.472, crownY: 1.49 },
+  { x: garageSuperbLongitudinalM(-0.5), halfWidth: 0.72, baseY: 1.452, shoulderY: 1.48, crownY: 1.497 },
+  { x: garageSuperbLongitudinalM(0.18), halfWidth: 0.72, baseY: 1.445, shoulderY: 1.475, crownY: 1.49 },
+  { x: garageSuperbLongitudinalM(0.66), halfWidth: 0.68, baseY: 1.39, shoulderY: 1.415, crownY: 1.44 },
+  { x: garageSuperbLongitudinalM(0.91), halfWidth: 0.61, baseY: 1.27, shoulderY: 1.3, crownY: 1.33 },
 ] as const satisfies readonly VehicleLoftStation[]);
 
 export const GARAGE_SUPERB_SIDE_WINDOWS = Object.freeze([
   {
     id: "front",
     points: [
-      { x: 0.04, y: 1.025 },
-      { x: 0.91, y: 1.01 },
-      { x: 0.67, y: 1.38 },
-      { x: 0.08, y: 1.445 },
+      { x: garageSuperbLongitudinalM(0.04), y: 1.025 },
+      { x: garageSuperbLongitudinalM(0.91), y: 1.01 },
+      { x: garageSuperbLongitudinalM(0.67), y: 1.38 },
+      { x: garageSuperbLongitudinalM(0.08), y: 1.445 },
     ],
   },
   {
     id: "rear",
     points: [
-      { x: -0.93, y: 1.02 },
-      { x: -0.04, y: 1.025 },
+      { x: garageSuperbLongitudinalM(-0.93), y: 1.02 },
+      { x: garageSuperbLongitudinalM(-0.04), y: 1.025 },
       { x: 0, y: 1.445 },
-      { x: -0.75, y: 1.44 },
+      { x: garageSuperbLongitudinalM(-0.75), y: 1.44 },
     ],
   },
   {
     id: "quarter",
     points: [
-      { x: -1.69, y: 1 },
-      { x: -1.01, y: 1.02 },
-      { x: -0.83, y: 1.425 },
-      { x: -1.49, y: 1.35 },
+      { x: garageSuperbLongitudinalM(-1.69), y: 1 },
+      { x: garageSuperbLongitudinalM(-1.01), y: 1.02 },
+      { x: garageSuperbLongitudinalM(-0.83), y: 1.425 },
+      { x: garageSuperbLongitudinalM(-1.49), y: 1.35 },
     ],
   },
 ] as const satisfies readonly {

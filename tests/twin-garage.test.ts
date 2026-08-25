@@ -17,6 +17,7 @@ import {
   GARAGE_SUPERB_AXLES_M,
   GARAGE_SUPERB_BODY_STATIONS,
   GARAGE_SUPERB_CABIN_STATIONS,
+  GARAGE_SUPERB_HALF_LENGTH_M,
   GARAGE_SUPERB_HALF_TRACKS_M,
   GARAGE_SUPERB_LOFT_RING_POINT_COUNT,
   GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
@@ -28,7 +29,7 @@ import {
   vehicleLoftGeometry,
 } from "../lib/twin-superb-combi";
 import { INTERIOR_ROOMS } from "../lib/twin-interior";
-import { HOUSE, SITE_SURFACES } from "../lib/twin-site";
+import { GARAGE_DEPTH_REVISION, HOUSE, SITE_SURFACES } from "../lib/twin-site";
 
 describe("garage vehicle contract", () => {
   it("uses the direct street garage door rather than the garden gate", () => {
@@ -50,9 +51,24 @@ describe("garage vehicle contract", () => {
     const closedLeafInnerYmm = GARAGE_VEHICLE.door.faceYmm + 38;
 
     expect(Math.min(...ys)).toBeGreaterThan(closedLeafInnerYmm + 40);
-    expect(Math.max(...ys)).toBeLessThan(7_749 - 40);
+    expect(Math.max(...ys)).toBeLessThan(
+      GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm - 40,
+    );
     expect(Math.min(...xs)).toBeGreaterThan(6_944);
     expect(Math.max(...xs)).toBeLessThan(10_842);
+
+    const loggia = HOUSE.porches.gardenLoggia;
+    const loggiaDoorLeafWidthMm = Math.round(loggia.backDoor.widthMm * 0.72);
+    const openLoggiaDoorTipYmm =
+      loggia.backFaceYmm - 150 - loggiaDoorLeafWidthMm;
+    expect(openLoggiaDoorTipYmm - Math.max(...ys)).toBeGreaterThanOrEqual(140);
+    expect(Math.min(...ys) - closedLeafInnerYmm).toBeGreaterThanOrEqual(140);
+    expect(GARAGE_VEHICLE.route.parkedMm.y).toBe(5_600);
+    expect(GARAGE_VEHICLE.garageRevision).toEqual({
+      sourceId: GARAGE_DEPTH_REVISION.sourceId,
+      extensionMm: 1_000,
+      rearInnerFaceYmm: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+    });
   });
 
   it("keeps the arrival queue centered in the documented driveway", () => {
@@ -145,7 +161,7 @@ describe("modern Superb visual geometry", () => {
     }
   });
 
-  it("preserves official Combi proportions inside the explicit garage compromise", () => {
+  it("renders the complete production-size Superb Combi in the revised garage", () => {
     const body = vehicleLoftBounds(
       vehicleLoftGeometry(GARAGE_SUPERB_BODY_STATIONS),
     );
@@ -153,7 +169,7 @@ describe("modern Superb visual geometry", () => {
       vehicleLoftGeometry(GARAGE_SUPERB_CABIN_STATIONS),
     );
     expect(body.maximum[2] - body.minimum[2]).toBeCloseTo(1.849, 6);
-    expect(body.maximum[0] - body.minimum[0]).toBeCloseTo(4.64, 6);
+    expect(body.maximum[0] - body.minimum[0]).toBeCloseTo(4.902, 6);
     expect(Math.max(Math.abs(body.minimum[0]), body.maximum[0])).toBeLessThanOrEqual(
       GARAGE_VEHICLE.dimensionsMm.length / 2_000,
     );
@@ -179,19 +195,20 @@ describe("modern Superb visual geometry", () => {
     expect(GARAGE_VEHICLE.dimensionsMm.height).toBe(
       GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.height,
     );
-    expect(GARAGE_SUPERB_VISUAL_LENGTH_SCALE).toBeCloseTo(4_640 / 4_902, 12);
+    expect(GARAGE_VEHICLE.dimensionsMm.length).toBe(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.length,
+    );
+    expect(GARAGE_SUPERB_VISUAL_LENGTH_SCALE).toBe(1);
     expect(GARAGE_SUPERB_AXLES_M.frontX - GARAGE_SUPERB_AXLES_M.rearX).toBeCloseTo(
       GARAGE_VEHICLE.dimensionsMm.wheelbase / 1_000,
       3,
     );
-    expect(2.32 - GARAGE_SUPERB_AXLES_M.frontX).toBeCloseTo(
-      (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.frontOverhang / 1_000) *
-        GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+    expect(GARAGE_SUPERB_HALF_LENGTH_M - GARAGE_SUPERB_AXLES_M.frontX).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.frontOverhang / 1_000,
       9,
     );
-    expect(GARAGE_SUPERB_AXLES_M.rearX + 2.32).toBeCloseTo(
-      (GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.rearOverhang / 1_000) *
-        GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
+    expect(GARAGE_SUPERB_AXLES_M.rearX + GARAGE_SUPERB_HALF_LENGTH_M).toBeCloseTo(
+      GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM.rearOverhang / 1_000,
       9,
     );
   });
