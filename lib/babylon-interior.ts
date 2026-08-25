@@ -22,6 +22,7 @@ import {
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_STOVE,
+  HALLWAY_BUILT_IN_WARDROBES,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -36,6 +37,7 @@ import {
   roomBoundsMm,
   type ChildBedroomFitout,
   type FurnitureFacing,
+  type HallwayBuiltInWardrobe,
   type InteriorDoor,
   type InteriorRoom,
   type RectMm,
@@ -97,6 +99,8 @@ export interface InteriorMaterials {
   readonly bedroomLinen: PBRMaterial;
   readonly bedroomThrow: PBRMaterial;
   readonly wardrobeFront: PBRMaterial;
+  readonly hallwayWardrobeOak: PBRMaterial;
+  readonly hallwayWardrobeSmokedOak: PBRMaterial;
   readonly childSage: PBRMaterial;
   readonly childClay: PBRMaterial;
   readonly childMidnight: PBRMaterial;
@@ -352,6 +356,29 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   bedroomThrow.sheen.color = Color3.FromHexString("#b5aa9d");
   bedroomThrow.sheen.roughness = 0.9;
   const wardrobeFront = pbr(scene, "real-bedroom-wardrobe-greige", "#b8afa3", 0.5);
+  const hallwayWardrobeOak = texturedPbr(
+    scene,
+    "real-hallway-wardrobe-warm-oak",
+    "oak-veneer-albedo",
+    "oak-veneer-normal",
+    anisotropy,
+    0.43,
+    0.38,
+    "#c89a70",
+  );
+  hallwayWardrobeOak.clearCoat.isEnabled = true;
+  hallwayWardrobeOak.clearCoat.intensity = 0.12;
+  hallwayWardrobeOak.clearCoat.roughness = 0.42;
+  const hallwayWardrobeSmokedOak = texturedPbr(
+    scene,
+    "real-hallway-wardrobe-smoked-oak",
+    "oak-veneer-albedo",
+    "oak-veneer-normal",
+    anisotropy,
+    0.5,
+    0.42,
+    "#75533d",
+  );
   const childSage = pbr(scene, "real-child-room-sage", "#788878", 0.72);
   childSage.sheen.isEnabled = true;
   childSage.sheen.intensity = 0.12;
@@ -410,6 +437,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     bedroomLinen,
     bedroomThrow,
     wardrobeFront,
+    hallwayWardrobeOak,
+    hallwayWardrobeSmokedOak,
     childSage,
     childClay,
     childMidnight,
@@ -2812,6 +2841,202 @@ function navigationGuard(
   return guard;
 }
 
+function hallwayWardrobeFrontX(
+  wardrobe: HallwayBuiltInWardrobe,
+  insetMm: number,
+) {
+  return wardrobe.facing === "EAST"
+    ? wardrobe.footprintMm.x1 - insetMm
+    : wardrobe.footprintMm.x0 + insetMm;
+}
+
+/**
+ * Full-height, handleless oak cabinetry fitted into the two corridor recesses
+ * marked by the client. Every visible layer stays inside the measured 601 mm
+ * niche depth; one smooth invisible guard per cabinet provides stable avatar
+ * collision without catching on panel reveals or the reeded accent.
+ */
+function buildHallwayBuiltInWardrobes(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+) {
+  for (const wardrobe of HALLWAY_BUILT_IN_WARDROBES) {
+    const rect = wardrobe.footprintMm;
+    const heightM = wardrobe.heightMm * MM_TO_M;
+    const bodyRect: RectMm = wardrobe.facing === "EAST"
+      ? { ...rect, x1: rect.x1 - 38 }
+      : { ...rect, x0: rect.x0 + 38 };
+    const carcase = texturedBox(
+      context.scene,
+      `${wardrobe.id} · CARCASE · celovýšková zapustená korpusová skriňa`,
+      rectCenter(bodyRect),
+      bodyRect.x1 - bodyRect.x0,
+      bodyRect.y1 - bodyRect.y0,
+      heightM,
+      0,
+      1.2,
+    );
+    carcase.metadata = {
+      ...(carcase.metadata ?? {}),
+      fitoutId: wardrobe.id,
+      designSourceId: wardrobe.sourceId,
+      architecturalSourceId: wardrobe.architecturalSourceId,
+      roomId: wardrobe.roomId,
+      furnitureKind: "HALLWAY_BUILT_IN_WARDROBE",
+      embeddedInArchitecturalNiche: true,
+      facing: wardrobe.facing,
+      finish: wardrobe.style.finish,
+      opening: wardrobe.style.opening,
+    };
+    finish(context, carcase, materials.hallwayWardrobeSmokedOak, {
+      shadow: true,
+      pickable: true,
+      cameraOccluder: true,
+    });
+
+    const panelSpanMm = (rect.y1 - rect.y0) / wardrobe.doorCount;
+    const frontX = hallwayWardrobeFrontX(wardrobe, 15);
+    for (let index = 0; index < wardrobe.doorCount; index += 1) {
+      const panelY0 = rect.y0 + index * panelSpanMm;
+      const panelY1 = panelY0 + panelSpanMm;
+      const isReeded = wardrobe.style.reededPanelIndices.includes(index);
+      const front = texturedBox(
+        context.scene,
+        `${wardrobe.id} · DOOR · bezúchytkové dubové čelo ${index + 1}${isReeded ? " · dymový lamelový akcent" : " · zrkadlovo radená dyha"}`,
+        { x: frontX, y: (panelY0 + panelY1) / 2 },
+        30,
+        panelSpanMm - wardrobe.style.panelRevealMm,
+        heightM - 0.1,
+        0.05,
+        1.2,
+      );
+      front.metadata = {
+        ...(front.metadata ?? {}),
+        fitoutId: wardrobe.id,
+        panelIndex: index,
+        veneerPattern: "BOOKMATCHED_VERTICAL_GRAIN",
+        handleless: true,
+        reededAccent: isReeded,
+      };
+      finish(
+        context,
+        front,
+        isReeded ? materials.hallwayWardrobeSmokedOak : materials.hallwayWardrobeOak,
+        { shadow: true, pickable: true },
+      );
+
+      if (isReeded) {
+        for (
+          let grooveIndex = 0;
+          grooveIndex < wardrobe.style.reededGrooveCountPerPanel;
+          grooveIndex += 1
+        ) {
+          const grooveY = panelY0
+            + ((grooveIndex + 1) * panelSpanMm)
+              / (wardrobe.style.reededGrooveCountPerPanel + 1);
+          const groove = texturedBox(
+            context.scene,
+            `${wardrobe.id} · REEDED-ACCENT · vertikálna dubová lamela ${grooveIndex + 1}`,
+            { x: hallwayWardrobeFrontX(wardrobe, 3), y: grooveY },
+            6,
+            8,
+            heightM - 0.2,
+            0.1,
+            1,
+          );
+          finish(context, groove, materials.hallwayWardrobeOak, {
+            shadow: true,
+            pickable: true,
+          });
+        }
+      }
+
+      if (index > 0) {
+        const reveal = texturedBox(
+          context.scene,
+          `${wardrobe.id} · REVEAL · zvislá tieňová škára ${index}`,
+          { x: hallwayWardrobeFrontX(wardrobe, 4), y: panelY0 },
+          8,
+          wardrobe.style.panelRevealMm,
+          heightM - 0.17,
+          0.085,
+          1,
+        );
+        finish(context, reveal, materials.fireplace);
+      }
+    }
+
+    const plinth = texturedBox(
+      context.scene,
+      `${wardrobe.id} · PLINTH · zapustený dymový sokel`,
+      {
+        x: hallwayWardrobeFrontX(wardrobe, 22),
+        y: (rect.y0 + rect.y1) / 2,
+      },
+      44,
+      rect.y1 - rect.y0 - 32,
+      wardrobe.style.plinthHeightMm * MM_TO_M,
+      0,
+      1,
+    );
+    finish(context, plinth, materials.fireplace, { shadow: true });
+
+    const topReveal = texturedBox(
+      context.scene,
+      `${wardrobe.id} · REVEAL · horná tieňová škára`,
+      {
+        x: hallwayWardrobeFrontX(wardrobe, 8),
+        y: (rect.y0 + rect.y1) / 2,
+      },
+      16,
+      rect.y1 - rect.y0 - 24,
+      0.02,
+      heightM - 0.02,
+      1,
+    );
+    finish(context, topReveal, materials.fireplace);
+
+    for (const edge of wardrobe.style.ledEdges) {
+      const edgeY = edge === "SOUTH" ? rect.y0 + 12 : rect.y1 - 12;
+      const led = texturedBox(
+        context.scene,
+        `${wardrobe.id} · LED · ${edge === "SOUTH" ? "južná" : "severná"} vertikálna línia ${wardrobe.style.ledCctK} K`,
+        { x: hallwayWardrobeFrontX(wardrobe, 3), y: edgeY },
+        6,
+        20,
+        2.22,
+        0.18,
+        1,
+      );
+      led.metadata = {
+        ...(led.metadata ?? {}),
+        fitoutId: wardrobe.id,
+        cctK: wardrobe.style.ledCctK,
+        integratedCabinetLight: true,
+      };
+      finish(context, led, materials.warmLight);
+    }
+
+    const lightX = wardrobe.facing === "EAST" ? rect.x1 + 150 : rect.x0 - 150;
+    const cabinetLight = new PointLight(
+      `${wardrobe.id} · LIGHT · mäkké odrazené svetlo chodby`,
+      new Vector3(xM(lightX), 1.55, zM((rect.y0 + rect.y1) / 2)),
+      context.scene,
+    );
+    cabinetLight.diffuse = Color3.FromHexString("#ffd0a0");
+    cabinetLight.specular = Color3.FromHexString("#765a43");
+    cabinetLight.intensity = wardrobe.doorCount === 4 ? 0.16 : 0.1;
+    cabinetLight.range = wardrobe.doorCount === 4 ? 3.1 : 2.2;
+
+    navigationGuard(
+      context,
+      materials,
+      `${wardrobe.id} · WARDROBE · hladký navigačný obrys niky`,
+      rect,
+    );
+  }
+}
+
 /**
  * Calm primary-bedroom composition for the compact en-suite room 1.08. The
  * fit-out keeps the exact 1 800 × 2 200 mm mattress requested by the client,
@@ -5185,6 +5410,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWcFitout(context, materials);
   buildBathroomFitout(context, materials);
   buildEnsuiteBathroomFitout(context, materials);
+  buildHallwayBuiltInWardrobes(context, materials);
   buildEntryFitout(context, materials);
   buildBedroomFitout(context, materials);
   buildChildrensBedroomFitouts(context, materials);

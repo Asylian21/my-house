@@ -152,6 +152,14 @@ export const SOURCES = {
     date: "22. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientHallwayWardrobesRevision20260825: {
+    id: "SRC-CLIENT-HALLWAY-WARDROBES-20260825",
+    title: "Revízia stavebníka · dve drevené vstavané skrine v chodbe",
+    detail:
+      "Podľa zelene vyznačených miest v pôdoryse vyplniť dve existujúce niky chodby 1.02 celovýškovými supermodernými drevenými vstavanými skriňami. Dlhá nika pri izbe 1.09 má 601 × 2 797 mm, kratšia nika pri spálni 1.08 a kúpeľni 1.11 má 601 × 859 mm. Čelá majú zostať zapustené, bezúchytkové a koplanárne posuvné, s teplou dubovou dyhou, jemnými tmavými škárami a integrovaným teplým svetlom; hlavné komunikačné pásy a všetky dverné krídla musia zostať voľné.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientRevision20260823: {
     id: "SRC-CLIENT-20260823",
     title: "Revízia stavebníka · obývacia a jedálenská zóna",
