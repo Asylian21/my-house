@@ -156,6 +156,48 @@ export interface RenderQualityProfile {
   readonly anisotropy: number;
 }
 
+/**
+ * Temporal and depth-stability contract for the exterior reality view.
+ *
+ * These values deliberately live beside the camera/render profile instead of
+ * being scattered through the Babylon scene. The scene is large enough that
+ * millimetre-scale coplanar layers, an aggressive shadow bias, or animated
+ * post-process noise all read as crawling textures while the orbit camera
+ * moves.
+ */
+export const EXTERIOR_RENDER_STABILITY = Object.freeze({
+  /** Keep the orbit depth buffer precise without clipping the 4.5 m close view. */
+  orbitNearClipM: 0.3,
+  /** Constant depth bias for the 2K/1K cascaded PCF shadow maps. */
+  shadowBias: 0.0007,
+  /** World-normal offset: removes facade/roof self-shadow acne at grazing angles. */
+  shadowNormalBiasM: 0.025,
+  /** Softly cross-fade cascade boundaries instead of exposing a moving seam. */
+  shadowCascadeBlendPercentage: 0.18,
+  /** Film grain must never animate over architectural materials. */
+  filmGrainEnabled: false,
+  filmGrainAnimated: false,
+  /**
+   * A screen-space AO kernel crosses the thin roof/eave depth layers and turns
+   * their real 70–105 mm separation into crawling black tiles while orbiting.
+   */
+  screenSpaceAmbientOcclusionEnabled: false,
+  /** Suppress highlight sparkle on roof seams and normal-mapped materials. */
+  pbrSpecularAntiAliasingEnabled: true,
+  /** Doors and the garage gate move, so CSM caster bounds must stay live. */
+  freezeDynamicShadowCasterBounds: false,
+  /** Broad context surface below roads, lawns and every designed hardscape. */
+  contextTerrainElevationM: -0.2,
+  /** One shared road datum prevents a 1 mm seam between adjacent polygons. */
+  roadContextSurfaceElevationM: -0.115,
+  /** Lawn base is recessed below gravel, mulch and graded access surfaces. */
+  parcelGrassElevationM: -0.065,
+  /** Minimum intentional gap for overlapping opaque landscape layers. */
+  minimumOpaqueLayerSeparationM: 0.018,
+  /** Sub-pixel standing seams disappear before they can sparkle at parcel scale. */
+  roofSeamVisibilityDistanceM: 36,
+});
+
 const MAX_PIXEL_RATIO = 2;
 const MIN_SUPERSAMPLED_RATIO = 1.5;
 const MAX_RENDER_PIXELS = 12_000_000;
@@ -224,9 +266,13 @@ export function deriveRenderQualityProfile({
     // FXAA is a fallback only. At Retina density it softens fine facade and
     // fence edges more than it helps them.
     fxaaEnabled: msaaSamples < 2 && pixelRatio <= MIN_SUPERSAMPLED_RATIO,
-    sharpenEdgeAmount: tier === "ULTRA" ? 0.12 : 0.08,
-    ssaoEnabled: tier === "ULTRA",
-    ssaoRatio: tier === "ULTRA" ? 1 : 0,
+    // A restrained pass preserves joinery edges without amplifying roof,
+    // paving and foliage mip transitions during camera motion.
+    sharpenEdgeAmount: tier === "ULTRA" ? 0.05 : 0.035,
+    ssaoEnabled: EXTERIOR_RENDER_STABILITY.screenSpaceAmbientOcclusionEnabled,
+    ssaoRatio: EXTERIOR_RENDER_STABILITY.screenSpaceAmbientOcclusionEnabled
+      ? 1
+      : 0,
     // Four stabilized cascades provide materially more useful texel density
     // than one oversized map. 2K/1K per cascade also keeps GPU memory bounded.
     shadowMapSize: tier === "ULTRA" ? 2048 : 1024,
@@ -461,6 +507,144 @@ export const WALK_CAMERA = Object.freeze({
   rejectedCarryResetDirectionCos: 0.5,
   maxMoveSubstepM: 0.05,
 });
+
+/**
+ * Shared surface/environment policy for the walkthrough. The collider follows
+ * the resolved surface exactly; only the eye/chase target is damped so ramps
+ * and small thresholds read naturally without letting the feet float.
+ */
+export const WALK_SURFACE = Object.freeze({
+  maxStepUpM: 0.22,
+  maxDropM: 0.78,
+  probeHeadroomM: 0.035,
+  cameraRiseHalfLifeMs: 58,
+  cameraFallHalfLifeMs: 86,
+  maxCameraLagM: 0.16,
+  /** Indoor cap is applied without overwriting the user's requested zoom. */
+  indoorCameraMaxRadiusM: 1.9,
+  environmentHalfLifeMs: 170,
+  /** A single blocked heading is a wall, not a reason to teleport. */
+  autoRecoveryBlockedS: 0.52,
+  autoRecoveryCooldownS: 1.35,
+  autoRecoveryAttemptWindowS: 0.9,
+  autoRecoveryMinRewindM: 0.08,
+  autoRecoveryMaxRewindM: 0.7,
+  escapeDirectionSectorCount: 8,
+  escapeDirectionMinimumGap: 2,
+});
+
+export type WalkSurfaceKind = "interior" | "exterior" | "terrain";
+
+/** Smoothly blends the environment profile; 1 is indoors, 0 is outdoors. */
+export function stepWalkIndoorBlend(
+  currentBlend: number,
+  indoors: boolean,
+  deltaMs: number,
+): number {
+  const current = clamp(Number.isFinite(currentBlend) ? currentBlend : 0, 0, 1);
+  const target = indoors ? 1 : 0;
+  const elapsed = clamp(Number.isFinite(deltaMs) ? deltaMs : 0, 0, 50);
+  const blend = 1 - Math.pow(0.5, elapsed / WALK_SURFACE.environmentHalfLifeMs);
+  const next = current + (target - current) * blend;
+  return Math.abs(target - next) <= 0.002 ? target : next;
+}
+
+/** Environment-aware boom length that always preserves a closer user zoom. */
+export function walkCameraRadiusForEnvironment(
+  requestedRadiusM: number,
+  indoorBlend: number,
+): number {
+  const requested = clamp(
+    Number.isFinite(requestedRadiusM) ? requestedRadiusM : WALK_CAMERA.radiusM,
+    WALK_CAMERA.minRadiusM,
+    WALK_CAMERA.maxRadiusM,
+  );
+  const indoors = clamp(Number.isFinite(indoorBlend) ? indoorBlend : 0, 0, 1);
+  const indoorTarget = Math.min(
+    requested,
+    WALK_SURFACE.indoorCameraMaxRadiusM,
+  );
+  return requested + (indoorTarget - requested) * indoors;
+}
+
+/** Frame-rate-independent eye/target height over a surface transition. */
+export function stepWalkCameraSurfaceHeight(
+  currentY: number,
+  surfaceY: number,
+  deltaMs: number,
+): number {
+  const target = Number.isFinite(surfaceY) ? surfaceY : 0;
+  const current = Number.isFinite(currentY) ? currentY : target;
+  const elapsed = clamp(Number.isFinite(deltaMs) ? deltaMs : 0, 0, 50);
+  const halfLifeMs =
+    target >= current
+      ? WALK_SURFACE.cameraRiseHalfLifeMs
+      : WALK_SURFACE.cameraFallHalfLifeMs;
+  const blend = 1 - Math.pow(0.5, elapsed / halfLifeMs);
+  const eased = current + (target - current) * blend;
+  return clamp(
+    eased,
+    target - WALK_SURFACE.maxCameraLagM,
+    target + WALK_SURFACE.maxCameraLagM,
+  );
+}
+
+/** Quantised attempted heading used to distinguish a wall from a real trap. */
+export function addWalkEscapeDirection(
+  directionMask: number,
+  direction: { readonly x: number; readonly z: number },
+): number {
+  const length = Math.hypot(direction.x, direction.z);
+  if (!Number.isFinite(length) || length <= 1e-5) return directionMask >>> 0;
+  const sectors = WALK_SURFACE.escapeDirectionSectorCount;
+  const angle = Math.atan2(direction.z / length, direction.x / length);
+  const sector =
+    ((Math.round((angle / (Math.PI * 2)) * sectors) % sectors) + sectors) %
+    sectors;
+  return (directionMask | (1 << sector)) >>> 0;
+}
+
+/** At least two materially different failed headings are required. */
+export function hasDiverseWalkEscapeDirections(directionMask: number): boolean {
+  const sectors = WALK_SURFACE.escapeDirectionSectorCount;
+  const active: number[] = [];
+  for (let sector = 0; sector < sectors; sector += 1) {
+    if ((directionMask & (1 << sector)) !== 0) active.push(sector);
+  }
+  for (let left = 0; left < active.length; left += 1) {
+    for (let right = left + 1; right < active.length; right += 1) {
+      const raw = Math.abs(active[left] - active[right]);
+      const circularGap = Math.min(raw, sectors - raw);
+      if (circularGap >= WALK_SURFACE.escapeDirectionMinimumGap) return true;
+    }
+  }
+  return false;
+}
+
+export function shouldAutoRecoverWalk({
+  blockedForS,
+  directionMask,
+  rewindDistanceM,
+  cooldownS,
+  hasDirectionalInput,
+}: {
+  readonly blockedForS: number;
+  readonly directionMask: number;
+  readonly rewindDistanceM: number;
+  readonly cooldownS: number;
+  readonly hasDirectionalInput: boolean;
+}): boolean {
+  return (
+    hasDirectionalInput &&
+    Number.isFinite(blockedForS) &&
+    blockedForS >= WALK_SURFACE.autoRecoveryBlockedS &&
+    hasDiverseWalkEscapeDirections(directionMask) &&
+    Number.isFinite(rewindDistanceM) &&
+    rewindDistanceM >= WALK_SURFACE.autoRecoveryMinRewindM &&
+    rewindDistanceM <= WALK_SURFACE.autoRecoveryMaxRewindM &&
+    (!Number.isFinite(cooldownS) || cooldownS <= 0)
+  );
+}
 /** Radii of the walker's collision ellipsoid (half extents in metres). */
 export const WALK_COLLISION_ELLIPSOID_M = Object.freeze({
   x: 0.22,

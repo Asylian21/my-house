@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  EXTERIOR_RENDER_STABILITY,
   FLIGHT_BOUNDS,
   FLIGHT_WHEEL_DOLLY_MAX_M,
   ORBIT_ZOOM,
   WALK_CAMERA,
   WALK_COLLISION_ELLIPSOID_M,
   WALK_COLLISION_OFFSET_M,
+  WALK_SURFACE,
+  addWalkEscapeDirection,
   clampOrbitRadius,
   deriveRenderQualityProfile,
   easeOrbitRadius,
   flightCommandForCode,
   flightWheelDollyDistanceM,
+  hasDiverseWalkEscapeDirections,
   integrateAvatarVelocity,
   integrateFlightDolly,
   integrateFlightPosition,
@@ -20,15 +24,55 @@ import {
   orbitZoomMultiplier,
   rayAabbDistance,
   resolveWalkCollisionVelocity,
+  shouldAutoRecoverWalk,
   shouldResetWalkCollisionCarry,
   shouldResolveWalkCollisionBatch,
   stepOrbitZoom,
   stepWalkCameraBoom,
+  stepWalkCameraSurfaceHeight,
+  stepWalkIndoorBlend,
+  walkCameraRadiusForEnvironment,
   wheelZoomGesture,
   type FlightCommand,
 } from "../lib/twin-viewport-contract";
 
 const commands = (...values: FlightCommand[]) => new Set(values);
+
+describe("exterior render stability contract", () => {
+  it("keeps reality mode temporally stable and shadow-safe", () => {
+    expect(EXTERIOR_RENDER_STABILITY).toMatchObject({
+      orbitNearClipM: 0.3,
+      shadowBias: 0.0007,
+      shadowNormalBiasM: 0.025,
+      shadowCascadeBlendPercentage: 0.18,
+      filmGrainEnabled: false,
+      filmGrainAnimated: false,
+      screenSpaceAmbientOcclusionEnabled: false,
+      pbrSpecularAntiAliasingEnabled: true,
+      freezeDynamicShadowCasterBounds: false,
+      roadContextSurfaceElevationM: -0.115,
+      roofSeamVisibilityDistanceM: 36,
+    });
+    expect(EXTERIOR_RENDER_STABILITY.shadowNormalBiasM).toBeLessThanOrEqual(
+      0.03,
+    );
+  });
+
+  it("separates the broad terrain, lawn and replacement surfaces", () => {
+    const terrainToRoadM =
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM -
+      EXTERIOR_RENDER_STABILITY.contextTerrainElevationM;
+    const lawnToLowestReplacementM =
+      -0.045 - EXTERIOR_RENDER_STABILITY.parcelGrassElevationM;
+
+    expect(terrainToRoadM).toBeGreaterThanOrEqual(
+      EXTERIOR_RENDER_STABILITY.minimumOpaqueLayerSeparationM,
+    );
+    expect(lawnToLowestReplacementM).toBeGreaterThanOrEqual(
+      EXTERIOR_RENDER_STABILITY.minimumOpaqueLayerSeparationM,
+    );
+  });
+});
 
 describe("orbit zoom contract", () => {
   it("uses an exponential trackpad model and owns browser gestures", () => {
@@ -144,8 +188,8 @@ describe("Retina render quality contract", () => {
       renderHeightPx: 1800,
       msaaSamples: 4,
       fxaaEnabled: false,
-      ssaoEnabled: true,
-      ssaoRatio: 1,
+      ssaoEnabled: false,
+      ssaoRatio: 0,
       shadowMapSize: 2048,
       environmentTextureSize: 512,
       anisotropy: 16,
@@ -704,6 +748,90 @@ describe("walkthrough motion", () => {
 });
 
 describe("adaptive indoor chase camera", () => {
+  it("caps only a wide indoor boom and restores the outdoor request", () => {
+    expect(walkCameraRadiusForEnvironment(WALK_CAMERA.radiusM, 1)).toBe(
+      WALK_SURFACE.indoorCameraMaxRadiusM,
+    );
+    expect(walkCameraRadiusForEnvironment(1.25, 1)).toBe(1.25);
+    expect(walkCameraRadiusForEnvironment(WALK_CAMERA.radiusM, 0)).toBe(
+      WALK_CAMERA.radiusM,
+    );
+    expect(walkCameraRadiusForEnvironment(WALK_CAMERA.radiusM, 0.5)).toBeCloseTo(
+      (WALK_CAMERA.radiusM + WALK_SURFACE.indoorCameraMaxRadiusM) / 2,
+      10,
+    );
+    expect(walkCameraRadiusForEnvironment(1.25, 0.5)).toBe(1.25);
+
+    const blendAfter = (fps: number, indoors: boolean) => {
+      let blend = indoors ? 0 : 1;
+      for (let frame = 0; frame < fps; frame += 1) {
+        blend = stepWalkIndoorBlend(blend, indoors, 1000 / fps);
+      }
+      return blend;
+    };
+    expect(blendAfter(60, true)).toBeCloseTo(blendAfter(240, true), 10);
+    expect(blendAfter(60, false)).toBeCloseTo(blendAfter(240, false), 10);
+  });
+
+  it("follows ramps smoothly at any refresh rate without excessive eye lag", () => {
+    const settle = (fps: number, targetY: number) => {
+      let y = 0;
+      for (let frame = 0; frame < fps; frame += 1) {
+        y = stepWalkCameraSurfaceHeight(y, targetY, 1000 / fps);
+      }
+      return y;
+    };
+    expect(settle(60, 0.18)).toBeCloseTo(settle(240, 0.18), 6);
+    expect(settle(60, -0.13)).toBeCloseTo(settle(240, -0.13), 6);
+
+    const afterDrop = stepWalkCameraSurfaceHeight(0.3, -0.48, 16);
+    expect(Math.abs(afterDrop - -0.48)).toBeCloseTo(
+      WALK_SURFACE.maxCameraLagM,
+      10,
+    );
+  });
+
+  it("auto-rewinds only after distinct failed escape directions", () => {
+    const forwardMask = addWalkEscapeDirection(0, { x: 0, z: -1 });
+    const repeatedForwardMask = addWalkEscapeDirection(forwardMask, {
+      x: 0,
+      z: -1,
+    });
+    const trappedMask = addWalkEscapeDirection(repeatedForwardMask, {
+      x: -1,
+      z: 0,
+    });
+    expect(hasDiverseWalkEscapeDirections(repeatedForwardMask)).toBe(false);
+    expect(hasDiverseWalkEscapeDirections(trappedMask)).toBe(true);
+
+    const base = {
+      blockedForS: WALK_SURFACE.autoRecoveryBlockedS,
+      rewindDistanceM: 0.2,
+      cooldownS: 0,
+      hasDirectionalInput: true,
+    } as const;
+    expect(
+      shouldAutoRecoverWalk({ ...base, directionMask: repeatedForwardMask }),
+    ).toBe(false);
+    expect(
+      shouldAutoRecoverWalk({ ...base, directionMask: trappedMask }),
+    ).toBe(true);
+    expect(
+      shouldAutoRecoverWalk({
+        ...base,
+        directionMask: trappedMask,
+        cooldownS: 0.1,
+      }),
+    ).toBe(false);
+    expect(
+      shouldAutoRecoverWalk({
+        ...base,
+        directionMask: trappedMask,
+        rewindDistanceM: WALK_SURFACE.autoRecoveryMaxRewindM + 0.01,
+      }),
+    ).toBe(false);
+  });
+
   it("finds the first finite world-box contact without triangle picking", () => {
     expect(
       rayAabbDistance({
