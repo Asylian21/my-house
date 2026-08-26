@@ -104,6 +104,38 @@ export interface JoinedRoofGeometry {
   readonly surfaceAreaMm2: number;
 }
 
+/**
+ * A renderer-ready quadrilateral. The authoritative roof keeps its documented
+ * overhangs, while these patches partition visible finishes so two opaque
+ * materials never claim the same depth-buffer pixels.
+ */
+export interface RoofRenderFace {
+  readonly id: string;
+  readonly faceId: RoofFaceId;
+  readonly vertices: readonly [
+    RoofVertexMm,
+    RoofVertexMm,
+    RoofVertexMm,
+    RoofVertexMm,
+  ];
+}
+
+export interface JoinedRoofRenderPlan {
+  readonly topFaces: readonly RoofRenderFace[];
+  readonly genericUndersideFaces: readonly RoofRenderFace[];
+  readonly seamSegments: readonly RoofSeamSegment[];
+  readonly wingPorch: {
+    /** Metal roof stops where the opaque P04 rake begins. */
+    readonly roofTopEndYmm: number;
+    /** The generic white underside stops before the dedicated larch soffit. */
+    readonly genericUndersideEndYmm: number;
+    readonly larchSoffitStartYmm: number;
+    readonly larchSoffitEndYmm: number;
+    readonly portalRakeStartYmm: number;
+    readonly portalRakeEndYmm: number;
+  };
+}
+
 export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze({
   minXmm: HOUSE.originMm.x,
   maxXmm: HOUSE.originMm.x + HOUSE.lowerBar.widthMm,
@@ -347,6 +379,172 @@ export function deriveJoinedRoofGeometry(
       0,
     ),
   };
+}
+
+/**
+ * The boarded larch soffit stops 20 mm behind the porch front plane. The P04
+ * supports (corner pillar, east wall end and both white heads) all present
+ * opaque faces exactly at `frontYmm`; without the setback the slab's front
+ * edge shares that plane and z-fights them from the garden. 20 mm reads as a
+ * shadow joint under the rake and satisfies the exterior stability contract
+ * (minimum 18 mm between overlapping opaque layers).
+ */
+export const WING_PORCH_SOFFIT_FRONT_SETBACK_MM = 20;
+
+/**
+ * Splits the visual roof at the covered wing porch.
+ *
+ * The architectural roof still ends at the documented 50 mm overhang. In the
+ * rendered assembly, however, the P04 rake owns that end strip and the larch
+ * soffit owns the porch ceiling. Clipping the generic metal/white surfaces at
+ * those two construction joints removes coplanar and intersecting opaque
+ * layers instead of relying on camera-dependent depth bias.
+ */
+export function deriveJoinedRoofRenderPlan(
+  roof: JoinedRoofGeometry = deriveJoinedRoofGeometry(),
+): JoinedRoofRenderPlan {
+  const porch = HOUSE.porches.wingEnd;
+  const roofTopEndYmm = porch.portalFrame.rakeBackFaceYmm;
+  const genericUndersideEndYmm = porch.glazingFaceYmm;
+
+  if (
+    porch.frontYmm !== roofTopEndYmm ||
+    genericUndersideEndYmm >= roofTopEndYmm ||
+    roofTopEndYmm > roof.parameters.wingEndYmm ||
+    roof.parameters.wingEndYmm > porch.portalFrame.rakeFrontFaceYmm
+  ) {
+    throw new Error("Invalid wing-porch roof finish partition");
+  }
+
+  const renderFace = (
+    face: RoofFace,
+    maximumWingYmm: number,
+    purpose: "top" | "generic-underside",
+  ): RoofRenderFace => {
+    const wing = face.id === "WING_INNER" || face.id === "WING_OUTER";
+    const renderVertex = (vertexIndex: number): RoofVertexMm => {
+      const source = roof.vertices[vertexIndex];
+      if (!wing || source.yMm <= maximumWingYmm) return source;
+      return {
+        ...source,
+        id: `${source.id}_${purpose.toUpperCase()}_CLIP`,
+        yMm: maximumWingYmm,
+        elevationMm: roofHeightMm(
+          face.id,
+          source.xMm,
+          maximumWingYmm,
+          roof.parameters,
+        ),
+      };
+    };
+    const [first, second, third, fourth] = face.vertexIndices;
+    const vertices = [
+      renderVertex(first),
+      renderVertex(second),
+      renderVertex(third),
+      renderVertex(fourth),
+    ] as const;
+    return {
+      id: `${face.id}_${purpose.toUpperCase()}`,
+      faceId: face.id,
+      vertices,
+    };
+  };
+
+  const topFaces = roof.faces.map((face) =>
+    renderFace(face, roofTopEndYmm, "top"),
+  );
+  const genericUndersideFaces = roof.faces.map((face) =>
+    renderFace(face, genericUndersideEndYmm, "generic-underside"),
+  );
+  const seamSegments = roof.seamSegments.filter(
+    (segment) =>
+      (segment.faceId !== "WING_INNER" &&
+        segment.faceId !== "WING_OUTER") ||
+      segment.coordinateMm < roofTopEndYmm,
+  );
+
+  return {
+    topFaces,
+    genericUndersideFaces,
+    seamSegments,
+    wingPorch: {
+      roofTopEndYmm,
+      genericUndersideEndYmm,
+      larchSoffitStartYmm: porch.glazingFaceYmm,
+      larchSoffitEndYmm: porch.frontYmm - WING_PORCH_SOFFIT_FRONT_SETBACK_MM,
+      portalRakeStartYmm: porch.portalFrame.rakeBackFaceYmm,
+      portalRakeEndYmm: porch.portalFrame.rakeFrontFaceYmm,
+    },
+  };
+}
+
+export interface WingPorchHeadProfileMm {
+  readonly id: string;
+  readonly startYmm: number;
+  readonly endYmm: number;
+  readonly profile: readonly {
+    readonly alongMm: number;
+    readonly elevationMm: number;
+  }[];
+}
+
+/**
+ * Sloped white heads continuing the P04 supports above the wall crown.
+ *
+ * Each head top runs one porch ceiling clearance below its roof plane, so the
+ * head finishes inside the boarded larch soffit slab instead of sharing the
+ * metal sheet's depth-buffer pixels (which used to flicker as white patches
+ * inside the anthracite roof). Where the lowered roof line dives under the
+ * crown — at the eaves corner of each support — the profile is clamped to the
+ * crown crossing so it stays a simple polygon.
+ */
+export function deriveWingPorchPortalHeadProfiles(
+  parameters: JoinedRoofParameters = ACTIVE_JOINED_ROOF_PARAMETERS,
+): readonly WingPorchHeadProfileMm[] {
+  const porch = HOUSE.porches.wingEnd;
+  const crownMm = parameters.eavesElevationMm;
+  const clearanceMm = porch.ceilingClearanceMm;
+  const heads: WingPorchHeadProfileMm[] = [];
+  for (const support of porch.portalFrame.supportsMm) {
+    const heightAt = (xMm: number) =>
+      support.startXmm < parameters.wingRidgeXmm
+        ? wingInnerRoofHeightMm(xMm, parameters)
+        : wingOuterRoofHeightMm(xMm, parameters);
+    const topStartMm = heightAt(support.startXmm) - clearanceMm;
+    const topEndMm = heightAt(support.endXmm) - clearanceMm;
+    if (topStartMm <= crownMm && topEndMm <= crownMm) continue;
+    const crownCrossingXmm =
+      support.startXmm +
+      ((crownMm - topStartMm) * (support.endXmm - support.startXmm)) /
+        (topEndMm - topStartMm);
+    const profile =
+      topStartMm <= crownMm
+        ? [
+            { alongMm: crownCrossingXmm, elevationMm: crownMm },
+            { alongMm: support.endXmm, elevationMm: crownMm },
+            { alongMm: support.endXmm, elevationMm: topEndMm },
+          ]
+        : topEndMm <= crownMm
+          ? [
+              { alongMm: support.startXmm, elevationMm: crownMm },
+              { alongMm: crownCrossingXmm, elevationMm: crownMm },
+              { alongMm: support.startXmm, elevationMm: topStartMm },
+            ]
+          : [
+              { alongMm: support.startXmm, elevationMm: crownMm },
+              { alongMm: support.endXmm, elevationMm: crownMm },
+              { alongMm: support.endXmm, elevationMm: topEndMm },
+              { alongMm: support.startXmm, elevationMm: topStartMm },
+            ];
+    heads.push({
+      id: support.id,
+      startYmm: support.startYmm,
+      endYmm: support.endYmm,
+      profile,
+    });
+  }
+  return heads;
 }
 
 function interpolateElevation(
