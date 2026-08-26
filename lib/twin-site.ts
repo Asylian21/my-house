@@ -152,6 +152,38 @@ export const SOURCES = {
     date: "22. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientHallwayWardrobesRevision20260825: {
+    id: "SRC-CLIENT-HALLWAY-WARDROBES-20260825",
+    title: "Revízia stavebníka · dve drevené vstavané skrine v chodbe",
+    detail:
+      "Podľa zelene vyznačených miest v pôdoryse vyplniť dve existujúce niky chodby 1.02 celovýškovými supermodernými drevenými vstavanými skriňami. Dlhá nika pri izbe 1.09 má 601 × 2 797 mm, kratšia nika pri spálni 1.08 a kúpeľni 1.11 má 601 × 859 mm. Čelá majú zostať zapustené, bezúchytkové a koplanárne posuvné, s teplou dubovou dyhou, jemnými tmavými škárami a integrovaným teplým svetlom; hlavné komunikačné pásy a všetky dverné krídla musia zostať voľné.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientGarageSideWindowRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-SIDE-WINDOW-20260825",
+    title: "Revízia stavebníka · malé bočné okno garáže",
+    detail:
+      "Na západný bočný štít garáže zo strany označenej na referenčnej snímke doplniť jedno malé okno rovnakého typu a rozmerov ako zostávajúce garážové okno FRONT-02. Otvor 1 250 × 750 mm s parapetom 1 750 mm je vycentrovaný v hlavnom vnútornom poli garáže 1.12.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientGarageFitoutRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-FITOUT-20260825",
+    title: "Revízia stavebníka · realistický pracovný výsek garáže",
+    detail:
+      "V garáži 1.12 hneď vedľa dverí z chodby, na opačnej strane priečky za vaňou kúpeľne 1.11, doplniť malé hlboké pracovné umývadlo. Okolitý výsek zariadiť ako používanú garáž: kovovým regálom, hornými policami, boxmi, farbami, náradím, záhradnou hadicou, metlou, lopatou a zaparkovanou kosačkou. Zachovať celý otvor a pohyb dverí, priamy príjazd vozidla aj bezpečný prístup k umývadlu.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientGarageDepthRevision20260825: {
+    id: "SRC-CLIENT-GARAGE-DEPTH-20260825",
+    title: "Revízia stavebníka · garáž dlhšia o 1 000 mm",
+    detail:
+      "Predĺžiť garáž 1.12 o presných 1 000 mm smerom do záhrady. Posunúť celú zadnú stenu vrátane dverí LOGGIA-DOOR na úkor malej zapustenej lodžie v terase 34,80 m²; uličná fasáda, garážová brána, príjazd, vonkajší pôdorys domu a strecha zostávajú bez zmeny. Existujúci základový výkres sa nemení potichu a nové založenie musí potvrdiť statik/projektant.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientRevision20260823: {
     id: "SRC-CLIENT-20260823",
     title: "Revízia stavebníka · obývacia a jedálenská zóna",
@@ -166,6 +198,14 @@ export const SOURCES = {
     detail:
       "Pôvodné hranaté kachle a murovaný komínový pilier v obývacom priestore 1.03 nahradiť štíhlymi čiernymi valcovými kachľami so zaobleným presklením podľa obrazovej referencie. Dymovod má viesť bez bočného kolena z osi kachlí zvislo cez šikmý podhľad a strechu; poloha pri terasových dverách a voľný nástup do obývačky zostávajú zachované.",
     date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientFireplacePositionRevision20260825: {
+    id: "SRC-CLIENT-FIREPLACE-POSITION-20260825",
+    title: "Revízia stavebníka · krb bližšie k TV",
+    detail:
+      "Posunúť celú zostavu valcových krbových kachlí aj priameho dymovodu o 200 mm smerom k TV stene. Zachovať spoločnú os kachlí a rúry, voľný priechod pri terasových dverách a murovaný komínový pilier naďalej odstránený.",
+    date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
   clientKitchenRevision20260823: {
@@ -230,6 +270,22 @@ export const SOURCES = {
     detail:
       "V miestnosti 1.05 umiestniť supermodernú walk-in sprchu úplne na koniec východného výklenku k malému vysokému oknu EAST-02. Celý zadný výrez za vstupom riešiť ako jednu vstavanú skriňovú zostavu s veľkým čiernym umývadlom, viditeľnou bielou práčkou a viditeľnou bielou sušičkou vedľa seba a s hornými skrinkami. Všetko musí rozmerovo sedieť bez zásahu do dverí, okna a priečok.",
     date: "23. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientBathroomServiceCoreRevision20260825: {
+    id: "SRC-CLIENT-BATHROOM-SERVICE-CORE-20260825",
+    title: "Revízia stavebníka · menšia kúpeľňa, väčšie WC a technická",
+    detail:
+      "Posunúť celú 140 mm priečku za vstavanou zostavou umývadla, práčky a sušičky v miestnosti 1.05 o presných 200 mm smerom do kúpeľne. Vstavanú zostavu posunúť spolu s priečkou, zachovať plnú 600 mm hĺbku oboch spotrebičov a nezmeniť sprchu ani dvere. Rovnakým posunom zväčšiť hĺbku WC 1.06 aj technickej miestnosti 1.07 za kuchyňou o 200 mm.",
+    date: "25. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientBathroomStackedLaundryRevision20260825: {
+    id: "SRC-CLIENT-BATHROOM-STACKED-LAUNDRY-20260825",
+    title: "Revízia stavebníka · práčovňová veža a rebríkový radiátor",
+    detail:
+      "V kúpeľni a práčovni 1.05 uložiť bielu práčku a sušičku do jednej vetranej veže nad seba, uvoľnenú šírku využiť na väčšiu plávajúcu umývadlovú skrinku a celú zostavu zjednotiť. Okrúhle dvierka oboch spotrebičov musia byť samostatne otvárateľné a zatvárateľné rovnakým ovládaním ako ostatné dvere v 3D prehliadke. Na voľnú južnú stenu doplniť matne čierny rebríkový radiátor bez zásahu do vstupu, sprchy alebo voľného priechodu.",
+    date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
   clientOfficeRevision20260823: {
@@ -326,6 +382,14 @@ export const SOURCES = {
     detail:
       "Uličná komunikácia má byť vo vizualizácii vykreslená ako realistická sivá betónová bloková dlažba s jemnou tonálnou variáciou a tmavými škárami. Materiál je potvrdený klientskou referenciou; presný kladačský plán a skutočný priebeh obrúb zostávajú mimo geodetického podkladu.",
     date: "24. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientStreetPhoto20260825: {
+    id: "SRC-CLIENT-STREET-PHOTO-20260825",
+    title: "Fotografia stavebníka · skutočný vzhľad ulice",
+    detail:
+      "Fotografia potvrdzuje svetlosivú betónovú blokovú dlažbu bez vodorovného značenia, súvislý prefabrikovaný obrubník, nespevnenú hlinenú krajnicu s riedkou náletovou vegetáciou a štíhle sivé stožiare verejného osvetlenia. Fotografia je vizuálnym podkladom; neurčuje geodetickú polohu ani presný rozstup svietidiel.",
+    date: "25. 8. 2026",
     kind: "CLIENT_REVISION",
   },
   fenceDesignProposal20260821: {
@@ -428,6 +492,27 @@ export const SOURCES = {
     kind: "UNRESOLVED_AS_BUILT",
   },
 } as const satisfies Record<string, SourceRecord>;
+
+/**
+ * Active client revision that converts a one-metre strip of the covered
+ * garden loggia into garage 1.12. The outer house and roof envelopes stay
+ * fixed; only the internal rear wall and the terrace split move along +Y.
+ */
+export const GARAGE_DEPTH_REVISION = Object.freeze({
+  sourceId: SOURCES.clientGarageDepthRevision20260825.id,
+  extensionMm: 1_000,
+  axis: "LOCAL_Y_TOWARD_GARDEN",
+  originalGarageRearInnerFaceYmm: 7_749,
+  revisedGarageRearInnerFaceYmm: 8_749,
+  originalLoggiaBackFaceYmm: 8_247,
+  revisedLoggiaBackFaceYmm: 9_247,
+  originalGarageAreaM2: 25.15,
+  revisedGarageAreaM2: 29.023,
+  originalFloorAreaM2: 175.15,
+  revisedFloorAreaM2: 179.023,
+  originalTerraceAreaM2: 84.35,
+  revisedTerraceAreaM2: 80.15,
+} as const);
 
 const mmPoint = (xM: number, yM: number): Point2Mm => ({
   x: Math.round(xM * 1000),
@@ -709,8 +794,10 @@ export const HOUSE = Object.freeze({
   ] as const satisfies readonly Point2Mm[],
   maximumDepthMm: 19035,
   derivedFootprintAreaM2: 252.965,
-  floorAreaM2: 175.15,
-  terraceAreaM2: 84.35,
+  originalFloorAreaM2: GARAGE_DEPTH_REVISION.originalFloorAreaM2,
+  floorAreaM2: GARAGE_DEPTH_REVISION.revisedFloorAreaM2,
+  originalTerraceAreaM2: GARAGE_DEPTH_REVISION.originalTerraceAreaM2,
+  terraceAreaM2: GARAGE_DEPTH_REVISION.revisedTerraceAreaM2,
   eavesElevationMm: 3125,
   ridgeElevationMm: 5560,
   flues: [
@@ -719,7 +806,7 @@ export const HOUSE = Object.freeze({
       // 24. 8. 2026: the full masonry pier is removed. A single round flue
       // rises directly from the centre of the cylindrical stove to the roof.
       shape: "ROUND_STOVE_PIPE",
-      centerMm: { x: 21853, y: 14275 } satisfies Point2Mm,
+      centerMm: { x: 21853, y: 14475 } satisfies Point2Mm,
       outerDiameterMm: 150,
       baseElevationMm: 1550,
       terminationElevationMm: 6160,
@@ -732,8 +819,8 @@ export const HOUSE = Object.freeze({
       replacesInteriorPierId: "IW-WEST-PIER-103",
       zone: "MAIN_LIVING_AND_KITCHEN_1_03",
       baseSourceId: SOURCES.roofPlan.id,
-      previousSourceId: SOURCES.clientRevision20260822.id,
-      sourceId: SOURCES.clientFireplaceRevision20260824.id,
+      previousSourceId: SOURCES.clientFireplaceRevision20260824.id,
+      sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
     },
   ] as const,
   removedChimneys: [
@@ -889,12 +976,27 @@ export const HOUSE = Object.freeze({
     west: {
       faceXmm: 6440,
       finish: "OFF_WHITE_ETICS",
+      garageWindow: {
+        id: "WEST-GARAGE-01",
+        startYmm: 4358,
+        widthMm: 1250,
+        heightMm: 750,
+        sillMm: 1750,
+        referenceOpeningId: "FRONT-02",
+        sourceId: SOURCES.clientGarageSideWindowRevision20260825.id,
+      },
       loggiaOpening: {
         id: "WEST-01",
-        startYmm: 9300,
-        widthMm: 1400,
+        // The one-metre garage extension shortens the side portal together
+        // with the loggia, retaining a useful 553 mm rear return and the
+        // existing 500 mm front corner pier.
+        startYmm: 9800,
+        widthMm: 900,
         heightMm: 2400,
         sillMm: 0,
+        originalStartYmm: 9300,
+        originalWidthMm: 1400,
+        revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
       },
     },
     wingWest: {
@@ -913,8 +1015,8 @@ export const HOUSE = Object.freeze({
   },
   // Both covered porches come straight from the D1.1.002 vector geometry: the
   // wing gable porch (TERASA 16,45 m²) has its glazed wall recessed 2 500 mm
-  // behind the gable plane, and the garden loggia (part of TERASA 34,80 m²)
-  // sits 2 953 mm behind the garden facade line.
+  // behind the gable plane. The garden loggia was part of the original TERASA
+  // 34,80 m² and is now 1 953 mm deep after the active garage revision.
   porches: {
     wingEnd: {
       id: "PORCH-WING-END",
@@ -977,7 +1079,10 @@ export const HOUSE = Object.freeze({
     gardenLoggia: {
       id: "PORCH-GARDEN-LOGGIA",
       faceYmm: 11200,
-      backFaceYmm: 8247,
+      backFaceYmm: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+      originalBackFaceYmm: GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
+      garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
+      revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
       openingStartXmm: 7440,
       openingEndXmm: 10640,
       cornerPier: { startXmm: 6440, endXmm: 7440, startYmm: 10700, endYmm: 11200 },
@@ -1054,6 +1159,7 @@ export const HOUSE = Object.freeze({
     active: true,
     placementStatus: "INFERRED_ALIGNMENT",
     alignmentNote: "Bez zrkadlenia zarovnané na pravú hranu, zalomenie a hornú hranu C3; garážový koniec sa predlžuje o 800 mm.",
+    garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
   },
   sourceIds: [
     SOURCES.floorPlan.id,
@@ -1061,7 +1167,10 @@ export const HOUSE = Object.freeze({
     SOURCES.coordination.id,
     SOURCES.section.id,
     SOURCES.clientRevision20260821.id,
+    SOURCES.clientGarageSideWindowRevision20260825.id,
+    SOURCES.clientGarageDepthRevision20260825.id,
     SOURCES.clientFireplaceRevision20260824.id,
+    SOURCES.clientFireplacePositionRevision20260825.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
     SOURCES.clientOfficeFixedWindowRevision20260824.id,
   ],
@@ -1072,17 +1181,20 @@ export const HOUSE = Object.freeze({
 // below are clipped directly from ČÚZK feature CP.94487856010. The 3.10 m front
 // reserve between the legal boundary and the C3 access endpoints is rendered
 // separately from the carriageway so the entrances no longer appear painted
-// over it. The exact as-built kerb profile is still not surveyed.
+// over it. The client photo from 25. 8. 2026 now controls the visual finish of
+// the blocks, kerb, rough verge and lamps; their exact as-built positions are
+// still not surveyed.
 export const ROAD_CONTEXT = Object.freeze({
   id: "ROAD-6012-1",
   featureId: "CP.94487856010",
   nationalReference: "613908-6012/1",
   registeredAreaM2: 10_647,
-  observedAt: "2026-08-24",
+  observedAt: "2026-08-25",
   sourceIds: [
     SOURCES.cadastre.id,
     SOURCES.coordination.id,
     SOURCES.clientStreetPaversRevision20260824.id,
+    SOURCES.clientStreetPhoto20260825.id,
   ],
   legalBoundaryStatus: "CURRENT_REGISTER",
   surfaceEnvelopeStatus: "CURRENT_REGISTER_CLIPPED_CONTEXT",
@@ -1093,8 +1205,49 @@ export const ROAD_CONTEXT = Object.freeze({
     visualModuleMm: { length: 200, width: 100 },
     visualJointMm: 5,
     layingPattern: "STAGGERED_RUNNING_BOND",
-    specificationStatus: "CLIENT_REFERENCE_WITHOUT_MANUFACTURER_SPEC",
-    sourceId: SOURCES.clientStreetPaversRevision20260824.id,
+    specificationStatus: "CLIENT_PHOTO_WITHOUT_MANUFACTURER_SPEC",
+    sourceId: SOURCES.clientStreetPhoto20260825.id,
+  },
+  visualReference: {
+    roadMarkings: "NONE",
+    shoulder: {
+      kind: "ROUGH_SOIL_WITH_SPARSE_WEEDS",
+      placementStatus: "C3_DERIVED_WIDTH_WITH_CLIENT_PHOTO_FINISH",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    },
+    curb: {
+      kind: "RAISED_PRECAST_CONCRETE_WITH_DROPPED_ACCESS_SEGMENTS",
+      nominalHeightMm: 100,
+      nominalDepthMm: 120,
+      placementStatus: "C3_DERIVED_NOT_AS_BUILT_SURVEY",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    },
+    vergeClustersMm: [
+      { x: -52_000, y: -1_250, scale: 0.82 },
+      { x: -31_500, y: -2_250, scale: 1.06 },
+      { x: -11_500, y: -1_150, scale: 0.9 },
+      { x: -1_200, y: -1_850, scale: 1.02 },
+      { x: 3_300, y: -900, scale: 0.78 },
+      { x: 13_400, y: -2_150, scale: 0.96 },
+      { x: 18_700, y: -1_050, scale: 0.84 },
+      { x: 25_300, y: -1_850, scale: 1.08 },
+      { x: 27_500, y: -650, scale: 0.72 },
+    ],
+  },
+  streetLighting: {
+    kind: "SLIM_GREY_LED_POLES",
+    poleHeightMm: 5_400,
+    poleDiameterMm: 95,
+    armLengthMm: 650,
+    luminaireLengthMm: 720,
+    placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
+    sourceId: SOURCES.clientStreetPhoto20260825.id,
+    polesMm: [
+      { x: -50_000, y: -10_250 },
+      { x: -27_000, y: -10_250 },
+      { x: -4_000, y: -10_250 },
+      { x: 19_000, y: -10_250 },
+    ],
   },
   touchedBoundarySegments: ["160–136", "136–135–134–133–132–131–130"],
   frontAsphaltEdgeYmm: -3_104,
@@ -1870,30 +2023,41 @@ export interface TerraceZoneRectMm {
 export interface TerraceZoneD1 {
   readonly id: string;
   readonly label: string;
+  /** Original area from the D1.1.002 room legend, m². */
   readonly documentedAreaM2: number;
+  /** Active area after a later client revision, when it differs from D1. */
+  readonly activeDesignAreaM2?: number;
   readonly covered: boolean;
   /** Axis-aligned rectangles in plan millimetres; boards run along X. */
   readonly rectsMm: readonly TerraceZoneRectMm[];
+  readonly baseSourceId?: string;
   readonly sourceId: string;
 }
 
 /**
- * The three documented D1.1.002 timber terrace zones (34,80 + 33,10 + 16,45 =
- * 84,35 m² per the room legend). They supersede the older C3 53 m² surface,
- * which is kept above as provenance. Rectangles are traced from the deck
- * hatch vectors of the drawing.
+ * The three original D1.1.002 timber terrace zones total 84,35 m². The active
+ * client revision converts a one-metre strip of TERR-D1-GARDEN into garage
+ * 1.12, reducing that zone by 4,20 m² while preserving the D1 values as
+ * provenance. They supersede the older C3 53 m² surface, which is kept above.
  */
 export const TERRACE_ZONES_D1: readonly TerraceZoneD1[] = [
   {
     id: "TERR-D1-GARDEN",
-    label: "Terasa D1 · záhradná časť s lodžiou · 34,80 m²",
+    label: "Záhradná terasa · aktívne 30,60 m² · D1 34,80 m²",
     documentedAreaM2: 34.8,
+    activeDesignAreaM2: 30.6,
     covered: false,
     rectsMm: [
-      { x0: 6440, y0: 8247, x1: 10640, y1: 11200 },
+      {
+        x0: 6440,
+        y0: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+        x1: 10640,
+        y1: 11200,
+      },
       { x0: 6440, y0: 11200, x1: 18040, y1: 13100 },
     ],
-    sourceId: SOURCES.floorPlan.id,
+    baseSourceId: SOURCES.floorPlan.id,
+    sourceId: SOURCES.clientGarageDepthRevision20260825.id,
   },
   {
     id: "TERR-D1-WING",
@@ -1923,6 +2087,11 @@ export function terraceZoneAreaM2(zone: TerraceZoneD1): number {
       0,
     ) / 1_000_000
   );
+}
+
+/** Active design area, falling back to the original D1 room-legend value. */
+export function terraceZoneDesignAreaM2(zone: TerraceZoneD1): number {
+  return zone.activeDesignAreaM2 ?? zone.documentedAreaM2;
 }
 
 export const GARDEN_POOL = Object.freeze({
@@ -1984,6 +2153,19 @@ export const GARDEN_POOL = Object.freeze({
     SOURCES.asBuiltGap.id,
   ],
 });
+
+/**
+ * Interior parcel areas where the grass mesh must not exist at all.
+ *
+ * Hardscape that reaches the cadastral edge remains vertically separated:
+ * Earcut holes must stay strictly inside their outer ring. The pool and side
+ * approach are closed interior rings and can therefore remove the underlying
+ * lawn instead of relying on sub-centimetre depth offsets.
+ */
+export const PARCEL_LAWN_INTERIOR_CUTOUTS_MM = Object.freeze([
+  SITE_SURFACES.sideEntryApproach.privatePolygonMm,
+  GARDEN_POOL.copingFootprintMm,
+] as const);
 
 const route = (
   id: string,

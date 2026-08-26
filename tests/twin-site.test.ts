@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CADASTRAL_PARCELS,
+  GARAGE_DEPTH_REVISION,
   TERRACE_ZONES_D1,
   terraceZoneAreaM2,
+  terraceZoneDesignAreaM2,
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
   GARDEN_POOL,
@@ -178,12 +180,47 @@ describe("site evidence seed", () => {
       visualModuleMm: { length: 200, width: 100 },
       visualJointMm: 5,
       layingPattern: "STAGGERED_RUNNING_BOND",
-      specificationStatus: "CLIENT_REFERENCE_WITHOUT_MANUFACTURER_SPEC",
-      sourceId: SOURCES.clientStreetPaversRevision20260824.id,
+      specificationStatus: "CLIENT_PHOTO_WITHOUT_MANUFACTURER_SPEC",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
     });
     expect(ROAD_CONTEXT.sourceIds).toContain(
       SOURCES.clientStreetPaversRevision20260824.id,
     );
+    expect(ROAD_CONTEXT.sourceIds).toContain(
+      SOURCES.clientStreetPhoto20260825.id,
+    );
+    expect(ROAD_CONTEXT.observedAt).toBe("2026-08-25");
+    expect(ROAD_CONTEXT.visualReference).toMatchObject({
+      roadMarkings: "NONE",
+      shoulder: {
+        kind: "ROUGH_SOIL_WITH_SPARSE_WEEDS",
+        placementStatus: "C3_DERIVED_WIDTH_WITH_CLIENT_PHOTO_FINISH",
+        sourceId: SOURCES.clientStreetPhoto20260825.id,
+      },
+      curb: {
+        kind: "RAISED_PRECAST_CONCRETE_WITH_DROPPED_ACCESS_SEGMENTS",
+        nominalHeightMm: 100,
+        nominalDepthMm: 120,
+        sourceId: SOURCES.clientStreetPhoto20260825.id,
+      },
+    });
+    expect(ROAD_CONTEXT.visualReference.vergeClustersMm).toHaveLength(9);
+    expect(ROAD_CONTEXT.streetLighting).toMatchObject({
+      kind: "SLIM_GREY_LED_POLES",
+      poleHeightMm: 5_400,
+      poleDiameterMm: 95,
+      armLengthMm: 650,
+      luminaireLengthMm: 720,
+      placementStatus: "ILLUSTRATIVE_FROM_CLIENT_PHOTO_NOT_AS_BUILT_SURVEY",
+      sourceId: SOURCES.clientStreetPhoto20260825.id,
+    });
+    expect(ROAD_CONTEXT.streetLighting.polesMm).toHaveLength(4);
+    const outerRoadEdgeYmm = Math.min(
+      ...ROAD_CONTEXT.frontOppositeParcelEdgeMm.map(({ y }) => y),
+    );
+    expect(
+      ROAD_CONTEXT.streetLighting.polesMm.every(({ y }) => y < outerRoadEdgeYmm),
+    ).toBe(true);
     expect(ROAD_CONTEXT.frontAsphaltEdgeYmm).toBe(-3_104);
     expect(ROAD_CONTEXT.frontReservePolygonMm).toEqual([
       { x: -60_262, y: 14 },
@@ -204,6 +241,27 @@ describe("site evidence seed", () => {
       [10_690, 21_415],
       [22_915, 28_194],
     ]);
+    for (const x of [0, 15_000, 27_000]) {
+      const roadPoint = { x, y: -5_000 };
+      expect(pointInRing(roadPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(true);
+      expect(
+        ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
+          pointInRing(roadPoint, ring),
+        ),
+      ).toBe(false);
+    }
+    for (const x of [0, 15_000, 25_000]) {
+      const shoulderPoint = { x, y: -1_500 };
+      expect(pointInRing(shoulderPoint, ROAD_CONTEXT.frontagePolygonMm)).toBe(
+        false,
+      );
+      expect(
+        ROAD_CONTEXT.frontReserveSurfacePolygonsMm.some((ring) =>
+          pointInRing(shoulderPoint, ring),
+        ),
+      ).toBe(true);
+    }
+    expect(DEFAULT_LAYER_VISIBILITY.street).toBe(true);
     expect(ROAD_CONTEXT.touchedBoundarySegments).toEqual([
       "160–136",
       "136–135–134–133–132–131–130",
@@ -284,13 +342,39 @@ describe("site evidence seed", () => {
       10,
     );
     expect(arcRotateCameraHeightM(streetCameraForWidth(1600))).toBeCloseTo(
-      1.85,
+      1.9,
       10,
     );
     expect(arcRotateCameraHeightM(streetCameraForWidth(390))).toBeCloseTo(
-      2,
+      2.05,
       10,
     );
+    expect(streetCameraForWidth(1600)).toMatchObject({
+      radius: 21,
+      fov: 0.78,
+      target: [-0.4, -0.65, 0],
+    });
+    expect(streetCameraForWidth(390)).toMatchObject({
+      radius: 23,
+      fov: 0.92,
+      target: [0.2, -0.55, -2],
+    });
+    expect(arcRotateCameraHeightM(streetCameraForWidth(1600))).toBeGreaterThan(
+      streetCameraForWidth(1600).target[1] + 2.5,
+    );
+    const roadWorldZ = [
+      sceneZM(ROAD_CONTEXT.frontAsphaltEdgeYmm),
+      ...ROAD_CONTEXT.frontOppositeParcelEdgeMm.map(({ y }) => sceneZM(y)),
+    ];
+    for (const width of [1600, 390]) {
+      const street = streetCameraForWidth(width);
+      const eyeWorldZ =
+        street.target[2] +
+        street.radius * Math.sin(street.beta) * Math.sin(street.alpha);
+      expect(eyeWorldZ).toBeGreaterThanOrEqual(Math.min(...roadWorldZ));
+      expect(eyeWorldZ).toBeLessThanOrEqual(Math.max(...roadWorldZ));
+      expect(street.target[2]).toBeLessThan(sceneZM(0));
+    }
     expect(streetCameraForWidth(390).radius).toBeGreaterThan(
       streetCameraForWidth(1600).radius,
     );
@@ -477,6 +561,20 @@ describe("site evidence seed", () => {
     expect(HOUSE.facades.front.openings.some(({ id }) => id === "FRONT-01")).toBe(
       false,
     );
+    expect(HOUSE.facades.west.garageWindow).toEqual({
+      id: "WEST-GARAGE-01",
+      startYmm: 4_358,
+      widthMm: 1_250,
+      heightMm: 750,
+      sillMm: 1_750,
+      referenceOpeningId: "FRONT-02",
+      sourceId: SOURCES.clientGarageSideWindowRevision20260825.id,
+    });
+    expect(HOUSE.facades.west.garageWindow).toMatchObject({
+      widthMm: HOUSE.facades.front.openings[0].widthMm,
+      heightMm: HOUSE.facades.front.openings[0].heightMm,
+      sillMm: HOUSE.facades.front.openings[0].sillMm,
+    });
     expect(HOUSE.facades.front.openings.find(({ id }) => id === "FRONT-05"))
       .toMatchObject({
         startXmm: 19_540,
@@ -502,14 +600,20 @@ describe("site evidence seed", () => {
       SOURCES.clientOfficeFixedWindowRevision20260824.id,
     );
     expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientGarageSideWindowRevision20260825.id,
+    );
+    expect(HOUSE.sourceIds).toContain(
       SOURCES.clientFireplaceRevision20260824.id,
+    );
+    expect(HOUSE.sourceIds).toContain(
+      SOURCES.clientFireplacePositionRevision20260825.id,
     );
     expect("garageDoor" in HOUSE.facades.west).toBe(false);
     expect(HOUSE.flues).toEqual([
       {
         id: "FLUE-LIVING-103",
         shape: "ROUND_STOVE_PIPE",
-        centerMm: { x: 21_853, y: 14_275 },
+        centerMm: { x: 21_853, y: 14_475 },
         outerDiameterMm: 150,
         baseElevationMm: 1_550,
         terminationElevationMm: 6_160,
@@ -522,8 +626,8 @@ describe("site evidence seed", () => {
         replacesInteriorPierId: "IW-WEST-PIER-103",
         zone: "MAIN_LIVING_AND_KITCHEN_1_03",
         baseSourceId: SOURCES.roofPlan.id,
-        previousSourceId: SOURCES.clientRevision20260822.id,
-        sourceId: SOURCES.clientFireplaceRevision20260824.id,
+        previousSourceId: SOURCES.clientFireplaceRevision20260824.id,
+        sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
       },
     ]);
     // The active chimney is only a round pipe on the stove axis; the former
@@ -1341,6 +1445,45 @@ describe("data to geometry contract", () => {
     expect(solidAreaMm2).toBe(31_825_000);
   });
 
+  it("cuts the matching small garage window out of the photographed west gable", () => {
+    const window = HOUSE.facades.west.garageWindow;
+    const loggia = HOUSE.facades.west.loggiaOpening;
+    const segments = segmentFacadeMm(
+      HOUSE.originMm.y,
+      HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
+      HOUSE.eavesElevationMm,
+      [window, loggia].map((opening) => ({
+        id: opening.id,
+        startMm: opening.startYmm,
+        widthMm: opening.widthMm,
+        heightMm: opening.heightMm,
+        sillMm: opening.sillMm,
+      })),
+    );
+
+    expect(segments).toContainEqual({
+      startMm: window.startYmm,
+      endMm: window.startYmm + window.widthMm,
+      bottomMm: 0,
+      topMm: window.sillMm,
+    });
+    expect(segments).toContainEqual({
+      startMm: window.startYmm,
+      endMm: window.startYmm + window.widthMm,
+      bottomMm: window.sillMm + window.heightMm,
+      topMm: HOUSE.eavesElevationMm,
+    });
+    expect(
+      segments.some(
+        ({ startMm, endMm, bottomMm, topMm }) =>
+          startMm < window.startYmm + window.widthMm &&
+          endMm > window.startYmm &&
+          bottomMm < window.sillMm + window.heightMm &&
+          topMm > window.sillMm,
+      ),
+    ).toBe(false);
+  });
+
   it("uses the rough wing opening while preserving the 2 400 mm clear frame", () => {
     const opening = HOUSE.facades.wingEnd.opening;
     const segments = segmentFacadeMm(21_040, 28_040, 3_125, [
@@ -1435,29 +1578,53 @@ describe("documented D1 covered porches and terrace zones", () => {
     expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(3_200);
     expect(loggia.backDoor.widthMm).toBe(1_250);
     expect(loggia.backLarch.endXmm).toBe(loggia.backDoor.startXmm);
-    expect(loggia.faceYmm - loggia.backFaceYmm).toBe(2_953);
-    expect(HOUSE.facades.west.loggiaOpening.startYmm).toBeGreaterThan(
-      loggia.backFaceYmm,
+    expect(loggia.originalBackFaceYmm).toBe(
+      GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
     );
+    expect(loggia.backFaceYmm - loggia.originalBackFaceYmm).toBe(1_000);
+    expect(loggia.faceYmm - loggia.backFaceYmm).toBe(1_953);
+    expect(loggia.revisionSourceId).toBe(
+      SOURCES.clientGarageDepthRevision20260825.id,
+    );
+    expect(
+      HOUSE.facades.west.loggiaOpening.startYmm - loggia.backFaceYmm,
+    ).toBeGreaterThanOrEqual(500);
+    expect(HOUSE.facades.west.loggiaOpening.widthMm).toBe(900);
     expect(
       HOUSE.facades.west.loggiaOpening.startYmm +
         HOUSE.facades.west.loggiaOpening.widthMm,
-    ).toBeLessThan(loggia.faceYmm);
+    ).toBe(loggia.cornerPier.startYmm);
   });
 
-  it("matches the documented 84,35 m² terrace total within drawing tolerance", () => {
+  it("preserves the D1 terrace legend and applies the active one-metre revision", () => {
     const documented = TERRACE_ZONES_D1.reduce(
       (sum, zone) => sum + zone.documentedAreaM2,
       0,
     );
     expect(documented).toBeCloseTo(84.35, 10);
+    expect(HOUSE.originalTerraceAreaM2).toBeCloseTo(documented, 10);
+    const active = TERRACE_ZONES_D1.reduce(
+      (sum, zone) => sum + terraceZoneDesignAreaM2(zone),
+      0,
+    );
+    expect(active).toBeCloseTo(80.15, 10);
+    expect(HOUSE.terraceAreaM2).toBeCloseTo(active, 10);
     for (const zone of TERRACE_ZONES_D1) {
       const derived = terraceZoneAreaM2(zone);
       expect(
-        Math.abs(derived - zone.documentedAreaM2),
+        Math.abs(derived - terraceZoneDesignAreaM2(zone)),
         zone.id,
       ).toBeLessThan(0.75);
     }
+    const garden = TERRACE_ZONES_D1.find(
+      (zone) => zone.id === "TERR-D1-GARDEN",
+    )!;
+    expect(garden.rectsMm[0].y0).toBe(
+      GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+    );
+    expect(garden.activeDesignAreaM2).toBe(30.6);
+    expect(garden.baseSourceId).toBe(SOURCES.floorPlan.id);
+    expect(garden.sourceId).toBe(SOURCES.clientGarageDepthRevision20260825.id);
     const porchZone = TERRACE_ZONES_D1.find((zone) => zone.covered);
     expect(porchZone?.id).toBe("TERR-D1-PORCH");
   });
