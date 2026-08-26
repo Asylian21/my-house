@@ -4,8 +4,15 @@ import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 
+import {
+  hingedDoorSweepIsClear,
+  liftSlideSashLiftM,
+  slidingDoorPathIsClear,
+  type AnimatedDoorRegistration,
+} from "./babylon-doors";
 import type { LayerId, Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
 
@@ -15,6 +22,11 @@ export interface FacadeOpeningStyleInput {
   readonly id: string;
   readonly kind?: OpeningKind;
   readonly frameWidthMm?: number;
+}
+
+export interface OpeningInteraction {
+  readonly id: string;
+  readonly label: string;
 }
 
 export function resolveFacadeOpeningStyle(
@@ -51,6 +63,8 @@ export interface OpeningSpec {
   readonly frameWidthMm?: number;
   /** Entity id attached to pickable parts. */
   readonly entityId?: string;
+  /** Enables GTA-style walk interaction for a door, slider or portal. */
+  readonly interaction?: OpeningInteraction;
   readonly curtains?: boolean;
 }
 
@@ -70,6 +84,7 @@ export interface OpeningBuildContext {
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
   appearance(mesh: AbstractMesh, technical: Material, realistic: Material): AbstractMesh;
+  registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
 }
 
 /** Distance of the glazing plane behind the facade face (mm). */
@@ -128,12 +143,13 @@ function frameRing(
   acrossCenterMm: number,
   material: Material,
 ) {
+  const meshes: Mesh[] = [];
   const barHeight = (topMm - bottomMm) * MM_TO_M;
   for (const [side, alongMm] of [
     ["ľavý", startAlong + barWidthMm / 2],
     ["pravý", endAlong - barWidthMm / 2],
   ] as const) {
-    solid(
+    meshes.push(solid(
       context,
       spec,
       `${spec.name} · ${label} ${side} stĺpik`,
@@ -144,13 +160,13 @@ function frameRing(
       bottomMm * MM_TO_M,
       material,
       { shadow: true },
-    );
+    ));
   }
   for (const [part, elevationMm] of [
     ["spodný", bottomMm],
     ["horný", topMm - barWidthMm],
   ] as const) {
-    solid(
+    meshes.push(solid(
       context,
       spec,
       `${spec.name} · ${label} ${part} priečnik`,
@@ -161,8 +177,9 @@ function frameRing(
       elevationMm * MM_TO_M,
       material,
       { shadow: true },
-    );
+    ));
   }
+  return meshes;
 }
 
 function glassPane(
@@ -193,8 +210,9 @@ function glassPane(
   context.appearance(mesh, context.materials.technicalGlass, context.materials.glass);
   mesh.metadata = { ...(mesh.metadata ?? {}), entityId: spec.entityId };
   mesh.isPickable = true;
-  // Fixed glass stops the walker; only a sliding leaf is passable.
-  mesh.checkCollisions = label !== "posuvné krídlo";
+  // A moving leaf remains physical while its transform slides it out of the
+  // clear opening; collision can no longer be inferred from a Slovak label.
+  mesh.checkCollisions = true;
   context.register(mesh, "building");
   return mesh;
 }
@@ -236,6 +254,21 @@ function handle(
   rosette.isPickable = false;
   context.realisticOnly(rosette);
   context.register(rosette, "building");
+  return [lever, rosette] as const;
+}
+
+function parentAtWorldTransform(meshes: readonly Mesh[], parent: TransformNode) {
+  for (const mesh of meshes) {
+    const worldPosition = mesh.position.clone();
+    mesh.parent = parent;
+    mesh.position.copyFrom(worldPosition.subtract(parent.position));
+  }
+}
+
+function placedWorld(spec: OpeningSpec, alongMm: number, acrossMm: number) {
+  return spec.axis === "Z"
+    ? { x: xM(alongMm), z: zM(acrossMm) }
+    : { x: xM(acrossMm), z: zM(alongMm) };
 }
 
 export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): Mesh[] {
@@ -386,18 +419,132 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     solid(context, spec, `${spec.name} · podlahová koľajnica`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * FRAME_WIDTH_MM, 150, 0.022, 0, context.materials.track);
     const leafWidth = (spec.widthMm - 2 * FRAME_WIDTH_MM + 50) / 2;
     const leaves = [
-      { label: "pevné krídlo", startAlong: start + FRAME_WIDTH_MM, across: outerAcross },
-      { label: "posuvné krídlo", startAlong: end - FRAME_WIDTH_MM - leafWidth, across: innerAcross },
-    ];
+      {
+        label: "pevné krídlo",
+        startAlong: start + FRAME_WIDTH_MM,
+        across: outerAcross,
+        moving: false,
+      },
+      {
+        label: "posuvné krídlo",
+        startAlong: end - FRAME_WIDTH_MM - leafWidth,
+        across: innerAcross,
+        moving: true,
+      },
+    ] as const;
+    const movingRoot = spec.interaction
+      ? new TransformNode(`${spec.interaction.id} · posuvný vozík`, context.scene)
+      : null;
+    const movingMeshes: Mesh[] = [];
+    const movingCollisionMeshes: Mesh[] = [];
+    let movingGlass: Mesh | null = null;
     for (const leaf of leaves) {
       const leafEnd = leaf.startAlong + leafWidth;
-      frameRing(context, spec, leaf.label, leaf.startAlong, leafEnd, 22, spec.heightMm - FRAME_WIDTH_MM, 90, 70, leaf.across, frame);
-      built.push(glassPane(context, spec, leaf.label, leaf.startAlong + 90, leafEnd - 90, 22 + 90, spec.heightMm - FRAME_WIDTH_MM - 90, leaf.across));
+      const leafMeshes = frameRing(
+        context,
+        spec,
+        leaf.label,
+        leaf.startAlong,
+        leafEnd,
+        22,
+        spec.heightMm - FRAME_WIDTH_MM,
+        90,
+        70,
+        leaf.across,
+        frame,
+      );
+      const glass = glassPane(
+        context,
+        spec,
+        leaf.label,
+        leaf.startAlong + 90,
+        leafEnd - 90,
+        22 + 90,
+        spec.heightMm - FRAME_WIDTH_MM - 90,
+        leaf.across,
+      );
+      built.push(glass);
+      if (leaf.moving && movingRoot) {
+        movingGlass = glass;
+        movingMeshes.push(...leafMeshes, glass);
+        movingCollisionMeshes.push(...leafMeshes, glass);
+      }
     }
     // Vertical pull handle on the sliding leaf, both faces.
     const pullAlong = end - FRAME_WIDTH_MM - leafWidth + 45;
     for (const offset of [-52, 52]) {
-      handle(context, spec, pullAlong, innerAcross + outward * offset, 1.05, true);
+      const handles = handle(
+        context,
+        spec,
+        pullAlong,
+        innerAcross + outward * offset,
+        1.05,
+        true,
+      );
+      if (movingRoot) movingMeshes.push(...handles);
+    }
+    if (movingRoot && movingGlass && spec.interaction) {
+      parentAtWorldTransform(movingMeshes, movingRoot);
+      for (const mesh of movingCollisionMeshes) mesh.checkCollisions = true;
+      for (const mesh of movingMeshes) {
+        mesh.metadata = {
+          ...(mesh.metadata ?? {}),
+          entityId: spec.interaction.id,
+          doorId: spec.interaction.id,
+          doorMotion: "SLIDING",
+        };
+      }
+      movingGlass.metadata = {
+        ...(movingGlass.metadata ?? {}),
+        entityId: spec.interaction.id,
+        doorId: spec.interaction.id,
+        doorMotion: "SLIDING",
+        cameraOccluder: true,
+        dynamicCameraOccluder: true,
+      };
+      const movingStartAlong = end - FRAME_WIDTH_MM - leafWidth;
+      const fixedStartAlong = start + FRAME_WIDTH_MM;
+      const travelAlongMm = fixedStartAlong - movingStartAlong;
+      const closedCenterAlong = movingStartAlong + leafWidth / 2;
+      const openCenterAlong = closedCenterAlong + travelAlongMm;
+      const closedCenter = placedWorld(spec, closedCenterAlong, innerAcross);
+      const openCenter = placedWorld(spec, openCenterAlong, innerAcross);
+      const travel = {
+        x: openCenter.x - closedCenter.x,
+        z: openCenter.z - closedCenter.z,
+      };
+      context.registerAnimatedDoor?.({
+        id: spec.interaction.id,
+        label: spec.interaction.label,
+        kind: "SLIDING",
+        interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
+        apply: (progress) => {
+          movingRoot.position.x = travel.x * progress;
+          movingRoot.position.y = liftSlideSashLiftM(progress);
+          movingRoot.position.z = travel.z * progress;
+          for (const mesh of movingMeshes) mesh.computeWorldMatrix(true);
+        },
+        canOpen: (actor, progress = 0) =>
+          slidingDoorPathIsClear(
+            actor,
+            closedCenter,
+            openCenter,
+            leafWidth * MM_TO_M / 2,
+            0.08,
+            progress,
+            1,
+          ),
+        canClose: (actor, progress = 1) =>
+          slidingDoorPathIsClear(
+            actor,
+            closedCenter,
+            openCenter,
+            leafWidth * MM_TO_M / 2,
+            0.08,
+            progress,
+            0,
+          ),
+      });
     }
   }
 
@@ -406,7 +553,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     const leafWidth = Math.round(spec.widthMm * 0.72);
     const leafStart = start + FRAME_WIDTH_MM;
     const sidelightStart = leafStart + leafWidth;
-    solid(
+    const leaf = solid(
       context,
       spec,
       `${spec.name} · plné antracitové dverné krídlo`,
@@ -430,10 +577,89 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
       frame,
     );
     built.push(glassPane(context, spec, "bočný svetlík", sidelightStart + 60, end - FRAME_WIDTH_MM, 0, top - FRAME_WIDTH_MM, planeAcross));
+    const handleMeshes: Mesh[] = [];
     for (const offset of [-40, 40]) {
-      handle(context, spec, sidelightStart - 80, planeAcross + outward * offset, 1.05, true);
+      handleMeshes.push(
+        ...handle(
+          context,
+          spec,
+          sidelightStart - 80,
+          planeAcross + outward * offset,
+          1.05,
+          true,
+        ),
+      );
     }
     solid(context, spec, `${spec.name} · prah`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * FRAME_WIDTH_MM, 150, 0.02, 0, context.materials.track);
+    leaf.checkCollisions = true;
+    if (spec.interaction) {
+      const hingeWorld = placedWorld(spec, leafStart, planeAcross);
+      const hinge = new TransformNode(
+        `${spec.interaction.id} · exteriérový pánt`,
+        context.scene,
+      );
+      hinge.position.set(hingeWorld.x, 0, hingeWorld.z);
+      parentAtWorldTransform([leaf, ...handleMeshes], hinge);
+      for (const mesh of handleMeshes) {
+        mesh.metadata = {
+          ...(mesh.metadata ?? {}),
+          entityId: spec.interaction.id,
+          doorId: spec.interaction.id,
+          doorMotion: "HINGED",
+        };
+        mesh.isPickable = true;
+      }
+      leaf.metadata = {
+        ...(leaf.metadata ?? {}),
+        entityId: spec.interaction.id,
+        doorId: spec.interaction.id,
+        doorMotion: "HINGED",
+        cameraOccluder: true,
+        dynamicCameraOccluder: true,
+      };
+      const openAngleRad =
+        (spec.axis === "Z" ? -outward : outward) * (Math.PI / 2);
+      const closedEndWorld = placedWorld(
+        spec,
+        leafStart + leafWidth,
+        planeAcross,
+      );
+      context.registerAnimatedDoor?.({
+        id: spec.interaction.id,
+        label: spec.interaction.label,
+        kind: "HINGED",
+        interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
+        apply: (progress) => {
+          // Keep the closed transform canonically +0 even on leaves whose
+          // opening direction is negative; strict scene contracts compare it.
+          hinge.rotation.y = progress === 0 ? 0 : openAngleRad * progress;
+          for (const mesh of handleMeshes) {
+            mesh.computeWorldMatrix(true);
+          }
+          leaf.computeWorldMatrix(true);
+        },
+        canOpen: (actor, progress = 0) =>
+          hingedDoorSweepIsClear(
+            actor,
+            hingeWorld,
+            closedEndWorld,
+            openAngleRad,
+            0.048,
+            progress,
+            1,
+          ),
+        canClose: (actor, progress = 1) =>
+          hingedDoorSweepIsClear(
+            actor,
+            hingeWorld,
+            closedEndWorld,
+            openAngleRad,
+            0.048,
+            progress,
+            0,
+          ),
+      });
+    }
   }
 
   if (spec.curtains !== false && spec.kind !== "door") {
