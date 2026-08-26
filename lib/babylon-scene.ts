@@ -1,6 +1,7 @@
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { PhotoDome } from "@babylonjs/core/Helpers/photoDome";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
@@ -37,14 +38,15 @@ import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { LinesMesh } from "@babylonjs/core/Meshes/linesMesh";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
+import { Ray } from "@babylonjs/core/Culling/ray";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
 import "@babylonjs/core/Rendering/edgesRenderer";
-import "@babylonjs/core/Culling/ray";
 import "@babylonjs/core/Collisions/collisionCoordinator";
 import { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
@@ -54,6 +56,7 @@ import {
   GARDEN_POOL,
   HOUSE,
   LAYERS,
+  PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -88,6 +91,8 @@ import {
 } from "./twin-render-frame";
 import {
   deriveJoinedRoofGeometry,
+  deriveJoinedRoofRenderPlan,
+  deriveWingPorchPortalHeadProfiles,
   roofMountTransform,
   wingInnerRoofHeightMm,
   wingOuterRoofHeightMm,
@@ -103,13 +108,34 @@ import {
   buildOpening,
   resolveFacadeOpeningStyle,
   type OpeningKind,
+  type OpeningInteraction,
 } from "./babylon-openings";
+import {
+  BabylonDoorController,
+  INTERACTIVE_DOOR_INVENTORY,
+  type AnimatedDoorRegistration,
+  type DoorInteractionSnapshot,
+} from "./babylon-doors";
+import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
 import {
+  GARAGE_SEQUENCE,
+  GARAGE_VEHICLE,
+  garageActionForState,
+  garageAnimationFrame,
+  garageCinematicRequiresSafePosition,
+  garageDoorPanelPose,
+  garageVehicleSurfaceElevationM,
+  type GarageAnimationFrame,
+  type GarageParkingState,
+  type GarageVehicleAction,
+} from "./twin-garage";
+import {
+  EXTERIOR_RENDER_STABILITY,
   ORBIT_ZOOM,
   clampOrbitRadius,
   deriveRenderQualityProfile,
@@ -125,6 +151,7 @@ import {
   type FlightCommand,
   type NavigationMode,
   type RenderQualityProfile,
+  type WalkSurfaceKind,
 } from "./twin-viewport-contract";
 
 export type CameraPreset =
@@ -155,7 +182,55 @@ export interface SceneSnapshot {
 
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
+
+function markWalkSurface<T extends AbstractMesh>(
+  mesh: T,
+  kind: WalkSurfaceKind,
+  id = mesh.name,
+  elevationOffsetM = 0,
+) {
+  mesh.metadata = {
+    ...(mesh.metadata ?? {}),
+    walkSurface: true,
+    walkSurfaceKind: kind,
+    walkSurfaceId: id,
+    walkSurfaceElevationOffsetM: elevationOffsetM,
+  };
+  return mesh;
+}
 const EAVES_M = HOUSE.eavesElevationMm * MM_TO_M;
+
+export const PARCEL_LABEL_RENDERING_GROUP_ID = 2;
+
+/**
+ * Parcel plaques render after the architectural scene for crisp alpha edges,
+ * but they must keep the depth written by walls and roofs. Babylon clears the
+ * depth buffer between rendering groups by default, which otherwise turns an
+ * outdoor plaque into an x-ray overlay when the camera is inside the house.
+ */
+export function preserveParcelLabelOcclusion(scene: Scene) {
+  scene.setRenderingAutoClearDepthStencil(
+    PARCEL_LABEL_RENDERING_GROUP_ID,
+    false,
+  );
+}
+
+export function createTwinRenderScene(engine: AbstractEngine) {
+  const scene = new Scene(engine);
+  preserveParcelLabelOcclusion(scene);
+  return scene;
+}
+
+export function setSelectionHighlightForNavigation(
+  highlight: Pick<HighlightLayer, "isEnabled">,
+  mode: NavigationMode,
+) {
+  // The glow is useful while selecting the model from orbit, but an effect
+  // layer has no wall-depth context and can reveal an exterior selection from
+  // an interior camera. Immersive cameras therefore render only real geometry.
+  highlight.isEnabled = mode === "orbit";
+}
+
 const point3 = (point: Point2Mm, elevationM = GROUND_Y) =>
   new Vector3(xM(point.x), elevationM, zM(point.y));
 
@@ -191,6 +266,8 @@ function pbrMaterial(
   material.alpha = alpha;
   material.backFaceCulling = true;
   material.environmentIntensity = 1;
+  material.enableSpecularAntiAliasing =
+    EXTERIOR_RENDER_STABILITY.pbrSpecularAntiAliasingEnabled;
   if (alpha < 1) {
     material.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
     material.useAlphaFromAlbedoTexture = false;
@@ -382,7 +459,7 @@ function createGradedPolygonEdgeSkirt(
   return mesh;
 }
 
-function createFlatPolygonWithHoles(
+export function createFlatPolygonWithHoles(
   scene: Scene,
   name: string,
   outerRing: readonly Point2Mm[],
@@ -471,6 +548,12 @@ function createRoofFace(
   data.applyToMesh(mesh);
   return mesh;
 }
+
+/**
+ * Depth of the rendered opaque facade shells. Porch finishes that must stand
+ * proud of a facade's inner face derive their planes from this value.
+ */
+const FACADE_SHELL_THICKNESS_MM = 530;
 
 function boxAtPlan(
   scene: Scene,
@@ -766,6 +849,7 @@ export class TwinSceneController {
   private readonly scene: Scene;
   private readonly orbitCamera: ArcRotateCamera;
   private readonly flightCamera: UniversalCamera;
+  private readonly garageCinematicCamera: UniversalCamera;
   private readonly layerMeshes = new Map<LayerId, AbstractMesh[]>();
   private readonly entityMeshes = new Map<string, AbstractMesh[]>();
   private readonly foundationMeshes = new Map<string, Mesh>();
@@ -782,6 +866,7 @@ export class TwinSceneController {
   private readonly shadowGenerator: ShadowGenerator;
   private readonly cascadedShadowGenerator: CascadedShadowGenerator | null;
   private readonly selectionHighlight: HighlightLayer;
+  private readonly doors: BabylonDoorController;
   private readonly postPipeline: DefaultRenderingPipeline;
   private readonly ssaoPipeline: SSAO2RenderingPipeline | null;
   private readonly poolWaterNormal: Texture;
@@ -809,6 +894,24 @@ export class TwinSceneController {
   private orbitZoomActive = false;
   private resizeFrame = 0;
   private snapshot: SceneSnapshot | null = null;
+  private readonly garageDoorPanels: Mesh[] = [];
+  private garageVehicleRoot: TransformNode | null = null;
+  private readonly garageVehicleWheelSpins: TransformNode[] = [];
+  private readonly garageVehicleFrontSteering: TransformNode[] = [];
+  private garageVehicleBrakeMaterial: PBRMaterial | null = null;
+  private garageVehicleHeadlightMaterial: PBRMaterial | null = null;
+  private garageParkingState: GarageParkingState = "away";
+  private garageVehicleAction: GarageVehicleAction | null = null;
+  private garageVehicleElapsedMs = 0;
+  private garageDoorProgress = 0;
+  private garageVehicleLastPose: GarageAnimationFrame["vehiclePose"] | null = null;
+  private garageVehicleWheelAngle = 0;
+  private garageVehicleSteeringAngle = 0;
+  private garageCinematicActive = false;
+  private garageCinematicReturnCamera:
+    | ArcRotateCamera
+    | UniversalCamera
+    | null = null;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -828,7 +931,10 @@ export class TwinSceneController {
     this.engine.setHardwareScalingLevel(
       this.renderQuality.hardwareScalingLevel,
     );
-    this.scene = new Scene(this.engine);
+    this.scene = createTwinRenderScene(this.engine);
+    this.doors = new BabylonDoorController(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0.18 : 1,
+    );
     this.scene.useRightHandedSystem = true;
     this.scene.skipPointerMovePicking = true;
     this.scene.clearColor = Color4.FromHexString("#c6cfd2ff");
@@ -895,7 +1001,7 @@ export class TwinSceneController {
     this.orbitCamera.panningSensibility = 95;
     this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
     this.orbitCamera.inertia = 0.72;
-    this.orbitCamera.minZ = 0.18;
+    this.orbitCamera.minZ = EXTERIOR_RENDER_STABILITY.orbitNearClipM;
     this.orbitCamera.maxZ = 220;
     this.orbitCamera.fov = gardenCamera.fov;
     this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
@@ -920,7 +1026,21 @@ export class TwinSceneController {
     this.flightCamera.fov = this.orbitCamera.fov;
     this.flightCamera.setTarget(this.orbitCamera.target);
     this.flightCamera.detachControl();
+
+    this.garageCinematicCamera = new UniversalCamera(
+      "garage-street-cinematic-camera",
+      new Vector3(0, 3, 28),
+      this.scene,
+    );
+    this.garageCinematicCamera.inputs.clear();
+    this.garageCinematicCamera.minZ = 0.12;
+    this.garageCinematicCamera.maxZ = 220;
+    this.garageCinematicCamera.detachControl();
+    this.configureGarageCinematicCamera(
+      garageAnimationFrame("park", 0).vehiclePose,
+    );
     this.scene.activeCamera = this.orbitCamera;
+    this.canvas.dataset.garageCameraView = "garage";
     // The walker's chase camera exists from the start so every post-process
     // pipeline can own it; the rigged glTF itself loads on the first walk.
     this.avatar = new AvatarController(this.scene, (mesh) => {
@@ -960,7 +1080,8 @@ export class TwinSceneController {
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.numCascades = 4;
       this.cascadedShadowGenerator.stabilizeCascades = true;
-      this.cascadedShadowGenerator.cascadeBlendPercentage = 0.12;
+      this.cascadedShadowGenerator.cascadeBlendPercentage =
+        EXTERIOR_RENDER_STABILITY.shadowCascadeBlendPercentage;
       this.cascadedShadowGenerator.lambda = 0.72;
       this.cascadedShadowGenerator.shadowMaxZ = 78;
       this.cascadedShadowGenerator.depthClamp = true;
@@ -970,8 +1091,9 @@ export class TwinSceneController {
       this.renderQuality.tier === "ULTRA"
       ? ShadowGenerator.QUALITY_HIGH
       : ShadowGenerator.QUALITY_MEDIUM;
-    this.shadowGenerator.bias = 0.00018;
-    this.shadowGenerator.normalBias = 0.0018;
+    this.shadowGenerator.bias = EXTERIOR_RENDER_STABILITY.shadowBias;
+    this.shadowGenerator.normalBias =
+      EXTERIOR_RENDER_STABILITY.shadowNormalBiasM;
     this.shadowGenerator.transparencyShadow = true;
     this.shadowGenerator.setDarkness(0.14);
 
@@ -982,12 +1104,21 @@ export class TwinSceneController {
     );
     this.selectionHighlight.innerGlow = false;
     this.selectionHighlight.outerGlow = true;
+    setSelectionHighlightForNavigation(
+      this.selectionHighlight,
+      this.navigationMode,
+    );
 
     this.postPipeline = new DefaultRenderingPipeline(
       "architectural-photo-pipeline",
       true,
       this.scene,
-      [this.orbitCamera, this.flightCamera, this.avatar.camera],
+      [
+        this.orbitCamera,
+        this.flightCamera,
+        this.garageCinematicCamera,
+        this.avatar.camera,
+      ],
     );
     this.postPipeline.samples = this.renderQuality.msaaSamples;
     this.postPipeline.fxaaEnabled = this.renderQuality.fxaaEnabled;
@@ -1003,17 +1134,24 @@ export class TwinSceneController {
     this.postPipeline.sharpen.edgeAmount =
       this.renderQuality.sharpenEdgeAmount;
     this.postPipeline.sharpen.colorAmount = 1;
-    // Animated fine grain gives flat outdoor gradients a photographic
-    // texture; it is enabled together with bloom in realistic mode only.
-    this.postPipeline.grainEnabled = false;
+    // Temporal film noise reads as texture shimmer on large architectural
+    // planes. Keep the pipeline configured, but gate it behind the explicit
+    // stability contract so reality mode remains frame-to-frame deterministic.
+    this.postPipeline.grainEnabled =
+      EXTERIOR_RENDER_STABILITY.filmGrainEnabled;
     this.postPipeline.grain.intensity = 9;
-    this.postPipeline.grain.animated = true;
-    const renderCameras = [this.orbitCamera, this.flightCamera];
+    this.postPipeline.grain.animated =
+      EXTERIOR_RENDER_STABILITY.filmGrainAnimated;
+    const renderCameras = [
+      this.orbitCamera,
+      this.flightCamera,
+      this.garageCinematicCamera,
+    ];
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
-    // Construct once even when the initial mobile tier is HIGH. This allows a
-    // later resize/promotion to ULTRA to attach SSAO instead of silently losing
-    // contact shading for the rest of the session.
-    if (SSAO2RenderingPipeline.IsSupported) {
+    // SSAO is intentionally omitted by the exterior stability contract. Its
+    // screen-space kernel spans the roof's 70–105 mm eave stack and creates
+    // false, camera-dependent self-occlusion tiles on the white soffit.
+    if (this.renderQuality.ssaoEnabled && SSAO2RenderingPipeline.IsSupported) {
       try {
         ssaoPipeline = new SSAO2RenderingPipeline(
           "architectural-ssao",
@@ -1265,7 +1403,7 @@ export class TwinSceneController {
       true,
     );
     const paverContext = paverTexture.getContext();
-    paverContext.fillStyle = "#3d4140";
+    paverContext.fillStyle = "#525755";
     paverContext.fillRect(0, 0, 1024, 1024);
     const paverLengthPx = 128;
     const paverWidthPx = 64;
@@ -1280,7 +1418,7 @@ export class TwinSceneController {
         const x = column * paverLengthPx + offset + paverJointInsetPx;
         const y = row * paverWidthPx + paverJointInsetPx;
         const variation = ((row * 31 + column * 47 + 97) % 25) - 12;
-        const base = 126 + variation;
+        const base = 151 + variation;
         const gradient = paverContext.createLinearGradient(
           x,
           y,
@@ -1358,7 +1496,12 @@ export class TwinSceneController {
     this.realisticMaterials.road.albedoColor = Color3.White();
     this.realisticMaterials.road.albedoTexture = paverTexture;
     this.realisticMaterials.road.bumpTexture = paverNormal;
-    this.realisticMaterials.road.environmentIntensity = 0.42;
+    this.realisticMaterials.road.environmentIntensity = 0.56;
+    // These triangulated ground rings use a flipped plan-to-world Z axis. Keep
+    // both faces visible so the realistic PBR pass cannot cull the carriageway
+    // and reveal the broad green terrain below it.
+    this.realisticMaterials.road.backFaceCulling = false;
+    this.realisticMaterials.roadReserve.backFaceCulling = false;
 
     this.poolWaterNormal = new Texture(
       "/assets/textures/pool-water-normal.png",
@@ -1399,6 +1542,9 @@ export class TwinSceneController {
     this.realisticMaterials.deck.albedoColor = Color3.FromHexString("#d7c4aa");
     this.realisticMaterials.grass.albedoColor = Color3.FromHexString("#c6d2bc");
     this.realisticMaterials.terrain.albedoColor = Color3.FromHexString("#aebca5");
+    this.realisticMaterials.roadReserve.albedoColor =
+      Color3.FromHexString("#d6c9ae");
+    this.realisticMaterials.roadReserve.environmentIntensity = 0.72;
     this.applyTexture(
       this.realisticMaterials.fenceMetal,
       "metal-anthracite-albedo",
@@ -1453,14 +1599,17 @@ export class TwinSceneController {
     this.buildCadastre();
     this.buildStreetAndSite();
     this.buildHouse();
+    this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
     this.buildFence();
     this.buildLandscape();
     this.buildUtilities();
     if (this.cascadedShadowGenerator) {
-      this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo = true;
+      this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo =
+        EXTERIOR_RENDER_STABILITY.freezeDynamicShadowCasterBounds;
     }
 
     this.scene.onPointerDown = (event) => {
+      if (this.garageCinematicActive) return;
       if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
       if (
         this.navigationMode === "walk" &&
@@ -1487,6 +1636,7 @@ export class TwinSceneController {
       };
     };
     this.scene.onPointerMove = (event) => {
+      if (this.garageCinematicActive) return;
       const gesture = this.pointerGesture;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       if (
@@ -1508,6 +1658,7 @@ export class TwinSceneController {
       );
     };
     this.scene.onPointerUp = (event, pick) => {
+      if (this.garageCinematicActive) return;
       const gesture = this.pointerGesture;
       this.activePointers.delete(event.pointerId);
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -1529,6 +1680,22 @@ export class TwinSceneController {
       ) {
         const id = pick?.pickedMesh?.metadata?.entityId;
         if (typeof id === "string") this.onSelect(id);
+      } else if (
+        this.navigationMode === "walk" &&
+        isSelectionTap({
+          travelPx: gesture.travelPx,
+          durationMs: performance.now() - gesture.startedAt,
+          maximumPointers: gesture.maximumPointers,
+          button: gesture.button,
+        })
+      ) {
+        const doorId = pick?.pickedMesh?.metadata?.doorId;
+        if (
+          typeof doorId === "string" &&
+          this.doors.getInteraction(doorId)?.id === doorId
+        ) {
+          this.toggleDoorInteraction(true, doorId);
+        }
       }
       this.pointerGesture = null;
     };
@@ -1541,6 +1708,8 @@ export class TwinSceneController {
       passive: false,
     });
     this.scene.onBeforeRenderObservable.add(() => {
+      this.updateGarageParkingAnimation();
+      this.updateDoorMotion();
       this.updateFlightMotion();
       this.updateOrbitZoomGlide();
       this.updateParcelLabelScale();
@@ -1592,11 +1761,27 @@ export class TwinSceneController {
   }
 
   private readonly handleFlightKeyDown = (event: KeyboardEvent) => {
+    if (this.garageCinematicActive) {
+      if (
+        event.code === "KeyE" ||
+        event.code.startsWith("Shift") ||
+        event.code.startsWith("Alt") ||
+        flightCommandForCode(event.code)
+      ) {
+        event.preventDefault();
+      }
+      return;
+    }
     if (
       (this.navigationMode !== "flight" && this.navigationMode !== "walk") ||
       event.metaKey ||
       event.ctrlKey
     ) {
+      return;
+    }
+    if (this.navigationMode === "walk" && event.code === "KeyE") {
+      if (!event.repeat) this.toggleDoorInteraction();
+      event.preventDefault();
       return;
     }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
@@ -1611,6 +1796,14 @@ export class TwinSceneController {
   };
 
   private readonly handleFlightKeyUp = (event: KeyboardEvent) => {
+    if (this.garageCinematicActive) {
+      this.clearFlightInput();
+      return;
+    }
+    if (this.navigationMode === "walk" && event.code === "KeyE") {
+      event.preventDefault();
+      return;
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.delete(event.code);
       return;
@@ -1643,6 +1836,7 @@ export class TwinSceneController {
   private readonly handleCanvasWheel = (event: WheelEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (this.garageCinematicActive) return;
     const pixels = normalizeWheelPixels(event);
     if (!pixels) return;
     if (this.navigationMode === "walk") {
@@ -1694,7 +1888,286 @@ export class TwinSceneController {
     this.orbitZoomTargetM = this.orbitCamera.radius;
   }
 
+  /** Fixed eye on the street with a pan that keeps the moving car in frame. */
+  private configureGarageCinematicCamera(
+    pose: GarageAnimationFrame["vehiclePose"],
+  ) {
+    const mobile = this.canvas.clientWidth < 600;
+    this.garageCinematicCamera.position.set(
+      xM(GARAGE_VEHICLE.route.queueMm.x) + (mobile ? 2.2 : 3.4),
+      mobile ? 3.25 : 2.85,
+      zM(GARAGE_VEHICLE.route.streetStartMm.y) + (mobile ? 11.2 : 7.2),
+    );
+    this.garageCinematicCamera.fov = mobile ? 0.72 : 0.58;
+    this.garageCinematicCamera.setTarget(
+      new Vector3(
+        xM(pose.centerMm.x),
+        garageVehicleSurfaceElevationM(pose.centerMm) + 0.82,
+        zM(pose.centerMm.y),
+      ),
+    );
+  }
+
+  private ensureGarageCinematicAvatarClearance() {
+    const pose = this.avatar.pose;
+    const pointMm = {
+      x: Math.round(pose.x * 1_000 + SCENE_CENTER_MM.x),
+      y: Math.round(SCENE_CENTER_MM.y - pose.z * 1_000),
+    };
+    if (!garageCinematicRequiresSafePosition(pointMm)) {
+      this.canvas.dataset.garageAvatarRelocated = "false";
+      return;
+    }
+    const garage = INTERIOR_ROOMS.find(
+      (room) => room.id === GARAGE_VEHICLE.roomId,
+    );
+    if (!garage) return;
+    const standing = garage.standingPointMm;
+    const look = walkLookTargetMm(garage);
+    const yaw = Math.atan2(
+      xM(look.x) - xM(standing.x),
+      zM(look.y) - zM(standing.y),
+    );
+    this.avatar.place(xM(standing.x), zM(standing.y), yaw);
+    this.flightHeading = { x: Math.sin(yaw), z: Math.cos(yaw) };
+    this.applyWalkView();
+    this.canvas.dataset.garageAvatarRelocated = "true";
+  }
+
+  private beginGarageCinematic() {
+    if (
+      this.garageCinematicActive ||
+      this.navigationMode !== "walk" ||
+      this.getWalkRoom()?.id !== GARAGE_VEHICLE.roomId
+    ) {
+      return false;
+    }
+    this.ensureGarageCinematicAvatarClearance();
+    const active = this.scene.activeCamera;
+    if (active !== this.avatar.camera && active !== this.flightCamera) {
+      return false;
+    }
+    this.clearFlightInput();
+    this.activePointers.clear();
+    this.pointerGesture = null;
+    active.detachControl();
+    this.garageCinematicReturnCamera = active;
+    this.garageCinematicActive = true;
+    this.configureGarageCinematicCamera(
+      garageAnimationFrame(
+        garageActionForState(this.garageParkingState) ?? "park",
+        0,
+      ).vehiclePose,
+    );
+    this.scene.activeCamera = this.garageCinematicCamera;
+    this.canvas.dataset.garageCameraView = "street";
+    return true;
+  }
+
+  private endGarageCinematic(restoreControl = true) {
+    if (!this.garageCinematicActive) return;
+    const returnCamera = this.garageCinematicReturnCamera;
+    this.garageCinematicActive = false;
+    this.garageCinematicReturnCamera = null;
+    this.garageCinematicCamera.detachControl();
+    this.clearFlightInput();
+    this.activePointers.clear();
+    this.pointerGesture = null;
+    this.canvas.dataset.garageCameraView = "garage";
+    if (!restoreControl || !returnCamera) return;
+    if (returnCamera === this.avatar.camera) {
+      this.flightCamera.detachControl();
+      this.avatar.setFirstPerson(false);
+      this.scene.activeCamera = returnCamera;
+      returnCamera.attachControl(this.canvas, true);
+    } else {
+      this.avatar.camera.detachControl();
+      this.avatar.setFirstPerson(true);
+      this.scene.activeCamera = returnCamera;
+      returnCamera.attachControl(false);
+    }
+    this.canvas.focus({ preventScroll: true });
+  }
+
+  private applyGarageAnimationFrame(frame: GarageAnimationFrame) {
+    const previousState = this.garageParkingState;
+    const stateChanged = frame.state !== previousState;
+    if (
+      stateChanged &&
+      (frame.state === "opening-to-park" ||
+        frame.state === "opening-to-leave")
+    ) {
+      this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, true);
+    }
+    if (
+      stateChanged &&
+      (frame.state === "closing-after-park" ||
+        frame.state === "closing-after-leave")
+    ) {
+      this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false);
+    }
+
+    const root = this.garageVehicleRoot;
+    if (root) {
+      root.setEnabled(frame.vehicleVisible);
+      if (frame.vehicleVisible) {
+        const current = frame.vehiclePose;
+        const previous = this.garageVehicleLastPose;
+        if (previous) {
+          const distanceM =
+            Math.hypot(
+              current.centerMm.x - previous.centerMm.x,
+              current.centerMm.y - previous.centerMm.y,
+            ) * MM_TO_M;
+          const direction = current.motion === "reverse" ? -1 : 1;
+          this.garageVehicleWheelAngle +=
+            (distanceM / 0.345) * direction;
+          if (distanceM > 0.005 && current.motion !== "still") {
+            let headingDelta = current.headingRad - previous.headingRad;
+            while (headingDelta > Math.PI) headingDelta -= Math.PI * 2;
+            while (headingDelta < -Math.PI) headingDelta += Math.PI * 2;
+            const wheelbaseM = GARAGE_VEHICLE.dimensionsMm.wheelbase * MM_TO_M;
+            this.garageVehicleSteeringAngle = Math.max(
+              -0.48,
+              Math.min(
+                0.48,
+                Math.atan((wheelbaseM * headingDelta) / (distanceM * direction)),
+              ),
+            );
+          }
+        } else {
+          this.garageVehicleSteeringAngle = 0;
+        }
+        root.position.set(
+          xM(current.centerMm.x),
+          garageVehicleSurfaceElevationM(current.centerMm) -
+            GARAGE_VEHICLE.wheelGroundOffsetM,
+          zM(current.centerMm.y),
+        );
+        root.rotation.y = current.headingRad;
+        for (const steering of this.garageVehicleFrontSteering) {
+          steering.rotation.y = this.garageVehicleSteeringAngle;
+        }
+        for (const wheel of this.garageVehicleWheelSpins) {
+          wheel.rotation.z = this.garageVehicleWheelAngle;
+        }
+        this.avatar.invalidateDynamicCameraOccluders();
+      }
+    }
+    if (this.garageVehicleBrakeMaterial) {
+      const sequenceRunning = Boolean(this.garageVehicleAction) && !frame.complete;
+      const intensity = !frame.vehicleVisible
+        ? 0
+        : sequenceRunning && frame.vehiclePose.motion === "still"
+          ? 0.94
+          : sequenceRunning
+            ? 0.28
+            : frame.state === "parked"
+              ? 0.08
+              : 0;
+      this.garageVehicleBrakeMaterial.emissiveColor =
+        Color3.FromHexString("#d3121c").scale(intensity);
+    }
+    if (this.garageVehicleHeadlightMaterial) {
+      const intensity =
+        frame.vehicleVisible && this.garageVehicleAction && !frame.complete
+          ? 0.72
+          : frame.state === "parked"
+            ? 0.06
+            : 0;
+      this.garageVehicleHeadlightMaterial.emissiveColor =
+        Color3.FromHexString("#bddfff").scale(intensity);
+    }
+    this.garageVehicleLastPose = frame.vehicleVisible
+      ? frame.vehiclePose
+      : null;
+    this.garageParkingState = frame.state;
+    this.garageDoorProgress = frame.doorProgress;
+    this.canvas.dataset.garageParkingState = frame.state;
+    this.canvas.dataset.garageVehicleVisible = frame.vehicleVisible
+      ? "true"
+      : "false";
+    if (this.garageCinematicActive) {
+      this.configureGarageCinematicCamera(frame.vehiclePose);
+    }
+  }
+
+  /** Render-loop sequence; capped frame deltas prevent jumps after tab sleep. */
+  private updateGarageParkingAnimation() {
+    const action = this.garageVehicleAction;
+    if (!action) {
+      this.canvas.dataset.garageParkingState = this.garageParkingState;
+      return;
+    }
+    this.garageVehicleElapsedMs += Math.min(
+      50,
+      Math.max(0, this.engine.getDeltaTime()),
+    );
+    const frame = garageAnimationFrame(action, this.garageVehicleElapsedMs);
+    this.applyGarageAnimationFrame(frame);
+    if (!frame.complete) return;
+
+    const door = this.doors
+      .debugState()
+      .find(({ id }) => id === GARAGE_VEHICLE.garageDoorId);
+    if (door && door.progress > 0.0001) {
+      // If a person stood in the closing plane, preserve the safety stop and
+      // retry only after the doorway becomes clear. Never restart an active
+      // close animation on every frame.
+      this.garageParkingState =
+        action === "park" ? "closing-after-park" : "closing-after-leave";
+      this.canvas.dataset.garageParkingState = this.garageParkingState;
+      if (door.phase === "OPEN") {
+        this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false);
+      }
+      return;
+    }
+    this.garageVehicleAction = null;
+    this.endGarageCinematic();
+  }
+
+  /** Door transforms and collision matrices settle before walker movement. */
+  private updateDoorMotion() {
+    if (this.navigationMode === "walk") {
+      const pose = this.avatar.pose;
+      const fallback = new Vector3(
+        Math.sin(pose.yaw),
+        0,
+        Math.cos(pose.yaw),
+      );
+      const cameraForward = this.garageCinematicActive
+        ? fallback
+        : (this.scene.activeCamera?.getForwardRay(1).direction ?? fallback);
+      const facingLength = Math.hypot(
+        cameraForward.x,
+        cameraForward.y,
+        cameraForward.z,
+      );
+      this.doors.setActor({
+        position: { x: pose.x, y: this.avatar.eyePosition.y, z: pose.z },
+        facing:
+          facingLength > 1e-6
+            ? {
+                x: cameraForward.x / facingLength,
+                y: cameraForward.y / facingLength,
+                z: cameraForward.z / facingLength,
+              }
+            : { x: fallback.x, y: 0, z: fallback.z },
+      });
+    } else {
+      this.doors.setActor(null);
+    }
+    if (this.doors.update(this.engine.getDeltaTime())) {
+      this.avatar.invalidateDynamicCameraOccluders();
+    }
+    const interaction = this.doors.getInteraction();
+    this.canvas.dataset.doorCount = this.doors.count.toString();
+    this.canvas.dataset.doorTarget = interaction?.id ?? "";
+    this.canvas.dataset.doorPhase = interaction?.phase ?? "";
+  }
+
   private updateFlightMotion() {
+    if (this.garageCinematicActive) return;
     if (this.navigationMode === "walk") {
       this.updateWalkMotion();
       return;
@@ -1989,7 +2462,11 @@ export class TwinSceneController {
       { width: 240, height: 200, subdivisions: 2 },
       this.scene,
     );
-    terrain.position.set(0, -0.13, 0);
+    terrain.position.set(
+      0,
+      EXTERIOR_RENDER_STABILITY.contextTerrainElevationM,
+      0,
+    );
     this.appearance(
       terrain,
       this.materials.terrain,
@@ -1997,6 +2474,7 @@ export class TwinSceneController {
     );
     terrain.receiveShadows = true;
     terrain.isPickable = false;
+    markWalkSurface(terrain, "terrain", "terrain-context");
 
     const minor = Color3.FromHexString("#313a37");
     const major = Color3.FromHexString("#55605c");
@@ -2044,8 +2522,8 @@ export class TwinSceneController {
           this.scene,
           "Parcela 6012/26 · 753 m²",
           localRing,
-          [SITE_SURFACES.sideEntryApproach.privatePolygonMm],
-          GROUND_Y,
+          PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
+          EXTERIOR_RENDER_STABILITY.parcelGrassElevationM,
         );
         this.appearance(
           fill,
@@ -2053,6 +2531,7 @@ export class TwinSceneController {
           this.realisticMaterials.grass,
         );
         fill.receiveShadows = true;
+        markWalkSurface(fill, "exterior", "parcel-6012-26");
         this.register(fill, "cadastre");
       }
 
@@ -2117,7 +2596,7 @@ export class TwinSceneController {
         label.rotation.y = longestParcelAxisYaw(localRing);
         label.isPickable = false;
         label.receiveShadows = false;
-        label.renderingGroupId = 2;
+        label.renderingGroupId = PARCEL_LABEL_RENDERING_GROUP_ID;
         label.material = parcelLabelMaterial(
           this.scene,
           parcel,
@@ -2135,7 +2614,7 @@ export class TwinSceneController {
     for (const [index, ring] of ROAD_CONTEXT.frontReserveSurfacePolygonsMm.entries()) {
       const roadReserve = createGradedPolygon(
         this.scene,
-        `Cestná rezerva 6012/1 · zelený diel ${index + 1} s otvormi pre vstupy`,
+        `Cestná rezerva 6012/1 · hlinená krajnica ${index + 1} s otvormi pre vstupy`,
         ring,
         (point) =>
           -0.02 -
@@ -2146,9 +2625,14 @@ export class TwinSceneController {
       this.appearance(
         roadReserve,
         this.materials.road,
-        this.realisticMaterials.grass,
+        this.realisticMaterials.roadReserve,
       );
       roadReserve.receiveShadows = true;
+      markWalkSurface(
+        roadReserve,
+        "exterior",
+        `front-road-reserve-${index + 1}`,
+      );
       this.register(roadReserve, "street", ROAD_CONTEXT.id);
     }
 
@@ -2156,38 +2640,128 @@ export class TwinSceneController {
       this.scene,
       "Miestna komunikácia 6012/1 · čelná vozovka po hranu odvodenú z C3",
       ROAD_CONTEXT.frontagePolygonMm,
-      -0.115,
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM,
       paverRepeatMm,
     );
     this.appearance(frontage, this.materials.road, this.realisticMaterials.road);
     frontage.receiveShadows = true;
+    markWalkSurface(frontage, "exterior", "front-road");
     this.register(frontage, "street", ROAD_CONTEXT.id);
 
     const corner = createFlatPolygon(
       this.scene,
       "Miestna komunikácia 6012/1 · rohová vetva v katastrálnom koridore",
       ROAD_CONTEXT.cornerCarriagewayPolygonMm,
-      -0.114,
+      EXTERIOR_RENDER_STABILITY.roadContextSurfaceElevationM,
       paverRepeatMm,
     );
     this.appearance(corner, this.materials.road, this.realisticMaterials.road);
     corner.receiveShadows = true;
+    markWalkSurface(corner, "exterior", "corner-road");
     this.register(corner, "street", ROAD_CONTEXT.id);
 
     for (const [index, ring] of ROAD_CONTEXT.cornerReserveSurfacePolygonsMm.entries()) {
       const sideReserve = createFlatPolygon(
         this.scene,
-        `Bočná cestná rezerva 6012/1 · zelený diel ${index + 1} s otvorom EAST-03`,
+        `Bočná cestná rezerva 6012/1 · hlinená krajnica ${index + 1} s otvorom EAST-03`,
         ring,
         -0.02,
       );
       this.appearance(
         sideReserve,
         this.materials.road,
-        this.realisticMaterials.grass,
+        this.realisticMaterials.roadReserve,
       );
       sideReserve.receiveShadows = true;
+      markWalkSurface(
+        sideReserve,
+        "exterior",
+        `side-road-reserve-${index + 1}`,
+      );
       this.register(sideReserve, "street", ROAD_CONTEXT.id);
+    }
+
+    for (const [index, cluster] of ROAD_CONTEXT.visualReference.vergeClustersMm.entries()) {
+      this.buildPlantCard(
+        `Riedka náletová vegetácia krajnice ${index + 1} · fotografia stavebníka`,
+        cluster.x,
+        cluster.y,
+        0.46 * cluster.scale,
+        0.68 * cluster.scale,
+        this.realisticMaterials.plantGrass,
+        index * 0.73,
+      );
+    }
+
+    for (const [index, pole] of ROAD_CONTEXT.streetLighting.polesMm.entries()) {
+      const lighting = ROAD_CONTEXT.streetLighting;
+      const poleHeightM = lighting.poleHeightMm * MM_TO_M;
+      const poleMesh = CreateCylinder(
+        `Stožiar verejného osvetlenia ${index + 1} · fotografia stavebníka`,
+        {
+          height: poleHeightM,
+          diameter: lighting.poleDiameterMm * MM_TO_M,
+          tessellation: 24,
+        },
+        this.scene,
+      );
+      poleMesh.position.set(
+        xM(pole.x),
+        -0.11 + poleHeightM / 2,
+        zM(pole.y),
+      );
+      poleMesh.isPickable = false;
+      this.appearance(
+        poleMesh,
+        this.materials.paving,
+        this.realisticMaterials.fenceTrack,
+      );
+      this.castShadow(poleMesh);
+      this.register(poleMesh, "street", ROAD_CONTEXT.id);
+
+      const arm = boxAtPlan(
+        this.scene,
+        `Rameno verejného osvetlenia ${index + 1}`,
+        { x: pole.x, y: pole.y + lighting.armLengthMm / 2 },
+        lighting.poleDiameterMm,
+        lighting.armLengthMm,
+        0.075,
+        -0.11 + poleHeightM - 0.04,
+      );
+      arm.isPickable = false;
+      this.appearance(
+        arm,
+        this.materials.paving,
+        this.realisticMaterials.fenceTrack,
+      );
+      this.castShadow(arm);
+      this.register(arm, "street", ROAD_CONTEXT.id);
+
+      const luminaire = boxAtPlan(
+        this.scene,
+        `LED hlavica verejného osvetlenia ${index + 1}`,
+        {
+          x: pole.x,
+          y:
+            pole.y +
+            lighting.armLengthMm +
+            lighting.luminaireLengthMm / 2 -
+            90,
+        },
+        165,
+        lighting.luminaireLengthMm,
+        0.085,
+        -0.11 + poleHeightM - 0.065,
+      );
+      luminaire.rotation.x = -0.035;
+      luminaire.isPickable = false;
+      this.appearance(
+        luminaire,
+        this.materials.fence,
+        this.realisticMaterials.fenceMetal,
+      );
+      this.castShadow(luminaire);
+      this.register(luminaire, "street", ROAD_CONTEXT.id);
     }
 
     const frontOpenings = [
@@ -2417,6 +2991,7 @@ export class TwinSceneController {
           : this.realisticMaterials.pavingEntry,
       );
       paving.receiveShadows = true;
+      markWalkSurface(paving, "exterior", `site-surface-${surface.id}`);
       this.register(paving, "street", surface.id);
 
       if (isStreetRamp || isSideStreetRamp) {
@@ -3096,46 +3671,8 @@ export class TwinSceneController {
       }
     }
 
-    const garageDoorSpec = HOUSE.facades.front.garageDoor;
-    const garageDoor = boxAtPlan(
-      this.scene,
-      "Garážová brána od ulice · 3 300 × 2 400 mm · RAL 7016",
-      {
-        x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
-        y: HOUSE.facades.front.faceYmm - 36,
-      },
-      garageDoorSpec.widthMm,
-      80,
-      2.4,
-      0,
-    );
-    this.appearance(
-      garageDoor,
-      this.materials.glass,
-      this.realisticMaterials.roofEdge,
-    );
-    garageDoor.receiveShadows = true;
-    garageDoor.isPickable = false;
-    this.register(garageDoor, "building");
-
-    for (let levelM = 0.3; levelM < 2.4; levelM += 0.3) {
-      const joint = boxAtPlan(
-        this.scene,
-        `Horizontálna škára garážovej brány ${levelM.toFixed(1)}`,
-        {
-          x: garageDoorSpec.startXmm + garageDoorSpec.widthMm / 2,
-          y: HOUSE.facades.front.faceYmm - 82,
-        },
-        garageDoorSpec.widthMm - 60,
-        34,
-        0.018,
-        levelM,
-      );
-      joint.material = this.realisticMaterials.glassFrame;
-      joint.isPickable = false;
-      this.realisticOnly(joint);
-      this.register(joint, "building");
-    }
+    this.buildInteractiveGarageDoor();
+    this.buildGarageVehicle();
 
     for (const [index, flueSpec] of HOUSE.flues.entries()) {
       const center = flueSpec.centerMm;
@@ -3331,15 +3868,113 @@ export class TwinSceneController {
     }
   }
 
+  /** Sectional door follows vertical tracks, a curved rail and the garage ceiling. */
+  private buildInteractiveGarageDoor() {
+    const spec = HOUSE.facades.front.garageDoor;
+    const door = GARAGE_VEHICLE.door;
+    const panelCount = door.panelCount;
+    const panelPitchM = door.panelHeightM;
+    const closedWorldZ = zM(door.faceYmm);
+
+    for (let index = 0; index < panelCount; index += 1) {
+      const panel = boxAtPlan(
+        this.scene,
+        `GARAGE-DOOR · sekcia ${index + 1} z ${panelCount}`,
+        {
+          x: spec.startXmm + spec.widthMm / 2,
+          y: HOUSE.facades.front.faceYmm - 36,
+        },
+        spec.widthMm,
+        76,
+        panelPitchM - 0.009,
+        index * panelPitchM + 0.0045,
+      );
+      this.appearance(
+        panel,
+        this.materials.glass,
+        this.realisticMaterials.roofEdge,
+      );
+      panel.receiveShadows = true;
+      panel.isPickable = true;
+      panel.checkCollisions = true;
+      panel.metadata = {
+        ...(panel.metadata ?? {}),
+        entityId: spec.id,
+        doorId: spec.id,
+        doorMotion: "OVERHEAD",
+        cameraOccluder: true,
+        dynamicCameraOccluder: true,
+      };
+      this.castShadow(panel);
+      this.register(panel, "building", spec.id);
+      this.garageDoorPanels.push(panel);
+    }
+
+    const apply = (progress: number) => {
+      for (const [index, panel] of this.garageDoorPanels.entries()) {
+        const pose = garageDoorPanelPose(index, progress);
+        panel.position.y = pose.elevationM;
+        panel.position.z = closedWorldZ - pose.inwardOffsetM;
+        panel.rotation.x = -pose.pitchRad;
+        panel.computeWorldMatrix(true);
+      }
+    };
+
+    this.doors.register({
+      id: spec.id,
+      label: "Sekčná garážová brána",
+      kind: "OVERHEAD",
+      interactionPoint: {
+        x: xM(spec.startXmm + spec.widthMm / 2),
+        z: closedWorldZ,
+      },
+      apply,
+      canClose: (actor) => {
+        const halfWidthM = spec.widthMm * MM_TO_M / 2 + 0.38;
+        const centerX = xM(spec.startXmm + spec.widthMm / 2);
+        // A sectional leaf travels above head height once it leaves the
+        // threshold. Only the descending facade plane can sweep through the
+        // walker; standing safely inside the garage must not block closing.
+        const insideTrack =
+          actor.position.z <= closedWorldZ + 0.42 &&
+          actor.position.z >= closedWorldZ - 0.62;
+        return !(
+          Math.abs(actor.position.x - centerX) < halfWidthM && insideTrack
+        );
+      },
+    });
+  }
+
+  /** Detailed procedural 2024+ Superb Combi visual on the parking root. */
+  private buildGarageVehicle() {
+    const visual = buildGarageSuperbVehicle(this.scene, {
+      realisticOnly: (mesh) => this.realisticOnly(mesh),
+      castShadow: (mesh) => this.castShadow(mesh),
+      register: (mesh) =>
+        this.register(mesh, "building", GARAGE_VEHICLE.id),
+    });
+    visual.root.position.set(
+      xM(GARAGE_VEHICLE.route.streetStartMm.x),
+      garageVehicleSurfaceElevationM(GARAGE_VEHICLE.route.streetStartMm) -
+        GARAGE_VEHICLE.wheelGroundOffsetM,
+      zM(GARAGE_VEHICLE.route.streetStartMm.y),
+    );
+    this.garageVehicleRoot = visual.root;
+    this.garageVehicleWheelSpins.push(...visual.wheelSpins);
+    this.garageVehicleFrontSteering.push(...visual.frontSteering);
+    this.garageVehicleHeadlightMaterial = visual.headlightMaterial;
+    this.garageVehicleBrakeMaterial = visual.brakeMaterial;
+  }
+
   private buildJoinedRoof() {
     const roof = deriveJoinedRoofGeometry();
+    const renderPlan = deriveJoinedRoofRenderPlan(roof);
 
-    for (const face of roof.faces) {
-      const faceVertices = face.vertexIndices.map((index) => roof.vertices[index]);
+    for (const face of renderPlan.topFaces) {
       const panel = createRoofFace(
         this.scene,
-        `Spojená strešná rovina · ${face.id}`,
-        faceVertices,
+        `Spojená strešná rovina · ${face.faceId}`,
+        face.vertices,
       );
       this.appearance(panel, this.materials.roof, this.realisticMaterials.roof);
       panel.metadata = { ...(panel.metadata ?? {}), cameraOccluder: true };
@@ -3349,11 +3984,13 @@ export class TwinSceneController {
       panel.edgesColor = Color4.FromHexString("#aeb8bb66");
       panel.edgesWidth = 0.65;
       this.register(panel, "building", HOUSE.id);
+    }
 
+    for (const face of renderPlan.genericUndersideFaces) {
       const underside = createRoofFace(
         this.scene,
-        `Súvislý podhľad strešnej roviny · ${face.id}`,
-        faceVertices.map((vertex) => ({
+        `Súvislý podhľad strešnej roviny · ${face.faceId}`,
+        face.vertices.map((vertex) => ({
           ...vertex,
           elevationMm: vertex.elevationMm - 70,
         })),
@@ -3370,7 +4007,7 @@ export class TwinSceneController {
       this.register(underside, "building", HOUSE.id);
     }
 
-    for (const seamSegment of roof.seamSegments) {
+    for (const seamSegment of renderPlan.seamSegments) {
       const seam = this.createRoofLine(
         `Orezaný falc · ${seamSegment.id}`,
         seamSegment.start,
@@ -3380,6 +4017,10 @@ export class TwinSceneController {
       );
       seam.material = this.realisticMaterials.roofEdge;
       seam.isPickable = false;
+      seam.addLODLevel(
+        EXTERIOR_RENDER_STABILITY.roofSeamVisibilityDistanceM,
+        null,
+      );
       this.realisticOnly(seam);
       this.register(seam, "building");
     }
@@ -3455,10 +4096,21 @@ export class TwinSceneController {
     const livingEastXmm = 27541;
     const gableWindow = HOUSE.porches.wingEnd.gableWindow;
     const ringBeamTopMm = HOUSE.porches.wingEnd.ringBeam.topMm;
+    // 26. 8. 2026: the extruded gable used to end exactly on the roof plane,
+    // so its 56 mm top strip was coplanar with the metal sheet and z-fought
+    // as larch stripes inside the roof. Every roof-contact edge now stops one
+    // ceiling clearance lower — the lowered edge hides inside the boarded
+    // soffit slab (roof −33…−87 mm), so no gap ever becomes visible.
+    const roofClearanceMm = HOUSE.porches.wingEnd.ceilingClearanceMm;
+    // Plan-x run the lowered roof line needs to climb back up to the eaves
+    // crown; keeps both corner profiles simple instead of dipping below it.
+    const eaveCrossingMm =
+      (roofClearanceMm * HOUSE.roof.wingHalfSpanMm) /
+      (HOUSE.ridgeElevationMm - HOUSE.eavesElevationMm);
     const roofAt = (xMm: number) =>
-      xMm < (wingLeftX + wingRightX) / 2
+      (xMm < (wingLeftX + wingRightX) / 2
         ? wingInnerRoofHeightMm(xMm)
-        : wingOuterRoofHeightMm(xMm);
+        : wingOuterRoofHeightMm(xMm)) - roofClearanceMm;
     const vaultHalfSpan = (wingLeftX + wingRightX) / 2 - livingWestXmm;
     const vaultAtX = (xMm: number) =>
       vaultRidgeMm -
@@ -3469,7 +4121,7 @@ export class TwinSceneController {
     // triangular light: west of it, the wedge above its hypotenuse, and east.
     const larchPieces: ReadonlyArray<readonly { readonly alongMm: number; readonly elevationMm: number }[]> = [
       [
-        { alongMm: wingLeftX, elevationMm: HOUSE.eavesElevationMm },
+        { alongMm: wingLeftX + eaveCrossingMm, elevationMm: HOUSE.eavesElevationMm },
         { alongMm: gableWindow.startXmm, elevationMm: roofAt(gableWindow.startXmm) },
         { alongMm: gableWindow.startXmm, elevationMm: ringBeamTopMm },
         { alongMm: livingWestXmm, elevationMm: ringBeamTopMm },
@@ -3485,8 +4137,11 @@ export class TwinSceneController {
         { alongMm: gableWindow.endXmm, elevationMm: ringBeamTopMm },
         { alongMm: livingEastXmm, elevationMm: ringBeamTopMm },
         { alongMm: livingEastXmm, elevationMm: HOUSE.eavesElevationMm },
-        { alongMm: wingRightX, elevationMm: HOUSE.eavesElevationMm },
-        { alongMm: (wingLeftX + wingRightX) / 2, elevationMm: HOUSE.ridgeElevationMm },
+        { alongMm: wingRightX - eaveCrossingMm, elevationMm: HOUSE.eavesElevationMm },
+        {
+          alongMm: (wingLeftX + wingRightX) / 2,
+          elevationMm: HOUSE.ridgeElevationMm - roofClearanceMm,
+        },
         { alongMm: gableWindow.endXmm, elevationMm: roofAt(gableWindow.endXmm) },
       ],
     ];
@@ -3750,6 +4405,11 @@ export class TwinSceneController {
     }
 
     for (const gable of roof.gables) {
+      // The wing-end roof edge belongs to the white P04 rake boards. The
+      // metal tubes used to sit buried inside that rake volume and their
+      // 38 mm radius poked through its front face as dark flickering arcs,
+      // so only the west gable keeps the metal trim.
+      if (gable.id === "WING_END_GABLE") continue;
       const [leftIndex, ridgeIndex, rightIndex] = gable.vertexIndices;
       for (const [segmentIndex, [startIndex, endIndex]] of [
         [0, [leftIndex, ridgeIndex]],
@@ -3956,6 +4616,13 @@ export class TwinSceneController {
     ];
     const westOpenings: readonly FacadeOpeningMm[] = [
       {
+        id: HOUSE.facades.west.garageWindow.id,
+        startMm: HOUSE.facades.west.garageWindow.startYmm,
+        widthMm: HOUSE.facades.west.garageWindow.widthMm,
+        heightMm: HOUSE.facades.west.garageWindow.heightMm,
+        sillMm: HOUSE.facades.west.garageWindow.sillMm,
+      },
+      {
         id: HOUSE.facades.west.loggiaOpening.id,
         startMm: HOUSE.facades.west.loggiaOpening.startYmm,
         widthMm: HOUSE.facades.west.loggiaOpening.widthMm,
@@ -4078,6 +4745,9 @@ export class TwinSceneController {
         style.kind,
         530,
         style.frameWidthMm,
+        opening.id === "FRONT-ENTRY"
+          ? { id: opening.id, label: "Hlavné vstupné dvere" }
+          : undefined,
       );
     }
     for (const opening of HOUSE.facades.garden.openings) {
@@ -4093,6 +4763,9 @@ export class TwinSceneController {
         this.realisticMaterials.wall,
         this.realisticMaterials.glassFrameWood,
         "sliding",
+        530,
+        undefined,
+        { id: opening.id, label: `Terasové posuvné dvere ${opening.id}` },
       );
     }
     for (const opening of eastOpenings) {
@@ -4107,8 +4780,25 @@ export class TwinSceneController {
         this.realisticMaterials.wall,
         this.realisticMaterials.glassFrame,
         opening.id === "EAST-03" ? "door" : "window",
+        530,
+        opening.id === "EAST-03"
+          ? { id: opening.id, label: "Bočné dvere technickej miestnosti" }
+          : undefined,
       );
     }
+    const garageSideWindow = HOUSE.facades.west.garageWindow;
+    this.buildWindowOnXFace(
+      `Bočné garážové okno ${garageSideWindow.id} · podľa FRONT-02`,
+      HOUSE.facades.west.faceXmm,
+      garageSideWindow.startYmm + garageSideWindow.widthMm / 2,
+      garageSideWindow.widthMm,
+      garageSideWindow.heightMm,
+      garageSideWindow.sillMm,
+      -1,
+      this.realisticMaterials.wall,
+      this.realisticMaterials.glassFrame,
+      "window",
+    );
     // Wing west sliding glazing onto the terrace walkway.
     this.buildWindowOnXFace(
       "Terasové posuvné presklenie 2 250 · D1.1.002",
@@ -4122,6 +4812,10 @@ export class TwinSceneController {
       this.realisticMaterials.glassFrameWood,
       "sliding",
       500,
+      {
+        id: HOUSE.facades.wingWest.opening.id,
+        label: "Posuvné dvere z obývacej izby na terasu",
+      },
     );
   }
 
@@ -4138,10 +4832,12 @@ export class TwinSceneController {
       register: (mesh, layer, entityId) => this.register(mesh, layer, entityId),
       realisticOnly: (mesh) => this.realisticOnly(mesh),
       castShadow: (mesh) => this.castShadow(mesh),
+      registerAnimatedDoor: (door: AnimatedDoorRegistration) =>
+        this.doors.register(door),
     });
   }
 
-  /** Garden loggia recessed 2 953 mm behind the garden facade (D1.1.002). */
+  /** Active garden loggia, shortened to 1 953 mm by the garage-depth revision. */
   private buildGardenLoggia() {
     const loggia = HOUSE.porches.gardenLoggia;
     const soffitM = loggia.soffitElevationMm * MM_TO_M;
@@ -4209,6 +4905,9 @@ export class TwinSceneController {
       this.realisticMaterials.wall,
       this.realisticMaterials.glassFrameWood,
       "door",
+      530,
+      undefined,
+      { id: loggia.backDoor.id, label: "Dvere zo záhradnej lodžie" },
     );
 
     // East inner cheek of the loggia (room 1.10 west wall).
@@ -4417,30 +5116,60 @@ export class TwinSceneController {
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
   private buildWingPorch() {
     const porch = HOUSE.porches.wingEnd;
-    const roofParameters = deriveJoinedRoofGeometry().parameters;
+    const roof = deriveJoinedRoofGeometry();
+    const roofParameters = roof.parameters;
+    const roofRenderPlan = deriveJoinedRoofRenderPlan(roof);
     const clearanceMm = porch.ceilingClearanceMm;
 
     this.buildPorchCurtainWall();
 
+    // Shared geometry of the boarded roof soffit ("podbitka"): a 45 mm slab
+    // whose centreline runs one ceiling clearance under the roof planes.
+    const soffitThicknessMm = 45;
+    const wingRunMm = HOUSE.roof.wingHalfSpanMm;
+    const wingRiseMm = HOUSE.ridgeElevationMm - HOUSE.eavesElevationMm;
+    const wingSlopeMm = Math.hypot(wingRunMm, wingRiseMm);
+    // Vertical drop from the metal sheet down to the slab underside.
+    const soffitUndersideDropMm =
+      clearanceMm + (soffitThicknessMm / 2) * (wingSlopeMm / wingRunMm);
+
     // Larch lining on the east porch cheek (inner face of the east wall).
-    const cheekDepthM = (porch.frontYmm - porch.glazingFaceYmm) * MM_TO_M;
-    const eastLiningTopM =
-      (wingOuterRoofHeightMm(porch.eastWallInnerXmm, roofParameters) -
-        clearanceMm) *
+    // The rendered facade shell is 530 mm deep, so its inner face stands
+    // 30 mm proud of the documented 500 mm wall — the previous 36 mm board
+    // was completely buried inside it. The board now stands proud of the
+    // rendered face and reaches 36 mm past the documented inner plane, which
+    // also swallows the P04 head's west face that used to be coplanar with
+    // the lining and z-fight it. Front/back edges tuck behind neighbouring
+    // finishes instead of sharing their planes, and the top hides inside the
+    // boarded soffit slab.
+    const liningBoardMm = 36;
+    const liningWestXmm =
+      HOUSE.facades.east.faceXmm - FACADE_SHELL_THICKNESS_MM - liningBoardMm;
+    const liningEastXmm = porch.eastWallInnerXmm + liningBoardMm;
+    const liningStartYmm = porch.glazingFaceYmm + 25;
+    const liningEndYmm = roofRenderPlan.wingPorch.larchSoffitEndYmm;
+    const liningTopM =
+      (wingOuterRoofHeightMm(liningWestXmm, roofParameters) -
+        soffitUndersideDropMm +
+        5) *
       MM_TO_M;
     const eastLining = boxAtPlan(
       this.scene,
       "Krytá terasa · modřínový obklad východnej steny",
       {
-        x: porch.eastWallInnerXmm + 18,
-        y: (porch.glazingFaceYmm + porch.frontYmm) / 2,
+        x: (liningWestXmm + liningEastXmm) / 2,
+        y: (liningStartYmm + liningEndYmm) / 2,
       },
-      36,
-      porch.frontYmm - porch.glazingFaceYmm,
-      eastLiningTopM,
+      liningEastXmm - liningWestXmm,
+      liningEndYmm - liningStartYmm,
+      liningTopM,
       0,
     );
-    eastLining.material = this.larchFor(cheekDepthM, eastLiningTopM, "porch-cheek");
+    eastLining.material = this.larchFor(
+      (liningEndYmm - liningStartYmm) * MM_TO_M,
+      liningTopM,
+      "porch-cheek",
+    );
     eastLining.receiveShadows = true;
     eastLining.isPickable = false;
     this.realisticOnly(eastLining);
@@ -4449,19 +5178,31 @@ export class TwinSceneController {
     // The porch is open to the roof: instead of a flat ceiling, two boarded
     // panels follow the wing roof planes up to the ridge, so the space reads
     // as tall and uncovered from the garden.
-    const porchDepthMm = porch.frontYmm - porch.glazingFaceYmm;
-    const porchCenterYmm = (porch.glazingFaceYmm + porch.frontYmm) / 2;
+    const porchDepthMm =
+      roofRenderPlan.wingPorch.larchSoffitEndYmm -
+      roofRenderPlan.wingPorch.larchSoffitStartYmm;
+    const porchCenterYmm =
+      (roofRenderPlan.wingPorch.larchSoffitStartYmm +
+        roofRenderPlan.wingPorch.larchSoffitEndYmm) /
+      2;
+    // Tilting the slab to the roof pitch swings its section corners ±13 mm
+    // past the plan ends. Insetting the eave ends keeps the rotated box flush
+    // with the west eave line and inside the east facade instead of poking
+    // out of both; at the ridge the two panels simply overlap under the cap.
+    const slabCornerPokeMm = Math.ceil(
+      (soffitThicknessMm / 2) * (wingRiseMm / wingSlopeMm),
+    );
     for (const [index, slope] of [
       {
         name: "západná",
-        startXmm: roofParameters.wingInnerEaveXmm,
+        startXmm: roofParameters.wingInnerEaveXmm + slabCornerPokeMm,
         endXmm: roofParameters.wingRidgeXmm,
         heightAt: wingInnerRoofHeightMm,
       },
       {
         name: "východná",
         startXmm: roofParameters.wingRidgeXmm,
-        endXmm: roofParameters.maxXmm,
+        endXmm: roofParameters.maxXmm - slabCornerPokeMm,
         heightAt: wingOuterRoofHeightMm,
       },
     ].entries()) {
@@ -4472,7 +5213,7 @@ export class TwinSceneController {
       const runM = (slope.endXmm - slope.startXmm) * MM_TO_M;
       const riseM = endM - startM;
       const lengthM = Math.hypot(runM, riseM);
-      const thicknessM = 0.045;
+      const thicknessM = soffitThicknessMm * MM_TO_M;
       const panel = boxAtPlan(
         this.scene,
         `Krytá terasa · ${slope.name} strešná podbitka`,
@@ -4491,42 +5232,18 @@ export class TwinSceneController {
     }
 
     // P04 portal supports: continue both white supports above the +3,125
-    // wall crown with a sloped head that follows the roof plane, so the
-    // pillar and the east wall end meet the boarded soffit and the rake
-    // without any gap — one continuous white frame from the deck to the apex.
-    for (const support of porch.portalFrame.supportsMm) {
-      const heightAt =
-        support.startXmm < roofParameters.wingRidgeXmm
-          ? wingInnerRoofHeightMm
-          : wingOuterRoofHeightMm;
-      const crownMm = HOUSE.eavesElevationMm;
-      const profile = [
-        { alongMm: support.startXmm, elevationMm: crownMm },
-        { alongMm: support.endXmm, elevationMm: crownMm },
-        { alongMm: support.endXmm, elevationMm: heightAt(support.endXmm, roofParameters) },
-        { alongMm: support.startXmm, elevationMm: heightAt(support.startXmm, roofParameters) },
-      ].filter(
-        (point, index, points) =>
-          index === 0 ||
-          Math.abs(point.elevationMm - points[index - 1].elevationMm) > 1 ||
-          Math.abs(point.alongMm - points[index - 1].alongMm) > 1,
-      );
-      // Drop a duplicated closing vertex when the outer edge sits on the crown.
-      const last = profile[profile.length - 1];
-      if (
-        profile.length > 3 &&
-        Math.abs(last.alongMm - profile[0].alongMm) < 1 &&
-        Math.abs(last.elevationMm - profile[0].elevationMm) < 1
-      ) {
-        profile.pop();
-      }
+    // wall crown with a sloped head parallel to the roof plane. The head
+    // stops one ceiling clearance under the metal sheet — its top lands
+    // inside the boarded soffit slab instead of z-fighting the roof, which
+    // used to flicker as white patches in the anthracite sheet.
+    for (const headProfile of deriveWingPorchPortalHeadProfiles(roofParameters)) {
       const head = verticalProfileSolid(
         this.scene,
-        `${support.id} · hlava podpory portálu P04`,
+        `${headProfile.id} · hlava podpory portálu P04`,
         "Y",
-        profile,
-        support.startYmm,
-        support.endYmm,
+        headProfile.profile,
+        headProfile.startYmm,
+        headProfile.endYmm,
       );
       head.material = this.realisticMaterials.wall;
       head.receiveShadows = true;
@@ -4558,6 +5275,11 @@ export class TwinSceneController {
       stepMesh.material = this.realisticMaterials.concrete;
       stepMesh.receiveShadows = true;
       stepMesh.isPickable = false;
+      markWalkSurface(
+        stepMesh,
+        "exterior",
+        `porch-step-${index + 1}`,
+      );
       this.realisticOnly(stepMesh);
       this.register(stepMesh, "building");
     }
@@ -4574,7 +5296,7 @@ export class TwinSceneController {
     finish: PBRMaterial,
     thicknessMmOverride?: number,
   ) {
-    const thicknessMm = thicknessMmOverride ?? 530;
+    const thicknessMm = thicknessMmOverride ?? FACADE_SHELL_THICKNESS_MM;
     for (const [index, segment] of segmentFacadeMm(startXmm, endXmm, heightMm, openings).entries()) {
       const mesh = boxAtPlan(
         this.scene,
@@ -4607,7 +5329,7 @@ export class TwinSceneController {
     finish: PBRMaterial,
     thicknessMmOverride?: number,
   ) {
-    const thicknessMm = thicknessMmOverride ?? 530;
+    const thicknessMm = thicknessMmOverride ?? FACADE_SHELL_THICKNESS_MM;
     for (const [index, segment] of segmentFacadeMm(startYmm, endYmm, heightMm, openings).entries()) {
       const mesh = boxAtPlan(
         this.scene,
@@ -4648,6 +5370,8 @@ export class TwinSceneController {
       castShadow: (mesh: AbstractMesh) => this.castShadow(mesh),
       appearance: (mesh: AbstractMesh, technical: Material, realistic: Material) =>
         this.appearance(mesh, technical, realistic),
+      registerAnimatedDoor: (door: AnimatedDoorRegistration) =>
+        this.doors.register(door),
     };
   }
 
@@ -4664,6 +5388,7 @@ export class TwinSceneController {
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
     frameWidthMm?: number,
+    interaction?: OpeningInteraction,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -4678,7 +5403,8 @@ export class TwinSceneController {
       kind,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
       frameWidthMm,
-      entityId: HOUSE.id,
+      entityId: interaction?.id ?? HOUSE.id,
+      interaction,
     });
   }
 
@@ -4694,6 +5420,7 @@ export class TwinSceneController {
     frameMaterial?: PBRMaterial,
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
+    interaction?: OpeningInteraction,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -4707,7 +5434,8 @@ export class TwinSceneController {
       wallThicknessMm,
       kind,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
-      entityId: HOUSE.id,
+      entityId: interaction?.id ?? HOUSE.id,
+      interaction,
     });
   }
 
@@ -4735,7 +5463,7 @@ export class TwinSceneController {
       material.bumpTexture = bump;
     }
 
-    for (const rect of zone.rectsMm) {
+    for (const [rectIndex, rect] of zone.rectsMm.entries()) {
       const underlay = boxAtPlan(
         this.scene,
         `${zone.label} · podkladový rošt`,
@@ -4747,6 +5475,14 @@ export class TwinSceneController {
       );
       underlay.material = this.realisticMaterials.interiorDark;
       underlay.isPickable = false;
+      // The continuous underlay closes plank gaps for the height probe; its
+      // metadata offset resolves the visible board top exactly at +20 mm.
+      markWalkSurface(
+        underlay,
+        "exterior",
+        `deck-${zone.id}-${rectIndex + 1}`,
+        0.029,
+      );
       this.realisticOnly(underlay);
       this.register(underlay, "street", zone.id);
     }
@@ -5133,11 +5869,11 @@ export class TwinSceneController {
     this.buildGardenPool();
 
     // Gravel maintenance strip along the plastered facades.
-    for (const strip of [
+    for (const [index, strip] of [
       { name: "Kačírek · južná fasáda", x0: 6440, x1: 21040, y0: 2550, y1: 3000 },
       { name: "Kačírek · východná fasáda", x0: 28040, x1: 28490, y0: 3000, y1: 22035 },
       { name: "Kačírek · severný štít", x0: 21040, x1: 28040, y0: 22035, y1: 22485 },
-    ]) {
+    ].entries()) {
       const gravel = boxAtPlan(
         this.scene,
         strip.name,
@@ -5160,16 +5896,17 @@ export class TwinSceneController {
       gravel.material = gravelMaterial;
       gravel.receiveShadows = true;
       gravel.isPickable = false;
+      markWalkSurface(gravel, "exterior", `gravel-strip-${index + 1}`);
       this.realisticOnly(gravel);
       this.register(gravel, "street");
     }
 
-    for (const stone of [
+    for (const [index, stone] of [
       { x: 4100, y: 12250, w: 900, d: 520, r: -0.08 },
       { x: 4750, y: 13050, w: 840, d: 500, r: 0.12 },
       { x: 5450, y: 13820, w: 980, d: 540, r: -0.04 },
       { x: 6100, y: 14620, w: 900, d: 510, r: 0.1 },
-    ]) {
+    ].entries()) {
       const step = boxAtPlan(
         this.scene,
         "Záhradný nášľap · ilustračný koncept",
@@ -5183,6 +5920,7 @@ export class TwinSceneController {
       step.material = this.realisticMaterials.stone;
       step.receiveShadows = true;
       step.isPickable = false;
+      markWalkSurface(step, "exterior", `garden-step-${index + 1}`);
       this.realisticOnly(step);
       this.register(step, "street");
     }
@@ -5229,6 +5967,7 @@ export class TwinSceneController {
       bed.material = this.realisticMaterials.mulch;
       bed.receiveShadows = true;
       bed.isPickable = false;
+      markWalkSurface(bed, "terrain", `mulch-bed-${index + 1}`);
       this.realisticOnly(bed);
       this.register(bed, "street");
     }
@@ -5696,9 +6435,11 @@ export class TwinSceneController {
     // Photographic finish belongs to the reality view; the technical model
     // stays a clean, grain-free linework document.
     this.postPipeline.bloomEnabled = realistic;
-    this.postPipeline.grainEnabled = realistic && !this.renderQuality.fxaaEnabled;
+    this.postPipeline.grainEnabled =
+      realistic && EXTERIOR_RENDER_STABILITY.filmGrainEnabled;
     this.postPipeline.grain.intensity = 9;
-    this.postPipeline.grain.animated = true;
+    this.postPipeline.grain.animated =
+      EXTERIOR_RENDER_STABILITY.filmGrainAnimated;
     this.scene.fogMode = realistic ? Scene.FOGMODE_EXP2 : Scene.FOGMODE_NONE;
     this.scene.fogDensity = 0.0026;
     this.scene.fogColor = Color3.FromHexString("#c2cccc");
@@ -5727,6 +6468,7 @@ export class TwinSceneController {
   }
 
   setCameraPreset(preset: CameraPreset) {
+    if (this.garageCinematicActive) return;
     this.setNavigationMode("orbit");
     this.resetOrbitInertia();
     this.applyCameraPreset(preset);
@@ -5835,6 +6577,7 @@ export class TwinSceneController {
   }
 
   setNavigationMode(mode: NavigationMode) {
+    if (this.garageCinematicActive) return;
     if (mode === this.navigationMode) return;
     if (mode === "walk") {
       this.enterWalkthrough();
@@ -5887,6 +6630,10 @@ export class TwinSceneController {
         this.flightCamera.attachControl(false);
       }
       this.navigationMode = "flight";
+      setSelectionHighlightForNavigation(
+        this.selectionHighlight,
+        this.navigationMode,
+      );
       this.canvas.focus({ preventScroll: true });
     } else {
       if (this.scene.activeCamera === this.avatar.camera) {
@@ -5913,6 +6660,10 @@ export class TwinSceneController {
         !ORBIT_ZOOM.preventBrowserGesture,
       );
       this.navigationMode = "orbit";
+      setSelectionHighlightForNavigation(
+        this.selectionHighlight,
+        this.navigationMode,
+      );
     }
     this.onNavigationModeChange(this.navigationMode);
   }
@@ -5924,6 +6675,7 @@ export class TwinSceneController {
    * doors and the glazed terrace doors stay passable.
    */
   enterWalkthrough(roomId?: string) {
+    if (this.garageCinematicActive) return;
     const room =
       INTERIOR_ROOMS.find((candidate) => candidate.id === roomId) ??
       INTERIOR_ROOMS.find((candidate) => candidate.id === "ROOM-1-03") ??
@@ -5948,12 +6700,18 @@ export class TwinSceneController {
     this.flightCamera.fov = 1.05;
     this.scene.collisionsEnabled = true;
     this.navigationMode = "walk";
+    setSelectionHighlightForNavigation(
+      this.selectionHighlight,
+      this.navigationMode,
+    );
     this.walkRoomId = room.id;
     this.applyWalkView();
     // Once the glTF arrives, hand over to the chase camera.
     void avatar.load().then(() => {
       this.canvas.dataset.walkAvatar = avatar.avatarId;
-      if (this.navigationMode === "walk") this.applyWalkView();
+      if (this.navigationMode === "walk" && !this.garageCinematicActive) {
+        this.applyWalkView();
+      }
     }).catch(() => undefined);
     this.canvas.focus({ preventScroll: true });
     this.onNavigationModeChange(this.navigationMode);
@@ -5985,7 +6743,7 @@ export class TwinSceneController {
       void this.avatar.load().catch(() => {
         // Without the glTF the walkthrough silently stays first-person.
         this.walkView = "first";
-        this.applyWalkView();
+        if (!this.garageCinematicActive) this.applyWalkView();
       });
     }
     return this.avatar;
@@ -5993,6 +6751,7 @@ export class TwinSceneController {
 
   /** Switches between the chase camera and the walker's own eyes. */
   setWalkView(view: "third" | "first") {
+    if (this.garageCinematicActive) return;
     this.walkView = view;
     if (this.navigationMode === "walk") this.applyWalkView();
   }
@@ -6002,6 +6761,7 @@ export class TwinSceneController {
   }
 
   private applyWalkView() {
+    if (this.garageCinematicActive) return;
     const avatar = this.ensureAvatar();
     const third = this.walkView === "third" && avatar.isLoaded;
     if (third) {
@@ -6029,11 +6789,16 @@ export class TwinSceneController {
   }
 
   setFlightCommand(command: FlightCommand, active: boolean) {
+    if (this.garageCinematicActive) {
+      this.manualFlightCommands.delete(command);
+      return;
+    }
     if (active) this.manualFlightCommands.add(command);
     else this.manualFlightCommands.delete(command);
   }
 
   nudgeFlight(command: FlightCommand) {
+    if (this.garageCinematicActive) return;
     if (this.navigationMode === "walk") {
       // A tap is a short step: hold the command for a few frames.
       this.manualFlightCommands.add(command);
@@ -6050,6 +6815,159 @@ export class TwinSceneController {
     this.flightCamera.position.set(next.x, next.y, next.z);
   }
 
+  getDoorInteraction(id?: string): DoorInteractionSnapshot | null {
+    if (this.navigationMode !== "walk") return null;
+    const interaction = this.doors.getInteraction(id);
+    if (interaction && !this.doorInteractionHasLineOfSight(interaction)) {
+      return null;
+    }
+    if (
+      interaction &&
+      this.garageVehicleAction &&
+      interaction.id === GARAGE_VEHICLE.garageDoorId
+    ) {
+      return { ...interaction, action: null };
+    }
+    return interaction;
+  }
+
+  /** A nearby leaf behind an unrelated wall must never steal the E prompt. */
+  private doorInteractionHasLineOfSight(
+    interaction: DoorInteractionSnapshot,
+  ) {
+    const pose = this.avatar.pose;
+    const origin = new Vector3(pose.x, 1.22, pose.z);
+    const target = new Vector3(
+      interaction.interactionPoint.x,
+      interaction.interactionPoint.y ?? 1.22,
+      interaction.interactionPoint.z,
+    );
+    const direction = target.subtract(origin);
+    const distance = direction.length();
+    if (distance < 0.02) return true;
+    direction.scaleInPlace(1 / distance);
+    const pick = this.scene.pickWithRay(
+      new Ray(origin, direction, distance + 0.08),
+      (mesh) =>
+        mesh.isEnabled() &&
+        mesh.isVisible &&
+        mesh.visibility > 0.02 &&
+        mesh.isPickable,
+    );
+    if (!pick?.hit || !pick.pickedMesh) return true;
+    const metadata = pick.pickedMesh.metadata as {
+      readonly doorId?: string;
+      readonly entityId?: string;
+    } | null;
+    return (
+      metadata?.doorId === interaction.id ||
+      metadata?.entityId === interaction.id
+    );
+  }
+
+  /** Shared action for E, a nearby leaf tap and the accessible touch button. */
+  toggleDoorInteraction(restoreCanvasFocus = true, id?: string) {
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) {
+      return false;
+    }
+    const interaction = this.getDoorInteraction(id);
+    if (!interaction?.action) return false;
+    if (
+      this.garageVehicleAction &&
+      interaction.id === GARAGE_VEHICLE.garageDoorId
+    ) {
+      return false;
+    }
+    const changed = this.doors.toggle(interaction.id);
+    if (changed && interaction.action === "OPEN") {
+      this.avatar.clearBlockedIndicator();
+    }
+    if (restoreCanvasFocus) this.canvas.focus({ preventScroll: true });
+    return changed;
+  }
+
+  setDoorOpen(id: string, open: boolean, immediate = false) {
+    const changed = this.doors.setOpen(id, open, immediate);
+    if (changed && immediate) this.avatar.invalidateDynamicCameraOccluders();
+    return changed;
+  }
+
+  getDoorDebugState() {
+    return this.doors.debugState();
+  }
+
+  getGarageParkingState(): GarageParkingState {
+    return this.garageParkingState;
+  }
+
+  requestGarageVehicleAction(action: GarageVehicleAction) {
+    if (
+      this.navigationMode !== "walk" ||
+      this.getWalkRoom()?.id !== GARAGE_VEHICLE.roomId ||
+      this.garageVehicleAction ||
+      garageActionForState(this.garageParkingState) !== action
+    ) {
+      return false;
+    }
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reducedMotion) {
+      this.ensureGarageCinematicAvatarClearance();
+      const totalMs =
+        action === "park"
+          ? GARAGE_SEQUENCE.park.totalMs
+          : GARAGE_SEQUENCE.unpark.totalMs;
+      // Reduced motion resolves atomically to the safe closed-door state.
+      if (!this.doors.setOpen(GARAGE_VEHICLE.garageDoorId, false, true)) {
+        return false;
+      }
+      this.applyGarageAnimationFrame(
+        garageAnimationFrame(action, totalMs),
+      );
+      this.garageVehicleAction = null;
+      this.canvas.dataset.garageReducedMotion = "true";
+      return true;
+    }
+
+    if (!this.beginGarageCinematic()) return false;
+    this.garageVehicleAction = action;
+    this.garageVehicleElapsedMs = 0;
+    this.garageVehicleLastPose = null;
+    this.canvas.dataset.garageReducedMotion = "false";
+    this.applyGarageAnimationFrame(garageAnimationFrame(action, 0));
+    return true;
+  }
+
+  getGarageParkingDebugState() {
+    const door = this.doors
+      .debugState()
+      .find(({ id }) => id === GARAGE_VEHICLE.garageDoorId);
+    return {
+      state: this.garageParkingState,
+      action: this.garageVehicleAction,
+      elapsedMs: this.garageVehicleElapsedMs,
+      vehicleVisible: this.garageVehicleRoot?.isEnabled() ?? false,
+      vehiclePose: this.garageVehicleLastPose,
+      wheelAngle: this.garageVehicleWheelAngle,
+      steeringAngle: this.garageVehicleSteeringAngle,
+      commandedDoorProgress: this.garageDoorProgress,
+      actualDoorProgress: door?.progress ?? 0,
+      actualDoorPhase: door?.phase ?? "CLOSED",
+      cinematicActive: this.garageCinematicActive,
+      cameraView: this.canvas.dataset.garageCameraView ?? "garage",
+      activeCameraName: this.scene.activeCamera?.name ?? null,
+      returnCameraName: this.garageCinematicReturnCamera?.name ?? null,
+      navigationMode: this.navigationMode,
+      avatarPose: this.avatar.pose,
+    } as const;
+  }
+
+  isGarageCinematicActive() {
+    return this.garageCinematicActive;
+  }
+
   getNavigationMode() {
     return this.navigationMode;
   }
@@ -6059,7 +6977,9 @@ export class TwinSceneController {
     this.canvas.dataset.walkAvatar = id;
     try {
       await this.avatar.setAvatar(id, this.navigationMode === "walk");
-      if (this.navigationMode === "walk") this.applyWalkView();
+      if (this.navigationMode === "walk" && !this.garageCinematicActive) {
+        this.applyWalkView();
+      }
     } catch (error) {
       this.canvas.dataset.walkAvatar =
         this.avatar.activeAvatarId ?? this.avatar.avatarId;
@@ -6072,7 +6992,7 @@ export class TwinSceneController {
   }
 
   recoverWalkthrough() {
-    if (this.navigationMode !== "walk") return;
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) return;
     this.clearFlightInput();
     this.avatar.recover();
     this.applyWalkView();
@@ -6093,6 +7013,7 @@ export class TwinSceneController {
       pose: this.avatar.pose,
       camera: this.avatar.cameraState,
       blocked: this.avatar.isBlocked,
+      recovery: this.avatar.recoveryState,
     } as const;
   }
 
@@ -6141,7 +7062,12 @@ export class TwinSceneController {
         if (previous.tier !== next.tier) {
           this.ssaoPipeline.samples = next.tier === "ULTRA" ? 16 : 12;
         }
-        const cameras = [this.orbitCamera, this.flightCamera, this.avatar.camera];
+        const cameras = [
+          this.orbitCamera,
+          this.flightCamera,
+          this.garageCinematicCamera,
+          this.avatar.camera,
+        ];
         if (next.ssaoEnabled && !this.ssaoAttached) {
           this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline(
             this.ssaoPipeline.name,
@@ -6158,6 +7084,9 @@ export class TwinSceneController {
         }
       }
       if (!scalingChanged) this.engine.resize();
+      if (this.garageCinematicActive && this.garageVehicleLastPose) {
+        this.configureGarageCinematicCamera(this.garageVehicleLastPose);
+      }
       this.renderQuality = next;
       this.onRenderQualityChange(next);
     });
@@ -6172,6 +7101,7 @@ export class TwinSceneController {
     this.canvas.removeEventListener("pointercancel", this.cancelPointerGesture);
     this.canvas.removeEventListener("wheel", this.handleCanvasWheel);
     this.clearFlightInput();
+    this.endGarageCinematic(false);
     this.clearSelection();
     this.avatar.dispose();
     this.scene.dispose();
