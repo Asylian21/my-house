@@ -1,4 +1,8 @@
-import { SOURCES, type Point2Mm } from "./twin-site";
+import {
+  GARAGE_DEPTH_REVISION,
+  SOURCES,
+  type Point2Mm,
+} from "./twin-site";
 
 /**
  * Interior of 1.NP traced from the D1.1.002 wall vectors (1:100, 1.44 pt wall
@@ -27,6 +31,8 @@ export interface InteriorRoom {
   readonly name: string;
   /** Area from the D1.1.002 room legend, m². */
   readonly documentedAreaM2: number;
+  /** Active clear area after a later client revision, when it differs. */
+  readonly activeDesignAreaM2?: number;
   /** Clear height (S.V.) from the room legend, mm. */
   readonly clearHeightMm: number;
   readonly ceiling: CeilingKind;
@@ -165,6 +171,7 @@ export interface WcFitout {
 export interface BathroomFitout {
   readonly id: string;
   readonly sourceId: string;
+  readonly boundaryRevisionSourceId: string;
   readonly architecturalSourceId: string;
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly roomId: "ROOM-1-05";
@@ -180,6 +187,7 @@ export interface BathroomFitout {
     readonly heightMm: number;
     readonly counterHeightMm: number;
     readonly overheadCabinetBottomMm: number;
+    readonly stackingGapMm: number;
     readonly basin: {
       readonly footprintMm: RectMm;
       readonly finish: "MATTE_BLACK";
@@ -187,16 +195,49 @@ export interface BathroomFitout {
     };
     readonly appliances: readonly [
       {
+        readonly id: "BATH-105-WASHER";
         readonly kind: "WASHER";
         readonly footprintMm: RectMm;
         readonly finish: "WHITE";
+        readonly baseElevationMm: number;
+        readonly heightMm: number;
+        readonly door: {
+          readonly id: "BATH-105-WASHER-DOOR";
+          readonly centerElevationMm: number;
+          readonly diameterMm: number;
+          readonly hinge: "LEFT";
+          readonly openAngleDegrees: 90;
+        };
       },
       {
+        readonly id: "BATH-105-DRYER";
         readonly kind: "DRYER";
         readonly footprintMm: RectMm;
         readonly finish: "WHITE";
+        readonly baseElevationMm: number;
+        readonly heightMm: number;
+        readonly door: {
+          readonly id: "BATH-105-DRYER-DOOR";
+          readonly centerElevationMm: number;
+          readonly diameterMm: number;
+          readonly hinge: "LEFT";
+          readonly openAngleDegrees: 90;
+        };
       },
     ];
+  };
+  readonly towelRadiator: {
+    readonly id: "BATH-105-TOWEL-RADIATOR";
+    readonly wallId: "IW-STUDY-NORTH";
+    readonly footprintMm: RectMm;
+    readonly facing: "NORTH";
+    readonly finish: "MATTE_BLACK";
+    readonly widthMm: number;
+    readonly projectionMm: number;
+    readonly bottomElevationMm: number;
+    readonly heightMm: number;
+    readonly railDiameterMm: number;
+    readonly rungCount: number;
   };
   readonly clearFloorRectMm: RectMm;
   readonly applianceServiceRectMm: RectMm;
@@ -239,6 +280,48 @@ export interface EnsuiteBathroomFitout {
   readonly vanityClearanceRectMm: RectMm;
   readonly corridorLandingRectMm: RectMm;
   readonly bedroomLandingRectMm: RectMm;
+}
+
+export interface GarageFitout {
+  readonly id: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly plumbingStatus: "CLIENT_CONCEPT_REQUIRES_ZTI_COORDINATION";
+  readonly roomId: "ROOM-1-12";
+  readonly entryDoorId: "DOOR-102-112";
+  readonly adjacentBathroomFitoutId: "ENSUITE-BATHROOM-FITOUT-2026-08-24";
+  /** Deep wall-mounted service sink on the garage face of the bath partition. */
+  readonly utilitySink: {
+    readonly footprintMm: RectMm;
+    readonly innerBasinMm: RectMm;
+    readonly facing: "WEST";
+    readonly rimElevationMm: number;
+    readonly backsplashTopElevationMm: number;
+  };
+  /** Galvanized rack south of the sink, fully outside the vehicle lane. */
+  readonly storageRack: {
+    readonly footprintMm: RectMm;
+    readonly facing: "WEST";
+    readonly heightMm: number;
+    readonly shelfElevationsMm: readonly [number, number, number, number];
+    readonly cardboardBoxCount: number;
+    readonly plasticBinCount: number;
+    readonly paintCanCount: number;
+  };
+  readonly overSinkShelves: {
+    readonly footprintMm: RectMm;
+    readonly elevationsMm: readonly [number, number];
+  };
+  readonly mower: {
+    readonly footprintMm: RectMm;
+    readonly parkedFacing: "SOUTH";
+    readonly deckDiameterMm: number;
+    readonly handleTopElevationMm: number;
+  };
+  readonly sinkServiceRectMm: RectMm;
+  readonly vehicleClearRectsMm: readonly [RectMm, RectMm];
+  readonly entryApproachRectMm: RectMm;
 }
 
 export interface OfficeFitout {
@@ -336,6 +419,32 @@ export interface EntryFitout {
     readonly bottomElevationMm: number;
   };
   readonly clearFloorRectMm: RectMm;
+}
+
+export interface HallwayBuiltInWardrobe {
+  readonly id: string;
+  readonly label: string;
+  readonly sourceId: string;
+  readonly architecturalSourceId: string;
+  readonly status: "CLIENT_DESIGN_CONCEPT";
+  readonly roomId: "ROOM-1-02";
+  /** Index of the exact corridor rectangle occupied by the architectural niche. */
+  readonly nicheRectIndex: 2 | 5;
+  readonly footprintMm: RectMm;
+  readonly facing: "EAST" | "WEST";
+  readonly heightMm: 2550;
+  readonly doorCount: 2 | 4;
+  readonly frontClearanceRectMm: RectMm;
+  readonly style: {
+    readonly finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT";
+    readonly opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING";
+    readonly panelRevealMm: 8;
+    readonly plinthHeightMm: 80;
+    readonly ledCctK: 2700;
+    readonly ledEdges: readonly ("NORTH" | "SOUTH")[];
+    readonly reededPanelIndices: readonly number[];
+    readonly reededGrooveCountPerPanel: 5;
+  };
 }
 
 export interface BedroomFitout {
@@ -505,6 +614,28 @@ export const INTERIOR_WALL_HEIGHT_MM = 3125;
 export const INTERIOR_DOOR_HEIGHT_MM = 2100;
 export const WING_RIDGE_XMM = 24540;
 
+/**
+ * Client revision 25. 8. 2026: move the complete partition behind the 1.05
+ * basin / washer / dryer wall 200 mm toward the bathroom. The unchanged
+ * 140 mm wall therefore gives both WC 1.06 and technical room 1.07 exactly
+ * 200 mm more clear depth behind the kitchen.
+ */
+export const BATHROOM_SERVICE_CORE_BOUNDARY_REVISION = Object.freeze({
+  id: "BATHROOM-SERVICE-CORE-BOUNDARY-2026-08-25",
+  sourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT" as const,
+  axis: "Y" as const,
+  shiftTowardRoomId: "ROOM-1-05" as const,
+  shiftMm: 200,
+  wallThicknessMm: 140,
+  originalBathroomFaceYmm: 8972,
+  revisedBathroomFaceYmm: 8772,
+  originalWcTechnicalFaceYmm: 9112,
+  revisedWcTechnicalFaceYmm: 8912,
+  affectedRoomIds: ["ROOM-1-05", "ROOM-1-06", "ROOM-1-07"] as const,
+});
+
 export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
   {
     id: "ROOM-1-01",
@@ -577,10 +708,15 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     floor: "TILE",
     wetRoom: true,
     rectsMm: [
-      { x0: 22783, y0: 6602, x1: 25399, y1: 8972 },
+      {
+        x0: 22783,
+        y0: 6602,
+        x1: 25399,
+        y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedBathroomFaceYmm,
+      },
       { x0: 25399, y0: 6602, x1: 27541, y1: 7601 },
     ],
-    standingPointMm: { x: 23600, y: 7900 },
+    standingPointMm: { x: 23600, y: 7788 },
   },
   {
     id: "ROOM-1-06",
@@ -591,7 +727,12 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     ceiling: "FLAT",
     floor: "TILE",
     wetRoom: true,
-    rectsMm: [{ x0: 22783, y0: 9112, x1: 24082, y1: 10712 }],
+    rectsMm: [{
+      x0: 22783,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+      x1: 24082,
+      y1: 10712,
+    }],
     standingPointMm: { x: 23280, y: 9800 },
   },
   {
@@ -607,6 +748,12 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
       { x0: 24221, y0: 9112, x1: 25830, y1: 10712 },
       { x0: 25830, y0: 9112, x1: 27541, y1: 11411 },
       { x0: 25543, y0: 7741, x1: 27541, y1: 9112 },
+      {
+        x0: 24221,
+        y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+        x1: 25543,
+        y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.originalWcTechnicalFaceYmm,
+      },
     ],
     standingPointMm: { x: 25800, y: 9900 },
   },
@@ -663,13 +810,19 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = [
     number: "1.12",
     name: "Garáž",
     documentedAreaM2: 25.15,
+    activeDesignAreaM2: GARAGE_DEPTH_REVISION.revisedGarageAreaM2,
     clearHeightMm: 2600,
     ceiling: "FLAT",
     floor: "EPOXY",
     wetRoom: false,
     rectsMm: [
       { x0: 6944, y0: 3504, x1: 13742, y1: 6462 },
-      { x0: 6944, y0: 6462, x1: 10842, y1: 7749 },
+      {
+        x0: 6944,
+        y0: 6462,
+        x1: 10842,
+        y1: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+      },
     ],
     standingPointMm: { x: 10300, y: 5000 },
   },
@@ -685,7 +838,16 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-GARAGE-EAST", role: "PARTITION", rectMm: { x0: 13742, y0: 3504, x1: 13941, y1: 5561 } },
   // 240 mm load-bearing wall garage / bedroom 1.10 and its 300 mm return.
   { id: "IW-GARAGE-NORTH", role: "LOAD_BEARING", rectMm: { x0: 10842, y0: 6462, x1: 15143, y1: 6699 } },
-  { id: "IW-GARAGE-LOGGIA", role: "LOAD_BEARING", rectMm: { x0: 10842, y0: 6699, x1: 11143, y1: 8249 } },
+  {
+    id: "IW-GARAGE-LOGGIA",
+    role: "LOAD_BEARING",
+    rectMm: {
+      x0: 10842,
+      y0: 6699,
+      x1: 11143,
+      y1: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm + 2,
+    },
+  },
   // Bathroom 1.11 top wall with the corridor door gap 14 990 – 15 790.
   { id: "IW-BATH-111-TOP-W", role: "PARTITION", rectMm: { x0: 13742, y0: 5421, x1: 14990, y1: 5561 } },
   { id: "IW-BATH-111-TOP-E", role: "PARTITION", rectMm: { x0: 15790, y0: 5421, x1: 16743, y1: 5561 } },
@@ -717,13 +879,41 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
   { id: "IW-SPINE-EAST-3", role: "PARTITION", rectMm: { x0: 22639, y0: 10666, x1: 22783, y1: 11550 } },
   // 190 mm load-bearing wall study 1.04 / bathroom 1.05.
   { id: "IW-STUDY-NORTH", role: "LOAD_BEARING", rectMm: { x0: 22783, y0: 6412, x1: 27541, y1: 6602 } },
-  // Bathroom 1.05 east wall and its return above the technical room.
-  { id: "IW-BATH-105-EAST", role: "PARTITION", rectMm: { x0: 25399, y0: 7741, x1: 25543, y1: 9112 } },
+  // Bathroom 1.05 east wall and its return above the technical room. The
+  // 25. 8. service-core revision shortens the return by the same 200 mm.
+  {
+    id: "IW-BATH-105-EAST",
+    role: "PARTITION",
+    rectMm: {
+      x0: 25399,
+      y0: 7741,
+      x1: 25543,
+      y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+    },
+  },
   { id: "IW-BATH-105-SOUTH-E", role: "PARTITION", rectMm: { x0: 25399, y0: 7601, x1: 27541, y1: 7741 } },
-  { id: "IW-BATH-105-NORTH", role: "PARTITION", rectMm: { x0: 22783, y0: 8972, x1: 25543, y1: 9112 } },
+  {
+    id: "IW-BATH-105-NORTH",
+    role: "PARTITION",
+    rectMm: {
+      x0: 22783,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedBathroomFaceYmm,
+      x1: 25543,
+      y1: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+    },
+  },
   // Client revision 23. 8. 2026 shifts the WC / technical-room partition
   // 300 mm east while retaining its original 139 mm construction thickness.
-  { id: "IW-WC-EAST", role: "PARTITION", rectMm: { x0: 24082, y0: 9112, x1: 24221, y1: 10712 } },
+  {
+    id: "IW-WC-EAST",
+    role: "PARTITION",
+    rectMm: {
+      x0: 24082,
+      y0: BATHROOM_SERVICE_CORE_BOUNDARY_REVISION.revisedWcTechnicalFaceYmm,
+      x1: 24221,
+      y1: 10712,
+    },
+  },
   // Wall behind the kitchen run (top of WC and technical room).
   { id: "IW-KITCHEN-BACK", role: "PARTITION", rectMm: { x0: 22783, y0: 10712, x1: 25830, y1: 10852 } },
   { id: "IW-TECH-WEST", role: "PARTITION", rectMm: { x0: 25691, y0: 10712, x1: 25830, y1: 11411 } },
@@ -736,15 +926,17 @@ export const INTERIOR_WALLS: readonly InteriorWall[] = [
  * Client revision 24. 8. 2026: freestanding cylindrical stove in the former
  * stove bay. The old 347 × 500 mm masonry pier is deliberately absent; the
  * round flue shares the stove axis and rises straight through the wing roof.
+ * The 25. 8. follow-up shifts the complete coaxial assembly 200 mm toward the
+ * TV wall while increasing the clear distance from the terrace door.
  */
 export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
   id: "FIREPLACE-STOVE-2026-08-24",
-  sourceId: SOURCES.clientFireplaceRevision20260824.id,
+  sourceId: SOURCES.clientFireplacePositionRevision20260825.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-03",
   facing: "EAST",
-  centerMm: { x: 21853, y: 14275 },
-  footprintMm: { x0: 21598, y0: 14020, x1: 22108, y1: 14530 },
+  centerMm: { x: 21853, y: 14475 },
+  footprintMm: { x0: 21598, y0: 14220, x1: 22108, y1: 14730 },
   bodyDiameterMm: 510,
   bodyHeightMm: 1550,
   window: {
@@ -868,13 +1060,15 @@ export const WC_FITOUT: WcFitout = Object.freeze({
 });
 
 /**
- * Final client layout for the L-shaped room 1.05. The fixed architecture stays
- * unchanged: the east leg is the walk-in wet zone and the complete north
- * recess becomes one 2 616 mm built-in wall with a basin and two appliances.
+ * Final client layout for the L-shaped room 1.05. The east leg remains the
+ * walk-in wet zone; the complete north recess is one 2 616 mm built-in wall.
+ * The 25. 8. revisions move that wall 200 mm toward the room, stack the two
+ * full-depth appliances in one ventilated tower and add a south-wall radiator.
  */
 export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
-  id: "BATHROOM-FITOUT-BUILTIN-2026-08-23",
-  sourceId: SOURCES.clientBathroomBuiltInRevision20260823.id,
+  id: "BATHROOM-FITOUT-STACKED-LAUNDRY-2026-08-25",
+  sourceId: SOURCES.clientBathroomStackedLaundryRevision20260825.id,
+  boundaryRevisionSourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-05",
@@ -887,31 +1081,65 @@ export const BATHROOM_FITOUT: BathroomFitout = Object.freeze({
     linearDrainMm: { x0: 27391, y0: 6752, x1: 27471, y1: 7452 },
   },
   builtIn: {
-    footprintMm: { x0: 22783, y0: 8322, x1: 25399, y1: 8972 },
+    footprintMm: { x0: 22783, y0: 8122, x1: 25399, y1: 8772 },
     facing: "SOUTH",
     heightMm: 2350,
     counterHeightMm: 900,
-    overheadCabinetBottomMm: 1100,
+    overheadCabinetBottomMm: 1850,
+    stackingGapMm: 40,
     basin: {
-      footprintMm: { x0: 22883, y0: 8422, x1: 23983, y1: 8872 },
+      footprintMm: { x0: 23083, y0: 8222, x1: 24413, y1: 8672 },
       finish: "MATTE_BLACK",
       rimElevationMm: 900,
     },
     appliances: [
       {
+        id: "BATH-105-WASHER",
         kind: "WASHER",
-        footprintMm: { x0: 24049, y0: 8352, x1: 24649, y1: 8952 },
+        footprintMm: { x0: 24749, y0: 8152, x1: 25349, y1: 8752 },
         finish: "WHITE",
+        baseElevationMm: 80,
+        heightMm: 850,
+        door: {
+          id: "BATH-105-WASHER-DOOR",
+          centerElevationMm: 500,
+          diameterMm: 470,
+          hinge: "LEFT",
+          openAngleDegrees: 90,
+        },
       },
       {
+        id: "BATH-105-DRYER",
         kind: "DRYER",
-        footprintMm: { x0: 24749, y0: 8352, x1: 25349, y1: 8952 },
+        footprintMm: { x0: 24749, y0: 8152, x1: 25349, y1: 8752 },
         finish: "WHITE",
+        baseElevationMm: 970,
+        heightMm: 850,
+        door: {
+          id: "BATH-105-DRYER-DOOR",
+          centerElevationMm: 1390,
+          diameterMm: 470,
+          hinge: "LEFT",
+          openAngleDegrees: 90,
+        },
       },
     ],
   },
-  clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8322 },
-  applianceServiceRectMm: { x0: 24049, y0: 7422, x1: 25349, y1: 8322 },
+  towelRadiator: {
+    id: "BATH-105-TOWEL-RADIATOR",
+    wallId: "IW-STUDY-NORTH",
+    footprintMm: { x0: 24450, y0: 6602, x1: 25050, y1: 6702 },
+    facing: "NORTH",
+    finish: "MATTE_BLACK",
+    widthMm: 600,
+    projectionMm: 100,
+    bottomElevationMm: 200,
+    heightMm: 1500,
+    railDiameterMm: 32,
+    rungCount: 15,
+  },
+  clearFloorRectMm: { x0: 22783, y0: 7453, x1: 25399, y1: 8122 },
+  applianceServiceRectMm: { x0: 24529, y0: 7222, x1: 25399, y1: 8122 },
 });
 
 /**
@@ -956,6 +1184,63 @@ export const ENSUITE_BATHROOM_FITOUT: EnsuiteBathroomFitout = Object.freeze({
   vanityClearanceRectMm: { x0: 15563, y0: 4461, x1: 16263, y1: 5361 },
   corridorLandingRectMm: { x0: 15170, y0: 4821, x1: 15610, y1: 5261 },
   bedroomLandingRectMm: { x0: 16172.5, y0: 3781, x1: 16612.5, y1: 4221 },
+});
+
+/**
+ * Used-but-orderly garage fit-out requested on 25. 8. 2026. The compact sink
+ * and shallow rack occupy the garage face of the partition directly behind
+ * the 1.11 bath, stopping before the inward-swinging corridor door. A folded
+ * mower uses the L-shaped return without narrowing the 3 300 mm vehicle lane.
+ * The wall and head of the glazed garden-loggia door stay completely free.
+ * Plumbing remains a client concept until the ZTI designer coordinates supply,
+ * waste and frost protection.
+ */
+export const GARAGE_FITOUT: GarageFitout = Object.freeze({
+  id: "GARAGE-FITOUT-2026-08-25",
+  sourceId: SOURCES.clientGarageFitoutRevision20260825.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
+  status: "CLIENT_DESIGN_CONCEPT",
+  plumbingStatus: "CLIENT_CONCEPT_REQUIRES_ZTI_COORDINATION",
+  roomId: "ROOM-1-12",
+  entryDoorId: "DOOR-102-112",
+  adjacentBathroomFitoutId: "ENSUITE-BATHROOM-FITOUT-2026-08-24",
+  utilitySink: {
+    footprintMm: { x0: 13242, y0: 4763, x1: 13742, y1: 5363 },
+    innerBasinMm: { x0: 13297, y0: 4833, x1: 13677, y1: 5293 },
+    facing: "WEST",
+    rimElevationMm: 930,
+    backsplashTopElevationMm: 1280,
+  },
+  storageRack: {
+    footprintMm: { x0: 13242, y0: 3600, x1: 13712, y1: 4480 },
+    facing: "WEST",
+    heightMm: 2100,
+    shelfElevationsMm: [150, 720, 1290, 1860],
+    cardboardBoxCount: 4,
+    plasticBinCount: 3,
+    paintCanCount: 4,
+  },
+  overSinkShelves: {
+    footprintMm: { x0: 13452, y0: 4713, x1: 13742, y1: 5413 },
+    elevationsMm: [1510, 1990],
+  },
+  mower: {
+    footprintMm: { x0: 10342, y0: 6660, x1: 10822, y1: 7360 },
+    parkedFacing: "SOUTH",
+    deckDiameterMm: 460,
+    handleTopElevationMm: 1380,
+  },
+  sinkServiceRectMm: { x0: 12442, y0: 4763, x1: 13242, y1: 5363 },
+  vehicleClearRectsMm: [
+    { x0: 6944, y0: 3504, x1: 10240, y1: 6462 },
+    {
+      x0: 6944,
+      y0: 6462,
+      x1: 10240,
+      y1: GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm,
+    },
+  ],
+  entryApproachRectMm: { x0: 10842, y0: 5669, x1: 13742, y1: 6462 },
 });
 
 /** Reoriented minimalist home-office composition fitted around both study windows. */
@@ -1060,6 +1345,68 @@ export const ENTRY_FITOUT: EntryFitout = Object.freeze({
   },
   clearFloorRectMm: { x0: 21543, y0: 3504, x1: 23289, y1: 5201 },
 } as const);
+
+/**
+ * Two full-height wardrobes fitted into the green-marked corridor niches from
+ * the client plan. Their 601 mm depth is the depth of the existing recesses:
+ * the fronts finish exactly on the corridor line, so neither cabinet reduces
+ * the 999 / 1 096 mm clear circulation strips in front of it. The long four-
+ * panel composition sits beside room 1.09; the compact two-panel composition
+ * uses the return between bedroom 1.08 and bathroom 1.11.
+ */
+export const HALLWAY_BUILT_IN_WARDROBES: readonly [
+  HallwayBuiltInWardrobe,
+  HallwayBuiltInWardrobe,
+] = Object.freeze([
+  {
+    id: "HALL-WARDROBE-109-NICHE-2026-08-25",
+    label: "Dlhá vstavaná skriňa pri izbe 1.09",
+    sourceId: SOURCES.clientHallwayWardrobesRevision20260825.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-02",
+    nicheRectIndex: 5,
+    footprintMm: { x0: 20942, y0: 7902, x1: 21543, y1: 10699 },
+    facing: "EAST",
+    heightMm: 2550,
+    doorCount: 4,
+    frontClearanceRectMm: { x0: 21543, y0: 7902, x1: 22639, y1: 10699 },
+    style: {
+      finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT",
+      opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING",
+      panelRevealMm: 8,
+      plinthHeightMm: 80,
+      ledCctK: 2700,
+      ledEdges: ["SOUTH", "NORTH"],
+      reededPanelIndices: [1, 2],
+      reededGrooveCountPerPanel: 5,
+    },
+  },
+  {
+    id: "HALL-WARDROBE-108-NICHE-2026-08-25",
+    label: "Vstavaná skriňa pri spálni 1.08 a kúpeľni 1.11",
+    sourceId: SOURCES.clientHallwayWardrobesRevision20260825.id,
+    architecturalSourceId: SOURCES.floorPlan.id,
+    status: "CLIENT_DESIGN_CONCEPT",
+    roomId: "ROOM-1-02",
+    nicheRectIndex: 2,
+    footprintMm: { x0: 16142, y0: 5561, x1: 16743, y1: 6420 },
+    facing: "WEST",
+    heightMm: 2550,
+    doorCount: 2,
+    frontClearanceRectMm: { x0: 15143, y0: 5561, x1: 16142, y1: 6420 },
+    style: {
+      finish: "BOOKMATCHED_WARM_OAK_WITH_SMOKED_REEDED_ACCENT",
+      opening: "HANDLELESS_COPLANAR_SOFT_CLOSE_SLIDING",
+      panelRevealMm: 8,
+      plinthHeightMm: 80,
+      ledCctK: 2700,
+      ledEdges: ["NORTH"],
+      reededPanelIndices: [],
+      reededGrooveCountPerPanel: 5,
+    },
+  },
+] as const);
 
 /**
  * Minimalist primary bedroom in 1.08. D1.1.002 gives a clear 4 300 × 2 857 mm
@@ -1491,4 +1838,12 @@ export function roomAt(point: Point2Mm): InteriorRoom | null {
 
 export function totalDocumentedFloorAreaM2(): number {
   return INTERIOR_ROOMS.reduce((sum, room) => sum + room.documentedAreaM2, 0);
+}
+
+/** Active client-design total while retaining the original D1 room legend. */
+export function totalActiveFloorAreaM2(): number {
+  return INTERIOR_ROOMS.reduce(
+    (sum, room) => sum + (room.activeDesignAreaM2 ?? room.documentedAreaM2),
+    0,
+  );
 }
