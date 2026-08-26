@@ -16,13 +16,20 @@ import {
   WALK_CAMERA,
   WALK_COLLISION_ELLIPSOID_M,
   WALK_COLLISION_OFFSET_M,
+  WALK_SURFACE,
   WALK_SPEED_MPS,
+  addWalkEscapeDirection,
   integrateAvatarVelocity,
   resolveWalkCollisionVelocity,
+  shouldAutoRecoverWalk,
   shouldResetWalkCollisionCarry,
   shouldResolveWalkCollisionBatch,
+  stepWalkCameraSurfaceHeight,
   stepWalkCameraBoom,
+  stepWalkIndoorBlend,
+  walkCameraRadiusForEnvironment,
   type FlightCommand,
+  type WalkSurfaceKind,
 } from "./twin-viewport-contract";
 import {
   DEFAULT_WALK_AVATAR_ID,
@@ -37,6 +44,7 @@ export const AVATAR_DIFFUSE_URL =
 
 export interface AvatarPose {
   readonly x: number;
+  readonly y: number;
   readonly z: number;
   readonly yaw: number;
 }
@@ -51,6 +59,19 @@ interface CameraOccluder {
   readonly maximumZ: number;
 }
 
+interface WalkSurface {
+  readonly mesh: AbstractMesh;
+  readonly kind: WalkSurfaceKind;
+  readonly id: string;
+  readonly elevationOffsetM: number;
+  readonly minimumX: number;
+  readonly minimumZ: number;
+  readonly maximumX: number;
+  readonly maximumZ: number;
+}
+
+type WalkSurfaceSnapResult = "resolved" | "blocked-rise" | "missing";
+
 interface LoadedAvatarRig {
   readonly id: WalkAvatarId;
   readonly root: AbstractMesh;
@@ -60,6 +81,8 @@ interface LoadedAvatarRig {
   readonly walk: AnimationGroup;
   readonly run: AnimationGroup;
 }
+
+const EMPTY_FLIGHT_COMMANDS: ReadonlySet<FlightCommand> = new Set();
 
 /** Allocation-free broad phase; exact triangle picking follows every hit. */
 function rayBoundsDistance(
@@ -150,6 +173,7 @@ export class AvatarController {
   private firstPerson = false;
   private sinceUserOrbitS = 10;
   private preferredCameraRadiusM = WALK_CAMERA.radiusM;
+  private desiredCameraRadiusM = WALK_CAMERA.radiusM;
   private effectiveCameraRadiusM = WALK_CAMERA.radiusM;
   private cameraObstructed = false;
   private cameraOccluders: CameraOccluder[] = [];
@@ -176,12 +200,26 @@ export class AvatarController {
     { length: 5 },
     () => new Ray(new Vector3(), new Vector3(0, 0, 1), WALK_CAMERA.maxRadiusM),
   );
+  private walkSurfaces: WalkSurface[] = [];
+  private walkSurfaceSceneMeshCount = -1;
+  private readonly surfaceProbeRay = new Ray(
+    new Vector3(),
+    new Vector3(0, -1, 0),
+    WALK_SURFACE.maxStepUpM + WALK_SURFACE.maxDropM,
+  );
+  private surfaceY = 0;
+  private cameraSurfaceY = 0;
+  private surfaceKind: WalkSurfaceKind = "interior";
+  private surfaceId: string | null = null;
+  private surfaceValid = true;
+  private indoorBlend = 1;
   private readonly intendedMovement = new Vector3();
   private readonly movementSinceCollisionSolve = new Vector3();
   private pendingMovementSecondsS = 0;
   private collisionBatchAccountedSecondsS = 0;
   private readonly movementSubstep = new Vector3();
   private readonly positionBeforeMove = new Vector3();
+  private readonly positionBeforeSubstep = new Vector3();
   private readonly actualMovement = new Vector3();
   private adaptiveVisibility = 1;
   private avatarMeshesEnabled: boolean | null = null;
@@ -192,6 +230,11 @@ export class AvatarController {
   private readonly lastSafePosition = new Vector3(0, 0, 0);
   private readonly safeCandidatePosition = new Vector3(0, 0, 0);
   private safeTravelM = 0;
+  private blockedDirectionMask = 0;
+  private blockedAttemptWindowS = 0;
+  private autoRecoveryCooldownS = 0;
+  private autoRecoveryCount = 0;
+  private autoRecoveryAwaitingRelease = false;
 
   constructor(
     private readonly scene: Scene,
@@ -438,10 +481,126 @@ export class AvatarController {
     }
   }
 
+  private refreshWalkSurfaces() {
+    if (this.walkSurfaceSceneMeshCount === this.scene.meshes.length) return;
+    const surfaces: WalkSurface[] = [];
+    for (const mesh of this.scene.meshes) {
+      if (mesh === this.collider || mesh.getTotalVertices() === 0) continue;
+      const metadata = mesh.metadata as {
+        readonly walkSurface?: boolean;
+        readonly walkSurfaceKind?: WalkSurfaceKind;
+        readonly walkSurfaceId?: string;
+        readonly walkSurfaceElevationOffsetM?: number;
+      } | null;
+      if (metadata?.walkSurface !== true) continue;
+      mesh.computeWorldMatrix(true);
+      const bounds = mesh.getBoundingInfo().boundingBox;
+      surfaces.push({
+        mesh,
+        kind: metadata.walkSurfaceKind ?? "exterior",
+        id: metadata.walkSurfaceId ?? mesh.name,
+        elevationOffsetM: Number.isFinite(
+          metadata.walkSurfaceElevationOffsetM,
+        )
+          ? (metadata.walkSurfaceElevationOffsetM ?? 0)
+          : 0,
+        minimumX: bounds.minimumWorld.x,
+        minimumZ: bounds.minimumWorld.z,
+        maximumX: bounds.maximumWorld.x,
+        maximumZ: bounds.maximumWorld.z,
+      });
+    }
+    this.walkSurfaces = surfaces;
+    this.walkSurfaceSceneMeshCount = this.scene.meshes.length;
+  }
+
+  /**
+   * Finds the highest tagged walk surface within one human-sized step/drop
+   * window. A taller probe also rejects an exact raised-surface hit
+   * inside the walker's body clearance, even when lower terrain exists below
+   * it. Visual detail never becomes floor collision, and disabled drawing
+   * layers remain valid geometry for walking.
+   */
+  private snapToWalkSurface(): WalkSurfaceSnapResult {
+    this.refreshWalkSurfaces();
+    const currentY = Number.isFinite(this.surfaceY)
+      ? this.surfaceY
+      : this.collider.position.y;
+    const standingClearanceM =
+      WALK_COLLISION_OFFSET_M.y + WALK_COLLISION_ELLIPSOID_M.y;
+    const originY =
+      currentY + standingClearanceM + WALK_SURFACE.probeHeadroomM;
+    const probeLength =
+      standingClearanceM +
+      WALK_SURFACE.probeHeadroomM +
+      WALK_SURFACE.maxDropM;
+    this.surfaceProbeRay.origin.set(
+      this.collider.position.x,
+      originY,
+      this.collider.position.z,
+    );
+    this.surfaceProbeRay.length = probeLength;
+
+    let resolvedY = Number.NEGATIVE_INFINITY;
+    let resolved: WalkSurface | null = null;
+    let blockedByRise = false;
+    for (const surface of this.walkSurfaces) {
+      if (surface.mesh.isDisposed()) continue;
+      if (
+        this.collider.position.x < surface.minimumX - 0.015 ||
+        this.collider.position.x > surface.maximumX + 0.015 ||
+        this.collider.position.z < surface.minimumZ - 0.015 ||
+        this.collider.position.z > surface.maximumZ + 0.015
+      ) {
+        continue;
+      }
+      const hit = this.surfaceProbeRay.intersectsMesh(surface.mesh, false);
+      if (!hit.hit || !Number.isFinite(hit.distance)) continue;
+      const hitY =
+        (hit.pickedPoint?.y ?? originY - hit.distance) +
+        surface.elevationOffsetM;
+      if (hitY > currentY + WALK_SURFACE.maxStepUpM + 1e-4) {
+        // AABB membership is only the broad phase: this branch is reached only
+        // after an exact triangle hit at the proposed X/Z. Ignore a true
+        // overhead that leaves the collision ellipsoid standing clearance.
+        if (hitY <= currentY + standingClearanceM + 1e-4) {
+          blockedByRise = true;
+        }
+        continue;
+      }
+      if (
+        hitY < currentY - WALK_SURFACE.maxDropM - 1e-4 ||
+        hitY <= resolvedY
+      ) {
+        continue;
+      }
+      resolvedY = hitY;
+      resolved = surface;
+    }
+
+    if (blockedByRise) {
+      this.collider.position.y = currentY;
+      return "blocked-rise";
+    }
+    if (!resolved || !Number.isFinite(resolvedY)) {
+      this.surfaceValid = this.walkSurfaces.length === 0;
+      this.collider.position.y = currentY;
+      return "missing";
+    }
+    this.surfaceY = resolvedY;
+    this.surfaceKind = resolved.kind;
+    this.surfaceId = resolved.id;
+    this.surfaceValid = true;
+    this.collider.position.y = resolvedY;
+    return "resolved";
+  }
+
   /** Places the walker and turns the chase camera behind it. */
   place(xM: number, zM: number, yawRad: number) {
     this.active = true;
     this.collider.position.set(xM, 0, zM);
+    this.surfaceY = 0;
+    this.snapToWalkSurface();
     this.collider.computeWorldMatrix(true);
     this.lastSafePosition.copyFrom(this.collider.position);
     this.safeCandidatePosition.copyFrom(this.collider.position);
@@ -449,7 +608,7 @@ export class AvatarController {
     this.blockedForS = 0;
     this.recoveryNeeded = false;
     this.recoveryClearTravelM = 0;
-    this.root.position.set(xM, 0, zM);
+    this.root.position.copyFrom(this.collider.position);
     this.yaw = yawRad;
     this.root.rotation.set(0, yawRad, 0);
     this.velocity.setAll(0);
@@ -457,7 +616,17 @@ export class AvatarController {
     this.movementSinceCollisionSolve.setAll(0);
     this.pendingMovementSecondsS = 0;
     this.collisionBatchAccountedSecondsS = 0;
-    this.effectiveCameraRadiusM = this.preferredCameraRadiusM;
+    this.blockedDirectionMask = 0;
+    this.blockedAttemptWindowS = 0;
+    this.autoRecoveryCooldownS = 0;
+    this.autoRecoveryAwaitingRelease = false;
+    this.indoorBlend = this.surfaceKind === "interior" ? 1 : 0;
+    this.desiredCameraRadiusM = walkCameraRadiusForEnvironment(
+      this.preferredCameraRadiusM,
+      this.indoorBlend,
+    );
+    this.effectiveCameraRadiusM = this.desiredCameraRadiusM;
+    this.cameraSurfaceY = this.surfaceY;
     this.adaptiveVisibility = Math.max(
       0,
       Math.min(
@@ -468,7 +637,8 @@ export class AvatarController {
     );
     this.cameraTarget.set(
       xM,
-      WALK_CAMERA.targetHeightM +
+      this.cameraSurfaceY +
+        WALK_CAMERA.targetHeightM +
         (WALK_CAMERA.closeTargetHeightM - WALK_CAMERA.targetHeightM) *
           (1 - this.adaptiveVisibility),
       zM,
@@ -501,6 +671,9 @@ export class AvatarController {
     this.blockedForS = 0;
     this.recoveryNeeded = false;
     this.recoveryClearTravelM = 0;
+    this.blockedDirectionMask = 0;
+    this.blockedAttemptWindowS = 0;
+    this.autoRecoveryAwaitingRelease = false;
   }
 
   noteCameraInput() {
@@ -511,11 +684,37 @@ export class AvatarController {
     return this.recoveryNeeded;
   }
 
+  /** A successfully opening door explains the expected collision; no rewind. */
+  clearBlockedIndicator() {
+    this.blockedForS = 0;
+    this.recoveryNeeded = false;
+    this.recoveryClearTravelM = 0;
+    this.blockedDirectionMask = 0;
+    this.blockedAttemptWindowS = 0;
+  }
+
   get cameraState() {
     return {
-      desiredRadiusM: this.preferredCameraRadiusM,
+      requestedRadiusM: this.preferredCameraRadiusM,
+      desiredRadiusM: this.desiredCameraRadiusM,
       effectiveRadiusM: this.effectiveCameraRadiusM,
       obstructed: this.cameraObstructed,
+      indoorBlend: this.indoorBlend,
+      surfaceY: this.surfaceY,
+      cameraSurfaceY: this.cameraSurfaceY,
+      surfaceKind: this.surfaceKind,
+      surfaceId: this.surfaceId,
+      surfaceValid: this.surfaceValid,
+    } as const;
+  }
+
+  get recoveryState() {
+    return {
+      needed: this.recoveryNeeded,
+      autoRecoveryCount: this.autoRecoveryCount,
+      cooldownS: this.autoRecoveryCooldownS,
+      attemptedDirectionMask: this.blockedDirectionMask,
+      awaitingRelease: this.autoRecoveryAwaitingRelease,
     } as const;
   }
 
@@ -524,7 +723,8 @@ export class AvatarController {
     // Keep the recovery request latched after input is released, giving a
     // novice enough time to reach R/the button without losing the safe rewind.
     if (this.recoveryNeeded) this.collider.position.copyFrom(this.lastSafePosition);
-    this.collider.position.y = 0;
+    this.surfaceY = this.collider.position.y;
+    this.snapToWalkSurface();
     this.collider.computeWorldMatrix(true);
     this.root.position.copyFrom(this.collider.position);
     this.velocity.setAll(0);
@@ -535,11 +735,16 @@ export class AvatarController {
     this.blockedForS = 0;
     this.recoveryNeeded = false;
     this.recoveryClearTravelM = 0;
+    this.blockedDirectionMask = 0;
+    this.blockedAttemptWindowS = 0;
+    this.autoRecoveryAwaitingRelease = false;
     this.safeTravelM = 0;
     this.safeCandidatePosition.copyFrom(this.collider.position);
+    this.cameraSurfaceY = this.surfaceY;
     this.cameraTarget.set(
       this.collider.position.x,
-      WALK_CAMERA.targetHeightM +
+      this.cameraSurfaceY +
+        WALK_CAMERA.targetHeightM +
         (WALK_CAMERA.closeTargetHeightM - WALK_CAMERA.targetHeightM) *
           (1 - this.adaptiveVisibility),
       this.collider.position.z,
@@ -554,12 +759,21 @@ export class AvatarController {
   }
 
   get pose(): AvatarPose {
-    return { x: this.collider.position.x, z: this.collider.position.z, yaw: this.yaw };
+    return {
+      x: this.collider.position.x,
+      y: this.surfaceY,
+      z: this.collider.position.z,
+      yaw: this.yaw,
+    };
   }
 
   /** Eye position for the first-person view. */
   get eyePosition() {
-    return new Vector3(this.collider.position.x, 1.62, this.collider.position.z);
+    return new Vector3(
+      this.collider.position.x,
+      this.cameraSurfaceY + 1.62,
+      this.collider.position.z,
+    );
   }
 
   /** Unit forward of the chase camera on the ground plane. */
@@ -579,21 +793,38 @@ export class AvatarController {
     modifiers: { boost: boolean; precision: boolean },
     headingOverride?: { x: number; z: number },
   ) {
+    const rawDirectionalInput =
+      commands.has("forward") ||
+      commands.has("backward") ||
+      commands.has("left") ||
+      commands.has("right");
+    if (this.autoRecoveryAwaitingRelease && !rawDirectionalInput) {
+      this.autoRecoveryAwaitingRelease = false;
+    }
+    const movementCommands = this.autoRecoveryAwaitingRelease
+      ? EMPTY_FLIGHT_COMMANDS
+      : commands;
     const forward = headingOverride ?? this.cameraForward();
     const next = integrateAvatarVelocity({
       velocity: { x: this.velocity.x, z: this.velocity.z },
       forward,
-      commands,
+      commands: movementCommands,
       deltaMs,
       boost: modifiers.boost,
       precision: modifiers.precision,
     });
     const seconds = Math.min(50, Math.max(0, deltaMs)) / 1000;
+    this.autoRecoveryCooldownS = Math.max(
+      0,
+      this.autoRecoveryCooldownS - seconds,
+    );
+    this.blockedAttemptWindowS = Math.max(
+      0,
+      this.blockedAttemptWindowS - seconds,
+    );
+    if (this.blockedAttemptWindowS <= 0) this.blockedDirectionMask = 0;
     const hasDirectionalInput =
-      commands.has("forward") ||
-      commands.has("backward") ||
-      commands.has("left") ||
-      commands.has("right");
+      rawDirectionalInput && !this.autoRecoveryAwaitingRelease;
     const intended = this.intendedMovement;
     const resetCollisionCarry = shouldResetWalkCollisionCarry(
       hasDirectionalInput,
@@ -643,12 +874,24 @@ export class AvatarController {
       intended.scaleToRef(1 / substeps, this.movementSubstep);
       this.collider.computeWorldMatrix(true);
       for (let index = 0; index < substeps; index += 1) {
+        this.positionBeforeSubstep.copyFrom(this.collider.position);
         this.collider.moveWithCollisions(this.movementSubstep);
         // moveWithCollisions mutates position in place; force the hidden
         // collider's absolute matrix before the next substep/frame. Without
         // this, Babylon can resolve every step from a stale start and tunnel
         // through furniture during a sprint or a deterministic QA loop.
-        this.collider.position.y = 0;
+        const surfaceResult = this.snapToWalkSurface();
+        if (
+          surfaceResult === "blocked-rise" ||
+          (surfaceResult === "missing" && !this.surfaceValid)
+        ) {
+          // A missing floor or an unwalkable rise is an impassable edge, just
+          // like a wall. Rewind the individual substep so a lower fallback
+          // terrain can never carry the walker through raised geometry.
+          this.collider.position.copyFrom(this.positionBeforeSubstep);
+          this.surfaceY = this.positionBeforeSubstep.y;
+          this.snapToWalkSurface();
+        }
         this.collider.computeWorldMatrix(true);
       }
       moved = this.actualMovement
@@ -706,15 +949,31 @@ export class AvatarController {
     this.velocity.set(actualX, 0, actualZ);
     this.root.position.copyFrom(this.collider.position);
 
-    const speed = Math.hypot(actualX, actualZ);
+    let speed = Math.hypot(actualX, actualZ);
     if (resolvedCollisionBatch) {
       if (hasDirectionalInput && intendedDistance > 1e-7 && progress < 0.12) {
         this.blockedForS += collisionAccountingSecondsS;
+        this.blockedAttemptWindowS = WALK_SURFACE.autoRecoveryAttemptWindowS;
+        this.blockedDirectionMask = addWalkEscapeDirection(
+          this.blockedDirectionMask,
+          {
+            x:
+              Number(commands.has("right")) -
+              Number(commands.has("left")),
+            z:
+              Number(commands.has("forward")) -
+              Number(commands.has("backward")),
+          },
+        );
       } else {
         this.blockedForS = Math.max(
           0,
           this.blockedForS - collisionAccountingSecondsS * 1.2,
         );
+        if (progress > 0.72 && movedDistance > 0.001) {
+          this.blockedDirectionMask = 0;
+          this.blockedAttemptWindowS = 0;
+        }
       }
       if (this.blockedForS >= 0.3) {
         this.recoveryNeeded = true;
@@ -750,7 +1009,60 @@ export class AvatarController {
       } else if (collisionCorrectionM >= 0.01) {
         this.safeTravelM = 0;
       }
+
+      const rewindDistanceM = Math.hypot(
+        this.collider.position.x - this.lastSafePosition.x,
+        this.collider.position.z - this.lastSafePosition.z,
+      );
+      if (
+        shouldAutoRecoverWalk({
+          blockedForS: this.blockedForS,
+          directionMask: this.blockedDirectionMask,
+          rewindDistanceM,
+          cooldownS: this.autoRecoveryCooldownS,
+          hasDirectionalInput,
+        })
+      ) {
+        this.collider.position.copyFrom(this.lastSafePosition);
+        this.surfaceY = this.collider.position.y;
+        this.snapToWalkSurface();
+        this.collider.computeWorldMatrix(true);
+        this.root.position.copyFrom(this.collider.position);
+        this.velocity.setAll(0);
+        this.intendedMovement.setAll(0);
+        this.movementSinceCollisionSolve.setAll(0);
+        this.pendingMovementSecondsS = 0;
+        this.collisionBatchAccountedSecondsS = 0;
+        this.blockedForS = 0;
+        this.recoveryNeeded = false;
+        this.recoveryClearTravelM = 0;
+        this.blockedDirectionMask = 0;
+        this.blockedAttemptWindowS = 0;
+        this.autoRecoveryCooldownS = WALK_SURFACE.autoRecoveryCooldownS;
+        this.autoRecoveryCount += 1;
+        this.autoRecoveryAwaitingRelease = true;
+        this.safeTravelM = 0;
+        this.safeCandidatePosition.copyFrom(this.collider.position);
+        actualX = 0;
+        actualZ = 0;
+        speed = 0;
+      }
     }
+
+    this.indoorBlend = stepWalkIndoorBlend(
+      this.indoorBlend,
+      this.surfaceKind === "interior",
+      deltaMs,
+    );
+    this.desiredCameraRadiusM = walkCameraRadiusForEnvironment(
+      this.preferredCameraRadiusM,
+      this.indoorBlend,
+    );
+    this.cameraSurfaceY = stepWalkCameraSurfaceHeight(
+      this.cameraSurfaceY,
+      this.surfaceY,
+      deltaMs,
+    );
 
     if (speed > 0.08) {
       const targetYaw = Math.atan2(actualX, actualZ);
@@ -772,6 +1084,7 @@ export class AvatarController {
     if (
       !cameraStillMoving &&
       speed > 0.3 &&
+      (commands.has("forward") || commands.has("backward")) &&
       this.sinceUserOrbitS > WALK_CAMERA.recenterDelayS
     ) {
       const behind = Math.atan2(-Math.cos(this.yaw), -Math.sin(this.yaw));
@@ -792,6 +1105,7 @@ export class AvatarController {
     }
     const closeBlend = 1 - this.adaptiveVisibility;
     this.cameraTarget.y =
+      this.cameraSurfaceY +
       WALK_CAMERA.targetHeightM +
       (WALK_CAMERA.closeTargetHeightM - WALK_CAMERA.targetHeightM) * closeBlend;
     // Probe and render from the exact same target height. The newly resolved
@@ -839,6 +1153,38 @@ export class AvatarController {
     this.lastProbeTarget.setAll(Number.POSITIVE_INFINITY);
   }
 
+  /** Refreshes only moving-door bounds without rescanning the full house. */
+  invalidateDynamicCameraOccluders() {
+    let refreshed = false;
+    this.cameraOccluders = this.cameraOccluders.map((occluder) => {
+      const metadata = occluder.mesh.metadata as {
+        readonly dynamicCameraOccluder?: boolean;
+      } | null;
+      if (
+        metadata?.dynamicCameraOccluder !== true ||
+        occluder.mesh.isDisposed()
+      ) {
+        return occluder;
+      }
+      occluder.mesh.computeWorldMatrix(true);
+      const bounds = occluder.mesh.getBoundingInfo().boundingBox;
+      refreshed = true;
+      return {
+        mesh: occluder.mesh,
+        minimumX: bounds.minimumWorld.x,
+        minimumY: bounds.minimumWorld.y,
+        minimumZ: bounds.minimumWorld.z,
+        maximumX: bounds.maximumWorld.x,
+        maximumY: bounds.maximumWorld.y,
+        maximumZ: bounds.maximumWorld.z,
+      };
+    });
+    if (refreshed) {
+      this.lastProbeTarget.setAll(Number.POSITIVE_INFINITY);
+      this.lastCameraHitDistanceM = null;
+    }
+  }
+
   private cameraHitDistance() {
     this.refreshCameraOccluders();
     // A layer can be toggled without changing mesh count or camera pose. Fold
@@ -857,7 +1203,7 @@ export class AvatarController {
       Math.abs(this.camera.alpha - this.lastProbeAlpha) > 0.003 ||
       Math.abs(this.camera.beta - this.lastProbeBeta) > 0.003;
     const zoomChanged =
-      Math.abs(this.preferredCameraRadiusM - this.lastProbeDesiredRadiusM) > 0.008;
+      Math.abs(this.desiredCameraRadiusM - this.lastProbeDesiredRadiusM) > 0.008;
     if (
       !targetMoved &&
       !angleMoved &&
@@ -870,7 +1216,7 @@ export class AvatarController {
     this.lastProbeTarget.copyFrom(this.cameraTarget);
     this.lastProbeAlpha = this.camera.alpha;
     this.lastProbeBeta = this.camera.beta;
-    this.lastProbeDesiredRadiusM = this.preferredCameraRadiusM;
+    this.lastProbeDesiredRadiusM = this.desiredCameraRadiusM;
     const sinBeta = Math.sin(this.camera.beta);
     const direction = this.cameraProbeDirection.set(
       Math.cos(this.camera.alpha) * sinBeta,
@@ -905,7 +1251,7 @@ export class AvatarController {
     // the hot path, while every broad-phase hit is verified against triangles.
     this.nearbyCameraOccluders.length = 0;
     const rangeM =
-      this.preferredCameraRadiusM + WALK_CAMERA.collisionProbeRadiusM + 0.04;
+      this.desiredCameraRadiusM + WALK_CAMERA.collisionProbeRadiusM + 0.04;
     const minX = this.cameraTarget.x - rangeM;
     const minY = this.cameraTarget.y - rangeM;
     const minZ = this.cameraTarget.z - rangeM;
@@ -932,13 +1278,13 @@ export class AvatarController {
       const ray = this.cameraProbeRays[index];
       ray.origin.copyFrom(this.cameraTarget).addInPlace(this.cameraProbeOffsets[index]);
       ray.direction.copyFrom(direction);
-      ray.length = this.preferredCameraRadiusM;
+      ray.length = this.desiredCameraRadiusM;
       for (const occluder of this.nearbyCameraOccluders) {
         const broadDistance = rayBoundsDistance(
           ray.origin,
           direction,
           occluder,
-          this.preferredCameraRadiusM,
+          this.desiredCameraRadiusM,
           0.01,
         );
         if (broadDistance === null || broadDistance >= nearest) continue;
@@ -947,7 +1293,7 @@ export class AvatarController {
           pick.hit &&
           Number.isFinite(pick.distance) &&
           pick.distance >= 0 &&
-          pick.distance <= this.preferredCameraRadiusM &&
+          pick.distance <= this.desiredCameraRadiusM &&
           pick.distance < nearest
         ) {
           nearest = pick.distance;
@@ -973,12 +1319,16 @@ export class AvatarController {
       WALK_CAMERA.minRadiusM,
       Math.min(WALK_CAMERA.maxRadiusM, this.preferredCameraRadiusM * multiplier),
     );
+    this.desiredCameraRadiusM = walkCameraRadiusForEnvironment(
+      this.preferredCameraRadiusM,
+      this.indoorBlend,
+    );
     this.effectiveCameraRadiusM = this.cameraObstructed
       ? Math.max(
           WALK_CAMERA.obstructionMinRadiusM,
-          Math.min(this.preferredCameraRadiusM, observedRadiusM),
+          Math.min(this.desiredCameraRadiusM, observedRadiusM),
         )
-      : this.preferredCameraRadiusM;
+      : this.desiredCameraRadiusM;
     this.lastProbeDesiredRadiusM = Number.POSITIVE_INFINITY;
     this.sinceUserOrbitS = 0;
   }
@@ -986,7 +1336,7 @@ export class AvatarController {
   private updateCameraObstruction(deltaMs: number) {
     this.captureNativePinch();
     const boom = stepWalkCameraBoom({
-      desiredRadiusM: this.preferredCameraRadiusM,
+      desiredRadiusM: this.desiredCameraRadiusM,
       currentRadiusM: this.effectiveCameraRadiusM,
       hitDistanceM: this.cameraHitDistance(),
       deltaMs,
@@ -1030,8 +1380,12 @@ export class AvatarController {
       WALK_CAMERA.minRadiusM,
       Math.min(WALK_CAMERA.maxRadiusM, next),
     );
-    if (this.preferredCameraRadiusM < this.effectiveCameraRadiusM) {
-      this.effectiveCameraRadiusM = this.preferredCameraRadiusM;
+    this.desiredCameraRadiusM = walkCameraRadiusForEnvironment(
+      this.preferredCameraRadiusM,
+      this.indoorBlend,
+    );
+    if (this.desiredCameraRadiusM < this.effectiveCameraRadiusM) {
+      this.effectiveCameraRadiusM = this.desiredCameraRadiusM;
       this.camera.radius = this.effectiveCameraRadiusM;
     }
   }
