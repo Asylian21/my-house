@@ -9,22 +9,15 @@ import {
   Eye,
   EyeOff,
   Focus,
-  Footprints,
-  Fullscreen,
-  House,
   Info,
   Layers3,
   Map,
   MapPin,
   Menu,
-  Orbit,
-  Plane,
   PanelLeftClose,
   PanelRightClose,
   Search,
   ShieldCheck,
-  SlidersHorizontal,
-  Trees,
   TriangleAlert,
   Undo2,
   X,
@@ -42,8 +35,24 @@ import {
   BabylonViewport,
   type BabylonViewportHandle,
 } from "./babylon-viewport";
-import type { CameraPreset } from "@/lib/babylon-scene";
+import { CommandPalette } from "./command-palette";
+import { useChromeVisibility } from "./use-chrome-visibility";
 import type { NavigationMode } from "@/lib/twin-viewport-contract";
+import { INTERIOR_ROOMS } from "@/lib/twin-interior";
+import { WALK_AVATARS, type WalkAvatarId } from "@/lib/twin-avatar";
+import {
+  buildCommands,
+  type CameraPresetId,
+  type TwinCommand,
+} from "@/lib/twin-commands";
+import {
+  DEFAULT_WORKSPACE_MODE,
+  chromeContract,
+  movementForWorkspace,
+  viewModeForWorkspace,
+  workspaceForMovement,
+  type WorkspaceMode,
+} from "@/lib/twin-ui-mode";
 import {
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
@@ -62,7 +71,6 @@ import {
   type FoundationStrip,
   type LayerId,
   type SourceRecord,
-  type ViewMode,
 } from "@/lib/twin-site";
 
 type InspectorTab = "parameters" | "sources";
@@ -96,6 +104,7 @@ interface EntityDetail {
 }
 
 const COMPACT_LAYOUT_QUERY = "(max-width: 1080px)";
+const DEFAULT_SELECTION_ID = "PARCEL-6012/26";
 
 function subscribeCompactLayout(onChange: () => void) {
   const mediaQuery = window.matchMedia(COMPACT_LAYOUT_QUERY);
@@ -310,7 +319,7 @@ function getEntityDetail(
         { label: "Výškový systém", value: "±0,000 = 184,00", unit: "m Bpv" },
       ],
       sourceIds: HOUSE.sourceIds,
-      note: "3D hmota vychádza z neskoršieho pôdorysu D1.1.002 bez zrkadlenia: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Žltá terasa je zatiaľ samostatná georeferencovaná revízia C3 s plochou 53 m², nie zlúčená plocha 84,35 m² zo súpisu D1.",
+      note: "3D hmota vychádza z neskoršieho pôdorysu D1.1.002 bez zrkadlenia: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Aktívna revízia predlžuje garáž o 1 000 mm na úkor záhradnej lodžie a znižuje D1 terasy z pôvodných 84,35 m² na 80,15 m². Žltá plocha C3 53 m² ostáva samostatnou staršou georeferencovanou revíziou.",
     };
   }
 
@@ -335,10 +344,12 @@ function getEntityDetail(
         { label: "Chodník ku dverám", value: "1 500", unit: "mm" },
         { label: "Povrch vozovky v 3D", value: "sivá betónová bloková dlažba" },
         { label: "Vzor dlažby", value: "200 × 100 · vizualizačný modul", unit: "mm" },
+        { label: "Krajnica", value: "hlina + riedka náletová vegetácia" },
+        { label: "Verejné osvetlenie", value: "štíhle sivé LED stožiare · ilustračné" },
         { label: "Najbližšia evidovaná ulica", value: "Bezová · ≈185 m" },
       ],
       sourceIds: [...ROAD_CONTEXT.sourceIds, SOURCES.networkContext.id],
-      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Sivá bloková dlažba vychádza z klientskej referencie; jej vizualizačný modul nie je výrobná špecifikácia. Hrana spevnenej vozovky a približne 3,104 m zelená cestná rezerva sú stále odvodené z C3, nie zo zamerania skutočných obrubníkov.",
+      note: "Parcela 6012/26 je na konci bloku: cestný pozemok 6012/1 ju obopína pozdĺž čelnej aj bočnej hrany a spája ich zaobleným rohom. Hranice cestného pozemku aj evidovaná plocha 10 647 m² sú načítané z aktuálnej služby ČÚZK. Sivá bloková dlažba, hlinená krajnica, obrubník a štíhle LED stožiare vychádzajú z fotografie stavebníka z 25. 8. 2026; modul dlažby ani rozstup stožiarov nie sú realizačnou špecifikáciou. Hrana vozovky a približne 3,104 m nespevnená cestná rezerva sú stále odvodené z C3, nie zo zamerania skutočných obrubníkov.",
     };
   }
 
@@ -410,7 +421,7 @@ function getEntityDetail(
   }
 
   return {
-    id: "PARCEL-6012/26",
+    id: DEFAULT_SELECTION_ID,
     code: "6012/26",
     eyebrow: "KATASTRÁLNA PARCELA",
     title: "Parcela 6012/26",
@@ -451,92 +462,92 @@ export function TwinStudio() {
   const explorerTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorPanelRef = useRef<HTMLElement>(null);
-  const flightTriggerRef = useRef<HTMLButtonElement>(null);
   const isCompact = useSyncExternalStore(
     subscribeCompactLayout,
     getCompactLayoutSnapshot,
     getCompactLayoutServerSnapshot,
   );
+
+  const [workspace, setWorkspace] = useState<WorkspaceMode>(
+    DEFAULT_WORKSPACE_MODE,
+  );
+  const [movement, setMovement] = useState<NavigationMode>("orbit");
   const [foundations, setFoundations] = useState<readonly FoundationStrip[]>(FOUNDATIONS);
-  const [selectionId, setSelectionId] = useState("PARCEL-6012/26");
+  const [selectionId, setSelectionId] = useState(DEFAULT_SELECTION_ID);
   const [visibleLayers, setVisibleLayers] = useState(DEFAULT_LAYER_VISIBILITY);
-  const [viewMode, setViewMode] = useState<ViewMode>("realistic");
-  const [navigationMode, setNavigationMode] =
-    useState<NavigationMode>("orbit");
   const [search, setSearch] = useState("");
   const [explorerOpen, setExplorerOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("parameters");
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [walkAvatarId, setWalkAvatarId] = useState<WalkAvatarId>("michelle");
+  const [walkView, setWalkView] = useState<"first" | "third">("third");
   const [draftWidth, setDraftWidth] = useState("");
   const [inputError, setInputError] = useState("");
   const [history, setHistory] = useState<readonly HistoryItem[]>([]);
-  const useOverlayPanels = isCompact || viewMode === "realistic";
+
+  const viewMode = viewModeForWorkspace(workspace);
+  const chrome = chromeContract(workspace, movement);
+  const overlayPanels = !chrome.dockedPanels || isCompact;
+  const panelOpen = explorerOpen || inspectorOpen;
+  const chromeVisible = useChromeVisibility({
+    autoHide: chrome.autoHide,
+    pinned: panelOpen || paletteOpen || helpOpen,
+  });
 
   const detail = useMemo(
     () => getEntityDetail(selectionId, foundations),
     [selectionId, foundations],
   );
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      const target = event.target as HTMLElement | null;
-      const isTyping =
-        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setInspectorOpen(false);
-        setExplorerOpen(true);
-        requestAnimationFrame(() => searchRef.current?.focus());
-      }
-      if (event.key === "Escape" && !isTyping) {
-        if (navigationMode === "flight" || navigationMode === "walk") {
-          event.preventDefault();
-          setNavigationMode("orbit");
-          viewportRef.current?.setNavigationMode("orbit");
-          requestAnimationFrame(() => flightTriggerRef.current?.focus());
-          return;
-        }
-        const restoreFocus = inspectorOpen
-          ? inspectorTriggerRef
-          : explorerOpen
-            ? explorerTriggerRef
-            : null;
-        setHelpOpen(false);
-        if (explorerOpen || inspectorOpen) {
-          setExplorerOpen(false);
-          setInspectorOpen(false);
-          requestAnimationFrame(() => restoreFocus?.current?.focus());
-        } else {
-          setSelectionId("PARCEL-6012/26");
-          setDraftWidth("");
-          setInputError("");
-        }
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [explorerOpen, inspectorOpen, navigationMode]);
-
-  const openExplorer = () => {
-    setInspectorOpen(false);
-    setExplorerOpen(true);
-  };
+  const commands = useMemo(
+    () =>
+      buildCommands({
+        workspace,
+        movement,
+        walkView,
+        avatarId: walkAvatarId,
+        rooms: INTERIOR_ROOMS.map((room) => ({
+          id: room.id,
+          number: room.number,
+          name: room.name,
+        })),
+        avatars: WALK_AVATARS.map((avatar) => ({
+          id: avatar.id,
+          label: avatar.label,
+          tagline: avatar.tagline,
+        })),
+        layers: LAYERS.map((layer) => ({
+          id: layer.id,
+          label: layer.label,
+          source: layer.source,
+        })),
+        layerVisibility: visibleLayers,
+        hasSelection: selectionId !== DEFAULT_SELECTION_ID,
+      }),
+    [workspace, movement, walkView, walkAvatarId, visibleLayers, selectionId],
+  );
 
   const closeExplorer = () => {
     setExplorerOpen(false);
     requestAnimationFrame(() => explorerTriggerRef.current?.focus());
   };
 
-  const openInspector = () => {
-    setExplorerOpen(false);
-    setInspectorOpen(true);
+  const openExplorer = () => {
+    setInspectorOpen(false);
+    setExplorerOpen(true);
   };
 
   const closeInspector = () => {
     setInspectorOpen(false);
     requestAnimationFrame(() => inspectorTriggerRef.current?.focus());
+  };
+
+  const openInspector = (tab: InspectorTab = "parameters") => {
+    setExplorerOpen(false);
+    setInspectorTab(tab);
+    setInspectorOpen(true);
   };
 
   const dismissPanels = () => {
@@ -546,65 +557,199 @@ export function TwinStudio() {
     requestAnimationFrame(() => restoreFocus.current?.focus());
   };
 
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void document.documentElement.requestFullscreen();
+  };
+
+  const showCameraPreset = (preset: CameraPresetId) => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
+    if (preset === "parcels") {
+      setVisibleLayers((current) =>
+        current.cadastre ? current : { ...current, cadastre: true },
+      );
+    }
+    // Tell the controller before React re-renders: a preset always lands in
+    // orbit, and the camera must not be framed while the walker still owns it.
+    setMovement("orbit");
+    viewportRef.current?.setNavigationMode("orbit");
+    viewportRef.current?.setCameraPreset(preset);
+  };
+
+  /** Walking needs the shell collision layer even if it was hidden earlier. */
+  const ensureBuildingLayer = () =>
+    setVisibleLayers((current) =>
+      current.building ? current : { ...current, building: true },
+    );
+
+  const changeMovement = (next: NavigationMode) => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
+    setWorkspace((current) => workspaceForMovement(current, next));
+    setMovement(next);
+    if (next === "walk") {
+      ensureBuildingLayer();
+      setExplorerOpen(false);
+      setInspectorOpen(false);
+      viewportRef.current?.enterWalkthrough();
+      return;
+    }
+    viewportRef.current?.setNavigationMode(next);
+  };
+
+  const enterRoom = (roomId: string) => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
+    setWorkspace("experience");
+    setMovement("walk");
+    ensureBuildingLayer();
+    setExplorerOpen(false);
+    setInspectorOpen(false);
+    viewportRef.current?.enterWalkthrough(roomId);
+  };
+
+  const changeWorkspace = (next: WorkspaceMode) => {
+    if (viewportRef.current?.isGarageCinematicActive()) return;
+    if (next === workspace) return;
+    const nextMovement = movementForWorkspace(next, movement);
+    setWorkspace(next);
+    setMovement(nextMovement);
+    setExplorerOpen(false);
+    setInspectorOpen(false);
+    setHelpOpen(false);
+    if (nextMovement !== movement) {
+      viewportRef.current?.setNavigationMode(nextMovement);
+    }
+    // Each mode has a signature framing, so the switch reads as a real change
+    // of intent rather than a restyle of the same picture.
+    requestAnimationFrame(() =>
+      viewportRef.current?.setCameraPreset(
+        next === "documentation" ? "axonometric" : "garden",
+      ),
+    );
+  };
+
+  const toggleLayer = (layer: LayerId) => {
+    if (movement === "walk" && layer === "building") return;
+    setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  };
+
   const select = (id: string) => {
-    const selectedFromExplorer = useOverlayPanels && explorerOpen;
+    const selectedFromExplorer = overlayPanels && explorerOpen;
     setSelectionId(id);
     const selectedFoundation = foundations.find((foundation) => foundation.id === id);
     setDraftWidth(selectedFoundation?.widthMm.toString() ?? "");
     setInputError("");
-    if (useOverlayPanels) setExplorerOpen(false);
+    if (overlayPanels) setExplorerOpen(false);
+    // While flying or walking, a click belongs to the scene. Panels would break
+    // the sense of being inside the model.
+    if (movement !== "orbit") return;
+    setInspectorTab("parameters");
     setInspectorOpen(true);
     if (selectedFromExplorer) {
       requestAnimationFrame(() => inspectorPanelRef.current?.focus());
     }
   };
 
-  const toggleLayer = (layer: LayerId) => {
-    if (navigationMode === "walk" && layer === "building") return;
-    setVisibleLayers((current) => ({ ...current, [layer]: !current[layer] }));
-  };
-
-  const showCameraPreset = (preset: CameraPreset) => {
-    if (preset === "parcels") {
-      setVisibleLayers((current) =>
-        current.cadastre ? current : { ...current, cadastre: true },
-      );
-    }
-    setNavigationMode("orbit");
-    viewportRef.current?.setCameraPreset(preset);
-  };
-
   const handleViewportNavigationModeChange = (next: NavigationMode) => {
-    setNavigationMode(next);
-    if (next === "walk") {
-      setVisibleLayers((current) =>
-        current.building ? current : { ...current, building: true },
-      );
-      setViewMode("realistic");
+    setMovement(next);
+    setWorkspace((current) => workspaceForMovement(current, next));
+    if (next === "walk") ensureBuildingLayer();
+  };
+
+  const runCommand = (command: TwinCommand) => {
+    const { action } = command;
+    switch (action.kind) {
+      case "workspace":
+        changeWorkspace(action.workspace);
+        break;
+      case "movement":
+        changeMovement(action.movement);
+        break;
+      case "preset":
+        showCameraPreset(action.preset);
+        break;
+      case "room":
+        enterRoom(action.roomId);
+        break;
+      case "avatar":
+        void viewportRef.current?.setWalkAvatar(action.avatarId);
+        break;
+      case "layer":
+        toggleLayer(action.layer);
+        break;
+      case "recenter":
+        viewportRef.current?.recoverWalkthrough();
+        break;
+      case "walk-view":
+        viewportRef.current?.setWalkView(action.view);
+        break;
+      case "fullscreen":
+        toggleFullscreen();
+        break;
+      case "help":
+        setHelpOpen(true);
+        break;
     }
   };
 
-  const toggleFlight = () => {
-    const next = navigationMode === "flight" ? "orbit" : "flight";
-    setNavigationMode(next);
-    viewportRef.current?.setNavigationMode(next);
-  };
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
 
-  const toggleWalk = () => {
-    const next = navigationMode === "walk" ? "orbit" : "walk";
-    setNavigationMode(next);
-    if (next === "walk") {
-      // Walkthrough always needs both the shell collision layer and the
-      // realistic fit-out. This also recovers from a previously hidden house.
-      setVisibleLayers((current) =>
-        current.building ? current : { ...current, building: true },
-      );
-      setViewMode("realistic");
-      viewportRef.current?.enterWalkthrough();
-    } else {
-      viewportRef.current?.setNavigationMode("orbit");
-    }
-  };
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setExplorerOpen(false);
+        setInspectorOpen(false);
+        setPaletteOpen((open) => !open);
+        return;
+      }
+      if (isTyping || event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key.toLowerCase() === "m") {
+        event.preventDefault();
+        changeWorkspace(
+          workspace === "documentation" ? "experience" : "documentation",
+        );
+        return;
+      }
+      if (event.key === "?") {
+        event.preventDefault();
+        setHelpOpen((open) => !open);
+        return;
+      }
+      if (event.key !== "Escape") return;
+
+      if (viewportRef.current?.isGarageCinematicActive()) {
+        event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      if (paletteOpen) {
+        setPaletteOpen(false);
+        return;
+      }
+      if (helpOpen) {
+        setHelpOpen(false);
+        return;
+      }
+      if (panelOpen) {
+        dismissPanels();
+        return;
+      }
+      if (movement !== "orbit") {
+        setMovement("orbit");
+        viewportRef.current?.setNavigationMode("orbit");
+        return;
+      }
+      setSelectionId(DEFAULT_SELECTION_ID);
+      setDraftWidth("");
+      setInputError("");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const applyWidth = () => {
     const foundation = detail.editableFoundation;
@@ -657,76 +802,88 @@ export function TwinStudio() {
   );
 
   return (
-    <main className={`twin-shell ${viewMode === "realistic" ? "is-presentation" : ""}`}>
+    <main
+      className="twin-shell"
+      data-workspace={workspace}
+      data-panels={overlayPanels ? "overlay" : "docked"}
+    >
       <a className="skip-link" href="#scene-explorer">Preskočiť na prieskumník modelu</a>
-      <header className="top-rail">
-        <div className="top-rail-start">
-          <button
-            ref={explorerTriggerRef}
-            className="rail-icon mobile-panel-trigger"
-            aria-label={`${explorerOpen ? "Zavrieť" : "Otvoriť"} prieskumník modelu`}
-            aria-expanded={explorerOpen}
-            onClick={explorerOpen ? closeExplorer : openExplorer}
-          >
-            <Menu size={19} />
-          </button>
-          <div className="brand-mark" aria-hidden="true"><span /><span /><span /></div>
-          <div className="brand-copy">
-            <span>DIGITÁLNE DVOJČA</span>
-            <strong>DOM 6012/26</strong>
+
+      {chrome.appRails && (
+        <header className="app-rail">
+          <div className="rail-start">
+            <button
+              ref={explorerTriggerRef}
+              className="rail-button"
+              aria-label={`${explorerOpen ? "Zavrieť" : "Otvoriť"} prieskumník modelu`}
+              aria-expanded={explorerOpen}
+              onClick={explorerOpen ? closeExplorer : openExplorer}
+            >
+              <Menu size={19} />
+            </button>
+            <div className="brand">
+              <div className="brand-mark" aria-hidden="true"><span /><span /><span /></div>
+              <div className="brand-copy">
+                <span>DIGITÁLNE DVOJČA</span>
+                <strong>DOM 6012/26</strong>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="project-locator" aria-label="Lokalita projektu">
-          <MapPin size={15} aria-hidden="true" />
-          <span>Březí u Mikulova</span>
-          <i />
-          <span>48.817716° N · 16.552789° E</span>
-        </div>
-        <div className="top-rail-end">
-          <div className="save-state" title="Zmeny sa neukladajú na server">
-            <span />
-            <div><strong>NÁVRHOVÝ MODEL</strong><small>session-only</small></div>
+          <div className="rail-locator" aria-label="Lokalita projektu">
+            <MapPin size={14} aria-hidden="true" />
+            <span>Březí u Mikulova</span>
+            <i aria-hidden="true" />
+            <span>48.817716° N · 16.552789° E</span>
           </div>
-          <button
-            className="rail-icon"
-            aria-label="Zobraziť pomoc a klávesové skratky"
-            aria-expanded={helpOpen}
-            onClick={() => setHelpOpen((open) => !open)}
-          >
-            <CircleHelp size={19} />
-          </button>
-          <button
-            ref={inspectorTriggerRef}
-            className="rail-icon mobile-panel-trigger"
-            aria-label={`${inspectorOpen ? "Zavrieť" : "Otvoriť"} detail vybraného objektu`}
-            aria-expanded={inspectorOpen}
-            onClick={inspectorOpen ? closeInspector : openInspector}
-          >
-            <Info size={19} />
-          </button>
-        </div>
-      </header>
+          <div className="rail-end">
+            <div className="rail-status" title="Zmeny sa neukladajú na server">
+              <i aria-hidden="true" />
+              <div><strong>NÁVRHOVÝ MODEL</strong><small>session-only</small></div>
+            </div>
+            <button
+              className="rail-button"
+              aria-label="Zobraziť pomoc a klávesové skratky"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen((open) => !open)}
+            >
+              <CircleHelp size={19} />
+            </button>
+            <button
+              ref={inspectorTriggerRef}
+              className="rail-button"
+              aria-label={`${inspectorOpen ? "Zavrieť" : "Otvoriť"} detail vybraného objektu`}
+              aria-expanded={inspectorOpen}
+              onClick={inspectorOpen ? closeInspector : () => openInspector()}
+            >
+              <Info size={19} />
+            </button>
+          </div>
+        </header>
+      )}
 
       <button
-        className={`panel-scrim ${explorerOpen || inspectorOpen ? "is-active" : ""}`}
+        className="panel-scrim"
+        data-active={overlayPanels && panelOpen}
         aria-label="Zavrieť otvorený panel"
+        tabIndex={overlayPanels && panelOpen ? 0 : -1}
         onClick={dismissPanels}
       />
 
       <aside
         id="scene-explorer"
-        className={`scene-panel ${explorerOpen ? "panel-open" : ""}`}
+        className="scene-panel"
+        data-open={explorerOpen}
         aria-label="Prieskumník digitálneho dvojčaťa"
-        aria-hidden={useOverlayPanels ? !explorerOpen : undefined}
-        inert={useOverlayPanels && !explorerOpen}
+        aria-hidden={overlayPanels ? !explorerOpen : undefined}
+        inert={overlayPanels && !explorerOpen}
       >
-        <div className="panel-header">
+        <div className="panel-head">
           <div><span className="micro-label">SCÉNA / 9 VRSTIEV</span><h1>Živý výkres</h1></div>
           <button className="panel-close" aria-label="Zavrieť prieskumník" onClick={closeExplorer}>
             <PanelLeftClose size={18} />
           </button>
         </div>
-        <label className="model-search">
+        <label className="panel-search">
           <Search size={16} aria-hidden="true" />
           <input
             ref={searchRef}
@@ -737,16 +894,16 @@ export function TwinStudio() {
           />
           {search ? (
             <button aria-label="Vymazať vyhľadávanie" onClick={() => setSearch("")}><X size={15} /></button>
-          ) : <kbd>⌘K</kbd>}
+          ) : <kbd className="key">⌘K</kbd>}
         </label>
 
         <div className="scene-tree" role="tree" aria-label="Objekty modelu">
           {matches("parcela 6012/26 kataster") && (
             <button
               role="treeitem"
-              aria-selected={selectionId === "PARCEL-6012/26"}
-              className={`tree-object root-object ${selectionId === "PARCEL-6012/26" ? "selected" : ""}`}
-              onClick={() => select("PARCEL-6012/26")}
+              aria-selected={selectionId === DEFAULT_SELECTION_ID}
+              className="tree-item tree-root"
+              onClick={() => select(DEFAULT_SELECTION_ID)}
             >
               <span className="entity-token cadastral">KN</span>
               <span><strong>Parcela 6012/26</strong><small>ČÚZK · 753 m²</small></span>
@@ -758,12 +915,12 @@ export function TwinStudio() {
             <summary><Map size={15} /><span>Areál a komunikácia</span><small>6</small></summary>
             <div role="group">
               {matches("miestna komunikácia 6012/1") && (
-                <button role="treeitem" aria-selected={selectionId === "ROAD-6012-1"} className={`tree-object ${selectionId === "ROAD-6012-1" ? "selected" : ""}`} onClick={() => select("ROAD-6012-1")}>
+                <button role="treeitem" aria-selected={selectionId === "ROAD-6012-1"} className="tree-item" onClick={() => select("ROAD-6012-1")}>
                   <span className="entity-token road">UL</span><span><strong>Miestna komunikácia</strong><small>parc. 6012/1 · dve hrany</small></span>
                 </button>
               )}
               {matches("dom rodinný so 01") && (
-                <button role="treeitem" aria-selected={selectionId === HOUSE.id} className={`tree-object ${selectionId === HOUSE.id ? "selected" : ""}`} onClick={() => select(HOUSE.id)}>
+                <button role="treeitem" aria-selected={selectionId === HOUSE.id} className="tree-item" onClick={() => select(HOUSE.id)}>
                   <span className="entity-token house">RD</span><span><strong>Rodinný dom</strong><small>SO 01 · návrh</small></span>
                 </button>
               )}
@@ -771,17 +928,17 @@ export function TwinStudio() {
                 <div className="tree-static"><span className="entity-token terrain">SP</span><span><strong>Spevnené plochy</strong><small>C3/D1 · návrh</small></span></div>
               )}
               {matches(`${GARDEN_POOL.label} bazén dvor terasa`) && (
-                <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className={`tree-object ${selectionId === GARDEN_POOL.id ? "selected" : ""}`} onClick={() => select(GARDEN_POOL.id)}>
+                <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className="tree-item" onClick={() => select(GARDEN_POOL.id)}>
                   <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>{GARDEN_POOL.label}</strong><small>vodná plocha {fmt(GARDEN_POOL.waterAreaM2)} m² · v rohu terás</small></span>
                 </button>
               )}
               {matches("plot oplotenie súkromná záhrada") && (
-                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.id} className={`tree-object ${selectionId === SITE_FENCE.id ? "selected" : ""}`} onClick={() => select(SITE_FENCE.id)}>
+                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.id} className="tree-item" onClick={() => select(SITE_FENCE.id)}>
                   <span className="entity-token house">OP</span><span><strong>Oplotenie záhrady</strong><small>náčrt stavebníka · návrh</small></span>
                 </button>
               )}
               {matches("brána teleskopická záhrada") && (
-                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.vehicleGate.id} className={`tree-object ${selectionId === SITE_FENCE.vehicleGate.id ? "selected" : ""}`} onClick={() => select(SITE_FENCE.vehicleGate.id)}>
+                <button role="treeitem" aria-selected={selectionId === SITE_FENCE.vehicleGate.id} className="tree-item" onClick={() => select(SITE_FENCE.vehicleGate.id)}>
                   <span className="entity-token house">BR</span><span><strong>Teleskopická brána</strong><small>4 200 mm · zelený náčrt</small></span>
                 </button>
               )}
@@ -796,7 +953,7 @@ export function TwinStudio() {
                   key={foundation.id}
                   role="treeitem"
                   aria-selected={selectionId === foundation.id}
-                  className={`tree-object ${selectionId === foundation.id ? "selected" : ""}`}
+                  className="tree-item"
                   onClick={() => select(foundation.id)}
                 >
                   <span className="entity-token foundation">{foundation.id.replace("F-", "")}</span>
@@ -816,7 +973,7 @@ export function TwinStudio() {
                 ["UTIL-ELECTRICITY", "NN", "Elektrina NN", "C3 · konflikt", "electricity"],
                 ["UTIL-WATER-STREET", "IS", "Verejné siete v komunikácii", "DMVS", "contextNetworks"],
               ].filter(([, , label]) => matches(label)).map(([id, code, label, source, layer]) => (
-                <button key={id} role="treeitem" aria-selected={selectionId === id} className={`tree-object ${selectionId === id ? "selected" : ""}`} onClick={() => select(id)}>
+                <button key={id} role="treeitem" aria-selected={selectionId === id} className="tree-item" onClick={() => select(id)}>
                   <span className="entity-token utility" style={{ "--entity-color": LAYERS.find((item) => item.id === layer)?.color } as CSSProperties}>{code}</span>
                   <span><strong>{label}</strong><small>{source}</small></span>
                 </button>
@@ -825,17 +982,17 @@ export function TwinStudio() {
           </details>
         </div>
 
-        <section className="layer-control" aria-labelledby="layers-heading">
+        <section className="layer-block" aria-labelledby="layers-heading">
           <div className="section-heading"><span id="layers-heading">VIDITEĽNOSŤ VRSTIEV</span><Layers3 size={15} /></div>
-          <div className="layer-list">
+          <div>
             {LAYERS.map((layer) => (
               <button
                 key={layer.id}
-                className={visibleLayers[layer.id] ? "is-visible" : ""}
+                className="layer-item"
                 aria-pressed={visibleLayers[layer.id]}
                 onClick={() => toggleLayer(layer.id)}
               >
-                <i style={{ backgroundColor: layer.color }} />
+                <i style={{ backgroundColor: layer.color, color: layer.color }} />
                 <span>{layer.label}<small>{layer.source}</small></span>
                 {visibleLayers[layer.id] ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
@@ -844,137 +1001,60 @@ export function TwinStudio() {
         </section>
       </aside>
 
-      <section className={`viewport ${viewMode === "realistic" ? "is-realistic" : ""} ${navigationMode === "flight" ? "is-flight" : ""} ${navigationMode === "walk" ? "is-flight is-walk" : ""}`} aria-label="3D pracovný priestor">
+      <section
+        className="viewport"
+        data-workspace={workspace}
+        aria-label="3D pracovný priestor"
+      >
         <BabylonViewport
           ref={viewportRef}
           foundations={foundations}
           selectionId={selectionId}
           visibleLayers={visibleLayers}
           viewMode={viewMode}
-          navigationMode={navigationMode}
+          navigationMode={movement}
+          workspace={workspace}
+          chrome={chrome}
+          chromeVisible={chromeVisible}
+          helpOpen={helpOpen}
           onSelect={select}
           onNavigationModeChange={handleViewportNavigationModeChange}
+          onWorkspaceChange={changeWorkspace}
           onParcelOverviewRequest={() =>
             setVisibleLayers((current) =>
               current.cadastre ? current : { ...current, cadastre: true },
             )
           }
+          onCameraPreset={showCameraPreset}
+          onOpenPalette={() => setPaletteOpen(true)}
+          onToggleHelp={() => setHelpOpen((open) => !open)}
+          onWalkAvatarChange={setWalkAvatarId}
+          onWalkViewChange={setWalkView}
         />
-
-        <div className="truth-card">
-          <div className="truth-live"><span /> AKTUÁLNY KATASTER · ROHOVÁ</div>
-          <strong>6012/26</strong>
-          <div><span>753 m²</span><i /><span>EPSG:5514</span></div>
-          <small>ČÚZK · overené 24. 8. 2026</small>
-        </div>
-
-        <div className="camera-dock" role="toolbar" aria-label="Kamera a navigácia">
-          <button aria-label="Záhradný prezentačný pohľad" aria-keyshortcuts="4" onClick={() => showCameraPreset("garden")}><Trees size={17} /><span>Záhrada</span><kbd>4</kbd></button>
-          <button aria-label="Prehľad parciel v mojom rade a oproti" aria-keyshortcuts="5" onClick={() => showCameraPreset("parcels")}><MapPin size={17} /><span>Parcely</span><kbd>5</kbd></button>
-          <button aria-label="Axonometrický pohľad" aria-keyshortcuts="1" onClick={() => showCameraPreset("axonometric")}><Orbit size={17} /><span>Axonometria</span><kbd>1</kbd></button>
-          <button aria-label="Pôdorysný pohľad" aria-keyshortcuts="2" onClick={() => showCameraPreset("top")}><Map size={17} /><span>Pôdorys</span><kbd>2</kbd></button>
-          <button aria-label="Pohľad od ulice" aria-keyshortcuts="3" onClick={() => showCameraPreset("street")}><House size={17} /><span>Od ulice</span><kbd>3</kbd></button>
-          <button
-            ref={flightTriggerRef}
-            className={navigationMode === "flight" ? "active" : ""}
-            aria-label={navigationMode === "flight" ? "Ukončiť voľný 3D prelet" : "Spustiť voľný 3D prelet"}
-            aria-pressed={navigationMode === "flight"}
-            aria-keyshortcuts="H"
-            onClick={toggleFlight}
-          ><Plane size={17} /><span>Prelet</span><kbd>H</kbd></button>
-          <button
-            className={navigationMode === "walk" ? "active" : ""}
-            aria-label={navigationMode === "walk" ? "Ukončiť prechádzku interiérom" : "Prejsť sa interiérom domu"}
-            aria-pressed={navigationMode === "walk"}
-            aria-keyshortcuts="G"
-            onClick={toggleWalk}
-          ><Footprints size={17} /><span>Interiér</span><kbd>G</kbd></button>
-          <button aria-label="Zamerať vybraný objekt" aria-keyshortcuts="F" onClick={() => showCameraPreset("focus")}><Focus size={17} /><span>Výber</span><kbd>F</kbd></button>
-          <button
-            aria-label="Zobraziť na celej obrazovke"
-            onClick={() => {
-              if (document.fullscreenElement) void document.exitFullscreen();
-              else void document.documentElement.requestFullscreen();
-            }}
-          ><Fullscreen size={17} /><span className="visually-hidden">Celá obrazovka</span></button>
-        </div>
-
-        <div className="view-mode" role="group" aria-label="Režim zobrazenia">
-          <button className={viewMode === "technical" ? "active" : ""} aria-pressed={viewMode === "technical"} onClick={() => {
-            setViewMode("technical");
-            setNavigationMode("orbit");
-            setExplorerOpen(false);
-            setInspectorOpen(false);
-            requestAnimationFrame(() => showCameraPreset("axonometric"));
-          }}>
-            <SlidersHorizontal size={15} /> Technický
-          </button>
-          <button className={viewMode === "realistic" ? "active" : ""} aria-pressed={viewMode === "realistic"} onClick={() => {
-            setViewMode("realistic");
-            setNavigationMode("orbit");
-            setExplorerOpen(false);
-            setInspectorOpen(false);
-            requestAnimationFrame(() => showCameraPreset("garden"));
-          }}>
-            <House size={15} /> Realita
-          </button>
-        </div>
-
-        <div className="north-compass" aria-label="Smer kladnej osi Y lokálneho pôdorysu">
-          <span>Y</span><i /><small>+ do parcely</small>
-        </div>
-
-        <div className="viewport-legend" aria-label="Legenda dôvery dát">
-          <span><i className="legend-current" />register</span>
-          <span><i className="legend-design" />projekt</span>
-          <span><i className="legend-gap" />chýba as-built</span>
-        </div>
-
-        {viewMode === "realistic" && (
-          <div className="visualization-note">
-            <Trees size={13} /> D1 architektúra · ČÚZK parcelný kontext · ilustračná vegetácia
-          </div>
-        )}
-
-        {helpOpen && (
-          <aside className="shortcut-card" aria-label="Ovládanie modelu">
-            <div><strong>Ovládanie modelu</strong><button aria-label="Zavrieť pomoc" onClick={() => setHelpOpen(false)}><X size={16} /></button></div>
-            <dl>
-              <div><dt>Orbit</dt><dd>ťahanie / 1 prst</dd></div>
-              <div><dt>Posun a zoom</dt><dd>pravé / koliesko / pinch</dd></div>
-              <div><dt>Pohľady</dt><dd>1 · 2 · 3 · 4 · 5 · F</dd></div>
-              <div><dt>Voľný prelet</dt><dd>H · potom WASD</dd></div>
-              <div><dt>Výška preletu</dt><dd>Q / E</dd></div>
-              <div><dt>Rýchlosť</dt><dd>Shift turbo · Alt presne</dd></div>
-              <div><dt>Ukončiť prelet</dt><dd>Esc</dd></div>
-            </dl>
-          </aside>
-        )}
-
-        <button className="mobile-explorer-button" onClick={openExplorer}><Layers3 size={18} /> Vrstvy</button>
       </section>
 
       <aside
         ref={inspectorPanelRef}
-        className={`inspector ${inspectorOpen ? "panel-open" : ""}`}
+        className="inspector"
+        data-open={inspectorOpen}
         aria-label="Detail vybraného objektu"
-        aria-hidden={useOverlayPanels ? !inspectorOpen : undefined}
-        inert={useOverlayPanels && !inspectorOpen}
+        aria-hidden={overlayPanels ? !inspectorOpen : undefined}
+        inert={overlayPanels && !inspectorOpen}
         tabIndex={-1}
       >
         <div className="inspector-hero">
-          <span className={`selection-code ${detail.statusTone}`}>{detail.code}</span>
+          <span className="selection-code" data-tone={detail.statusTone}>{detail.code}</span>
           <div><span className="micro-label">{detail.eyebrow}</span><h2>{detail.title}</h2><p>{detail.subtitle}</p></div>
           <button className="panel-close" aria-label="Zavrieť detail" onClick={closeInspector}><PanelRightClose size={18} /></button>
         </div>
-        <div className={`evidence-status ${detail.statusTone}`}>
+        <div className="evidence-status" data-tone={detail.statusTone}>
           {detail.statusTone === "current" ? <ShieldCheck size={15} /> : detail.statusTone === "warning" ? <TriangleAlert size={15} /> : <Database size={15} />}
           <span>{detail.status}</span>
           <button aria-label="Zamerať objekt v 3D" onClick={() => showCameraPreset("focus")}><Focus size={16} /></button>
         </div>
         <div className="inspector-tabs" role="tablist" aria-label="Detail a zdroje">
-          <button id="tab-parameters" role="tab" aria-controls="panel-parameters" aria-selected={inspectorTab === "parameters"} className={inspectorTab === "parameters" ? "active" : ""} onClick={() => setInspectorTab("parameters")}>Parametre</button>
-          <button id="tab-sources" role="tab" aria-controls="panel-sources" aria-selected={inspectorTab === "sources"} className={inspectorTab === "sources" ? "active" : ""} onClick={() => setInspectorTab("sources")}>Zdroje <span>{sourceRecords.length}</span></button>
+          <button id="tab-parameters" role="tab" aria-controls="panel-parameters" aria-selected={inspectorTab === "parameters"} onClick={() => setInspectorTab("parameters")}>Parametre</button>
+          <button id="tab-sources" role="tab" aria-controls="panel-sources" aria-selected={inspectorTab === "sources"} onClick={() => setInspectorTab("sources")}>Zdroje <span>{sourceRecords.length}</span></button>
         </div>
 
         <div className="inspector-scroll">
@@ -992,11 +1072,11 @@ export function TwinStudio() {
               {detail.editableFoundation && (
                 <section className="inspector-section edit-section">
                   <div className="section-heading"><span>PARAMETRICKÁ ÚPRAVA</span><span>SESSION</span></div>
-                  <label className={inputError ? "number-control has-error" : "number-control"}>
+                  <label className="number-control" data-error={Boolean(inputError)}>
                     <span>Šírka pásu</span>
                     <div><input type="number" inputMode="numeric" min="300" max="1200" step="50" value={draftWidth} onChange={(event) => setDraftWidth(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") applyWidth(); }} aria-invalid={Boolean(inputError)} aria-describedby="width-hint" /><em>mm</em></div>
                   </label>
-                  <p id="width-hint" className={inputError ? "field-message error" : "field-message"}>{inputError || "Zmena prepočíta 3D geometriu aj objem jedným krokom."}</p>
+                  <p id="width-hint" className="field-message" data-error={Boolean(inputError)}>{inputError || "Zmena prepočíta 3D geometriu aj objem jedným krokom."}</p>
                   <div className="edit-actions">
                     <button className="apply-button" onClick={applyWidth}>Použiť zmenu</button>
                     <button className="undo-button" disabled={!history.length} onClick={undoLast}><Undo2 size={15} /> Späť</button>
@@ -1013,7 +1093,7 @@ export function TwinStudio() {
           ) : (
             <section id="panel-sources" className="source-list" role="tabpanel" aria-labelledby="tab-sources">
               {sourceRecords.map((source) => (
-                <article key={source.id} className={`source-card ${source.kind === "UNRESOLVED_AS_BUILT" ? "source-warning" : ""}`}>
+                <article key={source.id} className="source-card" data-warning={source.kind === "UNRESOLVED_AS_BUILT"}>
                   <div><SourceBadge kind={source.kind} />{source.href && <a href={source.href} target="_blank" rel="noreferrer" aria-label={`Otvoriť zdroj ${source.title}`}><ChevronRight size={16} /></a>}</div>
                   <h3>{source.title}</h3>
                   <p>{source.detail}</p>
@@ -1025,17 +1105,30 @@ export function TwinStudio() {
         </div>
       </aside>
 
-      <footer className="data-rail" aria-label="Stav dátových zdrojov">
-        <div className="data-rail-title"><Database size={15} /><span>DÁTOVÁ STOPA</span></div>
-        <div className="data-facts">
-          <span className="fact current"><i />ČÚZK <strong>753 m²</strong><small>aktuálne</small></span>
-          <span className="fact design"><i />C3 <strong>28. 4. 2026</strong><small>projekt</small></span>
-          <span className="fact current"><i />DMVS <strong>voda + stoka</strong><small>verejné dáta</small></span>
-          <span className="fact context"><i />DMR 5G <strong>184,087 m</strong><small>Bpv</small></span>
-          <span className="fact warning"><TriangleAlert size={14} />Skutočné prípojky <strong>nepotvrdené</strong></span>
-        </div>
-        <div className="coordinate-readout"><span>LOCAL</span><strong>X → pozdĺž komunikácie</strong><small>Y → do parcely · Z ↑ výška</small></div>
-      </footer>
+      {chrome.appRails && (
+        <footer className="evidence-rail" aria-label="Stav dátových zdrojov">
+          <button type="button" className="evidence-rail-title" aria-label="Otvoriť zdroje vybraného objektu" onClick={() => openInspector("sources")}><Database size={15} /><span>DÁTOVÁ STOPA</span></button>
+          {/* `data-drop` is the order in which a fact gives up its place when
+              the rail runs short. The registered area and the missing-as-built
+              warning carry no order: they are never dropped. */}
+          <div className="evidence-facts">
+            <span className="fact" data-tone="current"><i />ČÚZK <strong>753 m²</strong><small>aktuálne</small></span>
+            <span className="fact" data-tone="design" data-drop="3"><i />C3 <strong>28. 4. 2026</strong><small>projekt</small></span>
+            <span className="fact" data-tone="current" data-drop="2"><i />DMVS <strong>voda + stoka</strong><small>verejné dáta</small></span>
+            <span className="fact" data-tone="context" data-drop="1"><i />DMR 5G <strong>184,087 m</strong><small>Bpv</small></span>
+            <span className="fact" data-tone="warning"><TriangleAlert size={13} />Skutočné prípojky <strong>nepotvrdené</strong></span>
+          </div>
+          <div className="coordinate-readout"><span>LOCAL</span><strong>X → pozdĺž komunikácie</strong><small>Y → do parcely · Z ↑ výška</small></div>
+        </footer>
+      )}
+
+      {paletteOpen && (
+        <CommandPalette
+          commands={commands}
+          onRun={runCommand}
+          onClose={() => setPaletteOpen(false)}
+        />
+      )}
 
       <div className="sr-only" aria-live="polite">Vybraný objekt: {detail.title}. {detail.status}.</div>
     </main>
