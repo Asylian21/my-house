@@ -12,6 +12,7 @@ import { CreateSphere } from "@babylonjs/core/Meshes/Builders/sphereBuilder.pure
 import { CreateTorus } from "@babylonjs/core/Meshes/Builders/torusBuilder.pure";
 import { CreateTube } from "@babylonjs/core/Meshes/Builders/tubeBuilder.pure";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
 
@@ -22,6 +23,8 @@ import {
   ENSUITE_BATHROOM_FITOUT,
   ENTRY_FITOUT,
   FIREPLACE_STOVE,
+  GARAGE_FITOUT,
+  HALLWAY_BUILT_IN_WARDROBES,
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
@@ -36,12 +39,18 @@ import {
   roomBoundsMm,
   type ChildBedroomFitout,
   type FurnitureFacing,
+  type HallwayBuiltInWardrobe,
   type InteriorDoor,
   type InteriorRoom,
   type RectMm,
 } from "./twin-interior";
 import { HOUSE, type LayerId, type Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
+import {
+  hingedDoorSweepIsClear,
+  type AnimatedDoorRegistration,
+} from "./babylon-doors";
+import type { WalkSurfaceKind } from "./twin-viewport-contract";
 
 export interface InteriorBuildContext {
   readonly scene: Scene;
@@ -54,6 +63,7 @@ export interface InteriorBuildContext {
   register(mesh: AbstractMesh, layer: LayerId, entityId?: string): AbstractMesh;
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
+  registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
 }
 
 export interface InteriorMaterials {
@@ -97,6 +107,8 @@ export interface InteriorMaterials {
   readonly bedroomLinen: PBRMaterial;
   readonly bedroomThrow: PBRMaterial;
   readonly wardrobeFront: PBRMaterial;
+  readonly hallwayWardrobeOak: PBRMaterial;
+  readonly hallwayWardrobeSmokedOak: PBRMaterial;
   readonly childSage: PBRMaterial;
   readonly childClay: PBRMaterial;
   readonly childMidnight: PBRMaterial;
@@ -352,6 +364,29 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
   bedroomThrow.sheen.color = Color3.FromHexString("#b5aa9d");
   bedroomThrow.sheen.roughness = 0.9;
   const wardrobeFront = pbr(scene, "real-bedroom-wardrobe-greige", "#b8afa3", 0.5);
+  const hallwayWardrobeOak = texturedPbr(
+    scene,
+    "real-hallway-wardrobe-warm-oak",
+    "oak-veneer-albedo",
+    "oak-veneer-normal",
+    anisotropy,
+    0.43,
+    0.38,
+    "#c89a70",
+  );
+  hallwayWardrobeOak.clearCoat.isEnabled = true;
+  hallwayWardrobeOak.clearCoat.intensity = 0.12;
+  hallwayWardrobeOak.clearCoat.roughness = 0.42;
+  const hallwayWardrobeSmokedOak = texturedPbr(
+    scene,
+    "real-hallway-wardrobe-smoked-oak",
+    "oak-veneer-albedo",
+    "oak-veneer-normal",
+    anisotropy,
+    0.5,
+    0.42,
+    "#75533d",
+  );
   const childSage = pbr(scene, "real-child-room-sage", "#788878", 0.72);
   childSage.sheen.isEnabled = true;
   childSage.sheen.intensity = 0.12;
@@ -410,6 +445,8 @@ export function createInteriorMaterials(context: InteriorBuildContext): Interior
     bedroomLinen,
     bedroomThrow,
     wardrobeFront,
+    hallwayWardrobeOak,
+    hallwayWardrobeSmokedOak,
     childSage,
     childClay,
     childMidnight,
@@ -493,18 +530,35 @@ function finish(
     shadow?: boolean;
     pickable?: boolean;
     cameraOccluder?: boolean;
+    walkSurface?: boolean;
+    walkSurfaceKind?: WalkSurfaceKind;
+    walkSurfaceId?: string;
+    walkSurfaceElevationOffsetM?: number;
+    entityId?: string;
   } = {},
 ) {
   mesh.material = material;
   mesh.receiveShadows = true;
   mesh.isPickable = options.pickable ?? false;
   mesh.checkCollisions = options.collide ?? false;
-  if (options.cameraOccluder) {
-    mesh.metadata = { ...(mesh.metadata ?? {}), cameraOccluder: true };
+  if (options.cameraOccluder || options.walkSurface) {
+    mesh.metadata = {
+      ...(mesh.metadata ?? {}),
+      ...(options.cameraOccluder ? { cameraOccluder: true } : {}),
+      ...(options.walkSurface
+        ? {
+            walkSurface: true,
+            walkSurfaceKind: options.walkSurfaceKind ?? "interior",
+            walkSurfaceId: options.walkSurfaceId ?? mesh.name,
+            walkSurfaceElevationOffsetM:
+              options.walkSurfaceElevationOffsetM ?? 0,
+          }
+        : {}),
+    };
   }
   context.realisticOnly(mesh);
   if (options.shadow) context.castShadow(mesh);
-  context.register(mesh, "building", HOUSE_ENTITY);
+  context.register(mesh, "building", options.entityId ?? HOUSE_ENTITY);
   return mesh;
 }
 
@@ -536,7 +590,11 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.052,
       1.5,
     );
-    finish(context, slab, materials.epoxy);
+    finish(context, slab, materials.epoxy, {
+      walkSurface: true,
+      walkSurfaceId: `interior-base-${index + 1}`,
+      walkSurfaceElevationOffsetM: 0.002,
+    });
   }
   // Door thresholds carry the floor of the room the door opens from.
   for (const door of INTERIOR_DOORS) {
@@ -556,7 +614,15 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
       FLOOR_TOP_M - 0.04,
       fromRoom?.floor === "TILE" ? 1.2 : 1.6,
     );
-    finish(context, threshold, fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl);
+    finish(
+      context,
+      threshold,
+      fromRoom ? floorMaterial(materials, fromRoom) : materials.vinyl,
+      {
+        walkSurface: true,
+        walkSurfaceId: `interior-threshold-${door.id}`,
+      },
+    );
   }
   for (const room of INTERIOR_ROOMS) {
     const floorTile = room.floor === "TILE" ? 1.2 : room.floor === "EPOXY" ? 1.5 : 1.6;
@@ -571,7 +637,11 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
         FLOOR_TOP_M - 0.04,
         floorTile,
       );
-      finish(context, floor, floorMaterial(materials, room), { pickable: true });
+      finish(context, floor, floorMaterial(materials, room), {
+        pickable: true,
+        walkSurface: true,
+        walkSurfaceId: `interior-room-${room.id}-${index + 1}`,
+      });
 
       const vaulted = room.ceiling === "VAULTED_TO_RIDGE" && index === 0;
       if (!vaulted) {
@@ -876,7 +946,6 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
   fireLight.range = 3.2;
 }
 
-
 function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, door: InteriorDoor) {
   const [wallFrom, wallTo] = door.wallSpanMm;
   const thicknessMm = wallTo - wallFrom;
@@ -932,38 +1001,134 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
   );
   finish(context, lintel, materials.plaster, { cameraOccluder: true });
 
-  // Leaf standing open at 90°, hinged on the `hinge` end and swung into the
-  // `swing` side, so every room stays walkable.
+  // A real pivot at the documented hinge replaces the former permanently open
+  // decorative slab. The controller owns the state; Babylon owns the live
+  // transform, collision and shadow at every animation frame.
   const leafThicknessMm = 40;
   const hingeAlongMm =
     door.hinge < 0 ? door.startMm + frameMm : door.startMm + door.widthMm - frameMm;
   const hingeAcrossMm = door.swing < 0 ? wallFrom : wallTo;
-  const leafCenterAcross = hingeAcrossMm + door.swing * (door.leafWidthMm / 2 + 10);
-  const leafCenterAlong = hingeAlongMm + (door.hinge < 0 ? 1 : -1) * (leafThicknessMm / 2 + 8);
+  const alongDirection = door.hinge < 0 ? 1 : -1;
+  const leafCenterAlong = hingeAlongMm + alongDirection * door.leafWidthMm / 2;
+  const hingePlan = plan(hingeAlongMm, hingeAcrossMm);
+  const leafCenterPlan = plan(leafCenterAlong, hingeAcrossMm);
+  const hinge = new TransformNode(`${door.id} · pánt animovaných dverí`, context.scene);
+  hinge.position.set(xM(hingePlan.x), 0, zM(hingePlan.y));
+  hinge.metadata = { doorId: door.id, doorMotion: "HINGED" };
   const leaf = texturedBox(
     context.scene,
-    `${door.label} · otvorené krídlo`,
-    plan(leafCenterAlong, leafCenterAcross),
-    door.axis === "X" ? leafThicknessMm : door.leafWidthMm + 20,
-    door.axis === "X" ? door.leafWidthMm + 20 : leafThicknessMm,
+    `${door.label} · animované krídlo`,
+    leafCenterPlan,
+    door.axis === "X" ? door.leafWidthMm : leafThicknessMm,
+    door.axis === "X" ? leafThicknessMm : door.leafWidthMm,
     heightM - 0.07,
     0.02,
     1,
   );
-  finish(context, leaf, materials.doorLeaf, { shadow: true, pickable: true });
-  const handle = CreateCylinder(
-    `${door.label} · kľučka`,
-    { height: 0.12, diameter: 0.018, tessellation: 12 },
-    context.scene,
+  const leafWorld = leaf.position.clone();
+  leaf.parent = hinge;
+  leaf.position.copyFrom(leafWorld.subtract(hinge.position));
+  leaf.metadata = {
+    ...(leaf.metadata ?? {}),
+    cameraOccluder: true,
+    dynamicCameraOccluder: true,
+    doorId: door.id,
+    doorMotion: "HINGED",
+  };
+  finish(context, leaf, materials.doorLeaf, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+    entityId: door.id,
+  });
+
+  const handleDistanceMm = Math.max(180, door.leafWidthMm - 105);
+  const handleAlongMm = hingeAlongMm + alongDirection * handleDistanceMm;
+  const handleLevers: Mesh[] = [];
+  for (const side of [-1, 1] as const) {
+    const handleAcrossMm =
+      hingeAcrossMm + side * (leafThicknessMm / 2 + 15);
+    const handlePlan = plan(handleAlongMm, handleAcrossMm);
+    const handle = CreateCylinder(
+      `${door.label} · kľučka ${side < 0 ? "A" : "B"}`,
+      { height: 0.13, diameter: 0.018, tessellation: 16 },
+      context.scene,
+    );
+    handle.position.set(xM(handlePlan.x), 1.05, zM(handlePlan.y));
+    if (door.axis === "X") handle.rotation.z = Math.PI / 2;
+    else handle.rotation.x = Math.PI / 2;
+    const handleWorld = handle.position.clone();
+    handle.parent = hinge;
+    handle.position.copyFrom(handleWorld.subtract(hinge.position));
+    handle.metadata = {
+      ...(handle.metadata ?? {}),
+      doorId: door.id,
+      doorMotion: "HINGED",
+    };
+    finish(context, handle, context.chimneyMetal, {
+      shadow: true,
+      pickable: true,
+      entityId: door.id,
+    });
+    handleLevers.push(handle);
+  }
+
+  const openAngleRad =
+    door.axis === "X"
+      ? door.swing * -door.hinge * (Math.PI / 2)
+      : door.swing * door.hinge * (Math.PI / 2);
+  const closedEndPlan = plan(
+    hingeAlongMm + alongDirection * door.leafWidthMm,
+    hingeAcrossMm,
   );
-  const handleAcross = hingeAcrossMm + door.swing * (door.leafWidthMm - 60);
-  const handleAlong = leafCenterAlong + (door.hinge < 0 ? 1 : -1) * 0.04 * 1000;
-  const handlePlan = plan(handleAlong, handleAcross);
-  handle.position.set(xM(handlePlan.x), 1.05, zM(handlePlan.y));
-  // Lever parallel to the open leaf: along plan y for X-axis walls.
-  handle.rotation.x = door.axis === "X" ? Math.PI / 2 : 0;
-  handle.rotation.z = door.axis === "X" ? 0 : Math.PI / 2;
-  finish(context, handle, context.chimneyMetal);
+  const hingeWorld = { x: xM(hingePlan.x), z: zM(hingePlan.y) };
+  const closedEndWorld = {
+    x: xM(closedEndPlan.x),
+    z: zM(closedEndPlan.y),
+  };
+  const interactionPlan = plan(
+    door.startMm + door.widthMm / 2,
+    wallCenter,
+  );
+  context.registerAnimatedDoor?.({
+    id: door.id,
+    label: door.label.replace(/^Dvere\s+/u, "").replace(/\s+·.*$/u, ""),
+    kind: "HINGED",
+    interactionPoint: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+    apply: (progress, handleDepression) => {
+      hinge.rotation.y = openAngleRad * progress;
+      for (const handle of handleLevers) {
+        if (door.axis === "X") {
+          handle.rotation.z = Math.PI / 2 + handleDepression * 0.34;
+        } else {
+          handle.rotation.x = Math.PI / 2 - handleDepression * 0.34;
+        }
+        handle.computeWorldMatrix(true);
+      }
+      leaf.computeWorldMatrix(true);
+    },
+    canOpen: (actor, progress = 0) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        leafThicknessMm * MM_TO_M,
+        progress,
+        1,
+      ),
+    canClose: (actor, progress = 1) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        leafThicknessMm * MM_TO_M,
+        progress,
+        0,
+      ),
+  });
 }
 
 /** Slim black bar handle on a front. */
@@ -1132,7 +1297,10 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     k.upperCabinets.bottomMm * MM_TO_M,
     1.2,
   );
-  finish(context, upper, materials.kitchenUpper, { shadow: true });
+  finish(context, upper, materials.kitchenUpper, {
+    shadow: true,
+    cameraOccluder: true,
+  });
   for (const xMm of [23991, 24591, 25191]) {
     const joint = texturedBox(
       context.scene,
@@ -2072,6 +2240,186 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   );
 }
 
+type BathroomLaundryAppliance =
+  (typeof BATHROOM_FITOUT.builtIn.appliances)[number];
+
+/** One real pivoted drum door, registered in the same controller as house doors. */
+function buildStackedLaundryAppliance(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  fitoutId: string,
+  run: RectMm,
+  appliance: BathroomLaundryAppliance,
+) {
+  const center = rectCenter(appliance.footprintMm);
+  const label = appliance.kind === "WASHER" ? "Práčka" : "Sušička";
+  const token = appliance.kind === "WASHER" ? "WASHER" : "DRYER";
+  const body = texturedBox(
+    context.scene,
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · ${label.toLocaleLowerCase("sk-SK")}`,
+    { x: center.x, y: run.y0 - 4 },
+    570,
+    26,
+    appliance.heightMm * MM_TO_M,
+    appliance.baseElevationMm * MM_TO_M,
+    1,
+  );
+  body.metadata = { ...(body.metadata ?? {}), applianceId: appliance.id };
+  finish(context, body, materials.applianceEnamel, {
+    shadow: true,
+    pickable: true,
+  });
+
+  const controlsElevationM =
+    (appliance.baseElevationMm + appliance.heightMm - 105) * MM_TO_M;
+  const controls = texturedBox(
+    context.scene,
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · ovládací panel`,
+    { x: center.x + 145, y: run.y0 - 34 },
+    150,
+    16,
+    0.06,
+    controlsElevationM,
+    1,
+  );
+  finish(context, controls, materials.blackGlass, { pickable: true });
+  const selector = CreateCylinder(
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · volič programu`,
+    { height: 0.024, diameter: 0.06, tessellation: 24 },
+    context.scene,
+  );
+  selector.rotation.x = Math.PI / 2;
+  selector.position.set(
+    xM(center.x - 150),
+    controlsElevationM + 0.03,
+    zM(run.y0 - 43),
+  );
+  finish(context, selector, materials.applianceEnamel, { pickable: true });
+
+  const frontPlanYmm = run.y0 - 45;
+  const radiusM = appliance.door.diameterMm * MM_TO_M / 2;
+  const hingeXmm = center.x - appliance.door.diameterMm / 2;
+  const hinge = new TransformNode(
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · pánt dvierok`,
+    context.scene,
+  );
+  hinge.position.set(
+    xM(hingeXmm),
+    appliance.door.centerElevationMm * MM_TO_M,
+    zM(frontPlanYmm),
+  );
+  hinge.metadata = {
+    doorId: appliance.door.id,
+    doorMotion: "HINGED",
+    doorSubject: "APPLIANCE_DOOR",
+  };
+
+  const doorMetadata = {
+    doorId: appliance.door.id,
+    doorMotion: "HINGED",
+    doorSubject: "APPLIANCE_DOOR",
+    dynamicCameraOccluder: true,
+  };
+  const doorRim = CreateCylinder(
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · otváravé dvierka · rám`,
+    {
+      height: 0.05,
+      diameter: appliance.door.diameterMm * MM_TO_M,
+      tessellation: 48,
+    },
+    context.scene,
+  );
+  doorRim.rotation.x = Math.PI / 2;
+  doorRim.parent = hinge;
+  doorRim.position.set(radiusM, 0, 0);
+  doorRim.metadata = doorMetadata;
+  finish(context, doorRim, materials.applianceEnamel, {
+    collide: true,
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+    entityId: appliance.door.id,
+  });
+
+  const doorGlass = CreateCylinder(
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · otváravé dvierka · sklo`,
+    {
+      height: 0.042,
+      diameter: (appliance.door.diameterMm - 90) * MM_TO_M,
+      tessellation: 48,
+    },
+    context.scene,
+  );
+  doorGlass.rotation.x = Math.PI / 2;
+  doorGlass.parent = hinge;
+  doorGlass.position.set(radiusM, 0, 0.024);
+  doorGlass.metadata = doorMetadata;
+  finish(context, doorGlass, materials.blackGlass, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+    entityId: appliance.door.id,
+  });
+
+  const latch = CreateBox(
+    `${fitoutId} · LAUNDRY-TOWER · ${token} · madlo dvierok`,
+    { width: 0.075, height: 0.028, depth: 0.055 },
+    context.scene,
+  );
+  latch.parent = hinge;
+  latch.position.set(radiusM * 1.84, 0, 0.035);
+  latch.metadata = doorMetadata;
+  finish(context, latch, materials.steel, {
+    shadow: true,
+    pickable: true,
+    entityId: appliance.door.id,
+  });
+
+  const openAngleRad = -(appliance.door.openAngleDegrees * Math.PI) / 180;
+  const hingeWorld = { x: xM(hingeXmm), z: zM(frontPlanYmm) };
+  const closedEndWorld = {
+    x: xM(hingeXmm + appliance.door.diameterMm),
+    z: zM(frontPlanYmm),
+  };
+  context.registerAnimatedDoor?.({
+    id: appliance.door.id,
+    label,
+    kind: "HINGED",
+    subject: "APPLIANCE_DOOR",
+    interactionPoint: {
+      x: xM(center.x),
+      y: appliance.door.centerElevationMm * MM_TO_M,
+      z: zM(frontPlanYmm),
+    },
+    apply: (progress) => {
+      hinge.rotation.y = openAngleRad * progress;
+      doorRim.computeWorldMatrix(true);
+      doorGlass.computeWorldMatrix(true);
+      latch.computeWorldMatrix(true);
+    },
+    canOpen: (actor, progress = 0) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        0.05,
+        progress,
+        1,
+      ),
+    canClose: (actor, progress = 1) =>
+      hingedDoorSweepIsClear(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        0.05,
+        progress,
+        0,
+      ),
+  });
+}
+
 /**
  * Final client fitout for the L-shaped bathroom/laundry 1.05. The small east
  * window terminates a premium walk-in shower, while the complete north recess
@@ -2223,8 +2571,8 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   const basinCenter = rectCenter(basin.footprintMm);
   const vanityX1 = builtIn.appliances[0].footprintMm.x0 - 36;
 
-  // One continuous 2 616 mm cabinet composition: the vanity, appliance bays,
-  // mirror and overhead storage share the same datum and flush top line.
+  // One continuous 2 616 mm composition: stacking releases a 1 930 mm vanity
+  // beside one ventilated 600 mm laundry tower, all on a single top datum.
   const vanityCabinet = texturedBox(
     context.scene,
     `${fitout.id} · BUILT-IN-2616 · plávajúca bezúchytková skrinka`,
@@ -2262,7 +2610,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     context,
     `${fitout.id} · BUILT-IN-2616 · veľké matne čierne umývadlo`,
     basinCenter,
-    [1.0, 0.16, 0.39],
+    [1.2, 0.16, 0.39],
     basin.rimElevationMm * MM_TO_M + 0.035,
     materials.blackCeramic,
   );
@@ -2270,7 +2618,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     context,
     `${fitout.id} · BUILT-IN-2616 · vnútorná čierna misa`,
     { x: basinCenter.x, y: basinCenter.y - 8 },
-    [0.82, 0.028, 0.27],
+    [1.0, 0.028, 0.27],
     basin.rimElevationMm * MM_TO_M + 0.095,
     materials.blackGlass,
   );
@@ -2286,11 +2634,12 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   );
   finish(context, basinDrain, materials.fireplace);
 
+  const mirrorWidthMm = Math.min(1_400, vanityX1 - run.x0 - 240);
   const mirrorGlow = texturedBox(
     context.scene,
     `${fitout.id} · BUILT-IN-2616 · nepriame LED za zrkadlom`,
     { x: basinCenter.x, y: run.y1 - 8 },
-    1060,
+    mirrorWidthMm + 40,
     18,
     0.82,
     1.1,
@@ -2301,7 +2650,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     context.scene,
     `${fitout.id} · BUILT-IN-2616 · veľké bezrámové zrkadlo`,
     { x: basinCenter.x, y: run.y1 - 19 },
-    1020,
+    mirrorWidthMm,
     9,
     0.78,
     1.12,
@@ -2334,11 +2683,15 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     builtIn.heightMm * MM_TO_M - 0.35,
     1,
   );
-  finish(context, basinTopCabinet, materials.kitchenFront, { shadow: true, pickable: true });
+  finish(context, basinTopCabinet, materials.kitchenFront, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
   const applianceUpperX0 = vanityX1;
   const applianceUpper = texturedBox(
     context.scene,
-    `${fitout.id} · BUILT-IN-2616 · horné skrinky nad spotrebičmi`,
+    `${fitout.id} · LAUNDRY-TOWER · vetraná horná skrinka`,
     { x: (applianceUpperX0 + run.x1) / 2, y: (run.y0 + run.y1) / 2 },
     run.x1 - applianceUpperX0,
     run.y1 - run.y0,
@@ -2346,20 +2699,22 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     builtIn.overheadCabinetBottomMm * MM_TO_M,
     1,
   );
-  finish(context, applianceUpper, materials.kitchenFront, { shadow: true, pickable: true });
-  for (const xMm of [vanityX1, builtIn.appliances[1].footprintMm.x0 - 50]) {
-    const cabinetJoint = texturedBox(
-      context.scene,
-      `${fitout.id} · BUILT-IN-2616 · zvislá škára horných skriniek`,
-      { x: xMm, y: run.y0 - 4 },
-      5,
-      14,
-      (builtIn.heightMm - builtIn.overheadCabinetBottomMm) * MM_TO_M - 0.04,
-      builtIn.overheadCabinetBottomMm * MM_TO_M + 0.02,
-      1,
-    );
-    finish(context, cabinetJoint, materials.fireplace);
-  }
+  finish(context, applianceUpper, materials.kitchenFront, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
+  const cabinetJoint = texturedBox(
+    context.scene,
+    `${fitout.id} · BUILT-IN-2616 · deliaca škára umývadlovej skrinky a práčovňovej veže`,
+    { x: vanityX1, y: run.y0 - 4 },
+    5,
+    14,
+    builtIn.heightMm * MM_TO_M - 0.08,
+    0.04,
+    1,
+  );
+  finish(context, cabinetJoint, materials.fireplace);
   const applianceLed = texturedBox(
     context.scene,
     `${fitout.id} · BUILT-IN-2616 · zapustené LED nad spotrebičmi`,
@@ -2372,64 +2727,54 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   );
   finish(context, applianceLed, materials.warmLight);
 
-  for (const [index, appliance] of builtIn.appliances.entries()) {
-    const applianceCenter = rectCenter(appliance.footprintMm);
-    const label = appliance.kind === "WASHER" ? "biela práčka" : "biela sušička";
-    const body = texturedBox(
-      context.scene,
-      `${fitout.id} · BUILT-IN-2616 · ${label}`,
-      { x: applianceCenter.x, y: run.y0 - 4 },
-      570,
-      26,
-      0.86,
-      0.08,
-      1,
+  for (const appliance of builtIn.appliances) {
+    buildStackedLaundryAppliance(
+      context,
+      materials,
+      fitout.id,
+      run,
+      appliance,
     );
-    finish(context, body, materials.applianceEnamel, { shadow: true, pickable: true });
-    const doorRim = CreateCylinder(
-      `${fitout.id} · BUILT-IN-2616 · biely rám bubna ${index + 1}`,
-      { height: 0.038, diameter: 0.47, tessellation: 40 },
-      context.scene,
-    );
-    doorRim.rotation.x = Math.PI / 2;
-    doorRim.position.set(xM(applianceCenter.x), 0.48, zM(run.y0 - 28));
-    finish(context, doorRim, materials.applianceEnamel, { shadow: true });
-    const doorGlass = CreateCylinder(
-      `${fitout.id} · BUILT-IN-2616 · sklo bubna ${index + 1}`,
-      { height: 0.046, diameter: 0.38, tessellation: 40 },
-      context.scene,
-    );
-    doorGlass.rotation.x = Math.PI / 2;
-    doorGlass.position.set(xM(applianceCenter.x), 0.48, zM(run.y0 - 45));
-    finish(context, doorGlass, materials.blackGlass, { pickable: true });
-    const controls = texturedBox(
-      context.scene,
-      `${fitout.id} · BUILT-IN-2616 · ovládací panel ${index + 1}`,
-      { x: applianceCenter.x + 145, y: run.y0 - 34 },
-      150,
-      16,
-      0.06,
-      0.8,
-      1,
-    );
-    finish(context, controls, materials.blackGlass, { pickable: true });
-    const selector = CreateCylinder(
-      `${fitout.id} · BUILT-IN-2616 · volič programu ${index + 1}`,
-      { height: 0.024, diameter: 0.06, tessellation: 24 },
-      context.scene,
-    );
-    selector.rotation.x = Math.PI / 2;
-    selector.position.set(xM(applianceCenter.x - 150), 0.83, zM(run.y0 - 43));
-    finish(context, selector, materials.applianceEnamel, { pickable: true });
   }
-  for (const xMm of [builtIn.appliances[0].footprintMm.x0 - 18, 24699, run.x1 - 24]) {
+
+  const washer = builtIn.appliances[0];
+  const stackingShelf = texturedBox(
+    context.scene,
+    `${fitout.id} · LAUNDRY-TOWER · antivibračná medzipolica`,
+    rectCenter(washer.footprintMm),
+    washer.footprintMm.x1 - washer.footprintMm.x0 + 20,
+    washer.footprintMm.y1 - washer.footprintMm.y0 + 20,
+    0.026,
+    (washer.baseElevationMm + washer.heightMm + 7) * MM_TO_M,
+    1,
+  );
+  finish(context, stackingShelf, materials.steel, { shadow: true });
+
+  for (let slot = 0; slot < 5; slot += 1) {
+    const vent = texturedBox(
+      context.scene,
+      `${fitout.id} · LAUNDRY-TOWER · odvetrávacia štrbina ${slot + 1}`,
+      {
+        x: (applianceUpperX0 + run.x1) / 2,
+        y: run.y0 - 10,
+      },
+      390,
+      12,
+      0.012,
+      (1.98 + slot * 0.052),
+      1,
+    );
+    finish(context, vent, materials.fireplace);
+  }
+
+  for (const xMm of [builtIn.appliances[0].footprintMm.x0 - 18, run.x1 - 24]) {
     const sidePanel = texturedBox(
       context.scene,
-      `${fitout.id} · BUILT-IN-2616 · zvislý skriňový panel`,
+      `${fitout.id} · LAUNDRY-TOWER · zvislý skriňový panel`,
       { x: xMm, y: (run.y0 + run.y1) / 2 },
       32,
       run.y1 - run.y0,
-      1.08,
+      builtIn.heightMm * MM_TO_M,
       0,
       1,
     );
@@ -2447,6 +2792,76 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   );
   finish(context, topCornice, materials.kitchenFront, { shadow: true });
 
+  const radiator = fitout.towelRadiator;
+  const radiatorCenter = rectCenter(radiator.footprintMm);
+  const radiatorCenterElevationM =
+    (radiator.bottomElevationMm + radiator.heightMm / 2) * MM_TO_M;
+  const railInsetMm = radiator.railDiameterMm / 2;
+  for (const [index, xMm] of [
+    radiator.footprintMm.x0 + railInsetMm,
+    radiator.footprintMm.x1 - railInsetMm,
+  ].entries()) {
+    const rail = CreateCylinder(
+      `${fitout.id} · TOWEL-RADIATOR-600 · zvislý kolektor ${index + 1}`,
+      {
+        height: radiator.heightMm * MM_TO_M,
+        diameter: radiator.railDiameterMm * MM_TO_M,
+        tessellation: 24,
+      },
+      context.scene,
+    );
+    rail.position.set(
+      xM(xMm),
+      radiatorCenterElevationM,
+      zM(radiator.footprintMm.y1 - railInsetMm),
+    );
+    finish(context, rail, materials.fireplace, { shadow: true, pickable: true });
+  }
+  const rungWidthM =
+    (radiator.widthMm - radiator.railDiameterMm * 1.25) * MM_TO_M;
+  for (let index = 0; index < radiator.rungCount; index += 1) {
+    const rung = CreateCylinder(
+      `${fitout.id} · TOWEL-RADIATOR-600 · vodorovná priečka ${index + 1}`,
+      {
+        height: rungWidthM,
+        diameter: 0.022,
+        tessellation: 24,
+      },
+      context.scene,
+    );
+    rung.rotation.z = Math.PI / 2;
+    rung.position.set(
+      xM(radiatorCenter.x),
+      (radiator.bottomElevationMm +
+        55 +
+        index * ((radiator.heightMm - 110) / (radiator.rungCount - 1))) *
+        MM_TO_M,
+      zM(radiator.footprintMm.y1),
+    );
+    finish(context, rung, materials.fireplace, { shadow: true, pickable: true });
+  }
+  for (const [xMm, elevationMm] of [
+    [radiator.footprintMm.x0 + 70, radiator.bottomElevationMm + 120],
+    [radiator.footprintMm.x1 - 70, radiator.bottomElevationMm + radiator.heightMm - 120],
+  ] as const) {
+    const wallMount = CreateCylinder(
+      `${fitout.id} · TOWEL-RADIATOR-600 · nástenná konzola`,
+      {
+        height: radiator.projectionMm * MM_TO_M,
+        diameter: 0.026,
+        tessellation: 20,
+      },
+      context.scene,
+    );
+    wallMount.rotation.x = Math.PI / 2;
+    wallMount.position.set(
+      xM(xMm),
+      elevationMm * MM_TO_M,
+      zM((radiator.footprintMm.y0 + radiator.footprintMm.y1) / 2),
+    );
+    finish(context, wallMount, materials.fireplace, { shadow: true });
+  }
+
   navigationGuard(
     context,
     materials,
@@ -2458,6 +2873,12 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     materials,
     `${fitout.id} · WALK-IN-1250 · navigačný obrys skla`,
     { x0: panel.x0 - 10, y0: panel.y0, x1: panel.x1 + 10, y1: panel.y1 },
+  );
+  navigationGuard(
+    context,
+    materials,
+    `${fitout.id} · TOWEL-RADIATOR-600 · hladký navigačný obrys`,
+    radiator.footprintMm,
   );
 }
 
@@ -2748,6 +3169,539 @@ function buildEnsuiteBathroomFitout(
   );
 }
 
+function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
+  const fitout = GARAGE_FITOUT;
+  const sink = fitout.utilitySink;
+  const sinkRect = sink.footprintMm;
+  const sinkCenter = rectCenter(sinkRect);
+  const sinkTopM = sink.rimElevationMm * MM_TO_M;
+
+  const sinkBody = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · hlboká nerezová pracovná vaňa`,
+    sinkCenter,
+    sinkRect.x1 - sinkRect.x0,
+    sinkRect.y1 - sinkRect.y0,
+    0.285,
+    sinkTopM - 0.285,
+    1,
+  );
+  sinkBody.metadata = {
+    ...(sinkBody.metadata ?? {}),
+    designSourceId: fitout.sourceId,
+    plumbingStatus: fitout.plumbingStatus,
+  };
+  finish(context, sinkBody, materials.steel, { shadow: true, pickable: true });
+
+  const inner = sink.innerBasinMm;
+  const innerCenter = rectCenter(inner);
+  const basinShadow = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · zapustené tmavé vnútro`,
+    innerCenter,
+    inner.x1 - inner.x0,
+    inner.y1 - inner.y0,
+    0.035,
+    sinkTopM - 0.075,
+    1,
+  );
+  finish(context, basinShadow, materials.blackGlass, { pickable: true });
+  const basinWater = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · tenká vrstva vody`,
+    { x: innerCenter.x - 12, y: innerCenter.y },
+    inner.x1 - inner.x0 - 42,
+    inner.y1 - inner.y0 - 42,
+    0.009,
+    sinkTopM - 0.045,
+    1,
+  );
+  finish(context, basinWater, materials.showerGlass, { pickable: true });
+
+  const rimPieces = [
+    { label: "predný", center: { x: sinkRect.x0 + 22, y: sinkCenter.y }, width: 44, depth: sinkRect.y1 - sinkRect.y0 },
+    { label: "zadný", center: { x: sinkRect.x1 - 22, y: sinkCenter.y }, width: 44, depth: sinkRect.y1 - sinkRect.y0 },
+    { label: "južný", center: { x: sinkCenter.x, y: sinkRect.y0 + 22 }, width: sinkRect.x1 - sinkRect.x0 - 88, depth: 44 },
+    { label: "severný", center: { x: sinkCenter.x, y: sinkRect.y1 - 22 }, width: sinkRect.x1 - sinkRect.x0 - 88, depth: 44 },
+  ] as const;
+  for (const piece of rimPieces) {
+    const rim = texturedBox(
+      context.scene,
+      `${fitout.id} · UTILITY-SINK · ${piece.label} zosilnený lem`,
+      piece.center,
+      piece.width,
+      piece.depth,
+      0.035,
+      sinkTopM - 0.012,
+      1,
+    );
+    finish(context, rim, materials.steel, { shadow: true });
+  }
+
+  const backsplash = texturedBox(
+    context.scene,
+    `${fitout.id} · UTILITY-SINK · nerezový chrbtový lem pri mokrej stene`,
+    { x: sinkRect.x1 - 14, y: sinkCenter.y },
+    28,
+    sinkRect.y1 - sinkRect.y0,
+    (sink.backsplashTopElevationMm - sink.rimElevationMm) * MM_TO_M,
+    sinkTopM,
+    1,
+  );
+  finish(context, backsplash, materials.steel, { shadow: true, pickable: true });
+
+  for (const yMm of [sinkRect.y0 + 92, sinkRect.y1 - 92]) {
+    const leg = CreateCylinder(
+      `${fitout.id} · UTILITY-SINK · nastaviteľná predná noha`,
+      { height: sinkTopM - 0.26, diameter: 0.042, tessellation: 20 },
+      context.scene,
+    );
+    leg.position.set(xM(sinkRect.x0 + 56), (sinkTopM - 0.26) / 2, zM(yMm));
+    finish(context, leg, materials.steel, { shadow: true });
+    const foot = CreateCylinder(
+      `${fitout.id} · UTILITY-SINK · gumová pätka`,
+      { height: 0.035, diameter: 0.075, tessellation: 20 },
+      context.scene,
+    );
+    foot.position.set(xM(sinkRect.x0 + 56), 0.0175, zM(yMm));
+    finish(context, foot, materials.fireplace, { shadow: true });
+  }
+
+  const sinkDrain = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · sitkový odtok`,
+    { height: 0.012, diameter: 0.072, tessellation: 28 },
+    context.scene,
+  );
+  sinkDrain.position.set(xM(innerCenter.x - 35), sinkTopM - 0.031, zM(innerCenter.y));
+  finish(context, sinkDrain, materials.steel, { pickable: true });
+
+  const trap = CreateTube(
+    `${fitout.id} · UTILITY-SINK · pohľadový sifón a odpad`,
+    {
+      path: [
+        new Vector3(xM(innerCenter.x), sinkTopM - 0.23, zM(innerCenter.y)),
+        new Vector3(xM(innerCenter.x), 0.47, zM(innerCenter.y)),
+        new Vector3(xM(innerCenter.x + 95), 0.4, zM(innerCenter.y)),
+        new Vector3(xM(sinkRect.x1 - 18), 0.4, zM(innerCenter.y)),
+      ],
+      radius: 0.026,
+      tessellation: 20,
+      cap: Mesh.CAP_ALL,
+    },
+    context.scene,
+  );
+  finish(context, trap, materials.steel, { shadow: true });
+
+  const tapRiser = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · robustná nástenná batéria`,
+    { height: 0.25, diameter: 0.034, tessellation: 24 },
+    context.scene,
+  );
+  tapRiser.position.set(xM(sinkRect.x1 - 38), 1.19, zM(sinkCenter.y));
+  finish(context, tapRiser, materials.steel, { shadow: true, pickable: true });
+  const tapSpout = CreateCylinder(
+    `${fitout.id} · UTILITY-SINK · dlhý otočný výtok`,
+    { height: 0.22, diameter: 0.027, tessellation: 24 },
+    context.scene,
+  );
+  tapSpout.rotation.z = Math.PI / 2;
+  tapSpout.position.set(xM(sinkRect.x1 - 135), 1.285, zM(sinkCenter.y));
+  finish(context, tapSpout, materials.steel, { shadow: true });
+  for (const yOffsetMm of [-72, 72]) {
+    const valve = CreateTorus(
+      `${fitout.id} · UTILITY-SINK · krížová rukoväť batérie`,
+      { diameter: 0.072, thickness: 0.012, tessellation: 24 },
+      context.scene,
+    );
+    valve.rotation.z = Math.PI / 2;
+    valve.position.set(xM(sinkRect.x1 - 52), 1.18, zM(sinkCenter.y + yOffsetMm));
+    finish(context, valve, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const bucket = CreateCylinder(
+    `${fitout.id} · GARAGE-CLUTTER · vedro pod umývadlom`,
+    { height: 0.32, diameterTop: 0.3, diameterBottom: 0.24, tessellation: 28 },
+    context.scene,
+  );
+  bucket.position.set(xM(sinkCenter.x + 60), 0.16, zM(sinkCenter.y - 95));
+  finish(context, bucket, materials.childMidnight, { shadow: true, pickable: true });
+
+  const rack = fitout.storageRack;
+  const rackRect = rack.footprintMm;
+  const rackHeightM = rack.heightMm * MM_TO_M;
+  for (const xMm of [rackRect.x0 + 20, rackRect.x1 - 20]) {
+    for (const yMm of [rackRect.y0 + 20, rackRect.y1 - 20]) {
+      const post = texturedBox(
+        context.scene,
+        `${fitout.id} · GARAGE-RACK · pozinkovaný stojan`,
+        { x: xMm, y: yMm },
+        36,
+        36,
+        rackHeightM,
+        0,
+        1,
+      );
+      finish(context, post, materials.steel, { shadow: true });
+    }
+  }
+  for (const shelfMm of rack.shelfElevationsMm) {
+    const shelf = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-RACK · nosná polica +${shelfMm}`,
+      rectCenter(rackRect),
+      rackRect.x1 - rackRect.x0,
+      rackRect.y1 - rackRect.y0,
+      0.045,
+      shelfMm * MM_TO_M,
+      1,
+    );
+    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
+  }
+
+  const cardboardBoxes = [
+    { x: 13465, y: 3780, w: 360, d: 270, h: 0.31, bottom: 0.765 },
+    { x: 13485, y: 4160, w: 330, d: 310, h: 0.37, bottom: 0.765 },
+    { x: 13465, y: 3790, w: 350, d: 280, h: 0.32, bottom: 1.905 },
+    { x: 13480, y: 4180, w: 320, d: 300, h: 0.28, bottom: 1.905 },
+  ] as const;
+  for (const [index, box] of cardboardBoxes.entries()) {
+    const carton = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · kartónová krabica ${index + 1}`,
+      { x: box.x, y: box.y },
+      box.w,
+      box.d,
+      box.h,
+      box.bottom,
+      0.55,
+    );
+    finish(context, carton, materials.childSand, { shadow: true, pickable: true });
+    const tape = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · páska krabice ${index + 1}`,
+      { x: box.x, y: box.y },
+      42,
+      box.d + 4,
+      0.008,
+      box.bottom + box.h,
+      1,
+    );
+    finish(context, tape, materials.kitchenFront);
+  }
+
+  const bins = [
+    { y: 3775, material: materials.childMidnight },
+    { y: 4070, material: materials.childClay },
+    { y: 4320, material: materials.childSage },
+  ] as const;
+  for (const [index, bin] of bins.entries()) {
+    const body = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · plastový box ${index + 1}`,
+      { x: 13475, y: bin.y },
+      370,
+      220,
+      0.29,
+      1.335,
+      1,
+    );
+    finish(context, body, bin.material, { shadow: true, pickable: true });
+    const lid = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-CLUTTER · veko boxu ${index + 1}`,
+      { x: 13475, y: bin.y },
+      390,
+      236,
+      0.028,
+      1.625,
+      1,
+    );
+    finish(context, lid, materials.fireplace, { shadow: true });
+  }
+
+  for (const [index, yMm] of [3735, 3945, 4155, 4365].entries()) {
+    const can = CreateCylinder(
+      `${fitout.id} · GARAGE-CLUTTER · plechovka farby ${index + 1}`,
+      { height: 0.205, diameter: 0.17, tessellation: 28 },
+      context.scene,
+    );
+    can.position.set(xM(13460), 1.4175, zM(yMm));
+    finish(context, can, index % 2 === 0 ? materials.applianceEnamel : materials.childClay, {
+      shadow: true,
+      pickable: true,
+    });
+    const lid = CreateCylinder(
+      `${fitout.id} · GARAGE-CLUTTER · veko farby ${index + 1}`,
+      { height: 0.012, diameter: 0.176, tessellation: 28 },
+      context.scene,
+    );
+    lid.position.set(xM(13460), 1.526, zM(yMm));
+    finish(context, lid, materials.steel);
+  }
+
+  for (const [index, elevationM] of [0.235, 0.365].entries()) {
+    const tyre = CreateTorus(
+      `${fitout.id} · GARAGE-CLUTTER · rezervná pneumatika ${index + 1}`,
+      { diameter: 0.31, thickness: 0.075, tessellation: 32 },
+      context.scene,
+    );
+    tyre.position.set(xM(13465), elevationM, zM(4040));
+    finish(context, tyre, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const toolbox = texturedBox(
+    context.scene,
+    `${fitout.id} · GARAGE-CLUTTER · červený kufrík na náradie`,
+    { x: 13470, y: 4320 },
+    365,
+    230,
+    0.17,
+    0.765,
+    1,
+  );
+  finish(context, toolbox, materials.childClay, { shadow: true, pickable: true });
+  barHandle(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-CLUTTER · madlo kufríka`,
+    { x: 13278, y: 4320 },
+    130,
+    false,
+    0.9,
+  );
+
+  const overSink = fitout.overSinkShelves;
+  for (const shelfMm of overSink.elevationsMm) {
+    const shelf = texturedBox(
+      context.scene,
+      `${fitout.id} · GARAGE-SHELF · polica nad pracovným umývadlom +${shelfMm}`,
+      rectCenter(overSink.footprintMm),
+      overSink.footprintMm.x1 - overSink.footprintMm.x0,
+      overSink.footprintMm.y1 - overSink.footprintMm.y0,
+      0.04,
+      shelfMm * MM_TO_M,
+      1,
+    );
+    finish(context, shelf, materials.steel, { shadow: true, pickable: true });
+    for (const yMm of [overSink.footprintMm.y0 + 70, overSink.footprintMm.y1 - 70]) {
+      const bracket = CreateTube(
+        `${fitout.id} · GARAGE-SHELF · trojuholníková konzola`,
+        {
+          path: [
+            new Vector3(xM(overSink.footprintMm.x1 - 18), shelfMm * MM_TO_M - 0.24, zM(yMm)),
+            new Vector3(xM(overSink.footprintMm.x0 + 24), shelfMm * MM_TO_M - 0.025, zM(yMm)),
+          ],
+          radius: 0.014,
+          tessellation: 16,
+          cap: Mesh.CAP_ALL,
+        },
+        context.scene,
+      );
+      finish(context, bracket, materials.fireplace, { shadow: true });
+    }
+  }
+
+  const pegboard = texturedBox(
+    context.scene,
+    `${fitout.id} · PEGBOARD · dierovaná stena na ručné náradie`,
+    { x: sinkRect.x1 - 12, y: sinkCenter.y },
+    24,
+    sinkRect.y1 - sinkRect.y0 + 40,
+    0.66,
+    1.29,
+    0.35,
+  );
+  finish(context, pegboard, materials.childCork, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
+  for (const elevationM of [1.39, 1.54, 1.69, 1.84]) {
+    for (const yMm of [sinkCenter.y - 210, sinkCenter.y - 70, sinkCenter.y + 70, sinkCenter.y + 210]) {
+      const hole = CreateCylinder(
+        `${fitout.id} · PEGBOARD · otvor`,
+        { height: 0.012, diameter: 0.018, tessellation: 12 },
+        context.scene,
+      );
+      hole.rotation.z = Math.PI / 2;
+      hole.position.set(xM(sinkRect.x1 - 27), elevationM, zM(yMm));
+      finish(context, hole, materials.fireplace);
+    }
+  }
+  for (const [index, tool] of [
+    { y: sinkCenter.y - 165, elevation: 1.55, length: 0.34 },
+    { y: sinkCenter.y + 15, elevation: 1.61, length: 0.45 },
+    { y: sinkCenter.y + 180, elevation: 1.58, length: 0.28 },
+  ].entries()) {
+    const handTool = texturedBox(
+      context.scene,
+      `${fitout.id} · PEGBOARD · zavesené ručné náradie ${index + 1}`,
+      { x: sinkRect.x1 - 34, y: tool.y },
+      26,
+      38,
+      tool.length,
+      tool.elevation,
+      1,
+    );
+    finish(context, handTool, index === 1 ? materials.childClay : materials.fireplace, {
+      shadow: true,
+      pickable: true,
+    });
+  }
+
+  const hose = CreateTorus(
+    `${fitout.id} · GARAGE-CLUTTER · navinutá záhradná hadica`,
+    { diameter: 0.4, thickness: 0.032, tessellation: 40 },
+    context.scene,
+  );
+  hose.rotation.z = Math.PI / 2;
+  hose.position.set(xM(13688), 2.32, zM(4060));
+  finish(context, hose, materials.childSage, { shadow: true, pickable: true });
+
+  for (const [index, tool] of [
+    { y: 4540, shaft: materials.kitchenFront, blade: materials.fireplace },
+    { y: 4630, shaft: materials.steel, blade: materials.childClay },
+  ].entries()) {
+    const shaft = CreateCylinder(
+      `${fitout.id} · LONG-TOOL · ${index === 0 ? "metla" : "lopata"} · násada`,
+      { height: 1.58, diameter: 0.03, tessellation: 16 },
+      context.scene,
+    );
+    shaft.position.set(xM(13680), 0.88, zM(tool.y));
+    shaft.rotation.z = index === 0 ? 0.04 : -0.035;
+    finish(context, shaft, tool.shaft, { shadow: true, pickable: true });
+    const head = index === 0
+      ? texturedBox(
+        context.scene,
+        `${fitout.id} · LONG-TOOL · metla · pracovná hlava`,
+        { x: 13655, y: tool.y },
+        100,
+        170,
+        0.1,
+        0.04,
+        1,
+      )
+      : softEllipsoid(
+        context,
+        `${fitout.id} · LONG-TOOL · lopata · oceľový list`,
+        { x: 13655, y: tool.y },
+        [0.16, 0.035, 0.22],
+        0.15,
+        tool.blade,
+      );
+    if (index === 0) finish(context, head, tool.blade, { shadow: true, pickable: true });
+  }
+
+  const mower = fitout.mower;
+  const mowerRect = mower.footprintMm;
+  const mowerCenter = rectCenter(mowerRect);
+  const deckCenter = { x: mowerCenter.x, y: mowerRect.y0 + 205 };
+  const deck = CreateCylinder(
+    `${fitout.id} · MOWER · zelené oceľové šasi`,
+    { height: 0.13, diameter: mower.deckDiameterMm * MM_TO_M, tessellation: 48 },
+    context.scene,
+  );
+  deck.position.set(xM(deckCenter.x), 0.155, zM(deckCenter.y));
+  deck.scaling.z = 1.08;
+  finish(context, deck, materials.childSage, { shadow: true, pickable: true });
+  const engine = CreateCylinder(
+    `${fitout.id} · MOWER · motor s čiernym krytom`,
+    { height: 0.22, diameterBottom: 0.29, diameterTop: 0.24, tessellation: 32 },
+    context.scene,
+  );
+  engine.position.set(xM(deckCenter.x), 0.33, zM(deckCenter.y - 10));
+  finish(context, engine, materials.fireplace, { shadow: true, pickable: true });
+  const fuelCap = CreateCylinder(
+    `${fitout.id} · MOWER · uzáver palivovej nádrže`,
+    { height: 0.028, diameter: 0.075, tessellation: 24 },
+    context.scene,
+  );
+  fuelCap.position.set(xM(deckCenter.x + 62), 0.454, zM(deckCenter.y - 15));
+  finish(context, fuelCap, materials.childClay, { shadow: true, pickable: true });
+
+  for (const [index, wheel] of [
+    { x: mowerRect.x0 + 36, y: deckCenter.y - 135 },
+    { x: mowerRect.x1 - 36, y: deckCenter.y - 135 },
+    { x: mowerRect.x0 + 36, y: deckCenter.y + 145 },
+    { x: mowerRect.x1 - 36, y: deckCenter.y + 145 },
+  ].entries()) {
+    const wheelMesh = CreateCylinder(
+      `${fitout.id} · MOWER · gumové koleso ${index + 1}`,
+      { height: 0.072, diameter: index < 2 ? 0.15 : 0.18, tessellation: 28 },
+      context.scene,
+    );
+    wheelMesh.rotation.z = Math.PI / 2;
+    wheelMesh.position.set(xM(wheel.x), index < 2 ? 0.12 : 0.14, zM(wheel.y));
+    finish(context, wheelMesh, materials.fireplace, { shadow: true, pickable: true });
+  }
+
+  const grassBag = texturedBox(
+    context.scene,
+    `${fitout.id} · MOWER · textilný zberný kôš`,
+    { x: mowerCenter.x, y: deckCenter.y + 235 },
+    330,
+    245,
+    0.255,
+    0.23,
+    0.45,
+  );
+  grassBag.rotation.x = -0.08;
+  finish(context, grassBag, materials.officeFabric, { shadow: true, pickable: true });
+
+  const handleTopY = mowerRect.y1 - 45;
+  for (const side of [-1, 1] as const) {
+    const handle = CreateTube(
+      `${fitout.id} · MOWER · sklopná oceľová rukoväť ${side < 0 ? "ľavá" : "pravá"}`,
+      {
+        path: [
+          new Vector3(xM(mowerCenter.x + side * 135), 0.39, zM(deckCenter.y + 135)),
+          new Vector3(xM(mowerCenter.x + side * 185), 0.85, zM(deckCenter.y + 330)),
+          new Vector3(xM(mowerCenter.x + side * 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+        ],
+        radius: 0.017,
+        tessellation: 18,
+        cap: Mesh.CAP_ALL,
+      },
+      context.scene,
+    );
+    finish(context, handle, materials.steel, { shadow: true, pickable: true });
+  }
+  const mowerGrip = CreateTube(
+    `${fitout.id} · MOWER · mäkké priečne madlo`,
+    {
+      path: [
+        new Vector3(xM(mowerCenter.x - 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+        new Vector3(xM(mowerCenter.x + 185), mower.handleTopElevationMm * MM_TO_M, zM(handleTopY)),
+      ],
+      radius: 0.025,
+      tessellation: 20,
+      cap: Mesh.CAP_ALL,
+    },
+    context.scene,
+  );
+  finish(context, mowerGrip, materials.fireplace, { shadow: true, pickable: true });
+
+  navigationGuard(context, materials, `${fitout.id} · UTILITY-SINK · navigačný obrys`, sinkRect);
+  navigationGuard(context, materials, `${fitout.id} · GARAGE-RACK · navigačný obrys`, rackRect);
+  navigationGuard(context, materials, `${fitout.id} · MOWER · navigačný obrys`, mowerRect);
+  cameraOcclusionProxy(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-RACK · súvislý objem pre kameru`,
+    rackRect,
+    0,
+    rackHeightM,
+  );
+  cameraOcclusionProxy(
+    context,
+    materials,
+    `${fitout.id} · GARAGE-SHELF · súvislý objem pre kameru`,
+    overSink.footprintMm,
+    Math.min(...overSink.elevationsMm) * MM_TO_M - 0.04,
+    Math.max(...overSink.elevationsMm) * MM_TO_M + 0.08,
+  );
+}
+
 function softEllipsoid(
   context: InteriorBuildContext,
   name: string,
@@ -2810,6 +3764,237 @@ function navigationGuard(
   guard.isVisible = false;
   guard.metadata = { ...(guard.metadata ?? {}), walkCollisionOnly: true };
   return guard;
+}
+
+/**
+ * One stable camera volume for a visually busy storage assembly. Individual
+ * shelves and boxes stay pickable, while the chase boom cannot thread through
+ * their gaps and end up inside a texture.
+ */
+function cameraOcclusionProxy(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  name: string,
+  rect: RectMm,
+  bottomM: number,
+  topM: number,
+) {
+  const proxy = texturedBox(
+    context.scene,
+    name,
+    rectCenter(rect),
+    rect.x1 - rect.x0,
+    rect.y1 - rect.y0,
+    Math.max(0.01, topM - bottomM),
+    bottomM,
+    1,
+  );
+  finish(context, proxy, materials.livingCabinet, {
+    cameraOccluder: true,
+  });
+  proxy.isVisible = false;
+  proxy.receiveShadows = false;
+  proxy.metadata = {
+    ...(proxy.metadata ?? {}),
+    cameraOcclusionProxy: true,
+  };
+  return proxy;
+}
+
+function hallwayWardrobeFrontX(
+  wardrobe: HallwayBuiltInWardrobe,
+  insetMm: number,
+) {
+  return wardrobe.facing === "EAST"
+    ? wardrobe.footprintMm.x1 - insetMm
+    : wardrobe.footprintMm.x0 + insetMm;
+}
+
+/**
+ * Full-height, handleless oak cabinetry fitted into the two corridor recesses
+ * marked by the client. Every visible layer stays inside the measured 601 mm
+ * niche depth; one smooth invisible guard per cabinet provides stable avatar
+ * collision without catching on panel reveals or the reeded accent.
+ */
+function buildHallwayBuiltInWardrobes(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+) {
+  for (const wardrobe of HALLWAY_BUILT_IN_WARDROBES) {
+    const rect = wardrobe.footprintMm;
+    const heightM = wardrobe.heightMm * MM_TO_M;
+    const bodyRect: RectMm = wardrobe.facing === "EAST"
+      ? { ...rect, x1: rect.x1 - 38 }
+      : { ...rect, x0: rect.x0 + 38 };
+    const carcase = texturedBox(
+      context.scene,
+      `${wardrobe.id} · CARCASE · celovýšková zapustená korpusová skriňa`,
+      rectCenter(bodyRect),
+      bodyRect.x1 - bodyRect.x0,
+      bodyRect.y1 - bodyRect.y0,
+      heightM,
+      0,
+      1.2,
+    );
+    carcase.metadata = {
+      ...(carcase.metadata ?? {}),
+      fitoutId: wardrobe.id,
+      designSourceId: wardrobe.sourceId,
+      architecturalSourceId: wardrobe.architecturalSourceId,
+      roomId: wardrobe.roomId,
+      furnitureKind: "HALLWAY_BUILT_IN_WARDROBE",
+      embeddedInArchitecturalNiche: true,
+      facing: wardrobe.facing,
+      finish: wardrobe.style.finish,
+      opening: wardrobe.style.opening,
+    };
+    finish(context, carcase, materials.hallwayWardrobeSmokedOak, {
+      shadow: true,
+      pickable: true,
+      cameraOccluder: true,
+    });
+
+    const panelSpanMm = (rect.y1 - rect.y0) / wardrobe.doorCount;
+    const frontX = hallwayWardrobeFrontX(wardrobe, 15);
+    for (let index = 0; index < wardrobe.doorCount; index += 1) {
+      const panelY0 = rect.y0 + index * panelSpanMm;
+      const panelY1 = panelY0 + panelSpanMm;
+      const isReeded = wardrobe.style.reededPanelIndices.includes(index);
+      const front = texturedBox(
+        context.scene,
+        `${wardrobe.id} · DOOR · bezúchytkové dubové čelo ${index + 1}${isReeded ? " · dymový lamelový akcent" : " · zrkadlovo radená dyha"}`,
+        { x: frontX, y: (panelY0 + panelY1) / 2 },
+        30,
+        panelSpanMm - wardrobe.style.panelRevealMm,
+        heightM - 0.1,
+        0.05,
+        1.2,
+      );
+      front.metadata = {
+        ...(front.metadata ?? {}),
+        fitoutId: wardrobe.id,
+        panelIndex: index,
+        veneerPattern: "BOOKMATCHED_VERTICAL_GRAIN",
+        handleless: true,
+        reededAccent: isReeded,
+      };
+      finish(
+        context,
+        front,
+        isReeded ? materials.hallwayWardrobeSmokedOak : materials.hallwayWardrobeOak,
+        { shadow: true, pickable: true },
+      );
+
+      if (isReeded) {
+        for (
+          let grooveIndex = 0;
+          grooveIndex < wardrobe.style.reededGrooveCountPerPanel;
+          grooveIndex += 1
+        ) {
+          const grooveY = panelY0
+            + ((grooveIndex + 1) * panelSpanMm)
+              / (wardrobe.style.reededGrooveCountPerPanel + 1);
+          const groove = texturedBox(
+            context.scene,
+            `${wardrobe.id} · REEDED-ACCENT · vertikálna dubová lamela ${grooveIndex + 1}`,
+            { x: hallwayWardrobeFrontX(wardrobe, 3), y: grooveY },
+            6,
+            8,
+            heightM - 0.2,
+            0.1,
+            1,
+          );
+          finish(context, groove, materials.hallwayWardrobeOak, {
+            shadow: true,
+            pickable: true,
+          });
+        }
+      }
+
+      if (index > 0) {
+        const reveal = texturedBox(
+          context.scene,
+          `${wardrobe.id} · REVEAL · zvislá tieňová škára ${index}`,
+          { x: hallwayWardrobeFrontX(wardrobe, 4), y: panelY0 },
+          8,
+          wardrobe.style.panelRevealMm,
+          heightM - 0.17,
+          0.085,
+          1,
+        );
+        finish(context, reveal, materials.fireplace);
+      }
+    }
+
+    const plinth = texturedBox(
+      context.scene,
+      `${wardrobe.id} · PLINTH · zapustený dymový sokel`,
+      {
+        x: hallwayWardrobeFrontX(wardrobe, 22),
+        y: (rect.y0 + rect.y1) / 2,
+      },
+      44,
+      rect.y1 - rect.y0 - 32,
+      wardrobe.style.plinthHeightMm * MM_TO_M,
+      0,
+      1,
+    );
+    finish(context, plinth, materials.fireplace, { shadow: true });
+
+    const topReveal = texturedBox(
+      context.scene,
+      `${wardrobe.id} · REVEAL · horná tieňová škára`,
+      {
+        x: hallwayWardrobeFrontX(wardrobe, 8),
+        y: (rect.y0 + rect.y1) / 2,
+      },
+      16,
+      rect.y1 - rect.y0 - 24,
+      0.02,
+      heightM - 0.02,
+      1,
+    );
+    finish(context, topReveal, materials.fireplace);
+
+    for (const edge of wardrobe.style.ledEdges) {
+      const edgeY = edge === "SOUTH" ? rect.y0 + 12 : rect.y1 - 12;
+      const led = texturedBox(
+        context.scene,
+        `${wardrobe.id} · LED · ${edge === "SOUTH" ? "južná" : "severná"} vertikálna línia ${wardrobe.style.ledCctK} K`,
+        { x: hallwayWardrobeFrontX(wardrobe, 3), y: edgeY },
+        6,
+        20,
+        2.22,
+        0.18,
+        1,
+      );
+      led.metadata = {
+        ...(led.metadata ?? {}),
+        fitoutId: wardrobe.id,
+        cctK: wardrobe.style.ledCctK,
+        integratedCabinetLight: true,
+      };
+      finish(context, led, materials.warmLight);
+    }
+
+    const lightX = wardrobe.facing === "EAST" ? rect.x1 + 150 : rect.x0 - 150;
+    const cabinetLight = new PointLight(
+      `${wardrobe.id} · LIGHT · mäkké odrazené svetlo chodby`,
+      new Vector3(xM(lightX), 1.55, zM((rect.y0 + rect.y1) / 2)),
+      context.scene,
+    );
+    cabinetLight.diffuse = Color3.FromHexString("#ffd0a0");
+    cabinetLight.specular = Color3.FromHexString("#765a43");
+    cabinetLight.intensity = wardrobe.doorCount === 4 ? 0.16 : 0.1;
+    cabinetLight.range = wardrobe.doorCount === 4 ? 3.1 : 2.2;
+
+    navigationGuard(
+      context,
+      materials,
+      `${wardrobe.id} · WARDROBE · hladký navigačný obrys niky`,
+      rect,
+    );
+  }
 }
 
 /**
@@ -3807,7 +4992,11 @@ function buildEntryFitout(context: InteriorBuildContext, materials: InteriorMate
     overhead.bottomElevationMm * MM_TO_M,
     1.2,
   );
-  finish(context, overheadBody, materials.livingCabinet, { shadow: true, pickable: true });
+  finish(context, overheadBody, materials.livingCabinet, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
 
   const overheadJoint = texturedBox(
     context.scene,
@@ -4001,7 +5190,11 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     upperBottomM,
     1.2,
   );
-  finish(context, nicheUpper, materials.livingCabinet, { shadow: true, pickable: true });
+  finish(context, nicheUpper, materials.livingCabinet, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
 
   if (nicheRect.y1 < cabinetRect.y1) {
     const endPanelRect: RectMm = {
@@ -4588,7 +5781,11 @@ export function buildLivingDiningFitout(
     2.33,
     1.2,
   );
-  finish(context, bridge, materials.livingCabinet, { shadow: true, pickable: true });
+  finish(context, bridge, materials.livingCabinet, {
+    shadow: true,
+    pickable: true,
+    cameraOccluder: true,
+  });
   const console = texturedBox(
     context.scene,
     "LIVING-103-TV-WALL · plávajúca dubová mediálna skrinka",
@@ -5082,6 +6279,7 @@ function exteriorOpeningsOn(axis: "X" | "Y", faceMm: number): Interval[] {
     for (const opening of east.openings) holes.push({ start: opening.startYmm, end: opening.startYmm + opening.widthMm });
   }
   if (axis === "Y" && near(faceMm, west.faceXmm + 530)) {
+    holes.push({ start: west.garageWindow.startYmm, end: west.garageWindow.startYmm + west.garageWindow.widthMm });
     holes.push({ start: west.loggiaOpening.startYmm, end: west.loggiaOpening.startYmm + west.loggiaOpening.widthMm });
   }
   if (axis === "Y" && near(faceMm, wingWest.faceXmm + 500)) {
@@ -5185,6 +6383,8 @@ export function buildInterior(context: InteriorBuildContext) {
   buildWcFitout(context, materials);
   buildBathroomFitout(context, materials);
   buildEnsuiteBathroomFitout(context, materials);
+  buildGarageFitout(context, materials);
+  buildHallwayBuiltInWardrobes(context, materials);
   buildEntryFitout(context, materials);
   buildBedroomFitout(context, materials);
   buildChildrensBedroomFitouts(context, materials);
