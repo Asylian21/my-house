@@ -12,6 +12,7 @@ import {
   HOUSE,
   POOL_SURROUND_DECK,
   POOL_TECHNOLOGY_SHAFT,
+  RAINWATER_COORDINATION,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -1253,6 +1254,9 @@ describe("data to geometry contract", () => {
     expect(SOURCES.clientPoolTerraceShaftRevision20260829.detail).toContain(
       "2 m širokou drevenou terasou",
     );
+    expect(SOURCES.clientPoolShaftCenteredRevision20260829.detail).toContain(
+      "geometrického stredu",
+    );
 
     const copingXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
     const copingYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
@@ -1314,23 +1318,24 @@ describe("data to geometry contract", () => {
       }
     }
     expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(0);
-    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(1_725);
-    expect(GARDEN_POOL.modelledClearancesMm.infiltrationObject).toBe(1_728);
+    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(2_325);
+    expect(GARDEN_POOL.modelledClearancesMm.infiltrationObject).toBe(2_328);
     expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(690);
-    expect(GARDEN_POOL.modelledClearancesMm.technologyShaftShell).toBe(400);
+    expect(GARDEN_POOL.modelledClearancesMm.technologyShaftShell).toBe(150);
     const reroutedRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-SOUTH",
     );
     expect(reroutedRain?.pointsMm).toEqual([
       { x: 7_600, y: 10_800 },
-      { x: 7_600, y: 17_400 },
-      { x: 16_900, y: 17_400 },
+      { x: 7_600, y: 18_500 },
+      { x: 16_900, y: 18_500 },
     ]);
     expect(reroutedRain?.sourceIds).toEqual([
       SOURCES.rainwater.id,
       SOURCES.clientExteriorRevision20260821.id,
       SOURCES.poolDesignProposal20260821.id,
       SOURCES.clientPoolTerraceShaftRevision20260829.id,
+      SOURCES.clientPoolShaftCenteredRevision20260829.id,
     ]);
     const northRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-NORTH",
@@ -1339,18 +1344,18 @@ describe("data to geometry contract", () => {
       { x: 26_300, y: 21_000 },
       { x: 22_400, y: 15_600 },
       { x: 18_800, y: 15_600 },
-      { x: 18_800, y: 17_400 },
-      { x: 16_900, y: 17_400 },
+      { x: 18_800, y: 18_500 },
+      { x: 16_900, y: 18_500 },
     ]);
     const eastPipeClearanceMm =
       18_800 - Math.max(...copingXs) - 70;
     const southPipeClearanceMm =
-      17_400 - Math.max(...copingYs) - 70;
+      18_500 - Math.max(...copingYs) - 70;
     expect(Math.min(eastPipeClearanceMm, southPipeClearanceMm)).toBe(690);
     expect(northRain?.revisionStatus).toBe("REVISION_CONFLICT");
   });
 
-  it("adds an exact two-metre timber surround with a real shaft opening", () => {
+  it("centres the complete shaft below the two-metre terrace behind the pool", () => {
     const poolXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
     const poolYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
     const poolBounds = {
@@ -1386,9 +1391,124 @@ describe("data to geometry contract", () => {
       expect(overlapsHatch).toBe(false);
     }
 
-    expect(poolBounds.x0 - shaft.outerFootprintMm.x1).toBe(
+    const southDeckCenter = {
+      x: (poolBounds.x0 + poolBounds.x1) / 2,
+      y: (poolBounds.y1 + POOL_SURROUND_DECK.outerBoundsMm.y1) / 2,
+    };
+    const shaftCenter = {
+      x: (shaft.outerFootprintMm.x0 + shaft.outerFootprintMm.x1) / 2,
+      y: (shaft.outerFootprintMm.y0 + shaft.outerFootprintMm.y1) / 2,
+    };
+    const hatchCenter = {
+      x: (hatch.x0 + hatch.x1) / 2,
+      y: (hatch.y0 + hatch.y1) / 2,
+    };
+    expect(southDeckCenter).toEqual({ x: 14_740, y: 17_400 });
+    expect(shaft.centeredBelowDeckMm).toEqual(southDeckCenter);
+    expect(shaftCenter).toEqual(southDeckCenter);
+    expect(hatchCenter).toEqual(southDeckCenter);
+
+    expect(shaft.outerFootprintMm.x0).toBeGreaterThan(poolBounds.x0);
+    expect(shaft.outerFootprintMm.x1).toBeLessThan(poolBounds.x1);
+    expect(shaft.outerFootprintMm.y0).toBeGreaterThan(poolBounds.y1);
+    expect(shaft.outerFootprintMm.y1).toBeLessThan(
+      POOL_SURROUND_DECK.outerBoundsMm.y1,
+    );
+    expect(shaft.outerFootprintMm.y0 - poolBounds.y1).toBe(
       shaft.poolShellClearanceMm,
     );
+
+    const clearInterior = {
+      x0: shaft.outerFootprintMm.x0 + shaft.wallThicknessMm,
+      y0: shaft.outerFootprintMm.y0 + shaft.wallThicknessMm,
+      x1: shaft.outerFootprintMm.x1 - shaft.wallThicknessMm,
+      y1: shaft.outerFootprintMm.y1 - shaft.wallThicknessMm,
+    };
+    expect(hatch.x0).toBeGreaterThan(clearInterior.x0);
+    expect(hatch.x1).toBeLessThan(clearInterior.x1);
+    expect(hatch.y0).toBeGreaterThan(clearInterior.y0);
+    expect(hatch.y1).toBeLessThan(clearInterior.y1);
+    expect(hatch.y0 - clearInterior.y0).toBeGreaterThan(58);
+    expect(clearInterior.y1 - hatch.y1).toBeGreaterThan(58);
+    expect(
+      shaft.sandFilter.centerMm.x - shaft.sandFilter.vesselDiameterMm / 2,
+    ).toBeGreaterThan(clearInterior.x0);
+    expect(
+      shaft.sandFilter.centerMm.x + shaft.sandFilter.vesselDiameterMm / 2,
+    ).toBeLessThan(clearInterior.x1);
+    expect(
+      shaft.sandFilter.centerMm.y - shaft.sandFilter.vesselDiameterMm / 2,
+    ).toBeGreaterThan(clearInterior.y0);
+    expect(
+      shaft.sandFilter.centerMm.y + shaft.sandFilter.vesselDiameterMm / 2,
+    ).toBeLessThan(clearInterior.y1);
+    expect(shaft.circulationPump.footprintMm.x0).toBeGreaterThan(
+      clearInterior.x0,
+    );
+    expect(shaft.circulationPump.footprintMm.x1).toBeLessThan(
+      clearInterior.x1,
+    );
+    expect(shaft.circulationPump.footprintMm.y0).toBeGreaterThan(
+      clearInterior.y0,
+    );
+    expect(shaft.circulationPump.footprintMm.y1).toBeLessThan(
+      clearInterior.y1,
+    );
+    expect(shaft.serviceAisleMm.x0).toBeGreaterThan(clearInterior.x0);
+    expect(shaft.serviceAisleMm.x1).toBeLessThan(clearInterior.x1);
+    expect(shaft.serviceAisleMm.y0).toBeGreaterThan(clearInterior.y0);
+    expect(shaft.serviceAisleMm.y1).toBeLessThan(clearInterior.y1);
+    expect(shaft.ladder.bottomStandingPointMm.x).toBeGreaterThan(clearInterior.x0);
+    expect(shaft.ladder.bottomStandingPointMm.x).toBeLessThan(clearInterior.x1);
+    expect(shaft.ladder.bottomStandingPointMm.y).toBeGreaterThan(clearInterior.y0);
+    expect(shaft.ladder.bottomStandingPointMm.y).toBeLessThan(clearInterior.y1);
+    expect(shaft.ladder.topStandingPointMm.x).toBe(southDeckCenter.x);
+    expect(shaft.ladder.topStandingPointMm.y).toBeGreaterThan(hatch.y1);
+    expect(shaft.ladder.topStandingPointMm.y).toBeLessThanOrEqual(
+      POOL_SURROUND_DECK.outerBoundsMm.y1,
+    );
+    expect(
+      POOL_SURROUND_DECK.outerBoundsMm.y1 -
+        shaft.ladder.topStandingPointMm.y,
+    ).toBe(220);
+
+    const rainSouth = UTILITY_ROUTES.find(({ id }) => id === "UTIL-RAIN-SOUTH");
+    expect(
+      (rainSouth?.pointsMm[1]?.y ?? 0) -
+        shaft.outerFootprintMm.y1 -
+        (rainSouth?.radiusMm ?? 0),
+    ).toBe(shaft.coordinationClearancesMm.rainPipeShell);
+    const tankRadius = RAINWATER_COORDINATION.tank.diameterMm / 2;
+    const tankClearance = Math.round(
+      Math.hypot(
+        RAINWATER_COORDINATION.tank.centerMm.x - shaft.outerFootprintMm.x1,
+        RAINWATER_COORDINATION.tank.centerMm.y - shaft.outerFootprintMm.y1,
+      ) - tankRadius,
+    );
+    expect(tankClearance).toBe(shaft.coordinationClearancesMm.rainTankShell);
+    const infiltrationBounds = {
+      x1:
+        RAINWATER_COORDINATION.infiltration.centerMm.x +
+        RAINWATER_COORDINATION.infiltration.widthMm / 2,
+      y0:
+        RAINWATER_COORDINATION.infiltration.centerMm.y -
+        RAINWATER_COORDINATION.infiltration.lengthMm / 2,
+    };
+    expect(
+      Math.round(
+        Math.hypot(
+          shaft.outerFootprintMm.x0 - infiltrationBounds.x1,
+          infiltrationBounds.y0 - shaft.outerFootprintMm.y1,
+        ),
+      ),
+    ).toBe(shaft.coordinationClearancesMm.infiltrationObject);
+    const overflow = UTILITY_ROUTES.find(
+      ({ id }) => id === "UTIL-RAIN-OVERFLOW",
+    );
+    expect(overflow?.pointsMm.at(-1)).toEqual({
+      x: infiltrationBounds.x1,
+      y: RAINWATER_COORDINATION.infiltration.centerMm.y,
+    });
     expect(shaft.floorElevationMm).toBe(-2_200);
     expect(shaft.ladder.rungCount).toBe(7);
     expect(shaft.electricalPanel.breakerCount).toBe(8);

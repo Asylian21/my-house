@@ -299,7 +299,7 @@ function getEntityDetail(
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
       ],
       sourceIds: GARDEN_POOL.sourceIds,
-      note: "Aktuálna klientska revízia mení vodnú plochu na mierne dlhší a užší rozmer 6,0 × 2,7 m. Pôvodná D1 terasa ostáva zachovaná; voľné západné a južné strany dopĺňa presne 2 m široký drevený lem s čistou plochou 22,81 m² po odpočítaní poklopu. Kríky a mulčovaný záhon pri bazéne sú odstránené. Dažďové potrubie, konštrukciu bazéna, šachtu, ZTI a elektro treba pred realizáciou odborne skoordinovať.",
+      note: "Aktuálna klientska revízia mení vodnú plochu na mierne dlhší a užší rozmer 6,0 × 2,7 m. Pôvodná D1 terasa ostáva zachovaná; voľné západné a južné strany dopĺňa presne 2 m široký drevený lem s čistou plochou 22,81 m² po odpočítaní poklopu. Celá kompaktná šachta aj poklop sú vycentrované v južnom páse bezprostredne za bazénom. Kríky a mulčovaný záhon pri bazéne sú odstránené. Dažďové potrubie, konštrukciu bazéna, šachtu, ZTI a elektro treba pred realizáciou odborne skoordinovať.",
     };
   }
 
@@ -326,6 +326,8 @@ function getEntityDetail(
           value: `${fmt(shaft.hatch.clearWidthMm)} × ${fmt(shaft.hatch.clearLengthMm)}`,
           unit: "mm",
         },
+        { label: "Poloha", value: "geometrický stred terasy za bazénom" },
+        { label: "Odstup od dažďového potrubia", value: fmt(shaft.coordinationClearancesMm.rainPipeShell), unit: "mm" },
         { label: "Rebrík", value: `${shaft.ladder.rungCount} nerezových priečok` },
         { label: "Piesková filtrácia", value: `Ø ${fmt(shaft.sandFilter.vesselDiameterMm)}`, unit: "mm" },
         { label: "Obehové čerpadlo", value: fmt(shaft.circulationPump.motorPowerKw), unit: "kW" },
