@@ -2318,7 +2318,7 @@ export const POOL_TECHNOLOGY_SHAFT = Object.freeze({
     centerXmm: 11_990,
     bottomElevationMm: -1_820,
     topElevationMm: -80,
-    topStandingPointMm: { x: 12_720, y: 17_100 } as const satisfies Point2Mm,
+    topStandingPointMm: { x: 12_740, y: 17_180 } as const satisfies Point2Mm,
     bottomStandingPointMm: { x: 11_990, y: 17_450 } as const satisfies Point2Mm,
   },
   sandFilter: {

@@ -43,6 +43,7 @@ import {
 import { segmentFacadeMm } from "../lib/twin-facade";
 import { slatCenterDistancesMm } from "../lib/twin-fence";
 import { roofHeightMm, roofMountTransform } from "../lib/twin-roof";
+import { DOOR_INTERACTION } from "../lib/babylon-doors";
 
 function pointInRing(
   point: { readonly x: number; readonly y: number },
@@ -1386,6 +1387,10 @@ describe("data to geometry contract", () => {
       POOL_SURROUND_DECK.netDeckAreaM2,
       10,
     );
+    expect(
+      POOL_SURROUND_DECK.grossAreaM2 -
+        POOL_SURROUND_DECK.hatchOpeningAreaM2,
+    ).toBe(POOL_SURROUND_DECK.netDeckAreaM2);
 
     const shaft = POOL_TECHNOLOGY_SHAFT;
     const hatch = shaft.hatch.footprintMm;
@@ -1445,6 +1450,7 @@ describe("data to geometry contract", () => {
       1_000_000;
     expect(intersectionAreaM2(shaft.outerFootprintMm, westDeckBand)).toBe(1.7);
     expect(intersectionAreaM2(shaft.outerFootprintMm, rearDeckBand)).toBe(3.57);
+    expect(intersectionAreaM2(westDeckBand, rearDeckBand)).toBe(0);
     expect(
       intersectionAreaM2(shaft.outerFootprintMm, westDeckBand) +
         intersectionAreaM2(shaft.outerFootprintMm, rearDeckBand),
@@ -1511,7 +1517,9 @@ describe("data to geometry contract", () => {
     ).toBeGreaterThanOrEqual(740);
     expect(
       Math.hypot(topStanding.x - hatchCenter.x, topStanding.y - hatchCenter.y),
-    ).toBeLessThanOrEqual(820);
+    ).toBeLessThanOrEqual(
+      DOOR_INTERACTION.nearOmnidirectionalDistanceM * 1_000,
+    );
     const hatchFrame = {
       x0: hatch.x0 - 58,
       y0: hatch.y0 - 58,
@@ -1522,7 +1530,11 @@ describe("data to geometry contract", () => {
       Math.max(hatchFrame.x0 - topStanding.x, topStanding.x - hatchFrame.x1, 0),
       Math.max(hatchFrame.y0 - topStanding.y, topStanding.y - hatchFrame.y1, 0),
     );
-    expect(topFrameClearanceMm).toBeGreaterThanOrEqual(220);
+    const minimumLandingClearanceMm =
+      DOOR_INTERACTION.actorRadiusM * 1_000 + 20;
+    expect(topFrameClearanceMm).toBeGreaterThanOrEqual(
+      minimumLandingClearanceMm,
+    );
     const pumpGuard = {
       x0: shaft.circulationPump.footprintMm.x0 - 80,
       y0: shaft.circulationPump.footprintMm.y0 - 70,
@@ -1535,7 +1547,7 @@ describe("data to geometry contract", () => {
     );
     expect(
       topPumpClearanceMm,
-    ).toBeGreaterThanOrEqual(220);
+    ).toBeGreaterThanOrEqual(minimumLandingClearanceMm);
 
     const rainSouth = UTILITY_ROUTES.find(({ id }) => id === "UTIL-RAIN-SOUTH");
     expect(
