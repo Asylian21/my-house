@@ -59,6 +59,8 @@ import {
   GARDEN_POOL,
   HOUSE,
   LAYERS,
+  POOL_SURROUND_DECK,
+  POOL_TECHNOLOGY_SHAFT,
   ROAD_CONTEXT,
   SITE_FENCE,
   SOURCES,
@@ -280,7 +282,7 @@ function getEntityDetail(
       eyebrow: "ZÁHRADNÝ BAZÉN",
       title: GARDEN_POOL.label,
       subtitle: "Otvorený L-dvor pri hlavnej terase",
-      status: "Rozmer a dotyk terasy podľa revízie · koordinačný návrh",
+      status: "Klientska revízia 29. 8. · profesijná koordinácia otvorená",
       statusTone: "design",
       rows: [
         { label: "Vodná plocha", value: `${fmt(GARDEN_POOL.waterLengthMm)} × ${fmt(GARDEN_POOL.waterWidthMm)}`, unit: "mm" },
@@ -289,12 +291,49 @@ function getEntityDetail(
         { label: "Navrhovaná hĺbka", value: fmt(GARDEN_POOL.proposedWaterDepthMm), unit: "mm" },
         { label: "Medzera lemu od terasy", value: fmt(GARDEN_POOL.terraceConnection.planGapMm), unit: "mm" },
         { label: "Dĺžka dotyku s terasou", value: fmt(GARDEN_POOL.terraceConnection.contactLengthMm), unit: "mm" },
+        { label: "Nový drevený lem", value: fmt(POOL_SURROUND_DECK.nominalWidthMm), unit: "mm" },
+        { label: "Nová čistá plocha dreva", value: fmt(POOL_SURROUND_DECK.netDeckAreaM2), unit: "m²" },
         { label: "Odstup od najbližšieho dažďového potrubia", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
         { label: "Odstup od plášťa dažďovej nádrže", value: fmt(GARDEN_POOL.modelledClearancesMm.rainTankShell), unit: "mm" },
+        { label: "Odstup od šachty", value: fmt(GARDEN_POOL.modelledClearancesMm.technologyShaftShell), unit: "mm" },
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
       ],
       sourceIds: GARDEN_POOL.sourceIds,
-      note: "Modelovaný variant má po dorovnaní do vnútorného rohu L vodnú plochu 5,6 × 3,0 m, teda o 0,6 m dlhšiu než posledná doložená požiadavka 5,0 × 3,0 m. Lem sa bez medzery dotýka hlavnej aj bočnej terasy a všetky tri plochy majú spoločnú hornú úroveň. Dažďová trasa je predbežne odklonená; od potrubia zostáva približne 0,63 m a od plášťa nádrže 1,787 m. Rozmer variantu, trasu, nádrž, technológiu aj skutočné vedenie potrubí treba pred realizáciou potvrdiť a odborne skoordinovať.",
+      note: "Aktuálna klientska revízia mení vodnú plochu na mierne dlhší a užší rozmer 6,0 × 2,7 m. Pôvodná D1 terasa ostáva zachovaná; voľné západné a južné strany dopĺňa presne 2 m široký drevený lem s čistou plochou 22,81 m² po odpočítaní poklopu. Kríky a mulčovaný záhon pri bazéne sú odstránené. Dažďové potrubie, konštrukciu bazéna, šachtu, ZTI a elektro treba pred realizáciou odborne skoordinovať.",
+    };
+  }
+
+  if (id === POOL_TECHNOLOGY_SHAFT.id) {
+    const shaft = POOL_TECHNOLOGY_SHAFT;
+    return {
+      id,
+      code: "ŠB",
+      eyebrow: "PODZEMNÁ BAZÉNOVÁ TECHNOLÓGIA",
+      title: shaft.label,
+      subtitle: "Poklop v terase · rebrík · filtrácia · elektro",
+      status: "Klientsky návrh · ZTI a elektro na potvrdenie",
+      statusTone: "warning",
+      rows: [
+        {
+          label: "Vonkajší pôdorys",
+          value: `${fmt(shaft.outerFootprintMm.x1 - shaft.outerFootprintMm.x0)} × ${fmt(shaft.outerFootprintMm.y1 - shaft.outerFootprintMm.y0)}`,
+          unit: "mm",
+        },
+        { label: "Úroveň podlahy", value: fmt(shaft.floorElevationMm), unit: "mm" },
+        { label: "Svetlá výška", value: fmt(shaft.clearHeightMm), unit: "mm" },
+        {
+          label: "Poklop",
+          value: `${fmt(shaft.hatch.clearWidthMm)} × ${fmt(shaft.hatch.clearLengthMm)}`,
+          unit: "mm",
+        },
+        { label: "Rebrík", value: `${shaft.ladder.rungCount} nerezových priečok` },
+        { label: "Piesková filtrácia", value: `Ø ${fmt(shaft.sandFilter.vesselDiameterMm)}`, unit: "mm" },
+        { label: "Obehové čerpadlo", value: fmt(shaft.circulationPump.motorPowerKw), unit: "kW" },
+        { label: "Elektrický rozvádzač", value: `${shaft.electricalPanel.breakerCount} ističov · IP65 návrh` },
+        { label: "Ovládanie", value: "E / dotyk · poklop, zostup aj návrat" },
+      ],
+      sourceIds: shaft.sourceIds,
+      note: "Poklop je pochôdzny iba v zatvorenom stave. Po otvorení ponúkne samostatnú akciu zostupu po rebríku; prechádzka sa bezpečne presunie na podzemnú servisnú podlahu a rovnakým rebríkom sa vráti na terasu. Model obsahuje železobetónovú vaňu, filter, predfilter, 0,75 kW čerpadlo, tlakové potrubia, podlahovú vpusť, servisné svetlo a IP65 rozvádzač s ôsmimi ističmi. Ide o vizualizačný návrh, nie výrobnú ani realizačnú dokumentáciu.",
     };
   }
 
@@ -912,7 +951,7 @@ export function TwinStudio() {
           )}
 
           <details open>
-            <summary><Map size={15} /><span>Areál a komunikácia</span><small>6</small></summary>
+            <summary><Map size={15} /><span>Areál a komunikácia</span><small>7</small></summary>
             <div role="group">
               {matches("miestna komunikácia 6012/1") && (
                 <button role="treeitem" aria-selected={selectionId === "ROAD-6012-1"} className="tree-item" onClick={() => select("ROAD-6012-1")}>
@@ -930,6 +969,11 @@ export function TwinStudio() {
               {matches(`${GARDEN_POOL.label} bazén dvor terasa`) && (
                 <button role="treeitem" aria-selected={selectionId === GARDEN_POOL.id} className="tree-item" onClick={() => select(GARDEN_POOL.id)}>
                   <span className="entity-token utility" style={{ "--entity-color": "#3ebbe0" } as CSSProperties}>BZ</span><span><strong>{GARDEN_POOL.label}</strong><small>vodná plocha {fmt(GARDEN_POOL.waterAreaM2)} m² · v rohu terás</small></span>
+                </button>
+              )}
+              {matches(`${POOL_TECHNOLOGY_SHAFT.label} šachta rebrík filter čerpadlo poistky ističe`) && (
+                <button role="treeitem" aria-selected={selectionId === POOL_TECHNOLOGY_SHAFT.id} className="tree-item" onClick={() => select(POOL_TECHNOLOGY_SHAFT.id)}>
+                  <span className="entity-token utility" style={{ "--entity-color": "#8d9496" } as CSSProperties}>ŠB</span><span><strong>{POOL_TECHNOLOGY_SHAFT.label}</strong><small>poklop · rebrík · filtrácia · elektro</small></span>
                 </button>
               )}
               {matches("plot oplotenie súkromná záhrada") && (

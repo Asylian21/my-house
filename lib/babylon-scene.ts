@@ -57,6 +57,8 @@ import {
   HOUSE,
   LAYERS,
   PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
+  POOL_SURROUND_DECK,
+  POOL_TECHNOLOGY_SHAFT,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -64,10 +66,10 @@ import {
   UTILITY_ROUTES,
   sjtskToLocalMm,
   type CadastralParcel,
+  type DeckZone,
   type FoundationStrip,
   type LayerId,
   type Point2Mm,
-  type TerraceZoneD1,
   type ViewMode,
 } from "./twin-site";
 import {
@@ -1599,9 +1601,9 @@ export class TwinSceneController {
     this.buildCadastre();
     this.buildStreetAndSite();
     this.buildHouse();
-    this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
     this.buildFence();
     this.buildLandscape();
+    this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
     this.buildUtilities();
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo =
@@ -2457,15 +2459,21 @@ export class TwinSceneController {
   }
 
   private buildTerrainAndGrid() {
-    const terrain = CreateGround(
-      "Terén · DMR 5G kontext",
-      { width: 240, height: 200, subdivisions: 2 },
+    const subjectParcel = CADASTRAL_PARCELS.find((parcel) => parcel.isSubject);
+    const terrain = createFlatPolygonWithHoles(
       this.scene,
-    );
-    terrain.position.set(
-      0,
+      "Terén · DMR 5G kontext",
+      [
+        { x: SCENE_CENTER_MM.x - 120_000, y: SCENE_CENTER_MM.y - 100_000 },
+        { x: SCENE_CENTER_MM.x + 120_000, y: SCENE_CENTER_MM.y - 100_000 },
+        { x: SCENE_CENTER_MM.x + 120_000, y: SCENE_CENTER_MM.y + 100_000 },
+        { x: SCENE_CENTER_MM.x - 120_000, y: SCENE_CENTER_MM.y + 100_000 },
+        { x: SCENE_CENTER_MM.x - 120_000, y: SCENE_CENTER_MM.y - 100_000 },
+      ],
+      subjectParcel
+        ? [subjectParcel.sjtskRingMm.map(sjtskToLocalMm)]
+        : [],
       EXTERIOR_RENDER_STABILITY.contextTerrainElevationM,
-      0,
     );
     this.appearance(
       terrain,
@@ -5439,7 +5447,7 @@ export class TwinSceneController {
     });
   }
 
-  private buildDeckZone(zone: TerraceZoneD1) {
+  private buildDeckZone(zone: DeckZone) {
     const plankMm = 145;
     const gapMm = 8;
     const stepMm = plankMm + gapMm;
@@ -5862,11 +5870,540 @@ export class TwinSceneController {
     this.register(outline, "street", pool.id);
   }
 
+  /**
+   * Client-requested pool plant room below the new deck. The hatch uses the
+   * same E/touch target selection as doors, while the ladder performs a
+   * controlled level transition because ordinary walk movement intentionally
+   * cannot drop more than a human-sized step.
+   */
+  private buildPoolTechnologyShaft() {
+    const shaft = POOL_TECHNOLOGY_SHAFT;
+    const footprint = shaft.outerFootprintMm;
+    const hatch = shaft.hatch;
+    const floorTopM = shaft.floorElevationMm * MM_TO_M;
+    const wallTopM = -0.12;
+    const wallHeightM = wallTopM - floorTopM;
+    const wall = shaft.wallThicknessMm;
+
+    const concretePart = (
+      name: string,
+      rect: { readonly x0: number; readonly y0: number; readonly x1: number; readonly y1: number },
+      heightM: number,
+      baseM: number,
+      colliding = false,
+    ) => {
+      const mesh = boxAtPlan(
+        this.scene,
+        name,
+        { x: (rect.x0 + rect.x1) / 2, y: (rect.y0 + rect.y1) / 2 },
+        rect.x1 - rect.x0,
+        rect.y1 - rect.y0,
+        heightM,
+        baseM,
+      );
+      this.appearance(
+        mesh,
+        this.materials.foundation,
+        this.realisticMaterials.concrete,
+      );
+      mesh.receiveShadows = true;
+      mesh.checkCollisions = colliding;
+      this.register(mesh, "street", shaft.id);
+      return mesh;
+    };
+
+    const floor = concretePart(
+      `${shaft.label} · železobetónová podlaha`,
+      footprint,
+      shaft.reinforcedConcreteFloorMm * MM_TO_M,
+      floorTopM - shaft.reinforcedConcreteFloorMm * MM_TO_M,
+    );
+    markWalkSurface(floor, "interior", `${shaft.id}-floor`);
+
+    for (const [name, rect] of [
+      ["západná stena", { x0: footprint.x0, y0: footprint.y0, x1: footprint.x0 + wall, y1: footprint.y1 }],
+      ["východná stena", { x0: footprint.x1 - wall, y0: footprint.y0, x1: footprint.x1, y1: footprint.y1 }],
+      ["severná stena", { x0: footprint.x0 + wall, y0: footprint.y0, x1: footprint.x1 - wall, y1: footprint.y0 + wall }],
+      ["južná stena", { x0: footprint.x0 + wall, y0: footprint.y1 - wall, x1: footprint.x1 - wall, y1: footprint.y1 }],
+    ] as const) {
+      concretePart(
+        `${shaft.label} · ${name}`,
+        rect,
+        wallHeightM,
+        floorTopM,
+        true,
+      );
+    }
+
+    // Reinforced roof slab split around the clear hatch opening. This keeps
+    // both the deck underlay and the terrain out of the shaft void.
+    for (const [index, rect] of [
+      { x0: footprint.x0, y0: footprint.y0, x1: footprint.x1, y1: hatch.footprintMm.y0 },
+      { x0: footprint.x0, y0: hatch.footprintMm.y1, x1: footprint.x1, y1: footprint.y1 },
+      { x0: footprint.x0, y0: hatch.footprintMm.y0, x1: hatch.footprintMm.x0, y1: hatch.footprintMm.y1 },
+      { x0: hatch.footprintMm.x1, y0: hatch.footprintMm.y0, x1: footprint.x1, y1: hatch.footprintMm.y1 },
+    ].entries()) {
+      concretePart(
+        `${shaft.label} · stropná doska ${index + 1}`,
+        rect,
+        0.1,
+        wallTopM,
+        true,
+      );
+    }
+
+    const hatchTopM = hatch.topElevationMm * MM_TO_M;
+    const frameWidthMm = 58;
+    for (const [index, rect] of [
+      { x0: hatch.footprintMm.x0 - frameWidthMm, y0: hatch.footprintMm.y0 - frameWidthMm, x1: hatch.footprintMm.x1 + frameWidthMm, y1: hatch.footprintMm.y0 },
+      { x0: hatch.footprintMm.x0 - frameWidthMm, y0: hatch.footprintMm.y1, x1: hatch.footprintMm.x1 + frameWidthMm, y1: hatch.footprintMm.y1 + frameWidthMm },
+      { x0: hatch.footprintMm.x0 - frameWidthMm, y0: hatch.footprintMm.y0, x1: hatch.footprintMm.x0, y1: hatch.footprintMm.y1 },
+      { x0: hatch.footprintMm.x1, y0: hatch.footprintMm.y0, x1: hatch.footprintMm.x1 + frameWidthMm, y1: hatch.footprintMm.y1 },
+    ].entries()) {
+      const frame = boxAtPlan(
+        this.scene,
+        `${hatch.label} · nerezový rám ${index + 1}`,
+        { x: (rect.x0 + rect.x1) / 2, y: (rect.y0 + rect.y1) / 2 },
+        rect.x1 - rect.x0,
+        rect.y1 - rect.y0,
+        0.058,
+        hatchTopM - 0.058,
+      );
+      this.appearance(
+        frame,
+        this.materials.fence,
+        this.realisticMaterials.chimneyMetal,
+      );
+      frame.receiveShadows = true;
+      frame.checkCollisions = true;
+      this.register(frame, "street", shaft.id);
+    }
+
+    let hatchProgress = 0;
+    let ladderProgress = 0;
+    let ladderInside = false;
+
+    const hatchRoot = new TransformNode(`${hatch.label} · severný pánt`, this.scene);
+    hatchRoot.position.set(
+      xM((hatch.footprintMm.x0 + hatch.footprintMm.x1) / 2),
+      hatchTopM,
+      zM(hatch.footprintMm.y0),
+    );
+    const hatchLid = CreateBox(
+      `${hatch.label} · zateplený pochôdzny poklop`,
+      {
+        width: hatch.clearWidthMm * MM_TO_M,
+        depth: hatch.clearLengthMm * MM_TO_M,
+        height: hatch.lidThicknessMm * MM_TO_M,
+      },
+      this.scene,
+    );
+    hatchLid.parent = hatchRoot;
+    hatchLid.position.set(
+      0,
+      -(hatch.lidThicknessMm * MM_TO_M) / 2,
+      -(hatch.clearLengthMm * MM_TO_M) / 2,
+    );
+    hatchLid.metadata = {
+      doorId: hatch.id,
+      dynamicCameraOccluder: true,
+      cameraOccluder: true,
+    };
+    this.appearance(
+      hatchLid,
+      this.materials.timber,
+      this.realisticMaterials.deck,
+    );
+    hatchLid.receiveShadows = true;
+    hatchLid.checkCollisions = true;
+    markWalkSurface(hatchLid, "exterior", `${shaft.id}-closed-hatch`);
+    this.castShadow(hatchLid);
+    this.register(hatchLid, "street", shaft.id);
+
+    // Four narrow bars make the flush deck hatch read as a robust framed lid.
+    for (const [index, piece] of [
+      { x: 0, z: -0.027, width: 0.9, depth: 0.054 },
+      { x: 0, z: -1.073, width: 0.9, depth: 0.054 },
+      { x: -0.423, z: -0.55, width: 0.054, depth: 0.992 },
+      { x: 0.423, z: -0.55, width: 0.054, depth: 0.992 },
+    ].entries()) {
+      const bar = CreateBox(
+        `${hatch.label} · obvodový profil ${index + 1}`,
+        { width: piece.width, depth: piece.depth, height: 0.014 },
+        this.scene,
+      );
+      bar.parent = hatchRoot;
+      bar.position.set(piece.x, 0.007, piece.z);
+      bar.material = this.realisticMaterials.fenceMetal;
+      bar.isPickable = false;
+      this.realisticOnly(bar);
+      this.castShadow(bar);
+      this.register(bar, "street", shaft.id);
+    }
+
+    const hatchCenterWorld = {
+      x: xM((hatch.footprintMm.x0 + hatch.footprintMm.x1) / 2),
+      z: zM((hatch.footprintMm.y0 + hatch.footprintMm.y1) / 2),
+    };
+    this.doors.register({
+      id: hatch.id,
+      label: hatch.label,
+      kind: "HINGED",
+      subject: "ACCESS_HATCH",
+      interactionPoint: { x: hatchCenterWorld.x, y: hatchTopM + 0.08, z: hatchCenterWorld.z },
+      isInteractionEnabled: () => !ladderInside && ladderProgress <= 0.001,
+      apply: (progress) => {
+        hatchProgress = progress;
+        hatchRoot.rotation.x =
+          progress * (hatch.openingAngleDeg * Math.PI) / 180;
+        hatchRoot.computeWorldMatrix(true);
+      },
+      canClose: ({ position }) =>
+        !ladderInside &&
+        ladderProgress <= 0.001 &&
+        Math.hypot(
+          position.x - hatchCenterWorld.x,
+          position.z - hatchCenterWorld.z,
+        ) >= 0.74,
+    });
+
+    const ladder = shaft.ladder;
+    const railHeightM =
+      (ladder.topElevationMm - ladder.bottomElevationMm) * MM_TO_M;
+    const railCenterElevationM =
+      ((ladder.topElevationMm + ladder.bottomElevationMm) / 2) * MM_TO_M;
+    for (const side of [-1, 1]) {
+      const rail = CreateCylinder(
+        `${ladder.label} · zvislé madlo ${side === -1 ? "ľavé" : "pravé"}`,
+        {
+          height: railHeightM,
+          diameter: ladder.railDiameterMm * MM_TO_M,
+          tessellation: 20,
+        },
+        this.scene,
+      );
+      rail.position.set(
+        xM(ladder.centerXmm + side * ladder.railSpacingMm / 2),
+        railCenterElevationM,
+        zM(ladder.wallYmm),
+      );
+      rail.material = this.realisticMaterials.chimneyMetal;
+      rail.metadata = { doorId: ladder.id };
+      this.castShadow(rail);
+      this.register(rail, "street", shaft.id);
+    }
+    for (let index = 0; index < ladder.rungCount; index += 1) {
+      const elevationMm =
+        ladder.bottomElevationMm +
+        ((ladder.topElevationMm - ladder.bottomElevationMm) * index) /
+          (ladder.rungCount - 1);
+      const rung = CreateCylinder(
+        `${ladder.label} · priečka ${index + 1}`,
+        {
+          height: ladder.railSpacingMm * MM_TO_M,
+          diameter: ladder.rungDiameterMm * MM_TO_M,
+          tessellation: 18,
+        },
+        this.scene,
+      );
+      rung.rotation.z = Math.PI / 2;
+      rung.position.set(
+        xM(ladder.centerXmm),
+        elevationMm * MM_TO_M,
+        zM(ladder.wallYmm - 18),
+      );
+      rung.material = this.realisticMaterials.chimneyMetal;
+      rung.metadata = { doorId: ladder.id };
+      this.castShadow(rung);
+      this.register(rung, "street", shaft.id);
+    }
+
+    const topLadderPoint = {
+      x: xM(ladder.centerXmm),
+      y: hatchTopM + 0.08,
+      z: zM((hatch.footprintMm.y0 + hatch.footprintMm.y1) / 2),
+    };
+    const bottomLadderPoint = {
+      x: xM(ladder.centerXmm),
+      y: floorTopM + 0.96,
+      z: zM(ladder.wallYmm + 120),
+    };
+    this.doors.register({
+      id: ladder.id,
+      label: ladder.label,
+      kind: "TRAVERSAL",
+      subject: "LADDER",
+      interactionPoint: topLadderPoint,
+      interactionPointAt: (progress) =>
+        progress < 0.5 ? topLadderPoint : bottomLadderPoint,
+      isInteractionEnabled: () =>
+        hatchProgress >= 0.999 &&
+        (ladderProgress <= 0.001 || ladderProgress >= 0.999),
+      apply: (progress) => {
+        ladderProgress = progress;
+        if (!ladderInside && progress >= 0.999) {
+          ladderInside = true;
+          this.clearFlightInput();
+          this.avatar.place(
+            xM(ladder.bottomStandingPointMm.x),
+            zM(ladder.bottomStandingPointMm.y),
+            0,
+            floorTopM,
+          );
+          this.walkRoomId = null;
+          this.flightHeading = { x: 0, z: 1 };
+          this.canvas.dataset.poolShaftLevel = "inside";
+          this.applyWalkView();
+        } else if (ladderInside && progress <= 0.001) {
+          ladderInside = false;
+          this.clearFlightInput();
+          this.avatar.place(
+            xM(ladder.topStandingPointMm.x),
+            zM(ladder.topStandingPointMm.y),
+            0,
+            hatchTopM,
+          );
+          this.walkRoomId = null;
+          this.flightHeading = { x: 0, z: 1 };
+          this.canvas.dataset.poolShaftLevel = "terrace";
+          this.applyWalkView();
+        }
+      },
+    });
+    this.canvas.dataset.poolShaftLevel = "terrace";
+
+    const filter = shaft.sandFilter;
+    const filterBaseM = floorTopM + 0.09;
+    const filterVessel = CreateCylinder(
+      `${shaft.label} · piesková filtrácia Ø ${filter.vesselDiameterMm} mm`,
+      {
+        height: filter.vesselHeightMm * MM_TO_M,
+        diameter: filter.vesselDiameterMm * MM_TO_M,
+        tessellation: 36,
+      },
+      this.scene,
+    );
+    filterVessel.position.set(
+      xM(filter.centerMm.x),
+      filterBaseM + filter.vesselHeightMm * MM_TO_M / 2,
+      zM(filter.centerMm.y),
+    );
+    this.appearance(
+      filterVessel,
+      this.materials.water,
+      this.realisticMaterials.poolBasin,
+    );
+    filterVessel.receiveShadows = true;
+    this.castShadow(filterVessel);
+    this.register(filterVessel, "street", shaft.id);
+    const filterDome = CreateSphere(
+      `${shaft.label} · horná kupola filtra`,
+      { diameter: filter.vesselDiameterMm * MM_TO_M * 0.92, segments: 24 },
+      this.scene,
+    );
+    filterDome.scaling.y = 0.34;
+    filterDome.position.set(
+      xM(filter.centerMm.x),
+      filterBaseM + filter.vesselHeightMm * MM_TO_M,
+      zM(filter.centerMm.y),
+    );
+    filterDome.material = this.realisticMaterials.poolBasin;
+    this.castShadow(filterDome);
+    this.register(filterDome, "street", shaft.id);
+    const multiport = CreateCylinder(
+      `${shaft.label} · šesťcestný ventil filtrácie`,
+      { height: 0.16, diameter: 0.25, tessellation: 24 },
+      this.scene,
+    );
+    multiport.position.set(
+      xM(filter.centerMm.x),
+      filterBaseM + filter.vesselHeightMm * MM_TO_M + 0.16,
+      zM(filter.centerMm.y),
+    );
+    multiport.material = this.realisticMaterials.fenceMetal;
+    this.castShadow(multiport);
+    this.register(multiport, "street", shaft.id);
+    const valveHandle = CreateBox(
+      `${shaft.label} · páka šesťcestného ventilu`,
+      { width: 0.3, depth: 0.055, height: 0.045 },
+      this.scene,
+    );
+    valveHandle.position.set(
+      xM(filter.centerMm.x),
+      multiport.position.y + 0.1,
+      zM(filter.centerMm.y),
+    );
+    valveHandle.rotation.y = -0.35;
+    valveHandle.material = this.realisticMaterials.chimneyMetal;
+    this.castShadow(valveHandle);
+    this.register(valveHandle, "street", shaft.id);
+
+    const pump = shaft.circulationPump.footprintMm;
+    const pumpCenter = {
+      x: (pump.x0 + pump.x1) / 2,
+      y: (pump.y0 + pump.y1) / 2,
+    };
+    const pumpBase = boxAtPlan(
+      this.scene,
+      `${shaft.label} · antivibračný podstavec čerpadla`,
+      pumpCenter,
+      pump.x1 - pump.x0,
+      pump.y1 - pump.y0,
+      0.12,
+      floorTopM,
+    );
+    pumpBase.material = this.realisticMaterials.interiorDark;
+    this.castShadow(pumpBase);
+    this.register(pumpBase, "street", shaft.id);
+    const pumpMotor = CreateCylinder(
+      `${shaft.label} · obehové čerpadlo ${shaft.circulationPump.motorPowerKw.toLocaleString("sk-SK")} kW`,
+      { height: 0.56, diameter: 0.36, tessellation: 28 },
+      this.scene,
+    );
+    pumpMotor.rotation.z = Math.PI / 2;
+    pumpMotor.position.set(
+      xM(pumpCenter.x + 80),
+      floorTopM + 0.34,
+      zM(pumpCenter.y),
+    );
+    pumpMotor.material = this.realisticMaterials.glassFrame;
+    this.castShadow(pumpMotor);
+    this.register(pumpMotor, "street", shaft.id);
+    const strainer = CreateCylinder(
+      `${shaft.label} · predfilter čerpadla`,
+      { height: 0.3, diameter: 0.32, tessellation: 28 },
+      this.scene,
+    );
+    strainer.position.set(
+      xM(pumpCenter.x - 250),
+      floorTopM + 0.32,
+      zM(pumpCenter.y),
+    );
+    this.appearance(
+      strainer,
+      this.materials.water,
+      this.realisticMaterials.poolTile,
+    );
+    this.castShadow(strainer);
+    this.register(strainer, "street", shaft.id);
+
+    const pipeMaterial = this.realisticMaterials.chimneyMetal;
+    for (const [index, points] of [
+      [
+        new Vector3(xM(pumpCenter.x - 250), floorTopM + 0.48, zM(pumpCenter.y)),
+        new Vector3(xM(filter.centerMm.x + 310), floorTopM + 0.48, zM(pumpCenter.y)),
+        new Vector3(xM(filter.centerMm.x + 310), floorTopM + 0.72, zM(filter.centerMm.y)),
+      ],
+      [
+        new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(filter.centerMm.y)),
+        new Vector3(xM(11_250), floorTopM + 1.36, zM(filter.centerMm.y)),
+        new Vector3(xM(11_250), -0.7, zM(15_200)),
+      ],
+      [
+        new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(pumpCenter.y)),
+        new Vector3(xM(10_780), floorTopM + 0.34, zM(14_980)),
+        new Vector3(xM(11_250), -0.92, zM(14_980)),
+      ],
+    ].entries()) {
+      const pipe = CreateTube(
+        `${shaft.label} · tlakové PVC potrubie ${index + 1}`,
+        {
+          path: points,
+          radius: index === 1 ? 0.032 : 0.025,
+          tessellation: 18,
+          cap: Mesh.CAP_ALL,
+        },
+        this.scene,
+      );
+      pipe.material = pipeMaterial;
+      this.castShadow(pipe);
+      this.register(pipe, "street", shaft.id);
+    }
+
+    const panel = shaft.electricalPanel;
+    const panelRect = panel.footprintMm;
+    const panelBox = boxAtPlan(
+      this.scene,
+      `${shaft.label} · elektrický rozvádzač IP65`,
+      { x: (panelRect.x0 + panelRect.x1) / 2, y: (panelRect.y0 + panelRect.y1) / 2 },
+      panelRect.x1 - panelRect.x0,
+      panelRect.y1 - panelRect.y0,
+      (panel.topElevationMm - panel.bottomElevationMm) * MM_TO_M,
+      panel.bottomElevationMm * MM_TO_M,
+    );
+    this.appearance(
+      panelBox,
+      this.materials.electricity,
+      this.realisticMaterials.glassFrame,
+    );
+    panelBox.receiveShadows = true;
+    this.castShadow(panelBox);
+    this.register(panelBox, "street", shaft.id);
+    for (let index = 0; index < panel.breakerCount; index += 1) {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      const breaker = CreateBox(
+        `${shaft.label} · istič ${index + 1}`,
+        { width: 0.042, depth: 0.092, height: 0.12 },
+        this.scene,
+      );
+      breaker.position.set(
+        xM(panelRect.x1 + 24),
+        panel.bottomElevationMm * MM_TO_M + 0.19 + row * 0.18,
+        zM(panelRect.y0 + 170 + column * 280),
+      );
+      breaker.material =
+        index === 0
+          ? this.realisticMaterials.poolLed
+          : this.realisticMaterials.sillInterior;
+      this.register(breaker, "street", shaft.id);
+    }
+
+    const floorDrain = CreateCylinder(
+      `${shaft.label} · podlahová vpusť`,
+      { height: 0.018, diameter: 0.18, tessellation: 28 },
+      this.scene,
+    );
+    floorDrain.position.set(xM(10_260), floorTopM + 0.012, zM(15_020));
+    floorDrain.material = this.realisticMaterials.fenceTrack;
+    this.register(floorDrain, "street", shaft.id);
+    const light = CreateCylinder(
+      `${shaft.label} · hermetické servisné svietidlo`,
+      { height: 0.035, diameter: 0.24, tessellation: 28 },
+      this.scene,
+    );
+    light.position.set(xM(10_120), wallTopM - 0.035, zM(15_080));
+    light.material = this.realisticMaterials.poolLed;
+    this.register(light, "street", shaft.id);
+
+    // Coarse invisible guards keep the avatar out of the detailed equipment
+    // while preserving the central service aisle and ladder landing.
+    for (const [index, guard] of [
+      { x0: 9_080, y0: 15_390, x1: 9_780, y1: 16_180, height: 1.5 },
+      { x0: 9_920, y0: 15_350, x1: 10_850, y1: 16_230, height: 0.9 },
+    ].entries()) {
+      const collision = boxAtPlan(
+        this.scene,
+        `${shaft.label} · neviditeľná servisná kolízia ${index + 1}`,
+        { x: (guard.x0 + guard.x1) / 2, y: (guard.y0 + guard.y1) / 2 },
+        guard.x1 - guard.x0,
+        guard.y1 - guard.y0,
+        guard.height,
+        floorTopM,
+      );
+      collision.isVisible = false;
+      collision.isPickable = false;
+      collision.checkCollisions = true;
+    }
+  }
+
   private buildLandscape() {
     for (const zone of TERRACE_ZONES_D1) {
       this.buildDeckZone(zone);
     }
+    this.buildDeckZone(POOL_SURROUND_DECK);
     this.buildGardenPool();
+    this.buildPoolTechnologyShaft();
 
     // Gravel maintenance strip along the plastered facades.
     for (const [index, strip] of [
@@ -5937,18 +6474,6 @@ export class TwinSceneController {
         { x: 3600, y: 14200 },
       ],
       [
-        { x: 7600, y: 17450 },
-        { x: 11200, y: 17450 },
-        { x: 14500, y: 17800 },
-        { x: 17400, y: 19000 },
-        { x: 17600, y: 20600 },
-        { x: 15800, y: 19900 },
-        { x: 13900, y: 19200 },
-        { x: 11000, y: 18700 },
-        { x: 8800, y: 18000 },
-        { x: 7600, y: 17450 },
-      ],
-      [
         { x: 28700, y: 15100 },
         { x: 30500, y: 15800 },
         { x: 30600, y: 22500 },
@@ -5976,11 +6501,6 @@ export class TwinSceneController {
       { x: 5200, y: 15400, s: 1.2 },
       { x: 6900, y: 16000, s: 1.0 },
       { x: 7700, y: 16550, s: 1.18 },
-      { x: 9200, y: 17750, s: 0.92 },
-      { x: 11400, y: 18300, s: 1.18 },
-      { x: 14500, y: 18900, s: 1.05 },
-      { x: 16700, y: 18800, s: 1.3 },
-      { x: 17100, y: 20300, s: 1.08 },
       { x: 29200, y: 18800, s: 1.25 },
       { x: 29800, y: 20500, s: 0.94 },
       { x: 4200, y: 7100, s: 1.1 },
@@ -5998,9 +6518,6 @@ export class TwinSceneController {
     for (const [index, grass] of [
       { x: 4700, y: 15100, s: 1.05 },
       { x: 7600, y: 16800, s: 1.18 },
-      { x: 10200, y: 18100, s: 0.94 },
-      { x: 13600, y: 18700, s: 1.12 },
-      { x: 16400, y: 20100, s: 1.2 },
       { x: 22300, y: 23300, s: 1.24 },
       { x: 27400, y: 23050, s: 1.02 },
       { x: 29100, y: 17100, s: 1.08 },

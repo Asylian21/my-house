@@ -65,6 +65,10 @@ export interface InteriorDoor {
   readonly swing: -1 | 1;
   /** Hinge at the lower (-1) or upper (1) end of the opening along the wall. */
   readonly hinge: -1 | 1;
+  /** Defaults to a hinged leaf; pocket doors translate within the wall plane. */
+  readonly motion?: "HINGED" | "POCKET_SLIDING";
+  readonly pocketDirection?: -1 | 1;
+  readonly pocketTravelMm?: number;
   /** Optional client revision when the handedness differs from the source plan. */
   readonly revisionSourceId?: string;
   readonly previousHinge?: -1 | 1;
@@ -151,18 +155,22 @@ export interface TechnicalHeatingFitout {
 export interface WcFitout {
   readonly id: string;
   readonly sourceId: string;
+  readonly expansionSourceId: string;
+  readonly boundaryRevisionSourceId: string;
+  readonly architecturalSourceId: string;
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly roomId: "ROOM-1-06";
   readonly expansionMm: 300;
+  readonly layoutStrategy: "LONG_AXIS";
   readonly toilet: {
     readonly footprintMm: RectMm;
     readonly concealedCisternRectMm: RectMm;
-    readonly facing: "WEST";
+    readonly facing: "NORTH";
     readonly seatElevationMm: number;
   };
   readonly basin: {
     readonly footprintMm: RectMm;
-    readonly facing: "SOUTH";
+    readonly facing: "WEST";
     readonly rimElevationMm: number;
   };
   readonly clearFloorRectMm: RectMm;
@@ -1038,25 +1046,33 @@ export const TECHNICAL_HEATING_FITOUT: TechnicalHeatingFitout = Object.freeze({
   },
 });
 
-/** Compact sanitary fitout after moving the 1.06 / 1.07 partition by 300 mm. */
+/**
+ * Practical long-axis sanitary fitout for the enlarged 1.06 room. The south
+ * wall-hung WC follows the source-plan orientation; the shallow east-wall
+ * basin keeps one continuous 1 049 x 955 mm approach clear of the doorway.
+ */
 export const WC_FITOUT: WcFitout = Object.freeze({
-  id: "WC-FITOUT-2026-08-23",
-  sourceId: SOURCES.clientWcRevision20260823.id,
+  id: "WC-FITOUT-PRACTICAL-2026-08-29",
+  sourceId: SOURCES.clientWcPracticalLayoutRevision20260829.id,
+  expansionSourceId: SOURCES.clientWcRevision20260823.id,
+  boundaryRevisionSourceId: SOURCES.clientBathroomServiceCoreRevision20260825.id,
+  architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-06",
   expansionMm: 300,
+  layoutStrategy: "LONG_AXIS",
   toilet: {
-    footprintMm: { x0: 23562, y0: 9327, x1: 24082, y1: 9697 },
-    concealedCisternRectMm: { x0: 23962, y0: 9252, x1: 24082, y1: 9772 },
-    facing: "WEST",
+    footprintMm: { x0: 23248, y0: 8912, x1: 23618, y1: 9432 },
+    concealedCisternRectMm: { x0: 23173, y0: 8912, x1: 23693, y1: 9032 },
+    facing: "NORTH",
     seatElevationMm: 450,
   },
   basin: {
-    footprintMm: { x0: 23602, y0: 10392, x1: 24052, y1: 10712 },
-    facing: "SOUTH",
+    footprintMm: { x0: 23832, y0: 9987, x1: 24082, y1: 10387 },
+    facing: "WEST",
     rimElevationMm: 850,
   },
-  clearFloorRectMm: { x0: 22783, y0: 9697, x1: 23562, y1: 10392 },
+  clearFloorRectMm: { x0: 22783, y0: 9432, x1: 23832, y1: 10387 },
 });
 
 /**
@@ -1667,7 +1683,7 @@ export const INTERIOR_DOORS: readonly InteriorDoor[] = [
   },
   {
     id: "DOOR-102-106",
-    label: "Dvere chodba → WC · 700/2100",
+    label: "Dvere chodba → WC · posuvné puzdrové 700/2100",
     axis: "Y",
     wallSpanMm: [22639, 22783],
     startMm: 9866,
@@ -1676,6 +1692,10 @@ export const INTERIOR_DOORS: readonly InteriorDoor[] = [
     leafWidthMm: 700,
     swing: 1,
     hinge: 1,
+    motion: "POCKET_SLIDING",
+    pocketDirection: -1,
+    pocketTravelMm: 760,
+    revisionSourceId: SOURCES.clientWcPracticalLayoutRevision20260829.id,
     fromRoomId: "ROOM-1-02",
     toRoomId: "ROOM-1-06",
   },

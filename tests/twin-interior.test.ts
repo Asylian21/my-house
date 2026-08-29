@@ -673,7 +673,7 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(roomAt({ x: 25000, y: 9000 })?.id).toBe(technicalRoom.id);
   });
 
-  it("keeps the earlier 300 mm WC width gain and adds 200 mm of depth", () => {
+  it("uses the enlarged WC on its long axis with a pocket door and a one-square-metre approach", () => {
     const fitout = WC_FITOUT;
     const wc = INTERIOR_ROOMS.find((room) => room.id === fitout.roomId)!;
     const technicalRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-07")!;
@@ -688,9 +688,17 @@ describe("interior of 1.NP traced from D1.1.002", () => {
       { x: rect.x1, y: rect.y1 },
     ].every((point) => roomAt(point)?.id === wc.id);
 
-    expect(fitout.sourceId).toBe(SOURCES.clientWcRevision20260823.id);
+    expect(fitout.sourceId).toBe(
+      SOURCES.clientWcPracticalLayoutRevision20260829.id,
+    );
+    expect(fitout.expansionSourceId).toBe(SOURCES.clientWcRevision20260823.id);
+    expect(fitout.boundaryRevisionSourceId).toBe(
+      SOURCES.clientBathroomServiceCoreRevision20260825.id,
+    );
+    expect(fitout.architecturalSourceId).toBe(SOURCES.floorPlan.id);
     expect(fitout.status).toBe("CLIENT_DESIGN_CONCEPT");
     expect(fitout.expansionMm).toBe(300);
+    expect(fitout.layoutStrategy).toBe("LONG_AXIS");
     expect(wcRect).toEqual({ x0: 22783, y0: 8912, x1: 24082, y1: 10712 });
     expect(wcRect.x1 - wcRect.x0).toBe(1299);
     expect(wcRect.y1 - wcRect.y0).toBe(1800);
@@ -703,25 +711,82 @@ describe("interior of 1.NP traced from D1.1.002", () => {
 
     expect(insideWc(fitout.toilet.footprintMm)).toBe(true);
     expect(insideWc(fitout.toilet.concealedCisternRectMm)).toBe(true);
-    expect(fitout.toilet.facing).toBe("WEST");
+    expect(fitout.toilet.facing).toBe("NORTH");
     expect(fitout.toilet.seatElevationMm).toBe(450);
-    expect(fitout.toilet.footprintMm.x1 - fitout.toilet.footprintMm.x0).toBe(520);
-    expect(fitout.toilet.footprintMm.y1 - fitout.toilet.footprintMm.y0).toBe(370);
-    expect(wcDoor.startMm - fitout.toilet.footprintMm.y1).toBeGreaterThanOrEqual(150);
+    expect(fitout.toilet.footprintMm.x1 - fitout.toilet.footprintMm.x0).toBe(370);
+    expect(fitout.toilet.footprintMm.y1 - fitout.toilet.footprintMm.y0).toBe(520);
+    expect(fitout.toilet.footprintMm.y0).toBe(wcRect.y0);
+    expect(fitout.toilet.concealedCisternRectMm.y0).toBe(wcRect.y0);
+    expect(
+      Math.abs(
+        (fitout.toilet.footprintMm.x0 + fitout.toilet.footprintMm.x1) / 2
+          - (wcRect.x0 + wcRect.x1) / 2,
+      ),
+    ).toBeLessThanOrEqual(0.5);
+    expect(fitout.toilet.footprintMm.x0 - wcRect.x0).toBeGreaterThanOrEqual(450);
+    expect(wcRect.x1 - fitout.toilet.footprintMm.x1).toBeGreaterThanOrEqual(450);
 
     expect(insideWc(fitout.basin.footprintMm)).toBe(true);
-    expect(fitout.basin.facing).toBe("SOUTH");
+    expect(fitout.basin.facing).toBe("WEST");
     expect(fitout.basin.rimElevationMm).toBe(850);
-    expect(fitout.basin.footprintMm.x1 - fitout.basin.footprintMm.x0).toBe(450);
-    expect(fitout.basin.footprintMm.y1 - fitout.basin.footprintMm.y0).toBe(320);
+    expect(fitout.basin.footprintMm.x1 - fitout.basin.footprintMm.x0).toBe(250);
+    expect(fitout.basin.footprintMm.y1 - fitout.basin.footprintMm.y0).toBe(400);
+    expect(fitout.basin.footprintMm.x1).toBe(wcRect.x1);
     expect(overlaps(fitout.toilet.footprintMm, fitout.basin.footprintMm)).toBe(false);
 
-    const openDoorLeafEastEdge = wcDoor.wallSpanMm[1] + wcDoor.leafWidthMm + 20;
-    expect(fitout.toilet.footprintMm.x0 - openDoorLeafEastEdge).toBeGreaterThanOrEqual(50);
-    expect(fitout.basin.footprintMm.x0 - openDoorLeafEastEdge).toBeGreaterThanOrEqual(90);
+    expect(wcDoor).toMatchObject({
+      motion: "POCKET_SLIDING",
+      pocketDirection: -1,
+      pocketTravelMm: 760,
+      revisionSourceId: SOURCES.clientWcPracticalLayoutRevision20260829.id,
+    });
+    const closedLeafCenterMm = wcDoor.startMm + wcDoor.widthMm / 2;
+    const openLeafCenterMm = closedLeafCenterMm
+      + wcDoor.pocketDirection! * wcDoor.pocketTravelMm!;
+    const openLeaf = {
+      y0: openLeafCenterMm - wcDoor.leafWidthMm / 2,
+      y1: openLeafCenterMm + wcDoor.leafWidthMm / 2,
+    };
+    const pocketWall = INTERIOR_WALLS.find((wall) => wall.id === "IW-SPINE-EAST-2")!;
+    expect(openLeaf.y0).toBeGreaterThanOrEqual(pocketWall.rectMm.y0);
+    expect(openLeaf.y1).toBeLessThanOrEqual(wcDoor.startMm);
+    expect(openLeaf.y1).toBeLessThanOrEqual(pocketWall.rectMm.y1);
+
     expect(insideWc(fitout.clearFloorRectMm)).toBe(true);
-    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBeGreaterThanOrEqual(750);
-    expect(fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0).toBeGreaterThanOrEqual(650);
+    expect(fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0).toBe(1049);
+    expect(fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0).toBe(955);
+    const avatarDiameterMm = WALK_COLLISION_ELLIPSOID_M.x * 2000;
+    expect(avatarDiameterMm).toBe(440);
+    expect(
+      fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0 - avatarDiameterMm,
+    ).toBeGreaterThanOrEqual(500);
+    expect(
+      fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0 - avatarDiameterMm,
+    ).toBeGreaterThanOrEqual(450);
+    expect(wcDoor.leafWidthMm - avatarDiameterMm).toBeGreaterThanOrEqual(250);
+    const modeledPortalWidthMm = wcDoor.widthMm - 2 * 60;
+    expect(modeledPortalWidthMm).toBe(680);
+    expect(modeledPortalWidthMm - avatarDiameterMm).toBeGreaterThanOrEqual(200);
+    expect(fitout.clearFloorRectMm.y1 - fitout.toilet.footprintMm.y1)
+      .toBeGreaterThanOrEqual(900);
+    expect(fitout.basin.footprintMm.x0 - fitout.clearFloorRectMm.x0)
+      .toBeGreaterThanOrEqual(900);
+    const safeStandingRect = {
+      x0: fitout.clearFloorRectMm.x0 + avatarDiameterMm / 2,
+      y0: fitout.clearFloorRectMm.y0 + avatarDiameterMm / 2,
+      x1: fitout.clearFloorRectMm.x1 - avatarDiameterMm / 2,
+      y1: fitout.clearFloorRectMm.y1 - avatarDiameterMm / 2,
+    };
+    expect(wc.standingPointMm.x).toBeGreaterThanOrEqual(safeStandingRect.x0);
+    expect(wc.standingPointMm.x).toBeLessThanOrEqual(safeStandingRect.x1);
+    expect(wc.standingPointMm.y).toBeGreaterThanOrEqual(safeStandingRect.y0);
+    expect(wc.standingPointMm.y).toBeLessThanOrEqual(safeStandingRect.y1);
+    expect(
+      (fitout.clearFloorRectMm.x1 - fitout.clearFloorRectMm.x0)
+        * (fitout.clearFloorRectMm.y1 - fitout.clearFloorRectMm.y0),
+    ).toBeGreaterThan(1_000_000);
+    expect(fitout.clearFloorRectMm.y0).toBe(fitout.toilet.footprintMm.y1);
+    expect(fitout.clearFloorRectMm.x1).toBe(fitout.basin.footprintMm.x0);
     expect(overlaps(fitout.clearFloorRectMm, fitout.toilet.footprintMm)).toBe(false);
     expect(overlaps(fitout.clearFloorRectMm, fitout.basin.footprintMm)).toBe(false);
   });

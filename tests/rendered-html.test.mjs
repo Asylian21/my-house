@@ -37,12 +37,13 @@ test("server-renders the Slovak digital-twin product shell", async () => {
   assert.match(html, /Březí u Mikulova/);
   assert.match(html, /Živý výkres/);
   assert.match(html, /Parcela 6012\/26/);
-  assert.match(html, /Bazén 5,6 × 3 m/);
+  assert.match(html, /Bazén 6,0 × 2,7 m/);
   assert.match(
     html,
-    /role="treeitem"[^>]+aria-selected="false"[^>]*>[\s\S]{0,400}?Bazén 5,6 × 3 m/,
+    /role="treeitem"[^>]+aria-selected="false"[^>]*>[\s\S]{0,400}?Bazén 6,0 × 2,7 m/,
   );
-  assert.match(html, /Areál a komunikácia<\/span><small>6<\/small>/);
+  assert.match(html, /Technologická šachta bazéna/);
+  assert.match(html, /Areál a komunikácia<\/span><small>7<\/small>/);
   assert.match(html, /ČÚZK/);
   assert.match(html, /Skutočné prípojky|Evidovaná výmera/);
   assert.match(html, /aria-label="Prieskumník digitálneho dvojčaťa"/);
@@ -270,14 +271,14 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /aria-live="polite"/);
   assert.match(
     viewport,
-    /E alebo dotyk na výzvu otvorí a zavrie blízke dvere alebo dvierka spotrebičov/,
+    /E alebo dotyk na výzvu ovláda blízke dvere, dvierka spotrebičov, poklop bazénovej šachty aj zostup po rebríku/,
   );
   assert.match(
     viewport,
-    /obe dvierka spotrebičov majú animovaný pohyb a fyzickú kolíziu/,
+    /pochôdzny poklop aj riadený rebrík majú samostatnú bezpečnú interakciu/,
   );
   // The door key is disclosed in the one help sheet rather than in a panel.
-  assert.match(viewport, /<dt>Dvere a dvierka<\/dt>\s*<dd>E<\/dd>/);
+  assert.match(viewport, /<dt>Dvere, poklop, rebrík<\/dt>\s*<dd>E<\/dd>/);
   assert.match(globals, /\.door-prompt/);
 
   // Garage cinematic keeps its own call to action while standing in 1.12.

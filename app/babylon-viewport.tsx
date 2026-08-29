@@ -388,7 +388,7 @@ export const BabylonViewport = forwardRef<
         : "Dom 6012/26";
   const contextMeta =
     navigationMode === "walk"
-      ? `${walkAvatarOption(walkAvatarId).label} · WASD · E dvere`
+      ? `${walkAvatarOption(walkAvatarId).label} · WASD · E interakcia`
       : navigationMode === "flight"
         ? "WASD pohyb · Q/E výška · Shift turbo"
         : "Březí u Mikulova · 753 m²";
@@ -422,7 +422,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s voliteľnou postavou. Postavu vyberiete v paneli príkazov pod Command K, kde nájdete aj všetkých dvanásť miestností. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu otvorí a zavrie blízke dvere alebo dvierka spotrebičov, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov aj obe dvierka spotrebičov majú animovaný pohyb a fyzickú kolíziu."
+            ? "Prechádzka domom s voliteľnou postavou. Postavu vyberiete v paneli príkazov pod Command K, kde nájdete aj všetkých dvanásť miestností. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu ovláda blízke dvere, dvierka spotrebičov, poklop bazénovej šachty aj zostup po rebríku, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov, obe dvierka spotrebičov, pochôdzny poklop aj riadený rebrík majú samostatnú bezpečnú interakciu."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 5 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -578,7 +578,7 @@ export const BabylonViewport = forwardRef<
                       <dd>G · WASD</dd>
                     </div>
                     <div>
-                      <dt>Dvere a dvierka</dt>
+                      <dt>Dvere, poklop, rebrík</dt>
                       <dd>E</dd>
                     </div>
                     <div>

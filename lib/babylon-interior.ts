@@ -48,6 +48,7 @@ import { HOUSE, type LayerId, type Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
 import {
   hingedDoorSweepIsClear,
+  slidingDoorPathIsClear,
   type AnimatedDoorRegistration,
 } from "./babylon-doors";
 import type { WalkSurfaceKind } from "./twin-viewport-contract";
@@ -1001,10 +1002,164 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
   );
   finish(context, lintel, materials.plaster, { cameraOccluder: true });
 
+  const leafThicknessMm = 40;
+  if (door.motion === "POCKET_SLIDING") {
+    const pocketDirection = door.pocketDirection ?? -1;
+    const pocketTravelMm = door.pocketTravelMm ?? door.leafWidthMm + frameMm;
+    const closedCenterAlong = door.startMm + door.widthMm / 2;
+    const openCenterAlong = closedCenterAlong + pocketDirection * pocketTravelMm;
+    const closedCenterPlan = plan(closedCenterAlong, wallCenter);
+    const openCenterPlan = plan(openCenterAlong, wallCenter);
+    const movingRoot = new TransformNode(
+      `${door.id} · posuvný vozík puzdrových dverí`,
+      context.scene,
+    );
+    movingRoot.metadata = { doorId: door.id, doorMotion: "SLIDING" };
+    const leaf = texturedBox(
+      context.scene,
+      `${door.label} · animované krídlo`,
+      closedCenterPlan,
+      door.axis === "X" ? door.leafWidthMm : leafThicknessMm,
+      door.axis === "X" ? leafThicknessMm : door.leafWidthMm,
+      heightM - 0.07,
+      0.02,
+      1,
+    );
+    const leafWorld = leaf.position.clone();
+    leaf.parent = movingRoot;
+    leaf.position.copyFrom(leafWorld.subtract(movingRoot.position));
+    leaf.metadata = {
+      ...(leaf.metadata ?? {}),
+      cameraOccluder: true,
+      dynamicCameraOccluder: true,
+      doorId: door.id,
+      doorMotion: "SLIDING",
+    };
+    finish(context, leaf, materials.doorLeaf, {
+      collide: true,
+      shadow: true,
+      pickable: true,
+      cameraOccluder: true,
+      entityId: door.id,
+    });
+
+    // Recessed pulls remain flush enough to disappear safely into the pocket.
+    const pullAlongMm = closedCenterAlong
+      - pocketDirection * (door.leafWidthMm / 2 - 105);
+    const pullMeshes: Mesh[] = [];
+    for (const side of [-1, 1] as const) {
+      const pullPlan = plan(
+        pullAlongMm,
+        wallCenter + side * (leafThicknessMm / 2 + 4),
+      );
+      const pull = CreateCylinder(
+        `${door.label} · zapustená kľučka ${side < 0 ? "A" : "B"}`,
+        { height: 0.012, diameter: 0.12, tessellation: 28 },
+        context.scene,
+      );
+      pull.position.set(xM(pullPlan.x), 1.02, zM(pullPlan.y));
+      if (door.axis === "X") pull.rotation.x = Math.PI / 2;
+      else pull.rotation.z = Math.PI / 2;
+      const pullWorld = pull.position.clone();
+      pull.parent = movingRoot;
+      pull.position.copyFrom(pullWorld.subtract(movingRoot.position));
+      pull.metadata = {
+        ...(pull.metadata ?? {}),
+        doorId: door.id,
+        doorMotion: "SLIDING",
+      };
+      finish(context, pull, context.chimneyMetal, {
+        shadow: true,
+        pickable: true,
+        entityId: door.id,
+      });
+      pullMeshes.push(pull);
+    }
+
+    // A slim edge pull remains a few millimetres visible at the pocket jamb,
+    // so the fully open leaf still reads as operable in close-up and on touch.
+    const edgePullAlongMm = closedCenterAlong
+      - pocketDirection * (door.leafWidthMm / 2 + 14);
+    const edgePullPlan = plan(edgePullAlongMm, wallCenter);
+    const edgePull = texturedBox(
+      context.scene,
+      `${door.label} · čelné výsuvné madlo`,
+      edgePullPlan,
+      door.axis === "X" ? 28 : 10,
+      door.axis === "X" ? 10 : 28,
+      0.18,
+      0.91,
+      1,
+    );
+    const edgePullWorld = edgePull.position.clone();
+    edgePull.parent = movingRoot;
+    edgePull.position.copyFrom(edgePullWorld.subtract(movingRoot.position));
+    edgePull.metadata = {
+      ...(edgePull.metadata ?? {}),
+      doorId: door.id,
+      doorMotion: "SLIDING",
+    };
+    finish(context, edgePull, context.chimneyMetal, {
+      shadow: true,
+      pickable: true,
+      entityId: door.id,
+    });
+    pullMeshes.push(edgePull);
+
+    const closedCenterWorld = {
+      x: xM(closedCenterPlan.x),
+      z: zM(closedCenterPlan.y),
+    };
+    const openCenterWorld = {
+      x: xM(openCenterPlan.x),
+      z: zM(openCenterPlan.y),
+    };
+    const travel = {
+      x: openCenterWorld.x - closedCenterWorld.x,
+      z: openCenterWorld.z - closedCenterWorld.z,
+    };
+    const interactionPlan = plan(
+      door.startMm + door.widthMm / 2,
+      wallCenter,
+    );
+    context.registerAnimatedDoor?.({
+      id: door.id,
+      label: door.label.replace(/^Dvere\s+/u, "").replace(/\s+·.*$/u, ""),
+      kind: "SLIDING",
+      interactionPoint: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+      apply: (progress) => {
+        movingRoot.position.x = travel.x * progress;
+        movingRoot.position.z = travel.z * progress;
+        leaf.computeWorldMatrix(true);
+        for (const pull of pullMeshes) pull.computeWorldMatrix(true);
+      },
+      canOpen: (actor, progress = 0) =>
+        slidingDoorPathIsClear(
+          actor,
+          closedCenterWorld,
+          openCenterWorld,
+          door.leafWidthMm * MM_TO_M / 2,
+          leafThicknessMm * MM_TO_M / 2 + 0.04,
+          progress,
+          1,
+        ),
+      canClose: (actor, progress = 1) =>
+        slidingDoorPathIsClear(
+          actor,
+          closedCenterWorld,
+          openCenterWorld,
+          door.leafWidthMm * MM_TO_M / 2,
+          leafThicknessMm * MM_TO_M / 2 + 0.04,
+          progress,
+          0,
+        ),
+    });
+    return;
+  }
+
   // A real pivot at the documented hinge replaces the former permanently open
   // decorative slab. The controller owns the state; Babylon owns the live
   // transform, collision and shadow at every animation frame.
-  const leafThicknessMm = 40;
   const hingeAlongMm =
     door.hinge < 0 ? door.startMm + frameMm : door.startMm + door.widthMm - frameMm;
   const hingeAcrossMm = door.swing < 0 ? wallFrom : wallTo;
@@ -2055,7 +2210,7 @@ function buildTechnicalHeatingFitout(
   finish(context, gaugeFace, materials.kitchenUpper);
 }
 
-/** Modern compact fitout for the enlarged room 1.06. */
+/** Practical long-axis fitout for the enlarged room 1.06. */
 function buildWcFitout(context: InteriorBuildContext, materials: InteriorMaterials) {
   const fitout = WC_FITOUT;
   const toilet = fitout.toilet;
@@ -2089,25 +2244,25 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   const flushPlate = texturedBox(
     context.scene,
     `${fitout.id} · WALL-HUNG-WC · dvojité splachovacie tlačidlo`,
-    { x: toilet.concealedCisternRectMm.x0 - 5, y: toiletCenter.y },
-    10,
+    { x: toiletCenter.x, y: toilet.concealedCisternRectMm.y1 + 5 },
     185,
+    10,
     0.11,
     0.84,
     1,
   );
   finish(context, flushPlate, materials.steel, { pickable: true });
-  for (const yOffsetMm of [-42, 42]) {
+  for (const xOffsetMm of [-42, 42]) {
     const button = CreateCylinder(
       `${fitout.id} · WALL-HUNG-WC · tlačidlo splachovania`,
-      { height: 0.012, diameter: yOffsetMm < 0 ? 0.052 : 0.038, tessellation: 24 },
+      { height: 0.012, diameter: xOffsetMm < 0 ? 0.052 : 0.038, tessellation: 24 },
       context.scene,
     );
-    button.rotation.z = Math.PI / 2;
+    button.rotation.x = Math.PI / 2;
     button.position.set(
-      xM(toilet.concealedCisternRectMm.x0 - 12),
+      xM(toiletCenter.x + xOffsetMm),
       0.895,
-      zM(toiletCenter.y + yOffsetMm),
+      zM(toilet.concealedCisternRectMm.y1 + 12),
     );
     finish(context, button, materials.blackGlass);
   }
@@ -2115,16 +2270,16 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   softEllipsoid(
     context,
     `${fitout.id} · WALL-HUNG-WC · keramická misa`,
-    { x: toiletCenter.x - 10, y: toiletCenter.y },
-    [0.52, 0.28, 0.37],
+    { x: toiletCenter.x, y: toiletCenter.y + 10 },
+    [0.37, 0.28, 0.52],
     0.32,
     materials.sanitaryCeramic,
   );
   softEllipsoid(
     context,
     `${fitout.id} · WALL-HUNG-WC · vnútro misy`,
-    { x: toiletCenter.x - 55, y: toiletCenter.y },
-    [0.31, 0.024, 0.2],
+    { x: toiletCenter.x, y: toiletCenter.y + 55 },
+    [0.2, 0.024, 0.31],
     0.455,
     materials.mirrorGlass,
   );
@@ -2133,8 +2288,12 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     { diameter: 0.355, thickness: 0.035, tessellation: 40 },
     context.scene,
   );
-  toiletSeat.position.set(xM(toiletCenter.x - 35), toilet.seatElevationMm * MM_TO_M, zM(toiletCenter.y));
-  toiletSeat.scaling.set(1.42, 0.68, 0.98);
+  toiletSeat.position.set(
+    xM(toiletCenter.x),
+    toilet.seatElevationMm * MM_TO_M,
+    zM(toiletCenter.y + 35),
+  );
+  toiletSeat.scaling.set(0.98, 0.68, 1.42);
   finish(context, toiletSeat, materials.sanitaryCeramic, { shadow: true, pickable: true });
 
   const basin = fitout.basin;
@@ -2144,17 +2303,17 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   };
   softEllipsoid(
     context,
-    `${fitout.id} · COMPACT-BASIN · keramické umývadlo 450`,
+    `${fitout.id} · COMPACT-BASIN · keramické umývadlo 400 × 250`,
     basinCenter,
-    [0.45, 0.16, 0.32],
+    [0.25, 0.16, 0.4],
     0.77,
     materials.sanitaryCeramic,
   );
   softEllipsoid(
     context,
     `${fitout.id} · COMPACT-BASIN · vnútorná misa`,
-    { x: basinCenter.x, y: basinCenter.y - 18 },
-    [0.31, 0.025, 0.19],
+    { x: basinCenter.x - 18, y: basinCenter.y },
+    [0.19, 0.025, 0.31],
     basin.rimElevationMm * MM_TO_M + 0.008,
     materials.mirrorGlass,
   );
@@ -2164,11 +2323,11 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     context.scene,
   );
   basinRim.position.set(
-    xM(basinCenter.x),
+    xM(basinCenter.x - 15),
     basin.rimElevationMm * MM_TO_M + 0.018,
-    zM(basinCenter.y - 15),
+    zM(basinCenter.y),
   );
-  basinRim.scaling.set(1.45, 0.65, 0.88);
+  basinRim.scaling.set(0.88, 0.65, 1.45);
   finish(context, basinRim, materials.sanitaryCeramic, { shadow: true });
   const drain = CreateCylinder(
     `${fitout.id} · COMPACT-BASIN · chrómový odtok`,
@@ -2176,9 +2335,9 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     context.scene,
   );
   drain.position.set(
-    xM(basinCenter.x),
+    xM(basinCenter.x - 38),
     basin.rimElevationMm * MM_TO_M + 0.024,
-    zM(basinCenter.y - 38),
+    zM(basinCenter.y),
   );
   finish(context, drain, materials.steel);
   const tapRiser = CreateCylinder(
@@ -2186,29 +2345,29 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     { height: 0.18, diameter: 0.027, tessellation: 20 },
     context.scene,
   );
-  tapRiser.position.set(xM(basinCenter.x), 0.95, zM(basin.footprintMm.y1 - 68));
+  tapRiser.position.set(xM(basin.footprintMm.x1 - 68), 0.95, zM(basinCenter.y));
   finish(context, tapRiser, materials.steel);
   const tapSpout = CreateCylinder(
     `${fitout.id} · COMPACT-BASIN · výtok batérie`,
     { height: 0.14, diameter: 0.021, tessellation: 20 },
     context.scene,
   );
-  tapSpout.rotation.x = Math.PI / 2;
-  tapSpout.position.set(xM(basinCenter.x), 1.03, zM(basin.footprintMm.y1 - 130));
+  tapSpout.rotation.z = Math.PI / 2;
+  tapSpout.position.set(xM(basin.footprintMm.x1 - 130), 1.03, zM(basinCenter.y));
   finish(context, tapSpout, materials.steel);
   const trap = CreateCylinder(
     `${fitout.id} · COMPACT-BASIN · pohľadový sifón`,
     { height: 0.28, diameter: 0.045, tessellation: 20 },
     context.scene,
   );
-  trap.position.set(xM(basinCenter.x), 0.56, zM(basinCenter.y + 12));
+  trap.position.set(xM(basinCenter.x + 12), 0.56, zM(basinCenter.y));
   finish(context, trap, materials.steel);
   const mirrorFrame = texturedBox(
     context.scene,
     `${fitout.id} · COMPACT-BASIN · zrkadlo s tenkým rámom`,
-    { x: basinCenter.x, y: basin.footprintMm.y1 - 6 },
-    470,
+    { x: basin.footprintMm.x1 - 6, y: basinCenter.y },
     14,
+    420,
     0.68,
     1.08,
     1,
@@ -2217,9 +2376,9 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   const mirror = texturedBox(
     context.scene,
     `${fitout.id} · COMPACT-BASIN · zrkadlová plocha`,
-    { x: basinCenter.x, y: basin.footprintMm.y1 - 14 },
-    440,
+    { x: basin.footprintMm.x1 - 14, y: basinCenter.y },
     7,
+    390,
     0.64,
     1.1,
     1,

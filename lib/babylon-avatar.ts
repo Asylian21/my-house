@@ -595,11 +595,15 @@ export class AvatarController {
     return "resolved";
   }
 
-  /** Places the walker and turns the chase camera behind it. */
-  place(xM: number, zM: number, yawRad: number) {
+  /**
+   * Places the walker and turns the chase camera behind it. A surface hint is
+   * needed for intentional level changes deeper than the normal step/drop
+   * window, such as the controlled pool-shaft ladder transition.
+   */
+  place(xM: number, zM: number, yawRad: number, surfaceHintM = 0) {
     this.active = true;
-    this.collider.position.set(xM, 0, zM);
-    this.surfaceY = 0;
+    this.collider.position.set(xM, surfaceHintM, zM);
+    this.surfaceY = surfaceHintM;
     this.snapToWalkSurface();
     this.collider.computeWorldMatrix(true);
     this.lastSafePosition.copyFrom(this.collider.position);
