@@ -291,7 +291,8 @@ function getEntityDetail(
         { label: "Navrhovaná hĺbka", value: fmt(GARDEN_POOL.proposedWaterDepthMm), unit: "mm" },
         { label: "Medzera lemu od terasy", value: fmt(GARDEN_POOL.terraceConnection.planGapMm), unit: "mm" },
         { label: "Dĺžka dotyku s terasou", value: fmt(GARDEN_POOL.terraceConnection.contactLengthMm), unit: "mm" },
-        { label: "Nový drevený lem", value: fmt(POOL_SURROUND_DECK.nominalWidthMm), unit: "mm" },
+        { label: "Pozdĺžny pás do záhrady", value: fmt(POOL_SURROUND_DECK.longitudinalWidthMm), unit: "mm" },
+        { label: "Zadný pás za bazénom", value: fmt(POOL_SURROUND_DECK.rearWidthMm), unit: "mm" },
         { label: "Nová čistá plocha dreva", value: fmt(POOL_SURROUND_DECK.netDeckAreaM2), unit: "m²" },
         { label: "Odstup od najbližšieho dažďového potrubia", value: fmt(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell), unit: "mm" },
         { label: "Odstup od plášťa dažďovej nádrže", value: fmt(GARDEN_POOL.modelledClearancesMm.rainTankShell), unit: "mm" },
@@ -299,7 +300,7 @@ function getEntityDetail(
         { label: "Orientácia", value: "dlhšia strana rovnobežne s terasou" },
       ],
       sourceIds: GARDEN_POOL.sourceIds,
-      note: "Aktuálna klientska revízia mení vodnú plochu na mierne dlhší a užší rozmer 6,0 × 2,7 m. Pôvodná D1 terasa ostáva zachovaná; voľné západné a južné strany dopĺňa presne 2 m široký drevený lem s čistou plochou 22,81 m² po odpočítaní poklopu. Celá kompaktná šachta aj poklop sú vycentrované v južnom páse bezprostredne za bazénom. Kríky a mulčovaný záhon pri bazéne sú odstránené. Dažďové potrubie, konštrukciu bazéna, šachtu, ZTI a elektro treba pred realizáciou odborne skoordinovať.",
+      note: "Aktuálna klientska revízia zachováva vodnú plochu 6,0 × 2,7 m. Pôvodná D1 terasa ostáva zachovaná; nový pozdĺžny pás vedúci popri bazéne do záhrady je zúžený z 2 m na 1 m, zatiaľ čo zadný pás za bazénom zostáva 2 m široký. Čistá plocha nového dreva je 17,51 m² po odpočítaní poklopu. Celá šachta je presunutá do vonkajšieho juhozápadného záhradného rohu smerom od domu. Kríky a mulčovaný záhon pri bazéne sú odstránené. Dažďové potrubie, konštrukciu bazéna, šachtu, ZTI a elektro treba pred realizáciou odborne skoordinovať.",
     };
   }
 
@@ -326,7 +327,7 @@ function getEntityDetail(
           value: `${fmt(shaft.hatch.clearWidthMm)} × ${fmt(shaft.hatch.clearLengthMm)}`,
           unit: "mm",
         },
-        { label: "Poloha", value: "geometrický stred terasy za bazénom" },
+        { label: "Poloha", value: "vonkajší záhradný roh smerom od domu" },
         { label: "Odstup od dažďového potrubia", value: fmt(shaft.coordinationClearancesMm.rainPipeShell), unit: "mm" },
         { label: "Rebrík", value: `${shaft.ladder.rungCount} nerezových priečok` },
         { label: "Piesková filtrácia", value: `Ø ${fmt(shaft.sandFilter.vesselDiameterMm)}`, unit: "mm" },

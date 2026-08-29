@@ -6297,6 +6297,16 @@ export class TwinSceneController {
     const serviceBackYmm = footprint.y1 - wall - 170;
     const poolConnectionYmm =
       Math.max(...GARDEN_POOL.copingFootprintMm.map(({ y }) => y)) - 80;
+    const poolWestConnectionXmm =
+      Math.min(...GARDEN_POOL.copingFootprintMm.map(({ x }) => x)) + 80;
+    const filterPoolConnectionXmm = Math.max(
+      filter.centerMm.x,
+      poolWestConnectionXmm,
+    );
+    const pumpPoolConnectionXmm = Math.max(
+      pumpCenter.x + 330,
+      poolWestConnectionXmm,
+    );
     for (const [index, points] of [
       [
         new Vector3(xM(pumpCenter.x - 250), floorTopM + 0.48, zM(pumpCenter.y)),
@@ -6307,12 +6317,13 @@ export class TwinSceneController {
       [
         new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(filter.centerMm.y)),
         new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(poolConnectionYmm)),
-        new Vector3(xM(filter.centerMm.x), -0.7, zM(poolConnectionYmm)),
+        new Vector3(xM(filterPoolConnectionXmm), floorTopM + 1.36, zM(poolConnectionYmm)),
+        new Vector3(xM(filterPoolConnectionXmm), -0.7, zM(poolConnectionYmm)),
       ],
       [
         new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(pumpCenter.y)),
-        new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(poolConnectionYmm)),
-        new Vector3(xM(pumpCenter.x + 330), -0.92, zM(poolConnectionYmm)),
+        new Vector3(xM(pumpPoolConnectionXmm), floorTopM + 0.34, zM(poolConnectionYmm)),
+        new Vector3(xM(pumpPoolConnectionXmm), -0.92, zM(poolConnectionYmm)),
       ],
     ].entries()) {
       const pipe = CreateTube(
@@ -6387,9 +6398,9 @@ export class TwinSceneController {
       this.scene,
     );
     light.position.set(
-      xM(shaft.centeredBelowDeckMm.x),
+      xM(shaft.placementCenterMm.x),
       wallTopM - 0.035,
-      zM(shaft.centeredBelowDeckMm.y),
+      zM(shaft.placementCenterMm.y),
     );
     light.material = this.realisticMaterials.poolLed;
     this.register(light, "street", shaft.id);
@@ -6862,7 +6873,7 @@ export class TwinSceneController {
       this.scene,
     );
     // The tank and infiltration field move only far enough south to keep the
-    // compact, centred technology shaft and all rain routes physically clear.
+    // corner technology shaft and all rain routes physically clear.
     rainTank.position.set(
       xM(RAINWATER_COORDINATION.tank.centerMm.x),
       0.12,

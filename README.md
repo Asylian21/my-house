@@ -49,14 +49,15 @@ Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové la
 hustý živý plot. Klientska revízia z 29. 8. 2026 mení bazén v otvorenom L-dvore
 na mierne dlhšiu a užšiu vodnú plochu 6,0 × 2,7 m. Svetlý 300 mm lem je bez
 medzery napojený na hlavnú aj bočnú terasu a zdieľa s nimi hornú úroveň.
-Na zostávajúcej západnej a južnej strane ho obopína nový presne 2 m široký
-drevený pás s hrubou plochou 23,80 m² a čistou plochou 22,81 m² po odpočítaní
-poklopu. Kolidujúce kríky, okrasné trávy a mulčovaný záhon okolo bazéna sú
+Na západnej strane vedie smerom do záhrady nový 1 m široký pozdĺžny pás;
+zadný pás bezprostredne za bazénom zostáva široký 2 m. Spolu majú hrubú plochu
+18,50 m² a čistú plochu 17,51 m² po odpočítaní poklopu. Kolidujúce kríky,
+okrasné trávy a mulčovaný záhon okolo bazéna sú
 odstránené; zadný živý plot na hranici parcely zostáva. Dažďová trasa je
-predbežne vedená južne od centrálnej šachty; dažďová nádrž aj vsakovací objekt
+predbežne vedená južne od rohovej šachty; dažďová nádrž aj vsakovací objekt
 sú posunuté iba o nevyhnutných 600/600 mm hlbšie do záhrady. Najmenší
 modelovaný odstup bazéna od plášťa potrubia zostáva približne 0,69 m a šachta
-má od potrubia 0,18 m. Vizualizačná hĺbka vody je
+má od potrubia 0,13 m. Vizualizačná hĺbka vody je
 navrhnutá na 1,40 m; nie je to realizačne potvrdená hodnota. Výška 1,6 m,
 trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
@@ -155,8 +156,8 @@ valcové krbové kachle so zvislým dymovodom a soklové lišty sú ilustračný
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
 
-V geometrickom strede južného dvojmetrového pásu bezprostredne za bazénom je
-pod drevenou terasou kompaktná železobetónová technologická šachta
+Na vonkajšom juhozápadnom okraji zadného pásu, v záhradnom rohu smerom od domu,
+je pod drevenou terasou kompaktná železobetónová technologická šachta
 `POOL_TECHNOLOGY_SHAFT` s pôdorysom 3 100 × 1 700 mm, podlahou na −2,200 m,
 svetlou výškou 2,080 m a pochôdznym poklopom 900 × 1 100 mm. Po otvorení poklopu sa dá
 v režime Prechádzka cez E alebo dotyk bezpečne zostúpiť po sedempriečkovom
