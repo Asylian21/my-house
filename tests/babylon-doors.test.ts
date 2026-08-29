@@ -11,9 +11,11 @@ import {
   INTERACTIVE_DOOR_INVENTORY,
   liftSlideSashLiftM,
   LIFT_SLIDE_MOTION,
+  POOL_ACCESS_INVENTORY,
   selectDoorInteractionTarget,
   slidingDoorPathIsClear,
   smootherStep01,
+  type DoorMotionKind,
   type DoorActorState,
 } from "../lib/babylon-doors";
 
@@ -28,7 +30,7 @@ const actor = (
 });
 
 describe("animated architectural doors", () => {
-  it("keeps 18 architectural systems and adds exactly two appliance doors", () => {
+  it("keeps 18 architectural systems plus appliance and pool access interactions", () => {
     expect(ARCHITECTURAL_DOOR_INVENTORY).toHaveLength(18);
     expect(new Set(ARCHITECTURAL_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(18);
     expect(
@@ -36,14 +38,23 @@ describe("animated architectural doors", () => {
         (counts, { kind }) => ({ ...counts, [kind]: (counts[kind] ?? 0) + 1 }),
         {},
       ),
-    ).toEqual({ HINGED: 14, SLIDING: 3, OVERHEAD: 1 });
+    ).toEqual({ HINGED: 13, SLIDING: 4, OVERHEAD: 1 });
+    expect(
+      ARCHITECTURAL_DOOR_INVENTORY.find(({ id }) => id === "DOOR-102-106"),
+    ).toEqual({ id: "DOOR-102-106", kind: "SLIDING" });
 
     expect(APPLIANCE_DOOR_INVENTORY).toEqual([
       { id: "BATH-105-WASHER-DOOR", kind: "HINGED" },
       { id: "BATH-105-DRYER-DOOR", kind: "HINGED" },
     ]);
-    expect(INTERACTIVE_DOOR_INVENTORY).toHaveLength(20);
-    expect(new Set(INTERACTIVE_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(20);
+    expect(POOL_ACCESS_INVENTORY).toHaveLength(2);
+    const expectedInteractionCount =
+      ARCHITECTURAL_DOOR_INVENTORY.length
+      + APPLIANCE_DOOR_INVENTORY.length
+      + POOL_ACCESS_INVENTORY.length;
+    expect(INTERACTIVE_DOOR_INVENTORY).toHaveLength(expectedInteractionCount);
+    expect(new Set(INTERACTIVE_DOOR_INVENTORY.map(({ id }) => id)).size)
+      .toBe(expectedInteractionCount);
 
     const controller = new BabylonDoorController();
     for (const door of INTERACTIVE_DOOR_INVENTORY) {
@@ -92,7 +103,7 @@ describe("animated architectural doors", () => {
 
   it("uses action copy that matches hinged, sliding and garage motion", () => {
     const prompt = (
-      kind: "HINGED" | "SLIDING" | "OVERHEAD",
+      kind: DoorMotionKind,
       phase: "CLOSED" | "OPENING" | "OPEN" | "CLOSING",
       action: "OPEN" | "CLOSE" | null,
     ) => doorInteractionPromptLabel({ kind, phase, action, blockedMessage: null });
@@ -126,6 +137,33 @@ describe("animated architectural doors", () => {
     ).toBe("Zavrieť dvierka");
     expect(
       doorInteractionPromptLabel({
+        kind: "HINGED",
+        subject: "ACCESS_HATCH",
+        phase: "CLOSED",
+        action: "OPEN",
+        blockedMessage: null,
+      }),
+    ).toBe("Otvoriť poklop šachty");
+    expect(
+      doorInteractionPromptLabel({
+        kind: "TRAVERSAL",
+        subject: "LADDER",
+        phase: "CLOSED",
+        action: "OPEN",
+        blockedMessage: null,
+      }),
+    ).toBe("Zostúpiť do šachty");
+    expect(
+      doorInteractionPromptLabel({
+        kind: "TRAVERSAL",
+        subject: "LADDER",
+        phase: "OPEN",
+        action: "CLOSE",
+        blockedMessage: null,
+      }),
+    ).toBe("Vystúpiť na terasu");
+    expect(
+      doorInteractionPromptLabel({
         kind: "SLIDING",
         phase: "CLOSING",
         action: null,
@@ -148,6 +186,55 @@ describe("animated architectural doors", () => {
         actor(0, 0),
       )?.door.id,
     ).toBe("NEAR-BEHIND");
+  });
+
+  it("reveals the ladder only after the hatch opens and retargets its lower end", () => {
+    let hatchOpen = false;
+    const controller = new BabylonDoorController();
+    controller.register({
+      id: "HATCH",
+      label: "Poklop",
+      kind: "HINGED",
+      subject: "ACCESS_HATCH",
+      interactionPoint: { x: 1.1, y: 0, z: 0 },
+      apply: (progress) => {
+        hatchOpen = progress >= 0.999;
+      },
+    });
+    controller.register({
+      id: "LADDER",
+      label: "Rebrík",
+      kind: "TRAVERSAL",
+      subject: "LADDER",
+      interactionPoint: { x: 0.7, y: 0, z: 0 },
+      interactionPointAt: (progress) =>
+        progress < 0.5
+          ? { x: 0.7, y: 0, z: 0 }
+          : { x: 0.6, y: -1.2, z: 0 },
+      isInteractionEnabled: () => hatchOpen,
+      apply: () => undefined,
+    });
+    controller.setActor(actor(0, 0));
+    expect(controller.getInteraction()?.id).toBe("HATCH");
+
+    expect(controller.setOpen("HATCH", true, true)).toBe(true);
+    expect(controller.getInteraction()).toMatchObject({
+      id: "LADDER",
+      action: "OPEN",
+      interactionPoint: { y: 0 },
+    });
+    expect(controller.toggleInteractionTarget("LADDER")).toBe(true);
+    for (
+      let elapsed = 0;
+      elapsed < doorMotionDurationMs("TRAVERSAL", 1) + 80;
+      elapsed += 20
+    ) {
+      controller.update(20);
+    }
+    expect(controller.getInteraction("LADDER")).toMatchObject({
+      action: "CLOSE",
+      interactionPoint: { y: -1.2 },
+    });
   });
 
   it("uses vertical gaze and an explicit picked id to reach both stacked doors", () => {
@@ -198,7 +285,7 @@ describe("animated architectural doors", () => {
   });
 
   it("reaches the same open state for every motion kind at 60, 144 and 240 Hz", () => {
-    const run = (kind: "HINGED" | "SLIDING" | "OVERHEAD", fps: number) => {
+    const run = (kind: DoorMotionKind, fps: number) => {
       let lastProgress = -1;
       const controller = new BabylonDoorController();
       controller.register({
@@ -219,7 +306,7 @@ describe("animated architectural doors", () => {
       }
       return controller.debugState()[0];
     };
-    for (const kind of ["HINGED", "SLIDING", "OVERHEAD"] as const) {
+    for (const kind of ["HINGED", "SLIDING", "OVERHEAD", "TRAVERSAL"] as const) {
       for (const fps of [60, 144, 240]) {
         expect(run(kind, fps)).toMatchObject({ phase: "OPEN", progress: 1 });
       }
@@ -228,7 +315,7 @@ describe("animated architectural doors", () => {
 
   it("keeps every opening and closing motion equivalent across refresh rates", () => {
     const progressAt = (
-      kind: "HINGED" | "SLIDING" | "OVERHEAD",
+      kind: DoorMotionKind,
       fps: number,
       elapsedTargetMs: number,
       closing = false,
@@ -252,7 +339,7 @@ describe("animated architectural doors", () => {
       return controller.debugState()[0].progress;
     };
 
-    for (const kind of ["HINGED", "SLIDING", "OVERHEAD"] as const) {
+    for (const kind of ["HINGED", "SLIDING", "OVERHEAD", "TRAVERSAL"] as const) {
       for (const closing of [false, true]) {
         const durationMs = doorMotionDurationMs(kind, closing ? 0 : 1);
         for (const fraction of [0.25, 0.5, 0.9]) {

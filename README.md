@@ -46,14 +46,17 @@ k TV zostave; medzi telesom krbu a TV stenou zostáva 650 mm.
 
 Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové lamely RAL
 7016, mení obe bočné hranice na plné nepriehľadné polia a zadnú kovovú líniu na
-hustý živý plot. Najnovšia doložená exteriérová revízia požaduje v otvorenom
-L-dvore vodnú plochu 5,0 × 3,0 m. Aktuálny modelovaný variant ju po dorovnaní
-do vnútorného rohu oboch terás predlžuje na 5,6 × 3,0 m; jeho 6,2 m dlhý lem je
-bez medzery napojený na hlavnú aj bočnú terasu a zdieľa s nimi hornú úroveň.
-Rozdiel 0,6 m je otvorene vedený ako vizualizačný návrh na potvrdenie. Dažďová
-trasa je v modeli predbežne odklonená; najmenší odstup od plášťa potrubia je
-približne 0,63 m. Vizualizačná hĺbka vody je navrhnutá na 1,40 m; nie je to
-realizačne potvrdená hodnota. Výška 1,6 m, trojdielny teleskopický pojazd, plná skrytá
+hustý živý plot. Klientska revízia z 29. 8. 2026 mení bazén v otvorenom L-dvore
+na mierne dlhšiu a užšiu vodnú plochu 6,0 × 2,7 m. Svetlý 300 mm lem je bez
+medzery napojený na hlavnú aj bočnú terasu a zdieľa s nimi hornú úroveň.
+Na zostávajúcej západnej a južnej strane ho obopína nový presne 2 m široký
+drevený pás s hrubou plochou 23,80 m² a čistou plochou 22,81 m² po odpočítaní
+poklopu. Kolidujúce kríky, okrasné trávy a mulčovaný záhon okolo bazéna sú
+odstránené; zadný živý plot na hranici parcely zostáva. Dažďová trasa je
+predbežne vedená západne od novej šachty a pod terasou; najmenší modelovaný
+odstup od plášťa potrubia je približne 0,69 m. Vizualizačná hĺbka vody je
+navrhnutá na 1,40 m; nie je to realizačne potvrdená hodnota. Výška 1,6 m,
+trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
 vizualizačný dizajnový návrh. Nie sú schválenou realizačnou špecifikáciou;
 materiály, výsadbu, systém a presné geodetické osadenie treba potvrdiť pred
@@ -64,7 +67,9 @@ krytých terás odčítaných z vektorov výkresu D1.1.002: zapustenej presklene
 steny pod štítom krídla (TERASA 16,45 m²) a záhradnej lodžie (pôvodne súčasť
 TERASY 34,80 m²). Aktívna revízia predlžuje garáž 1.12 o 1 000 mm do lodžie,
 preto má záhradná zóna 30,60 m² a súčet terás klesá z pôvodných 84,35 m² na
-80,15 m². Drevené zóny sa generujú doska po doske z `TERRACE_ZONES_D1`.
+80,15 m². Pôvodné drevené zóny sa generujú doska po doske z
+`TERRACE_ZONES_D1`; nová bazénová plocha je samostatná klientská revízia
+`POOL_SURROUND_DECK`, takže historický súčet D1 nemení.
 Vegetácia, nábytok a
 panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 
@@ -114,8 +119,8 @@ RobotExpressive od Tomása Laulhé, upravený Donom McCurdym a vydaný ako
 `047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319`).
 Ovládanie: W A S D
 chôdza v smere kamery, ťahanie otáča kameru okolo postavy, Shift beh, koliesko
-priblíženie, E alebo dotyk na kontextovú výzvu otvorí a zavrie blízke dvere
-aj dvierka práčky a sušičky,
+priblíženie, E alebo dotyk na kontextovú výzvu ovláda blízke dvere, dvierka
+práčky a sušičky, poklop bazénovej šachty aj riadený zostup po rebríku,
 V prepne pohľad z očí a R vystredí kameru alebo vráti zaseknutú postavu na
 posledný bezpečný bod; pohyb má krátke zrýchlenie a dobeh
 (`WALK_CAMERA` v `lib/twin-viewport-contract.ts`), postava sa otáča do smeru
@@ -135,8 +140,9 @@ SDK podhľady 2 600 mm a šikmý podhľad hlavného obytného priestoru
 hrúbka stien z obrysov 1,44 pt v mierke 1:100). Chodec sa ovláda rovnako ako
 prelet (WASD, ťahanie, Shift/Alt), steny ho zastavia cez kolízny elipsoid
 s polomermi 0,22 × 0,80 × 0,22 m a pohyb sa delí na najviac 50 mm kroky.
-Spoločný kontrolér pokrýva presne 20 systémov: 11 interiérových, tri exteriérové
-krídlové, tri zdvižno-posuvné, sekčnú garážovú bránu a dvoje dvierka spotrebičov.
+Spoločný kontrolér pokrýva presne 22 interakcií: 18 architektonických dverových
+systémov, dvoje dvierka spotrebičov, pochôdzny poklop šachty a obojsmerný
+riadený prechod po rebríku.
 Zatvorené krídlo chodca zastaví, po animovanom otvorení uvoľní reálny priechod
 a pri vstupe postavy do dráhy sa pohyb bezpečne pozastaví. HUD ponúka priamy vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
@@ -146,6 +152,17 @@ valcové krbové kachle so zvislým dymovodom a soklové lišty sú ilustračný
 špecifikácia. Sklo je od tejto revízie skutočne priehľadné (alfa prekrytie s
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
+
+Pod garážovou stranou nového bazénového lemu je samostatná železobetónová
+technologická šachta `POOL_TECHNOLOGY_SHAFT` s podlahou na −2,200 m, svetlou
+výškou 2,080 m a pochôdznym poklopom 900 × 1 100 mm. Po otvorení poklopu sa dá
+v režime Prechádzka cez E alebo dotyk bezpečne zostúpiť po sedempriečkovom
+nerezovom rebríku a rovnakým spôsobom sa vrátiť na terasu. Vnútri je
+vymodelovaná piesková filtrácia Ø 620 mm, predfilter, 0,75 kW obehové čerpadlo,
+tlakové potrubia, podlahová vpusť, servisné svietidlo a IP65 rozvádzač s ôsmimi
+ističmi. Rozmery, hydroizolácia, vetranie, odvodnenie, elektrická ochrana,
+pospájanie aj napojenie bazénovej technológie sú klientskym vizualizačným
+návrhom a vyžadujú realizačnú koordináciu ZTI, elektro a statiky.
 
 Revízia stavebníka z 22. 8. 2026 (`SOURCES.clientRevision20260822`) mení tri
 veci v obytnom priestore 1.03: kachle s komínom sú menšie a stoja hneď vedľa

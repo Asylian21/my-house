@@ -901,13 +901,17 @@ async function run() {
       const wcRoom = interiorModule?.INTERIOR_ROOMS.find(
         (room) => room.id === "ROOM-1-06",
       );
-      if (!wcRoom || !toScene) {
-        autoRecovery.setupError = "ROOM-1-06 geometry or plan transform unavailable";
+      const wcFitout = interiorModule?.WC_FITOUT;
+      if (!wcRoom || !wcFitout || !toScene) {
+        autoRecovery.setupError = "ROOM-1-06 geometry, fitout or plan transform unavailable";
       } else {
-        const rect = wcRoom.rectsMm[0];
-        // Approach the solid south-west WC corner along two distinct headings.
-        // The point remains outside the fixture envelopes and below the door.
-        const startPlan = { x: rect.x0 + 420, y: rect.y0 + 420 };
+        // Begin in the clear approach north-west of the long-axis WC. The
+        // first south-west heading meets the sanitary guard; physical Left
+        // then supplies the distinct west-wall heading required for recovery.
+        const startPlan = {
+          x: wcFitout.toilet.footprintMm.x0 + 252,
+          y: wcFitout.toilet.footprintMm.y1 + 318,
+        };
         const startScene = toScene(startPlan);
         const firstDirection = { x: -0.95, z: 0.31 };
         const alphaForDirection = (direction) =>

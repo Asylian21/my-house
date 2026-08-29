@@ -13,11 +13,12 @@ import {
   FIREPLACE_STOVE,
   GARAGE_FITOUT,
   INTERIOR_DOORS,
+  INTERIOR_ROOMS,
   INTERIOR_WALLS,
   TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
 } from "../lib/twin-interior";
-import { MM_TO_M, sceneZM } from "../lib/twin-render-frame";
+import { MM_TO_M, sceneXM, sceneZM } from "../lib/twin-render-frame";
 
 describe("Babylon interior fit-out", () => {
   it("builds the required room objects and measured collision envelopes", () => {
@@ -98,21 +99,28 @@ describe("Babylon interior fit-out", () => {
         expect(leaf?.isPickable).toBe(true);
         expect(leaf?.metadata).toMatchObject({
           doorId: door.id,
-          doorMotion: "HINGED",
+          doorMotion: door.kind,
           dynamicCameraOccluder: true,
         });
         const handles = scene.meshes.filter(
           (mesh) =>
             mesh.parent === leaf?.parent && mesh.name.includes("kľučka"),
         );
-        expect(handles, `${door.id} has a lever on both faces`).toHaveLength(2);
+        expect(handles, `${door.id} has a handle on both faces`).toHaveLength(2);
         door.apply(1, 1);
-        expect(
-          Math.abs((leaf?.parent as TransformNode | null)?.rotation.y ?? 0),
-        ).toBeCloseTo(
-          Math.PI / 2,
-          8,
-        );
+        const movingRoot = leaf?.parent as TransformNode | null;
+        if (door.kind === "SLIDING") {
+          expect(Math.hypot(
+            movingRoot?.position.x ?? 0,
+            movingRoot?.position.z ?? 0,
+          )).toBeCloseTo(0.76, 8);
+          expect(movingRoot?.rotation.y ?? 0).toBe(0);
+        } else {
+          expect(Math.abs(movingRoot?.rotation.y ?? 0)).toBeCloseTo(
+            Math.PI / 2,
+            8,
+          );
+        }
         expect(
           door.canOpen?.({
             position: door.interactionPoint,
@@ -130,6 +138,44 @@ describe("Babylon interior fit-out", () => {
         ).toBe(true);
         door.apply(0, 0);
       }
+
+      const wcDoor = architecturalDoors.find((door) => door.id === "DOOR-102-106")!;
+      const wcLeaf = scene.meshes.find(
+        (mesh) =>
+          mesh.metadata?.doorId === wcDoor.id
+          && mesh.name.includes("animované krídlo"),
+      )!;
+      const wcEdgePull = scene.meshes.find(
+        (mesh) =>
+          mesh.metadata?.doorId === wcDoor.id
+          && mesh.name.includes("čelné výsuvné madlo"),
+      )!;
+      wcDoor.apply(1, 0);
+      const wcMovingRoot = wcLeaf.parent as TransformNode;
+      expect(wcDoor.kind).toBe("SLIDING");
+      expect(wcEdgePull.isPickable).toBe(true);
+      expect(wcMovingRoot.position.x).toBeCloseTo(0, 8);
+      expect(wcMovingRoot.position.z).toBeCloseTo(0.76, 8);
+      wcEdgePull.computeWorldMatrix(true);
+      const wcDoorSpec = INTERIOR_DOORS.find((door) => door.id === wcDoor.id)!;
+      expect(wcEdgePull.getAbsolutePosition().z).toBeCloseTo(sceneZM(9870), 6);
+      expect(
+        Math.abs(
+          wcEdgePull.getAbsolutePosition().z - sceneZM(wcDoorSpec.startMm),
+        ),
+      ).toBeLessThanOrEqual(0.02);
+      const wcRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-06")!;
+      const wcActor = {
+        position: {
+          x: sceneXM(wcRoom.standingPointMm.x),
+          z: sceneZM(wcRoom.standingPointMm.y),
+        },
+        facing: { x: -1, z: 0 },
+        radiusM: 0.22,
+      };
+      expect(wcDoor.canOpen?.(wcActor, 0)).toBe(true);
+      expect(wcDoor.canClose?.(wcActor, 1)).toBe(true);
+      wcDoor.apply(0, 0);
 
       const applianceHinges = new Map(
         BATHROOM_FITOUT.builtIn.appliances.map((appliance) => [
@@ -332,6 +378,38 @@ describe("Babylon interior fit-out", () => {
       );
       expect(wcGuards).toHaveLength(2);
       expect(wcGuards.every((guard) => guard.checkCollisions && !guard.isVisible)).toBe(true);
+      const planSize = (mesh: AbstractMesh) => {
+        mesh.computeWorldMatrix(true);
+        const extent = mesh.getBoundingInfo().boundingBox.extendSizeWorld;
+        return { x: extent.x * 2, z: extent.z * 2 };
+      };
+      const toiletGuard = wcGuards.find((mesh) =>
+        mesh.name.includes("WALL-HUNG-WC"),
+      )!;
+      const basinGuard = wcGuards.find((mesh) =>
+        mesh.name.includes("COMPACT-BASIN"),
+      )!;
+      const toiletGuardSize = planSize(toiletGuard);
+      const basinGuardSize = planSize(basinGuard);
+      expect(toiletGuardSize.x).toBeCloseTo(0.37, 8);
+      expect(toiletGuardSize.z).toBeCloseTo(0.52, 8);
+      expect(basinGuardSize.x).toBeCloseTo(0.25, 8);
+      expect(basinGuardSize.z).toBeCloseTo(0.4, 8);
+
+      const toiletBowl = scene.meshes.find((mesh) =>
+        mesh.name.startsWith(WC_FITOUT.id)
+        && mesh.name.includes("WALL-HUNG-WC · keramická misa"),
+      )!;
+      const basinBowl = scene.meshes.find((mesh) =>
+        mesh.name.startsWith(WC_FITOUT.id)
+        && mesh.name.includes("COMPACT-BASIN · keramické umývadlo 400 × 250"),
+      )!;
+      const toiletBowlSize = planSize(toiletBowl);
+      const basinBowlSize = planSize(basinBowl);
+      expect(toiletBowlSize.x).toBeCloseTo(0.37, 6);
+      expect(toiletBowlSize.z).toBeCloseTo(0.52, 6);
+      expect(basinBowlSize.x).toBeCloseTo(0.25, 6);
+      expect(basinBowlSize.z).toBeCloseTo(0.4, 6);
 
       const garageMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(GARAGE_FITOUT.id));
       for (const required of [

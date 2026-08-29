@@ -10,6 +10,8 @@ import {
   FOUNDATIONS,
   GARDEN_POOL,
   HOUSE,
+  POOL_SURROUND_DECK,
+  POOL_TECHNOLOGY_SHAFT,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -1201,22 +1203,22 @@ describe("site evidence seed", () => {
 });
 
 describe("data to geometry contract", () => {
-  it("places the requested 5,6 × 3 m pool flush into the inner-L corner", () => {
+  it("places the revised 6,0 × 2,7 m pool flush into the inner-L corner", () => {
     expect(GARDEN_POOL).toMatchObject({
-      id: "POOL-COURTYARD-56X3",
-      centerMm: { x: 14_940, y: 14_900 },
-      waterLengthMm: 5_600,
-      waterWidthMm: 3_000,
-      waterAreaM2: 16.8,
+      id: "POOL-COURTYARD-6X27",
+      centerMm: { x: 14_740, y: 14_750 },
+      waterLengthMm: 6_000,
+      waterWidthMm: 2_700,
+      waterAreaM2: 16.2,
       copingWidthMm: 300,
       proposedWaterDepthMm: 1_400,
       placementStatus:
-        "CLIENT_REQUESTED_LAYOUT_REQUIRES_RAINWATER_COORDINATION",
+        "CLIENT_REQUESTED_POOL_AND_SHAFT_REQUIRE_PROFESSIONAL_COORDINATION",
       terraceConnection: {
         terraceId: "TERR-D1-GARDEN",
         copingEdgeYmm: 13_100,
         planGapMm: 0,
-        contactLengthMm: 6_200,
+        contactLengthMm: 6_600,
         sharedTopElevationMm: 20,
       },
       wingDeckContact: {
@@ -1236,8 +1238,8 @@ describe("data to geometry contract", () => {
         return Math.hypot(end.x - start.x, end.y - start.y);
       })
       .sort((left, right) => left - right);
-    expect(edgeLengthsMm).toEqual([3_000, 3_000, 5_600, 5_600]);
-    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(16.8);
+    expect(edgeLengthsMm).toEqual([2_700, 2_700, 6_000, 6_000]);
+    expect(polygonAreaM2(GARDEN_POOL.waterFootprintMm)).toBe(16.2);
     expect(
       GARDEN_POOL.sourceIds.every((sourceId) => findSource(sourceId)),
     ).toBe(true);
@@ -1247,6 +1249,9 @@ describe("data to geometry contract", () => {
     expect(SOURCES.poolDesignProposal20260821.kind).toBe("DESIGN_PROPOSAL");
     expect(SOURCES.poolDesignProposal20260821.detail).toContain(
       "Pôvodná vodná plocha 4,0 × 2,5 m",
+    );
+    expect(SOURCES.clientPoolTerraceShaftRevision20260829.detail).toContain(
+      "2 m širokou drevenou terasou",
     );
 
     const copingXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
@@ -1309,22 +1314,23 @@ describe("data to geometry contract", () => {
       }
     }
     expect(Math.min(...Object.values(GARDEN_POOL.modelledClearancesMm))).toBe(0);
-    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(1_787);
-    expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(630);
+    expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(1_725);
+    expect(GARDEN_POOL.modelledClearancesMm.infiltrationObject).toBe(1_728);
+    expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(690);
+    expect(GARDEN_POOL.modelledClearancesMm.technologyShaftShell).toBe(400);
     const reroutedRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-SOUTH",
     );
     expect(reroutedRain?.pointsMm).toEqual([
       { x: 7_600, y: 10_800 },
-      { x: 7_600, y: 12_400 },
-      { x: 11_000, y: 12_400 },
-      { x: 11_000, y: 17_400 },
+      { x: 7_600, y: 17_400 },
       { x: 16_900, y: 17_400 },
     ]);
     expect(reroutedRain?.sourceIds).toEqual([
       SOURCES.rainwater.id,
       SOURCES.clientExteriorRevision20260821.id,
       SOURCES.poolDesignProposal20260821.id,
+      SOURCES.clientPoolTerraceShaftRevision20260829.id,
     ]);
     const northRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-NORTH",
@@ -1336,12 +1342,59 @@ describe("data to geometry contract", () => {
       { x: 18_800, y: 17_400 },
       { x: 16_900, y: 17_400 },
     ]);
-    // Both preliminary legs share the bypass corridor 700 mm south of the
-    // coping; minus the 70 mm pipe shell this keeps the documented ~0,63 m.
-    const corridorGapMm = Math.min(
-      ...northRain!.pointsMm.filter(({ y }) => y === 17_400).map(() => 17_400),
+    const eastPipeClearanceMm =
+      18_800 - Math.max(...copingXs) - 70;
+    const southPipeClearanceMm =
+      17_400 - Math.max(...copingYs) - 70;
+    expect(Math.min(eastPipeClearanceMm, southPipeClearanceMm)).toBe(690);
+    expect(northRain?.revisionStatus).toBe("REVISION_CONFLICT");
+  });
+
+  it("adds an exact two-metre timber surround with a real shaft opening", () => {
+    const poolXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
+    const poolYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
+    const poolBounds = {
+      x0: Math.min(...poolXs),
+      x1: Math.max(...poolXs),
+      y0: Math.min(...poolYs),
+      y1: Math.max(...poolYs),
+    };
+    expect(poolBounds.x0 - POOL_SURROUND_DECK.outerBoundsMm.x0).toBe(2_000);
+    expect(POOL_SURROUND_DECK.outerBoundsMm.y1 - poolBounds.y1).toBe(2_000);
+    expect(POOL_SURROUND_DECK.nominalWidthMm).toBe(2_000);
+    expect(POOL_SURROUND_DECK.grossAreaM2).toBe(23.8);
+    expect(POOL_SURROUND_DECK.hatchOpeningAreaM2).toBe(0.99);
+    const renderedDeckAreaM2 = POOL_SURROUND_DECK.rectsMm.reduce(
+      (sum, rect) =>
+        sum + ((rect.x1 - rect.x0) * (rect.y1 - rect.y0)) / 1_000_000,
+      0,
     );
-    expect(corridorGapMm - GARDEN_POOL.copingFootprintMm[2].y - 70).toBe(630);
+    expect(renderedDeckAreaM2).toBeCloseTo(
+      POOL_SURROUND_DECK.netDeckAreaM2,
+      10,
+    );
+
+    const shaft = POOL_TECHNOLOGY_SHAFT;
+    const hatch = shaft.hatch.footprintMm;
+    expect((hatch.x1 - hatch.x0) * (hatch.y1 - hatch.y0) / 1_000_000).toBe(
+      POOL_SURROUND_DECK.hatchOpeningAreaM2,
+    );
+    for (const rect of POOL_SURROUND_DECK.rectsMm) {
+      const overlapsHatch =
+        Math.max(rect.x0, hatch.x0) < Math.min(rect.x1, hatch.x1) &&
+        Math.max(rect.y0, hatch.y0) < Math.min(rect.y1, hatch.y1);
+      expect(overlapsHatch).toBe(false);
+    }
+
+    expect(poolBounds.x0 - shaft.outerFootprintMm.x1).toBe(
+      shaft.poolShellClearanceMm,
+    );
+    expect(shaft.floorElevationMm).toBe(-2_200);
+    expect(shaft.ladder.rungCount).toBe(7);
+    expect(shaft.electricalPanel.breakerCount).toBe(8);
+    expect(shaft.sandFilter.vesselDiameterMm).toBe(620);
+    expect(shaft.circulationPump.motorPowerKw).toBe(0.75);
+    expect(shaft.sourceIds.every((sourceId) => findSource(sourceId))).toBe(true);
   });
 
   it("keeps the luxury fence raster at a fixed pitch with balanced margins", () => {

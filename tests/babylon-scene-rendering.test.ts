@@ -13,6 +13,7 @@ import {
   CADASTRAL_PARCELS,
   GARDEN_POOL,
   PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
+  POOL_TECHNOLOGY_SHAFT,
   sjtskToLocalMm,
 } from "../lib/twin-site";
 import { sceneXM, sceneZM } from "../lib/twin-render-frame";
@@ -110,6 +111,18 @@ describe("Babylon scene depth occlusion", () => {
       };
 
       expect(covers(GARDEN_POOL.centerMm)).toBe(false);
+      expect(
+        covers({
+          x:
+            (POOL_TECHNOLOGY_SHAFT.hatch.footprintMm.x0 +
+              POOL_TECHNOLOGY_SHAFT.hatch.footprintMm.x1) /
+            2,
+          y:
+            (POOL_TECHNOLOGY_SHAFT.hatch.footprintMm.y0 +
+              POOL_TECHNOLOGY_SHAFT.hatch.footprintMm.y1) /
+            2,
+        }),
+      ).toBe(false);
       expect(covers({ x: 25_000, y: 18_000 })).toBe(true);
     } finally {
       scene.dispose();

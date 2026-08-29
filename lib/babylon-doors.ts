@@ -1,6 +1,7 @@
 import { BATHROOM_FITOUT, INTERIOR_DOORS } from "./twin-interior";
+import { POOL_TECHNOLOGY_SHAFT } from "./twin-site";
 
-export type DoorMotionKind = "HINGED" | "SLIDING" | "OVERHEAD";
+export type DoorMotionKind = "HINGED" | "SLIDING" | "OVERHEAD" | "TRAVERSAL";
 export type DoorPhase = "CLOSED" | "OPENING" | "OPEN" | "CLOSING";
 
 export interface DoorPlanarPoint {
@@ -10,7 +11,11 @@ export interface DoorPlanarPoint {
   readonly y?: number;
 }
 
-export type DoorInteractionSubject = "DOOR" | "APPLIANCE_DOOR";
+export type DoorInteractionSubject =
+  | "DOOR"
+  | "APPLIANCE_DOOR"
+  | "ACCESS_HATCH"
+  | "LADDER";
 
 export interface DoorActorState {
   readonly position: DoorPlanarPoint;
@@ -25,6 +30,10 @@ export interface AnimatedDoorRegistration {
   readonly interactionPoint: DoorPlanarPoint;
   readonly subject?: DoorInteractionSubject;
   readonly initiallyOpen?: boolean;
+  /** Optional moving/level-dependent target, used by the two ends of a ladder. */
+  interactionPointAt?(progress: number): DoorPlanarPoint;
+  /** Keeps a context action completely out of targeting until it is usable. */
+  isInteractionEnabled?(progress: number): boolean;
   apply(progress: number, handleDepression: number): void;
   canOpen?(actor: DoorActorState, progress?: number): boolean;
   canClose?(actor: DoorActorState, progress?: number): boolean;
@@ -86,7 +95,10 @@ export const ARCHITECTURAL_DOOR_INVENTORY: readonly {
   readonly id: string;
   readonly kind: DoorMotionKind;
 }[] = Object.freeze([
-  ...INTERIOR_DOORS.map(({ id }) => ({ id, kind: "HINGED" as const })),
+  ...INTERIOR_DOORS.map(({ id, motion }) => ({
+    id,
+    kind: motion === "POCKET_SLIDING" ? "SLIDING" as const : "HINGED" as const,
+  })),
   { id: "FRONT-ENTRY", kind: "HINGED" },
   { id: "EAST-03", kind: "HINGED" },
   { id: "LOGGIA-DOOR", kind: "HINGED" },
@@ -107,12 +119,22 @@ export const APPLIANCE_DOOR_INVENTORY: readonly {
   })),
 );
 
+/** The pool hatch and ladder share the contextual E/touch interaction model. */
+export const POOL_ACCESS_INVENTORY: readonly {
+  readonly id: string;
+  readonly kind: DoorMotionKind;
+}[] = Object.freeze([
+  { id: POOL_TECHNOLOGY_SHAFT.hatch.id, kind: "HINGED" },
+  { id: POOL_TECHNOLOGY_SHAFT.ladder.id, kind: "TRAVERSAL" },
+]);
+
 export const INTERACTIVE_DOOR_INVENTORY: readonly {
   readonly id: string;
   readonly kind: DoorMotionKind;
 }[] = Object.freeze([
   ...ARCHITECTURAL_DOOR_INVENTORY,
   ...APPLIANCE_DOOR_INVENTORY,
+  ...POOL_ACCESS_INVENTORY,
 ]);
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
@@ -143,6 +165,20 @@ export function doorInteractionPromptLabel(
   >,
 ): string {
   if (interaction.blockedMessage) return interaction.blockedMessage;
+  if (interaction.subject === "ACCESS_HATCH") {
+    if (interaction.phase === "OPENING") return "Otváram vstup do šachty…";
+    if (interaction.phase === "CLOSING") return "Zatváram vstup do šachty…";
+    if (interaction.action === "OPEN") return "Otvoriť poklop šachty";
+    if (interaction.action === "CLOSE") return "Zavrieť poklop šachty";
+    return "Poklop sa práve pohybuje";
+  }
+  if (interaction.subject === "LADDER") {
+    if (interaction.phase === "OPENING") return "Zostupujem po rebríku…";
+    if (interaction.phase === "CLOSING") return "Vystupujem po rebríku…";
+    if (interaction.action === "OPEN") return "Zostúpiť do šachty";
+    if (interaction.action === "CLOSE") return "Vystúpiť na terasu";
+    return "Prebieha presun po rebríku";
+  }
   if (interaction.subject === "APPLIANCE_DOOR") {
     if (interaction.phase === "OPENING") return "Otváram dvierka…";
     if (interaction.phase === "CLOSING") return "Zatváram dvierka…";
@@ -191,7 +227,14 @@ export function doorMotionDurationMs(
   const baseDuration = targetProgress === 1
     ? DOOR_INTERACTION.openingDurationMs
     : DOOR_INTERACTION.closingDurationMs;
-  const kindScale = kind === "OVERHEAD" ? 1.65 : kind === "SLIDING" ? 1.25 : 1;
+  const kindScale =
+    kind === "OVERHEAD"
+      ? 1.65
+      : kind === "SLIDING"
+        ? 1.25
+        : kind === "TRAVERSAL"
+          ? 1.4
+          : 1;
   return baseDuration * kindScale;
 }
 
@@ -466,11 +509,23 @@ export class BabylonDoorController {
 
   private targetRuntime(id?: string) {
     if (!this.actor) return null;
-    if (id) {
-      const door = this.doors.get(id);
-      return door ? selectDoorInteractionTarget([door], this.actor) : null;
-    }
-    return selectDoorInteractionTarget([...this.doors.values()], this.actor);
+    const candidates = [...this.doors.values()]
+      .filter((door) => door.isInteractionEnabled?.(door.progress) !== false)
+      .filter((door) => !id || door.id === id)
+      .map((door) => ({
+        id: door.id,
+        door,
+        interactionPoint:
+          door.interactionPointAt?.(door.progress) ?? door.interactionPoint,
+      }));
+    const target = selectDoorInteractionTarget(candidates, this.actor);
+    return target
+      ? {
+          door: target.door.door,
+          distanceM: target.distanceM,
+          interactionPoint: target.door.interactionPoint,
+        }
+      : null;
   }
 
   getInteraction(id?: string): DoorInteractionSnapshot | null {
@@ -481,7 +536,7 @@ export class BabylonDoorController {
       id: target.door.id,
       label: target.door.label,
       kind: target.door.kind,
-      interactionPoint: target.door.interactionPoint,
+      interactionPoint: target.interactionPoint,
       subject: target.door.subject ?? "DOOR",
       phase,
       action: phase === "CLOSED" ? "OPEN" : phase === "OPEN" ? "CLOSE" : null,
@@ -490,7 +545,11 @@ export class BabylonDoorController {
         target.door.blockedUntilMs > this.clockMs
           ? target.door.subject === "APPLIANCE_DOOR"
             ? "Ustúpte z dráhy dvierok"
-            : "Ustúpte z dráhy dverí"
+            : target.door.subject === "ACCESS_HATCH"
+              ? "Ustúpte od poklopu šachty"
+              : target.door.subject === "LADDER"
+                ? "Rebrík je momentálne zablokovaný"
+                : "Ustúpte z dráhy dverí"
           : null,
     };
   }
