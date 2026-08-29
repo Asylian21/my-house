@@ -59,6 +59,7 @@ import {
   PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
   POOL_SURROUND_DECK,
   POOL_TECHNOLOGY_SHAFT,
+  RAINWATER_COORDINATION,
   ROAD_CONTEXT,
   SITE_FENCE,
   SITE_SURFACES,
@@ -6293,21 +6294,25 @@ export class TwinSceneController {
     this.register(strainer, "street", shaft.id);
 
     const pipeMaterial = this.realisticMaterials.chimneyMetal;
+    const serviceBackYmm = footprint.y1 - wall - 170;
+    const poolConnectionYmm =
+      Math.max(...GARDEN_POOL.copingFootprintMm.map(({ y }) => y)) - 80;
     for (const [index, points] of [
       [
         new Vector3(xM(pumpCenter.x - 250), floorTopM + 0.48, zM(pumpCenter.y)),
-        new Vector3(xM(filter.centerMm.x + 310), floorTopM + 0.48, zM(pumpCenter.y)),
+        new Vector3(xM(pumpCenter.x - 250), floorTopM + 0.48, zM(serviceBackYmm)),
+        new Vector3(xM(filter.centerMm.x + 310), floorTopM + 0.48, zM(serviceBackYmm)),
         new Vector3(xM(filter.centerMm.x + 310), floorTopM + 0.72, zM(filter.centerMm.y)),
       ],
       [
         new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(filter.centerMm.y)),
-        new Vector3(xM(11_250), floorTopM + 1.36, zM(filter.centerMm.y)),
-        new Vector3(xM(11_250), -0.7, zM(15_200)),
+        new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(poolConnectionYmm)),
+        new Vector3(xM(filter.centerMm.x), -0.7, zM(poolConnectionYmm)),
       ],
       [
         new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(pumpCenter.y)),
-        new Vector3(xM(10_780), floorTopM + 0.34, zM(14_980)),
-        new Vector3(xM(11_250), -0.92, zM(14_980)),
+        new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(poolConnectionYmm)),
+        new Vector3(xM(pumpCenter.x + 330), -0.92, zM(poolConnectionYmm)),
       ],
     ].entries()) {
       const pipe = CreateTube(
@@ -6369,7 +6374,11 @@ export class TwinSceneController {
       { height: 0.018, diameter: 0.18, tessellation: 28 },
       this.scene,
     );
-    floorDrain.position.set(xM(10_260), floorTopM + 0.012, zM(15_020));
+    floorDrain.position.set(
+      xM(shaft.serviceAisleMm.x1 - 180),
+      floorTopM + 0.012,
+      zM(shaft.serviceAisleMm.y1 - 180),
+    );
     floorDrain.material = this.realisticMaterials.fenceTrack;
     this.register(floorDrain, "street", shaft.id);
     const light = CreateCylinder(
@@ -6377,15 +6386,31 @@ export class TwinSceneController {
       { height: 0.035, diameter: 0.24, tessellation: 28 },
       this.scene,
     );
-    light.position.set(xM(10_120), wallTopM - 0.035, zM(15_080));
+    light.position.set(
+      xM(shaft.centeredBelowDeckMm.x),
+      wallTopM - 0.035,
+      zM(shaft.centeredBelowDeckMm.y),
+    );
     light.material = this.realisticMaterials.poolLed;
     this.register(light, "street", shaft.id);
 
     // Coarse invisible guards keep the avatar out of the detailed equipment
     // while preserving the central service aisle and ladder landing.
     for (const [index, guard] of [
-      { x0: 9_080, y0: 15_390, x1: 9_780, y1: 16_180, height: 1.5 },
-      { x0: 9_920, y0: 15_350, x1: 10_850, y1: 16_230, height: 0.9 },
+      {
+        x0: filter.centerMm.x - 360,
+        y0: filter.centerMm.y - 410,
+        x1: filter.centerMm.x + 330,
+        y1: filter.centerMm.y + 410,
+        height: 1.5,
+      },
+      {
+        x0: pump.x0 - 80,
+        y0: pump.y0 - 70,
+        x1: pump.x1 + 80,
+        y1: pump.y1 + 70,
+        height: 0.9,
+      },
     ].entries()) {
       const collision = boxAtPlan(
         this.scene,
@@ -6828,24 +6853,31 @@ export class TwinSceneController {
     this.register(meter, "water", "OBJ-WATER-METER");
 
     const rainTank = CreateCylinder(
-      "Akumulačná nádrž dažďovej vody · 8,5 m³",
-      { diameter: 2.55, height: 0.34, tessellation: 28 },
+      `Akumulačná nádrž dažďovej vody · ${RAINWATER_COORDINATION.tank.volumeM3.toLocaleString("sk-SK")} m³`,
+      {
+        diameter: RAINWATER_COORDINATION.tank.diameterMm * MM_TO_M,
+        height: 0.34,
+        tessellation: 28,
+      },
       this.scene,
     );
-    // Moved south onto open lawn so the enlarged pool can sit flush in the
-    // inner-L corner (client revision); modelled clearance 1 787 mm to the
-    // pool coping shell.
-    rainTank.position.set(xM(16_600), 0.12, zM(19_400));
+    // The tank and infiltration field move only far enough south to keep the
+    // compact, centred technology shaft and all rain routes physically clear.
+    rainTank.position.set(
+      xM(RAINWATER_COORDINATION.tank.centerMm.x),
+      0.12,
+      zM(RAINWATER_COORDINATION.tank.centerMm.y),
+    );
     rainTank.material = this.materials.rainwater;
     this.technicalOverlay(rainTank);
     this.register(rainTank, "rainwater", "OBJ-RAIN-TANK");
 
     const infiltration = boxAtPlan(
       this.scene,
-      "Podzemný vsakovací objekt · 6,1 m³",
-      { x: 10481, y: 19878 },
-      5000,
-      3500,
+      `Podzemný vsakovací objekt · ${RAINWATER_COORDINATION.infiltration.volumeM3.toLocaleString("sk-SK")} m³`,
+      RAINWATER_COORDINATION.infiltration.centerMm,
+      RAINWATER_COORDINATION.infiltration.widthMm,
+      RAINWATER_COORDINATION.infiltration.lengthMm,
       0.2,
       -0.02,
     );

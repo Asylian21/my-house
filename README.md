@@ -53,8 +53,10 @@ Na zostávajúcej západnej a južnej strane ho obopína nový presne 2 m širok
 drevený pás s hrubou plochou 23,80 m² a čistou plochou 22,81 m² po odpočítaní
 poklopu. Kolidujúce kríky, okrasné trávy a mulčovaný záhon okolo bazéna sú
 odstránené; zadný živý plot na hranici parcely zostáva. Dažďová trasa je
-predbežne vedená západne od novej šachty a pod terasou; najmenší modelovaný
-odstup od plášťa potrubia je približne 0,69 m. Vizualizačná hĺbka vody je
+predbežne vedená južne od centrálnej šachty; dažďová nádrž aj vsakovací objekt
+sú posunuté iba o nevyhnutných 600/600 mm hlbšie do záhrady. Najmenší
+modelovaný odstup bazéna od plášťa potrubia zostáva približne 0,69 m a šachta
+má od potrubia 0,18 m. Vizualizačná hĺbka vody je
 navrhnutá na 1,40 m; nie je to realizačne potvrdená hodnota. Výška 1,6 m,
 trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
@@ -153,9 +155,10 @@ valcové krbové kachle so zvislým dymovodom a soklové lišty sú ilustračný
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
 
-Pod garážovou stranou nového bazénového lemu je samostatná železobetónová
-technologická šachta `POOL_TECHNOLOGY_SHAFT` s podlahou na −2,200 m, svetlou
-výškou 2,080 m a pochôdznym poklopom 900 × 1 100 mm. Po otvorení poklopu sa dá
+V geometrickom strede južného dvojmetrového pásu bezprostredne za bazénom je
+pod drevenou terasou kompaktná železobetónová technologická šachta
+`POOL_TECHNOLOGY_SHAFT` s pôdorysom 3 100 × 1 700 mm, podlahou na −2,200 m,
+svetlou výškou 2,080 m a pochôdznym poklopom 900 × 1 100 mm. Po otvorení poklopu sa dá
 v režime Prechádzka cez E alebo dotyk bezpečne zostúpiť po sedempriečkovom
 nerezovom rebríku a rovnakým spôsobom sa vrátiť na terasu. Vnútri je
 vymodelovaná piesková filtrácia Ø 620 mm, predfilter, 0,75 kW obehové čerpadlo,

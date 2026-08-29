@@ -392,6 +392,14 @@ export const SOURCES = {
     date: "29. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientPoolShaftCenteredRevision20260829: {
+    id: "SRC-CLIENT-POOL-SHAFT-CENTERED-20260829",
+    title: "Spresnenie stavebníka · šachta v strede bazénovej terasy",
+    detail:
+      "Po prvom náhľade presunúť celú technologickú šachtu aj jej pochôdzny poklop do geometrického stredu nového dreveného pásu bezprostredne za bazénom. Zachovať bezpečný vstup po rebríku, kompletnú filtráciu a elektrický rozvádzač; súvisiacu dažďovú nádrž, vsakovanie a potrubia posunúť iba v rozsahu potrebnom na bezkolíznu koordináciu.",
+    date: "29. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientStreetPaversRevision20260824: {
     id: "SRC-CLIENT-STREET-PAVERS-20260824",
     title: "Revízia stavebníka · sivá bloková dlažba ulice",
@@ -2116,6 +2124,29 @@ export function terraceZoneDesignAreaM2(zone: TerraceZoneD1): number {
   return zone.activeDesignAreaM2 ?? zone.documentedAreaM2;
 }
 
+/**
+ * Active rainwater positions after the centrally placed pool-technology shaft
+ * is coordinated below the new south deck. Both objects remain below lawn;
+ * only their plan position changes from the earlier exterior proposal.
+ */
+export const RAINWATER_COORDINATION = Object.freeze({
+  tank: {
+    centerMm: { x: 16_600, y: 20_000 } as const satisfies Point2Mm,
+    diameterMm: 2_550,
+    volumeM3: 8.5,
+  },
+  infiltration: {
+    centerMm: { x: 10_481, y: 20_478 } as const satisfies Point2Mm,
+    widthMm: 5_000,
+    lengthMm: 3_500,
+    volumeM3: 6.1,
+  },
+  sourceIds: [
+    SOURCES.rainwater.id,
+    SOURCES.clientPoolShaftCenteredRevision20260829.id,
+  ],
+});
+
 export const GARDEN_POOL = Object.freeze({
   id: "POOL-COURTYARD-6X27",
   label: "Bazén 6,0 × 2,7 m",
@@ -2163,12 +2194,13 @@ export const GARDEN_POOL = Object.freeze({
   modelledClearancesMm: {
     mainTerrace: 0,
     wingTerrace: 0,
-    rainTankShell: 1_725,
-    infiltrationObject: 1_728,
+    rainTankShell: 2_325,
+    infiltrationObject: 2_328,
     closestRainPipeShell: 690,
-    technologyShaftShell: 400,
+    technologyShaftShell: 150,
   },
   sourceIds: [
+    SOURCES.clientPoolShaftCenteredRevision20260829.id,
     SOURCES.clientPoolTerraceShaftRevision20260829.id,
     SOURCES.clientExteriorRevision20260821.id,
     SOURCES.poolDesignProposal20260821.id,
@@ -2182,7 +2214,8 @@ export const GARDEN_POOL = Object.freeze({
  * New timber added only around the two still-open sides of the pool. The
  * existing D1 terrace already supplies the north side (1.9 m) and the wing
  * supplies the east side (3 m); this client revision adds an exact 2 m west
- * and south surround. Rectangles deliberately leave the hatch opening empty.
+ * and south surround. The complete compact technology shaft now sits below
+ * the centre of the south band; rectangles deliberately leave its hatch open.
  */
 export const POOL_SURROUND_DECK = Object.freeze({
   id: "TERR-POOL-SURROUND-20260829",
@@ -2198,13 +2231,17 @@ export const POOL_SURROUND_DECK = Object.freeze({
     y1: 18_400,
   } as const satisfies TerraceZoneRectMm,
   rectsMm: [
-    { x0: 9_440, y0: 13_100, x1: 11_440, y1: 13_400 },
-    { x0: 9_440, y0: 14_500, x1: 11_440, y1: 18_400 },
-    { x0: 9_440, y0: 13_400, x1: 9_690, y1: 14_500 },
-    { x0: 10_590, y0: 13_400, x1: 11_440, y1: 14_500 },
-    { x0: 11_440, y0: 16_400, x1: 18_040, y1: 18_400 },
+    { x0: 9_440, y0: 13_100, x1: 11_440, y1: 18_400 },
+    { x0: 11_440, y0: 16_400, x1: 18_040, y1: 16_850 },
+    { x0: 11_440, y0: 17_950, x1: 18_040, y1: 18_400 },
+    { x0: 11_440, y0: 16_850, x1: 14_290, y1: 17_950 },
+    { x0: 15_190, y0: 16_850, x1: 18_040, y1: 17_950 },
   ] as const satisfies readonly TerraceZoneRectMm[],
-  sourceId: SOURCES.clientPoolTerraceShaftRevision20260829.id,
+  sourceId: SOURCES.clientPoolShaftCenteredRevision20260829.id,
+  sourceIds: [
+    SOURCES.clientPoolShaftCenteredRevision20260829.id,
+    SOURCES.clientPoolTerraceShaftRevision20260829.id,
+  ],
 } satisfies DeckZone & {
   readonly nominalWidthMm: number;
   readonly grossAreaM2: number;
@@ -2212,6 +2249,7 @@ export const POOL_SURROUND_DECK = Object.freeze({
   readonly netDeckAreaM2: number;
   readonly outerBoundsMm: TerraceZoneRectMm;
   readonly sourceId: string;
+  readonly sourceIds: readonly string[];
 });
 
 export const POOL_TECHNOLOGY_SHAFT = Object.freeze({
@@ -2219,24 +2257,33 @@ export const POOL_TECHNOLOGY_SHAFT = Object.freeze({
   label: "Technologická šachta bazéna",
   status: "CLIENT_DESIGN_CONCEPT_REQUIRES_ZTI_AND_ELECTRICAL_COORDINATION",
   outerFootprintMm: {
-    x0: 8_840,
-    y0: 13_150,
-    x1: 11_040,
-    y1: 16_650,
+    x0: 13_190,
+    y0: 16_550,
+    x1: 16_290,
+    y1: 18_250,
   } as const satisfies TerraceZoneRectMm,
   wallThicknessMm: 160,
   floorElevationMm: -2_200,
   clearHeightMm: 2_080,
   reinforcedConcreteFloorMm: 140,
-  poolShellClearanceMm: 400,
+  poolShellClearanceMm: 150,
+  centeredBelowDeckMm: {
+    x: 14_740,
+    y: 17_400,
+  } as const satisfies Point2Mm,
+  coordinationClearancesMm: {
+    rainPipeShell: 180,
+    rainTankShell: 502,
+    infiltrationObject: 522,
+  },
   hatch: {
     id: "POOL-SHAFT-HATCH",
     label: "Poklop technologickej šachty",
     footprintMm: {
-      x0: 9_690,
-      y0: 13_400,
-      x1: 10_590,
-      y1: 14_500,
+      x0: 14_290,
+      y0: 16_850,
+      x1: 15_190,
+      y1: 17_950,
     } as const satisfies TerraceZoneRectMm,
     clearWidthMm: 900,
     clearLengthMm: 1_100,
@@ -2253,25 +2300,25 @@ export const POOL_TECHNOLOGY_SHAFT = Object.freeze({
     railDiameterMm: 42,
     rungDiameterMm: 30,
     rungCount: 7,
-    wallYmm: 13_330,
-    centerXmm: 10_140,
+    wallYmm: 16_730,
+    centerXmm: 14_740,
     bottomElevationMm: -1_820,
     topElevationMm: -80,
-    topStandingPointMm: { x: 10_140, y: 15_100 } as const satisfies Point2Mm,
-    bottomStandingPointMm: { x: 10_140, y: 14_760 } as const satisfies Point2Mm,
+    topStandingPointMm: { x: 14_740, y: 18_180 } as const satisfies Point2Mm,
+    bottomStandingPointMm: { x: 14_740, y: 17_400 } as const satisfies Point2Mm,
   },
   sandFilter: {
-    centerMm: { x: 9_420, y: 15_780 } as const satisfies Point2Mm,
+    centerMm: { x: 13_820, y: 17_400 } as const satisfies Point2Mm,
     vesselDiameterMm: 620,
     vesselHeightMm: 1_180,
     media: "QUARTZ_SAND_OR_FILTER_GLASS_TO_BE_CONFIRMED",
   },
   circulationPump: {
     footprintMm: {
-      x0: 10_000,
-      y0: 15_420,
-      x1: 10_760,
-      y1: 16_150,
+      x0: 15_300,
+      y0: 17_050,
+      x1: 16_050,
+      y1: 17_780,
     } as const satisfies TerraceZoneRectMm,
     motorPowerKw: 0.75,
   },
@@ -2279,22 +2326,23 @@ export const POOL_TECHNOLOGY_SHAFT = Object.freeze({
     id: "POOL-SHAFT-ELECTRICAL-PANEL",
     breakerCount: 8,
     footprintMm: {
-      x0: 8_930,
-      y0: 14_620,
-      x1: 9_110,
-      y1: 15_300,
+      x0: 13_280,
+      y0: 17_000,
+      x1: 13_460,
+      y1: 17_680,
     } as const satisfies TerraceZoneRectMm,
     bottomElevationMm: -1_560,
     topElevationMm: -660,
     protection: "IP65_RCD_AND_EQUIPOTENTIAL_BONDING_TO_BE_DESIGNED",
   },
   serviceAisleMm: {
-    x0: 9_680,
-    y0: 14_520,
-    x1: 10_780,
-    y1: 15_340,
+    x0: 14_160,
+    y0: 16_900,
+    x1: 15_220,
+    y1: 17_900,
   } as const satisfies TerraceZoneRectMm,
   sourceIds: [
+    SOURCES.clientPoolShaftCenteredRevision20260829.id,
     SOURCES.clientPoolTerraceShaftRevision20260829.id,
     SOURCES.floorPlan.id,
     SOURCES.rainwater.id,
@@ -2351,9 +2399,9 @@ export const UTILITY_ROUTES: readonly UtilityRoute[] = [
   route("UTIL-WATER", "Navrhnutá vodovodná prípojka", "water", [[13500, -1689], [13500, 1415], [12861, 1415], [12861, 3000]], SOURCES.water.id, "DESIGNED", 80),
   route("UTIL-SEWER", "Navrhnutá splašková kanalizácia", "sewer", [[15794, 3000], [15712, 1483], [16814, 1483]], SOURCES.sewer.id, "DESIGNED", 95),
   route("UTIL-SEWER-FUTURE", "Budúce gravitačné prepojenie", "sewer", [[15712, 1483], [15640, -400], [15400, -5600]], SOURCES.sewer.id, "FUTURE_OPTION", 45),
-  route("UTIL-RAIN-SOUTH", "Dažďová kanalizácia · prítok k ŠD · západne od bazénovej šachty", "rainwater", [[7600, 10800], [7600, 17400], [16900, 17400]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientExteriorRevision20260821.id, SOURCES.poolDesignProposal20260821.id, SOURCES.clientPoolTerraceShaftRevision20260829.id]),
-  route("UTIL-RAIN-NORTH", "Dažďová kanalizácia · ŠD–Šf–AN · pri bazénovej terase", "rainwater", [[26300, 21000], [22400, 15600], [18800, 15600], [18800, 17400], [16900, 17400]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientPoolTerraceShaftRevision20260829.id]),
-  route("UTIL-RAIN-OVERFLOW", "Bezpečnostný prepad do vsaku · pod novou terasou", "rainwater", [[15416, 18147], [13981, 19878], [12981, 19878]], SOURCES.rainwater.id, "DESIGNED", 55, "REVISION_CONFLICT", [SOURCES.clientPoolTerraceShaftRevision20260829.id]),
+  route("UTIL-RAIN-SOUTH", "Dažďová kanalizácia · prítok k ŠD · južne od centrálnej bazénovej šachty", "rainwater", [[7600, 10800], [7600, 18500], [16900, 18500]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientExteriorRevision20260821.id, SOURCES.poolDesignProposal20260821.id, SOURCES.clientPoolTerraceShaftRevision20260829.id, SOURCES.clientPoolShaftCenteredRevision20260829.id]),
+  route("UTIL-RAIN-NORTH", "Dažďová kanalizácia · ŠD–Šf–AN · pri bazénovej terase", "rainwater", [[26300, 21000], [22400, 15600], [18800, 15600], [18800, 18500], [16900, 18500]], SOURCES.rainwater.id, "DESIGNED", 70, "REVISION_CONFLICT", [SOURCES.clientPoolTerraceShaftRevision20260829.id, SOURCES.clientPoolShaftCenteredRevision20260829.id]),
+  route("UTIL-RAIN-OVERFLOW", "Bezpečnostný prepad do vsaku · za centrálnou bazénovou šachtou", "rainwater", [[15416, 18747], [13981, 20478], [12981, 20478]], SOURCES.rainwater.id, "DESIGNED", 55, "REVISION_CONFLICT", [SOURCES.clientPoolTerraceShaftRevision20260829.id, SOURCES.clientPoolShaftCenteredRevision20260829.id]),
   route("UTIL-ELECTRICITY", "Domové vedenie NN · staršia C3 trasa", "electricity", [[0, 3500], [2600, 4200], [5200, 4750], [7236, 5327]], SOURCES.coordination.id, "DESIGNED", 55, "REVISION_CONFLICT"),
 ] as const;
 
