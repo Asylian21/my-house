@@ -501,10 +501,15 @@ export function createFlatPolygonWithHoles(
   const triangulated = earcut(planar, holeIndices, 2);
   const indices: number[] = [];
   for (let index = 0; index < triangulated.length; index += 3) {
+    // zM() mirrors the plan Y axis into scene Z, so Earcut already returns
+    // the X/Z winding used by Babylon's CreateGround in this RHS scene.
+    // Reversing it here turns every lawn/terrain triangle into a back face;
+    // the technical material is two-sided, but the realistic PBR material
+    // correctly culls it and makes the grass appear to disappear.
     indices.push(
       triangulated[index],
-      triangulated[index + 2],
       triangulated[index + 1],
+      triangulated[index + 2],
     );
   }
   const data = new VertexData();

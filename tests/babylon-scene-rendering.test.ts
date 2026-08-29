@@ -75,6 +75,7 @@ describe("Babylon scene depth occlusion", () => {
   it("removes the transparent pool footprint from the grass triangles", () => {
     const engine = new NullEngine();
     const scene = new Scene(engine);
+    scene.useRightHandedSystem = true;
     const subjectParcel = CADASTRAL_PARCELS.find((parcel) => parcel.isSubject);
     expect(subjectParcel).toBeDefined();
 
@@ -91,6 +92,24 @@ describe("Babylon scene depth occlusion", () => {
       const indices = lawn.getIndices();
       expect(positions).not.toBeNull();
       expect(indices).not.toBeNull();
+
+      // Match the production RHS scene: Babylon ground faces use this X/Z
+      // winding. The realistic lawn material culls the opposite side, so a
+      // positive cross-product here would make the entire lawn invisible.
+      for (let offset = 0; offset < indices!.length; offset += 3) {
+        const [a, b, c] = [
+          indices![offset],
+          indices![offset + 1],
+          indices![offset + 2],
+        ].map((index) => [
+          positions![index * 3],
+          positions![index * 3 + 2],
+        ] as const);
+        const facingY =
+          (b[1] - a[1]) * (c[0] - a[0]) -
+          (b[0] - a[0]) * (c[1] - a[1]);
+        expect(facingY).toBeLessThan(0);
+      }
 
       const covers = (pointMm: { readonly x: number; readonly y: number }) => {
         const point = [sceneXM(pointMm.x), sceneZM(pointMm.y)] as const;
