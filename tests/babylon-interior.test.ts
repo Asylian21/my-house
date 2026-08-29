@@ -15,6 +15,7 @@ import {
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_WALLS,
+  OFFICE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
 } from "../lib/twin-interior";
@@ -250,6 +251,144 @@ describe("Babylon interior fit-out", () => {
           expect(guard.checkCollisions).toBe(true);
           expect(guard.isVisible).toBe(false);
         }
+      }
+
+      const officeMeshes = scene.meshes.filter((mesh) =>
+        mesh.name.startsWith(OFFICE_FITOUT.id),
+      );
+      for (const required of [
+        "· CABINET ·",
+        "· PRINTER ·",
+        "· DESK ·",
+        "· MONITOR-40-21:9 ·",
+        "· CHAIR ·",
+        "· WHITEBOARD ·",
+      ]) {
+        expect(
+          officeMeshes.some((mesh) => mesh.name.includes(required)),
+          `office renders ${required}`,
+        ).toBe(true);
+      }
+
+      const officeGuards = officeMeshes.filter(
+        (mesh) => mesh.metadata?.walkCollisionOnly === true,
+      );
+      expect(officeGuards).toHaveLength(3);
+      const expectedOfficeGuards = [
+        ["· CABINET · navigačný obrys", OFFICE_FITOUT.cabinet.footprintMm],
+        ["· DESK · navigačný obrys", OFFICE_FITOUT.desk.footprintMm],
+        ["· CHAIR · navigačný obrys pojazdu", OFFICE_FITOUT.chair.footprintMm],
+      ] as const;
+      for (const [marker, footprint] of expectedOfficeGuards) {
+        const guard = officeGuards.find((mesh) => mesh.name.includes(marker));
+        expect(guard, `${marker} exists`).toBeDefined();
+        expect(guard?.checkCollisions).toBe(true);
+        expect(guard?.isVisible).toBe(false);
+        guard?.computeWorldMatrix(true);
+        const bounds = guard?.getBoundingInfo().boundingBox;
+        expect((bounds?.extendSizeWorld.x ?? 0) * 2).toBeCloseTo(
+          (footprint.x1 - footprint.x0) * MM_TO_M,
+          8,
+        );
+        expect((bounds?.extendSizeWorld.z ?? 0) * 2).toBeCloseTo(
+          (footprint.y1 - footprint.y0) * MM_TO_M,
+          8,
+        );
+        expect(guard?.position.x).toBeCloseTo(
+          sceneXM((footprint.x0 + footprint.x1) / 2),
+          8,
+        );
+        expect(guard?.position.z).toBeCloseTo(
+          sceneZM((footprint.y0 + footprint.y1) / 2),
+          8,
+        );
+      }
+
+      const cabinetNicheBack = officeMeshes.find((mesh) =>
+        mesh.name.includes("· CABINET · tmavý chrbát tlačiarňového výklenku"),
+      );
+      const cabinetFrontSeams = officeMeshes.filter((mesh) =>
+        mesh.name.includes("· CABINET · zvislá tieňová škára"),
+      );
+      expect(cabinetNicheBack?.position.x).toBeCloseTo(
+        sceneXM(OFFICE_FITOUT.cabinet.printerNiche.footprintMm.x1 - 8),
+        8,
+      );
+      expect(cabinetFrontSeams).toHaveLength(2);
+      expect(
+        cabinetFrontSeams.every(
+          (mesh) => mesh.position.x < sceneXM(OFFICE_FITOUT.cabinet.footprintMm.x0),
+        ),
+      ).toBe(true);
+
+      const printerBody = officeMeshes.find((mesh) =>
+        mesh.name.includes("· PRINTER · biele telo integrovanej tlačiarne"),
+      );
+      for (const frontDetail of [
+        "· PRINTER · čierny výstup papiera",
+        "· PRINTER · dotykový ovládací panel",
+        "· PRINTER · čistý papier vo výstupe",
+      ]) {
+        const mesh = officeMeshes.find((candidate) =>
+          candidate.name.includes(frontDetail),
+        );
+        expect(mesh, `${frontDetail} exists`).toBeDefined();
+        expect(mesh?.position.x).toBeLessThan(printerBody?.position.x ?? 0);
+      }
+
+      const monitorShells = officeMeshes.filter((mesh) =>
+        mesh.name.includes("· MONITOR-40-21:9 · zakrivený zadný segment"),
+      );
+      const monitorGlass = officeMeshes.filter((mesh) =>
+        mesh.name.includes("· MONITOR-40-21:9 · obrazový segment"),
+      );
+      expect(monitorShells).toHaveLength(9);
+      expect(monitorGlass).toHaveLength(9);
+      for (let index = 0; index < 9; index += 1) {
+        expect(monitorGlass[index].position.x).toBeGreaterThan(
+          monitorShells[index].position.x,
+        );
+      }
+      const monitorPlanSpanM =
+        Math.max(...monitorShells.map((mesh) => mesh.position.z)) -
+        Math.min(...monitorShells.map((mesh) => mesh.position.z));
+      expect(monitorPlanSpanM).toBeGreaterThan(0.8);
+      expect(
+        monitorShells.every(
+          (mesh) => mesh.position.x >= sceneXM(OFFICE_FITOUT.desk.monitor.centerMm.x),
+        ),
+      ).toBe(true);
+
+      const chairBack = officeMeshes.find((mesh) =>
+        mesh.name.includes("· CHAIR · vysoké ergonomické operadlo"),
+      );
+      const chairArmPosts = officeMeshes.filter((mesh) =>
+        mesh.name.includes("· CHAIR · nastaviteľná podrúčka"),
+      );
+      expect(chairBack?.position.x).toBeGreaterThan(
+        sceneXM(OFFICE_FITOUT.chair.centerMm.x),
+      );
+      expect(chairArmPosts).toHaveLength(2);
+      expect(
+        chairArmPosts.every(
+          (mesh) => mesh.position.x < sceneXM(OFFICE_FITOUT.chair.centerMm.x),
+        ),
+      ).toBe(true);
+
+      const officeCableTray = officeMeshes.find((mesh) =>
+        mesh.name.includes("· DESK · skrytý káblový žľab"),
+      );
+      const officeLight = officeMeshes.find((mesh) =>
+        mesh.name.includes("· LIGHT · čierny lineárny stropný profil"),
+      );
+      for (const [mesh, widthM, depthM] of [
+        [officeCableTray, 0.15, 0.88],
+        [officeLight, 0.058, 1.26],
+      ] as const) {
+        mesh?.computeWorldMatrix(true);
+        const bounds = mesh?.getBoundingInfo().boundingBox;
+        expect((bounds?.extendSizeWorld.x ?? 0) * 2).toBeCloseTo(widthM, 8);
+        expect((bounds?.extendSizeWorld.z ?? 0) * 2).toBeCloseTo(depthM, 8);
       }
 
       const heatingMeshes = scene.meshes.filter((mesh) =>

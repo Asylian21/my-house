@@ -246,18 +246,21 @@ Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uza
 kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
 musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.
 
-Pracovňa 1.04 je v klientskej revízii z 24. 8. 2026 preskladaná ako
-minimalistický pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečku k
-zádveriu využíva 2 550 mm vysoká greige bezúchytková skriňa s integrovanou
-bielo-čiernou tlačiarňou. Naprieč k južnému oknu stojí subtílny dubový stôl
-1 800 × 800 mm s prehnutým 40-palcovým ultrawide monitorom 21 : 9 a čiernym
-ergonomickým kreslom. Veľké okno FRONT-07 priamo v osi pohľadu ostáva v
-pôvodnom stavebnom otvore 2 000 × 1 600 mm, ale podľa nadväzujúcej klientskej
-revízie je jednou pevnou neotváravou tabuľou bez stredového stĺpika, krídel a
-kľučiek, s ultra-tenkým 35 mm pohľadovým rámom. Bezrámová 1 700 mm široká tabuľa na fixky je za chrbtom
-používateľa na severnej stene, teda vľavo po vstupe a oproti stolu; od rohu
-okna EAST-01 má približne 707 mm diagonálny odstup. Voľný vstupný pás má
-1 538 × 1 012 mm a rešpektuje celý oblúk dverí.
+Pracovňa 1.04 je v klientskej revízii z 29. 8. 2026 preskladaná ako
+minimalistický pracovný kokpit (`OFFICE_FITOUT`). Greige bezúchytková skriňa
+s integrovanou bielo-čiernou tlačiarňou sa presúva z priečky pri zádverí na
+presne protiľahlú východnú stenu. Zachováva hĺbku 538 mm a výšku 2 550 mm,
+ale skracuje sa z 1 697 na 1 461 mm, aby pred oknom EAST-01 zostal 60 mm
+odstup od stavebného otvoru a 20 mm od presahu parapetu. Na pôvodnej strane
+skrine je pozdĺž steny subtílny dubový stôl 1 800 × 800 mm; používateľ aj
+čierne ergonomické kreslo smerujú k západnej stene a prehnutý 40-palcový
+ultrawide monitor 21 : 9 má obrazovku otočenú do miestnosti. Medzi obrysom
+kresla a novou skriňou ostáva 1 091 mm, po započítaní 220 mm kolízneho
+polomeru chodca z každej strany 651 mm. Veľké južné okno FRONT-07 zostáva v
+pôvodnom stavebnom otvore 2 000 × 1 600 mm ako jedna pevná neotváravá tabuľa
+bez stredového stĺpika, krídel a kľučiek, s ultra-tenkým 35 mm pohľadovým
+rámom. Bezrámová 1 700 mm široká tabuľa na fixky zostáva na voľnej severnej
+stene; voľný vstupný pás 1 538 × 1 012 mm rešpektuje celý oblúk dverí.
 
 Výrez na východnej stene zádveria 1.01 vypĺňa samostatná vstavaná zostava
 `ENTRY_FITOUT`: celovýšková 950 mm skriňa na kabáty, dvojzásuvkový botník,

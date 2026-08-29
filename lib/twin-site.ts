@@ -312,6 +312,14 @@ export const SOURCES = {
     date: "24. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientOfficeCabinetDeskSwapRevision20260829: {
+    id: "SRC-CLIENT-OFFICE-CABINET-DESK-SWAP-20260829",
+    title: "Revízia stavebníka · výmena strán skrinky a pracovného stola",
+    detail:
+      "V pracovni 1.04 presunúť skriňu s integrovanou tlačiarňou z priečky pri zádverí presne na protiľahlú východnú stenu a skrátiť ju tak, aby zachovala odstup od okna EAST-01. Na pôvodnú stranu skrine osadiť pracovný stôl pozdĺž steny; 40-palcový ultrawide monitor aj ergonomické kreslo otočiť smerom k tejto stene. Zachovať voľný vstup, celé dverné krídlo, obe okná a priechod medzi kreslom a skriňou.",
+    date: "29. 8. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientOfficeFixedWindowRevision20260824: {
     id: "SRC-CLIENT-OFFICE-FIXED-WINDOW-20260824",
     title: "Revízia stavebníka · pevné ultra-slim okno v pracovni",

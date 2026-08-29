@@ -122,6 +122,7 @@ import {
 import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
+  OFFICE_FITOUT,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
@@ -833,9 +834,9 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
     case "ROOM-1-10":
       return { x: room.standingPointMm.x, y: 11500 };
     case "ROOM-1-04":
-      // The office is entered through its north-west bay; frame the rotated
-      // desk and 40-inch ultrawide instead of looking past them at FRONT-07.
-      return { x: 26230, y: 4100 };
+      // Frame both sides of the compact room: the west-wall workstation and
+      // the shortened east-wall printer cabinet.
+      return OFFICE_FITOUT.cameraLookTargetMm;
     case "ROOM-1-08":
     case "ROOM-1-11":
       return { x: room.standingPointMm.x, y: 2500 };
