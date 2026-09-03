@@ -43,6 +43,7 @@ import {
 import { segmentFacadeMm } from "../lib/twin-facade";
 import { slatCenterDistancesMm } from "../lib/twin-fence";
 import { roofHeightMm, roofMountTransform } from "../lib/twin-roof";
+import { DOOR_INTERACTION } from "../lib/babylon-doors";
 
 function pointInRing(
   point: { readonly x: number; readonly y: number },
@@ -1257,6 +1258,12 @@ describe("data to geometry contract", () => {
     expect(SOURCES.clientPoolShaftCenteredRevision20260829.detail).toContain(
       "geometrického stredu",
     );
+    expect(
+      SOURCES.clientPoolDeckNarrowShaftCornerRevision20260829.detail,
+    ).toContain("1 000 mm");
+    expect(
+      SOURCES.clientPoolDeckNarrowShaftCornerRevision20260829.detail,
+    ).toContain("juhozápadného");
 
     const copingXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
     const copingYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
@@ -1321,7 +1328,7 @@ describe("data to geometry contract", () => {
     expect(GARDEN_POOL.modelledClearancesMm.rainTankShell).toBe(2_325);
     expect(GARDEN_POOL.modelledClearancesMm.infiltrationObject).toBe(2_328);
     expect(GARDEN_POOL.modelledClearancesMm.closestRainPipeShell).toBe(690);
-    expect(GARDEN_POOL.modelledClearancesMm.technologyShaftShell).toBe(150);
+    expect(GARDEN_POOL.modelledClearancesMm.technologyShaftShell).toBe(200);
     const reroutedRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-SOUTH",
     );
@@ -1336,6 +1343,7 @@ describe("data to geometry contract", () => {
       SOURCES.poolDesignProposal20260821.id,
       SOURCES.clientPoolTerraceShaftRevision20260829.id,
       SOURCES.clientPoolShaftCenteredRevision20260829.id,
+      SOURCES.clientPoolDeckNarrowShaftCornerRevision20260829.id,
     ]);
     const northRain = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-NORTH",
@@ -1355,7 +1363,7 @@ describe("data to geometry contract", () => {
     expect(northRain?.revisionStatus).toBe("REVISION_CONFLICT");
   });
 
-  it("centres the complete shaft below the two-metre terrace behind the pool", () => {
+  it("narrows the longitudinal deck and moves the complete shaft to the outer garden corner", () => {
     const poolXs = GARDEN_POOL.copingFootprintMm.map(({ x }) => x);
     const poolYs = GARDEN_POOL.copingFootprintMm.map(({ y }) => y);
     const poolBounds = {
@@ -1364,10 +1372,11 @@ describe("data to geometry contract", () => {
       y0: Math.min(...poolYs),
       y1: Math.max(...poolYs),
     };
-    expect(poolBounds.x0 - POOL_SURROUND_DECK.outerBoundsMm.x0).toBe(2_000);
+    expect(poolBounds.x0 - POOL_SURROUND_DECK.outerBoundsMm.x0).toBe(1_000);
     expect(POOL_SURROUND_DECK.outerBoundsMm.y1 - poolBounds.y1).toBe(2_000);
-    expect(POOL_SURROUND_DECK.nominalWidthMm).toBe(2_000);
-    expect(POOL_SURROUND_DECK.grossAreaM2).toBe(23.8);
+    expect(POOL_SURROUND_DECK.longitudinalWidthMm).toBe(1_000);
+    expect(POOL_SURROUND_DECK.rearWidthMm).toBe(2_000);
+    expect(POOL_SURROUND_DECK.grossAreaM2).toBe(18.5);
     expect(POOL_SURROUND_DECK.hatchOpeningAreaM2).toBe(0.99);
     const renderedDeckAreaM2 = POOL_SURROUND_DECK.rectsMm.reduce(
       (sum, rect) =>
@@ -1378,6 +1387,10 @@ describe("data to geometry contract", () => {
       POOL_SURROUND_DECK.netDeckAreaM2,
       10,
     );
+    expect(
+      POOL_SURROUND_DECK.grossAreaM2 -
+        POOL_SURROUND_DECK.hatchOpeningAreaM2,
+    ).toBe(POOL_SURROUND_DECK.netDeckAreaM2);
 
     const shaft = POOL_TECHNOLOGY_SHAFT;
     const hatch = shaft.hatch.footprintMm;
@@ -1391,7 +1404,7 @@ describe("data to geometry contract", () => {
       expect(overlapsHatch).toBe(false);
     }
 
-    const southDeckCenter = {
+    const rearDeckCenter = {
       x: (poolBounds.x0 + poolBounds.x1) / 2,
       y: (poolBounds.y1 + POOL_SURROUND_DECK.outerBoundsMm.y1) / 2,
     };
@@ -1403,17 +1416,49 @@ describe("data to geometry contract", () => {
       x: (hatch.x0 + hatch.x1) / 2,
       y: (hatch.y0 + hatch.y1) / 2,
     };
-    expect(southDeckCenter).toEqual({ x: 14_740, y: 17_400 });
-    expect(shaft.centeredBelowDeckMm).toEqual(southDeckCenter);
-    expect(shaftCenter).toEqual(southDeckCenter);
-    expect(hatchCenter).toEqual(southDeckCenter);
-
-    expect(shaft.outerFootprintMm.x0).toBeGreaterThan(poolBounds.x0);
-    expect(shaft.outerFootprintMm.x1).toBeLessThan(poolBounds.x1);
-    expect(shaft.outerFootprintMm.y0).toBeGreaterThan(poolBounds.y1);
-    expect(shaft.outerFootprintMm.y1).toBeLessThan(
-      POOL_SURROUND_DECK.outerBoundsMm.y1,
+    expect(rearDeckCenter).toEqual({ x: 14_740, y: 17_400 });
+    expect(shaft.placement).toBe(
+      "OUTER_SOUTHWEST_GARDEN_CORNER_AWAY_FROM_HOUSE",
     );
+    expect(shaft.placementCenterMm).toEqual({ x: 11_990, y: 17_450 });
+    expect(shaftCenter).toEqual(shaft.placementCenterMm);
+    expect(hatchCenter).toEqual(shaft.placementCenterMm);
+    expect(shaftCenter).not.toEqual(rearDeckCenter);
+
+    const westDeckBand = {
+      x0: POOL_SURROUND_DECK.outerBoundsMm.x0,
+      y0: POOL_SURROUND_DECK.outerBoundsMm.y0,
+      x1: poolBounds.x0,
+      y1: POOL_SURROUND_DECK.outerBoundsMm.y1,
+    };
+    const rearDeckBand = {
+      x0: poolBounds.x0,
+      y0: poolBounds.y1,
+      x1: POOL_SURROUND_DECK.outerBoundsMm.x1,
+      y1: POOL_SURROUND_DECK.outerBoundsMm.y1,
+    };
+    const intersectionAreaM2 = (
+      left: typeof shaft.outerFootprintMm,
+      right: typeof shaft.outerFootprintMm,
+    ) =>
+      (Math.max(0, Math.min(left.x1, right.x1) - Math.max(left.x0, right.x0)) *
+        Math.max(0, Math.min(left.y1, right.y1) - Math.max(left.y0, right.y0))) /
+      1_000_000;
+    const shaftAreaM2 =
+      ((shaft.outerFootprintMm.x1 - shaft.outerFootprintMm.x0) *
+        (shaft.outerFootprintMm.y1 - shaft.outerFootprintMm.y0)) /
+      1_000_000;
+    expect(intersectionAreaM2(shaft.outerFootprintMm, westDeckBand)).toBe(1.7);
+    expect(intersectionAreaM2(shaft.outerFootprintMm, rearDeckBand)).toBe(3.57);
+    expect(intersectionAreaM2(westDeckBand, rearDeckBand)).toBe(0);
+    expect(
+      intersectionAreaM2(shaft.outerFootprintMm, westDeckBand) +
+        intersectionAreaM2(shaft.outerFootprintMm, rearDeckBand),
+    ).toBe(shaftAreaM2);
+    expect(hatch.x0).toBeGreaterThanOrEqual(rearDeckBand.x0);
+    expect(hatch.x1).toBeLessThanOrEqual(rearDeckBand.x1);
+    expect(hatch.y0).toBeGreaterThanOrEqual(rearDeckBand.y0);
+    expect(hatch.y1).toBeLessThanOrEqual(rearDeckBand.y1);
     expect(shaft.outerFootprintMm.y0 - poolBounds.y1).toBe(
       shaft.poolShellClearanceMm,
     );
@@ -1462,15 +1507,47 @@ describe("data to geometry contract", () => {
     expect(shaft.ladder.bottomStandingPointMm.x).toBeLessThan(clearInterior.x1);
     expect(shaft.ladder.bottomStandingPointMm.y).toBeGreaterThan(clearInterior.y0);
     expect(shaft.ladder.bottomStandingPointMm.y).toBeLessThan(clearInterior.y1);
-    expect(shaft.ladder.topStandingPointMm.x).toBe(southDeckCenter.x);
-    expect(shaft.ladder.topStandingPointMm.y).toBeGreaterThan(hatch.y1);
-    expect(shaft.ladder.topStandingPointMm.y).toBeLessThanOrEqual(
-      POOL_SURROUND_DECK.outerBoundsMm.y1,
+    const topStanding = shaft.ladder.topStandingPointMm;
+    expect(topStanding.x).toBeGreaterThanOrEqual(rearDeckBand.x0);
+    expect(topStanding.x).toBeLessThanOrEqual(rearDeckBand.x1);
+    expect(topStanding.y).toBeGreaterThanOrEqual(rearDeckBand.y0);
+    expect(topStanding.y).toBeLessThanOrEqual(rearDeckBand.y1);
+    expect(
+      Math.hypot(topStanding.x - hatchCenter.x, topStanding.y - hatchCenter.y),
+    ).toBeGreaterThanOrEqual(740);
+    expect(
+      Math.hypot(topStanding.x - hatchCenter.x, topStanding.y - hatchCenter.y),
+    ).toBeLessThanOrEqual(
+      DOOR_INTERACTION.nearOmnidirectionalDistanceM * 1_000,
+    );
+    const hatchFrame = {
+      x0: hatch.x0 - 58,
+      y0: hatch.y0 - 58,
+      x1: hatch.x1 + 58,
+      y1: hatch.y1 + 58,
+    };
+    const topFrameClearanceMm = Math.hypot(
+      Math.max(hatchFrame.x0 - topStanding.x, topStanding.x - hatchFrame.x1, 0),
+      Math.max(hatchFrame.y0 - topStanding.y, topStanding.y - hatchFrame.y1, 0),
+    );
+    const minimumLandingClearanceMm =
+      DOOR_INTERACTION.actorRadiusM * 1_000 + 20;
+    expect(topFrameClearanceMm).toBeGreaterThanOrEqual(
+      minimumLandingClearanceMm,
+    );
+    const pumpGuard = {
+      x0: shaft.circulationPump.footprintMm.x0 - 80,
+      y0: shaft.circulationPump.footprintMm.y0 - 70,
+      x1: shaft.circulationPump.footprintMm.x1 + 80,
+      y1: shaft.circulationPump.footprintMm.y1 + 70,
+    };
+    const topPumpClearanceMm = Math.hypot(
+      Math.max(pumpGuard.x0 - topStanding.x, topStanding.x - pumpGuard.x1, 0),
+      Math.max(pumpGuard.y0 - topStanding.y, topStanding.y - pumpGuard.y1, 0),
     );
     expect(
-      POOL_SURROUND_DECK.outerBoundsMm.y1 -
-        shaft.ladder.topStandingPointMm.y,
-    ).toBe(220);
+      topPumpClearanceMm,
+    ).toBeGreaterThanOrEqual(minimumLandingClearanceMm);
 
     const rainSouth = UTILITY_ROUTES.find(({ id }) => id === "UTIL-RAIN-SOUTH");
     expect(
@@ -1487,20 +1564,31 @@ describe("data to geometry contract", () => {
     );
     expect(tankClearance).toBe(shaft.coordinationClearancesMm.rainTankShell);
     const infiltrationBounds = {
+      x0:
+        RAINWATER_COORDINATION.infiltration.centerMm.x -
+        RAINWATER_COORDINATION.infiltration.widthMm / 2,
       x1:
         RAINWATER_COORDINATION.infiltration.centerMm.x +
         RAINWATER_COORDINATION.infiltration.widthMm / 2,
       y0:
         RAINWATER_COORDINATION.infiltration.centerMm.y -
         RAINWATER_COORDINATION.infiltration.lengthMm / 2,
+      y1:
+        RAINWATER_COORDINATION.infiltration.centerMm.y +
+        RAINWATER_COORDINATION.infiltration.lengthMm / 2,
     };
+    const infiltrationDxMm = Math.max(
+      infiltrationBounds.x0 - shaft.outerFootprintMm.x1,
+      shaft.outerFootprintMm.x0 - infiltrationBounds.x1,
+      0,
+    );
+    const infiltrationDyMm = Math.max(
+      infiltrationBounds.y0 - shaft.outerFootprintMm.y1,
+      shaft.outerFootprintMm.y0 - infiltrationBounds.y1,
+      0,
+    );
     expect(
-      Math.round(
-        Math.hypot(
-          shaft.outerFootprintMm.x0 - infiltrationBounds.x1,
-          infiltrationBounds.y0 - shaft.outerFootprintMm.y1,
-        ),
-      ),
+      Math.round(Math.hypot(infiltrationDxMm, infiltrationDyMm)),
     ).toBe(shaft.coordinationClearancesMm.infiltrationObject);
     const overflow = UTILITY_ROUTES.find(
       ({ id }) => id === "UTIL-RAIN-OVERFLOW",

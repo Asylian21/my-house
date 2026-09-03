@@ -41,8 +41,12 @@ import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import "@babylonjs/core/Meshes/thinInstanceMesh";
 import { Ray } from "@babylonjs/core/Culling/ray";
+import type { Camera } from "@babylonjs/core/Cameras/camera";
+import { Constants } from "@babylonjs/core/Engines/constants";
+import { ColorCurves } from "@babylonjs/core/Materials/colorCurves";
 import { DefaultRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline";
 import { SSAO2RenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline";
+import { SSRRenderingPipeline } from "@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssrRenderingPipeline";
 import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Rendering/depthRendererSceneComponent";
 import "@babylonjs/core/Rendering/geometryBufferRendererSceneComponent";
@@ -115,13 +119,16 @@ import {
 } from "./babylon-openings";
 import {
   BabylonDoorController,
+  DOOR_INTERACTION,
   INTERACTIVE_DOOR_INVENTORY,
   type AnimatedDoorRegistration,
+  type DoorActorState,
   type DoorInteractionSnapshot,
 } from "./babylon-doors";
 import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
+  OFFICE_FITOUT,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
@@ -139,19 +146,27 @@ import {
 } from "./twin-garage";
 import {
   EXTERIOR_RENDER_STABILITY,
+  INTERIOR_RENDER_QUALITY,
   ORBIT_ZOOM,
+  PHOTOGRAPHIC_GRADE,
   clampOrbitRadius,
   deriveRenderQualityProfile,
   flightCommandForCode,
   flightWheelDollyDistanceM,
+  initialAdaptivePostFxState,
   integrateFlightDolly,
   integrateFlightPosition,
+  interiorPostFxPlan,
   isSelectionTap,
   normalizeWheelPixels,
   orbitZoomMultiplier,
+  shouldEngageInteriorPostFx,
+  stepAdaptivePostFx,
   stepOrbitZoom,
   wheelZoomGesture,
+  type AdaptivePostFxState,
   type FlightCommand,
+  type InteriorPostFxPlan,
   type NavigationMode,
   type RenderQualityProfile,
   type WalkSurfaceKind,
@@ -185,6 +200,8 @@ export interface SceneSnapshot {
 
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
+/** Cascade horizon for the exterior: reaches the far parcel boundary and road. */
+const EXTERIOR_SHADOW_MAX_Z = 78;
 
 function markWalkSurface<T extends AbstractMesh>(
   mesh: T,
@@ -833,9 +850,9 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
     case "ROOM-1-10":
       return { x: room.standingPointMm.x, y: 11500 };
     case "ROOM-1-04":
-      // The office is entered through its north-west bay; frame the rotated
-      // desk and 40-inch ultrawide instead of looking past them at FRONT-07.
-      return { x: 26230, y: 4100 };
+      // Frame both sides of the compact room: the west-wall workstation and
+      // the shortened east-wall printer cabinet.
+      return OFFICE_FITOUT.cameraLookTargetMm;
     case "ROOM-1-08":
     case "ROOM-1-11":
       return { x: room.standingPointMm.x, y: 2500 };
@@ -877,6 +894,13 @@ export class TwinSceneController {
   private readonly doors: BabylonDoorController;
   private readonly postPipeline: DefaultRenderingPipeline;
   private readonly ssaoPipeline: SSAO2RenderingPipeline | null;
+  private ssrPipeline: SSRRenderingPipeline | null = null;
+  private ssrUnavailable = false;
+  private readonly postProcessTextureType: number;
+  private interiorPostFxEngaged = false;
+  private interiorPostFxCamera: Camera | null = null;
+  private interiorPostFxPlanApplied: InteriorPostFxPlan | null = null;
+  private adaptivePostFx: AdaptivePostFxState = initialAdaptivePostFxState();
   private readonly poolWaterNormal: Texture;
   private readonly selectedOriginals = new Map<
     AbstractMesh,
@@ -895,7 +919,6 @@ export class TwinSceneController {
   private pointerGesture: PointerGestureState | null = null;
   private navigationMode: NavigationMode = "orbit";
   private renderQuality: RenderQualityProfile;
-  private ssaoAttached = false;
   private flightHeading = { x: 0, z: -1 };
   private orbitFocusDistance = 18;
   private orbitZoomTargetM = ORBIT_ZOOM.upperRadiusLimitM;
@@ -1091,7 +1114,7 @@ export class TwinSceneController {
       this.cascadedShadowGenerator.cascadeBlendPercentage =
         EXTERIOR_RENDER_STABILITY.shadowCascadeBlendPercentage;
       this.cascadedShadowGenerator.lambda = 0.72;
-      this.cascadedShadowGenerator.shadowMaxZ = 78;
+      this.cascadedShadowGenerator.shadowMaxZ = EXTERIOR_SHADOW_MAX_Z;
       this.cascadedShadowGenerator.depthClamp = true;
     }
     this.shadowGenerator.usePercentageCloserFiltering = true;
@@ -1150,53 +1173,63 @@ export class TwinSceneController {
     this.postPipeline.grain.intensity = 9;
     this.postPipeline.grain.animated =
       EXTERIOR_RENDER_STABILITY.filmGrainAnimated;
-    const renderCameras = [
-      this.orbitCamera,
-      this.flightCamera,
-      this.garageCinematicCamera,
-    ];
+    // Screen-space passes run in the same HDR precision as the photo pipeline
+    // so ambient occlusion and reflections multiply linear light, before ACES.
+    this.postProcessTextureType = this.engine.getCaps().textureHalfFloatRender
+      ? Constants.TEXTURETYPE_HALF_FLOAT
+      : Constants.TEXTURETYPE_UNSIGNED_BYTE;
     let ssaoPipeline: SSAO2RenderingPipeline | null = null;
-    // SSAO is intentionally omitted by the exterior stability contract. Its
-    // screen-space kernel spans the roof's 70–105 mm eave stack and creates
-    // false, camera-dependent self-occlusion tiles on the white soffit.
-    if (this.renderQuality.ssaoEnabled && SSAO2RenderingPipeline.IsSupported) {
+    // The exterior stability contract keeps SSAO off the orbit/flight views:
+    // its kernel spans the roof's 70–105 mm eave stack and creates false,
+    // camera-dependent self-occlusion tiles on the white soffit. Indoors the
+    // same pass is what grounds furniture and reads wall/ceiling junctions,
+    // so it is created once here and attached only to the walking camera.
+    if (SSAO2RenderingPipeline.IsSupported) {
       try {
+        const ao = INTERIOR_RENDER_QUALITY.ambientOcclusion;
         ssaoPipeline = new SSAO2RenderingPipeline(
-          "architectural-ssao",
+          "interior-ambient-occlusion",
           this.scene,
           {
-            ssaoRatio: 1,
-            blurRatio: 1,
+            ssaoRatio: ao.ssaoRatio[this.renderQuality.tier],
+            blurRatio: ao.blurRatio,
           },
-          renderCameras,
-          false,
+          [],
+          true,
+          this.postProcessTextureType,
         );
-        ssaoPipeline.radius = 0.62;
-        ssaoPipeline.totalStrength = 0.62;
-        ssaoPipeline.samples = 16;
+        ssaoPipeline.radius = ao.radiusM;
+        ssaoPipeline.totalStrength = ao.totalStrength;
+        ssaoPipeline.base = ao.base;
+        ssaoPipeline.maxZ = ao.maxZ;
+        ssaoPipeline.minZAspect = ao.minZAspect;
+        ssaoPipeline.epsilon = ao.epsilon;
+        ssaoPipeline.samples = ao.samples[this.renderQuality.tier];
         ssaoPipeline.expensiveBlur = true;
-        ssaoPipeline.bilateralSamples = 12;
-        ssaoPipeline.bilateralSoften = 0.42;
-        ssaoPipeline.bilateralTolerance = 0.38;
+        ssaoPipeline.bilateralSamples = ao.bilateralSamples;
+        ssaoPipeline.bilateralSoften = ao.bilateralSoften;
+        ssaoPipeline.bilateralTolerance = ao.bilateralTolerance;
+        // Whichever pass ends up first in the camera chain owns the MSAA
+        // resolve of the scene render.
+        ssaoPipeline.textureSamples = this.renderQuality.msaaSamples;
       } catch {
         // SSAO is a progressive enhancement; WebGL fallbacks skip it.
+        ssaoPipeline = null;
       }
     }
     this.ssaoPipeline = ssaoPipeline;
-    this.ssaoAttached = Boolean(ssaoPipeline);
-    if (ssaoPipeline && !this.renderQuality.ssaoEnabled) {
-      this.scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline(
-        ssaoPipeline.name,
-        renderCameras,
-      );
-      this.ssaoAttached = false;
-    } else if (!ssaoPipeline && this.renderQuality.ssaoEnabled) {
-      this.renderQuality = {
-        ...this.renderQuality,
-        ssaoEnabled: false,
-        ssaoRatio: 0,
-      };
+    if (
+      ssaoPipeline &&
+      INTERIOR_RENDER_QUALITY.screenSpaceReflections.tiers.includes(
+        this.renderQuality.tier,
+      )
+    ) {
+      // Compile the reflection shaders now, not on the first indoor frame.
+      this.ensureSsrPipeline();
     }
+    this.doors.setActorDisplacementHandler((displacement) =>
+      this.displaceWalkerForDoor(displacement),
+    );
     this.onRenderQualityChange(this.renderQuality);
 
     this.materials = {
@@ -1610,6 +1643,7 @@ export class TwinSceneController {
     this.buildFence();
     this.buildLandscape();
     this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
+    this.avatar.setPassages(this.doors.passages());
     this.buildUtilities();
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo =
@@ -1719,6 +1753,7 @@ export class TwinSceneController {
       this.updateGarageParkingAnimation();
       this.updateDoorMotion();
       this.updateFlightMotion();
+      this.syncInteriorPostFx();
       this.updateOrbitZoomGlide();
       this.updateParcelLabelScale();
       this.animateWaterSurface();
@@ -2134,34 +2169,61 @@ export class TwinSceneController {
     this.endGarageCinematic();
   }
 
+  /** The walker as the door controller sees it: feet position, eye height, gaze. */
+  private currentDoorActorState(): DoorActorState {
+    const pose = this.avatar.pose;
+    const fallback = new Vector3(
+      Math.sin(pose.yaw),
+      0,
+      Math.cos(pose.yaw),
+    );
+    const cameraForward = this.garageCinematicActive
+      ? fallback
+      : (this.scene.activeCamera?.getForwardRay(1).direction ?? fallback);
+    const facingLength = Math.hypot(
+      cameraForward.x,
+      cameraForward.y,
+      cameraForward.z,
+    );
+    return {
+      position: { x: pose.x, y: this.avatar.eyePosition.y, z: pose.z },
+      facing:
+        facingLength > 1e-6
+          ? {
+              x: cameraForward.x / facingLength,
+              y: cameraForward.y / facingLength,
+              z: cameraForward.z / facingLength,
+            }
+          : { x: fallback.x, y: 0, z: fallback.z },
+    };
+  }
+
+  /**
+   * A moving leaf pushes the walker through the same ellipsoid collision as
+   * walking. Returns the new actor state, or null when a wall or furniture
+   * behind the walker absorbed the push and the door has to wait.
+   */
+  private displaceWalkerForDoor(displacement: {
+    readonly x: number;
+    readonly z: number;
+  }): DoorActorState | null {
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) {
+      return null;
+    }
+    const honoured = this.avatar.nudge(displacement.x, displacement.z);
+    if (honoured < DOOR_INTERACTION.yieldMinimumProgress) return null;
+    // Being moved by a door is expected contact, never a stuck walker.
+    this.avatar.clearBlockedIndicator();
+    if (this.scene.activeCamera === this.flightCamera) {
+      this.flightCamera.position.copyFrom(this.avatar.eyePosition);
+    }
+    return this.currentDoorActorState();
+  }
+
   /** Door transforms and collision matrices settle before walker movement. */
   private updateDoorMotion() {
     if (this.navigationMode === "walk") {
-      const pose = this.avatar.pose;
-      const fallback = new Vector3(
-        Math.sin(pose.yaw),
-        0,
-        Math.cos(pose.yaw),
-      );
-      const cameraForward = this.garageCinematicActive
-        ? fallback
-        : (this.scene.activeCamera?.getForwardRay(1).direction ?? fallback);
-      const facingLength = Math.hypot(
-        cameraForward.x,
-        cameraForward.y,
-        cameraForward.z,
-      );
-      this.doors.setActor({
-        position: { x: pose.x, y: this.avatar.eyePosition.y, z: pose.z },
-        facing:
-          facingLength > 1e-6
-            ? {
-                x: cameraForward.x / facingLength,
-                y: cameraForward.y / facingLength,
-                z: cameraForward.z / facingLength,
-              }
-            : { x: fallback.x, y: 0, z: fallback.z },
-      });
+      this.doors.setActor(this.currentDoorActorState());
     } else {
       this.doors.setActor(null);
     }
@@ -2172,6 +2234,170 @@ export class TwinSceneController {
     this.canvas.dataset.doorCount = this.doors.count.toString();
     this.canvas.dataset.doorTarget = interaction?.id ?? "";
     this.canvas.dataset.doorPhase = interaction?.phase ?? "";
+  }
+
+  /** Lazily builds the reflection pass; pre-warmed on ultra so no first-use hitch. */
+  private ensureSsrPipeline(): SSRRenderingPipeline | null {
+    if (this.ssrPipeline || this.ssrUnavailable) return this.ssrPipeline;
+    try {
+      const ssr = new SSRRenderingPipeline(
+        "interior-reflections",
+        this.scene,
+        [],
+        true,
+        this.postProcessTextureType,
+      );
+      if (!ssr.isSupported) {
+        ssr.dispose();
+        this.ssrUnavailable = true;
+        return null;
+      }
+      const contract = INTERIOR_RENDER_QUALITY.screenSpaceReflections;
+      ssr.strength = contract.strength;
+      ssr.reflectionSpecularFalloffExponent =
+        contract.reflectionSpecularFalloffExponent;
+      ssr.thickness = contract.thicknessM;
+      ssr.step = contract.step;
+      ssr.maxSteps = contract.maxSteps;
+      ssr.maxDistance = contract.maxDistanceM;
+      ssr.roughnessFactor = contract.roughnessFactor;
+      ssr.reflectivityThreshold = contract.reflectivityThreshold;
+      ssr.blurDispersionStrength = contract.blurDispersionStrength;
+      ssr.ssrDownsample = contract.ssrDownsample;
+      ssr.blurDownsample = contract.blurDownsample;
+      ssr.selfCollisionNumSkip = contract.selfCollisionNumSkip;
+      ssr.enableSmoothReflections = true;
+      ssr.useFresnel = true;
+      ssr.attenuateScreenBorders = true;
+      ssr.attenuateIntersectionDistance = true;
+      ssr.attenuateIntersectionIterations = true;
+      ssr.attenuateFacingCamera = true;
+      ssr.attenuateBackfaceReflection = true;
+      ssr.clipToFrustum = true;
+      // The pass sits before ACES in the chain and therefore reads and writes
+      // linear light; the photo pipeline performs the single gamma encode.
+      ssr.inputTextureColorIsInGammaSpace = false;
+      ssr.generateOutputInGammaSpace = false;
+      ssr.samples = this.renderQuality.msaaSamples;
+      this.ssrPipeline = ssr;
+      return ssr;
+    } catch {
+      this.ssrUnavailable = true;
+      return null;
+    }
+  }
+
+  /**
+   * Interior stack lifecycle: engages with hysteresis while the walker is
+   * indoors, follows the active walking camera (chase or eyes), sheds cost
+   * under sustained load and always leaves the photo pipeline last so
+   * sharpen, bloom and ACES see the occluded, reflected linear image.
+   */
+  private syncInteriorPostFx() {
+    const walking =
+      this.navigationMode === "walk" && !this.garageCinematicActive;
+    const activeCamera = this.scene.activeCamera;
+    const walkCamera =
+      walking &&
+      (activeCamera === this.avatar.camera || activeCamera === this.flightCamera)
+        ? activeCamera
+        : null;
+    const engaged =
+      walkCamera !== null &&
+      this.ssaoPipeline !== null &&
+      shouldEngageInteriorPostFx({
+        navigationMode: this.navigationMode,
+        indoorBlend: this.avatar.cameraState.indoorBlend,
+        wasEngaged: this.interiorPostFxEngaged,
+      });
+    if (engaged) {
+      this.adaptivePostFx = stepAdaptivePostFx(
+        this.adaptivePostFx,
+        this.engine.getDeltaTime(),
+      );
+    }
+    const plan = interiorPostFxPlan({
+      engaged,
+      tier: this.renderQuality.tier,
+      shedLevel: this.adaptivePostFx.shedLevel,
+    });
+    const camera = engaged ? walkCamera : null;
+    const applied = this.interiorPostFxPlanApplied;
+    if (
+      applied &&
+      camera === this.interiorPostFxCamera &&
+      applied.ambientOcclusion === plan.ambientOcclusion &&
+      applied.ambientOcclusionSamples === plan.ambientOcclusionSamples &&
+      applied.screenSpaceReflections === plan.screenSpaceReflections
+    ) {
+      this.interiorPostFxEngaged = engaged;
+      return;
+    }
+    this.applyInteriorPostFx(plan, camera);
+    this.interiorPostFxEngaged = engaged;
+  }
+
+  private applyInteriorPostFx(plan: InteriorPostFxPlan, camera: Camera | null) {
+    const manager = this.scene.postProcessRenderPipelineManager;
+    const previous = this.interiorPostFxPlanApplied;
+    const previousCamera = this.interiorPostFxCamera;
+    if (previousCamera) {
+      if (this.ssaoPipeline && previous?.ambientOcclusion) {
+        manager.detachCamerasFromRenderPipeline(this.ssaoPipeline.name, [
+          previousCamera,
+        ]);
+      }
+      if (this.ssrPipeline && previous?.screenSpaceReflections) {
+        this.ssrPipeline.removeCamera(previousCamera);
+      }
+    }
+    let attachedAny = false;
+    if (camera && plan.ambientOcclusion && this.ssaoPipeline) {
+      this.ssaoPipeline.samples = plan.ambientOcclusionSamples;
+      manager.attachCamerasToRenderPipeline(
+        this.ssaoPipeline.name,
+        [camera],
+        true,
+      );
+      attachedAny = true;
+    }
+    if (camera && plan.screenSpaceReflections) {
+      const ssr = this.ensureSsrPipeline();
+      if (ssr) {
+        ssr.addCamera(camera);
+        attachedAny = true;
+      }
+    }
+    if (camera && attachedAny) {
+      // Re-attaching moves the photo pipeline behind the screen-space passes.
+      manager.detachCamerasFromRenderPipeline(this.postPipeline.name, [camera]);
+      manager.attachCamerasToRenderPipeline(
+        this.postPipeline.name,
+        [camera],
+        true,
+      );
+    }
+    if (this.cascadedShadowGenerator) {
+      this.cascadedShadowGenerator.shadowMaxZ = attachedAny
+        ? INTERIOR_RENDER_QUALITY.walkShadowMaxZ
+        : EXTERIOR_SHADOW_MAX_Z;
+    }
+    this.interiorPostFxCamera = attachedAny ? camera : null;
+    this.interiorPostFxPlanApplied = plan;
+    this.canvas.dataset.interiorPostFxShed = String(this.adaptivePostFx.shedLevel);
+    this.canvas.dataset.interiorPostFxSsr = this.ssrUnavailable
+      ? "unsupported"
+      : this.ssrPipeline
+        ? "ready"
+        : "idle";
+    this.canvas.dataset.interiorPostFx = attachedAny
+      ? [
+          plan.ambientOcclusion ? "ao" : null,
+          plan.screenSpaceReflections ? "ssr" : null,
+        ]
+          .filter(Boolean)
+          .join("+")
+      : "";
   }
 
   private updateFlightMotion() {
@@ -6297,6 +6523,16 @@ export class TwinSceneController {
     const serviceBackYmm = footprint.y1 - wall - 170;
     const poolConnectionYmm =
       Math.max(...GARDEN_POOL.copingFootprintMm.map(({ y }) => y)) - 80;
+    const poolWestConnectionXmm =
+      Math.min(...GARDEN_POOL.copingFootprintMm.map(({ x }) => x)) + 80;
+    const filterPoolConnectionXmm = Math.max(
+      filter.centerMm.x,
+      poolWestConnectionXmm,
+    );
+    const pumpPoolConnectionXmm = Math.max(
+      pumpCenter.x + 330,
+      poolWestConnectionXmm,
+    );
     for (const [index, points] of [
       [
         new Vector3(xM(pumpCenter.x - 250), floorTopM + 0.48, zM(pumpCenter.y)),
@@ -6307,12 +6543,13 @@ export class TwinSceneController {
       [
         new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(filter.centerMm.y)),
         new Vector3(xM(filter.centerMm.x), floorTopM + 1.36, zM(poolConnectionYmm)),
-        new Vector3(xM(filter.centerMm.x), -0.7, zM(poolConnectionYmm)),
+        new Vector3(xM(filterPoolConnectionXmm), floorTopM + 1.36, zM(poolConnectionYmm)),
+        new Vector3(xM(filterPoolConnectionXmm), -0.7, zM(poolConnectionYmm)),
       ],
       [
         new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(pumpCenter.y)),
-        new Vector3(xM(pumpCenter.x + 330), floorTopM + 0.34, zM(poolConnectionYmm)),
-        new Vector3(xM(pumpCenter.x + 330), -0.92, zM(poolConnectionYmm)),
+        new Vector3(xM(pumpPoolConnectionXmm), floorTopM + 0.34, zM(poolConnectionYmm)),
+        new Vector3(xM(pumpPoolConnectionXmm), -0.92, zM(poolConnectionYmm)),
       ],
     ].entries()) {
       const pipe = CreateTube(
@@ -6387,9 +6624,9 @@ export class TwinSceneController {
       this.scene,
     );
     light.position.set(
-      xM(shaft.centeredBelowDeckMm.x),
+      xM(shaft.placementCenterMm.x),
       wallTopM - 0.035,
-      zM(shaft.centeredBelowDeckMm.y),
+      zM(shaft.placementCenterMm.y),
     );
     light.material = this.realisticMaterials.poolLed;
     this.register(light, "street", shaft.id);
@@ -6862,7 +7099,7 @@ export class TwinSceneController {
       this.scene,
     );
     // The tank and infiltration field move only far enough south to keep the
-    // compact, centred technology shaft and all rain routes physically clear.
+    // corner technology shaft and all rain routes physically clear.
     rainTank.position.set(
       xM(RAINWATER_COORDINATION.tank.centerMm.x),
       0.12,
@@ -6982,10 +7219,31 @@ export class TwinSceneController {
     this.scene.clearColor = Color4.FromHexString(
       realistic ? "#c6cfd2ff" : "#101313ff",
     );
-    this.scene.imageProcessingConfiguration.exposure = realistic ? 1.02 : 1;
-    this.scene.imageProcessingConfiguration.contrast = realistic ? 1.08 : 1.04;
-    this.scene.imageProcessingConfiguration.vignetteEnabled = realistic;
-    this.scene.imageProcessingConfiguration.vignetteWeight = 0.32;
+    const imageProcessing = this.scene.imageProcessingConfiguration;
+    imageProcessing.exposure = realistic ? PHOTOGRAPHIC_GRADE.exposure : 1;
+    imageProcessing.contrast = realistic ? PHOTOGRAPHIC_GRADE.contrast : 1.04;
+    imageProcessing.vignetteEnabled = realistic;
+    imageProcessing.vignetteWeight = PHOTOGRAPHIC_GRADE.vignetteWeight;
+    // Restrained film-style curves: warm shadows, neutral midtones, a hint
+    // of cool in the highlights. The technical document stays uncoloured.
+    if (realistic && !imageProcessing.colorCurves) {
+      const grade = PHOTOGRAPHIC_GRADE.colorCurves;
+      const curves = new ColorCurves();
+      curves.globalSaturation = grade.globalSaturation;
+      curves.globalHue = grade.globalHue;
+      curves.globalDensity = grade.globalDensity;
+      curves.shadowsHue = grade.shadowsHue;
+      curves.shadowsDensity = grade.shadowsDensity;
+      curves.shadowsSaturation = grade.shadowsSaturation;
+      curves.midtonesHue = grade.midtonesHue;
+      curves.midtonesDensity = grade.midtonesDensity;
+      curves.midtonesSaturation = grade.midtonesSaturation;
+      curves.highlightsHue = grade.highlightsHue;
+      curves.highlightsDensity = grade.highlightsDensity;
+      curves.highlightsSaturation = grade.highlightsSaturation;
+      imageProcessing.colorCurves = curves;
+    }
+    imageProcessing.colorCurvesEnabled = realistic;
     // Photographic finish belongs to the reality view; the technical model
     // stays a clean, grain-free linework document.
     this.postPipeline.bloomEnabled = realistic;
@@ -7583,10 +7841,7 @@ export class TwinSceneController {
     if (this.resizeFrame) return;
     this.resizeFrame = window.requestAnimationFrame(() => {
       this.resizeFrame = 0;
-      let next = this.deriveCurrentRenderQuality();
-      if (!this.ssaoPipeline && next.ssaoEnabled) {
-        next = { ...next, ssaoEnabled: false, ssaoRatio: 0 };
-      }
+      const next = this.deriveCurrentRenderQuality();
       const previous = this.renderQuality;
       const scalingChanged =
         previous.hardwareScalingLevel !== next.hardwareScalingLevel;
@@ -7612,30 +7867,15 @@ export class TwinSceneController {
             ? ShadowGenerator.QUALITY_HIGH
             : ShadowGenerator.QUALITY_MEDIUM;
       }
-      if (this.ssaoPipeline) {
-        if (previous.tier !== next.tier) {
-          this.ssaoPipeline.samples = next.tier === "ULTRA" ? 16 : 12;
+      if (previous.msaaSamples !== next.msaaSamples) {
+        if (this.ssaoPipeline) {
+          this.ssaoPipeline.textureSamples = next.msaaSamples;
         }
-        const cameras = [
-          this.orbitCamera,
-          this.flightCamera,
-          this.garageCinematicCamera,
-          this.avatar.camera,
-        ];
-        if (next.ssaoEnabled && !this.ssaoAttached) {
-          this.scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline(
-            this.ssaoPipeline.name,
-            cameras,
-            true,
-          );
-          this.ssaoAttached = true;
-        } else if (!next.ssaoEnabled && this.ssaoAttached) {
-          this.scene.postProcessRenderPipelineManager.detachCamerasFromRenderPipeline(
-            this.ssaoPipeline.name,
-            cameras,
-          );
-          this.ssaoAttached = false;
-        }
+        if (this.ssrPipeline) this.ssrPipeline.samples = next.msaaSamples;
+      }
+      if (previous.tier !== next.tier) {
+        // The interior plan depends on the tier; force a re-apply next frame.
+        this.interiorPostFxPlanApplied = null;
       }
       if (!scalingChanged) this.engine.resize();
       if (this.garageCinematicActive && this.garageVehicleLastPose) {

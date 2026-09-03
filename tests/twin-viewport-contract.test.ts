@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ADAPTIVE_POST_FX,
   EXTERIOR_RENDER_STABILITY,
   FLIGHT_BOUNDS,
   FLIGHT_WHEEL_DOLLY_MAX_M,
+  INTERIOR_RENDER_QUALITY,
   ORBIT_ZOOM,
+  PHOTOGRAPHIC_GRADE,
   WALK_CAMERA,
   WALK_COLLISION_ELLIPSOID_M,
   WALK_COLLISION_OFFSET_M,
@@ -16,17 +19,21 @@ import {
   flightCommandForCode,
   flightWheelDollyDistanceM,
   hasDiverseWalkEscapeDirections,
+  initialAdaptivePostFxState,
   integrateAvatarVelocity,
   integrateFlightDolly,
   integrateFlightPosition,
+  interiorPostFxPlan,
   isSelectionTap,
   normalizeWheelPixels,
   orbitZoomMultiplier,
   rayAabbDistance,
   resolveWalkCollisionVelocity,
   shouldAutoRecoverWalk,
+  shouldEngageInteriorPostFx,
   shouldResetWalkCollisionCarry,
   shouldResolveWalkCollisionBatch,
+  stepAdaptivePostFx,
   stepOrbitZoom,
   stepWalkCameraBoom,
   stepWalkCameraSurfaceHeight,
@@ -908,5 +915,164 @@ describe("adaptive indoor chase camera", () => {
       wasObstructed: false,
     });
     expect(grazing).toEqual({ radiusM: 2, obstructed: false });
+  });
+});
+
+describe("interior photographic contract", () => {
+  it("keeps the exterior clean and reserves screen-space passes for indoors", () => {
+    expect(EXTERIOR_RENDER_STABILITY.screenSpaceAmbientOcclusionEnabled).toBe(
+      false,
+    );
+    const ao = INTERIOR_RENDER_QUALITY.ambientOcclusion;
+    // The kernel must read skirtings and linings, not the roof's eave stack.
+    expect(ao.radiusM).toBeGreaterThan(0.2);
+    expect(ao.radiusM).toBeLessThan(0.5);
+    expect(ao.base).toBeGreaterThan(0);
+    expect(ao.samples.ULTRA).toBeGreaterThan(ao.samples.HIGH);
+    expect(ao.ssaoRatio.ULTRA).toBeGreaterThan(ao.ssaoRatio.HIGH);
+    expect(INTERIOR_RENDER_QUALITY.screenSpaceReflections.tiers).toEqual([
+      "ULTRA",
+    ]);
+    expect(INTERIOR_RENDER_QUALITY.walkShadowMaxZ).toBeLessThan(78);
+    expect(INTERIOR_RENDER_QUALITY.engageIndoorBlend).toBeGreaterThan(
+      INTERIOR_RENDER_QUALITY.releaseIndoorBlend,
+    );
+  });
+
+  it("engages only while walking indoors, with hysteresis at the threshold", () => {
+    const { engageIndoorBlend, releaseIndoorBlend } = INTERIOR_RENDER_QUALITY;
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "orbit",
+        indoorBlend: 1,
+        wasEngaged: true,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "walk",
+        indoorBlend: engageIndoorBlend - 0.01,
+        wasEngaged: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "walk",
+        indoorBlend: engageIndoorBlend,
+        wasEngaged: false,
+      }),
+    ).toBe(true);
+    // A doorway crossing in the band between the two thresholds keeps state.
+    const between = (engageIndoorBlend + releaseIndoorBlend) / 2;
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "walk",
+        indoorBlend: between,
+        wasEngaged: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "walk",
+        indoorBlend: between,
+        wasEngaged: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldEngageInteriorPostFx({
+        navigationMode: "walk",
+        indoorBlend: Number.NaN,
+        wasEngaged: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("sheds reflections first, then AO quality, and never restores", () => {
+    const heavy = ADAPTIVE_POST_FX.shedFrameMs + 6;
+    let state = initialAdaptivePostFxState();
+    // Warm-up frames are absorbed without judgement.
+    for (let elapsed = 0; elapsed < ADAPTIVE_POST_FX.warmupMs; elapsed += heavy) {
+      state = stepAdaptivePostFx(state, heavy);
+    }
+    expect(state.shedLevel).toBe(0);
+    const runWindow = (frameMs: number) => {
+      for (let elapsed = 0; elapsed < ADAPTIVE_POST_FX.windowMs; elapsed += frameMs) {
+        state = stepAdaptivePostFx(state, frameMs);
+      }
+    };
+    runWindow(heavy);
+    expect(state.shedLevel).toBe(1);
+    runWindow(heavy);
+    expect(state.shedLevel).toBe(2);
+    runWindow(heavy);
+    expect(state.shedLevel).toBe(ADAPTIVE_POST_FX.maxShedLevel);
+    // Recovered performance does not bring effects back within the session.
+    runWindow(8);
+    expect(state.shedLevel).toBe(ADAPTIVE_POST_FX.maxShedLevel);
+  });
+
+  it("ignores tab sleeps and shader compiles when judging load", () => {
+    let state = { ...initialAdaptivePostFxState(), warmupRemainingMs: 0 };
+    for (let frame = 0; frame < 4; frame += 1) {
+      state = stepAdaptivePostFx(state, ADAPTIVE_POST_FX.ignoreFrameAboveMs + 1);
+    }
+    expect(state).toMatchObject({ shedLevel: 0, windowMs: 0, windowFrames: 0 });
+    state = stepAdaptivePostFx(state, Number.NaN);
+    state = stepAdaptivePostFx(state, -5);
+    expect(state.windowFrames).toBe(0);
+    // A smooth window never sheds.
+    for (let elapsed = 0; elapsed < ADAPTIVE_POST_FX.windowMs; elapsed += 8) {
+      state = stepAdaptivePostFx(state, 8);
+    }
+    expect(state.shedLevel).toBe(0);
+  });
+
+  it("resolves the interior plan per tier and shed level", () => {
+    const ao = INTERIOR_RENDER_QUALITY.ambientOcclusion;
+    expect(interiorPostFxPlan({ engaged: false, tier: "ULTRA", shedLevel: 0 }))
+      .toEqual({
+        ambientOcclusion: false,
+        ambientOcclusionSamples: 0,
+        screenSpaceReflections: false,
+      });
+    expect(interiorPostFxPlan({ engaged: true, tier: "ULTRA", shedLevel: 0 }))
+      .toEqual({
+        ambientOcclusion: true,
+        ambientOcclusionSamples: ao.samples.ULTRA,
+        screenSpaceReflections: true,
+      });
+    expect(interiorPostFxPlan({ engaged: true, tier: "HIGH", shedLevel: 0 }))
+      .toEqual({
+        ambientOcclusion: true,
+        ambientOcclusionSamples: ao.samples.HIGH,
+        screenSpaceReflections: false,
+      });
+    expect(interiorPostFxPlan({ engaged: true, tier: "ULTRA", shedLevel: 1 }))
+      .toMatchObject({
+        ambientOcclusionSamples: ao.samples.ULTRA,
+        screenSpaceReflections: false,
+      });
+    expect(interiorPostFxPlan({ engaged: true, tier: "ULTRA", shedLevel: 2 }))
+      .toMatchObject({
+        ambientOcclusion: true,
+        ambientOcclusionSamples: ao.samples.HIGH,
+        screenSpaceReflections: false,
+      });
+  });
+
+  it("grades reality mode like a restrained architectural photograph", () => {
+    expect(PHOTOGRAPHIC_GRADE.exposure).toBeGreaterThanOrEqual(1);
+    expect(PHOTOGRAPHIC_GRADE.exposure).toBeLessThan(1.1);
+    expect(PHOTOGRAPHIC_GRADE.contrast).toBeGreaterThan(1);
+    expect(PHOTOGRAPHIC_GRADE.contrast).toBeLessThan(1.15);
+    const curves = PHOTOGRAPHIC_GRADE.colorCurves;
+    // Warm shadows, cool highlights, and a saturation lift kept in single digits.
+    expect(curves.shadowsHue).toBeGreaterThan(0);
+    expect(curves.shadowsHue).toBeLessThan(60);
+    expect(curves.highlightsHue).toBeGreaterThan(180);
+    expect(curves.highlightsHue).toBeLessThan(260);
+    expect(Math.abs(curves.globalSaturation)).toBeLessThan(10);
+    expect(Math.abs(curves.shadowsDensity)).toBeLessThan(15);
+    expect(Math.abs(curves.highlightsDensity)).toBeLessThan(15);
   });
 });

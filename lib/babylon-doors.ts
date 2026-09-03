@@ -1,5 +1,6 @@
 import { BATHROOM_FITOUT, INTERIOR_DOORS } from "./twin-interior";
 import { POOL_TECHNOLOGY_SHAFT } from "./twin-site";
+import type { WalkPassage } from "./twin-walk-assist";
 
 export type DoorMotionKind = "HINGED" | "SLIDING" | "OVERHEAD" | "TRAVERSAL";
 export type DoorPhase = "CLOSED" | "OPENING" | "OPEN" | "CLOSING";
@@ -37,7 +38,23 @@ export interface AnimatedDoorRegistration {
   apply(progress: number, handleDepression: number): void;
   canOpen?(actor: DoorActorState, progress?: number): boolean;
   canClose?(actor: DoorActorState, progress?: number): boolean;
+  /**
+   * Minimal planar displacement that moves the actor out of the leaf's
+   * envelope at `progress`, or null when the actor is already clear. Doors
+   * that provide it yield the walker gently instead of refusing to move.
+   */
+  actorDisplacement?(
+    actor: DoorActorState,
+    progress: number,
+  ): DoorPlanarPoint | null;
+  /** Clear walk-through envelope consumed by the walker's doorway assist. */
+  readonly passage?: WalkPassage;
 }
+
+/** Applies a door-induced displacement to the walker; null when it cannot move. */
+export type DoorActorDisplacementHandler = (
+  displacement: DoorPlanarPoint,
+) => DoorActorState | null;
 
 export interface DoorInteractionSnapshot {
   readonly id: string;
@@ -78,6 +95,12 @@ export const DOOR_INTERACTION = Object.freeze({
   closingDurationMs: 680,
   minimumReversalDurationMs: 220,
   blockedMessageMs: 1_800,
+  /** Air gap kept between the leaf face and the walker's capsule. */
+  leafClearancePaddingM: 0.045,
+  /** Extra millimetres so a yielded walker is unambiguously outside the envelope. */
+  yieldOvershootM: 0.006,
+  /** A yield counts as successful when this share of the request was honoured. */
+  yieldMinimumProgress: 0.6,
 });
 
 export const LIFT_SLIDE_MOTION = Object.freeze({
@@ -323,7 +346,8 @@ export function hingedDoorSweepIsClear(
   const actorRadius = actor.radiusM ?? DOOR_INTERACTION.actorRadiusM;
   const dx = closedEnd.x - hinge.x;
   const dz = closedEnd.z - hinge.z;
-  const clearance = actorRadius + leafThicknessM / 2 + 0.045;
+  const clearance =
+    actorRadius + leafThicknessM / 2 + DOOR_INTERACTION.leafClearancePaddingM;
   const samples = 18;
   for (let index = 0; index <= samples; index += 1) {
     const progress =
@@ -341,6 +365,107 @@ export function hingedDoorSweepIsClear(
     }
   }
   return true;
+}
+
+/**
+ * Displacement that moves the actor just outside a hinged leaf at one exact
+ * angle. Used every frame while a door yields the walker: the leaf keeps
+ * moving and the actor is nudged along with it, the way a real door pushes a
+ * person standing in its way. Returns null when the actor is already clear.
+ */
+export function hingedDoorActorDisplacement(
+  actor: DoorActorState,
+  hinge: DoorPlanarPoint,
+  closedEnd: DoorPlanarPoint,
+  openAngleRad: number,
+  progress: number,
+  leafThicknessM = 0.04,
+): DoorPlanarPoint | null {
+  const actorRadius = actor.radiusM ?? DOOR_INTERACTION.actorRadiusM;
+  const clearance =
+    actorRadius + leafThicknessM / 2 + DOOR_INTERACTION.leafClearancePaddingM;
+  const dx = closedEnd.x - hinge.x;
+  const dz = closedEnd.z - hinge.z;
+  const angle = openAngleRad * clamp01(progress);
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
+  const end = {
+    x: hinge.x + dx * cosine + dz * sine,
+    z: hinge.z - dx * sine + dz * cosine,
+  };
+  const leafX = end.x - hinge.x;
+  const leafZ = end.z - hinge.z;
+  const leafLengthSquared = leafX * leafX + leafZ * leafZ;
+  const t = leafLengthSquared > 1e-9
+    ? clamp01(
+        ((actor.position.x - hinge.x) * leafX +
+          (actor.position.z - hinge.z) * leafZ) /
+          leafLengthSquared,
+      )
+    : 0;
+  const nearestX = hinge.x + leafX * t;
+  const nearestZ = hinge.z + leafZ * t;
+  let awayX = actor.position.x - nearestX;
+  let awayZ = actor.position.z - nearestZ;
+  const distance = Math.hypot(awayX, awayZ);
+  if (distance >= clearance) return null;
+  if (distance < 1e-4) {
+    // Standing exactly in the leaf plane: any perpendicular exit is valid, so
+    // pick the side the swing itself would carry the actor toward. For a
+    // positive angle the rotation above moves the leaf tip along (dz, -dx).
+    const swing = Math.sign(openAngleRad) || 1;
+    awayX = leafZ * swing;
+    awayZ = -leafX * swing;
+    const length = Math.hypot(awayX, awayZ) || 1;
+    awayX /= length;
+    awayZ /= length;
+  } else {
+    awayX /= distance;
+    awayZ /= distance;
+  }
+  const magnitude = clearance - distance + DOOR_INTERACTION.yieldOvershootM;
+  return { x: awayX * magnitude, z: awayZ * magnitude };
+}
+
+/**
+ * Perpendicular displacement out of a sliding leaf's travel line at one exact
+ * progress. The actor is always pushed off the leaf plane toward the side it
+ * already stands on, never squeezed along the track toward the jamb.
+ */
+export function slidingDoorActorDisplacement(
+  actor: DoorActorState,
+  closedCenter: DoorPlanarPoint,
+  openCenter: DoorPlanarPoint,
+  halfLeafWidthM: number,
+  perpendicularClearanceM = 0.08,
+  progress = 0,
+): DoorPlanarPoint | null {
+  const actorRadius = actor.radiusM ?? DOOR_INTERACTION.actorRadiusM;
+  const travelX = openCenter.x - closedCenter.x;
+  const travelZ = openCenter.z - closedCenter.z;
+  const travelLength = Math.hypot(travelX, travelZ);
+  if (travelLength < 1e-6) return null;
+  const alongX = travelX / travelLength;
+  const alongZ = travelZ / travelLength;
+  const normalX = -alongZ;
+  const normalZ = alongX;
+  const centerX = closedCenter.x + travelX * clamp01(progress);
+  const centerZ = closedCenter.z + travelZ * clamp01(progress);
+  const relX = actor.position.x - centerX;
+  const relZ = actor.position.z - centerZ;
+  const along = relX * alongX + relZ * alongZ;
+  const perpendicular = relX * normalX + relZ * normalZ;
+  const clearance = perpendicularClearanceM + actorRadius;
+  if (
+    Math.abs(along) > halfLeafWidthM + actorRadius ||
+    Math.abs(perpendicular) >= clearance
+  ) {
+    return null;
+  }
+  const side = perpendicular >= 0 ? 1 : -1;
+  const magnitude =
+    clearance - Math.abs(perpendicular) + DOOR_INTERACTION.yieldOvershootM;
+  return { x: normalX * side * magnitude, z: normalZ * side * magnitude };
 }
 
 /** Safe close check for a leaf translating within the facade plane. */
@@ -391,9 +516,40 @@ export function slidingDoorPathIsClear(
 export class BabylonDoorController {
   private readonly doors = new Map<string, RuntimeDoor>();
   private actor: DoorActorState | null = null;
+  private displaceActor: DoorActorDisplacementHandler | null = null;
   private clockMs = 0;
 
   constructor(private readonly motionScale = 1) {}
+
+  /**
+   * Lets doors push the walker out of their way. Without a handler every
+   * door falls back to the conservative "pause until the sweep is clear".
+   */
+  setActorDisplacementHandler(handler: DoorActorDisplacementHandler | null) {
+    this.displaceActor = handler;
+  }
+
+  /** Doorway envelopes for the walker's funnel assist. */
+  passages(): readonly WalkPassage[] {
+    return [...this.doors.values()]
+      .flatMap((door) => (door.passage ? [door.passage] : []))
+      .sort((left, right) => left.id.localeCompare(right.id));
+  }
+
+  /**
+   * Moves the actor clear of the leaf at `progress`. Returns true when the
+   * actor is (now) outside the envelope, false when it could not be moved.
+   */
+  private yieldActor(door: RuntimeDoor, progress: number): boolean {
+    if (!this.actor || !door.actorDisplacement) return false;
+    const displacement = door.actorDisplacement(this.actor, progress);
+    if (!displacement) return true;
+    if (!this.displaceActor) return false;
+    const moved = this.displaceActor(displacement);
+    if (!moved) return false;
+    this.actor = moved;
+    return door.actorDisplacement(moved, progress) === null;
+  }
 
   register(registration: AnimatedDoorRegistration) {
     if (this.doors.has(registration.id)) {
@@ -426,9 +582,32 @@ export class BabylonDoorController {
     let changed = false;
     for (const door of this.doors.values()) {
       if (door.animationDurationMs <= 0) continue;
+      const nextElapsedMs = Math.min(
+        door.animationDurationMs,
+        door.animationElapsedMs + frameMs,
+      );
+      const normalized = nextElapsedMs / door.animationDurationMs;
+      const eased = smootherStep01(normalized);
+      const nextProgress =
+        nextElapsedMs >= door.animationDurationMs
+          ? door.targetProgress
+          : clamp01(
+              door.startProgress +
+                (door.targetProgress - door.startProgress) * eased,
+            );
       const pathIsClear =
         door.targetProgress === 1 ? door.canOpen : door.canClose;
-      if (
+      if (this.actor && door.actorDisplacement && this.displaceActor) {
+        // Yielding door: the leaf advances one frame and carries the walker
+        // just ahead of its face. Only an immovable walker (pinned against a
+        // wall or furniture) pauses the leaf.
+        if (!this.yieldActor(door, nextProgress)) {
+          door.blockedUntilMs =
+            this.clockMs + DOOR_INTERACTION.blockedMessageMs;
+          door.apply(door.progress, 0);
+          continue;
+        }
+      } else if (
         this.actor &&
         pathIsClear &&
         !pathIsClear(this.actor, door.progress)
@@ -440,18 +619,9 @@ export class BabylonDoorController {
         door.apply(door.progress, 0);
         continue;
       }
-      door.animationElapsedMs = Math.min(
-        door.animationDurationMs,
-        door.animationElapsedMs + frameMs,
-      );
-      const normalized = door.animationElapsedMs / door.animationDurationMs;
-      const eased = smootherStep01(normalized);
-      door.progress = clamp01(
-        door.startProgress +
-          (door.targetProgress - door.startProgress) * eased,
-      );
+      door.animationElapsedMs = nextElapsedMs;
+      door.progress = nextProgress;
       if (door.animationElapsedMs >= door.animationDurationMs) {
-        door.progress = door.targetProgress;
         door.animationDurationMs = 0;
       }
       door.apply(door.progress, doorHandleDepression(normalized));
@@ -489,8 +659,18 @@ export class BabylonDoorController {
       pathIsClear &&
       !pathIsClear(this.actor, door.progress)
     ) {
-      door.blockedUntilMs = this.clockMs + DOOR_INTERACTION.blockedMessageMs;
-      return false;
+      // The walker stands somewhere in the sweep. A yielding door may still
+      // start, provided the walker is clear of the leaf where it is right now
+      // (an immediate jump has no frames in which to push anyone aside).
+      const canYield =
+        !immediate &&
+        Boolean(door.actorDisplacement) &&
+        Boolean(this.displaceActor) &&
+        this.yieldActor(door, door.progress);
+      if (!canYield) {
+        door.blockedUntilMs = this.clockMs + DOOR_INTERACTION.blockedMessageMs;
+        return false;
+      }
     }
     this.start(door, open ? 1 : 0, immediate);
     return true;

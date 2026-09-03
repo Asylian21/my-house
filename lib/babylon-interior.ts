@@ -47,11 +47,14 @@ import {
 import { HOUSE, type LayerId, type Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
 import {
+  hingedDoorActorDisplacement,
   hingedDoorSweepIsClear,
+  slidingDoorActorDisplacement,
   slidingDoorPathIsClear,
   type AnimatedDoorRegistration,
 } from "./babylon-doors";
 import type { WalkSurfaceKind } from "./twin-viewport-contract";
+import type { WalkPassage } from "./twin-walk-assist";
 
 export interface InteriorBuildContext {
   readonly scene: Scene;
@@ -1122,11 +1125,14 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
       door.startMm + door.widthMm / 2,
       wallCenter,
     );
+    const slidingPerpendicularClearanceM =
+      leafThicknessMm * MM_TO_M / 2 + 0.04;
     context.registerAnimatedDoor?.({
       id: door.id,
       label: door.label.replace(/^Dvere\s+/u, "").replace(/\s+·.*$/u, ""),
       kind: "SLIDING",
       interactionPoint: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+      passage: interiorDoorPassage(door, interactionPlan, thicknessMm, frameMm),
       apply: (progress) => {
         movingRoot.position.x = travel.x * progress;
         movingRoot.position.z = travel.z * progress;
@@ -1139,7 +1145,7 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
           closedCenterWorld,
           openCenterWorld,
           door.leafWidthMm * MM_TO_M / 2,
-          leafThicknessMm * MM_TO_M / 2 + 0.04,
+          slidingPerpendicularClearanceM,
           progress,
           1,
         ),
@@ -1149,9 +1155,18 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
           closedCenterWorld,
           openCenterWorld,
           door.leafWidthMm * MM_TO_M / 2,
-          leafThicknessMm * MM_TO_M / 2 + 0.04,
+          slidingPerpendicularClearanceM,
           progress,
           0,
+        ),
+      actorDisplacement: (actor, progress) =>
+        slidingDoorActorDisplacement(
+          actor,
+          closedCenterWorld,
+          openCenterWorld,
+          door.leafWidthMm * MM_TO_M / 2,
+          slidingPerpendicularClearanceM,
+          progress,
         ),
     });
     return;
@@ -1251,6 +1266,7 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
     label: door.label.replace(/^Dvere\s+/u, "").replace(/\s+·.*$/u, ""),
     kind: "HINGED",
     interactionPoint: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+    passage: interiorDoorPassage(door, interactionPlan, thicknessMm, frameMm),
     apply: (progress, handleDepression) => {
       hinge.rotation.y = openAngleRad * progress;
       for (const handle of handleLevers) {
@@ -1283,7 +1299,35 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
         progress,
         0,
       ),
+    actorDisplacement: (actor, progress) =>
+      hingedDoorActorDisplacement(
+        actor,
+        hingeWorld,
+        closedEndWorld,
+        openAngleRad,
+        progress,
+        leafThicknessMm * MM_TO_M,
+      ),
   });
+}
+
+/**
+ * Clear walk-through envelope of an interior opening: the width between the
+ * two 60 mm linings, centred on the opening, through the full wall depth.
+ */
+export function interiorDoorPassage(
+  door: InteriorDoor,
+  interactionPlan: Point2Mm,
+  wallThicknessMm: number,
+  frameMm: number,
+): WalkPassage {
+  return {
+    id: door.id,
+    center: { x: xM(interactionPlan.x), z: zM(interactionPlan.y) },
+    along: door.axis === "X" ? { x: 1, z: 0 } : { x: 0, z: 1 },
+    halfClearWidthM: ((door.widthMm - 2 * frameMm) / 2) * MM_TO_M,
+    halfDepthM: (wallThicknessMm / 2) * MM_TO_M,
+  };
 }
 
 /** Slim black bar handle on a front. */
@@ -5306,8 +5350,9 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const nicheBottomM = niche.bottomElevationMm * MM_TO_M;
   const nicheHeightM = niche.heightMm * MM_TO_M;
 
-  // Full-height handleless wall. The printer bay is modelled as a real void
-  // between lower and upper carcasses, not as a dark decal on a solid box.
+  // Full-height handleless wall. The cabinet now sits on the east facade and
+  // opens west into the room; the printer bay remains a real void between the
+  // lower and upper carcasses rather than a decal on a solid box.
   const closedBay: RectMm = {
     x0: cabinetRect.x0,
     y0: cabinetRect.y0,
@@ -5329,7 +5374,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const nicheLower = texturedBox(
     context.scene,
     `${fitout.id} · CABINET · spodný blok tlačiarňového výklenku`,
-    rectCenter({ ...nicheRect, x0: cabinetRect.x0 }),
+    rectCenter({ ...nicheRect, x1: cabinetRect.x1 }),
     cabinetRect.x1 - cabinetRect.x0,
     nicheRect.y1 - nicheRect.y0,
     nicheBottomM,
@@ -5342,7 +5387,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const nicheUpper = texturedBox(
     context.scene,
     `${fitout.id} · CABINET · horný blok nad tlačiarňou`,
-    rectCenter({ ...nicheRect, x0: cabinetRect.x0 }),
+    rectCenter({ ...nicheRect, x1: cabinetRect.x1 }),
     cabinetRect.x1 - cabinetRect.x0,
     nicheRect.y1 - nicheRect.y0,
     cabinetHeightM - upperBottomM,
@@ -5378,7 +5423,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const nicheBack = texturedBox(
     context.scene,
     `${fitout.id} · CABINET · tmavý chrbát tlačiarňového výklenku`,
-    { x: nicheRect.x0 + 8, y: (nicheRect.y0 + nicheRect.y1) / 2 },
+    { x: nicheRect.x1 - 8, y: (nicheRect.y0 + nicheRect.y1) / 2 },
     16,
     nicheRect.y1 - nicheRect.y0 - 26,
     nicheHeightM - 0.026,
@@ -5414,7 +5459,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const nicheLight = texturedBox(
     context.scene,
     `${fitout.id} · CABINET · 2700 K svetlo vo výklenku`,
-    { x: nicheRect.x1 - 18, y: (nicheRect.y0 + nicheRect.y1) / 2 },
+    { x: nicheRect.x0 + 18, y: (nicheRect.y0 + nicheRect.y1) / 2 },
     18,
     nicheRect.y1 - nicheRect.y0 - 70,
     0.018,
@@ -5431,7 +5476,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     const seam = texturedBox(
       context.scene,
       `${fitout.id} · CABINET · zvislá tieňová škára ${index + 1}`,
-      { x: cabinetRect.x1 + 3, y: seamY },
+      { x: cabinetRect.x0 - 3, y: seamY },
       7,
       4,
       cabinetHeightM - 0.12,
@@ -5443,7 +5488,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const cabinetPlinth = texturedBox(
     context.scene,
     `${fitout.id} · CABINET · zapustená tmavá soklová línia`,
-    { x: cabinetRect.x1 + 4, y: (cabinetRect.y0 + cabinetRect.y1) / 2 },
+    { x: cabinetRect.x0 - 4, y: (cabinetRect.y0 + cabinetRect.y1) / 2 },
     12,
     cabinetRect.y1 - cabinetRect.y0 - 28,
     0.055,
@@ -5472,7 +5517,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const outputSlot = texturedBox(
     context.scene,
     `${fitout.id} · PRINTER · čierny výstup papiera`,
-    { x: printer.footprintMm.x1 + 4, y: printerCenter.y },
+    { x: printer.footprintMm.x0 - 4, y: printerCenter.y },
     10,
     300,
     0.052,
@@ -5483,7 +5528,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const printerPanel = texturedBox(
     context.scene,
     `${fitout.id} · PRINTER · dotykový ovládací panel`,
-    { x: printer.footprintMm.x1 + 7, y: printer.footprintMm.y0 + 78 },
+    { x: printer.footprintMm.x0 - 7, y: printer.footprintMm.y0 + 78 },
     12,
     104,
     0.052,
@@ -5494,7 +5539,7 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const paper = texturedBox(
     context.scene,
     `${fitout.id} · PRINTER · čistý papier vo výstupe`,
-    { x: printer.footprintMm.x1 + 16, y: printerCenter.y },
+    { x: printer.footprintMm.x0 - 16, y: printerCenter.y },
     130,
     255,
     0.006,
@@ -5521,14 +5566,14 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   finish(context, desktop, materials.kitchenFront, { shadow: true, pickable: true });
 
   const legHeightM = deskTopM - deskThicknessM - 0.015;
-  for (const [frameIndex, frameX] of [deskRect.x0 + 135, deskRect.x1 - 135].entries()) {
-    for (const yMm of [deskRect.y0 + 72, deskRect.y1 - 72]) {
+  for (const [frameIndex, frameY] of [deskRect.y0 + 135, deskRect.y1 - 135].entries()) {
+    for (const xMm of [deskRect.x0 + 72, deskRect.x1 - 72]) {
       const leg = texturedBox(
         context.scene,
         `${fitout.id} · DESK · čierna noha rámu ${frameIndex + 1}`,
-        { x: frameX, y: yMm },
-        42,
+        { x: xMm, y: frameY },
         36,
+        42,
         legHeightM,
         0.015,
         1,
@@ -5538,9 +5583,9 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     const frameRail = texturedBox(
       context.scene,
       `${fitout.id} · DESK · horná priečka rámu ${frameIndex + 1}`,
-      { x: frameX, y: (deskRect.y0 + deskRect.y1) / 2 },
+      { x: (deskRect.x0 + deskRect.x1) / 2, y: frameY },
+      deskRect.x1 - deskRect.x0 - 126,
       42,
-      deskRect.y1 - deskRect.y0 - 126,
       0.036,
       deskTopM - deskThicknessM - 0.052,
       1,
@@ -5550,18 +5595,18 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const cableTray = texturedBox(
     context.scene,
     `${fitout.id} · DESK · skrytý káblový žľab`,
-    { x: (deskRect.x0 + deskRect.x1) / 2, y: deskRect.y0 + 150 },
-    880,
+    { x: deskRect.x0 + 150, y: (deskRect.y0 + deskRect.y1) / 2 },
     150,
+    880,
     0.09,
     deskTopM - 0.14,
     1,
   );
   finish(context, cableTray, materials.fireplace, { shadow: true });
 
-  // Curved 40-inch 21:9 ultrawide. Nine tangential panels run along plan X;
-  // their concave face points north toward the chair while the compact 2500R
-  // shell remains visually thin above the oak top.
+  // Curved 40-inch 21:9 ultrawide. Nine tangential panels run along plan Y;
+  // their concave face points east toward the chair while the compact 2500R
+  // shell stays close to the west wall above the oak top.
   const monitor = desk.monitor;
   const segmentCount = 9;
   const segmentWidthMm = monitor.widthMm / segmentCount;
@@ -5571,17 +5616,17 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     const offsetMm = -monitor.widthMm / 2 + segmentWidthMm * (index + 0.5);
     const radiusAlongMm = Math.sqrt(Math.max(1, curveRadiusMm ** 2 - offsetMm ** 2));
     const curveDepthMm = curveRadiusMm - radiusAlongMm;
-    const yaw = Math.asin(offsetMm / curveRadiusMm);
+    const yaw = -Math.asin(offsetMm / curveRadiusMm);
     const shellCenter: Point2Mm = {
-      x: monitor.centerMm.x + offsetMm,
-      y: monitor.centerMm.y + curveDepthMm,
+      x: monitor.centerMm.x + curveDepthMm,
+      y: monitor.centerMm.y + offsetMm,
     };
     const shell = texturedBox(
       context.scene,
       `${fitout.id} · MONITOR-40-21:9 · zakrivený zadný segment ${index + 1}`,
       shellCenter,
-      segmentWidthMm + 5,
       monitor.maxThicknessMm,
+      segmentWidthMm + 5,
       monitor.heightMm * MM_TO_M,
       shellBottomM,
       1,
@@ -5589,8 +5634,8 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     shell.rotation.y = yaw;
     finish(context, shell, materials.fireplace, { shadow: true, pickable: true });
 
-    const normalX = -offsetMm / curveRadiusMm;
-    const normalY = radiusAlongMm / curveRadiusMm;
+    const normalX = radiusAlongMm / curveRadiusMm;
+    const normalY = -offsetMm / curveRadiusMm;
     const glassOffsetMm = monitor.maxThicknessMm / 2 + 3;
     const glass = texturedBox(
       context.scene,
@@ -5599,8 +5644,8 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
         x: shellCenter.x + normalX * glassOffsetMm,
         y: shellCenter.y + normalY * glassOffsetMm,
       },
-      segmentWidthMm + 1,
       4,
+      segmentWidthMm + 1,
       (monitor.heightMm - 16) * MM_TO_M,
       shellBottomM + 0.008,
       1,
@@ -5611,9 +5656,9 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const monitorBase = texturedBox(
     context.scene,
     `${fitout.id} · MONITOR-40-21:9 · subtílna stolová základňa`,
-    { x: monitor.centerMm.x, y: monitor.centerMm.y - 35 },
-    410,
+    { x: monitor.centerMm.x + 35, y: monitor.centerMm.y },
     220,
+    410,
     0.018,
     deskTopM + 0.002,
     1,
@@ -5624,9 +5669,9 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const monitorPost = texturedBox(
     context.scene,
     `${fitout.id} · MONITOR-40-21:9 · centrálny stojan`,
-    { x: monitor.centerMm.x, y: monitor.centerMm.y - 20 },
-    54,
+    { x: monitor.centerMm.x - 20, y: monitor.centerMm.y },
     46,
+    54,
     postHeightM,
     deskTopM + 0.018,
     1,
@@ -5638,8 +5683,8 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   const chair = fitout.chair;
   const chairCenter = chair.centerMm;
   const seatM = chair.seatElevationMm * MM_TO_M;
-  const chairWidthM = (chair.footprintMm.x1 - chair.footprintMm.x0) * MM_TO_M;
-  const chairDepthM = (chair.footprintMm.y1 - chair.footprintMm.y0) * MM_TO_M;
+  const chairWidthM = (chair.footprintMm.y1 - chair.footprintMm.y0) * MM_TO_M;
+  const chairDepthM = (chair.footprintMm.x1 - chair.footprintMm.x0) * MM_TO_M;
   const hub = CreateCylinder(
     `${fitout.id} · CHAIR · centrálna päťramenná báza`,
     { height: 0.09, diameter: 0.13, tessellation: 28 },
@@ -5693,8 +5738,8 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   softEllipsoid(
     context,
     `${fitout.id} · CHAIR · ergonomický čalúnený sedák`,
-    { x: chairCenter.x, y: chairCenter.y - 45 },
-    [chairWidthM * 0.72, 0.135, chairDepthM * 0.7],
+    { x: chairCenter.x - 45, y: chairCenter.y },
+    [chairDepthM * 0.7, 0.135, chairWidthM * 0.72],
     seatM,
     materials.officeFabric,
   );
@@ -5710,41 +5755,41 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
   );
   finish(context, seatShell, materials.fireplace, { shadow: true });
 
-  const backCenterY = chairCenter.y + 250;
+  const backCenterX = chairCenter.x + 250;
   const backBottomM = seatM + 0.08;
   const backTopM = chair.backTopElevationMm * MM_TO_M;
   softCapsule(
     context,
     `${fitout.id} · CHAIR · vysoké ergonomické operadlo`,
-    { x: chairCenter.x, y: backCenterY },
+    { x: backCenterX, y: chairCenter.y },
     (backBottomM + backTopM) / 2,
     backTopM - backBottomM,
     0.18,
     new Vector3(0, 1, 0),
-    [1.45, 1, 0.34],
+    [0.34, 1, 1.45],
     materials.officeFabric,
   );
   softEllipsoid(
     context,
     `${fitout.id} · CHAIR · nastaviteľná bedrová opora`,
-    { x: chairCenter.x, y: backCenterY - 72 },
-    [0.48, 0.24, 0.095],
+    { x: backCenterX - 72, y: chairCenter.y },
+    [0.095, 0.24, 0.48],
     seatM + 0.26,
     materials.accentFabric,
   );
   softEllipsoid(
     context,
     `${fitout.id} · CHAIR · mäkká hlavová opierka`,
-    { x: chairCenter.x, y: backCenterY + 12 },
-    [0.43, 0.17, 0.13],
+    { x: backCenterX + 12, y: chairCenter.y },
+    [0.13, 0.17, 0.43],
     backTopM - 0.07,
     materials.officeFabric,
   );
-  for (const [index, sideX] of [chairCenter.x - 255, chairCenter.x + 255].entries()) {
+  for (const [index, sideY] of [chairCenter.y - 255, chairCenter.y + 255].entries()) {
     const armPost = texturedBox(
       context.scene,
       `${fitout.id} · CHAIR · nastaviteľná podrúčka ${index + 1}`,
-      { x: sideX, y: chairCenter.y - 15 },
+      { x: chairCenter.x - 15, y: sideY },
       42,
       42,
       0.22,
@@ -5755,20 +5800,20 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     const armPad = softCapsule(
       context,
       `${fitout.id} · CHAIR · mäkká opierka ruky ${index + 1}`,
-      { x: sideX, y: chairCenter.y - 75 },
+      { x: chairCenter.x - 75, y: sideY },
       seatM + 0.245,
       0.31,
       0.04,
-      new Vector3(0, 0, 1),
+      new Vector3(1, 0, 0),
       [1, 0.65, 1],
       materials.officeFabric,
     );
     armPad.rotation.z = 0.02;
   }
 
-  // Frameless marker board spans the solid north-wall bay, left after entering
-  // and directly opposite the desk. Its generous corner gap keeps EAST-01
-  // visually independent instead of pinning the board to the window reveal.
+  // The frameless marker board stays on the only uninterrupted north-wall bay.
+  // Its generous corner gap keeps EAST-01 visually independent while the desk
+  // and cabinet exchange the west and east sides of the room.
   const whiteboard = fitout.whiteboard;
   const boardRect = whiteboard.footprintMm;
   const boardBottomM = whiteboard.bottomElevationMm * MM_TO_M;
@@ -5825,13 +5870,13 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     finish(context, marker, markerMaterials[index], { pickable: true });
   }
 
-  // One restrained linear ceiling luminaire follows the rotated desk axis.
+  // One restrained linear ceiling luminaire follows the wall-facing desk axis.
   const ceilingHousing = texturedBox(
     context.scene,
     `${fitout.id} · LIGHT · čierny lineárny stropný profil`,
     { x: (deskRect.x0 + deskRect.x1) / 2, y: (deskRect.y0 + deskRect.y1) / 2 },
-    1260,
     58,
+    1260,
     0.035,
     2.565,
     1,
@@ -5841,8 +5886,8 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
     context.scene,
     `${fitout.id} · LIGHT · teplý súvislý difúzor`,
     { x: (deskRect.x0 + deskRect.x1) / 2, y: (deskRect.y0 + deskRect.y1) / 2 },
-    1210,
     34,
+    1210,
     0.012,
     2.553,
     1,

@@ -203,9 +203,18 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   // The glide step lives in the contract (`stepOrbitZoom` wraps
   // `easeOrbitRadius`) so the scene only consumes the settled result.
   assert.match(scene, /stepOrbitZoom\(/);
-  assert.match(
+  // Screen-space passes are an interior walkthrough feature: the stack follows
+  // the active walking camera with hysteresis and the photo pipeline is
+  // re-attached last so ACES sees the occluded, reflected linear image.
+  assert.match(scene, /this\.syncInteriorPostFx\(\)/);
+  assert.match(scene, /shouldEngageInteriorPostFx\(\{/);
+  assert.match(scene, /interiorPostFxPlan\(\{/);
+  assert.match(scene, /stepAdaptivePostFx\(/);
+  assert.match(scene, /new SSAO2RenderingPipeline\(\s*"interior-ambient-occlusion"/);
+  assert.match(scene, /new SSRRenderingPipeline\(\s*"interior-reflections"/);
+  assert.doesNotMatch(
     scene,
-    /const cameras = \[\s*this\.orbitCamera,\s*this\.flightCamera,\s*this\.garageCinematicCamera,\s*this\.avatar\.camera,\s*\];/,
+    /attachCamerasToRenderPipeline\([^)]*this\.orbitCamera/s,
   );
   assert.match(scene, /CascadedShadowGenerator\.IsSupported/);
   // Water keeps true refraction; glazing is alpha-blended so the interior

@@ -1017,3 +1017,199 @@ export function integrateAvatarVelocity({
     z: Math.abs(vz) < 1e-4 ? 0 : vz,
   };
 }
+
+export type RenderQualityTier = RenderQualityProfile["tier"];
+
+/**
+ * Interior photographic contract for the walkthrough.
+ *
+ * Screen-space effects are deliberately excluded from the exterior view (see
+ * `EXTERIOR_RENDER_STABILITY`): the roof's thin eave layers turn an AO kernel
+ * into crawling tiles while orbiting. Indoors the situation inverts — contact
+ * shadows under furniture, darkened wall/ceiling junctions and glossy floor
+ * reflections are exactly what separates a CAD model from a photograph. The
+ * stack therefore engages only while the walker is inside the house and
+ * releases again with hysteresis so a doorway never flickers it on and off.
+ */
+export const INTERIOR_RENDER_QUALITY = Object.freeze({
+  ambientOcclusion: Object.freeze({
+    /** World-space kernel: reads plinths, skirtings and door linings, not eaves. */
+    radiusM: 0.34,
+    totalStrength: 1.05,
+    /** Lifts the darkest AO so corners stay readable, never crushed. */
+    base: 0.1,
+    /** Fades AO out past the far wall of the living space. */
+    maxZ: 14,
+    minZAspect: 0.25,
+    epsilon: 0.02,
+    samples: Object.freeze({ ULTRA: 20, HIGH: 12 }),
+    ssaoRatio: Object.freeze({ ULTRA: 0.75, HIGH: 0.5 }),
+    blurRatio: 1,
+    bilateralSamples: 12,
+    bilateralSoften: 0.35,
+    bilateralTolerance: 0.12,
+  }),
+  screenSpaceReflections: Object.freeze({
+    /** The most expensive pass is reserved for uncompromised desktops. */
+    tiers: Object.freeze(["ULTRA"] as readonly RenderQualityTier[]),
+    strength: 0.55,
+    reflectionSpecularFalloffExponent: 1.6,
+    thicknessM: 0.15,
+    step: 2,
+    maxSteps: 240,
+    maxDistanceM: 18,
+    roughnessFactor: 0.14,
+    reflectivityThreshold: 0.045,
+    blurDispersionStrength: 0.045,
+    ssrDownsample: 1,
+    blurDownsample: 1,
+    selfCollisionNumSkip: 2,
+  }),
+  /** Indoor blend at which the interior stack engages / releases (hysteresis). */
+  engageIndoorBlend: 0.55,
+  releaseIndoorBlend: 0.35,
+  /**
+   * Indoors the sun only matters through the glazing. Pulling the cascade
+   * horizon in concentrates the four shadow maps on the rooms and the garden
+   * visible through the windows instead of the far parcel boundary.
+   */
+  walkShadowMaxZ: 42,
+});
+
+/**
+ * Frame-time governor for the interior stack. Sheds the most expensive effect
+ * first and never restores within a session: a photographic tour must not
+ * visibly oscillate between "reflections on" and "reflections off".
+ */
+export const ADAPTIVE_POST_FX = Object.freeze({
+  /** Rolling window judged as one unit. */
+  windowMs: 1_500,
+  /** Sustained average above this (≈ 42 fps) sheds one level. */
+  shedFrameMs: 24,
+  /** Frames longer than this are tab sleeps or shader compiles, not load. */
+  ignoreFrameAboveMs: 250,
+  /** Give shader warm-up a moment before judging the first window. */
+  warmupMs: 2_000,
+  /** 0 = full stack, 1 = no reflections, 2 = no reflections + light AO. */
+  maxShedLevel: 2,
+});
+
+export type InteriorPostFxShedLevel = 0 | 1 | 2;
+
+export interface AdaptivePostFxState {
+  readonly shedLevel: InteriorPostFxShedLevel;
+  readonly windowMs: number;
+  readonly windowFrames: number;
+  readonly warmupRemainingMs: number;
+}
+
+export function initialAdaptivePostFxState(): AdaptivePostFxState {
+  return {
+    shedLevel: 0,
+    windowMs: 0,
+    windowFrames: 0,
+    warmupRemainingMs: ADAPTIVE_POST_FX.warmupMs,
+  };
+}
+
+/** Advances the governor by one rendered frame while the interior stack is live. */
+export function stepAdaptivePostFx(
+  state: AdaptivePostFxState,
+  frameMs: number,
+): AdaptivePostFxState {
+  const frame = Number.isFinite(frameMs) ? Math.max(0, frameMs) : 0;
+  if (frame <= 0 || frame > ADAPTIVE_POST_FX.ignoreFrameAboveMs) return state;
+  if (state.warmupRemainingMs > 0) {
+    return {
+      ...state,
+      warmupRemainingMs: Math.max(0, state.warmupRemainingMs - frame),
+    };
+  }
+  const windowMs = state.windowMs + frame;
+  const windowFrames = state.windowFrames + 1;
+  if (windowMs < ADAPTIVE_POST_FX.windowMs) {
+    return { ...state, windowMs, windowFrames };
+  }
+  const averageMs = windowMs / windowFrames;
+  const shedLevel =
+    averageMs > ADAPTIVE_POST_FX.shedFrameMs &&
+    state.shedLevel < ADAPTIVE_POST_FX.maxShedLevel
+      ? ((state.shedLevel + 1) as InteriorPostFxShedLevel)
+      : state.shedLevel;
+  return { shedLevel, windowMs: 0, windowFrames: 0, warmupRemainingMs: 0 };
+}
+
+/** Interior effects are a walkthrough feature with hysteresis on the indoor blend. */
+export function shouldEngageInteriorPostFx({
+  navigationMode,
+  indoorBlend,
+  wasEngaged,
+}: {
+  readonly navigationMode: "orbit" | "flight" | "walk";
+  readonly indoorBlend: number;
+  readonly wasEngaged: boolean;
+}): boolean {
+  if (navigationMode !== "walk") return false;
+  const blend = clamp(Number.isFinite(indoorBlend) ? indoorBlend : 0, 0, 1);
+  return wasEngaged
+    ? blend >= INTERIOR_RENDER_QUALITY.releaseIndoorBlend
+    : blend >= INTERIOR_RENDER_QUALITY.engageIndoorBlend;
+}
+
+export interface InteriorPostFxPlan {
+  readonly ambientOcclusion: boolean;
+  readonly ambientOcclusionSamples: number;
+  readonly screenSpaceReflections: boolean;
+}
+
+/** Resolves what the interior stack should render for a tier and shed level. */
+export function interiorPostFxPlan({
+  engaged,
+  tier,
+  shedLevel,
+}: {
+  readonly engaged: boolean;
+  readonly tier: RenderQualityTier;
+  readonly shedLevel: InteriorPostFxShedLevel;
+}): InteriorPostFxPlan {
+  if (!engaged) {
+    return {
+      ambientOcclusion: false,
+      ambientOcclusionSamples: 0,
+      screenSpaceReflections: false,
+    };
+  }
+  const ao = INTERIOR_RENDER_QUALITY.ambientOcclusion;
+  return {
+    ambientOcclusion: true,
+    ambientOcclusionSamples: shedLevel >= 2 ? ao.samples.HIGH : ao.samples[tier],
+    screenSpaceReflections:
+      shedLevel === 0 &&
+      INTERIOR_RENDER_QUALITY.screenSpaceReflections.tiers.includes(tier),
+  };
+}
+
+/**
+ * Photographic grade for the reality view. ACES already handles the tone
+ * curve; the curves only add the restrained warmth and gentle highlight
+ * roll-off of a large-format architectural photograph.
+ */
+export const PHOTOGRAPHIC_GRADE = Object.freeze({
+  exposure: 1.02,
+  contrast: 1.08,
+  vignetteWeight: 0.32,
+  colorCurves: Object.freeze({
+    globalSaturation: 6,
+    globalHue: 30,
+    globalDensity: 0,
+    shadowsHue: 28,
+    shadowsDensity: 8,
+    shadowsSaturation: -4,
+    midtonesHue: 30,
+    midtonesDensity: 0,
+    midtonesSaturation: 2,
+    highlightsHue: 212,
+    highlightsDensity: 4,
+    highlightsSaturation: -6,
+  }),
+});

@@ -37,6 +37,14 @@ import {
   type WalkAvatarId,
   type WalkAvatarOption,
 } from "./twin-avatar";
+import {
+  DOORWAY_ASSIST,
+  movementProgress,
+  rotatePlanar,
+  shouldAttemptDeflection,
+  steerVelocityThroughPassages,
+  type WalkPassage,
+} from "./twin-walk-assist";
 
 export const AVATAR_URL = walkAvatarOption(DEFAULT_WALK_AVATAR_ID).modelUrl;
 export const AVATAR_DIFFUSE_URL =
@@ -235,6 +243,11 @@ export class AvatarController {
   private autoRecoveryCooldownS = 0;
   private autoRecoveryCount = 0;
   private autoRecoveryAwaitingRelease = false;
+  private passages: readonly WalkPassage[] = [];
+  private deflectionCount = 0;
+  private readonly deflectedSubstep = new Vector3();
+  private readonly deflectedBestPosition = new Vector3();
+  private readonly nudgeDisplacement = new Vector3();
 
   constructor(
     private readonly scene: Scene,
@@ -719,7 +732,41 @@ export class AvatarController {
       cooldownS: this.autoRecoveryCooldownS,
       attemptedDirectionMask: this.blockedDirectionMask,
       awaitingRelease: this.autoRecoveryAwaitingRelease,
+      deflectionCount: this.deflectionCount,
     } as const;
+  }
+
+  /** Doorway envelopes the funnel assist may steer toward. */
+  setPassages(passages: readonly WalkPassage[]) {
+    this.passages = passages;
+  }
+
+  /**
+   * Kinematic push from a moving door leaf. Runs through the same ellipsoid
+   * collision and floor snapping as walking, so a wall behind the walker
+   * still wins. Returns the share (0–1) of the requested push that was honoured.
+   */
+  nudge(dxM: number, dzM: number): number {
+    if (!this.active) return 0;
+    const distance = Math.hypot(dxM, dzM);
+    if (!Number.isFinite(distance) || distance < 1e-6) return 1;
+    this.positionBeforeMove.copyFrom(this.collider.position);
+    this.moveColliderWithSurface(this.nudgeDisplacement.set(dxM, 0, dzM));
+    const movedX = this.collider.position.x - this.positionBeforeMove.x;
+    const movedZ = this.collider.position.z - this.positionBeforeMove.z;
+    this.root.position.copyFrom(this.collider.position);
+    // The camera target keeps its lag budget: shift it with the body so the
+    // push reads as the door moving the person, not the person teleporting.
+    this.cameraTarget.x += movedX;
+    this.cameraTarget.z += movedZ;
+    this.camera.target.copyFrom(this.cameraTarget);
+    // A push is an external event; it must not count toward a stuck verdict.
+    this.intendedMovement.setAll(0);
+    this.movementSinceCollisionSolve.setAll(0);
+    this.pendingMovementSecondsS = 0;
+    this.collisionBatchAccountedSecondsS = 0;
+    this.safeTravelM = 0;
+    return movementProgress({ x: dxM, z: dzM }, { x: movedX, z: movedZ });
   }
 
   /** Rewinds only a short distance to the latest unobstructed movement anchor. */
@@ -809,7 +856,7 @@ export class AvatarController {
       ? EMPTY_FLIGHT_COMMANDS
       : commands;
     const forward = headingOverride ?? this.cameraForward();
-    const next = integrateAvatarVelocity({
+    const integrated = integrateAvatarVelocity({
       velocity: { x: this.velocity.x, z: this.velocity.z },
       forward,
       commands: movementCommands,
@@ -817,6 +864,16 @@ export class AvatarController {
       boost: modifiers.boost,
       precision: modifiers.precision,
     });
+    // Doorway funnel: only ever rotates the heading toward an opening's
+    // centreline, so the shoulder clears the lining without any speed change.
+    const next =
+      this.passages.length > 0 && !this.autoRecoveryAwaitingRelease
+        ? steerVelocityThroughPassages(
+            integrated,
+            { x: this.collider.position.x, z: this.collider.position.z },
+            this.passages,
+          )
+        : integrated;
     const seconds = Math.min(50, Math.max(0, deltaMs)) / 1000;
     this.autoRecoveryCooldownS = Math.max(
       0,
@@ -871,33 +928,7 @@ export class AvatarController {
         collisionBatchSecondsS - this.collisionBatchAccountedSecondsS,
       );
       this.positionBeforeMove.copyFrom(this.collider.position);
-      const substeps = Math.max(
-        1,
-        Math.ceil(intended.length() / WALK_CAMERA.maxMoveSubstepM),
-      );
-      intended.scaleToRef(1 / substeps, this.movementSubstep);
-      this.collider.computeWorldMatrix(true);
-      for (let index = 0; index < substeps; index += 1) {
-        this.positionBeforeSubstep.copyFrom(this.collider.position);
-        this.collider.moveWithCollisions(this.movementSubstep);
-        // moveWithCollisions mutates position in place; force the hidden
-        // collider's absolute matrix before the next substep/frame. Without
-        // this, Babylon can resolve every step from a stale start and tunnel
-        // through furniture during a sprint or a deterministic QA loop.
-        const surfaceResult = this.snapToWalkSurface();
-        if (
-          surfaceResult === "blocked-rise" ||
-          (surfaceResult === "missing" && !this.surfaceValid)
-        ) {
-          // A missing floor or an unwalkable rise is an impassable edge, just
-          // like a wall. Rewind the individual substep so a lower fallback
-          // terrain can never carry the walker through raised geometry.
-          this.collider.position.copyFrom(this.positionBeforeSubstep);
-          this.surfaceY = this.positionBeforeSubstep.y;
-          this.snapToWalkSurface();
-        }
-        this.collider.computeWorldMatrix(true);
-      }
+      this.moveColliderWithSurface(intended);
       moved = this.actualMovement
         .copyFrom(this.collider.position)
         .subtractInPlace(this.positionBeforeMove);
@@ -912,6 +943,19 @@ export class AvatarController {
             ),
           )
         : 1;
+      if (
+        shouldAttemptDeflection(hasDirectionalInput, intendedDistance, progress)
+      ) {
+        // A jamb edge or a wardrobe corner caught the capsule. Try a few
+        // steeper headings and keep the best one that still honours most of
+        // the original intent; a flat wall rejects all of them and stays a wall.
+        progress = this.tryDeflectedMove(intended, progress);
+        moved = this.actualMovement
+          .copyFrom(this.collider.position)
+          .subtractInPlace(this.positionBeforeMove);
+        moved.y = 0;
+        movedDistance = moved.length();
+      }
       collisionCorrectionM = Math.hypot(
         intended.x - moved.x,
         intended.z - moved.z,
@@ -1119,6 +1163,81 @@ export class AvatarController {
 
     this.blendAnimations(speed);
     return speed;
+  }
+
+  /**
+   * One collision-resolved planar move from the current collider position,
+   * split into short substeps with floor snapping after each.
+   */
+  private moveColliderWithSurface(displacement: Vector3) {
+    const substeps = Math.max(
+      1,
+      Math.ceil(displacement.length() / WALK_CAMERA.maxMoveSubstepM),
+    );
+    displacement.scaleToRef(1 / substeps, this.movementSubstep);
+    this.collider.computeWorldMatrix(true);
+    for (let index = 0; index < substeps; index += 1) {
+      this.positionBeforeSubstep.copyFrom(this.collider.position);
+      this.collider.moveWithCollisions(this.movementSubstep);
+      // moveWithCollisions mutates position in place; force the hidden
+      // collider's absolute matrix before the next substep/frame. Without
+      // this, Babylon can resolve every step from a stale start and tunnel
+      // through furniture during a sprint or a deterministic QA loop.
+      const surfaceResult = this.snapToWalkSurface();
+      if (
+        surfaceResult === "blocked-rise" ||
+        (surfaceResult === "missing" && !this.surfaceValid)
+      ) {
+        // A missing floor or an unwalkable rise is an impassable edge, just
+        // like a wall. Rewind the individual substep so a lower fallback
+        // terrain can never carry the walker through raised geometry.
+        this.collider.position.copyFrom(this.positionBeforeSubstep);
+        this.surfaceY = this.positionBeforeSubstep.y;
+        this.snapToWalkSurface();
+      }
+      this.collider.computeWorldMatrix(true);
+    }
+  }
+
+  /**
+   * Retries a mostly rejected move on deflected headings. The collider ends
+   * on the best candidate (or back on the original result) and the achieved
+   * share of the original intent is returned.
+   */
+  private tryDeflectedMove(intended: Vector3, originalProgress: number) {
+    let bestProgress = originalProgress;
+    this.deflectedBestPosition.copyFrom(this.collider.position);
+    let bestSurfaceY = this.surfaceY;
+    const originalSurfaceY = this.positionBeforeMove.y;
+    for (const angleRad of DOORWAY_ASSIST.deflectionAnglesRad) {
+      const rotated = rotatePlanar({ x: intended.x, z: intended.z }, angleRad);
+      this.collider.position.copyFrom(this.positionBeforeMove);
+      this.surfaceY = originalSurfaceY;
+      this.moveColliderWithSurface(
+        this.deflectedSubstep.set(rotated.x, 0, rotated.z),
+      );
+      const candidateProgress = movementProgress(
+        { x: intended.x, z: intended.z },
+        {
+          x: this.collider.position.x - this.positionBeforeMove.x,
+          z: this.collider.position.z - this.positionBeforeMove.z,
+        },
+      );
+      if (
+        candidateProgress >= DOORWAY_ASSIST.deflectMinimumProgress &&
+        candidateProgress > bestProgress
+      ) {
+        bestProgress = candidateProgress;
+        this.deflectedBestPosition.copyFrom(this.collider.position);
+        bestSurfaceY = this.surfaceY;
+      }
+    }
+    this.collider.position.copyFrom(this.deflectedBestPosition);
+    this.surfaceY = bestSurfaceY;
+    this.snapToWalkSurface();
+    this.collider.computeWorldMatrix(true);
+    if (bestProgress > originalProgress) this.deflectionCount += 1;
+    return bestProgress;
   }
 
   private refreshCameraOccluders() {

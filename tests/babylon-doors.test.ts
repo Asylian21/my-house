@@ -7,12 +7,15 @@ import {
   doorHandleDepression,
   doorInteractionPromptLabel,
   doorMotionDurationMs,
+  DOOR_INTERACTION,
+  hingedDoorActorDisplacement,
   hingedDoorSweepIsClear,
   INTERACTIVE_DOOR_INVENTORY,
   liftSlideSashLiftM,
   LIFT_SLIDE_MOTION,
   POOL_ACCESS_INVENTORY,
   selectDoorInteractionTarget,
+  slidingDoorActorDisplacement,
   slidingDoorPathIsClear,
   smootherStep01,
   type DoorMotionKind,
@@ -468,5 +471,214 @@ describe("animated architectural doors", () => {
         1,
       ),
     ).toBe(true);
+  });
+
+  it("computes the minimal push that clears a hinged leaf at one progress", () => {
+    const hinge = { x: 0, z: 0 };
+    const closedEnd = { x: 0.8, z: 0 };
+    const clearance =
+      DOOR_INTERACTION.actorRadiusM + 0.02 + DOOR_INTERACTION.leafClearancePaddingM;
+
+    // Closed leaf lies along +X; an actor 0.1 m in front of it is pushed
+    // straight off the leaf plane until it is just outside the clearance.
+    const push = hingedDoorActorDisplacement(
+      actor(0.4, -0.1),
+      hinge,
+      closedEnd,
+      Math.PI / 2,
+      0,
+    );
+    expect(push).not.toBeNull();
+    expect(push?.x).toBeCloseTo(0, 10);
+    expect(push?.z).toBeCloseTo(
+      -(clearance - 0.1 + DOOR_INTERACTION.yieldOvershootM),
+      10,
+    );
+    const pushed = actor(0.4, -0.1 + (push?.z ?? 0));
+    expect(
+      hingedDoorActorDisplacement(pushed, hinge, closedEnd, Math.PI / 2, 0),
+    ).toBeNull();
+
+    // Already clear: nothing to do.
+    expect(
+      hingedDoorActorDisplacement(actor(0.4, -0.5), hinge, closedEnd, Math.PI / 2, 0),
+    ).toBeNull();
+
+    // Fully open (a positive angle swings toward -Z): the leaf now points
+    // along -Z, so an actor beside it is moved sideways, not backwards.
+    const fullyOpen = hingedDoorActorDisplacement(
+      actor(0.1, -0.4),
+      hinge,
+      closedEnd,
+      Math.PI / 2,
+      1,
+    );
+    expect(fullyOpen).not.toBeNull();
+    expect(fullyOpen?.z).toBeCloseTo(0, 10);
+    expect(fullyOpen?.x).toBeCloseTo(
+      clearance - 0.1 + DOOR_INTERACTION.yieldOvershootM,
+      10,
+    );
+
+    // Exactly in the leaf plane: pushed along the swing direction.
+    const inPlane = hingedDoorActorDisplacement(
+      actor(0.4, 0),
+      hinge,
+      closedEnd,
+      Math.PI / 2,
+      0,
+    );
+    expect(inPlane?.x).toBeCloseTo(0, 10);
+    expect(inPlane?.z).toBeCloseTo(
+      -(clearance + DOOR_INTERACTION.yieldOvershootM),
+      10,
+    );
+  });
+
+  it("pushes a sliding leaf's bystander off the track plane, never along it", () => {
+    const closed = { x: 0, z: 0 };
+    const open = { x: -1, z: 0 };
+    const clearance = 0.08 + DOOR_INTERACTION.actorRadiusM;
+    const push = slidingDoorActorDisplacement(actor(0.2, 0.1), closed, open, 0.5);
+    expect(push?.x).toBeCloseTo(0, 10);
+    expect(push?.z).toBeCloseTo(
+      clearance - 0.1 + DOOR_INTERACTION.yieldOvershootM,
+      10,
+    );
+    const otherSide = slidingDoorActorDisplacement(
+      actor(0.2, -0.1),
+      closed,
+      open,
+      0.5,
+    );
+    expect(otherSide?.z).toBeCloseTo(-(push?.z ?? 0), 10);
+    expect(
+      slidingDoorActorDisplacement(actor(0.2, 1), closed, open, 0.5),
+    ).toBeNull();
+    // Beyond the leaf end along the track the actor is clear.
+    expect(
+      slidingDoorActorDisplacement(actor(0.9, 0.1), closed, open, 0.5),
+    ).toBeNull();
+    // The check follows the leaf as it travels.
+    expect(
+      slidingDoorActorDisplacement(actor(-0.9, 0.1), closed, open, 0.5, 0.08, 1),
+    ).not.toBeNull();
+  });
+
+  it("lets a yielding door open through the walker by pushing them aside", () => {
+    const hinge = { x: 0, z: 0 };
+    const closedEnd = { x: 0.8, z: 0 };
+    const controller = new BabylonDoorController();
+    let walker = actor(0.4, -0.25);
+    const pushes: { x: number; z: number }[] = [];
+    controller.setActorDisplacementHandler((displacement) => {
+      pushes.push(displacement);
+      walker = actor(
+        walker.position.x + displacement.x,
+        walker.position.z + displacement.z,
+      );
+      return walker;
+    });
+    controller.register({
+      id: "DOOR",
+      label: "Dvere",
+      kind: "HINGED",
+      interactionPoint: { x: 0.4, z: 0 },
+      apply: () => undefined,
+      canOpen: (state, progress = 0) =>
+        hingedDoorSweepIsClear(state, hinge, closedEnd, Math.PI / 2, 0.04, progress, 1),
+      actorDisplacement: (state, progress) =>
+        hingedDoorActorDisplacement(state, hinge, closedEnd, Math.PI / 2, progress),
+    });
+    controller.setActor(walker);
+    // The walker stands inside the sweep: without yielding this is refused.
+    expect(hingedDoorSweepIsClear(walker, hinge, closedEnd, Math.PI / 2)).toBe(
+      false,
+    );
+    expect(controller.setOpen("DOOR", true)).toBe(true);
+    expect(controller.getInteraction()?.blockedMessage).toBeNull();
+
+    for (let elapsed = 0; elapsed < 1_200; elapsed += 16) {
+      controller.update(16);
+      controller.setActor(walker);
+    }
+    expect(controller.debugState()[0]).toMatchObject({ phase: "OPEN", progress: 1 });
+    expect(pushes.length).toBeGreaterThan(0);
+    // Each push is a small, frame-sized step, not a teleport.
+    expect(Math.max(...pushes.map(({ x, z }) => Math.hypot(x, z)))).toBeLessThan(
+      0.12,
+    );
+    // The walker ended up clear of the fully open leaf.
+    expect(
+      hingedDoorActorDisplacement(walker, hinge, closedEnd, Math.PI / 2, 1),
+    ).toBeNull();
+  });
+
+  it("pauses a yielding door when the walker cannot be moved", () => {
+    const hinge = { x: 0, z: 0 };
+    const closedEnd = { x: 0.8, z: 0 };
+    const controller = new BabylonDoorController();
+    controller.setActorDisplacementHandler(() => null);
+    controller.register({
+      id: "DOOR",
+      label: "Dvere",
+      kind: "HINGED",
+      interactionPoint: { x: 0.4, z: 0 },
+      apply: () => undefined,
+      canOpen: (state, progress = 0) =>
+        hingedDoorSweepIsClear(state, hinge, closedEnd, Math.PI / 2, 0.04, progress, 1),
+      actorDisplacement: (state, progress) =>
+        hingedDoorActorDisplacement(state, hinge, closedEnd, Math.PI / 2, progress),
+    });
+    // Clear of the closed leaf, but inside the arc.
+    controller.setActor(actor(0.4, -0.4));
+    expect(controller.setOpen("DOOR", true)).toBe(true);
+    for (let elapsed = 0; elapsed < 600; elapsed += 16) controller.update(16);
+    const paused = controller.debugState()[0].progress;
+    expect(paused).toBeGreaterThan(0);
+    expect(paused).toBeLessThan(1);
+    expect(controller.getInteraction()?.blockedMessage).toBe(
+      "Ustúpte z dráhy dverí",
+    );
+
+    // Once the walker steps aside the leaf completes its swing.
+    controller.setActor(actor(-0.6, -0.6));
+    for (let elapsed = 0; elapsed < 1_200; elapsed += 16) controller.update(16);
+    expect(controller.debugState()[0]).toMatchObject({ phase: "OPEN", progress: 1 });
+  });
+
+  it("publishes passages for the walker's doorway assist, sorted by id", () => {
+    const controller = new BabylonDoorController();
+    const passageFor = (id: string) => ({
+      id,
+      center: { x: 0, z: 0 },
+      along: { x: 1, z: 0 },
+      halfClearWidthM: 0.35,
+      halfDepthM: 0.075,
+    });
+    controller.register({
+      id: "B",
+      label: "B",
+      kind: "HINGED",
+      interactionPoint: { x: 0, z: 0 },
+      apply: () => undefined,
+      passage: passageFor("B"),
+    });
+    controller.register({
+      id: "A",
+      label: "A",
+      kind: "SLIDING",
+      interactionPoint: { x: 1, z: 0 },
+      apply: () => undefined,
+      passage: passageFor("A"),
+    });
+    controller.register({
+      id: "LADDER",
+      label: "Rebrík",
+      kind: "TRAVERSAL",
+      interactionPoint: { x: 2, z: 0 },
+      apply: () => undefined,
+    });
+    expect(controller.passages().map(({ id }) => id)).toEqual(["A", "B"]);
   });
 });

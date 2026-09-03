@@ -49,14 +49,15 @@ Nadväzujúca záhradná revízia zachováva čelné antracitové hliníkové la
 hustý živý plot. Klientska revízia z 29. 8. 2026 mení bazén v otvorenom L-dvore
 na mierne dlhšiu a užšiu vodnú plochu 6,0 × 2,7 m. Svetlý 300 mm lem je bez
 medzery napojený na hlavnú aj bočnú terasu a zdieľa s nimi hornú úroveň.
-Na zostávajúcej západnej a južnej strane ho obopína nový presne 2 m široký
-drevený pás s hrubou plochou 23,80 m² a čistou plochou 22,81 m² po odpočítaní
-poklopu. Kolidujúce kríky, okrasné trávy a mulčovaný záhon okolo bazéna sú
+Na západnej strane vedie smerom do záhrady nový 1 m široký pozdĺžny pás;
+zadný pás bezprostredne za bazénom zostáva široký 2 m. Spolu majú hrubú plochu
+18,50 m² a čistú plochu 17,51 m² po odpočítaní poklopu. Kolidujúce kríky,
+okrasné trávy a mulčovaný záhon okolo bazéna sú
 odstránené; zadný živý plot na hranici parcely zostáva. Dažďová trasa je
-predbežne vedená južne od centrálnej šachty; dažďová nádrž aj vsakovací objekt
+predbežne vedená južne od rohovej šachty; dažďová nádrž aj vsakovací objekt
 sú posunuté iba o nevyhnutných 600/600 mm hlbšie do záhrady. Najmenší
 modelovaný odstup bazéna od plášťa potrubia zostáva približne 0,69 m a šachta
-má od potrubia 0,18 m. Vizualizačná hĺbka vody je
+má od potrubia 0,13 m. Vizualizačná hĺbka vody je
 navrhnutá na 1,40 m; nie je to realizačne potvrdená hodnota. Výška 1,6 m,
 trojdielny teleskopický pojazd, plná skrytá
 bránka pri EAST-03, druh živého plota, poloha a technológia bazéna sú
@@ -145,8 +146,17 @@ s polomermi 0,22 × 0,80 × 0,22 m a pohyb sa delí na najviac 50 mm kroky.
 Spoločný kontrolér pokrýva presne 22 interakcií: 18 architektonických dverových
 systémov, dvoje dvierka spotrebičov, pochôdzny poklop šachty a obojsmerný
 riadený prechod po rebríku.
-Zatvorené krídlo chodca zastaví, po animovanom otvorení uvoľní reálny priechod
-a pri vstupe postavy do dráhy sa pohyb bezpečne pozastaví. HUD ponúka priamy vstup do každej z dvanástich
+Zatvorené krídlo chodca zastaví, po animovanom otvorení uvoľní reálny priechod.
+Krídlo, ktoré sa otvára na chodca, ho po milimetroch odsúva pred svojou plochou
+(`actorDisplacement` v `lib/babylon-doors.ts`), takže dvere sa dajú otvoriť aj
+tesne pred nimi; pohyb sa pozastaví s výzvou „Ustúpte z dráhy dverí“ iba vtedy,
+keď postavu nemá kam odsunúť (stena, nábytok). Pri približovaní k otvoru sa
+smer chôdze jemne stáča na os priechodu a takmer zamietnutý krok sa skúsi
+vychýliť o ±30°/±60°, aby zárubňa ani roh skrine nezastavili chodca
+(`lib/twin-walk-assist.ts`). V interiéri sa k obrazu pripája SSAO2 a na
+tieri ULTRA aj odrazy v obrazovom priestore (`INTERIOR_RENDER_QUALITY`);
+stack sa zapína s hysterézou podľa vnútorného blendu, pri trvalom zaťažení
+sa odľahčuje a exteriér zostáva bez skrínových efektov. HUD ponúka priamy vstup do každej z dvanástich
 miestností. Plochy 1.01, 1.04 a 1.06–1.12 sedia s legendou na 0,05 m²;
 1.02, 1.03 a 1.05 sú v legende merané inak (chodbová chrbtica a kuchynská
 nika sa počítajú raz), rozdiel je otvorene vedený v testoch. Kuchynská linka,
@@ -155,8 +165,8 @@ valcové krbové kachle so zvislým dymovodom a soklové lišty sú ilustračný
 dielektrickým Fresnelom namiesto lomu IBL panorámy), takže z terasy vidno
 interiér a zvnútra terasu.
 
-V geometrickom strede južného dvojmetrového pásu bezprostredne za bazénom je
-pod drevenou terasou kompaktná železobetónová technologická šachta
+Na vonkajšom juhozápadnom okraji zadného pásu, v záhradnom rohu smerom od domu,
+je pod drevenou terasou kompaktná železobetónová technologická šachta
 `POOL_TECHNOLOGY_SHAFT` s pôdorysom 3 100 × 1 700 mm, podlahou na −2,200 m,
 svetlou výškou 2,080 m a pochôdznym poklopom 900 × 1 100 mm. Po otvorení poklopu sa dá
 v režime Prechádzka cez E alebo dotyk bezpečne zostúpiť po sedempriečkovom
@@ -245,18 +255,21 @@ Pôdorysné odstupy od krbu, zadného muriva, pevného skla a priechodov sú uza
 kontraktovými testami; finálny protipožiarny odstup a výrobnú skladbu TV steny
 musí potvrdiť dodávateľ konkrétnych kachlí a interiéru.
 
-Pracovňa 1.04 je v klientskej revízii z 24. 8. 2026 preskladaná ako
-minimalistický pracovný kokpit (`OFFICE_FITOUT`). Celú 1 697 mm dlhú priečku k
-zádveriu využíva 2 550 mm vysoká greige bezúchytková skriňa s integrovanou
-bielo-čiernou tlačiarňou. Naprieč k južnému oknu stojí subtílny dubový stôl
-1 800 × 800 mm s prehnutým 40-palcovým ultrawide monitorom 21 : 9 a čiernym
-ergonomickým kreslom. Veľké okno FRONT-07 priamo v osi pohľadu ostáva v
-pôvodnom stavebnom otvore 2 000 × 1 600 mm, ale podľa nadväzujúcej klientskej
-revízie je jednou pevnou neotváravou tabuľou bez stredového stĺpika, krídel a
-kľučiek, s ultra-tenkým 35 mm pohľadovým rámom. Bezrámová 1 700 mm široká tabuľa na fixky je za chrbtom
-používateľa na severnej stene, teda vľavo po vstupe a oproti stolu; od rohu
-okna EAST-01 má približne 707 mm diagonálny odstup. Voľný vstupný pás má
-1 538 × 1 012 mm a rešpektuje celý oblúk dverí.
+Pracovňa 1.04 je v klientskej revízii z 29. 8. 2026 preskladaná ako
+minimalistický pracovný kokpit (`OFFICE_FITOUT`). Greige bezúchytková skriňa
+s integrovanou bielo-čiernou tlačiarňou sa presúva z priečky pri zádverí na
+presne protiľahlú východnú stenu. Zachováva hĺbku 538 mm a výšku 2 550 mm,
+ale skracuje sa z 1 697 na 1 461 mm, aby pred oknom EAST-01 zostal 60 mm
+odstup od stavebného otvoru a 20 mm od presahu parapetu. Na pôvodnej strane
+skrine je pozdĺž steny subtílny dubový stôl 1 800 × 800 mm; používateľ aj
+čierne ergonomické kreslo smerujú k západnej stene a prehnutý 40-palcový
+ultrawide monitor 21 : 9 má obrazovku otočenú do miestnosti. Medzi obrysom
+kresla a novou skriňou ostáva 1 091 mm, po započítaní 220 mm kolízneho
+polomeru chodca z každej strany 651 mm. Veľké južné okno FRONT-07 zostáva v
+pôvodnom stavebnom otvore 2 000 × 1 600 mm ako jedna pevná neotváravá tabuľa
+bez stredového stĺpika, krídel a kľučiek, s ultra-tenkým 35 mm pohľadovým
+rámom. Bezrámová 1 700 mm široká tabuľa na fixky zostáva na voľnej severnej
+stene; voľný vstupný pás 1 538 × 1 012 mm rešpektuje celý oblúk dverí.
 
 Výrez na východnej stene zádveria 1.01 vypĺňa samostatná vstavaná zostava
 `ENTRY_FITOUT`: celovýšková 950 mm skriňa na kabáty, dvojzásuvkový botník,
@@ -350,7 +363,8 @@ Gate zahŕňa ESLint, doménové testy, produkčný build a kontrolu serverom vy
 - `lib/twin-site.ts` — projektové revízie, vrstvy, zdroje a parametrické základy,
 - `lib/twin-facade.ts` — čisté delenie fasádneho plášťa okolo zdrojovaných otvorov,
 - `lib/twin-interior.ts` — miestnosti, vnútorné steny a dvere 1.NP odčítané z D1.1.002,
-- `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy, pohyb voľnej kamery a chodca,
+- `lib/twin-viewport-contract.ts` — testovateľná Retina politika, vstupy, pohyb voľnej kamery a chodca, interiérový post-FX kontrakt,
+- `lib/twin-walk-assist.ts` — čisté pomocníky chôdze: nálievka priechodu dverami a vychýlenie zablokovaného kroku,
 - `lib/babylon-interior.ts` — stavba interiérového vybavenia zo záznamu miestností,
 - `lib/babylon-openings.ts` — okná, parapety, posuvné a vstupné dvere,
 - `lib/babylon-doors.ts` — inventár 20 interaktívnych dverí/dvierok, 3D cielenie, stavový automat a bezpečnostné obálky pohybu,

@@ -8,13 +8,16 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 
 import {
+  hingedDoorActorDisplacement,
   hingedDoorSweepIsClear,
   liftSlideSashLiftM,
+  slidingDoorActorDisplacement,
   slidingDoorPathIsClear,
   type AnimatedDoorRegistration,
 } from "./babylon-doors";
 import type { LayerId, Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
+import type { WalkPassage } from "./twin-walk-assist";
 
 export type OpeningKind = "window" | "door" | "sliding" | "fixed";
 
@@ -271,6 +274,23 @@ function placedWorld(spec: OpeningSpec, alongMm: number, acrossMm: number) {
     : { x: xM(acrossMm), z: zM(alongMm) };
 }
 
+/** Clear walk-through envelope of the operable part of a facade opening. */
+function facadePassage(
+  spec: OpeningSpec,
+  id: string,
+  clearCenterAlongMm: number,
+  clearWidthMm: number,
+  acrossMm: number,
+): WalkPassage {
+  return {
+    id,
+    center: placedWorld(spec, clearCenterAlongMm, acrossMm),
+    along: spec.axis === "Z" ? { x: 1, z: 0 } : { x: 0, z: 1 },
+    halfClearWidthM: (clearWidthMm / 2) * MM_TO_M,
+    halfDepthM: (spec.wallThicknessMm / 2) * MM_TO_M,
+  };
+}
+
 export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): Mesh[] {
   const { outward } = spec;
   const inward = (depthMm: number) => spec.faceMm - outward * depthMm;
@@ -518,6 +538,15 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         label: spec.interaction.label,
         kind: "SLIDING",
         interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
+        // The sliding sash parks over the fixed one, so the walk-through is
+        // exactly the sash's own closed footprint.
+        passage: facadePassage(
+          spec,
+          spec.interaction.id,
+          closedCenterAlong,
+          leafWidth - 2 * 90,
+          spec.faceMm - outward * (spec.wallThicknessMm / 2),
+        ),
         apply: (progress) => {
           movingRoot.position.x = travel.x * progress;
           movingRoot.position.y = liftSlideSashLiftM(progress);
@@ -543,6 +572,15 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
             0.08,
             progress,
             0,
+          ),
+        actorDisplacement: (actor, progress) =>
+          slidingDoorActorDisplacement(
+            actor,
+            closedCenter,
+            openCenter,
+            leafWidth * MM_TO_M / 2,
+            0.08,
+            progress,
           ),
       });
     }
@@ -629,6 +667,14 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         label: spec.interaction.label,
         kind: "HINGED",
         interactionPoint: placedWorld(spec, spec.centerMm, planeAcross),
+        // Only the leaf swings; the sidelight is fixed glazing.
+        passage: facadePassage(
+          spec,
+          spec.interaction.id,
+          leafStart + leafWidth / 2,
+          leafWidth - 6,
+          spec.faceMm - outward * (spec.wallThicknessMm / 2),
+        ),
         apply: (progress) => {
           // Keep the closed transform canonically +0 even on leaves whose
           // opening direction is negative; strict scene contracts compare it.
@@ -657,6 +703,15 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
             0.048,
             progress,
             0,
+          ),
+        actorDisplacement: (actor, progress) =>
+          hingedDoorActorDisplacement(
+            actor,
+            hingeWorld,
+            closedEndWorld,
+            openAngleRad,
+            progress,
+            0.048,
           ),
       });
     }

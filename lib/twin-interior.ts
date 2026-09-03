@@ -339,9 +339,10 @@ export interface OfficeFitout {
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly roomId: "ROOM-1-04";
   readonly cabinet: {
-    readonly wallId: "IW-ENTRY-EAST";
+    readonly wallId: "EAST-FACADE";
+    readonly openingId: "EAST-01";
     readonly footprintMm: RectMm;
-    readonly facing: "EAST";
+    readonly facing: "WEST";
     readonly heightMm: number;
     readonly printerNiche: {
       readonly footprintMm: RectMm;
@@ -350,12 +351,13 @@ export interface OfficeFitout {
     };
   };
   readonly desk: {
+    readonly wallId: "IW-ENTRY-EAST";
     readonly footprintMm: RectMm;
-    readonly facing: "SOUTH";
+    readonly facing: "WEST";
     readonly topElevationMm: number;
     readonly monitor: {
       readonly centerMm: Point2Mm;
-      readonly screenFacing: "NORTH";
+      readonly screenFacing: "EAST";
       readonly diagonalIn: 40;
       readonly aspectRatio: "21:9";
       readonly widthMm: number;
@@ -368,7 +370,7 @@ export interface OfficeFitout {
   readonly chair: {
     readonly footprintMm: RectMm;
     readonly centerMm: Point2Mm;
-    readonly facing: "SOUTH";
+    readonly facing: "WEST";
     readonly seatElevationMm: number;
     readonly backTopElevationMm: number;
   };
@@ -376,7 +378,7 @@ export interface OfficeFitout {
     readonly footprintMm: RectMm;
     readonly baseElevationMm: number;
     readonly heightMm: number;
-    readonly facing: "EAST";
+    readonly facing: "WEST";
     readonly finish: "WHITE_BLACK";
     readonly integrated: true;
   };
@@ -389,6 +391,7 @@ export interface OfficeFitout {
     readonly openingId: "EAST-01";
   };
   readonly clearEntryRectMm: RectMm;
+  readonly cameraLookTargetMm: Point2Mm;
 }
 
 export interface EntryFitout {
@@ -1259,31 +1262,33 @@ export const GARAGE_FITOUT: GarageFitout = Object.freeze({
   entryApproachRectMm: { x0: 10842, y0: 5669, x1: 13742, y1: 6462 },
 });
 
-/** Reoriented minimalist home-office composition fitted around both study windows. */
+/** Opposed cabinet and wall-facing workstation fitted around both study windows. */
 export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
-  id: "OFFICE-FITOUT-2026-08-24",
-  sourceId: SOURCES.clientOfficeRelayoutRevision20260824.id,
+  id: "OFFICE-FITOUT-2026-08-29",
+  sourceId: SOURCES.clientOfficeCabinetDeskSwapRevision20260829.id,
   architecturalSourceId: SOURCES.floorPlan.id,
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-04",
   cabinet: {
-    wallId: "IW-ENTRY-EAST",
-    footprintMm: { x0: 24192, y0: 3504, x1: 24730, y1: 5201 },
-    facing: "EAST",
+    wallId: "EAST-FACADE",
+    openingId: "EAST-01",
+    footprintMm: { x0: 27003, y0: 3504, x1: 27541, y1: 4965 },
+    facing: "WEST",
     heightMm: 2550,
     printerNiche: {
-      footprintMm: { x0: 24232, y0: 4590, x1: 24730, y1: 5151 },
+      footprintMm: { x0: 27003, y0: 4354, x1: 27501, y1: 4915 },
       bottomElevationMm: 650,
       heightMm: 500,
     },
   },
   desk: {
-    footprintMm: { x0: 25330, y0: 3600, x1: 27130, y1: 4400 },
-    facing: "SOUTH",
+    wallId: "IW-ENTRY-EAST",
+    footprintMm: { x0: 24192, y0: 3504, x1: 24992, y1: 5304 },
+    facing: "WEST",
     topElevationMm: 750,
     monitor: {
-      centerMm: { x: 26230, y: 3850 },
-      screenFacing: "NORTH",
+      centerMm: { x: 24442, y: 4404 },
+      screenFacing: "EAST",
       diagonalIn: 40,
       aspectRatio: "21:9",
       widthMm: 934,
@@ -1294,17 +1299,17 @@ export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
     },
   },
   chair: {
-    footprintMm: { x0: 25830, y0: 4520, x1: 26630, y1: 5320 },
-    centerMm: { x: 26230, y: 4920 },
-    facing: "SOUTH",
+    footprintMm: { x0: 25112, y0: 4004, x1: 25912, y1: 4804 },
+    centerMm: { x: 25512, y: 4404 },
+    facing: "WEST",
     seatElevationMm: 460,
     backTopElevationMm: 1300,
   },
   printer: {
-    footprintMm: { x0: 24300, y0: 4650, x1: 24720, y1: 5090 },
+    footprintMm: { x0: 27013, y0: 4414, x1: 27433, y1: 4854 },
     baseElevationMm: 760,
     heightMm: 230,
-    facing: "EAST",
+    facing: "WEST",
     finish: "WHITE_BLACK",
     integrated: true,
   },
@@ -1317,6 +1322,7 @@ export const OFFICE_FITOUT: OfficeFitout = Object.freeze({
     openingId: "EAST-01",
   },
   clearEntryRectMm: { x0: 23682, y0: 5400, x1: 25220, y1: 6412 },
+  cameraLookTargetMm: { x: 25723, y: 4319 },
 } as const);
 
 /** Full-height coat, shoe and seating composition in the 1.01 wall recess. */
