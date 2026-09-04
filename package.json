@@ -12,7 +12,16 @@
     "test": "npm run lint && npm run test:unit && npm run build && node --test tests/rendered-html.test.mjs",
     "test:unit": "vitest run --config vitest.config.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "archviz:setup": "node scripts/archviz/run.mjs setup",
+    "archviz:assets": "node scripts/archviz/fetch-assets.mjs",
+    "archviz:export": "node scripts/archviz/export.mjs",
+    "archviz:build": "node scripts/archviz/run.mjs build",
+    "archviz:preview": "node scripts/archviz/run.mjs preview",
+    "archviz:render": "node scripts/archviz/run.mjs render",
+    "archviz:open": "node scripts/archviz/run.mjs open",
+    "archviz:test": "node --test tests/archviz-export.test.mjs && python3 -m unittest discover -s scripts/archviz -p \"test_*.py\"",
+    "archviz:validate": "node scripts/archviz/validate.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^9.21.2",
@@ -40,6 +49,8 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
+    "playwright": "1.58.2",
+    "proj4": "2.20.2",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",

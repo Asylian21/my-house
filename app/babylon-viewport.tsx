@@ -519,6 +519,16 @@ export const BabylonViewport = forwardRef<
                     );
                   })}
                 </div>
+                <a
+                  className="hud-icon-button hud-render-link glass"
+                  href="/archviz/garden-4k.jpg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Otvoriť ArchViz 4K vizualizáciu záhrady v novej karte"
+                  title="ArchViz 4K · vizualizácia záhrady"
+                >
+                  4K
+                </a>
                 <button
                   type="button"
                   className="hud-icon-button glass"

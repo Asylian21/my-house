@@ -1207,6 +1207,12 @@ kbd.key {
   background: var(--glass-bg-strong);
 }
 
+.hud-render-link {
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 /* --- Contextual dock (bottom-centre) ----------------------------------- */
 
 .dock {

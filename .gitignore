@@ -45,3 +45,4 @@ yarn-error.log*
 /output/
 /.playwright-cli/
 *.tsbuildinfo
+/scripts/archviz/__pycache__/

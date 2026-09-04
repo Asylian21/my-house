@@ -1,0 +1,459 @@
+{
+  "source": "Poly Haven",
+  "credit": "Powered by Poly Haven",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "apiTermsUrl": "https://github.com/Poly-Haven/Public-API/blob/master/ToS.md",
+  "resolution": "2k",
+  "assets": {
+    "white_plaster_02": {
+      "page": "https://polyhaven.com/a/white_plaster_02",
+      "tileSizeMetres": 1,
+      "dimensionsMillimetres": [1000, 1000],
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "maps": {
+        "diffuse": {
+          "size": 2568315,
+          "md5": "35f9c96c16aa0d934da7884b232f6d07",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_diff_2k.jpg",
+          "path": "white_plaster_02/white_plaster_02_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "size": 1604444,
+          "md5": "47f989e9fd3e69e667244ff4b9f406f8",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_rough_2k.jpg",
+          "path": "white_plaster_02/white_plaster_02_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "size": 3379814,
+          "md5": "a9fa643c4a200686ad89598b545b2adc",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_nor_gl_2k.jpg",
+          "path": "white_plaster_02/white_plaster_02_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "size": 1007108,
+          "md5": "4078dba6ea1f4df9602d28e243e5ab21",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_disp_2k.jpg",
+          "path": "white_plaster_02/white_plaster_02_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    },
+    "concrete_pavement": {
+      "page": "https://polyhaven.com/a/concrete_pavement",
+      "tileSizeMetres": 1.8,
+      "dimensionsMillimetres": [1800.0000715255737, 1800.0000715255737],
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "maps": {
+        "diffuse": {
+          "size": 3817566,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_diff_2k.jpg",
+          "md5": "f7cdc6f38538e2739d48fbb4f1507ddb",
+          "path": "concrete_pavement/concrete_pavement_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "size": 2125646,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_rough_2k.jpg",
+          "md5": "670223ce80309b606ceea892f47aa766",
+          "path": "concrete_pavement/concrete_pavement_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "size": 5179971,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_nor_gl_2k.jpg",
+          "md5": "0b6ff8180e61242be0b89e8fe1d6fda7",
+          "path": "concrete_pavement/concrete_pavement_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "size": 2490285,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_disp_2k.jpg",
+          "md5": "9f0f74207b21c4aeec625f06fc058153",
+          "path": "concrete_pavement/concrete_pavement_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    },
+    "asphalt_02": {
+      "page": "https://polyhaven.com/a/asphalt_02",
+      "tileSizeMetres": 3,
+      "dimensionsMillimetres": [3000.000238418579, 3000],
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "maps": {
+        "diffuse": {
+          "size": 3075676,
+          "md5": "336af399fd98a39ab986d8b3bf73b4ff",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_diff_2k.jpg",
+          "path": "asphalt_02/asphalt_02_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "size": 2230457,
+          "md5": "6fe669ab38640ef2009d6a28d1ad5ee9",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_rough_2k.jpg",
+          "path": "asphalt_02/asphalt_02_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "size": 4943950,
+          "md5": "77ebd1cc0b020ccaa1c6b58f103d1f75",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_nor_gl_2k.jpg",
+          "path": "asphalt_02/asphalt_02_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "size": 1131595,
+          "md5": "d5f850f6c2d283be7482db3b0458a2af",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_disp_2k.jpg",
+          "path": "asphalt_02/asphalt_02_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    },
+    "gravel_floor_02": {
+      "page": "https://polyhaven.com/a/gravel_floor_02",
+      "tileSizeMetres": 2,
+      "dimensionsMillimetres": [2000, 2000],
+      "authors": {
+        "Jenelle van Heerden": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "maps": {
+        "diffuse": {
+          "size": 4698557,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravel_floor_02/gravel_floor_02_diff_2k.jpg",
+          "md5": "db7865191e53523b2b9eabc85a7f73c3",
+          "path": "gravel_floor_02/gravel_floor_02_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "size": 2698006,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravel_floor_02/gravel_floor_02_rough_2k.jpg",
+          "md5": "e523a3ce827dc5dee008d8ff7f318246",
+          "path": "gravel_floor_02/gravel_floor_02_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "size": 5894173,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravel_floor_02/gravel_floor_02_nor_gl_2k.jpg",
+          "md5": "6d1c9823f61e798fe15388e99668be7a",
+          "path": "gravel_floor_02/gravel_floor_02_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "size": 2160182,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/gravel_floor_02/gravel_floor_02_disp_2k.jpg",
+          "md5": "3b1b0ad87e97f3723c48d1229eb81870",
+          "path": "gravel_floor_02/gravel_floor_02_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    },
+    "hinoki_planks": {
+      "page": "https://polyhaven.com/a/hinoki_planks",
+      "tileSizeMetres": 1.89,
+      "dimensionsMillimetres": [1889.9999856948853, 1889.9999856948853],
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "description": "Free 16K hinoki wood plank texture with warm honey tone, straight grain, scattered knots and fine seams, smooth satin sheen and subtle surface variation.",
+      "maps": {
+        "diffuse": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hinoki_planks/hinoki_planks_diff_2k.jpg",
+          "md5": "4f0ad5facbc907b88c079a1c109bf820",
+          "size": 2117798,
+          "path": "hinoki_planks/hinoki_planks_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hinoki_planks/hinoki_planks_rough_2k.jpg",
+          "md5": "e0a0f958b37c85499c60b569a5aa274a",
+          "size": 666730,
+          "path": "hinoki_planks/hinoki_planks_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hinoki_planks/hinoki_planks_nor_gl_2k.jpg",
+          "md5": "32232e4e48f1004b2c68964a123a582a",
+          "size": 2213410,
+          "path": "hinoki_planks/hinoki_planks_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hinoki_planks/hinoki_planks_disp_2k.jpg",
+          "md5": "b037185ed218da79e5f579224ea1c9a5",
+          "size": 903439,
+          "path": "hinoki_planks/hinoki_planks_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    },
+    "leafy_grass": {
+      "page": "https://polyhaven.com/a/leafy_grass",
+      "tileSizeMetres": 2,
+      "dimensionsMillimetres": [2000, 2000],
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "description": "Free 8K leafy grass texture: trampled green blades with scattered brown leaves and twigs, low-relief rough soil surface with a natural matte finish.",
+      "maps": {
+        "diffuse": {
+          "size": 4766204,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_diff_2k.jpg",
+          "md5": "8014f4dace676a62ed71b3dd76119dae",
+          "path": "leafy_grass/leafy_grass_diff_2k.jpg",
+          "colorSpace": "sRGB"
+        },
+        "roughness": {
+          "size": 2274652,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_rough_2k.jpg",
+          "md5": "b5c551ed91162aab5afbfb03b73ae3f5",
+          "path": "leafy_grass/leafy_grass_rough_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "normal": {
+          "size": 6047262,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_nor_gl_2k.jpg",
+          "md5": "ea5e91abe01dc5e5d7028c68c3bc9194",
+          "path": "leafy_grass/leafy_grass_nor_gl_2k.jpg",
+          "colorSpace": "Non-Color"
+        },
+        "displacement": {
+          "size": 2545281,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/leafy_grass/leafy_grass_disp_2k.jpg",
+          "md5": "9c0a5f6c375be590bda0c28e2c1dfa2a",
+          "path": "leafy_grass/leafy_grass_disp_2k.jpg",
+          "colorSpace": "Non-Color"
+        }
+      }
+    }
+  },
+  "models": {
+    "grass_bermuda_01": {
+      "page": "https://polyhaven.com/a/grass_bermuda_01",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "path": "grass_bermuda_01/grass_bermuda_01_1k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/grass_bermuda_01/grass_bermuda_01_1k.blend",
+      "md5": "61d700a2259ec67ba8ed6846ebc680cc",
+      "size": 185844,
+      "include": {
+        "textures/grass_bermuda_01_alpha_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/grass_bermuda_01/grass_bermuda_01_alpha_1k.png",
+          "md5": "274285abb11b3b7a0fd277b9923d1074",
+          "size": 59564,
+          "path": "grass_bermuda_01/textures/grass_bermuda_01_alpha_1k.png"
+        },
+        "textures/grass_bermuda_01_diff_1k.jpg": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_bermuda_01/grass_bermuda_01_diff_1k.jpg",
+          "md5": "234be9f52cfcd3380c7f782baaa841c3",
+          "size": 175425,
+          "path": "grass_bermuda_01/textures/grass_bermuda_01_diff_1k.jpg"
+        },
+        "textures/grass_bermuda_01_nor_gl_1k.exr": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/grass_bermuda_01/grass_bermuda_01_nor_gl_1k.exr",
+          "md5": "4b81e770a8d6a27af63f28bc27c58b68",
+          "size": 1558026,
+          "path": "grass_bermuda_01/textures/grass_bermuda_01_nor_gl_1k.exr"
+        },
+        "textures/grass_bermuda_01_rough_1k.exr": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/grass_bermuda_01/grass_bermuda_01_rough_1k.exr",
+          "md5": "52c9560c10329520735fa6ed242d4ed3",
+          "size": 704249,
+          "path": "grass_bermuda_01/textures/grass_bermuda_01_rough_1k.exr"
+        }
+      }
+    },
+    "shrub_02": {
+      "page": "https://polyhaven.com/a/shrub_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "path": "shrub_02/shrub_02_1k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/shrub_02/shrub_02_1k.blend",
+      "md5": "7861bc836d90eda975bdcd14788684a3",
+      "size": 1094180,
+      "include": {
+        "textures/shrub_02_rough_1k.exr": {
+          "size": 303276,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/shrub_02/shrub_02_rough_1k.exr",
+          "md5": "2d2096ee1d827f41ffaddd43ddf549cf",
+          "path": "shrub_02/textures/shrub_02_rough_1k.exr"
+        },
+        "textures/shrub_02_alpha_1k.png": {
+          "size": 91741,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/shrub_02/shrub_02_alpha_1k.png",
+          "md5": "64a1f609d80ea076b43412498a3d2db5",
+          "path": "shrub_02/textures/shrub_02_alpha_1k.png"
+        },
+        "textures/shrub_02_diff_1k.jpg": {
+          "size": 395120,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/shrub_02/shrub_02_diff_1k.jpg",
+          "md5": "3f4ae281928de030c7d4e41ad5b88a8b",
+          "path": "shrub_02/textures/shrub_02_diff_1k.jpg"
+        },
+        "textures/shrub_02_mask_1k.png": {
+          "size": 12041,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/shrub_02/shrub_02_mask_1k.png",
+          "md5": "5a6819b61eee81763aed06e9d16e9573",
+          "path": "shrub_02/textures/shrub_02_mask_1k.png"
+        },
+        "textures/shrub_02_nor_gl_1k.exr": {
+          "size": 1050955,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/shrub_02/shrub_02_nor_gl_1k.exr",
+          "md5": "7367f8e7fd4cc602acbc78952ce0898f",
+          "path": "shrub_02/textures/shrub_02_nor_gl_1k.exr"
+        }
+      }
+    },
+    "tree_small_02": {
+      "page": "https://polyhaven.com/a/tree_small_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "path": "tree_small_02/tree_small_02_1k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/tree_small_02/tree_small_02_1k.blend",
+      "md5": "d602d9e4df77457454ac427fd37d0b53",
+      "size": 63805841,
+      "include": {
+        "textures/tree_small_02_branch_diff_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_diff_1k.png",
+          "md5": "2da9ea379228636c4fda2fde9a11d760",
+          "size": 1277270,
+          "path": "tree_small_02/textures/tree_small_02_branch_diff_1k.png"
+        },
+        "textures/tree_small_02_branch_nor_gl_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_nor_gl_1k.png",
+          "md5": "4b6ae81428061986d42f205d03ec1989",
+          "size": 5754879,
+          "path": "tree_small_02/textures/tree_small_02_branch_nor_gl_1k.png"
+        },
+        "textures/tree_small_02_branch_rough_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_branch_rough_1k.png",
+          "md5": "6189ac57979c248f9eb362ca04c5619e",
+          "size": 421614,
+          "path": "tree_small_02/textures/tree_small_02_branch_rough_1k.png"
+        },
+        "textures/tree_small_02_diff_1k.jpg": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_diff_1k.jpg",
+          "md5": "a7287a3f4e7f0d4577cb949b245f5b14",
+          "size": 863246,
+          "path": "tree_small_02/textures/tree_small_02_diff_1k.jpg"
+        },
+        "textures/tree_small_02_leaves_alpha_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_alpha_1k.png",
+          "md5": "63199ba87a9e8928424bd8c3b8017bd0",
+          "size": 264711,
+          "path": "tree_small_02/textures/tree_small_02_leaves_alpha_1k.png"
+        },
+        "textures/tree_small_02_leaves_diff_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_diff_1k.png",
+          "md5": "2c667193084725e8553062ddbdc73c7d",
+          "size": 2338424,
+          "path": "tree_small_02/textures/tree_small_02_leaves_diff_1k.png"
+        },
+        "textures/tree_small_02_leaves_nor_gl_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_nor_gl_1k.png",
+          "md5": "e81c5d7e7fc09af321e8c5ac5b4948f2",
+          "size": 4903387,
+          "path": "tree_small_02/textures/tree_small_02_leaves_nor_gl_1k.png"
+        },
+        "textures/tree_small_02_leaves_rough_1k.png": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_rough_1k.png",
+          "md5": "49c08fb74ed781e9632b543b8e19c8cb",
+          "size": 1043665,
+          "path": "tree_small_02/textures/tree_small_02_leaves_rough_1k.png"
+        },
+        "textures/tree_small_02_nor_gl_1k.exr": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/tree_small_02/tree_small_02_nor_gl_1k.exr",
+          "md5": "eccf7df1617a8d6d841dff98bf58dc3a",
+          "size": 2462999,
+          "path": "tree_small_02/textures/tree_small_02_nor_gl_1k.exr"
+        },
+        "textures/tree_small_02_rough_1k.exr": {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/tree_small_02/tree_small_02_rough_1k.exr",
+          "md5": "af3b33e4b262b8ac40a94ee5d93ce13e",
+          "size": 978557,
+          "path": "tree_small_02/textures/tree_small_02_rough_1k.exr"
+        }
+      }
+    },
+    "outdoor_table_chair_set_01": {
+      "page": "https://polyhaven.com/a/outdoor_table_chair_set_01",
+      "authors": {
+        "James Ray Cock": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "dimensionsMillimetres": [
+        776.0046124458313, 1831.0473561286926, 858.5816156119108
+      ],
+      "description": "Free 4K model: compact outdoor foldable table & two chairs with wood slats and metal frame; perfect for city cafes, diners, patios and street seating.",
+      "path": "outdoor_table_chair_set_01/outdoor_table_chair_set_01_2k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_2k.blend",
+      "md5": "a44745fa6cd4c35ed682b6f2a5a9cdec",
+      "size": 427033,
+      "include": {
+        "textures/outdoor_table_chair_set_01_table_nor_gl_2k.png": {
+          "size": 11457500,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_table_nor_gl_2k.png",
+          "md5": "0ca357142d95d49ca99a5c6d8c11cb0b",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_table_nor_gl_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_chair_metal_2k.png": {
+          "size": 18846,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_chair_metal_2k.png",
+          "md5": "32a0e88cce667c9f1c9cc2ed84031304",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_chair_metal_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_chair_nor_gl_2k.png": {
+          "size": 13672173,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_chair_nor_gl_2k.png",
+          "md5": "3f971a9ecba257904a76ba1b9605d459",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_chair_nor_gl_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_table_diff_2k.png": {
+          "size": 12733888,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_table_diff_2k.png",
+          "md5": "b0fa9696eada49ea431f253100a7ad3e",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_table_diff_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_chair_diff_2k.png": {
+          "size": 14935457,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_chair_diff_2k.png",
+          "md5": "1a23a5adecff9e5a78c9e3c0220dd957",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_chair_diff_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_table_metal_2k.png": {
+          "size": 25719,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_table_metal_2k.png",
+          "md5": "5c855f299244c1b9451b5d7655014eb5",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_table_metal_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_chair_rough_2k.png": {
+          "size": 4754025,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_chair_rough_2k.png",
+          "md5": "3d3c76a5655f35e7026fe2c5a468f288",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_chair_rough_2k.png"
+        },
+        "textures/outdoor_table_chair_set_01_table_rough_2k.png": {
+          "size": 4313108,
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/outdoor_table_chair_set_01/outdoor_table_chair_set_01_table_rough_2k.png",
+          "md5": "9b9cbdd984f55bbc2dcbbaabc4635cb3",
+          "path": "outdoor_table_chair_set_01/textures/outdoor_table_chair_set_01_table_rough_2k.png"
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,15 @@
 
 Interaktívny technický model parcely a navrhovaného rodinného domu v Březí u Mikulova. Aplikácia používa Babylon.js a drží 3D geometriu, výpočty aj inspector nad jedným typovaným modelom v celočíselných milimetroch.
 
+Lokálny **Blender Cycles ArchViz** pipeline exportuje celý model do OBJ/GLB,
+zostaví scénu s PBR materiálmi a umožní 4K rendery. Spustenie:
+`npm run archviz:setup`, `npm run archviz:preview`, `npm run archviz:render`.
+Podrobnosti, ovládanie prechádzky a výstupy sú v [návode ArchViz](scripts/archviz/README.md).
+
+Publikovaná 4K vizualizácia je dostupná tlačidlom **4K** v ovládaní modelu
+a priamo na `/archviz/garden-4k.jpg`. Web používa JPEG kópiu finálneho renderu;
+pôvodný 16-bitový PNG a Blender scéna zostávajú v lokálnom `output/archviz/`.
+
 ## Dôkazová hranica
 
 - hranica parcely, výmera 753 m² a koridor cestnej parcely 6012/1 s výmerou
