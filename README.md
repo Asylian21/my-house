@@ -16,6 +16,15 @@ textúrovaný dom, celý existujúci interiér, záhradný nábytok a skenovanú
 Zachováva otáčanie, prelet, chôdzu, kolízie a všetky pôvodné dvere a mechanizmy.
 Deväť GLB balíkov má spolu približne 39 MiB; obloha `sky.hdr` používa HDR z uloženého Blender
 sveta. Postup obnovy assetov a ich pôvod sú v [návode webového exportu](scripts/archviz/web/README.md).
+
+Obývačka má samostatnú teplú paletu ecru, piesku, dubu, kašmíru a terakoty,
+aplikovanú na pôvodný aj importovaný interiér podľa identifikátorov `LIVING-103-`.
+Auto je vlastná webová modelácia Superbu Combi IV podľa referenčných pohľadov
+a [oficiálneho technického listu](https://cdn.skoda-storyboard.com/2024/03/TD-Superb-en_87b42ad4.pdf),
+nie importovaný model výrobcu. Plynulá karoséria používa monotónne kubické krivky;
+sklá, maska a svetlá sú orezané podľa jej skutočných trojuholníkov.
+`node tools/superb-geometry-check.mjs` kontroluje odstupy panelov, plynulosť profilu,
+umiestnenie podbehov a animačné aj kolízne rozhrania.
 Pri chybe načítania zostáva funkčný pôvodný model s možnosťou opakovania.
 Web dodáva osvetlenie v reálnom čase; Cycles globálne osvetlenie nie je zapečené.
 

@@ -11,6 +11,7 @@ import type { Scene } from "@babylonjs/core/scene";
 import "@babylonjs/loaders/glTF";
 
 import type { LayerId } from "./twin-site";
+import { warmLivingMaterial } from "./babylon-living-palette";
 
 export type ArchvizStatus = "loading" | "ready" | "fallback";
 
@@ -287,6 +288,9 @@ export class ArchvizPresentation {
           continue;
         }
         if (provenance && source) nodeSources.set(provenance.node, source);
+        if (provenance && mesh.material instanceof PBRMaterial) {
+          mesh.material = warmLivingMaterial(this.host.scene, provenance.extras.source_name ?? "", mesh.material);
+        }
         registrations.push({ mesh, source, layer: source?.layer ?? "street" });
       }
     }

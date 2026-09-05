@@ -85,21 +85,46 @@ export const GARAGE_SUPERB_WHEEL_ARCH_RADIUS_M = 0.37;
 
 type CurveControls = readonly (readonly [number, number])[];
 
-/** Smoothstep interpolation across ordered control points. */
+const curveTangents = new WeakMap<object, readonly number[]>();
+
+/** Shape-preserving cubic Hermite interpolation with continuous tangents.
+ * Smoothstep at each control previously forced horizontal shelves into the
+ * windscreen and bonnet, visibly reflecting the sky as accordion stripes.
+ */
 function sampleCurve(controls: CurveControls, x: number): number {
   if (x <= controls[0][0]) return controls[0][1];
-  const last = controls[controls.length - 1];
-  if (x >= last[0]) return last[1];
-  for (let index = 0; index < controls.length - 1; index += 1) {
-    const [x0, y0] = controls[index];
-    const [x1, y1] = controls[index + 1];
-    if (x <= x1) {
-      const t = (x - x0) / (x1 - x0);
-      const smooth = t * t * (3 - 2 * t);
-      return y0 + (y1 - y0) * smooth;
+  const last = controls.length - 1;
+  if (x >= controls[last][0]) return controls[last][1];
+  let tangents = curveTangents.get(controls);
+  if (!tangents) {
+    const widths = controls.slice(1).map((point, index) => point[0] - controls[index][0]);
+    const slopes = controls.slice(1).map((point, index) => (point[1] - controls[index][1]) / widths[index]);
+    const values = new Array(controls.length).fill(0);
+    const endpoint = (h0: number, h1: number, d0: number, d1: number) => {
+      const slope = ((2 * h0 + h1) * d0 - h0 * d1) / (h0 + h1);
+      if (Math.sign(slope) !== Math.sign(d0)) return 0;
+      return Math.sign(d0) !== Math.sign(d1) && Math.abs(slope) > Math.abs(3 * d0) ? 3 * d0 : slope;
+    };
+    values[0] = slopes.length === 1 ? slopes[0] : endpoint(widths[0], widths[1], slopes[0], slopes[1]);
+    values[last] = slopes.length === 1 ? slopes[0] : endpoint(widths[last - 1], widths[last - 2], slopes[last - 1], slopes[last - 2]);
+    for (let index = 1; index < last; index += 1) {
+      const previous = slopes[index - 1], next = slopes[index];
+      if (previous * next <= 0) continue;
+      const a = 2 * widths[index] + widths[index - 1];
+      const b = widths[index] + 2 * widths[index - 1];
+      values[index] = (a + b) / (a / previous + b / next);
     }
+    curveTangents.set(controls, values);
+    tangents = values;
   }
-  return last[1];
+  for (let index = 0; index < last; index += 1) {
+    const [x0, y0] = controls[index], [x1, y1] = controls[index + 1];
+    if (x > x1) continue;
+    const width = x1 - x0, t = (x - x0) / width, t2 = t * t, t3 = t2 * t;
+    return (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * width * tangents[index] +
+      (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * width * tangents[index + 1];
+  }
+  return controls[last][1];
 }
 
 /**
@@ -107,26 +132,26 @@ function sampleCurve(controls: CurveControls, x: number): number {
  * Belt line rises gently rearwards with the photographed quarter kick-up.
  */
 const BELT_Y: CurveControls = [
-  [-2.451, 0.985],
-  [-2.1, 0.968],
-  [-1.6, 0.938],
-  [-1.0, 0.91],
-  [-0.3, 0.888],
-  [0.4, 0.877],
+  [-2.451, 0.925],
+  [-2.1, 1.01],
+  [-1.6, 1.01],
+  [-1.0, 0.979],
+  [-0.3, 0.932],
+  [0.4, 0.902],
   [1.05, 0.872],
   [1.6, 0.868],
   [2.0, 0.858],
-  [2.26, 0.842],
-  [2.451, 0.815],
+  [2.26, 0.808],
+  [2.451, 0.765],
 ];
 
 /** Crown line: tail spoiler, raked tailgate glass, long flat roof, fast
  * windscreen and an almost level bonnet falling toward the grille. */
 const ROOF_Y: CurveControls = [
-  [-2.451, 1.29],
-  [-2.32, 1.336],
-  [-2.1, 1.392],
-  [-1.9, 1.421],
+  [-2.451, 1.015],
+  [-2.32, 1.092],
+  [-2.1, 1.285],
+  [-1.9, 1.418],
   [-1.72, 1.44],
   [-1.45, 1.454],
   [-1.1, 1.463],
@@ -140,9 +165,9 @@ const ROOF_Y: CurveControls = [
   [1.1, 0.94],
   [1.5, 0.9185],
   [1.9, 0.902],
-  [2.2, 0.886],
-  [2.36, 0.873],
-  [2.451, 0.858],
+  [2.2, 0.866],
+  [2.36, 0.838],
+  [2.451, 0.818],
 ];
 
 /** Plan-view taper. Doors carry the full 1,849 mm production width. */
@@ -244,12 +269,20 @@ export function garageSuperbSectionAt(x: number): VehicleSection {
  * Dense sampling positions: extra stations trace the wheel-arch circles so
  * the openings read as real cut arches instead of rectangular notches.
  */
-const STATION_XS: readonly number[] = [
+const SILHOUETTE_STATION_XS: readonly number[] = [
   -2.451, -2.42, -2.36, -2.28, -2.16, -2.02, -1.9, -1.8, -1.76, -1.7, -1.6,
   -1.47, -1.34, -1.21, -1.08, -0.98, -0.92, -0.8, -0.7, -0.52, -0.34, -0.16,
   0.06, 0.28, 0.5, 0.7, 0.88, 1.04, 1.12, 1.22, 1.35, 1.501, 1.65, 1.78,
   1.88, 1.94, 2.02, 2.14, 2.26, 2.36, 2.42, 2.451,
 ];
+
+// Uniform intermediate stations keep the bonnet, windscreen and tailgate
+// genuinely curved. Their surface is also the authority for all inset panels.
+const STATION_XS: readonly number[] = [...new Set([
+  ...SILHOUETTE_STATION_XS,
+  ...Array.from({ length: 125 }, (_, index) =>
+    -GARAGE_SUPERB_HALF_LENGTH_M + index * GARAGE_SUPERB_HALF_LENGTH_M * 2 / 124),
+])].sort((a, b) => a - b);
 
 export const GARAGE_SUPERB_BODY_STATIONS: readonly VehicleSection[] =
   Object.freeze(STATION_XS.map((x) => garageSuperbSectionAt(x)));
@@ -349,8 +382,8 @@ function stationRing(section: VehicleSection) {
     [beltY + 0.3 * glassSpan, glassZ(0.3)],
     [beltY + 0.62 * glassSpan, glassZ(0.62)],
     [beltY + 0.88 * glassSpan, glassZ(0.92)],
-    [roofY - 0.012, roofHalf],
-    [roofY - 0.002, 0.45 * roofHalf],
+    [roofY - Math.min(0.012, glassSpan * 0.06), roofHalf],
+    [roofY - Math.min(0.002, glassSpan * 0.015), 0.45 * roofHalf],
   ];
   return [
     [x, baseY, 0],
@@ -449,6 +482,30 @@ export function vehicleLoftGeometry(
         capStart + ((ringIndex + 1) % GARAGE_SUPERB_LOFT_RING_POINT_COUNT);
       if (rear) indices.push(centre, current, next);
       else indices.push(centre, next, current);
+    }
+  }
+  // Recess the corners of both fascias in actual geometry. The original
+  // planar caps plus hand-painted dome normals produced an inflated nose;
+  // trim spanning those corners then cut straight through the body.
+  const capCentreY = (section: VehicleSection) => {
+    const ring = stationRing(section);
+    return ring.reduce((sum, point) => sum + point[1], 0) / ring.length;
+  };
+  const frontCentreY = capCentreY(sections[sections.length - 1]);
+  const rearCentreY = capCentreY(sections[0]);
+  for (let index = 0; index < positions.length; index += 3) {
+    const x = positions[index];
+    const y = positions[index + 1];
+    const z = positions[index + 2];
+    if (x > 2.14) {
+      const blend = ((x - 2.14) / (GARAGE_SUPERB_HALF_LENGTH_M - 2.14)) ** 2;
+      positions[index] -= blend *
+        (0.095 * (z / 0.9) ** 2 + 0.021 * ((y - frontCentreY) / 0.4) ** 2 +
+          0.055 * Math.max(0, Math.min(1, (0.48 - y) / 0.28)) ** 2 + 0.035 * (z / 0.9) ** 6);
+    } else if (x < -2.2) {
+      const blend = ((-x - 2.2) / (GARAGE_SUPERB_HALF_LENGTH_M - 2.2)) ** 2;
+      positions[index] += blend *
+        (0.055 * (z / 0.9) ** 2 + 0.012 * ((y - rearCentreY) / 0.4) ** 2);
     }
   }
   return { positions, indices, uvs };

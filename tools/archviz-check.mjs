@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const output = new URL("../output/playwright/", import.meta.url).pathname;
+const appUrl = process.env.DOM_TEST_URL ?? "http://localhost:3000/";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true,
   args: ["--use-gl=angle", `--use-angle=${process.platform === "darwin" ? "metal" : "swiftshader"}`, "--ignore-gpu-blocklist"] });
@@ -15,7 +16,7 @@ try {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (/GL_INVALID|WebGL.*(error|warning)/i.test(message.text())) errors.push(message.text()); });
-    await page.goto("http://localhost:3000/", { waitUntil: "domcontentloaded" });
+    await page.goto(appUrl, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => window.twinDebug?.getArchvizStatus().status === "ready", null, { timeout: 180_000 });
     await page.evaluate(() => window.twinDebug.whenReady());
     const state = await page.evaluate(async () => {
@@ -69,7 +70,7 @@ try {
   }
   const fallback = await browser.newPage({ viewport: { width: 900, height: 700 } });
   await fallback.route("**/assets/archviz/dom-interior-02.glb", (route) => route.abort());
-  await fallback.goto("http://localhost:3000/", { waitUntil: "domcontentloaded" });
+  await fallback.goto(appUrl, { waitUntil: "domcontentloaded" });
   await fallback.waitForSelector(".archviz-notice", { timeout: 120_000 });
   report.fallback = await fallback.evaluate(() => {
     const c = window.twinDebug;

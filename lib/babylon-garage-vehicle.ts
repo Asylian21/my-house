@@ -14,13 +14,13 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 
 import { GARAGE_VEHICLE } from "./twin-garage";
+import { createVehicleLettering } from "./babylon-vehicle-lettering";
 import {
   GARAGE_SUPERB_AXLES_M,
   GARAGE_SUPERB_BODY_STATIONS,
   GARAGE_SUPERB_DLO,
   GARAGE_SUPERB_HALF_LENGTH_M,
   GARAGE_SUPERB_HALF_TRACKS_M,
-  GARAGE_SUPERB_LOFT_RING_POINT_COUNT,
   GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
   GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
   GARAGE_SUPERB_WHEEL_ARCH_RADIUS_M,
@@ -81,30 +81,20 @@ function createLoftMesh(
   const indices = [...geometry.indices];
   const normals = new Array(positions.length).fill(0);
   VertexData.ComputeNormals(positions, indices, normals);
-  // The flat end caps act as mirrors and reflect the environment's road as a
-  // hard dark "V". Dome their vertex normals (shading only, geometry stays
-  // flat) so the fascia and tailgate scatter reflections like curved panels.
-  const stripVertexCount =
-    sections.length * GARAGE_SUPERB_LOFT_RING_POINT_COUNT;
-  const capVertexCount = GARAGE_SUPERB_LOFT_RING_POINT_COUNT + 1;
-  for (const cap of [0, 1]) {
-    const capStart = stripVertexCount + cap * capVertexCount;
-    const centreIndex = capStart + capVertexCount - 1;
-    const centreY = positions[centreIndex * 3 + 1];
-    const axisX = Math.sign(positions[centreIndex * 3]);
-    for (let offset = 0; offset < capVertexCount - 1; offset += 1) {
-      const vertex = (capStart + offset) * 3;
-      const radialY = positions[vertex + 1] - centreY;
-      const radialZ = positions[vertex + 2];
-      const radialLength = Math.hypot(radialY, radialZ) || 1;
-      const domeX = axisX;
-      const domeY = (radialY / radialLength) * 0.85;
-      const domeZ = (radialZ / radialLength) * 0.85;
-      const domeLength = Math.hypot(domeX, domeY, domeZ);
-      normals[vertex] = domeX / domeLength;
-      normals[vertex + 1] = domeY / domeLength;
-      normals[vertex + 2] = domeZ / domeLength;
-    }
+  // Smooth the real fascia geometry across the duplicated cap boundary.
+  // Normals now describe the surface instead of faking a domed planar cap.
+  const weldedNormals = new Map<string, number[]>();
+  for (let index = 0; index < positions.length; index += 3) {
+    const key = positions.slice(index, index + 3).map(value => value.toFixed(7)).join(",");
+    const sum = weldedNormals.get(key) ?? [0, 0, 0];
+    for (let axis = 0; axis < 3; axis += 1) sum[axis] += normals[index + axis];
+    weldedNormals.set(key, sum);
+  }
+  for (let index = 0; index < positions.length; index += 3) {
+    const key = positions.slice(index, index + 3).map(value => value.toFixed(7)).join(",");
+    const sum = weldedNormals.get(key)!;
+    const length = Math.hypot(...sum) || 1;
+    for (let axis = 0; axis < 3; axis += 1) normals[index + axis] = sum[axis] / length;
   }
   const data = new VertexData();
   data.positions = positions;
@@ -176,6 +166,183 @@ function createGridMesh(
   return mesh;
 }
 
+type SurfaceProjection = {
+  readonly axis: 0 | 1 | 2;
+  readonly direction: -1 | 1;
+  readonly minimumDepth: number;
+  readonly offset?: number;
+};
+
+type ProjectedTriangle = {
+  readonly points: number[][];
+  readonly minimumU: number;
+  readonly maximumU: number;
+  readonly minimumV: number;
+  readonly maximumV: number;
+};
+
+const conformingTriangleCache = new WeakMap<Mesh, Map<string, readonly ProjectedTriangle[]>>();
+const signedSurfaceArea = (a: readonly number[], b: readonly number[], c: readonly number[]) =>
+  (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+
+function projectedTriangle(points: number[][]): ProjectedTriangle {
+  return {
+    points,
+    minimumU: Math.min(points[0][0], points[1][0], points[2][0]),
+    maximumU: Math.max(points[0][0], points[1][0], points[2][0]),
+    minimumV: Math.min(points[0][1], points[1][1], points[2][1]),
+    maximumV: Math.max(points[0][1], points[1][1], points[2][1]),
+  };
+}
+
+/** Body geometry is immutable while its material panels are being built. */
+function conformingBodyTriangles(body: Mesh, projection: SurfaceProjection) {
+  const key = `${projection.axis}:${projection.direction}:${projection.minimumDepth}`;
+  let cache = conformingTriangleCache.get(body);
+  if (!cache) {
+    cache = new Map();
+    conformingTriangleCache.set(body, cache);
+  }
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const axes = [0, 1, 2].filter(axis => axis !== projection.axis);
+  const positions = body.getVerticesData("position")!;
+  const normals = body.getVerticesData("normal")!;
+  const indices = body.getIndices()!;
+  const triangles: ProjectedTriangle[] = [];
+  for (let index = 0; index < indices.length; index += 3) {
+    const points = [indices[index], indices[index + 1], indices[index + 2]].map(vertex => [
+      positions[vertex * 3 + axes[0]], positions[vertex * 3 + axes[1]],
+      positions[vertex * 3 + projection.axis],
+      normals[vertex * 3], normals[vertex * 3 + 1], normals[vertex * 3 + 2],
+    ]);
+    if (points.every(point => point[2] * projection.direction < projection.minimumDepth)) continue;
+    if (points.reduce((sum, point) => sum + point[3 + projection.axis], 0) * projection.direction <= 0.001) continue;
+    if (Math.abs(signedSurfaceArea(points[0], points[1], points[2])) < 1e-10) continue;
+    triangles.push(projectedTriangle(points));
+  }
+  cache.set(key, triangles);
+  return triangles;
+}
+
+/**
+ * Cut the actual body triangles by the projected panel outline. Merely
+ * projecting the panel's corners is insufficient: its large triangles then
+ * cut through the curved body again between those corners.
+ */
+function conformPanelToBody(mesh: Mesh, body: Mesh, projection: SurfaceProjection) {
+  const axes = [0, 1, 2].filter(axis => axis !== projection.axis);
+  const sourcePositions = mesh.getVerticesData("position")!;
+  const sourceIndices = mesh.getIndices()!;
+  const sourceMatrix = mesh.computeWorldMatrix(true);
+  const sourcePoints = Array.from({ length: sourcePositions.length / 3 }, (_, index) => {
+    const point = Vector3.TransformCoordinates(Vector3.FromArray(sourcePositions, index * 3), sourceMatrix).asArray();
+    return [point[axes[0]], point[axes[1]]];
+  });
+  const signedArea = signedSurfaceArea;
+  const masks: ProjectedTriangle[] = [];
+  const maskKeys = new Set<string>();
+  for (let index = 0; index < sourceIndices.length; index += 3) {
+    const triangle = Array.from(sourceIndices.slice(index, index + 3), vertex => sourcePoints[vertex]);
+    if (Math.abs(signedArea(...triangle as [number[], number[], number[]])) < 1e-10) continue;
+    const key = triangle.map(point => point.map(value => value.toFixed(7)).join(",")).sort().join(";");
+    if (maskKeys.has(key)) continue;
+    maskKeys.add(key);
+    if (signedArea(...triangle as [number[], number[], number[]]) < 0) triangle.reverse();
+    masks.push(projectedTriangle(triangle));
+  }
+  const positions: number[] = [], normals: number[] = [], indices: number[] = [];
+  const offset = projection.offset ?? 0.003;
+  for (const bodyTriangle of conformingBodyTriangles(body, projection)) {
+    const triangle = bodyTriangle.points;
+    for (const maskTriangle of masks) {
+      if (maskTriangle.maximumU < bodyTriangle.minimumU || maskTriangle.minimumU > bodyTriangle.maximumU ||
+          maskTriangle.maximumV < bodyTriangle.minimumV || maskTriangle.minimumV > bodyTriangle.maximumV) continue;
+      const mask = maskTriangle.points;
+      let polygon = triangle;
+      for (let edge = 0; edge < 3 && polygon.length; edge += 1) {
+        const a = mask[edge], b = mask[(edge + 1) % 3];
+        const clipped: number[][] = [];
+        for (let current = 0; current < polygon.length; current += 1) {
+          const p = polygon[current], q = polygon[(current + 1) % polygon.length];
+          const dp = signedArea(a, b, p), dq = signedArea(a, b, q);
+          if (dp >= -1e-10) clipped.push(p);
+          if ((dp >= 0) !== (dq >= 0)) {
+            const t = dp / (dp - dq);
+            clipped.push(p.map((value, component) => value + (q[component] - value) * t));
+          }
+        }
+        polygon = clipped;
+      }
+      if (polygon.length < 3) continue;
+      for (let fan = 1; fan < polygon.length - 1; fan += 1) {
+        const points = [polygon[0], polygon[fan], polygon[fan + 1]];
+        if (Math.abs(signedArea(...points as [number[], number[], number[]])) < 1e-10) continue;
+        for (const point of points) {
+          const xyz = [0, 0, 0];
+          xyz[axes[0]] = point[0]; xyz[axes[1]] = point[1];
+          xyz[projection.axis] = point[2] + offset * projection.direction;
+          positions.push(...xyz);
+          const length = Math.hypot(point[3], point[4], point[5]) || 1;
+          normals.push(point[3] / length, point[4] / length, point[5] / length);
+          indices.push(indices.length);
+        }
+      }
+    }
+  }
+  if (!positions.length) throw new Error(`Vehicle panel ${mesh.name} does not meet its body surface.`);
+  const data = new VertexData();
+  data.positions = positions; data.normals = normals; data.indices = indices;
+  data.applyToMesh(mesh);
+  mesh.position.setAll(0); mesh.rotation.setAll(0); mesh.scaling.setAll(1);
+  mesh.rotationQuaternion = null;
+  mesh.metadata = { ...mesh.metadata, conformingBodyPanel: true, surfaceOffsetMm: offset * 1_000 };
+}
+
+const surfaceTriangleCache = new WeakMap<Mesh, Map<string, number[][][]>>();
+
+function surfacePoint(body: Mesh, point: Vector3, projection: SurfaceProjection) {
+  const axes = [0, 1, 2].filter(axis => axis !== projection.axis);
+  const key = `${projection.axis}:${projection.direction}:${projection.minimumDepth}`;
+  let cache = surfaceTriangleCache.get(body);
+  if (!cache) { cache = new Map(); surfaceTriangleCache.set(body, cache); }
+  let triangles = cache.get(key);
+  if (!triangles) {
+    triangles = [];
+    const positions = body.getVerticesData("position")!, indices = body.getIndices()!;
+    for (let index = 0; index < indices.length; index += 3) {
+      const triangle = Array.from(indices.slice(index, index + 3), vertex => [
+        positions[vertex * 3 + axes[0]], positions[vertex * 3 + axes[1]],
+        positions[vertex * 3 + projection.axis] * projection.direction,
+      ]);
+      if (triangle.every(p => p[2] < projection.minimumDepth)) continue;
+      const [a, b, c] = triangle;
+      const determinant = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+      if (Math.abs(determinant) < 1e-10) continue;
+      triangle.push([
+        Math.min(a[0], b[0], c[0]), Math.max(a[0], b[0], c[0]),
+        Math.min(a[1], b[1], c[1]), Math.max(a[1], b[1], c[1]), determinant,
+      ]);
+      triangles.push(triangle);
+    }
+    cache.set(key, triangles);
+  }
+  const p = point.asArray(), u = p[axes[0]], v = p[axes[1]];
+  let depth = -Infinity;
+  for (const [a, b, c, bounds] of triangles) {
+    if (u < bounds[0] - 1e-6 || u > bounds[1] + 1e-6 || v < bounds[2] - 1e-6 || v > bounds[3] + 1e-6) continue;
+    const wa = ((b[1] - c[1]) * (u - c[0]) + (c[0] - b[0]) * (v - c[1])) / bounds[4];
+    const wb = ((c[1] - a[1]) * (u - c[0]) + (a[0] - c[0]) * (v - c[1])) / bounds[4];
+    const wc = 1 - wa - wb;
+    if (wa < -1e-6 || wb < -1e-6 || wc < -1e-6) continue;
+    const candidate = wa * a[2] + wb * b[2] + wc * c[2];
+    if (candidate >= projection.minimumDepth) depth = Math.max(depth, candidate);
+  }
+  if (!Number.isFinite(depth)) return point.clone();
+  p[projection.axis] = (depth + (projection.offset ?? 0.003)) * projection.direction;
+  return Vector3.FromArray(p);
+}
+
 export function buildGarageSuperbVehicle(
   scene: Scene,
   hooks: GarageVehicleBuildHooks,
@@ -192,18 +359,18 @@ export function buildGarageSuperbVehicle(
     parkingRoomId: vehicle.roomId,
     productionDimensionsMm: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
     visualLengthScale: GARAGE_SUPERB_VISUAL_LENGTH_SCALE,
-    visualReference: "client-supplied-2024-plus-superb-combi-photos-2026-08-25",
+    visualReference: "skoda-superb-combi-official-technical-sheet-2024-06-03-and-client-photos-2026-08-25",
     referenceViews: ["side-profile", "front-three-quarter"],
-    bodyConstruction: "single-loft-arch-cutouts",
+    bodyConstruction: "curved-loft-conforming-panels",
   };
   root.setEnabled(false);
 
   const paint = vehiclePbrMaterial(
     scene,
     "Superb Combi IV · šalviovo-olivová metalíza",
-    "#8a9178",
-    0.24,
-    0.62,
+    "#9caa8a",
+    0.29,
+    0.48,
   );
   paint.clearCoat.isEnabled = true;
   paint.clearCoat.intensity = 0.95;
@@ -215,17 +382,17 @@ export function buildGarageSuperbVehicle(
   const glass = vehiclePbrMaterial(
     scene,
     "Superb Combi IV · tónované bezpečnostné sklo",
-    "#0a1418",
-    0.06,
-    0.05,
-    0.93,
+    "#050809",
+    0.14,
+    0,
+    0.98,
   );
   glass.backFaceCulling = false;
   glass.indexOfRefraction = 1.52;
-  glass.environmentIntensity = 1.4;
+  glass.environmentIntensity = 0.6;
   glass.clearCoat.isEnabled = true;
-  glass.clearCoat.intensity = 0.9;
-  glass.clearCoat.roughness = 0.03;
+  glass.clearCoat.intensity = 0.45;
+  glass.clearCoat.roughness = 0.12;
 
   const pianoBlack = vehiclePbrMaterial(
     scene,
@@ -387,6 +554,24 @@ export function buildGarageSuperbVehicle(
   };
   registerVisual(body);
 
+  const frontSurface: SurfaceProjection = { axis: 0, direction: 1, minimumDepth: 2.1 };
+  const rearSurface: SurfaceProjection = { axis: 0, direction: -1, minimumDepth: 2.1 };
+  const addSurfaceTube = (
+    name: string, path: readonly Vector3[], radius: number, material: Material,
+    projection: SurfaceProjection = frontSurface,
+  ) => {
+    const samples: Vector3[] = [];
+    for (let segment = 0; segment < path.length - 1; segment += 1) {
+      const steps = Math.max(1, Math.ceil(Vector3.Distance(path[segment], path[segment + 1]) / 0.025));
+      for (let index = 0; index < steps; index += 1) {
+        samples.push(surfacePoint(body, Vector3.Lerp(path[segment], path[segment + 1], index / steps),
+          { ...projection, offset: radius + 0.004 }));
+      }
+    }
+    samples.push(surfacePoint(body, path[path.length - 1], { ...projection, offset: radius + 0.004 }));
+    return addTube(name, samples, radius, material);
+  };
+
   addBox(
     "aerodynamicky zakrytý podvozok",
     { x: 4.35, y: 0.09, z: 1.5 },
@@ -538,11 +723,12 @@ export function buildGarageSuperbVehicle(
       const y = Math.max(garageSuperbDloBottomY(x), garageSuperbDloTopY(x));
       return new Vector3(x, y, side * (garageSuperbGlassZ(x, y) + 0.003));
     });
-    const surround = addTube(
+    const surround = addSurfaceTube(
       `chrómové orámovanie presklenia ${sideName}`,
       [...outlineBottom, ...outlineTop, outlineBottom[0]],
-      0.0055,
+      0.004,
       brightChrome,
+      { axis: 2, direction: side, minimumDepth: 0.4 },
     );
     surround.metadata = { vehiclePart: "window-chrome-surround" };
   }
@@ -603,16 +789,16 @@ export function buildGarageSuperbVehicle(
 
     const rail = addTube(
       `strešná lyžina ${sideName}`,
-      [0.05, -0.4, -0.9, -1.4, -1.8, -2.05].map((x) => {
+      [0.0, -0.25, -0.65, -1.05, -1.45, -1.73].map((x) => {
         const crest = section(x);
         return new Vector3(
           x,
-          crest.roofY + 0.016,
-          side * (crest.roofHalf + 0.008),
+          crest.roofY + 0.006,
+          side * (crest.roofHalf - 0.016),
         );
       }),
-      0.011,
-      brightChrome,
+      0.009,
+      darkChrome,
       true,
     );
     rail.metadata = { vehiclePart: "roof-rail" };
@@ -627,11 +813,11 @@ export function buildGarageSuperbVehicle(
     rocker.metadata = { vehiclePart: "rocker-trim" };
   }
 
-  // Gloss-black wedge under the trailing edge of the roof spoiler.
+  // Low roof spoiler follows the top of the sloping estate tailgate.
   const spoilerUnderside = addBox(
     "čierna spodná hrana spojlera",
-    { x: 0.1, y: 0.045, z: 1.14 },
-    { x: -2.4, y: 1.255, z: 0 },
+    { x: 0.105, y: 0.023, z: 1.18 },
+    { x: -1.94, y: 1.414, z: 0 },
     pianoBlack,
     false,
   );
@@ -640,28 +826,28 @@ export function buildGarageSuperbVehicle(
   // ------------------------------------------------------- front fascia ---
   const grilleOutline = (inset: number) =>
     [
-      [0.78 - inset, 0.27 - inset],
-      [0.752 - inset, 0.33 - inset],
-      [0.542 + inset, 0.33 - inset],
-      [0.512 + inset, 0.27 - inset],
-      [0.512 + inset, -(0.27 - inset)],
-      [0.542 + inset, -(0.33 - inset)],
-      [0.752 - inset, -(0.33 - inset)],
-      [0.78 - inset, -(0.27 - inset)],
+      [0.758 - inset, 0.435 - inset],
+      [0.718 - inset, 0.515 - inset],
+      [0.536 + inset, 0.475 - inset],
+      [0.498 + inset, 0.415 - inset],
+      [0.498 + inset, -(0.415 - inset)],
+      [0.536 + inset, -(0.475 - inset)],
+      [0.718 - inset, -(0.515 - inset)],
+      [0.758 - inset, -(0.435 - inset)],
     ] as const;
-  const grilleX = (y: number) => noseX + 0.011 - (y - 0.512) * 0.11;
+  const grilleX = noseX + 0.004;
   const grille = createPanelMesh(
     scene,
     `${vehicle.label} · výplň širokej osemuholníkovej prednej masky`,
-    grilleOutline(0.004).map(([y, z]) => new Vector3(grilleX(y), y, z)),
+    grilleOutline(0.004).map(([y, z]) => new Vector3(grilleX, y, z)),
     pianoBlack,
   );
   grille.metadata = { vehiclePart: "front-grille" };
   registerVisual(grille, false);
   const framePoints = grilleOutline(0).map(
-    ([y, z]) => new Vector3(grilleX(y) + 0.006, y, z),
+    ([y, z]) => new Vector3(grilleX + 0.006, y, z),
   );
-  const grilleFrame = addTube(
+  const grilleFrame = addSurfaceTube(
     "svetlý chrómový rám osemuholníkovej masky",
     [...framePoints, framePoints[0]],
     0.009,
@@ -669,23 +855,28 @@ export function buildGarageSuperbVehicle(
   );
   grilleFrame.metadata = { vehiclePart: "front-grille-frame" };
   for (let index = -6; index <= 6; index += 1) {
-    const slat = addBox(
-      `zvislá lamela masky ${index + 7}`,
-      { x: 0.012, y: 0.22 - Math.abs(index) * 0.005, z: 0.009 },
-      { x: grilleX(0.645) + 0.004, y: 0.645, z: index * 0.048 },
-      darkChrome,
-      false,
-    );
-    slat.rotation.z = 0.08;
+    const z = index * 0.068;
+    const halfHeight = (0.212 - Math.abs(index) * 0.005) / 2;
+    const slat = registerVisual(createPanelMesh(
+      scene,
+      `${vehicle.label} · zvislá lamela masky ${index + 7}`,
+      [
+        new Vector3(noseX, 0.626 - halfHeight, z - 0.004),
+        new Vector3(noseX, 0.626 + halfHeight, z - 0.004),
+        new Vector3(noseX, 0.626 + halfHeight, z + 0.004),
+        new Vector3(noseX, 0.626 - halfHeight, z + 0.004),
+      ],
+      brightChrome,
+    ), false);
     slat.metadata = { vehiclePart: "front-grille-slat" };
   }
 
   const badge = CreateCylinder(
     `${vehicle.label} · emblém na čele kapoty`,
-    { height: 0.012, diameter: 0.09, tessellation: 32 },
+    { height: 0.008, diameter: 0.052, tessellation: 32 },
     scene,
   );
-  badge.position.set(grilleX(0.815), 0.815, 0);
+  badge.position.copyFrom(surfacePoint(body, new Vector3(noseX, 0.789, 0), { ...frontSurface, offset: 0.005 }));
   badge.rotation.z = Math.PI / 2;
   badge.material = darkChrome;
   badge.metadata = { vehiclePart: "bonnet-badge" };
@@ -699,23 +890,23 @@ export function buildGarageSuperbVehicle(
       scene,
       `${vehicle.label} · zapustené teleso Matrix LED ${sideName}`,
       [
-        new Vector3(noseX + 0.002, 0.784, side * 0.35),
-        new Vector3(noseX + 0.002, 0.706, side * 0.35),
-        new Vector3(noseX + 0.002, 0.7, side * 0.63),
+        new Vector3(noseX + 0.002, 0.784, side * 0.535),
+        new Vector3(noseX + 0.002, 0.706, side * 0.535),
+        new Vector3(noseX + 0.002, 0.7, side * 0.74),
         new Vector3(2.38, 0.712, side * (garageSuperbBodySideZ(2.38, 0.712) + 0.006)),
         new Vector3(2.365, 0.772, side * (garageSuperbBodySideZ(2.365, 0.772) + 0.006)),
-        new Vector3(noseX + 0.002, 0.778, side * 0.62),
+        new Vector3(noseX + 0.002, 0.778, side * 0.745),
       ],
       pianoBlack,
     );
     headlamp.metadata = { vehiclePart: "headlamp" };
     registerVisual(headlamp, false);
 
-    const drl = addTube(
+    const drl = addSurfaceTube(
       `dvojité LED denné svetlo ${sideName}`,
       [
-        new Vector3(noseX + 0.006, 0.776, side * 0.355),
-        new Vector3(noseX + 0.006, 0.772, side * 0.6),
+        new Vector3(noseX + 0.006, 0.776, side * 0.54),
+        new Vector3(noseX + 0.006, 0.772, side * 0.755),
         new Vector3(
           2.375,
           0.768,
@@ -728,24 +919,32 @@ export function buildGarageSuperbVehicle(
     drl.metadata = { vehiclePart: "drl" };
 
     for (let moduleIndex = 0; moduleIndex < 3; moduleIndex += 1) {
-      const ledModule = addBox(
-        `Matrix LED modul ${moduleIndex + 1} ${sideName}`,
-        { x: 0.012, y: 0.045, z: 0.06 },
-        { x: noseX + 0.004, y: 0.736, z: side * (0.4 + moduleIndex * 0.085) },
+      const centreZ = side * (0.585 + moduleIndex * 0.085);
+      const ledModule = registerVisual(createPanelMesh(
+        scene,
+        `${vehicle.label} · Matrix LED modul ${moduleIndex + 1} ${sideName}`,
+        [
+          new Vector3(noseX, 0.751, centreZ - 0.027),
+          new Vector3(noseX, 0.724, centreZ - 0.027),
+          new Vector3(noseX, 0.724, centreZ + 0.027),
+          new Vector3(noseX, 0.751, centreZ + 0.027),
+        ],
         headlight,
-        false,
-      );
+      ), false);
       ledModule.metadata = { vehiclePart: "headlamp-module" };
     }
 
-    const blade = addBox(
-      `zvislá bočná clona nárazníka ${sideName}`,
-      { x: 0.02, y: 0.24, z: 0.016 },
-      { x: 2.36, y: 0.42, z: side * (garageSuperbBodySideZ(2.36, 0.42) + 0.004) },
+    const blade = registerVisual(createPanelMesh(
+      scene,
+      `${vehicle.label} · zvislá bočná clona nárazníka ${sideName}`,
+      [
+        new Vector3(noseX, 0.465, side * 0.765),
+        new Vector3(noseX, 0.46, side * 0.845),
+        new Vector3(noseX, 0.3, side * 0.795),
+        new Vector3(noseX, 0.305, side * 0.73),
+      ],
       pianoBlack,
-      false,
-    );
-    blade.rotation.y = side * 0.45;
+    ), false);
     blade.metadata = { vehiclePart: "side-intake" };
   }
 
@@ -753,16 +952,16 @@ export function buildGarageSuperbVehicle(
     scene,
     `${vehicle.label} · celoplošný spodný nasávací otvor`,
     [
-      new Vector3(noseX + 0.0025, 0.46, -0.545),
-      new Vector3(noseX + 0.0025, 0.46, 0.545),
-      new Vector3(noseX + 0.0025, 0.28, 0.49),
-      new Vector3(noseX + 0.0025, 0.28, -0.49),
+      new Vector3(noseX, 0.465, -0.72),
+      new Vector3(noseX, 0.465, 0.72),
+      new Vector3(noseX, 0.275, 0.65),
+      new Vector3(noseX, 0.275, -0.65),
     ],
     pianoBlack,
   );
   lowerIntake.metadata = { vehiclePart: "lower-intake" };
   registerVisual(lowerIntake, false);
-  const lowerLip = addTube(
+  const lowerLip = addSurfaceTube(
     "spodná aerodynamická hrana",
     [
       new Vector3(noseX + 0.004, 0.272, -0.48),
@@ -781,7 +980,10 @@ export function buildGarageSuperbVehicle(
     plate,
     false,
   );
+  frontPlate.position.copyFrom(surfacePoint(body, frontPlate.position, { ...frontSurface, offset: 0.009 }));
   frontPlate.metadata = { vehiclePart: "front-plate" };
+  registerVisual(createVehicleLettering(scene, "superb-model-plate",
+    frontPlate.position.add(new Vector3(0.009, 0, 0)), 1, 0.516, 0.121), false);
 
   // --------------------------------------------------------------- rear ---
   for (const side of [-1, 1] as const) {
@@ -814,26 +1016,28 @@ export function buildGarageSuperbVehicle(
     wrapLamp.metadata = { vehiclePart: "rear-wrap-lamp" };
     registerVisual(wrapLamp, false);
 
-    const upperGuide = addTube(
+    const upperGuide = addSurfaceTube(
       `kryštalické zadné svetlo C ${sideName}`,
       [
-        new Vector3(tailX - 0.005, 0.975, side * 0.32),
-        new Vector3(tailX - 0.005, 0.978, side * 0.62),
-        new Vector3(tailX + 0.012, 0.972, side * 0.74),
-        new Vector3(tailX + 0.136, 0.952, side * 0.856),
-      ],
-      0.007,
-      brake,
-    );
-    upperGuide.metadata = { vehiclePart: "rear-light-guide" };
-    const lowerGuide = addTube(
-      `spodná línia zadného svetla ${sideName}`,
-      [
-        new Vector3(tailX - 0.005, 0.925, side * 0.34),
-        new Vector3(tailX - 0.005, 0.922, side * 0.6),
+        new Vector3(tailX - 0.005, 0.963, side * 0.32),
+        new Vector3(tailX - 0.005, 0.956, side * 0.66),
+        new Vector3(tailX + 0.012, 0.943, side * 0.735),
+        new Vector3(tailX + 0.136, 0.928, side * 0.846),
       ],
       0.006,
       brake,
+      rearSurface,
+    );
+    upperGuide.metadata = { vehiclePart: "rear-light-guide" };
+    const lowerGuide = addSurfaceTube(
+      `spodná línia zadného svetla ${sideName}`,
+      [
+        new Vector3(tailX - 0.005, 0.925, side * 0.34),
+        new Vector3(tailX - 0.005, 0.922, side * 0.755),
+      ],
+      0.005,
+      brake,
+      rearSurface,
     );
     lowerGuide.metadata = { vehiclePart: "rear-light-guide" };
 
@@ -855,6 +1059,13 @@ export function buildGarageSuperbVehicle(
     false,
   );
   rearBand.metadata = { vehiclePart: "rear-band" };
+  const tailgateSeam = addSurfaceTube("presná škára piatych dverí", [
+    new Vector3(tailX, 0.886, -0.63), new Vector3(tailX, 0.62, -0.665),
+    new Vector3(tailX, 0.48, -0.625), new Vector3(tailX, 0.444, -0.54),
+    new Vector3(tailX, 0.444, 0.54), new Vector3(tailX, 0.48, 0.625),
+    new Vector3(tailX, 0.62, 0.665), new Vector3(tailX, 0.886, 0.63),
+  ], 0.0015, darkChrome, rearSurface);
+  tailgateSeam.metadata = { vehiclePart: "tailgate-seam" };
   const rearWordmark = addTube(
     "chrómová linka nápisu ŠKODA",
     [
@@ -865,6 +1076,9 @@ export function buildGarageSuperbVehicle(
     brightChrome,
   );
   rearWordmark.metadata = { vehiclePart: "rear-wordmark-line" };
+  rearWordmark.setEnabled(false);
+  registerVisual(createVehicleLettering(scene, "superb-rear-wordmark",
+    new Vector3(tailX - 0.014, 0.952, 0), -1, 0.60, 0.082), false);
 
   const rearDiffuser = addBox(
     "nízky lichobežníkový zadný difúzor",
@@ -881,6 +1095,8 @@ export function buildGarageSuperbVehicle(
     false,
   );
   rearPlate.metadata = { vehiclePart: "rear-plate" };
+  registerVisual(createVehicleLettering(scene, "superb-model-plate",
+    rearPlate.position.add(new Vector3(-0.009, 0, 0)), -1, 0.516, 0.121), false);
 
   // -------------------------------------------------------------- wheels ---
   const wheelSpins: TransformNode[] = [];
@@ -927,7 +1143,7 @@ export function buildGarageSuperbVehicle(
       wheelWell.position.set(
         axleX,
         GARAGE_SUPERB_WHEEL_M.centerY + 0.03,
-        side * 0.84,
+        side * (halfTrack - GARAGE_SUPERB_WHEEL_M.tireWidth / 2 - 0.025),
       );
       wheelWell.rotation.x = Math.PI / 2;
       wheelWell.material = wellShadow;
@@ -1068,6 +1284,26 @@ export function buildGarageSuperbVehicle(
         true,
       );
       wheelArch.metadata = { vehiclePart: "wheel-arch" };
+    }
+  }
+
+  // Glazing, lamp lenses and grille details share the exact triangulated
+  // body surface. All remain separate meshes for their materials and hooks.
+  for (const mesh of root.getChildMeshes()) {
+    if (!(mesh instanceof Mesh)) continue;
+    const part = mesh.metadata?.vehiclePart;
+    if (part === "windshield" || part === "rear-window") {
+      conformPanelToBody(mesh, body, { axis: 1, direction: 1, minimumDepth: 0.85 });
+    } else if (part === "side-glass" || part === "window-pillar") {
+      const vertices = mesh.getVerticesData("position")!;
+      const side = Math.sign(vertices[2]) as -1 | 1;
+      conformPanelToBody(mesh, body, { axis: 2, direction: side, minimumDepth: 0.4,
+        offset: part === "window-pillar" ? 0.006 : 0.003 });
+    } else if (["front-grille", "front-grille-slat", "headlamp", "headlamp-module", "lower-intake", "side-intake"].includes(part)) {
+      conformPanelToBody(mesh, body, { ...frontSurface,
+        offset: part === "front-grille-slat" || part === "headlamp-module" ? 0.007 : 0.003 });
+    } else if (["rear-lamp", "rear-wrap-lamp"].includes(part)) {
+      conformPanelToBody(mesh, body, rearSurface);
     }
   }
 

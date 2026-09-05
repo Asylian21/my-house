@@ -260,10 +260,11 @@ describe("modern Superb visual geometry", () => {
     expect(garageSuperbSectionAt(0.02).roofY).toBeGreaterThan(1.4);
     expect(garageSuperbSectionAt(0.78).roofY).toBeLessThan(1.0);
 
-    // Raked tailgate with an integrated spoiler lip well above the belt.
+    // The glass slopes from the roof spoiler to the low tailgate edge.
+    // A 1.29 m crown at the bumper previously made the rear almost vertical.
     const tail = garageSuperbSectionAt(-2.451);
-    expect(tail.roofY).toBeGreaterThanOrEqual(1.25);
-    expect(tail.roofY).toBeLessThanOrEqual(1.35);
+    expect(tail.roofY).toBeGreaterThanOrEqual(1.0);
+    expect(tail.roofY).toBeLessThanOrEqual(1.08);
     expect(garageSuperbSectionAt(-1.9).roofY).toBeGreaterThan(1.4);
   });
 

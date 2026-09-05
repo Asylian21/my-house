@@ -7,7 +7,7 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { delimiter, dirname, join } from "node:path";
 
-const APP_URL = "http://localhost:3000/";
+const APP_URL = process.env.DOM_TEST_URL ?? "http://localhost:3000/";
 const WALK_CHECK_FPS = Number(process.env.WALK_CHECK_FPS ?? 60);
 assert.ok(
   Number.isFinite(WALK_CHECK_FPS) && WALK_CHECK_FPS > 0,

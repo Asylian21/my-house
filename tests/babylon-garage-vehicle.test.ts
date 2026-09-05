@@ -60,9 +60,9 @@ describe("Babylon Superb Combi visual", () => {
       vehicleGeneration: "SUPERB-IV-COMBI",
       productionDimensionsMm: GARAGE_SUPERB_REFERENCE_DIMENSIONS_MM,
       visualLengthScale: 1,
-      visualReference: "client-supplied-2024-plus-superb-combi-photos-2026-08-25",
+      visualReference: "skoda-superb-combi-official-technical-sheet-2024-06-03-and-client-photos-2026-08-25",
       referenceViews: ["side-profile", "front-three-quarter"],
-      bodyConstruction: "single-loft-arch-cutouts",
+      bodyConstruction: "curved-loft-conforming-panels",
     });
     expect(visual.wheelSpins).toHaveLength(4);
     expect(visual.frontSteering).toHaveLength(2);

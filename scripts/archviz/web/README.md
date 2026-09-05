@@ -46,3 +46,9 @@ Grass placement JSON has a flat `placements` array with stride 5: `[x,y,z,yawRad
 Tree foliage keeps complete scanned leaf cards with deterministic thinning; woody geometry has a separate simplification budget. Collapsing an entire tree together would shrink disconnected leaves and damage the trunk.
 
 The GLBs retain physical transmission and IOR. The web integration uses full-resolution alpha-blended thin glass and the original animated water material. The web renderer supplies its own lighting, environment reflections, shadowing and transparency tuning. Global illumination and Cycles caustics are not baked into these meshes. See [the environment export](ENVIRONMENT.md) for the saved Blender HDR sky.
+
+## Living-room finishes
+
+`lib/babylon-living-palette.ts` applies the warm ecru, sand, oak, limestone, cashmere and terracotta palette to `LIVING-103-` objects. The native collision model and imported GLBs use the same room-scoped finish resolver. Shared bedroom, hallway, bathroom and kitchen materials retain their original finish. Imported materials are cloned before batching; source GLBs and the saved Blender file remain the unmodified export.
+
+The four `public/assets/textures/living-*-albedo.jpg` files retain the grain of the existing material maps. Reproduce them with `python3 scripts/archviz/web/prepare_living_palette.py`; the default output is `output/archviz/living-palette/`. Normal and roughness maps retain their original scale. The renderer additionally uses warmer surface reflectance to balance these finishes against the saved blue daylight inside the shaded living room.

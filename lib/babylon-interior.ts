@@ -15,6 +15,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
+import { warmLivingMaterial } from "./babylon-living-palette";
 
 import {
   BATHROOM_FITOUT,
@@ -541,7 +542,7 @@ function finish(
     entityId?: string;
   } = {},
 ) {
-  mesh.material = material;
+  mesh.material = warmLivingMaterial(context.scene, mesh.name, material);
   mesh.receiveShadows = true;
   mesh.isPickable = options.pickable ?? false;
   mesh.checkCollisions = options.collide ?? false;
