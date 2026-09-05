@@ -949,6 +949,32 @@ kbd.key {
   font-size: var(--fs-xs);
 }
 
+.archviz-notice {
+  position: absolute;
+  z-index: 35;
+  top: 5.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(36rem, calc(100% - 2rem));
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-hi);
+}
+
+.archviz-notice button {
+  flex: none;
+  padding: 0.6rem;
+  border: 1px solid var(--ink-600);
+  border-radius: 0.5rem;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
 .drawing-loader {
   width: 64px;
   height: 40px;

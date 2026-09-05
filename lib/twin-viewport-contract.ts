@@ -284,6 +284,32 @@ export function deriveRenderQualityProfile({
   };
 }
 
+/** Textured Blender geometry needs a bounded framebuffer and refraction budget. */
+export function deriveArchvizRenderQualityProfile(input: RenderQualityInput): RenderQualityProfile {
+  const base = deriveRenderQualityProfile(input);
+  const width = Math.max(1, Math.round(finitePositive(input.widthPx, 1)));
+  const height = Math.max(1, Math.round(finitePositive(input.heightPx, 1)));
+  const pixelRatio = Math.min(base.pixelRatio, input.isCoarsePointer ? 1.25 : 1.5,
+    Math.sqrt(2_200_000 / (width * height)));
+  const renderWidthPx = Math.max(1, Math.round(width * pixelRatio));
+  const renderHeightPx = Math.max(1, Math.round(height * pixelRatio));
+  const msaaSamples = Math.min(2, base.msaaSamples);
+  return {
+    ...base,
+    tier: "HIGH",
+    pixelRatio,
+    hardwareScalingLevel: 1 / pixelRatio,
+    renderWidthPx,
+    renderHeightPx,
+    renderPixelCount: renderWidthPx * renderHeightPx,
+    msaaSamples,
+    fxaaEnabled: msaaSamples < 2,
+    shadowMapSize: 1024,
+    environmentTextureSize: 256,
+    anisotropy: 8,
+  };
+}
+
 export const FLIGHT_BOUNDS = Object.freeze({
   // These limits include every built-in orbit preset and the orbit camera's
   // maximum radius, so switching to flight does not reframe a valid view.

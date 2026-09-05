@@ -11,6 +11,14 @@ Publikovaná 4K vizualizácia je dostupná tlačidlom **4K** v ovládaní modelu
 a priamo na `/archviz/garden-4k.jpg`. Web používa JPEG kópiu finálneho renderu;
 pôvodný 16-bitový PNG a Blender scéna zostávajú v lokálnom `output/archviz/`.
 
+Režim **Realita** načítava aj interaktívnu podobu tejto Blender scény:
+textúrovaný dom, celý existujúci interiér, záhradný nábytok a skenovanú vegetáciu.
+Zachováva otáčanie, prelet, chôdzu, kolízie a všetky pôvodné dvere a mechanizmy.
+Deväť GLB balíkov má spolu približne 39 MiB; obloha `sky.hdr` používa HDR z uloženého Blender
+sveta. Postup obnovy assetov a ich pôvod sú v [návode webového exportu](scripts/archviz/web/README.md).
+Pri chybe načítania zostáva funkčný pôvodný model s možnosťou opakovania.
+Web dodáva osvetlenie v reálnom čase; Cycles globálne osvetlenie nie je zapečené.
+
 ## Dôkazová hranica
 
 - hranica parcely, výmera 753 m² a koridor cestnej parcely 6012/1 s výmerou
@@ -85,9 +93,9 @@ preto má záhradná zóna 30,60 m² a súčet terás klesá z pôvodných 84,35
 Vegetácia, nábytok a
 panoramatická atmosféra sú zámerne označené ako ilustračný záhradný koncept.
 
-WebGL výstup používa manuálne riadený Retina framebuffer do 2× DPR, pixelový
-rozpočet pre veľké obrazovky, MSAA bez zmäkčujúceho FXAA pri vysokom rozlíšení
-(8× MSAA na kompaktných plochách ULTRA vrstvy), plné mipmapy, 16× anizotropné
+WebGL výstup pre detailnú Blender scénu používa framebuffer do 1,5× DPR
+(1,25× na dotykových zariadeniach) s rozpočtom 2,2 milióna pixelov, 2× MSAA
+podľa podpory zariadenia, plné mipmapy, 8× anizotropné
 filtrovanie, stabilizované štvorstupňové kaskádové tiene, plný dielektrický
 Fresnel na skle, lom svetla vo vode, ACES tone mapping, jemný HDR bloom iba pre
 skutočné odlesky, PBR specular anti-aliasing a časovo stabilný obraz bez
@@ -338,12 +346,15 @@ prekrývajúcich sa vĺn pokojného rezidenčného bazéna). PBR sady v
 (`gravel-albedo.jpg`, `gravel-normal.jpg`), betón (`concrete-albedo.jpg`,
 `concrete-normal.jpg`) a normálová mapa trávnika (`lawn-normal.jpg`) sú
 procedurálne vygenerované v tomto repozitári (deterministický generátor, žiadne
-externé licencie). Aktívne panoramatické pozadie
+externé licencie). Predchádzajúce panoramatické pozadie
 `suburban-field-01-8k.jpg` má rozlíšenie 8192 × 4096; responzívny variant
 `suburban-field-01-4k.jpg` a pamäťovo úsporný IBL variant
 `suburban-field-01-2k.jpg` sú odvodené z rovnakého zdroja. Dielo
 [Suburban Field 01](https://polyhaven.com/a/suburban_field_01) vytvoril Jacopo
 Voltolina a Poly Haven ho publikuje pod licenciou CC0.
+Aktívny interaktívny pohľad používa fyzikálnu oblohu z Blenderu; pôvodné
+panorámy zostávajú v archíve assetov. Pôvod skenovaných rastlín a nábytku
+je uvedený v `public/assets/archviz/credits.json`.
 Nereprezentujú skutočný stav parcely, jej susedov ani konkrétny dodaný výrobok
 či realizačný výber výsadby.
 

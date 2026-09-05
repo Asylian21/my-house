@@ -817,6 +817,20 @@ async function run() {
 
       const recoveryStart = harness.begin("ROOM-1-06", "recovery");
       const recoveryCameraErrors = [...recoveryStart.cameraErrors];
+      const wcRoom = interiorModule?.INTERIOR_ROOMS.find(
+        (room) => room.id === "ROOM-1-06",
+      );
+      const wcFitout = interiorModule?.WC_FITOUT;
+      if (wcRoom && wcFitout && toScene) {
+        // The normal standing point is within one capsule radius of the
+        // basin corner. Start midway between fixtures so this smoke test
+        // exercises a flat wall, without legitimate doorway/corner sliding.
+        const start = toScene({
+          x: wcRoom.standingPointMm.x,
+          y: (wcFitout.toilet.footprintMm.y1 + wcFitout.basin.footprintMm.y0) / 2,
+        });
+        controller.avatar.place(start.x, start.z, Math.PI / 2);
+      }
       // ROOM-1-06 normally faces its open door. Face the chase camera east so
       // W deliberately drives into the solid wall and establishes a genuine
       // blocked/recovery checkpoint scenario.
@@ -898,22 +912,18 @@ async function run() {
         firstDirectionMask: 0,
         finalState: null,
       };
-      const wcRoom = interiorModule?.INTERIOR_ROOMS.find(
-        (room) => room.id === "ROOM-1-06",
-      );
-      const wcFitout = interiorModule?.WC_FITOUT;
       if (!wcRoom || !wcFitout || !toScene) {
         autoRecovery.setupError = "ROOM-1-06 geometry, fitout or plan transform unavailable";
       } else {
-        // Begin in the clear approach north-west of the long-axis WC. The
-        // first south-west heading meets the sanitary guard; physical Left
-        // then supplies the distinct west-wall heading required for recovery.
+        // Approach between the west wall and toilet. The first heading
+        // meets the south wall; Left then meets the perpendicular toilet
+        // guard. The old north-west path escaped through the open WC door.
         const startPlan = {
-          x: wcFitout.toilet.footprintMm.x0 + 252,
-          y: wcFitout.toilet.footprintMm.y1 + 318,
+          x: (wcRoom.rectsMm[0].x0 + wcFitout.toilet.footprintMm.x0) / 2,
+          y: (wcFitout.toilet.footprintMm.y1 + wcFitout.basin.footprintMm.y0) / 2,
         };
         const startScene = toScene(startPlan);
-        const firstDirection = { x: -0.95, z: 0.31 };
+        const firstDirection = { x: 0.2, z: 1 };
         const alphaForDirection = (direction) =>
           Math.atan2(-direction.z, -direction.x);
         const setup = harness.begin("ROOM-1-06", "multi-direction trap");
@@ -957,14 +967,14 @@ async function run() {
 
           // Escape diversity is intentionally based on physical commands, not
           // camera-relative world headings. Release W for one neutral frame,
-          // then make physical Left push west into the second corner wall.
+          // then make physical Left push east into the toilet guard.
           controller.setFlightCommand("forward", false);
           harness.render(
             harness.framesFrom60Hz(1),
             "multi-direction neutral release",
             autoRecovery.cameraErrors,
           );
-          controller.avatar.camera.alpha = Math.PI / 2;
+          controller.avatar.camera.alpha = 3 * Math.PI / 2;
           controller.avatar.camera.inertialAlphaOffset = 0;
           controller.avatar.noteCameraInput();
           controller.setFlightCommand("left", true);

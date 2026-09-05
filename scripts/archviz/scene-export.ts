@@ -16,6 +16,7 @@ const controller = createTwinScene(
   () => {},
   () => {},
   () => {},
+  { loadArchviz: false },
 );
 controller.update({
   foundations: site.FOUNDATIONS,

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -257,7 +258,8 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(scene, /krížená botanická karta/);
   assert.doesNotMatch(scene, /BILLBOARDMODE_Y/);
   assert.doesNotMatch(scene, /material\.unlit = true/);
-  assert.match(scene, /return this\.scene\.whenReadyAsync\(\)/);
+  assert.match(scene, /await this\.archviz\?\.ready/);
+  assert.match(scene, /await this\.scene\.whenReadyAsync\(\)/);
 
   // Walking: the character is chosen from the palette and remembered.
   assert.match(viewport, /controller\.setWalkAvatar\(id\)/);
@@ -359,9 +361,7 @@ test("styles the interface from one token set rather than ad-hoc values", async 
 
 test("ships and discloses every local illustrative rendering asset", async () => {
   const assets = [
-    ["../public/assets/environment/suburban-field-01-2k.jpg", "ffd8ff"],
-    ["../public/assets/environment/suburban-field-01-4k.jpg", "ffd8ff"],
-    ["../public/assets/environment/suburban-field-01-8k.jpg", "ffd8ff"],
+    ["../public/assets/archviz/sky.hdr", "233f52414449414e4345"],
     ["../public/assets/textures/lawn-albedo.jpg", "ffd8ff"],
     ["../public/assets/textures/lawn-normal.jpg", "ffd8ff"],
     ["../public/assets/textures/plaster-white-albedo.jpg", "ffd8ff"],
@@ -447,4 +447,30 @@ test("ships and discloses every local illustrative rendering asset", async () =>
   assert.match(readme, /OpenAI imagegen/);
   assert.match(avatarSource, /material\.albedoTexture = avatarDiffuse/);
   assert.match(readme, /ilustračný záhradný koncept/);
+});
+
+test("ships complete, unmodified Blender assets within the hosting limit", async () => {
+  const root = new URL("../public/assets/archviz/", import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL("export-manifest.json", root), "utf8"));
+  const environment = JSON.parse(await readFile(new URL("environment-manifest.json", root), "utf8"));
+  assert.equal(manifest.sourceSha256, environment.sourceSha256);
+  assert.equal(manifest.files.length, 9);
+  assert.equal(manifest.files.filter(({ kind }) => kind === "interior").length, 4);
+  for (const file of manifest.files) {
+    assert.match(file.file, /^[a-z0-9-]+\.glb$/);
+    const bytes = await readFile(new URL(file.file, root));
+    assert.equal(bytes.byteLength, file.bytes, file.file);
+    assert.ok(bytes.byteLength < 20 * 1024 * 1024, `${file.file} exceeds the hosting asset limit`);
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), file.sha256, file.file);
+    assert.equal(bytes.readUInt32LE(0), 0x46546c67);
+    assert.equal(bytes.readUInt32LE(8), bytes.byteLength);
+    const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
+    assert.ok(gltf.images.length > 0, `${file.file} lost its textures`);
+    assert.ok(gltf.images.every((image) => Number.isInteger(image.bufferView)), `${file.file} needs an external texture`);
+  }
+  const grass = JSON.parse(await readFile(new URL("grass-placements.json", root), "utf8"));
+  assert.equal(grass.stride, 5);
+  assert.equal(grass.placements.length, grass.desktopCount * grass.stride);
+  assert.ok(grass.placements.every(Number.isFinite));
+  assert.ok(grass.mobileCount > 0 && grass.mobileCount < grass.desktopCount);
 });

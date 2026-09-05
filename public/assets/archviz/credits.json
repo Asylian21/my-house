@@ -1,0 +1,82 @@
+{
+  "title": "DOM | Blender web assets",
+  "credit": "Powered by Poly Haven",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "assets": [
+    {
+      "id": "white_plaster_02",
+      "page": "https://polyhaven.com/a/white_plaster_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "concrete_pavement",
+      "page": "https://polyhaven.com/a/concrete_pavement",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "gravel_floor_02",
+      "page": "https://polyhaven.com/a/gravel_floor_02",
+      "authors": {
+        "Jenelle van Heerden": "Processing",
+        "Dimitrios Savva": "Photography"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "hinoki_planks",
+      "page": "https://polyhaven.com/a/hinoki_planks",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "leafy_grass",
+      "page": "https://polyhaven.com/a/leafy_grass",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "grass_bermuda_01",
+      "page": "https://polyhaven.com/a/grass_bermuda_01",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "shrub_02",
+      "page": "https://polyhaven.com/a/shrub_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "tree_small_02",
+      "page": "https://polyhaven.com/a/tree_small_02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "license": "CC0-1.0"
+    },
+    {
+      "id": "outdoor_table_chair_set_01",
+      "page": "https://polyhaven.com/a/outdoor_table_chair_set_01",
+      "authors": {
+        "James Ray Cock": "All"
+      },
+      "license": "CC0-1.0"
+    }
+  ],
+  "projectMaterials": "Additional interior material maps are existing DOM project assets."
+}

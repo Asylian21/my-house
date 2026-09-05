@@ -3,7 +3,6 @@ import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCa
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { PhotoDome } from "@babylonjs/core/Helpers/photoDome";
 import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { CascadedShadowGenerator } from "@babylonjs/core/Lights/Shadows/cascadedShadowGenerator";
@@ -13,7 +12,7 @@ import { ImageProcessingConfiguration } from "@babylonjs/core/Materials/imagePro
 import type { Material } from "@babylonjs/core/Materials/material";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { EquiRectangularCubeTexture } from "@babylonjs/core/Materials/Textures/equiRectangularCubeTexture";
+import { HDRCubeTexture } from "@babylonjs/core/Materials/Textures/hdrCubeTexture";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
@@ -110,6 +109,7 @@ import {
 import { slatCenterDistancesMm } from "./twin-fence";
 import { buildInterior } from "./babylon-interior";
 import { AvatarController } from "./babylon-avatar";
+import { ArchvizPresentation } from "./babylon-archviz";
 import type { WalkAvatarId } from "./twin-avatar";
 import {
   buildOpening,
@@ -150,7 +150,7 @@ import {
   ORBIT_ZOOM,
   PHOTOGRAPHIC_GRADE,
   clampOrbitRadius,
-  deriveRenderQualityProfile,
+  deriveArchvizRenderQualityProfile,
   flightCommandForCode,
   flightWheelDollyDistanceM,
   initialAdaptivePostFxState,
@@ -870,6 +870,7 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
 }
 
 export class TwinSceneController {
+  private readonly archviz: ArchvizPresentation | null;
   private readonly engine: Engine;
   private readonly scene: Scene;
   private readonly orbitCamera: ArcRotateCamera;
@@ -951,6 +952,7 @@ export class TwinSceneController {
     private readonly onRenderQualityChange: (
       profile: RenderQualityProfile,
     ) => void,
+    options: { loadArchviz?: boolean } = {},
   ) {
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
@@ -971,38 +973,38 @@ export class TwinSceneController {
     this.scene.clearColor = Color4.FromHexString("#c6cfd2ff");
     this.scene.ambientColor = Color3.FromHexString("#5d6462");
 
-    // A dedicated 2K source avoids the very large transient float buffers that
-    // Babylon's equirectangular cube conversion would allocate from the 8K
-    // panorama. The resulting 512 px IBL cube remains visually lossless here.
-    const environment = new EquiRectangularCubeTexture(
-      "/assets/environment/suburban-field-01-2k.jpg",
+    // The actual Blender physical sky supplies linear HDR illumination and
+    // reflections. Its world strength is already baked into the panorama.
+    const environment = new HDRCubeTexture(
+      "/assets/archviz/sky.hdr",
       this.scene,
-      this.renderQuality.environmentTextureSize,
+      256,
       false,
+      true,
       false,
+      true,
       () => {
         this.scene.environmentTexture = environment;
-        this.scene.environmentIntensity = 0.95;
+        this.scene.environmentIntensity = 1;
       },
+      () => { sky.isVisible = false; },
     );
-    const panoramaUrl =
-      this.renderQuality.tier === "ULTRA" &&
-      this.engine.getCaps().maxTextureSize >= 8192 &&
-      this.renderQuality.renderWidthPx >= 2_000
-        ? "/assets/environment/suburban-field-01-8k.jpg"
-        : "/assets/environment/suburban-field-01-4k.jpg";
-    const sky = new PhotoDome(
-      "Ilustračné záhradné prostredie",
-      panoramaUrl,
-      { resolution: 64, size: 360, useDirectMapping: false },
-      this.scene,
-    );
-    // Keep the visible panorama and the equirectangular IBL in the same world
-    // orientation so reflections and the apparent light source agree.
-    sky.rotation.y = 0;
-    sky.mesh.isPickable = false;
-    sky.mesh.applyFog = false;
-    this.realisticOnlyMeshes.push(sky.mesh);
+    environment.isBlocking = false;
+    const sky = CreateBox("Blender physical sky", { size: 200 }, this.scene);
+    sky.infiniteDistance = true;
+    const skyMaterial = new StandardMaterial("Blender HDR sky", this.scene);
+    skyMaterial.backFaceCulling = false;
+    skyMaterial.disableLighting = true;
+    skyMaterial.diffuseColor = Color3.Black();
+    skyMaterial.specularColor = Color3.Black();
+    const skyTexture = environment.clone();
+    skyTexture.isBlocking = false;
+    skyTexture.coordinatesMode = Texture.SKYBOX_MODE;
+    skyMaterial.reflectionTexture = skyTexture;
+    sky.material = skyMaterial;
+    sky.isPickable = false;
+    sky.applyFog = false;
+    this.realisticOnlyMeshes.push(sky);
     this.scene.imageProcessingConfiguration.toneMappingEnabled = true;
     this.scene.imageProcessingConfiguration.toneMappingType =
       ImageProcessingConfiguration.TONEMAPPING_ACES;
@@ -1084,19 +1086,18 @@ export class TwinSceneController {
       new Vector3(0.25, 1, -0.12),
       this.scene,
     );
-    ambient.intensity = 0.3;
+    ambient.intensity = 0.12;
     ambient.diffuse = Color3.FromHexString("#eef4f6");
     ambient.groundColor = Color3.FromHexString("#6a755f");
-    // Soft high sun angled so the garden facade and porch corner read like the
-    // approved reference photograph (bright overcast with gentle shadows).
+    // Direction, colour and strength match the saved Blender physical sky.
     const sun = new DirectionalLight(
       "architectural-sun",
-      new Vector3(0.18, -1, 0.52),
+      new Vector3(0.7560315132, -0.4734486639, 0.4519543052),
       this.scene,
     );
-    sun.position = new Vector3(-26, 46, -26);
-    sun.intensity = 1.04;
-    sun.diffuse = Color3.FromHexString("#fffaf1");
+    sun.position = sun.direction.scale(-60);
+    sun.intensity = 3.5;
+    sun.diffuse = new Color3(1, 0.93, 0.83);
     sun.specular = Color3.FromHexString("#ffffff");
     this.cascadedShadowGenerator = CascadedShadowGenerator.IsSupported
       ? new CascadedShadowGenerator(
@@ -1645,6 +1646,38 @@ export class TwinSceneController {
     this.doors.assertInventory(INTERACTIVE_DOOR_INVENTORY);
     this.avatar.setPassages(this.doors.passages());
     this.buildUtilities();
+    // Capture the original rest matrices before any user can move a door.
+    // The Blender layer replaces appearance; these meshes retain navigation,
+    // collision, floor heights and every existing animated mechanism.
+    this.archviz = options.loadArchviz === false ? null : new ArchvizPresentation({
+      scene: this.scene,
+      layers: this.layerMeshes,
+      compact: window.matchMedia("(pointer: coarse)").matches,
+      technicalVisibility: (mesh) => this.realisticOnlyMeshes.includes(mesh) ? 0 : mesh.visibility,
+      castsShadow: (mesh) => this.shadowGenerator.getShadowMap()?.renderList?.includes(mesh) ?? false,
+      setShadow: (mesh, enabled) => {
+        if (enabled) this.shadowGenerator.addShadowCaster(mesh, false);
+        else this.shadowGenerator.removeShadowCaster(mesh, false);
+      },
+      register: (mesh, layer, entityId) => this.register(mesh, layer, entityId),
+      unregister: (mesh) => {
+        for (const meshes of [...this.layerMeshes.values(), ...this.entityMeshes.values()]) {
+          const index = meshes.indexOf(mesh);
+          if (index !== -1) meshes.splice(index, 1);
+        }
+      },
+      onStatus: (status) => {
+        this.canvas.dataset.archviz = status;
+        if (status === "ready") {
+          for (const mesh of this.scene.meshes) {
+            if (mesh.metadata?.archviz && mesh.metadata.sourceName?.includes("refrakčná vodná plocha")) {
+              mesh.material = this.realisticMaterials.poolWater;
+            }
+          }
+        }
+        if (status !== "loading" && this.snapshot) this.update(this.snapshot);
+      },
+    });
     if (this.cascadedShadowGenerator) {
       this.cascadedShadowGenerator.freezeShadowCastersBoundingInfo =
         EXTERIOR_RENDER_STABILITY.freezeDynamicShadowCasterBounds;
@@ -1767,19 +1800,23 @@ export class TwinSceneController {
     });
 
     const render = () => this.scene.render();
-    this.engine.runRenderLoop(render);
+    if (this.archviz) {
+      void this.archviz.ready.then(() => {
+        if (!this.scene.isDisposed && !document.hidden) this.engine.runRenderLoop(render);
+      });
+    } else this.engine.runRenderLoop(render);
     this.onVisibilityChange = () => {
       if (document.hidden) {
         this.clearFlightInput();
         this.engine.stopRenderLoop(render);
       }
-      else this.engine.runRenderLoop(render);
+      else if (this.archviz?.status !== "loading") this.engine.runRenderLoop(render);
     };
     document.addEventListener("visibilitychange", this.onVisibilityChange);
   }
 
   private deriveCurrentRenderQuality() {
-    return deriveRenderQualityProfile({
+    return deriveArchvizRenderQualityProfile({
       widthPx: this.canvas.clientWidth,
       heightPx: this.canvas.clientHeight,
       devicePixelRatio: window.devicePixelRatio,
@@ -7277,6 +7314,7 @@ export class TwinSceneController {
     this.materials.wall.alpha = 0.24;
     this.materials.roof.alpha = 0.34;
     this.scene.getMeshByName("Terén · DMR 5G kontext")?.setEnabled(realistic);
+    this.archviz?.applyViewMode(realistic);
   }
 
   setCameraPreset(preset: CameraPreset) {
@@ -7833,8 +7871,13 @@ export class TwinSceneController {
     return this.renderQuality;
   }
 
-  whenReady() {
-    return this.scene.whenReadyAsync();
+  async whenReady() {
+    await this.archviz?.ready;
+    if (!this.scene.isDisposed) await this.scene.whenReadyAsync();
+  }
+
+  getArchvizStatus() {
+    return this.archviz?.statistics ?? { status: "fallback", visuals: 0, replaced: 0 };
   }
 
   resize() {
@@ -7897,6 +7940,7 @@ export class TwinSceneController {
     this.clearFlightInput();
     this.endGarageCinematic(false);
     this.clearSelection();
+    this.archviz?.dispose();
     this.avatar.dispose();
     this.scene.dispose();
     this.engine.dispose();
@@ -7908,11 +7952,13 @@ export function createTwinScene(
   onSelect: (id: string) => void,
   onNavigationModeChange: (mode: NavigationMode) => void,
   onRenderQualityChange: (profile: RenderQualityProfile) => void,
+  options: { loadArchviz?: boolean } = {},
 ) {
   return new TwinSceneController(
     canvas,
     onSelect,
     onNavigationModeChange,
     onRenderQualityChange,
+    options,
   );
 }

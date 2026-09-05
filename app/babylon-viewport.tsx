@@ -130,6 +130,7 @@ export const BabylonViewport = forwardRef<
   const onNavigationModeChangeRef = useRef(onNavigationModeChange);
   const onWalkAvatarChangeRef = useRef(onWalkAvatarChange);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [archvizUnavailable, setArchvizUnavailable] = useState(false);
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
   const [walkRoom, setWalkRoom] = useState("");
   const [walkRoomId, setWalkRoomId] = useState<string | null>(null);
@@ -260,6 +261,7 @@ export const BabylonViewport = forwardRef<
         dprQuery.addEventListener("change", onDprChange);
         await createdController.whenReady();
         if (!active) return;
+        setArchvizUnavailable(createdController.getArchvizStatus().status === "fallback");
         setStatus("ready");
       })
       .catch(() => {
@@ -937,7 +939,13 @@ export const BabylonViewport = forwardRef<
         <div className="viewport-state" role="status">
           <span className="drawing-loader" aria-hidden="true" />
           <strong>Skladám digitálne dvojča</strong>
-          <small>Kataster · dom · základy · komunikácia · siete</small>
+          <small>Materiály · záhrada · kompletný interiér</small>
+        </div>
+      )}
+      {status === "ready" && archvizUnavailable && (
+        <div className="archviz-notice glass" role="status">
+          <span>Detailný vzhľad sa nepodarilo načítať. Prehliadka funguje v základnom zobrazení.</span>
+          <button type="button" onClick={() => window.location.reload()}>Skúsiť znova</button>
         </div>
       )}
       {status === "error" && (
