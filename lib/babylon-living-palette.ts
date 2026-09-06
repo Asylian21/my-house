@@ -5,6 +5,7 @@ import type { Scene } from "@babylonjs/core/scene";
 
 const FINISHES = {
   fabric: { color: "#D8C8B2", texture: "living-boucle-ecru-albedo", roughness: 0.92 },
+  sofa: { color: "#D8C8B2", texture: "living-boucle-ecru-albedo", roughness: 0.99 },
   cabinet: { color: "#CEA087", texture: null, roughness: 0.82 },
   stone: { color: "#BDAF98", texture: "living-warm-stone-albedo", roughness: 0.72 },
   oak: { color: "#BE9566", texture: "living-natural-oak-albedo", roughness: 0.55 },
@@ -25,7 +26,8 @@ export function livingFinishFor(sourceName: string, materialName: string): Livin
     "real-interior-accent-fabric": "accent",
     "real-interior-worktop": "stone",
   };
-  return Object.entries(roles).find(([name]) => materialName === name || materialName.endsWith(` | ${name}`))?.[1] ?? null;
+  const role = Object.entries(roles).find(([name]) => materialName === name || materialName.endsWith(` | ${name}`))?.[1] ?? null;
+  return role === "fabric" && sourceName.startsWith("LIVING-103-SOFA-L") ? "sofa" : role;
 }
 
 const caches = new WeakMap<Scene, Map<string, PBRMaterial>>();
@@ -50,6 +52,7 @@ export function warmLivingMaterial(scene: Scene, sourceName: string, original: P
   // Warm the actual surface reflectance: the saved blue daylight otherwise
   // makes neutral textiles and limestone read cold inside the shaded room.
   if (role === "fabric" || role === "rug") material.albedoColor.set(1, 0.9, 0.74);
+  if (role === "sofa") material.albedoColor.set(1, 0.95, 0.85);
   if (role === "stone") material.albedoColor.set(1, 0.76, 0.63);
   if (finish.texture) {
     const texture = new Texture(`/assets/textures/${finish.texture}.jpg`, scene, false, false, Texture.TRILINEAR_SAMPLINGMODE);
@@ -70,11 +73,21 @@ export function warmLivingMaterial(scene: Scene, sourceName: string, original: P
   for (const texture of ownedTextures) {
     if (!activeTextures.has(texture)) { texture.dispose(); ownedTextures.delete(texture); }
   }
-  if (role === "fabric" || role === "accent") {
+  if (role === "fabric" || role === "accent" || role === "sofa") {
     material.sheen.isEnabled = true;
     material.sheen.intensity = 0.2;
     material.sheen.color = Color3.FromHexString(finish.color).toLinearSpace();
     material.sheen.roughness = 0.9;
+  }
+  if (role === "sofa") {
+    // Keep the matching weave maps, but soften their relief and dielectric
+    // highlights so the cushions read as brushed cloth under the room's IBL.
+    material.metallicF0Factor = 0.4;
+    material.clearCoat.isEnabled = false;
+    material.enableSpecularAntiAliasing = true;
+    if (material.bumpTexture) material.bumpTexture.level = 0.16;
+    material.sheen.intensity = 0.15;
+    material.sheen.roughness = 1;
   }
   // AssetContainer owns the imported original. Follow its lifetime so a
   // failed import/fallback also releases these room-scoped replacements.
