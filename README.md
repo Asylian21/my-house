@@ -2,6 +2,13 @@
 
 Interaktívny technický model parcely a navrhovaného rodinného domu v Březí u Mikulova. Aplikácia používa Babylon.js a drží 3D geometriu, výpočty aj inspector nad jedným typovaným modelom v celočíselných milimetroch.
 
+Historické verzie sú dostupné na `/v1` a `/v2`. Vetva `v2` uchováva celý
+repozitár zo 7. 9. 2026 na commite `0bcbb57774fd551137c2b596a899a0432b148f28`.
+Trasa `/v2` používa samostatný zdroj v `versions/v2/` a súbory v
+`public/v2-assets/`; zahŕňa aj `/v2/koncept-2d` so všetkými variantmi.
+Ďalší vývoj patrí do `main`. Historické kópie a ich assety zostávajú nemenné;
+obnoviť presnú kópiu umožňuje `node scripts/snapshot-v2.mjs`.
+
 Lokálny **Blender Cycles ArchViz** pipeline exportuje celý model do OBJ/GLB,
 zostaví scénu s PBR materiálmi a umožní 4K rendery. Spustenie:
 `npm run archviz:setup`, `npm run archviz:preview`, `npm run archviz:render`.

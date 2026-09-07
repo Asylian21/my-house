@@ -1,0 +1,88 @@
+{
+  "source": "dom-archviz.blend",
+  "sourceSha256": "13164a1745182252f31d9fd527e61934392a9e776ef10469a9a695d96c3594db",
+  "blender": "5.2.1 LTS",
+  "skyType": "MULTIPLE_SCATTERING",
+  "skySunDisc": false,
+  "worldStrengthIncludedInHDR": 0.23000000417232513,
+  "skySunElevation": 0.4932018518447876,
+  "skySunRotation": -1.0319973230361938,
+  "sourceSunEnergy": 3.5,
+  "sourceSunColor": [
+    1.0,
+    0.9300000071525574,
+    0.8299999833106995
+  ],
+  "sourceSunAngularDiameter": 0.009512044489383698,
+  "blenderSunRayDirection": [
+    0.7560315132141113,
+    -0.45195430517196655,
+    -0.47344866394996643
+  ],
+  "babylonSunRayDirection": [
+    0.7560315132141113,
+    -0.47344866394996643,
+    0.45195430517196655
+  ],
+  "babylonDirectionTowardSun": [
+    -0.7560315132141113,
+    0.47344866394996643,
+    -0.45195430517196655
+  ],
+  "sourceViewTransform": "AgX",
+  "sourceViewLook": "AgX - Medium High Contrast",
+  "sourceExposureEV": 0.0,
+  "solarDateTime": "2026-09-04T16:30:00+02:00",
+  "coordinates": "Right-handed Y-up; native [BlenderX,BlenderZ,-BlenderY]",
+  "panoramaOrientation": {
+    "u0.5v0.5": "+X",
+    "u0.75v0.5": "+Z",
+    "u0.25v0.5": "-Z",
+    "u0.5v0": "+Y",
+    "rotationY": 0,
+    "horizontalFlip": false
+  },
+  "recommendation": {
+    "environmentIntensity": 1,
+    "imageProcessingExposure": 1.0,
+    "directSunIntensity": 3.5,
+    "directSunIntensityNote": "Source Blender sun energy is 3.5 W/m2-like irradiance; Babylon standard PBR intensity is not a physical unit equivalence. Start 3.5 and tune after IBL at 1 using neutral grey/white surfaces.",
+    "hdrUse": "HDRCubeTexture with gammaSpace=false and prefiltering; source world strength is already included.",
+    "backgroundUse": "sky.jpg is the same render with original AgX Medium High Contrast and exposure applied. Do not apply display tonemapping twice to the JPEG.",
+    "sunDiscNote": "Original source sky has sun_disc=false; a separate directional light is required and avoids duplicate sun in IBL.",
+    "photoDome": {
+      "useDirectMapping": false,
+      "faceForward": false,
+      "rotationY": 0,
+      "overrideTextureCoordinatesMode": "Texture.FIXED_EQUIRECTANGULAR_MODE",
+      "reason": "PhotoDome otherwise selects MIRRORED_MODE. Override to retain canonical u=atan2(z,x)/(2*pi)+0.5 orientation.",
+      "imageProcessing": "Disable additional tone mapping on JPEG background material, exposure 1, contrast 1."
+    },
+    "preferredBackground": "Use the same linear HDRCubeTexture for a skybox to apply scene tonemapping exactly once. sky.jpg is supplied for a lightweight PhotoDome fallback."
+  },
+  "linearRadiance": {
+    "min": 0.009768741205334663,
+    "max": 9.982933044433594,
+    "meanLuminance": 0.5276436033812145,
+    "p50Luminance": 0.3692946854278445,
+    "p95Luminance": 2.3313734694159027
+  },
+  "width": 2048,
+  "height": 1024,
+  "samples": 16,
+  "renderedMeshObjects": 0,
+  "elapsedSeconds": 17.09,
+  "files": [
+    {
+      "file": "sky.hdr",
+      "bytes": 1190397,
+      "sha256": "7f1e6856111a9cd7af6e9fc63bcc37a6434b549f1ce0e2023cfb3e1917997f2f"
+    },
+    {
+      "file": "sky.jpg",
+      "bytes": 99988,
+      "sha256": "79c8b9938fa2a691f7f2e1d2c56e41ff98a16707ec4ebab7d306c85c354777d2"
+    }
+  ],
+  "orientationVerification": "Independent 256x128 panorama with RGB emissive markers confirmed native +X at u=.498, native -Z at u=.248, native +Y at top, within half a source pixel."
+}

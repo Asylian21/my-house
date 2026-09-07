@@ -27,6 +27,58 @@ async function render(path = "/") {
 const source = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
+test("serves the pinned v2 model and its floor-plan studio without leaving v2", async () => {
+  for (const path of ["/v2", "/v2/"]) {
+    let response = await render(path);
+    if ([301, 302, 307, 308].includes(response.status)) {
+      const target = new URL(response.headers.get("location"), "http://localhost");
+      assert.equal(target.pathname, "/v2");
+      response = await render(target.pathname);
+    }
+    assert.equal(response.status, 200, path);
+    const html = await response.text();
+    assert.match(html, /<title>Dom 6012\/26 · Digitálne dvojča · v2<\/title>/);
+    assert.match(html, /class="scene-canvas"/);
+    assert.match(html, /Parcela 6012\/26/);
+  }
+
+  for (const variant of ["existing", "a", "b", "c", "d", "e"]) {
+    const response = await render(`/v2/koncept-2d?variant=${variant}`);
+    assert.equal(response.status, 200, variant);
+    const html = await response.text();
+    assert.match(html, /<title>Dom · Dispozičné štúdio 2D · v2<\/title>/);
+    assert.match(html, new RegExp(`id="floor-plan-tab-${variant}"[^>]*aria-selected="true"`));
+    assert.match(html, /href="\/v2"/);
+    assert.doesNotMatch(html, /href="\/"|NaN|This page couldn’t load/);
+  }
+  const redirect = await render("/v2/koncept-2d-2");
+  assert.equal(redirect.status, 307);
+  assert.equal(redirect.headers.get("location"), "/v2/koncept-2d?variant=e");
+  assert.equal((await render("/v2/missing")).status, 404);
+});
+
+test("preserves v2 source and bundled assets from the exact pushed snapshot", async () => {
+  const snapshot = JSON.parse(await source("versions/v2/snapshot.json"));
+  assert.equal(snapshot.branch, "v2");
+  assert.equal(snapshot.commit, "0bcbb57774fd551137c2b596a899a0432b148f28");
+  for (const file of snapshot.files) {
+    let content = await readFile(new URL(`../${file.destination}`, import.meta.url));
+    if (file.source.startsWith("public/")) {
+      const bundled = await readFile(new URL(`../dist/client/${file.destination.slice("public/".length)}`, import.meta.url));
+      assert.equal(createHash("sha256").update(bundled).digest("hex"), file.sha256, file.destination);
+    } else {
+      const text = content.toString();
+      assert.doesNotMatch(text, /@\/(?!versions\/v2\/)|["'`]\/(?:assets|archviz|koncept-2d)\//, file.destination);
+      for (const match of text.matchAll(/(["'`])(\/v2-assets\/[^"'`$]+)\1/g)) {
+        await access(new URL(`../public${match[2]}`, import.meta.url));
+      }
+      content = Buffer.from([...snapshot.replacements].reverse()
+        .reduce((value, [from, to]) => value.replaceAll(to, from), text));
+    }
+    assert.equal(createHash("sha256").update(content).digest("hex"), file.sha256, file.destination);
+  }
+});
+
 test("serves the historical v1 model at its public route", async () => {
   let historicalStyles;
   for (const path of ["/v1", "/v1/"]) {
