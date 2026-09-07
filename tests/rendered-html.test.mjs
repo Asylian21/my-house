@@ -3,13 +3,13 @@ import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render() {
+async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
+    new Request(`http://localhost${path}`, {
       headers: { accept: "text/html" },
     }),
     {
@@ -26,6 +26,52 @@ async function render() {
 
 const source = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
+
+test("serves the historical v1 model at its public route", async () => {
+  let historicalStyles;
+  for (const path of ["/v1", "/v1/"]) {
+    let response = await render(path);
+    if ([301, 302, 307, 308].includes(response.status)) {
+      const target = new URL(response.headers.get("location"), "http://localhost");
+      assert.equal(target.pathname, "/v1");
+      response = await render(target.pathname);
+    }
+    assert.equal(response.status, 200, path);
+    const html = await response.text();
+    assert.match(html, /<title>Dom 6012\/26 · Digitálne dvojča · v1<\/title>/);
+    assert.match(html, /class="scene-canvas"/);
+    assert.match(html, /Parcela 6012\/26/);
+    historicalStyles = html.match(/<link rel="stylesheet"[^>]+href="([^"]+)"/)?.[1];
+    assert.ok(historicalStyles, "v1 must load its historical stylesheet");
+  }
+
+  const current = await render("/");
+  assert.equal(current.status, 200);
+  const currentHtml = await current.text();
+  assert.match(currentHtml, /<title>Dom 6012\/26 · Digitálne dvojča<\/title>/);
+  const currentStyles = currentHtml.match(/<link rel="stylesheet"[^>]+href="([^"]+)"/)?.[1];
+  assert.ok(currentStyles);
+  assert.notEqual(currentStyles, historicalStyles, "v1 must keep its own styles");
+  assert.equal((await render("/v1/missing")).status, 404);
+});
+
+test("keeps v1 source and assets identical to the historical snapshot", async () => {
+  const snapshot = JSON.parse(await source("versions/v1/snapshot.json"));
+  assert.equal(snapshot.commit, "1057ed30e7a3d5b63a938acf47208ae1f3f296af");
+  for (const file of snapshot.files) {
+    let content = await readFile(new URL(`../${file.destination}`, import.meta.url));
+    if (!file.source.startsWith("public/")) {
+      const text = content.toString();
+      assert.doesNotMatch(text, /@\/(?!versions\/v1\/)|["'`]\/assets\//, file.destination);
+      content = Buffer.from(text.replaceAll("@/versions/v1/", "@/").replaceAll("/v1-assets/", "/assets/"));
+    }
+    assert.equal(createHash("sha256").update(content).digest("hex"), file.sha256, file.destination);
+    if (file.source.startsWith("public/")) {
+      const bundled = await readFile(new URL(`../dist/client/${file.destination.slice("public/".length)}`, import.meta.url));
+      assert.equal(createHash("sha256").update(bundled).digest("hex"), file.sha256, file.destination);
+    }
+  }
+});
 
 test("server-renders the Slovak digital-twin product shell", async () => {
   const response = await render();
