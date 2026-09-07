@@ -2212,20 +2212,23 @@ function buildTechnicalHeatingFitout(
     band.position.set(xM(tank.centerMm.x), elevationM, zM(tank.centerMm.y));
     finish(context, band, materials.steel);
   }
+  const connectionStart = context.scene.meshes.length;
   for (const [index, elevationM, yOffsetMm] of [
     [1, 0.34, -245],
     [2, 0.78, 245],
     [3, 1.22, -245],
     [4, 1.66, 245],
   ] as const) {
+    const rootX = Math.sqrt(tankRadiusMm ** 2 - yOffsetMm ** 2) - 5;
+    const tipX = tankRadiusMm + tank.connectionProjectionMm;
     const nozzle = CreateCylinder(
       `${fitout.id} · BUFFER-TANK-1000L · hydraulické hrdlo ${index}`,
-      { height: 0.18, diameter: 0.055, tessellation: 20 },
+      { height: (tipX - rootX) * MM_TO_M, diameter: 0.055, tessellation: 20 },
       context.scene,
     );
     nozzle.rotation.z = Math.PI / 2;
     nozzle.position.set(
-      xM(tank.centerMm.x + tankRadiusMm + 90),
+      xM(tank.centerMm.x + (rootX + tipX) / 2),
       elevationM,
       zM(tank.centerMm.y + yOffsetMm),
     );
@@ -2262,6 +2265,12 @@ function buildTechnicalHeatingFitout(
     zM(tank.centerMm.y),
   );
   finish(context, gaugeFace, materials.kitchenUpper);
+  // Turn the connection bank towards the kitchen approach, leaving the hopper accessible.
+  // Keep the circular jacket independent so its exported diameter stays exact.
+  const connectionRoot = new TransformNode(`${fitout.id} · orientácia prípojok nádrže`, context.scene);
+  connectionRoot.position.set(xM(tank.centerMm.x), 0, zM(tank.centerMm.y));
+  for (const mesh of context.scene.meshes.slice(connectionStart)) mesh.setParent(connectionRoot);
+  connectionRoot.rotation.y = tank.connectionAzimuthDegrees * Math.PI / 180;
   buildTechnicalStorageReserve(context,materials);
 }
 
@@ -2272,21 +2281,28 @@ function buildTechnicalStorageReserve(context:InteriorBuildContext,materials:Int
     const mesh=texturedBox(context.scene,`${storage.id} · ${name}`,center,w,d,h*MM_TO_M,bottom*MM_TO_M,1);
     finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
   };
-  box('STORAGE-CABINET · uzavretá skladová rezerva, požiarne oddelenie na overenie',{x:r.x0+8,y:c.y},16,450,storage.heightMm,0);
-  for(const y of [r.y0+8,r.y1-8])box('STORAGE-CABINET · oceľová bočnica',{x:c.x,y},500,16,storage.heightMm,0);
-  for(const z of [30,470,1184])box('STORAGE-CABINET · oceľová polica',c,468,418,16,z);
-  // A sliding tambour face has no door sweep into the tank or boiler access.
-  for(let i=0;i<12;i++)box('STORAGE-CABINET · posuvné roletové čelo',{x:r.x1-8,y:c.y},16,434,96,i*100);
+  const width=r.x1-r.x0,depth=r.y1-r.y0,bagCenter={x:r.x0+196,y:c.y},vacuumCenter={x:r.x0+548,y:c.y};
+  box('STORAGE-CABINET · chrbát plytkej servisnej skrine',{x:c.x,y:r.y1-8},width,16,storage.heightMm,0);
+  for(const x of [r.x0+8,r.x1-8])box('STORAGE-CABINET · oceľová bočnica',{x,y:c.y},16,depth,storage.heightMm,0);
+  for(const z of [30,storage.heightMm-16])box('STORAGE-CABINET · oceľová polica',c,width-32,depth-32,16,z);
+  box('STORAGE-CABINET · zvislé oddelenie vysávača',{x:r.x0+384,y:c.y},16,depth-32,storage.heightMm-32,16);
+  for(const z of [540,1040,1540])box('STORAGE-CABINET · polica pre zvislé vrecia',bagCenter,360,depth-32,16,z);
+  // A tambour front leaves the full shared approach clear at all times.
+  for(let z=0;z<storage.heightMm;z+=100)box('STORAGE-CABINET · posuvné roletové čelo',{x:c.x,y:r.y0+8},width-32,16,Math.min(96,storage.heightMm-z),z);
   const vacuum=storage.vacuumSizeMm;
-  box('VACUUM · kompaktný vysávač – rozmerová rezerva',{x:c.x,y:c.y},vacuum.width,vacuum.depth,vacuum.height,70,materials.fireplace);
-  for(let i=0;i<3;i++)box(`PELLET-BAG-${i+1} · vrece peliet 15 kg`,c,storage.bagSizeMm.width,storage.bagSizeMm.depth,storage.bagSizeMm.height,500+i*160,materials.childCork);
+  box('VACUUM · podlahová hubica tyčového vysávača',vacuumCenter,vacuum.width,vacuum.depth,60,70,materials.fireplace);
+  box('VACUUM · zvislá trubica',{x:vacuumCenter.x,y:c.y+20},30,35,830,130,materials.steel);
+  box('VACUUM · motor a zberná nádoba',{x:vacuumCenter.x,y:c.y+10},105,100,215,820,materials.fireplace);
+  box('VACUUM · horné držadlo',{x:vacuumCenter.x,y:c.y+15},85,45,140,1035,materials.steel);
+  box('VACUUM · nástenný držiak, napájanie na dopracovanie',{x:vacuumCenter.x,y:r.y1-35},120,30,45,1100,materials.steel);
+  for(let i=0;i<storage.pelletBagCount;i++)box(`PELLET-BAG-${i+1} · zvislo uložené vrece peliet 15 kg`,bagCenter,storage.bagSizeMm.width,storage.bagSizeMm.depth,storage.bagSizeMm.height,i===0?46:56+i*500,materials.childCork);
   navigationGuard(context,materials,`${storage.id} · STORAGE-CABINET · navigačný obrys`,r);
   const h=TECHNICAL_HEATING_FITOUT.hydraulicReserve;
-  // Open framing makes the unselected hydraulic envelope visually explicit.
+  // Reserved upper compartment; product selection and pipework remain separate.
   for(const y of [r.y0+10,r.y1-10])for(const x of [r.x0+10,r.x1-10])
-    box('HYDRAULIC-RESERVE · rám rezervy hydrauliky',{x,y},20,20,h.heightMm,h.bottomMm);
+    box('HYDRAULIC-RESERVE · rám hornej hydraulickej rezervy',{x,y},20,20,h.heightMm,h.bottomMm);
   const k=h.safetyGroupMm;
-  box('SAFETY-GROUP · KSG mini 2,5 bar',{x:r.x1-55,y:r.y0+100},k.depth,k.width,k.height,1500,materials.fireplace);
+  box('SAFETY-GROUP · KSG mini 2,5 bar',{x:r.x0+150,y:r.y1-55},k.width,k.depth,k.height,1950,materials.fireplace);
 }
 
 /** Practical long-axis fitout for the enlarged room 1.06. */

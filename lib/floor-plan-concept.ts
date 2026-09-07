@@ -239,10 +239,10 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const core=SERVICE_CORE_REVISION;
   const wc=rooms.find(room=>room.number==='1.06')!;
   wc.rectsMm=wc.rectsMm.map(r=>({...r,x1:r.x1+core.wcExpansionMm}));
-  wc.standingPointMm={x:23550,y:9900};
+  wc.standingPointMm={x:23733,y:9900};
   const technical=rooms.find(room=>room.number==='1.07')!;
   technical.rectsMm=[rect(core.technicalWestMm,8912,core.boilerBayWestMm,10712),rect(core.boilerBayWestMm,9112,25830,10712),rect(25830,9112,core.technicalFacadeInsideMm,11411),rect(core.boilerBayWestMm,7741,core.technicalFacadeInsideMm,9112)];
-  technical.standingPointMm={x:26500,y:10350};
+  technical.standingPointMm={x:26500,y:10750};
   const bathroom=rooms.find(room=>room.number==='1.05')!;
   bathroom.rectsMm=[rect(22783,6602,core.bathroomEastMm,8772),rect(core.bathroomEastMm,6602,27541,7601)];
   const street=rooms.find(room=>room.number==='1.08')!;

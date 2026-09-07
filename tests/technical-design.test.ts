@@ -4,10 +4,11 @@ import { Scene } from '@babylonjs/core/scene';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { buildOpening, type OpeningBuildContext } from '../lib/babylon-openings';
+import { buildInterior } from '../lib/babylon-interior';
 import type { AnimatedDoorRegistration } from '../lib/babylon-doors';
 import { HOUSE } from '../lib/twin-active-house';
 import { SCENE_CENTER_MM } from '../lib/twin-render-frame';
-import { INTERIOR_ROOMS, roomAreaM2 } from '../lib/twin-interior';
+import { INTERIOR_DOORS, INTERIOR_ROOMS, roomAreaM2 } from '../lib/twin-interior';
 import { BATHROOM_FITOUT, TECHNICAL_HEATING_FITOUT as heating, WC_FITOUT } from '../lib/technical-design';
 import generated from '../lib/plan-geometry.generated.json';
 import { contains, floorBoundary, inside, intersects } from './floor-plan-geometry';
@@ -27,6 +28,11 @@ function discHits(p:Point,r:number,poly:Point[]){
   }
   return inside;
 }
+const polygon=(mesh:typeof generated.meshes[number]):Point[]=>mesh.polygon.split(' ').map(pair=>{const [x,y]=pair.split(',').map(Number);return [x,-y];});
+function polygonDistance(p:Point,poly:Point[]){
+  if(discHits(p,0,poly))return 0;
+  return Math.min(...poly.map((v,i)=>distance(p,v,poly[(i+1)%poly.length])));
+}
 function polysOverlap(a:Point[],b:Point[]){
   for(const p of [a,b])for(let i=0;i<p.length;i++){
     const v=p[i],w=p[(i+1)%p.length],nx=-(w[1]-v[1]),ny=w[0]-v[0];
@@ -37,12 +43,11 @@ function polysOverlap(a:Point[],b:Point[]){
 }
 
 describe('Service core dimensional and access contracts',()=>{
-  it('has a continuous 550 mm access path to storage and tank, including linings, nozzles and raised bases',()=>{
+  it('has continuous 580 mm access to storage, tank, boiler and hopper, including linings, rotated nozzles and raised bases',()=>{
     const floors=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-07')!.rectsMm,edges=floorBoundary([...floors]);
     const obstacles=generated.meshes.filter(m=>(m.name.startsWith('TECHNICAL')||m.name.startsWith('1.07 ·'))&&m.z0<1850&&m.z1>20
-      &&(!m.name.includes('BUFFER-TANK')||/hrdlo|teplomer|ciferník/.test(m.name)));
-    const rectDistance=(p:Point,r:typeof obstacles[number]['rect'])=>Math.hypot(Math.max(r.x0-p[0],0,p[0]-r.x1),Math.max(r.y0-p[1],0,p[1]-r.y1));
-    const routes:Point[][]=[[[26500,10350],[26050,9560],[25955,9490],[25605,9355],[25480,9275],[25310,9210],[25280,9200]],[[26500,10350],[26170,10020]]];
+      &&(!m.name.includes('BUFFER-TANK')||/hrdlo|teplomer|ciferník/.test(m.name))).map(polygon);
+    const routes:Point[][]=[[[26500,10800],[27100,10820]],[[26500,10800],[26700,10100]],[[26500,10800],[26700,9900]],[[26500,10800],[26565,10225],[26555,10140],[26510,10055],[26435,9985],[26175,9585],[26080,9480],[26065,9400]]];
     // Distance is 1-Lipschitz: a 0.5 mm margin and samples <=1 mm apart
     // also protect every point between samples, rather than only grid nodes.
     for(const route of routes)for(let i=1;i<route.length;i++){
@@ -50,16 +55,16 @@ describe('Service core dimensional and access contracts',()=>{
       for(let j=0;j<=steps;j++){
         const p:Point=[a[0]+(b[0]-a[0])*j/steps,a[1]+(b[1]-a[1])*j/steps];
         const clear=Math.min(Math.hypot(p[0]-heating.accumulator.centerMm.x,p[1]-heating.accumulator.centerMm.y)-heating.accumulator.outerDiameterMm/2,
-          ...obstacles.map(m=>rectDistance(p,m.rect)),...edges.map(([x0,y0,x1,y1])=>distance(p,[x0,y0],[x1,y1])));
-        expect(floors.some(r=>inside(r,...p))&&clear>=275.5,`550 mm route blocked at ${p}; radius clearance ${clear}`).toBe(true);
+          ...obstacles.map(poly=>polygonDistance(p,poly)),...edges.map(([x0,y0,x1,y1])=>distance(p,[x0,y0],[x1,y1])));
+        expect(floors.some(r=>inside(r,...p))&&clear>=290.5,`580 mm route blocked at ${p}; radius clearance ${clear}`).toBe(true);
       }
     }
   });
   it('enlarges the WC without overlapping room floors or reducing full-size laundry appliances',()=>{
     const wc=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-06')!;
-    expect(roomAreaM2(wc)).toBeCloseTo(2.7522,6);
+    expect(roomAreaM2(wc)).toBeCloseTo(3.4182,6);
     const tech=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-07')!;
-    expect(roomAreaM2(tech)).toBeCloseTo(9.335177,6);
+    expect(roomAreaM2(tech)).toBeCloseTo(8.669177,6);
     const floors=INTERIOR_ROOMS.flatMap(r=>r.rectsMm.map(rect=>({id:r.id,rect})));
     floors.forEach((a,i)=>floors.slice(i+1).forEach(b=>expect(intersects(a.rect,b.rect),`${a.id}/${b.id}`).toBe(false)));
     for(const a of BATHROOM_FITOUT.builtIn.appliances){
@@ -78,10 +83,29 @@ describe('Service core dimensional and access contracts',()=>{
       expect(contains(heating.boiler.assemblyFootprintMm,m.rect),m.name).toBe(true);
       expect(m.z1,m.name).toBeLessThanOrEqual(1441.1);
     }
+    const west=Math.min(...boiler.map(m=>m.rect.x0))-25253;
+    const east=27500-Math.max(...boiler.map(m=>m.rect.x1));
+    expect(west).toBeCloseTo(east,1);
+    expect(Math.min(west,east)).toBeGreaterThanOrEqual(500);
     const tank=generated.meshes.find(m=>m.name.endsWith('akumulačná nádrž 1000 l'))!;
     expect(tank.rect.x1-tank.rect.x0).toBe(1106);
     expect(tank.rect.y1-tank.rect.y0).toBe(1106);
     expect(generated.meshes.find(m=>m.name.endsWith('horné izolované veko'))!.z1).toBe(1913);
+  });
+  it('fits three supported pellet sacks and a hanging stick vacuum in the shallow entry cabinet',()=>{
+    const parts=generated.meshes.filter(m=>m.name.startsWith(heating.storage.id));
+    const panels=parts.filter(m=>m.name.includes('STORAGE-CABINET'));
+    const contents=parts.filter(m=>/PELLET-BAG|VACUUM/.test(m.name));
+    const bags=contents.filter(m=>m.name.includes('PELLET-BAG'));
+    expect(bags).toHaveLength(3);
+    for(const bag of bags)expect(panels.some(p=>/polica/.test(p.name)&&Math.abs(p.z1-bag.z0)<.1&&contains(p.rect,bag.rect))).toBe(true);
+    for(const m of contents){
+      expect(contains(heating.storage.footprintMm,m.rect),m.name).toBe(true);
+      for(const panel of panels)if(m.z0<panel.z1-.1&&m.z1>panel.z0+.1)expect(intersects(m.rect,panel.rect),`${m.name}/${panel.name}`).toBe(false);
+    }
+    const vacuum=contents.filter(m=>m.name.includes('VACUUM'));
+    expect(Math.max(...vacuum.map(m=>m.z1))-Math.min(...vacuum.map(m=>m.z0))).toBe(1105);
+    for(const p of panels)expect(intersects(p.rect,heating.boiler.serviceRectMm),p.name).toBe(false);
   });
   it('opens both transport leaves outward through a collision-free sweep and passes the upright insulated tank',()=>{
     const engine=new NullEngine({renderWidth:128,renderHeight:128,textureSize:128,deterministicLockstep:false,lockstepMaxSteps:1}),scene=new Scene(engine);
@@ -108,9 +132,18 @@ describe('Service core dimensional and access contracts',()=>{
         }
       }
       expect(leaves.map(shape).every(s=>Math.max(...s.polygon.map(p=>p[0]))>HOUSE.facades.east.faceXmm)).toBe(true);
+      const exteriorMeshes=[...scene.meshes],interiorDoors:AnimatedDoorRegistration[]=[];
+      buildInterior({scene,anisotropy:1,wall:material,soffit:material,glassFrame:material,chimneyMetal:material,timber:material,
+        register:identity,realisticOnly:identity,castShadow:identity,registerAnimatedDoor:d=>interiorDoors.push(d)});
+      const kitchenDoor=interiorDoors.find(d=>d.id==='DOOR-103-107')!;
+      expect(kitchenDoor).toBeDefined();
+      kitchenDoor.apply(1,0);
+      const kitchenLabel=INTERIOR_DOORS.find(d=>d.id==='DOOR-103-107')!.label;
+      const kitchenMeshes=scene.meshes.filter(m=>m.name.startsWith(kitchenLabel));
+      expect(kitchenMeshes.length).toBeGreaterThan(3);
       const staticObstacles=generated.meshes.filter(m=>m.z1>100.1&&m.z0<2013&&m.rect.x1>24000&&m.rect.y1>9000&&m.rect.y0<11200&&!m.name.includes('EAST-03')&&!m.name.includes('BUFFER-TANK')).map(m=>({name:m.name,polygon:m.polygon.split(' ').map(pair=>{const [x,y]=pair.split(',').map(Number);return [x,-y] as Point;})}));
-      const openDoorObstacles=scene.meshes.map(shape).filter(m=>m.top>100.1&&m.bottom<2013);
-      const route:Point[]=[[29000,10200],[26120,10200],[26000,10100],[25104,10100],[25104,10020]];
+      const openDoorObstacles=[...exteriorMeshes,...kitchenMeshes].map(shape).filter(m=>m.top>100.1&&m.bottom<2013);
+      const route:Point[]=[[29000,10200],[26250,10150],[26000,10100],[25500,10100]];
       for(let i=1;i<route.length;i++){
         const a=route[i-1],b=route[i],steps=Math.ceil(Math.hypot(a[0]-b[0],a[1]-b[1])/10);
         for(let j=0;j<=steps;j++){
