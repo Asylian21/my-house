@@ -3,13 +3,13 @@ import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render() {
+async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
+    new Request(`http://localhost${path}`, {
       headers: { accept: "text/html" },
     }),
     {
@@ -473,4 +473,49 @@ test("ships complete, unmodified Blender assets within the hosting limit", async
   assert.equal(grass.placements.length, grass.desktopCount * grass.stride);
   assert.ok(grass.placements.every(Number.isFinite));
   assert.ok(grass.mobileCount > 0 && grass.mobileCount < grass.desktopCount);
+});
+
+
+test("renders the separate interactive floor-plan concept with dimensioned geometry", async () => {
+  const response = await render("/koncept-2d");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Dispozičné štúdio 2D/);
+  assert.match(html, /class="fp-plan"/);
+  assert.match(html, /viewBox="5550 -12350 17300 10850"/);
+  assert.match(html, /id="expansion"/);
+  assert.match(html, /id="bed-width"/);
+  assert.match(html, /D · Súkromná spálňa/);
+  assert.match(html, /Úložný výklenok/);
+  assert.match(html, /Šatníkový vstup → kúpeľňa · 800 mm/);
+  assert.match(html, /id="nested-closet-depth"/);
+  assert.match(html, /id="garage-bay-width"/);
+  assert.match(html, /fp-shared-route/);
+  assert.match(html, /Súkromná spálňa · zatvárateľné dvere 800 mm/);
+  assert.match(html, /1660 mm/);
+  assert.match(html, /Dvere do garáže/);
+  assert.match(html, /fp-door-gap/);
+  assert.doesNotMatch(html, /NaN|This page couldn’t load/);
+});
+
+test("renders independent concept 02 with private storage and movable wall jogs", async () => {
+  const response = await render("/koncept-2d-2");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Dom · 2D koncept 02/);
+  assert.match(html, /E · Zalomenie a súkromný šatník/);
+  assert.match(html, /id="alcove-width"/);
+  assert.match(html, /id="passage-depth"/);
+  assert.match(html, /id="bedroom-door-offset"/);
+  assert.match(html, /fp-private-alcove/);
+  assert.match(html, /fp-garage-gain/);
+  assert.match(html, /fp-garden-recess/);
+  assert.match(html, /fp-loggia-roof/);
+  assert.match(html, /Krytý zárez/);
+  assert.match(html, /Garáž → záhrada · 900 mm/);
+  assert.match(html, /Vstup → zväčšená garáž · 800 mm/);
+  assert.match(html, /fp-shared-route/);
+  assert.match(html, /href="\/koncept-2d"/);
+  assert.match(html, /Zúženie pri rohu priečky/);
+  assert.doesNotMatch(html, /NaN|This page couldn’t load/);
 });
