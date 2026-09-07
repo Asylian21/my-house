@@ -47,7 +47,7 @@ describe('Service core dimensional and access contracts',()=>{
     const floors=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-07')!.rectsMm,edges=floorBoundary([...floors]);
     const obstacles=generated.meshes.filter(m=>(m.name.startsWith('TECHNICAL')||m.name.startsWith('1.07 ·'))&&m.z0<1850&&m.z1>20
       &&(!m.name.includes('BUFFER-TANK')||/hrdlo|teplomer|ciferník/.test(m.name))).map(polygon);
-    const routes:Point[][]=[[[26500,10800],[27100,10820]],[[26500,10800],[26700,10100]],[[26500,10800],[26700,9900]],[[26500,10800],[26600,10220],[26600,10040],[26250,9550],[26080,9200]]];
+    const routes:Point[][]=[[[26500,10800],[27100,10820]],[[26500,10800],[27000,10100]],[[26500,10800],[27000,9780]],[[26500,10800],[27000,10100],[27000,9660],[26500,9320],[26320,8940]]];
     // Distance is 1-Lipschitz: a 0.5 mm margin and samples <=1 mm apart
     // also protect every point between samples, rather than only grid nodes.
     for(const route of routes)for(let i=1;i<route.length;i++){
@@ -85,14 +85,20 @@ describe('Service core dimensional and access contracts',()=>{
     }
     const west=Math.min(...boiler.map(m=>m.rect.x0))-25253;
     const east=27500-Math.max(...boiler.map(m=>m.rect.x1));
-    expect(west).toBeCloseTo(east,1);
-    expect(Math.min(west,east)).toBeGreaterThanOrEqual(500);
-    // PLUS p.16 fig.7 measures the rear 500 mm from the body, not the flue tip.
+    expect(west).toBe(759);
+    expect(east).toBe(250);
+    // Explicit client layout revision: reduced gaps must never silently pass as manufacturer-compliant.
+    expect(heating.boiler.clearanceStatus).toBe('BELOW_MANUFACTURER_RECOMMENDATION');
+    expect(heating.boiler.professionalInstallationReviewRequired).toBe(true);
+    expect(east).toBeLessThan(heating.boiler.manufacturerSideAndRearRecommendationMm);
     const body=boiler.find(m=>m.name.endsWith('kombinované teleso drevo alebo pelety'))!;
     const flue=boiler.find(m=>m.name.includes('koncept napojenia dymovodu'))!;
-    expect(body.rect.y0-7751).toBe(500);
-    expect(flue.rect.y0-7751).toBe(287);
+    expect(body.rect.y0-7751).toBe(250);
+    expect(flue.rect.y0-7751).toBe(37);
     const tank=generated.meshes.find(m=>m.name.endsWith('akumulačná nádrž 1000 l'))!;
+    const zone=heating.accumulator.placementZoneMm;
+    expect((tank.rect.x0+tank.rect.x1)/2).toBe((zone.x0+zone.x1)/2);
+    expect((tank.rect.y0+tank.rect.y1)/2).toBe((zone.y0+zone.y1)/2);
     expect(tank.rect.x1-tank.rect.x0).toBe(1106);
     expect(tank.rect.y1-tank.rect.y0).toBe(1106);
     expect(generated.meshes.find(m=>m.name.endsWith('horné izolované veko'))!.z1).toBe(1913);
@@ -159,7 +165,7 @@ describe('Service core dimensional and access contracts',()=>{
       }
       const staticObstacles=generated.meshes.filter(m=>m.z1>100.1&&m.z0<2013&&m.rect.x1>24000&&m.rect.y1>9000&&m.rect.y0<11200&&!m.name.includes('EAST-03')&&!m.name.includes('BUFFER-TANK')).map(m=>({name:m.name,polygon:m.polygon.split(' ').map(pair=>{const [x,y]=pair.split(',').map(Number);return [x,-y] as Point;})}));
       const openDoorObstacles=[...exteriorMeshes,...kitchenMeshes].map(shape).filter(m=>m.top>100.1&&m.bottom<2013);
-      const route:Point[]=[[29000,10200],[26250,10150],[26000,10100],[25500,10100]];
+      const route:Point[]=heating.accumulator.transportRouteMm.map(p=>[p.x,p.y]);
       for(let i=1;i<route.length;i++){
         const a=route[i-1],b=route[i],steps=Math.ceil(Math.hypot(a[0]-b[0],a[1]-b[1])/10);
         for(let j=0;j<=steps;j++){

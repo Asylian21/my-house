@@ -131,6 +131,7 @@ import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
   OFFICE_FITOUT,
+  TECHNICAL_HEATING_FITOUT,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
@@ -868,8 +869,11 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
       // corridor, rather than driving a novice straight into the east wall.
       return { x: 22000, y: 10266 };
     case "ROOM-1-05":
-    case "ROOM-1-07":
       return { x: 28500, y: room.standingPointMm.y };
+    case "ROOM-1-07": {
+      const body = TECHNICAL_HEATING_FITOUT.boiler.body.footprintMm;
+      return { x: (body.x0 + body.x1) / 2, y: (body.y0 + body.y1) / 2 };
+    }
     default:
       return { x: room.standingPointMm.x + 1000, y: room.standingPointMm.y };
   }

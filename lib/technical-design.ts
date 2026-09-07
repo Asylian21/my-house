@@ -21,23 +21,26 @@ export const HEATING_SOURCES={
 };
 export const TECHNICAL_HEATING_FITOUT={...heating,id:'TECHNICAL-PLUS19-DBOS1000',sourceId:SERVICE_CORE_REVISION.id,
   boiler:{...heating.boiler,referenceProductFamily:'DEFRO_FIREWOOD_DUO_PLUS',referenceOutputKw:19,
-    assemblyFootprintMm:rect(25757.5,8038,26995.5,9336),heightMm:1391,baseElevationMm:50,
-    body:{footprintMm:rect(26457.5,8251,26995.5,8907),heightMm:1233,controllerTopElevationMm:1389},
-    hopper:{...heating.boiler.hopper,footprintMm:rect(25757.5,8251,26371.5,8865),
+    assemblyFootprintMm:rect(26012,7788,27250,9086),heightMm:1391,baseElevationMm:50,
+    body:{footprintMm:rect(26712,8001,27250,8657),heightMm:1233,controllerTopElevationMm:1389},
+    hopper:{...heating.boiler.hopper,footprintMm:rect(26012,8001,26626,8615),
       depthBasis:'DERIVED_FROM_ORTHOGRAPHIC_DRAWING' as const},
-    burner:{footprintMm:rect(26505.5,8907,26947.5,9336)},
-    serviceRectMm:rect(26457.5,8907,27500,10907),frontServiceClearanceMm:2000,
+    burner:{footprintMm:rect(26760,8657,27202,9086)},
+    serviceRectMm:rect(26712,8657,27500,10657),frontServiceClearanceMm:2000,
     serviceMeasuredFrom:'BODY_FRONT' as const,openDoorEnvelopeWidthMm:1663,
-    // PLUS manual, p.16 fig.7: rear distance is from the body, with the flue projecting into it.
-    modeledSideClearanceMm:504.5,modeledRearClearanceMm:500,rearServiceMeasuredFrom:'BODY_REAR' as const,
-    modeledRearConnectionClearanceMm:287,
+    // Client-requested corner position. Both 250 mm gaps are below the manufacturer's 500 mm.
+    modeledSideClearanceMm:250,modeledRearClearanceMm:250,rearServiceMeasuredFrom:'BODY_REAR' as const,
+    modeledRearConnectionClearanceMm:37,clearanceStatus:'BELOW_MANUFACTURER_RECOMMENDATION' as const,
     // Measured to the finished 10 mm wall lining, including the real shell at x27510.
-    sideClearancesMm:{west:504.5,east:504.5},
+    sideClearancesMm:{west:759,east:250},
   },
-  accumulator:{...heating.accumulator,referenceProduct:'DEFRO DBO-S 1000',centerMm:{x:25500,y:10100},
+  accumulator:{...heating.accumulator,referenceProduct:'DEFRO DBO-S 1000',centerMm:{x:25771.5,y:9812},
+    // A planning zone, not an additional wall: centred in the left side before the boiler service strip.
+    placementZoneMm:rect(24831,8922,26712,10702),
+    transportRouteMm:[{x:29000,y:10200},{x:26250,y:10150},{x:25771.5,y:9812}],
     nominalVolumeL:1000,outerDiameterMm:1106,transportDiameterWithoutInsulationMm:897,heightMm:1913,
     // Fittings and their service space are planning allowances, not manufacturer nozzle dimensions.
-    connectionProjectionMm:180,connectionAzimuthDegrees:30,serviceRectMm:rect(26280,10000,26880,10700),
+    connectionProjectionMm:180,connectionAzimuthDegrees:30,serviceRectMm:rect(26560,9700,27160,10440),
   },
   storage:{id:'TECHNICAL-STORAGE-RESERVE',footprintMm:rect(26760,11140,27480,11401),heightMm:1750,
     pelletBagCount:3,pelletBagMassKg:15,bagSizeMm:{width:330,depth:190,height:430},

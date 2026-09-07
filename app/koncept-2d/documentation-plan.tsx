@@ -70,7 +70,9 @@ export function ItemMiniature({item,componentId}:{item:PlanItem;componentId?:str
 }
 
 export function TechnicalClearances(){
-  const boiler=HEATING.boiler.assemblyFootprintMm,body=HEATING.boiler.body.footprintMm,rearY=body.y0-HEATING.boiler.modeledRearClearanceMm,axisX=(boiler.x0+boiler.x1)/2;
+  const boiler=HEATING.boiler.assemblyFootprintMm,body=HEATING.boiler.body.footprintMm,rearY=body.y0-HEATING.boiler.modeledRearClearanceMm,axisX=(boiler.x0+boiler.x1)/2,sideY=(body.y0+body.y1)/2;
+  const route=HEATING.accumulator.transportRouteMm,target=route.at(-1)!,previous=route.at(-2)!;
+  const arrivalAngle=Math.atan2(previous.y-target.y,target.x-previous.x)*180/Math.PI;
   const zones=[{rect:HEATING.boiler.serviceRectMm,color:'#256eaa',label:'Obsluha kotla · 2 000 mm',vertical:true},
     {rect:HEATING.accumulator.serviceRectMm,color:'#187c75',label:'600',vertical:false},
     {rect:HEATING.storage.frontClearanceRectMm,color:'#93602a',label:'600',vertical:false}];
@@ -79,21 +81,21 @@ export function TechnicalClearances(){
       <Box r={r} fill={color} fillOpacity=".09" stroke={color} strokeWidth="1.25" strokeDasharray="6 4" vectorEffect="non-scaling-stroke"/>
       <text x={(r.x0+r.x1)/2} y={-(r.y0+r.y1)/2} transform={vertical?`rotate(-90 ${(r.x0+r.x1)/2} ${-(r.y0+r.y1)/2})`:undefined} fontSize="90" fill={color} stroke="white" strokeWidth="28" paintOrder="stroke" textAnchor="middle">{label}</text>
     </g>)}
-    <path d="M28800 -10200L26250 -10150L26000 -10100H25500" fill="none" stroke="#187c75" strokeWidth="2" strokeDasharray="5 4" vectorEffect="non-scaling-stroke"/>
-    <path d="M25595 -10176L25500 -10100L25595 -10024" fill="none" stroke="#187c75" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+    <path d={route.map((p,i)=>`${i?'L':'M'}${p.x} ${-p.y}`).join(' ')} fill="none" stroke="#187c75" strokeWidth="2" strokeDasharray="5 4" vectorEffect="non-scaling-stroke"/>
+    <path d="M-95 -76L0 0L-95 76" transform={`translate(${target.x} ${-target.y}) rotate(${arrivalAngle})`} fill="none" stroke="#187c75" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
     <text x="28480" y="-10320" textAnchor="middle" fontSize="95" fill="#187c75" stroke="white" strokeWidth="28" paintOrder="stroke">Nádrž Ø 1 106</text>
     <g fill="#45596e" stroke="#45596e" fontSize="72" textAnchor="middle">
-      {[[SERVICE_CORE_REVISION.boilerBayWestMm+10,boiler.x0],[boiler.x1,SERVICE_CORE_REVISION.technicalFacadeInsideMm-10]].map(([x0,x1])=><g key={x0}>
-        <path d={`M${x0} -8740H${x1}M${x0} -8785v90M${x1} -8785v90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        <text x={(x0+x1)/2} y="-8820" stroke="white" strokeWidth="22" paintOrder="stroke">{numberSk(x1-x0,1)}</text>
+      {[[SERVICE_CORE_REVISION.boilerBayWestMm+10,boiler.x0],[boiler.x1,SERVICE_CORE_REVISION.technicalFacadeInsideMm-10]].map(([x0,x1])=><g key={x0} fill={x1-x0<500?'#aa6021':'#45596e'} stroke={x1-x0<500?'#aa6021':'#45596e'}>
+        <path d={`M${x0} ${-sideY}H${x1}M${x0} ${-sideY-45}v90M${x1} ${-sideY-45}v90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+        <text x={(x0+x1)/2} y={-sideY-80} stroke="white" strokeWidth="22" paintOrder="stroke">{numberSk(x1-x0,1)}</text>
       </g>)}
-      <path d={`M${axisX} ${-rearY}V${-body.y0}M${axisX-45} ${-rearY}h90M${axisX-45} ${-body.y0}h90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-      <text x={axisX} y={-(rearY+body.y0)/2} stroke="white" strokeWidth="22" paintOrder="stroke">{HEATING.boiler.modeledRearClearanceMm}</text>
+      <path d={`M${axisX} ${-rearY}V${-body.y0}M${axisX-45} ${-rearY}h90M${axisX-45} ${-body.y0}h90`} fill="none" stroke="#aa6021" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+      <text x={axisX} y={-(rearY+body.y0)/2} fill="#aa6021" stroke="white" strokeWidth="22" paintOrder="stroke">{HEATING.boiler.modeledRearClearanceMm}</text>
     </g>
   </g>;
 }
 
-export function TechnicalLegend(){return <p className="pd-clearance-legend"><span>Modrá: obsluha kotla</span><span>Zelená: nádrž a jej presun</span><span>Hnedá: prístup ku skrini</span><small>Prerušované plochy ponechať voľné. Rozmery v mm. Trasa platí s nádržou zvislo na 100 mm podvozku a oboma krídlami dverí otvorenými von; zásobník a prípojky sa montujú až po osadení nádrže.</small></p>;}
+export function TechnicalLegend(){return <p className="pd-clearance-legend"><span>Modrá: obsluha kotla</span><span>Zelená: nádrž a jej presun</span><span>Hnedá: prístup ku skrini</span><strong style={{color:'#aa6021',flexBasis:'100%'}}>Oranžové kóty 250 mm sú pod odstupmi 500 mm podľa výrobcu. Osadenie vyžaduje potvrdenie dodávateľom kotla.</strong><small>Prerušované plochy ponechať voľné. Rozmery v mm. Trasa platí s nádržou zvislo na 100 mm podvozku a oboma krídlami dverí otvorenými von; zásobník a prípojky sa montujú až po osadení nádrže.</small></p>;}
 
 export function StaticPlan({viewBox,roomId='',labels=true}:{viewBox:PlanViewBox;roomId?:string;labels?:boolean}) {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} role="img" aria-label="Pôdorys aktuálneho 3D modelu">
