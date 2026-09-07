@@ -11,17 +11,19 @@ describe('nested bedroom, closet and garage study C', () => {
     const m = createConcept(DEFAULT_CONCEPT);
     expect(m.isNested).toBe(true);
     expect(m.privateHallArea).toBe(0);
-    expect(m.bedroomArea).toBeCloseTo(14.8207, 6);
+    expect(m.bedroomArea).toBeCloseTo(12.0239, 6);
     expect(m.bathroomArea).toBeCloseTo(5.2941, 6);
     expect(area([m.dressing!])).toBeCloseTo(3.74, 6);
     expect(area([m.garageBay!])).toBeCloseTo(3.15, 6);
-    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(31.19611, 6);
+    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(23.59501, 6);
     expect(m.dressingAisle).toBe(1000);
     expect(m.storageLength).toBe(2400);
     expect(m.sideClearance).toBe(657);
     expect(m.footClearance).toBe(1660);
-    expect(m.rooms.find(r => r.number === '1.10')!.rectsMm[1].x1 - 13483).toBe(1520);
-    expect(m.doors.find(d => d.id === 'C-BED-BATH')?.fromRoomId).toBe('ROOM-1-10');
+    expect(m.rooms.find(r => r.number === '1.10')!.rectsMm).toHaveLength(1);
+    expect(m.doors.find(d => d.id === 'C-HALL-BATH')?.fromRoomId).toBe('ROOM-1-02');
+    expect(m.doors.some(d => d.id === 'C-HALL-BED')).toBe(false);
+    expect(m.doors.find(d => d.id === 'C-PRIVATE-BED')?.widthMm).toBe(800);
   });
 
   it('does not mutate the source model and tracks every replaced bearing wall', () => {
@@ -42,9 +44,9 @@ describe('nested bedroom, closet and garage study C', () => {
     for (let expansion = 0; expansion <= 600; expansion += 50)
       for (let garageBayWidth = 1000; garageBayWidth <= 1700; garageBayWidth += 50)
         for (let nestedClosetDepth = 1600; nestedClosetDepth <= 1900; nestedClosetDepth += 50)
-          for (const garageConnected of [false, true]) for (const encloseLoggia of [false, true]) {
-            const m = createConcept({ ...DEFAULT_CONCEPT, expansion, garageBayWidth, nestedClosetDepth, garageConnected, encloseLoggia });
-            const context = `expansion=${expansion}, bay=${garageBayWidth}, closet=${nestedClosetDepth}, garage=${garageConnected}, loggia=${encloseLoggia}`;
+          for (const garageConnected of [false, true]) for (const gardenRecess of [false, true]) {
+            const m = createConcept({ ...DEFAULT_CONCEPT, expansion, garageBayWidth, nestedClosetDepth, garageConnected, gardenRecess });
+            const context = `expansion=${expansion}, bay=${garageBayWidth}, closet=${nestedClosetDepth}, garage=${garageConnected}, loggia=${gardenRecess}`;
             const floors = m.rooms.flatMap(room => room.rectsMm.map(r => ({ r, room: room.number })));
             for (let i = 0; i < floors.length; i++) {
               const a = floors[i];
@@ -94,7 +96,7 @@ describe('nested bedroom, closet and garage study C', () => {
   });
 
   it('trades garage access for one metre of closet frontage and keeps terrace retention measurable', () => {
-    const on = createConcept(DEFAULT_CONCEPT), off = createConcept({ ...DEFAULT_CONCEPT, garageConnected: false, encloseLoggia: false });
+    const on = createConcept(DEFAULT_CONCEPT), off = createConcept({ ...DEFAULT_CONCEPT, garageConnected: false, gardenRecess: true });
     expect(on.doors.some(d => d.id === 'C-GARAGE-CLOSET')).toBe(true);
     expect(off.doors.some(d => d.id === 'C-GARAGE-CLOSET')).toBe(false);
     expect(off.storageLength - on.storageLength).toBe(1000);
@@ -104,15 +106,21 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(off.walls.some(w => contains(w.rectMm, rect(10842, 5844, 11143, 6644)))).toBe(true);
   });
 
-  it('routes a 440 mm disc from the bedroom directly to the bath with the closet excluded', () => {
+  it('routes a 440 mm disc to the bath through the new bedroom door, with the closet excluded', () => {
     for (const expansion of [0, 600]) for (const garageBayWidth of [1000, 1700]) for (const nestedClosetDepth of [1600, 1900]) {
       const m = createConcept({ ...DEFAULT_CONCEPT, expansion, garageBayWidth, nestedClosetDepth, bedWidth: 1800 });
-      const bathDoor = m.doors.find(d => d.id === 'C-BED-BATH')!;
-      const floors = [...m.rooms.filter(r => ['1.10', '1.11'].includes(r.number)).flatMap(r => r.rectsMm), opening(bathDoor)];
-      const obstacles = [m.bed, ...m.storageRuns, ...Object.values(m.fixtures), openLeaf(bathDoor)];
+      const bathDoor = m.doors.find(d => d.id === 'C-HALL-BATH')!;
+      const bedroomDoor = m.doors.find(d => d.id === 'C-PRIVATE-BED')!;
+      const floors = [...m.rooms.filter(r => ['1.02', '1.10', '1.11'].includes(r.number)).flatMap(r => r.rectsMm), opening(bedroomDoor), opening(bathDoor)];
+      const obstacles = [m.bed, ...m.storageRuns, ...Object.values(m.fixtures), openLeaf(bathDoor), openLeaf(bedroomDoor)];
       const target: [number, number] = [Math.round((m.bathLeft + m.bathRight) / 100) * 50, 4550];
       expect(walkingPath(floors, obstacles, [14000, 9000], target), `Direct bath route, expansion=${expansion}, bay=${garageBayWidth}, closet=${nestedClosetDepth}`).toBe(true);
       expect(walkingPath(floors.filter(r => r !== floors[floors.length - 1]), obstacles, [14000, 9000], target), 'Closing the bath doorway must break the route').toBe(false);
+      expect(walkingPath(floors.filter(r => r !== floors[floors.length - 2]), obstacles, [14000, 9000], target), 'Closing the new bedroom doorway must break the private route').toBe(false);
+      const hallFloors=[...m.rooms.filter(r => ['1.02','1.11'].includes(r.number)).flatMap(r => r.rectsMm),opening(bathDoor)];
+      const hallStart:[number,number]=[Math.round((m.suiteRight+1000)/50)*50,7100];
+      expect(walkingPath(hallFloors,obstacles,hallStart,target),'Hall to bathroom remains open with bedroom excluded').toBe(true);
+      expect(walkingPath(hallFloors,obstacles,hallStart,[14000,9000]),'Bedroom stays private behind its door').toBe(false);
     }
   }, 15000);
 

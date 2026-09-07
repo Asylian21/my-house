@@ -544,12 +544,12 @@ test("renders the separate interactive floor-plan concept with dimensioned geome
   assert.doesNotMatch(html, /NaN|This page couldn’t load/);
 });
 
-test("renders independent concept 02 with private storage and movable wall jogs", async () => {
-  const response = await render("/koncept-2d-2");
+test("renders variant E in the shared studio with its private storage and covered garden recess", async () => {
+  const response = await render("/koncept-2d?variant=e");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Dom · 2D koncept 02/);
-  assert.match(html, /E · Zalomenie a súkromný šatník/);
+  assert.match(html, /Dom · Dispozičné štúdio 2D/);
+  assert.match(html, /E · Zalomenie a krytý zárez/);
   assert.match(html, /id="alcove-width"/);
   assert.match(html, /id="passage-depth"/);
   assert.match(html, /id="bedroom-door-offset"/);
@@ -561,7 +561,44 @@ test("renders independent concept 02 with private storage and movable wall jogs"
   assert.match(html, /Garáž → záhrada · 900 mm/);
   assert.match(html, /Vstup → zväčšená garáž · 800 mm/);
   assert.match(html, /fp-shared-route/);
-  assert.match(html, /href="\/koncept-2d"/);
+  assert.match(html, /id="floor-plan-tab-e"[^>]*aria-selected="true"/);
   assert.match(html, /Zúženie pri rohu priečky/);
   assert.doesNotMatch(html, /NaN|This page couldn’t load/);
+});
+
+
+test("selects every floor-plan variant on one route with one accessible tab panel", async () => {
+  for (const variant of ["existing", "a", "b", "c", "d", "e"]) {
+    const response = await render(`/koncept-2d?variant=${variant}`);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    const main = html.match(/<main[\s\S]*?<\/main>/)?.[0];
+    assert.ok(main, variant);
+    assert.equal((main.match(/role="tab"/g) ?? []).length, 6, variant);
+    assert.equal((main.match(/aria-selected="true"/g) ?? []).length, 1, variant);
+    assert.match(main, new RegExp(`id="floor-plan-tab-${variant}"[^>]*aria-selected="true"`));
+    assert.match(main, new RegExp(`role="tabpanel"[^>]*aria-labelledby="floor-plan-tab-${variant}"`));
+    assert.equal((main.match(/class="fp-plan"/g) ?? []).length, 1, variant);
+    assert.equal((main.match(/id="bed-width"/g) ?? []).length, 1, variant);
+    assert.doesNotMatch(main, /href="\/koncept-2d-2"|NaN/);
+    assert.match(main, /class="fp-shell fp-loggia-pier"/);
+    assert.match(main, /Rohový stĺpik 1,00 × 0,50 m/);
+    assert.match(main, /class="fp-terrace fp-garden-recess"/);
+    assert.match(main, /Garáž → záhrada · 900 mm/);
+    if (variant === "e") assert.match(main, /id="alcove-width"/);
+    else assert.doesNotMatch(main, /id="alcove-width"/);
+    if (variant === "c") {
+      assert.match(main, /Spálňa za novou priečkou · dvere 800 mm/);
+      assert.match(main, /Otvorený vstup z chodby → kúpeľňa · 800 mm/);
+      assert.doesNotMatch(main, /Chodba → spálňa · 800 mm/);
+    }
+  }
+  const fallback = await render("/koncept-2d?variant=unknown");
+  assert.match(await fallback.text(), /id="floor-plan-tab-d"[^>]*aria-selected="true"/);
+});
+
+test("redirects the previous experimental address to the E tab", async () => {
+  const response = await render("/koncept-2d-2");
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get("location"), "/koncept-2d?variant=e");
 });

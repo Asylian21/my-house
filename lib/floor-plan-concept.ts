@@ -1,15 +1,16 @@
+import { createGarageEnvelope } from './floor-plan-garage';
 import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior';
 
 /** Separate study in plan millimetres. Never mutates the canonical 3D model. */
-export interface ConceptSettings { expansion: number; bedWidth: number; wardrobe: boolean; garageConnected: boolean; layout: 'private' | 'nested' | 'wardrobe' | 'vestibule'; wardrobeDepth: number; encloseLoggia: boolean; garageBayWidth: number; nestedClosetDepth: number }
-export const DEFAULT_CONCEPT: ConceptSettings = { expansion: 0, bedWidth: 1800, wardrobe: true, garageConnected: true, layout: 'private', wardrobeDepth: 2000, encloseLoggia: true, garageBayWidth: 1500, nestedClosetDepth: 1700 };
+export interface ConceptSettings { expansion: number; bedWidth: number; wardrobe: boolean; garageConnected: boolean; layout: 'private' | 'nested' | 'wardrobe' | 'vestibule'; wardrobeDepth: number; gardenRecess: boolean; garageBayWidth: number; nestedClosetDepth: number }
+export const DEFAULT_CONCEPT: ConceptSettings = { expansion: 0, bedWidth: 1800, wardrobe: true, garageConnected: true, layout: 'private', wardrobeDepth: 2000, gardenRecess: true, garageBayWidth: 1500, nestedClosetDepth: 1700 };
 export const BED_LENGTH = 2200;
 export const rect = (x0: number, y0: number, x1: number, y1: number): RectMm => ({ x0, y0, x1, y1 });
 export const area = (rects: readonly RectMm[]) => rects.reduce((sum, r) => sum + (r.x1-r.x0)*(r.y1-r.y0)/1e6, 0);
 export function normalizeConcept(input: Partial<ConceptSettings>): ConceptSettings {
   const bounded = (v: unknown, fallback: number, lo: number, hi: number) => typeof v === 'number' && Number.isFinite(v) ? Math.round(Math.max(lo, Math.min(hi, v))/50)*50 : fallback;
   const layout=input.layout==='vestibule'?'vestibule':input.layout==='wardrobe'?'wardrobe':input.layout==='nested'?'nested':'private';
-  return { expansion: bounded(input.expansion, 0, 0, 600), bedWidth: bounded(input.bedWidth, 1800, 1600, 2200), wardrobe: typeof input.wardrobe === 'boolean' ? input.wardrobe : true, garageConnected: typeof input.garageConnected === 'boolean' ? input.garageConnected : true, layout, wardrobeDepth: bounded(input.wardrobeDepth, 2000, 2000, 2200), encloseLoggia: typeof input.encloseLoggia === 'boolean' ? input.encloseLoggia : true, garageBayWidth: bounded(input.garageBayWidth,1500,1000,1700), nestedClosetDepth: bounded(input.nestedClosetDepth,1700,layout==='private'?1700:1600,1900) };
+  return { expansion: bounded(input.expansion, 0, 0, 600), bedWidth: bounded(input.bedWidth, 1800, 1600, 2200), wardrobe: typeof input.wardrobe === 'boolean' ? input.wardrobe : true, garageConnected: typeof input.garageConnected === 'boolean' ? input.garageConnected : true, layout, wardrobeDepth: bounded(input.wardrobeDepth, 2000, 2000, 2200), gardenRecess: typeof input.gardenRecess === 'boolean' ? input.gardenRecess : true, garageBayWidth: bounded(input.garageBayWidth,1500,1000,1700), nestedClosetDepth: bounded(input.nestedClosetDepth,1700,layout==='private'?1700:1600,1900) };
 }
 export function createVestibuleConcept(input: ConceptSettings, original = false) {
   const settings = normalizeConcept(input);
@@ -52,7 +53,7 @@ export function createVestibuleConcept(input: ConceptSettings, original = false)
   const bed = original ? BEDROOM_FITOUT.bed.footprintMm : rect(11143,bedY,13343,bedY+settings.bedWidth);
   const wardrobeRect = rect(14403+delta,7899,15003+delta,10299);
   const footClearance = 3860+delta-BED_LENGTH-(settings.wardrobe?600:0);
-  return { rooms, walls, doors, vestibule: original ? [] : vestibule, bed, wardrobeRect, sideClearance, footClearance, bedroomArea: area(rooms.find(r=>r.number===(original?'1.08':'1.10'))!.rectsMm), kidGardenArea: area(rooms.find(r=>r.number==='1.09')!.rectsMm), kidStreetArea: area(rooms.find(r=>r.number==='1.08')!.rectsMm), bathroomArea: area(rooms.find(r=>r.number==='1.11')!.rectsMm), vestibuleArea: area(vestibule), settings };
+  return { ...createGarageEnvelope(true), rooms, walls, doors, vestibule: original ? [] : vestibule, bed, wardrobeRect, sideClearance, footClearance, bedroomArea: area(rooms.find(r=>r.number===(original?'1.08':'1.10'))!.rectsMm), kidGardenArea: area(rooms.find(r=>r.number==='1.09')!.rectsMm), kidStreetArea: area(rooms.find(r=>r.number==='1.08')!.rectsMm), bathroomArea: area(rooms.find(r=>r.number==='1.11')!.rectsMm), vestibuleArea: area(vestibule), settings };
 }
 
 export function createLinearConcept(input: ConceptSettings, original = false) {
@@ -78,7 +79,7 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
   replace('1.11','Rodičovská kúpeľňa',[rect(11143,3504,right,bathTop)]);
   replace('1.08','Detská izba · ulica',[rect(right+140,3504,21242,6361)]);
   replace('1.09','Detská izba · dvor',[rect(right+140,7741,20641,10699)]);
-  replace('1.12','Garáž',[rect(6944,3504,10842,settings.encloseLoggia?10699:8749)]);
+  replace('1.12','Garáž',[rect(6944,3504,10842,!settings.gardenRecess?10699:8749)]);
   replace('1.02','Spoločná chodba',[rect(right+140,6560,21543,7601),...INTERIOR_ROOMS.find(r=>r.number==='1.02')!.rectsMm.slice(4)]);
   rooms.push({...INTERIOR_ROOMS.find(r=>r.number==='1.10')!,id:'ROOM-DRESSING',number:'1.14',name:'Priechodný šatník',documentedAreaM2:area([dressing]),rectsMm:[dressing]});
 
@@ -112,7 +113,7 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
   const bedroomDepth=10699-bedroomBottom, sideClearance=Math.floor((bedroomDepth-settings.bedWidth)/2);
   const bed=rect(11143,bedroomBottom+sideClearance,13343,bedroomBottom+sideClearance+settings.bedWidth);
   return {
-    rooms,walls,doors,settings,isWardrobe:true,dressing,storageRuns,
+    ...createGarageEnvelope(settings.gardenRecess),rooms,walls,doors,settings,isWardrobe:true,dressing,storageRuns,
     storageLength:right-11143-1000,dressingAisle:settings.wardrobeDepth-600,
     vestibule:[] as RectMm[],vestibuleArea:0,privateHallArea:0,
     bed,wardrobeRect:storageRuns[0],sideClearance,footClearance:right-bed.x1,bedroomDepth,suiteRight:right,bathRight:right,
@@ -121,8 +122,8 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
     kidStreetArea:area(rooms.find(r=>r.number==='1.08')!.rectsMm),
     bathroomArea:area(rooms.find(r=>r.number==='1.11')!.rectsMm),
     fixtures:{bath:rect(11193,3604,11993,5304),basin:rect(12300,3504,13300,4004),toilet:rect(right-700,4550,right-100,5100)},
-    convertedTerraceArea:settings.encloseLoggia?(10842-6944)*(10699-9247)/1e6:0,
-    garageDepth:settings.encloseLoggia?7195:5245,structuralChanges,frontWindowStart,
+    convertedTerraceArea:!settings.gardenRecess?(10842-6944)*(10699-9247)/1e6:0,
+    garageDepth:!settings.gardenRecess?7195:5245,structuralChanges,frontWindowStart,
     sharedHallArea:area(rooms.find(r=>r.number==='1.02')!.rectsMm),
   };
 }
@@ -144,7 +145,7 @@ export function createNestedConcept(input: ConceptSettings, original = false) {
   replace('1.10','Spálňa do dvora',[rect(11143,bedroomBottom,right,10699),rect(13483,5744,right,bedroomBottom)]);
   replace('1.11','Kúpeľňa',[rect(bathLeft,3504,right,5604)]);
   replace('1.14','Šatník',[dressing]);
-  replace('1.12','Garáž',[rect(6944,3504,10842,settings.encloseLoggia?10699:8749),garageBay]);
+  replace('1.12','Garáž',[rect(6944,3504,10842,!settings.gardenRecess?10699:8749),garageBay]);
   const walls=base.walls.filter(w=>!w.id.startsWith('B-GARAGE-WALL')&&!w.id.startsWith('B-BATH-WALL')&&!w.id.startsWith('B-BED-WALL'));
   const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
   add('C-GARAGE-BAY-EAST',rect(bayRight,3504,bathLeft,5604));
@@ -176,11 +177,34 @@ export function createNestedConcept(input: ConceptSettings, original = false) {
   };
 }
 
+/** C's added bedroom wall leaves the bathroom approach open to the shared hall. */
+function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
+  const right=base.suiteRight, top=base.dressing!.y1, bedroomBottom=top+140;
+  const entranceTop=Math.min(top,7601);
+  const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
+  Object.assign(rooms.find(room=>room.number==='1.10')!,{
+    rectsMm:[rect(11143,bedroomBottom,right,10699)],
+  });
+  const hall=rooms.find(room=>room.number==='1.02')!;
+  hall.rectsMm.push(rect(13483,5744,right,top),rect(right,6560,right+140,entranceTop));
+  const walls=base.walls.filter(w=>!['B-SUITE-WALL-S','B-SUITE-WALL-N'].includes(w.id));
+  const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
+  add('C-BED-PRIVACY-W',rect(13483,top,right-1000,bedroomBottom));
+  add('C-BED-PRIVACY-E',rect(right-200,top,right,bedroomBottom));
+  add('C-OPEN-HALL-S',rect(right,3504,right+140,6560));
+  add('C-OPEN-HALL-N',rect(right,entranceTop,right+140,10699));
+  const doors=base.doors.filter(d=>d.id!=='C-HALL-BED').map(d=>d.id==='C-BED-BATH'
+    ? {...d,id:'C-HALL-BATH',label:'Otvorený vstup z chodby → kúpeľňa · 800 mm',fromRoomId:'ROOM-1-02'}
+    : d);
+  doors.push({id:'C-PRIVATE-BED',label:'Spálňa za novou priečkou · dvere 800 mm',axis:'X',wallSpanMm:[top,bedroomBottom],startMm:right-1000,widthMm:800,heightMm:2100,leafWidthMm:800,swing:1,hinge:1,motion:'HINGED',fromRoomId:'ROOM-1-02',toRoomId:'ROOM-1-10'});
+  return {...base,rooms,walls,doors,bedroomArea:area(rooms.find(room=>room.number==='1.10')!.rectsMm),sharedHallArea:area(hall.rectsMm)};
+}
+
 /** D separates sleeping from the shared routes, within C's existing suite. */
 export function createConcept(input: ConceptSettings, original = false) {
   const settings=normalizeConcept(input);
   const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original);
-  if(original||settings.layout!=='private') return {...base,isPrivate:false};
+  if(original||settings.layout!=='private') return {...(!original&&settings.layout==='nested'?encloseNestedBedroom(base):base),isPrivate:false};
   const right=base.suiteRight, top=base.dressing!.y1, bedroomBottom=top+140;
   const dressing=rect(11143,5744,right,top);
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));

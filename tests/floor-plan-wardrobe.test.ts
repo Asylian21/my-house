@@ -47,12 +47,16 @@ describe('walk-through wardrobe study B',()=>{
   });
   it('makes the smaller bedroom and optional terrace conversion measurable',()=>{
     const normal=createConcept(DEFAULT_CONCEPT);
+    const enclosed=createConcept({...DEFAULT_CONCEPT,gardenRecess:false});
     const tight=createConcept({...DEFAULT_CONCEPT,wardrobeDepth:2200,bedWidth:2200});
     expect(tight.sideClearance).toBe(307);
-    expect(normal.garageDepth).toBe(7195);
-    expect(area(normal.rooms.find(r=>r.number==='1.12')!.rectsMm)).toBeCloseTo(28.04611);
-    expect(normal.convertedTerraceArea).toBeCloseTo(5.659896);
-    const terrace=createConcept({...DEFAULT_CONCEPT,encloseLoggia:false,garageConnected:false});
+    expect(normal.garageDepth).toBe(5245);
+    expect(enclosed.garageDepth).toBe(7195);
+    expect(area(normal.rooms.find(r=>r.number==='1.12')!.rectsMm)).toBeCloseTo(20.44501);
+    expect(area(enclosed.rooms.find(r=>r.number==='1.12')!.rectsMm)).toBeCloseTo(28.04611);
+    expect(normal.convertedTerraceArea).toBe(0);
+    expect(enclosed.convertedTerraceArea).toBeCloseTo(5.659896);
+    const terrace=createConcept({...DEFAULT_CONCEPT,gardenRecess:true,garageConnected:false});
     expect(terrace.garageDepth).toBe(5245);
     expect(terrace.convertedTerraceArea).toBe(0);
     expect(terrace.doors.some(d=>d.id==='B-GARAGE-DRESSING')).toBe(false);

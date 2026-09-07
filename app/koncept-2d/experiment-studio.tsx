@@ -1,40 +1,33 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, type Dispatch, type SetStateAction } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, Check, Download, Expand, LockKeyhole, Minus, Plus, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
 import { HOUSE } from '@/lib/twin-site';
-import { type RectMm, type InteriorDoor } from '@/lib/twin-interior';
 import { area, rect } from '@/lib/floor-plan-concept';
 import { createExperiment, DEFAULT_EXPERIMENT, normalizeExperiment, bedroomDoorOffsetMax, type ExperimentSettings } from '@/lib/floor-plan-experiment';
-import '../koncept-2d/studio.css';
+import './studio.css';
+import { Box, Label, Dimension, VerticalDimension, Door } from './plan-svg';
+import { GarageShell, GarageLoggiaLabel } from './garage-loggia';
+import { EXPERIMENT_NAME, VariantTabs, type VariantNavigationProps, type PlanViewState } from './variant-tabs';
 import './experiment.css';
 
 const m = (n:number) => (n/1000).toLocaleString('sk-SK',{minimumFractionDigits:2,maximumFractionDigits:2});
 const sqm = (n:number) => n.toLocaleString('sk-SK',{minimumFractionDigits:2,maximumFractionDigits:2});
-function Box({r,...props}:{r:RectMm}&Omit<React.SVGProps<SVGRectElement>,'r'>) { return <rect x={r.x0} y={-r.y1} width={r.x1-r.x0} height={r.y1-r.y0} {...props}/>; }
-function Label({x,y,children,...props}:{x:number;y:number;children:React.ReactNode}&React.SVGProps<SVGTextElement>) { return <text x={x} y={-y} textAnchor="middle" {...props}>{children}</text>; }
-function Dimension({x0,x1,y,label}:{x0:number;x1:number;y:number;label?:string}) {return <g className="fp-dimension"><path d={`M${x0},${-y-90}v180 M${x0},${-y}H${x1} M${x1},${-y-90}v180`}/><Label x={(x0+x1)/2} y={y+110}>{label??`${m(x1-x0)} m`}</Label></g>;}
-function VerticalDimension({x,y0,y1,label}:{x:number;y0:number;y1:number;label:string}) {const cy=(y0+y1)/2;return <g className="fp-dimension"><path d={`M${x},${-y0}V${-y1}M${x-70},${-y0}h140M${x-70},${-y1}h140`}/><Label x={x-120} y={cy} transform={`rotate(-90 ${x-120} ${-cy})`}>{label}</Label></g>;}
-function Door({door}:{door:InteriorDoor & {leafPlaneMm?:number}}) {
-  const d=door, horizontal=d.axis==='X', plane=d.leafPlaneMm??(d.wallSpanMm[0]+d.wallSpanMm[1])/2;
-  const hinge=d.startMm+(d.hinge===1?d.widthMm:0), end=d.startMm+(d.hinge===-1?d.widthMm:0);
-  if(d.motion==='POCKET_SLIDING') return <g className="fp-door fp-sliding"><Box r={horizontal?rect(d.startMm,d.wallSpanMm[0],d.startMm+d.widthMm,d.wallSpanMm[1]):rect(d.wallSpanMm[0],d.startMm,d.wallSpanMm[1],d.startMm+d.widthMm)} className="fp-door-gap"/><path d={horizontal?`M${d.startMm+d.widthMm},${-plane}h${d.widthMm}m${-d.widthMm},35h${d.widthMm}`:`M${plane},${-d.startMm-d.widthMm}v${-d.widthMm}`}/><title>{d.label}</title></g>;
-  const x=horizontal?hinge:plane, y=horizontal?plane:hinge;
-  const ex=horizontal?hinge:plane+d.swing*d.leafWidthMm, ey=horizontal?plane+d.swing*d.leafWidthMm:hinge;
-  const cx=horizontal?end:plane, cy=horizontal?plane:end;
-  return <g className="fp-door"><Box r={horizontal?rect(d.startMm,d.wallSpanMm[0],d.startMm+d.widthMm,d.wallSpanMm[1]):rect(d.wallSpanMm[0],d.startMm,d.wallSpanMm[1],d.startMm+d.widthMm)} className="fp-door-gap"/><path d={`M${x},${-y}L${ex},${-ey}`}/><path d={`M${cx},${-cy}Q${horizontal?end:ex},${-(horizontal?ey:end)} ${ex},${-ey}`} strokeDasharray="55 35"/><title>{d.label}</title></g>;
-}
 const roomCenters:Record<string,[number,number]> = {'1.01':[22900,4600],'1.02':[19200,7010],'1.03':[24800,14800],'1.04':[25300,5850],'1.05':[24100,7800],'1.06':[23400,10250],'1.07':[26200,9530],'1.08':[19100,4950],'1.09':[18400,9340],'1.10':[13150,7550],'1.11':[15400,4730],'1.12':[8900,7040],'1.14':[13073,6800]};
 function color(number:string) { if(number==='1.14')return 'neutral'; if(number==='1.12')return 'garage'; if(number==='1.10')return 'bedroom'; if(['1.08','1.09'].includes(number))return 'kid'; if(['1.05','1.06','1.11'].includes(number))return 'wet'; return 'neutral'; }
 
-export function ExperimentalFloorPlanStudio() {
-  const [rawSettings,setSettings]=useState<ExperimentSettings>(DEFAULT_EXPERIMENT);
+interface ExperimentStudioProps extends VariantNavigationProps {
+  rawSettings: ExperimentSettings;
+  setSettings: Dispatch<SetStateAction<ExperimentSettings>>;
+  view: PlanViewState;
+}
+export function ExperimentalFloorPlanStudio({rawSettings,setSettings,variant,onVariantChange,view}:ExperimentStudioProps) {
   const settings=normalizeExperiment(rawSettings);
-  const [full,setFull]=useState(false),[dimensions,setDimensions]=useState(true),[route,setRoute]=useState(true),[selected,setSelected]=useState('1.10'),[zoom,setZoom]=useState(1);
+  const {full,setFull,dimensions,setDimensions,route,setRoute,selected,setSelected,zoom,setZoom}=view;
   const svg=useRef<SVGSVGElement>(null);
   const model=createExperiment(settings);
-  const layoutName='E · Zalomenie a súkromný šatník';
+  const layoutName=EXPERIMENT_NAME;
   const frontStart=(id:string,start:number)=>id==='FRONT-02'?model.garageWindowStart:id==='FRONT-03'?model.frontWindowStart:start;
   const update=<K extends keyof ExperimentSettings>(key:K,value:ExperimentSettings[K])=>setSettings(s=>({...s,[key]:value}));
   const exportPlan=()=>{
@@ -50,21 +43,19 @@ export function ExperimentalFloorPlanStudio() {
     const a=document.createElement('a');a.href=url;a.download='dom-koncept-e-zalomenie.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
   return <main className="fp-studio fp-experiment">
-    <header className="fp-header"><Link href="/koncept-2d" className="fp-back" aria-label="Späť na schválený návrh D"><ArrowLeft size={18}/></Link><div className="fp-brand">DOM<span>/</span><h1>Dispozičné štúdio / 02</h1><span className="fp-badge">EXPERIMENT</span></div><button className="fp-export" onClick={exportPlan}><Download size={16}/><span>Stiahnuť plán E</span></button></header>
+    <header className="fp-header"><Link href="/" className="fp-back" aria-label="Späť na 3D dom"><ArrowLeft size={18}/></Link><div className="fp-brand">DOM<span>/</span><h1>Dispozičné štúdio</h1><span className="fp-badge">VARIANT E</span></div><button className="fp-export" onClick={exportPlan}><Download size={16}/><span>Stiahnuť plán E</span></button></header>
     <div className="fp-workspace"><section className="fp-drawing" aria-label="Alternatívny pôdorys">
-      <div className="fp-toolbar"><div className="fp-experiment-nav"><Link href="/koncept-2d">Schválený návrh D<ArrowUpRight size={14}/></Link><span>E · Zalomenie</span></div><div className="fp-view-tools"><button aria-label="Oddialiť" disabled={zoom<=1} onClick={()=>setZoom(z=>Math.max(1,z-.25))}><Minus size={16}/></button><button aria-label="Priblížiť" disabled={zoom>=2.5} onClick={()=>setZoom(z=>Math.min(2.5,z+.25))}><Plus size={16}/></button><button className={dimensions?'active':''} onClick={()=>setDimensions(v=>!v)} aria-label="Zobraziť kóty" aria-pressed={dimensions}><Ruler size={18}/></button><button onClick={()=>setFull(v=>!v)} aria-label={full?'Detail nočnej časti':'Celý dom'} aria-pressed={full}><Expand size={18}/><span>{full?'Detail':'Celý dom'}</span></button></div></div>
-      <div className="fp-sheet"><div className="fp-sheet-heading"><span>ŠTÚDIA DISPOZÍCIE / 02</span><p>Menej priechodu. Viac miesta v garáži.</p></div><div className="fp-plan-scroll"><div className="fp-plan-canvas" style={{width:`${zoom*100}%`,height:`${zoom*100}%`}}>
+      <div className="fp-toolbar"><VariantTabs variant={variant} onVariantChange={onVariantChange}/><div className="fp-view-tools"><button aria-label="Oddialiť" disabled={zoom<=1} onClick={()=>setZoom(z=>Math.max(1,z-.25))}><Minus size={16}/></button><button aria-label="Priblížiť" disabled={zoom>=2.5} onClick={()=>setZoom(z=>Math.min(2.5,z+.25))}><Plus size={16}/></button><button className={dimensions?'active':''} onClick={()=>setDimensions(v=>!v)} aria-label="Zobraziť kóty" aria-pressed={dimensions}><Ruler size={18}/></button><button onClick={()=>setFull(v=>!v)} aria-label={full?'Detail nočnej časti':'Celý dom'} aria-pressed={full}><Expand size={18}/><span>{full?'Detail':'Celý dom'}</span></button></div></div>
+      <div className="fp-sheet" role="tabpanel" id="floor-plan-panel" aria-labelledby={`floor-plan-tab-${variant}`}><div className="fp-sheet-heading"><span>VARIANT E / ZALOMENIE A KRYTÝ ZÁREZ</span><p>Menej priechodu. Viac miesta v garáži.</p></div><div className="fp-plan-scroll"><div className="fp-plan-canvas" style={{width:`${zoom*100}%`,height:`${zoom*100}%`}}>
 <svg ref={svg} className="fp-plan" viewBox={full?'5500 -23100 23700 21500':'5550 -12350 17300 10850'} role="img" aria-label="Koncept E so spálňou do dvora, súkromným šatníkom a zalomeným vstupom">
             <title>{`Dom — ${layoutName}`}</title>
             <desc>Rozmery v milimetroch, dvor hore, ulica dole. Koncept pre diskusiu, nie realizačný výkres. Obrys 21600 × 19035 mm, nočné krídlo hlboké 8200 mm.</desc>
             <defs><pattern id="fp-grid" width="500" height="500" patternUnits="userSpaceOnUse"><path d="M500 0H0V500" fill="none" stroke="#dce2e4" strokeWidth="9"/></pattern><pattern id="fp-tile" width="400" height="400" patternUnits="userSpaceOnUse"><path d="M400 0H0V400" fill="none" stroke="#c5d8df" strokeWidth="9"/></pattern><marker id="fp-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="#c06424" strokeWidth="1.4"/></marker></defs>
             <rect x="5400" y="-23100" width="24500" height="22000" fill="#fafcfc"/><rect x="5400" y="-23100" width="24500" height="22000" fill="url(#fp-grid)" opacity=".46"/>
             <path className="fp-envelope" d={`M${HOUSE.footprintMm.map(p=>`${p.x},${-p.y}`).join('L')}Z`}/>
-            {settings.gardenRecess&&<Box r={model.loggia.bounds} className="fp-terrace fp-garden-recess"/>}<Box r={rect(21040,20035,28040,22035)} className="fp-terrace"/>
+            <GarageShell garage={model}/>
+            <Box r={rect(21040,20035,28040,22035)} className="fp-terrace"/>
             <Label x={24400} y={21000} className="fp-outside">Terasa</Label>
-
-            <path className="fp-shell" d={!settings.gardenRecess?"M6440,-3000H28040V-20035H21040V-11200H6440Z":`M6440,-3000H28040V-20035H21040V-11200H${model.loggia.bounds.x1}V-${model.loggia.bounds.y0}H6440Z`}/>
-            {settings.gardenRecess&&<g className="fp-loggia-structure"><Box r={model.loggia.pier} className="fp-shell"/><Box r={model.loggia.westReturn} className="fp-shell"/><path className="fp-loggia-roof" d={`M6440,-9800V-11200H${model.loggia.bounds.x1}`}><title>Hrana zastrešenia nad otvoreným zárezom</title></path></g>}
             {/* Clear interiors are dimensioned from the source model, including the L-shaped garage. */}
             {model.rooms.map(room=><g key={room.id} className={`fp-room fp-${color(room.number)} ${selected===room.number?'fp-selected':''}`} onClick={()=>setSelected(room.number)}><title>{`${room.name}: ${sqm(area(room.rectsMm))} m²`}</title>{room.rectsMm.map((r,i)=><Box key={i} r={r}/>)}</g>)}
             <Box r={model.privateAlcove} className="fp-private-alcove"/><Box r={model.garageAddition} className="fp-garage-gain"><title>Plocha pridaná ku garáži: {sqm(model.garageGain)} m²</title></Box>
@@ -89,7 +80,7 @@ export function ExperimentalFloorPlanStudio() {
               <Box r={rect(25500,17200,27250,19000)} rx="90"/><Box r={rect(23700,13300,25300,14200)} rx="150"/><Box r={rect(23000,10900,25450,11500)}/>
             </g>
             {model.doors.map(door=><Door key={door.id} door={door}/>)}<Door door={model.gardenDoor}/>
-            {settings.gardenRecess&&<g className="fp-loggia-label"><Label x={8540} y={10330}>Krytý zárez</Label><Label x={8540} y={10070} className="fp-loggia-subtitle">otvorený do záhrady</Label>{dimensions&&<><Dimension x0={7440} x1={model.loggia.bounds.x1} y={11420} label={`${m(model.loggia.openingWidth)} m otvor`}/><VerticalDimension x={6800} y0={model.loggia.bounds.y0} y1={model.loggia.bounds.y1} label={`${m(model.loggia.depth)} m`}/></>}</g>}
+            <GarageLoggiaLabel garage={model} dimensions={dimensions}/>
             {route&&<g className="fp-route fp-shared-route" aria-label="Spoločný prechod mimo spálne"><path d={settings.garageConnected?`M${model.suiteRight+1000},-7100H${model.suiteRight-650}V-6244H10400`:`M${model.suiteRight+1000},-7100H${model.suiteRight-650}V-6244`} markerEnd={settings.garageConnected?'url(#fp-arrow)':undefined}/><path d={`M${model.suiteRight-650},-6244H${model.suiteRight-960}V-5140`} markerEnd="url(#fp-arrow)"/></g>}
             {model.rooms.map(room=>{const [x,y]=room.number==='1.10'?[(model.bed.x1+model.suiteRight)/2,9600]:room.number==='1.11'?[(model.bathLeft+model.bathRight)/2,4650]:room.number==='1.14'?[(model.bathLeft+model.suiteRight)/2,model.stepY-240]:roomCenters[room.number];return <g key={room.id} className="fp-room-label" pointerEvents="none"><Label x={x} y={y}>{room.number==='1.10'?'Spálňa':room.name.replace('Hlavný obytný priestor s kuchyňou','Obývačka + kuchyňa').replace('Zádverie, chodba, vstup','Zádverie')}</Label><Label x={x} y={y-220} className="fp-room-area">{sqm(area(room.rectsMm))} m²</Label></g>;})}
             <Label x={(11143+model.alcoveRight)/2} y={model.cabinetFront+230} className="fp-private-label">SÚKROMNÝ ŠATNÍK</Label>
@@ -105,7 +96,7 @@ export function ExperimentalFloorPlanStudio() {
           </svg></div></div><div className="fp-sheet-footer"><div className="fp-legend"><span><i className="parent"/>Súkromná spálňa</span><span><i className="private-closet"/>Súkromný šatník</span><span><i className="children"/>Detské izby</span><span><i className="new"/>Nové priečky</span></div><span>Oranžová trasa: spoločný prechod mimo spálne</span></div></div>
       <div className="fp-bottom-note"><LockKeyhole size={15}/><span>Pevný obrys 21,60 × 19,035 m · nočné krídlo 8,20 m</span></div>
     </section><aside className="fp-inspector" aria-label="Nastavenie experimentu E">
-      <div className="fp-inspector-title"><span className="fp-eyebrow">VARIANT E / ZALOMENÁ PRIEČKA</span><h2>Šatník dovnútra.<br/>Prechod okolo<span>.</span></h2><p>Priečka sa zalomí okolo súkromných skríň. {settings.garageConnected?'Rodina prejde krátkym vstupom do garáže alebo kúpeľne.':'Rodina prejde krátkym vstupom do kúpeľne. Garáž je teraz prístupná zvonka.'} Spálňa aj šatník sú za jednými dverami.</p></div>
+      <div className="fp-inspector-title"><span className="fp-eyebrow">VARIANT E / ZALOMENIE A KRYTÝ ZÁREZ</span><h2>Šatník dovnútra.<br/>Prechod okolo<span>.</span></h2><p>Priečka sa zalomí okolo súkromných skríň. {settings.garageConnected?'Rodina prejde krátkym vstupom do garáže alebo kúpeľne.':'Rodina prejde krátkym vstupom do kúpeľne. Garáž je teraz prístupná zvonka.'} Spálňa aj šatník sú za jednými dverami.</p></div>
       <div className="fp-privacy-summary"><strong><LockKeyhole size={17}/>Dve samostatné funkcie</strong><span>{settings.garageConnected?'Rodina: dom → vstup → kúpeľňa / garáž':'Rodina: dom → vstup → kúpeľňa'}</span><span>Rodičia: spálňa + vlastné skrine</span><span>Zo spálne do kúpeľne cez vstup</span></div>
       <div className="fp-metrics"><div><span>Spálňa so šatníkom</span><strong>{sqm(model.bedroomArea)} <small>m²</small></strong></div><div><span>Spoločný vstup L</span><strong>{sqm(model.foyerArea)} <small>m²</small></strong></div></div>
       <div className="fp-garage-summary"><strong>+{sqm(model.garageGain)} m² pre garáž</strong><p>Stena medzi vstupom a garážou pokračuje v línii bočnej steny kúpeľne. Garáž má spolu {sqm(model.garageArea)} m²; vstup je menší o {sqm(model.foyerReduction)} m² oproti predchádzajúcemu E.</p></div><div className="fp-secondary-metrics"><div><span>Kúpeľňa</span><strong>{sqm(model.bathroomArea)} m²</strong></div><div><span>Rozšírený výklenok garáže</span><strong>{sqm(area([model.garageBay!]))} m²</strong></div><p>Plocha spálne zahŕňa súkromný šatníkový výklenok aj pôdorys skríň ({sqm(model.storageArea)} m²).</p></div>
@@ -117,13 +108,13 @@ export function ExperimentalFloorPlanStudio() {
         <label htmlFor="bedroom-door-offset">Odsadenie dverí od pravej steny <output>{settings.doorOffset/10} cm</output></label><input id="bedroom-door-offset" type="range" min="100" max={bedroomDoorOffsetMax(settings)} step="50" value={settings.doorOffset} onChange={e=>update('doorOffset',Number(e.target.value))}/><p className="fp-control-hint">Posúva 80 cm dvere v hornej priečke. Rozsah sa prispôsobí polohe zalomenia.</p>
         <label htmlFor="bed-width">Šírka postele <output>{m(settings.bedWidth)} m</output></label><input id="bed-width" type="range" min="1600" max="2200" step="50" value={settings.bedWidth} onChange={e=>update('bedWidth',Number(e.target.value))}/><p className="fp-control-hint">Dĺžka postele je pevná: 2,20 m. Šírka 1,80 m zostáva predpoklad.</p>
         <details className="fp-extra-controls"><summary>Šírka izieb a garáž</summary><label htmlFor="expansion">Rozšírenie rodičovskej zóny <output>+{settings.expansion/10} cm</output></label><input id="expansion" type="range" min="0" max="600" step="50" value={settings.expansion} onChange={e=>update('expansion',Number(e.target.value))}/><p className="fp-control-hint">Posunie stenu smerom k detským izbám. Rozšíri spálňu, kúpeľňu aj vstup.</p><label htmlFor="garage-bay-width">Šírka výklenku v garáži <output>{m(settings.garageBayWidth)} m</output></label><input id="garage-bay-width" type="range" min="1000" max="1700" step="50" value={settings.garageBayWidth} onChange={e=>update('garageBayWidth',Number(e.target.value))}/><p className="fp-control-hint">Posúva bočnú stenu kúpeľne aj nové dvere do garáže. Väčší výklenok zúži kúpeľňu a vstup.{model.bathroomArea>6&&' Pri tomto nastavení má kúpeľňa viac ako 6 m².'}</p><label className="fp-check"><input type="checkbox" checked={settings.garageConnected} onChange={e=>update('garageConnected',e.target.checked)}/><span>Dvere do garáže <small>Zo spoločného vstupu</small></span></label><label className="fp-check"><input type="checkbox" checked={settings.gardenRecess} onChange={e=>update('gardenRecess',e.target.checked)}/><span>Krytý zárez do záhrady <small>Podľa aktuálneho 3D modelu</small></span></label></details>
-        <button className="fp-reset" onClick={()=>setSettings(DEFAULT_EXPERIMENT)}><RotateCcw size={14}/>Obnoviť experiment E</button>
+        <button className="fp-reset" onClick={()=>setSettings(DEFAULT_EXPERIMENT)}><RotateCcw size={14}/>Obnoviť variant E</button>
       </div>
       <div className={`fp-fit ${Math.min(model.sideClearance,model.turnClearance)<600?'fp-tight':''}`} aria-live="polite"><strong><Check size={17}/>{Math.min(model.turnClearance,model.sideClearance)<440?'Pri skrini nevychádza overovaný priechod':Math.min(model.sideClearance,model.turnClearance)<450?'Prístup ku skriniam je veľmi tesný':Math.min(model.sideClearance,model.turnClearance)<600?'Posteľ sa zmestí, prístup je tesnejší':'Posteľ 2,20 m sa zmestí'}</strong><div><span>Medzi skriňou a posteľou</span><b>{Math.round(model.sideClearance)} mm</b></div><div><span>Posteľ → presklenie</span><b>{10699-model.bed.y1} mm</b></div><div><span>Zúženie pri rohu priečky</span><b>{Math.floor(model.turnClearance)} mm</b></div><div><span>Pred nohami postele</span><b>{model.footClearance} mm</b></div><p>Rozmery sú od hrany zakresleného rámu. Skrine sú navrhnuté s posuvnými čelami.{Math.min(model.turnClearance,model.sideClearance)<440&&' Zúženie má menej než 44 cm. Rozšír šatníkový výklenok, zmenši hĺbku vstupu alebo šírku postele.'}</p></div>
       <label className="fp-route-toggle"><input type="checkbox" checked={route} onChange={e=>setRoute(e.target.checked)}/>Ukázať rodinný prechod mimo spálne</label>
       <details className="fp-reasoning" open><summary>Čo prináša zalomenie</summary><ol><li>Skrine sa presunuli za dvere spálne. Cez rodičovský šatník už neprechádza rodina do garáže.</li><li>Spoločný vstup má {sqm(model.foyerArea)} m². Pri rovnakom rozšírení domu je to o {sqm(model.passageSaving)} m² menej než základný šatníkový vstup D.</li><li>Detská do ulice má {sqm(model.kidStreetArea)} m², detská do dvora {sqm(model.kidGardenArea)} m².</li></ol><p>Plocha sa presunula k spálni so šatníkom a ku garáži. Celková zastavaná plocha sa tým nezmenšila. Zalomenie pridáva roh a vyžaduje premyslený detail skrine.</p></details>
-      <div className="fp-construction-note"><strong>Rovnaký obrys, nový experiment</strong><p>Kúpeľňa zostáva ako v D. Garážový výklenok pokračuje do bývalého priechodu a regál je otočený k stene kúpeľne. Náhrada pôvodnej nosnej steny pri garáži, rozvody a posunuté uličné okná zostávajú témou projektu.</p><p>{settings.gardenRecess?'Krytý zárez zostáva vonkajším priestorom pod pôvodnou strechou. Parkovanie pri bráne je tesné; poloha auta závisí od konkrétnej brány a rozmerov auta.':'Garáž využíva uzavretú krytú terasu; obrys domu sa nezväčšuje, uzavretie však znamená stavebnú prácu.'}</p></div>
-      <div className="fp-source"><strong>Teoretický 2D koncept</strong><p>Rozmery a priechody sú modelované v milimetroch. Nejde o realizačný výkres ani potvrdenie statiky. Nábytok mimo rodičovskej časti je schematický.</p><Link href="/koncept-2d">Otvoriť zachovaný návrh D<ArrowUpRight size={14}/></Link></div>
+      <div className="fp-construction-note"><strong>Rovnaký obrys, variant E</strong><p>Kúpeľňa zostáva ako v D. Garážový výklenok pokračuje do bývalého priechodu a regál je otočený k stene kúpeľne. Náhrada pôvodnej nosnej steny pri garáži, rozvody a posunuté uličné okná zostávajú témou projektu.</p><p>{settings.gardenRecess?'Krytý zárez zostáva vonkajším priestorom pod pôvodnou strechou. Parkovanie pri bráne je tesné; poloha auta závisí od konkrétnej brány a rozmerov auta.':'Garáž využíva uzavretú krytú terasu; obrys domu sa nezväčšuje, uzavretie však znamená stavebnú prácu.'}</p></div>
+      <div className="fp-source"><strong>Teoretický 2D koncept</strong><p>Rozmery a priechody sú modelované v milimetroch. Nejde o realizačný výkres ani potvrdenie statiky. Nábytok mimo rodičovskej časti je schematický.</p><Link href="/">Otvoriť existujúci 3D dom<ArrowUpRight size={14}/></Link></div>
     </aside></div>
   </main>;
 }

@@ -39,7 +39,7 @@ describe('private bedroom study D',()=>{
         for(const wall of m.walls)check(!intersects(floors[i],wall.rectMm),`Wall ${wall.id} crosses floor`);
       }
       for(const bank of m.storageRuns)check(contains(m.dressing!,bank),'Cabinet outside lobby');
-      const furniture=[m.bed,...m.storageRuns,...m.garageShelves,...Object.values(m.fixtures),rect(7600,3850,9450,8700)];
+      const furniture=[m.bed,...m.storageRuns,...m.garageShelves,...Object.values(m.fixtures),m.car];
       for(const d of m.doors.filter(d=>d.id.startsWith('D-')||d.id==='C-GARAGE-CLOSET')){
         check(m.walls.every(w=>!intersects(w.rectMm,opening(d))),`${d.id} is blocked`);
         check(furniture.every(r=>!swingHits(d,r)),`${d.id} swings into furniture`);
@@ -52,7 +52,7 @@ describe('private bedroom study D',()=>{
       const m=createConcept({...DEFAULT_CONCEPT,expansion,nestedClosetDepth,garageBayWidth});
       const shared=m.doors.filter(d=>['D-HALL-DRESSING','D-DRESSING-BATH','C-GARAGE-CLOSET'].includes(d.id));
       const floors=[...m.rooms.filter(r=>['1.02','1.14','1.11','1.12'].includes(r.number)).flatMap(r=>r.rectsMm),...shared.map(opening)];
-      const obstacles=[...m.storageRuns,...m.garageShelves,...Object.values(m.fixtures),...shared.map(openLeaf),rect(7600,3850,9450,8700)];
+      const obstacles=[...m.storageRuns,...m.garageShelves,...Object.values(m.fixtures),...shared.map(openLeaf),m.car];
       const from:[number,number]=[Math.round((m.suiteRight+1000)/50)*50,7100];
       const bath:[number,number]=[Math.round((m.bathLeft+m.bathRight)/100)*50,4550];
       expect(walkingPath(floors,obstacles,from,bath)).toBe(true);

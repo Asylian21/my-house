@@ -1,7 +1,5 @@
 import { area, createConcept, DEFAULT_CONCEPT, normalizeConcept, rect, type ConceptSettings } from './floor-plan-concept';
 import type { InteriorDoor } from './twin-interior';
-import { HOUSE, GARAGE_DEPTH_REVISION } from './twin-site';
-import { GARAGE_VEHICLE } from './twin-garage';
 
 export interface ExperimentSettings extends Pick<ConceptSettings,'expansion'|'bedWidth'|'garageBayWidth'|'garageConnected'> {
   gardenRecess: boolean;
@@ -31,23 +29,7 @@ export function normalizeExperiment(input: Partial<ExperimentSettings>): Experim
 /** Independent E study. The approved A–D model and its route are not changed. */
 export function createExperiment(input: Partial<ExperimentSettings> = DEFAULT_EXPERIMENT) {
   const settings=normalizeExperiment(input);
-  const base=createConcept({...DEFAULT_CONCEPT,...settings,encloseLoggia:!settings.gardenRecess,layout:'private'});
-  const porch=HOUSE.porches.gardenLoggia, pier=porch.cornerPier;
-  const loggia={
-    bounds:rect(pier.startXmm,porch.backFaceYmm,porch.eastInnerXmm,porch.faceYmm),
-    pier:rect(pier.startXmm,pier.startYmm,pier.endXmm,pier.endYmm),
-    westReturn:rect(pier.startXmm,porch.backFaceYmm,6944,HOUSE.facades.west.loggiaOpening.startYmm),
-    depth:porch.faceYmm-porch.backFaceYmm,openingWidth:porch.openingEndXmm-porch.openingStartXmm,
-  };
-  const backFace=settings.gardenRecess?porch.backFaceYmm:porch.faceYmm;
-  const garageBackOpening=rect(porch.backDoor.startXmm,settings.gardenRecess?GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm:10699,porch.backDoor.startXmm+porch.backDoor.widthMm,backFace);
-  // Match the native 3D door: a 900 mm inward leaf and a 350 mm fixed sidelight.
-  const gardenDoor:InteriorDoor & {leafPlaneMm:number}={id:'E-GARDEN-DOOR',label:'Garáž → záhrada · 900 mm + bočné presklenie',axis:'X',wallSpanMm:[garageBackOpening.y0,backFace],leafPlaneMm:backFace-150,startMm:porch.backDoor.startXmm,widthMm:900,leafWidthMm:900,heightMm:porch.backDoor.heightMm,swing:-1,hinge:-1,motion:'HINGED',fromRoomId:'ROOM-1-12',toRoomId:'GARDEN'};
-  // Like the current 3D model, the car uses the recessed garage-gate threshold.
-  const carCenter=settings.gardenRecess?GARAGE_VEHICLE.route.parkedMm.y:6275;
-  const car=rect(7600,carCenter-2425,9450,carCenter+2425);
-  const gate=HOUSE.facades.front.garageDoor;
-  const garageThreshold=rect(gate.startXmm,HOUSE.facades.front.faceYmm,gate.startXmm+gate.widthMm,3504);
+  const base=createConcept({...DEFAULT_CONCEPT,...settings,layout:'private'});
   const right=base.suiteRight,stepY=5744+settings.passageDepth;
   const alcoveRight=11143+settings.alcoveWidth,returnRight=alcoveRight+140;
   const bedroomBottom=7741,doorStart=right-settings.doorOffset-800;
@@ -82,7 +64,7 @@ export function createExperiment(input: Partial<ExperimentSettings> = DEFAULT_EX
   const bed=rect(11143,cabinetFront+sideClearance,13343,cabinetFront+sideClearance+settings.bedWidth);
   const turnClearance=Math.hypot(Math.max(0,alcoveRight-bed.x1),bed.y0-bedroomBottom);
   const bedroomArea=area(rooms.find(r=>r.number==='1.10')!.rectsMm);
-  return {...base,settings,rooms,walls,doors,garageBay,garageAddition,garageShelves,loggia,garageBackOpening,gardenDoor,car,garageThreshold,
+  return {...base,settings,rooms,walls,doors,garageBay,garageAddition,garageShelves,
     garageArea:area(rooms.find(r=>r.number==='1.12')!.rectsMm),garageGain:area([garageAddition]),
     foyerReduction:(base.bathLeft-11143)*settings.passageDepth/1e6,privateAlcove,foyerRects,storageRuns,bed,sideClearance,turnClearance,
     dressing:privateAlcove,wardrobeRect:storageRuns[0],dressingAisle:sideClearance,
