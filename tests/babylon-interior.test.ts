@@ -146,25 +146,15 @@ describe("Babylon interior fit-out", () => {
           mesh.metadata?.doorId === wcDoor.id
           && mesh.name.includes("animované krídlo"),
       )!;
-      const wcEdgePull = scene.meshes.find(
-        (mesh) =>
-          mesh.metadata?.doorId === wcDoor.id
-          && mesh.name.includes("čelné výsuvné madlo"),
-      )!;
       wcDoor.apply(1, 0);
       const wcMovingRoot = wcLeaf.parent as TransformNode;
-      expect(wcDoor.kind).toBe("SLIDING");
-      expect(wcEdgePull.isPickable).toBe(true);
-      expect(wcMovingRoot.position.x).toBeCloseTo(0, 8);
-      expect(wcMovingRoot.position.z).toBeCloseTo(0.76, 8);
-      wcEdgePull.computeWorldMatrix(true);
-      const wcDoorSpec = INTERIOR_DOORS.find((door) => door.id === wcDoor.id)!;
-      expect(wcEdgePull.getAbsolutePosition().z).toBeCloseTo(sceneZM(9870), 6);
-      expect(
-        Math.abs(
-          wcEdgePull.getAbsolutePosition().z - sceneZM(wcDoorSpec.startMm),
-        ),
-      ).toBeLessThanOrEqual(0.02);
+      expect(wcDoor.kind).toBe("HINGED");
+      expect(wcMovingRoot.rotation.y).toBeCloseTo(Math.PI / 2, 8);
+      wcLeaf.computeWorldMatrix(true);
+      const wcBounds = wcLeaf.getBoundingInfo().boundingBox;
+      expect(wcBounds.minimumWorld.x).toBeGreaterThan(sceneXM(22783));
+      expect(wcBounds.maximumWorld.z).toBeLessThan(sceneZM(10500));
+      expect(scene.meshes.some(mesh => mesh.metadata?.doorId === wcDoor.id && mesh.name.includes("čelné výsuvné madlo"))).toBe(false);
       const wcRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-06")!;
       const wcActor = {
         position: {

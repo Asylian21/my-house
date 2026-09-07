@@ -43,11 +43,11 @@ function polysOverlap(a:Point[],b:Point[]){
 }
 
 describe('Service core dimensional and access contracts',()=>{
-  it('has continuous 580 mm access to storage, tank, boiler and hopper, including linings, rotated nozzles and raised bases',()=>{
+  it('has continuous 600 mm access to storage, tank, boiler and hopper, including linings, rotated nozzles and raised bases',()=>{
     const floors=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-07')!.rectsMm,edges=floorBoundary([...floors]);
     const obstacles=generated.meshes.filter(m=>(m.name.startsWith('TECHNICAL')||m.name.startsWith('1.07 ·'))&&m.z0<1850&&m.z1>20
       &&(!m.name.includes('BUFFER-TANK')||/hrdlo|teplomer|ciferník/.test(m.name))).map(polygon);
-    const routes:Point[][]=[[[26500,10800],[27100,10820]],[[26500,10800],[26700,10100]],[[26500,10800],[26700,9900]],[[26500,10800],[26565,10225],[26555,10140],[26510,10055],[26435,9985],[26175,9585],[26080,9480],[26065,9400]]];
+    const routes:Point[][]=[[[26500,10800],[27100,10820]],[[26500,10800],[26700,10100]],[[26500,10800],[26700,9900]],[[26500,10800],[26600,10220],[26600,10040],[26250,9550],[26080,9200]]];
     // Distance is 1-Lipschitz: a 0.5 mm margin and samples <=1 mm apart
     // also protect every point between samples, rather than only grid nodes.
     for(const route of routes)for(let i=1;i<route.length;i++){
@@ -56,7 +56,7 @@ describe('Service core dimensional and access contracts',()=>{
         const p:Point=[a[0]+(b[0]-a[0])*j/steps,a[1]+(b[1]-a[1])*j/steps];
         const clear=Math.min(Math.hypot(p[0]-heating.accumulator.centerMm.x,p[1]-heating.accumulator.centerMm.y)-heating.accumulator.outerDiameterMm/2,
           ...obstacles.map(poly=>polygonDistance(p,poly)),...edges.map(([x0,y0,x1,y1])=>distance(p,[x0,y0],[x1,y1])));
-        expect(floors.some(r=>inside(r,...p))&&clear>=290.5,`580 mm route blocked at ${p}; radius clearance ${clear}`).toBe(true);
+        expect(floors.some(r=>inside(r,...p))&&clear>=300.5,`600 mm route blocked at ${p}; radius clearance ${clear}`).toBe(true);
       }
     }
   });
@@ -87,6 +87,11 @@ describe('Service core dimensional and access contracts',()=>{
     const east=27500-Math.max(...boiler.map(m=>m.rect.x1));
     expect(west).toBeCloseTo(east,1);
     expect(Math.min(west,east)).toBeGreaterThanOrEqual(500);
+    // PLUS p.16 fig.7 measures the rear 500 mm from the body, not the flue tip.
+    const body=boiler.find(m=>m.name.endsWith('kombinované teleso drevo alebo pelety'))!;
+    const flue=boiler.find(m=>m.name.includes('koncept napojenia dymovodu'))!;
+    expect(body.rect.y0-7751).toBe(500);
+    expect(flue.rect.y0-7751).toBe(287);
     const tank=generated.meshes.find(m=>m.name.endsWith('akumulačná nádrž 1000 l'))!;
     expect(tank.rect.x1-tank.rect.x0).toBe(1106);
     expect(tank.rect.y1-tank.rect.y0).toBe(1106);
@@ -141,6 +146,17 @@ describe('Service core dimensional and access contracts',()=>{
       const kitchenLabel=INTERIOR_DOORS.find(d=>d.id==='DOOR-103-107')!.label;
       const kitchenMeshes=scene.meshes.filter(m=>m.name.startsWith(kitchenLabel));
       expect(kitchenMeshes.length).toBeGreaterThan(3);
+      const wcDoor=interiorDoors.find(d=>d.id==='DOOR-102-106')!;
+      expect(wcDoor.kind).toBe('HINGED');
+      const wcSpec=INTERIOR_DOORS.find(d=>d.id===wcDoor.id)!;
+      const wcMoving=scene.meshes.filter(m=>m.metadata?.doorId===wcDoor.id);
+      const wcObstacles=scene.meshes.filter(m=>(m.name.startsWith(wcSpec.label)&&!m.metadata?.doorId)||m.name.startsWith(WC_FITOUT.id)).map(shape);
+      expect(wcMoving.length).toBeGreaterThanOrEqual(3);
+      for(let step=0;step<=360;step++){
+        wcDoor.apply(step/360,0);
+        for(const m of wcMoving.map(shape))for(const o of wcObstacles)
+          if(m.top>o.bottom+.1&&m.bottom<o.top-.1)expect(polysOverlap(m.polygon,o.polygon),`${m.name}/${o.name} at ${step/4} degrees`).toBe(false);
+      }
       const staticObstacles=generated.meshes.filter(m=>m.z1>100.1&&m.z0<2013&&m.rect.x1>24000&&m.rect.y1>9000&&m.rect.y0<11200&&!m.name.includes('EAST-03')&&!m.name.includes('BUFFER-TANK')).map(m=>({name:m.name,polygon:m.polygon.split(' ').map(pair=>{const [x,y]=pair.split(',').map(Number);return [x,-y] as Point;})}));
       const openDoorObstacles=[...exteriorMeshes,...kitchenMeshes].map(shape).filter(m=>m.top>100.1&&m.bottom<2013);
       const route:Point[]=[[29000,10200],[26250,10150],[26000,10100],[25500,10100]];

@@ -21,14 +21,16 @@ export const HEATING_SOURCES={
 };
 export const TECHNICAL_HEATING_FITOUT={...heating,id:'TECHNICAL-PLUS19-DBOS1000',sourceId:SERVICE_CORE_REVISION.id,
   boiler:{...heating.boiler,referenceProductFamily:'DEFRO_FIREWOOD_DUO_PLUS',referenceOutputKw:19,
-    assemblyFootprintMm:rect(25757.5,8251,26995.5,9549),heightMm:1391,baseElevationMm:50,
-    body:{footprintMm:rect(26457.5,8464,26995.5,9120),heightMm:1233,controllerTopElevationMm:1389},
-    hopper:{...heating.boiler.hopper,footprintMm:rect(25757.5,8464,26371.5,9078),
+    assemblyFootprintMm:rect(25757.5,8038,26995.5,9336),heightMm:1391,baseElevationMm:50,
+    body:{footprintMm:rect(26457.5,8251,26995.5,8907),heightMm:1233,controllerTopElevationMm:1389},
+    hopper:{...heating.boiler.hopper,footprintMm:rect(25757.5,8251,26371.5,8865),
       depthBasis:'DERIVED_FROM_ORTHOGRAPHIC_DRAWING' as const},
-    burner:{footprintMm:rect(26505.5,9120,26947.5,9549)},
-    serviceRectMm:rect(26457.5,9120,27500,11120),frontServiceClearanceMm:2000,
+    burner:{footprintMm:rect(26505.5,8907,26947.5,9336)},
+    serviceRectMm:rect(26457.5,8907,27500,10907),frontServiceClearanceMm:2000,
     serviceMeasuredFrom:'BODY_FRONT' as const,openDoorEnvelopeWidthMm:1663,
-    modeledSideClearanceMm:504.5,modeledRearClearanceMm:500,
+    // PLUS manual, p.16 fig.7: rear distance is from the body, with the flue projecting into it.
+    modeledSideClearanceMm:504.5,modeledRearClearanceMm:500,rearServiceMeasuredFrom:'BODY_REAR' as const,
+    modeledRearConnectionClearanceMm:287,
     // Measured to the finished 10 mm wall lining, including the real shell at x27510.
     sideClearancesMm:{west:504.5,east:504.5},
   },

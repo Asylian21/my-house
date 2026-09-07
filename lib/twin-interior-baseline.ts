@@ -65,6 +65,8 @@ export interface InteriorDoor {
   readonly swing: -1 | 1;
   /** Hinge at the lower (-1) or upper (1) end of the opening along the wall. */
   readonly hinge: -1 | 1;
+  /** Pivot offset beyond the room-side wall face; a rebated leaf closes in front of the lining. */
+  readonly hingeOffsetMm?: number;
   /** Defaults to a hinged leaf; pocket doors translate within the wall plane. */
   readonly motion?: "HINGED" | "POCKET_SLIDING";
   readonly pocketDirection?: -1 | 1;

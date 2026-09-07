@@ -70,7 +70,7 @@ export function ItemMiniature({item,componentId}:{item:PlanItem;componentId?:str
 }
 
 export function TechnicalClearances(){
-  const boiler=HEATING.boiler.assemblyFootprintMm,rearY=boiler.y0-HEATING.boiler.modeledRearClearanceMm,axisX=(boiler.x0+boiler.x1)/2;
+  const boiler=HEATING.boiler.assemblyFootprintMm,body=HEATING.boiler.body.footprintMm,rearY=body.y0-HEATING.boiler.modeledRearClearanceMm,axisX=(boiler.x0+boiler.x1)/2;
   const zones=[{rect:HEATING.boiler.serviceRectMm,color:'#256eaa',label:'Obsluha kotla · 2 000 mm',vertical:true},
     {rect:HEATING.accumulator.serviceRectMm,color:'#187c75',label:'600',vertical:false},
     {rect:HEATING.storage.frontClearanceRectMm,color:'#93602a',label:'600',vertical:false}];
@@ -87,8 +87,8 @@ export function TechnicalClearances(){
         <path d={`M${x0} -8740H${x1}M${x0} -8785v90M${x1} -8785v90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         <text x={(x0+x1)/2} y="-8820" stroke="white" strokeWidth="22" paintOrder="stroke">{numberSk(x1-x0,1)}</text>
       </g>)}
-      <path d={`M${axisX} ${-rearY}V${-boiler.y0}M${axisX-45} ${-rearY}h90M${axisX-45} ${-boiler.y0}h90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-      <text x={axisX} y={-(rearY+boiler.y0)/2} stroke="white" strokeWidth="22" paintOrder="stroke">{HEATING.boiler.modeledRearClearanceMm}</text>
+      <path d={`M${axisX} ${-rearY}V${-body.y0}M${axisX-45} ${-rearY}h90M${axisX-45} ${-body.y0}h90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+      <text x={axisX} y={-(rearY+body.y0)/2} stroke="white" strokeWidth="22" paintOrder="stroke">{HEATING.boiler.modeledRearClearanceMm}</text>
     </g>
   </g>;
 }

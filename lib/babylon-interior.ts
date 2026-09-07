@@ -1183,7 +1183,7 @@ function buildDoor(context: InteriorBuildContext, materials: InteriorMaterials, 
   // transform, collision and shadow at every animation frame.
   const hingeAlongMm =
     door.hinge < 0 ? door.startMm + liningInsetMm : door.startMm + door.widthMm - liningInsetMm;
-  const hingeAcrossMm = door.swing < 0 ? wallFrom : wallTo;
+  const hingeAcrossMm = (door.swing < 0 ? wallFrom : wallTo) + door.swing * (door.hingeOffsetMm ?? 0);
   const alongDirection = door.hinge < 0 ? 1 : -1;
   const leafCenterAlong = hingeAlongMm + alongDirection * door.leafWidthMm / 2;
   const hingePlan = plan(hingeAlongMm, hingeAcrossMm);

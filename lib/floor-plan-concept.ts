@@ -279,6 +279,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const structuralChanges=[...base.structuralChanges,...INTERIOR_WALLS.filter(w=>removed.has(w.id)&&w.role==='LOAD_BEARING')];
   const doors=base.doors.map(d=>d.id==='DOOR-101-102'
     ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[6361,6560] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
+    :d.id==='DOOR-102-106'?{...d,label:'Dvere chodba → WC · otváravé 700/2100',motion:'HINGED' as const,hinge:1 as const,swing:1 as const,hingeOffsetMm:34,pocketDirection:undefined,pocketTravelMm:undefined,revisionSourceId:'C-WC-HINGED-2026-09-08'}
     :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}:d);
   const entryCabinet=rect(storageBack,4461,hallLine,6361);
   const entryBench=rect(storageBack,3554,storageBack+450,4404);

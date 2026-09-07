@@ -41,10 +41,10 @@ describe("animated architectural doors", () => {
         (counts, { kind }) => ({ ...counts, [kind]: (counts[kind] ?? 0) + 1 }),
         {},
       ),
-    ).toEqual({ HINGED: 10, SLIDING: 6, OVERHEAD: 1 });
+    ).toEqual({ HINGED: 11, SLIDING: 5, OVERHEAD: 1 });
     expect(
       ARCHITECTURAL_DOOR_INVENTORY.find(({ id }) => id === "DOOR-102-106"),
-    ).toEqual({ id: "DOOR-102-106", kind: "SLIDING" });
+    ).toEqual({ id: "DOOR-102-106", kind: "HINGED" });
 
     expect(APPLIANCE_DOOR_INVENTORY).toEqual([
       { id: "BATH-105-WASHER-DOOR", kind: "HINGED" },

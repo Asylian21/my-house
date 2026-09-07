@@ -10,8 +10,10 @@ export const opening = (d: InteriorDoor) => d.axis === 'X'
   : rect(d.wallSpanMm[0], d.startMm, d.wallSpanMm[1], d.startMm + d.widthMm);
 
 export function openLeaf(d: InteriorDoor & { leafPlaneMm?: number }): RectMm {
-  const plane = d.leafPlaneMm ?? (d.wallSpanMm[0] + d.wallSpanMm[1]) / 2;
-  const hinge = d.startMm + (d.hinge === 1 ? d.widthMm : 0);
+  const exactPivot = d.hingeOffsetMm !== undefined;
+  const plane = d.leafPlaneMm ?? (exactPivot ? (d.swing < 0 ? d.wallSpanMm[0] : d.wallSpanMm[1]) + d.swing * d.hingeOffsetMm! : (d.wallSpanMm[0] + d.wallSpanMm[1]) / 2);
+  const inset = exactPivot && d.widthMm !== d.leafWidthMm ? 60 : 0;
+  const hinge = d.startMm + (d.hinge === 1 ? d.widthMm - inset : inset);
   return d.axis === 'X'
     ? rect(hinge - 10, Math.min(plane, plane + d.swing * d.leafWidthMm), hinge + 10, Math.max(plane, plane + d.swing * d.leafWidthMm))
     : rect(Math.min(plane, plane + d.swing * d.leafWidthMm), hinge - 10, Math.max(plane, plane + d.swing * d.leafWidthMm), hinge + 10);
@@ -19,8 +21,10 @@ export function openLeaf(d: InteriorDoor & { leafPlaneMm?: number }): RectMm {
 
 /** Exact quarter-disc test for a hinged leaf's complete swing, not only its open position. */
 export function swingHits(d: InteriorDoor & { leafPlaneMm?: number }, obstacle: RectMm): boolean {
-  const plane = d.leafPlaneMm ?? (d.wallSpanMm[0] + d.wallSpanMm[1]) / 2;
-  const hinge = d.startMm + (d.hinge === 1 ? d.widthMm : 0);
+  const exactPivot = d.hingeOffsetMm !== undefined;
+  const plane = d.leafPlaneMm ?? (exactPivot ? (d.swing < 0 ? d.wallSpanMm[0] : d.wallSpanMm[1]) + d.swing * d.hingeOffsetMm! : (d.wallSpanMm[0] + d.wallSpanMm[1]) / 2);
+  const inset = exactPivot && d.widthMm !== d.leafWidthMm ? 60 : 0;
+  const hinge = d.startMm + (d.hinge === 1 ? d.widthMm - inset : inset);
   const direction = d.hinge === -1 ? 1 : -1;
   const along = d.axis === 'X'
     ? [(obstacle.x0 - hinge) * direction, (obstacle.x1 - hinge) * direction]
