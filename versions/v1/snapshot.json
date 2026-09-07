@@ -1,0 +1,345 @@
+{
+  "commit": "1057ed30e7a3d5b63a938acf47208ae1f3f296af",
+  "files": [
+    {
+      "source": "app/babylon-viewport.tsx",
+      "destination": "versions/v1/app/babylon-viewport.tsx",
+      "sha256": "72298dfb7aa94a207915bf9e8cd2c84e3354d9afb9a9c18bb697ca71c9b06ed2"
+    },
+    {
+      "source": "app/command-palette.tsx",
+      "destination": "versions/v1/app/command-palette.tsx",
+      "sha256": "81976aa7871109de8c9013768f9a0343c1c11b4a1805110a3fdb8155186fb760"
+    },
+    {
+      "source": "app/globals.css",
+      "destination": "versions/v1/app/globals.css",
+      "sha256": "b1dc53dfb49db1d0af35fa2d8d6f4a33d68ee4d282cdea19cef9f8dfc6a54e65"
+    },
+    {
+      "source": "app/hud-icons.ts",
+      "destination": "versions/v1/app/hud-icons.ts",
+      "sha256": "03a0b684a4ab1402ce7432f98d02306baadf55b2ca38489256afacf64bbc1c57"
+    },
+    {
+      "source": "app/twin-studio.tsx",
+      "destination": "versions/v1/app/twin-studio.tsx",
+      "sha256": "6c481cb4c4169dc57a900c395c55e82b4dbc2ffae6682eda24fd166f1fbf9f15"
+    },
+    {
+      "source": "app/use-chrome-visibility.ts",
+      "destination": "versions/v1/app/use-chrome-visibility.ts",
+      "sha256": "71adb0f279b96594f7be7fa33713957e57c43d1b0dd91f913c60de91b6fb82d0"
+    },
+    {
+      "source": "lib/babylon-avatar.ts",
+      "destination": "versions/v1/lib/babylon-avatar.ts",
+      "sha256": "9b89ca9d3dfae795133eb6af91d4a08a4e2e1926fec940dc41a17a8961cc1a29"
+    },
+    {
+      "source": "lib/babylon-doors.ts",
+      "destination": "versions/v1/lib/babylon-doors.ts",
+      "sha256": "cc8b08ca9a9440f4396fd81ffe4a5245ee2e74bb0e1b41b2a7975b4b0720ef1b"
+    },
+    {
+      "source": "lib/babylon-garage-vehicle.ts",
+      "destination": "versions/v1/lib/babylon-garage-vehicle.ts",
+      "sha256": "e4c8cd0e878c6754e841b56644ee61a6672227f05b9250029f2e94c52d0b8924"
+    },
+    {
+      "source": "lib/babylon-interior.ts",
+      "destination": "versions/v1/lib/babylon-interior.ts",
+      "sha256": "daf7a56a9760d42acea7636834d873d6395d815e097a48e4a83bb87d117eb657"
+    },
+    {
+      "source": "lib/babylon-openings.ts",
+      "destination": "versions/v1/lib/babylon-openings.ts",
+      "sha256": "8afd2718fb795b0db2c1621aedfc4b1b918fa738fc1bc57e7977b4df2b1c88d9"
+    },
+    {
+      "source": "lib/babylon-scene.ts",
+      "destination": "versions/v1/lib/babylon-scene.ts",
+      "sha256": "64eb4ac3485b94d34548913243ef0fc2473a916a6bba2d21a009191740ad5c1a"
+    },
+    {
+      "source": "lib/twin-avatar.ts",
+      "destination": "versions/v1/lib/twin-avatar.ts",
+      "sha256": "62e3502ba75f503c7df64d40fe9a6af767bab70d5d6e15cbf21bef935533ddde"
+    },
+    {
+      "source": "lib/twin-commands.ts",
+      "destination": "versions/v1/lib/twin-commands.ts",
+      "sha256": "bc66b326fd53b18ceba2ba6c0992762dc7833421099234390867285384d4877b"
+    },
+    {
+      "source": "lib/twin-domain.ts",
+      "destination": "versions/v1/lib/twin-domain.ts",
+      "sha256": "5afe508640f72aa956b6653093d719720568d10e383e86c9e8b9b43b85d64a84"
+    },
+    {
+      "source": "lib/twin-facade.ts",
+      "destination": "versions/v1/lib/twin-facade.ts",
+      "sha256": "afa5ae65c679058b9fd63ceb07d5e250e7983853c517f6915d918e9c9814aeeb"
+    },
+    {
+      "source": "lib/twin-fence.ts",
+      "destination": "versions/v1/lib/twin-fence.ts",
+      "sha256": "fef236cd65dd40ee11d5917af56710278c2e7dacf7940ff37238263f4731ff42"
+    },
+    {
+      "source": "lib/twin-garage-model.ts",
+      "destination": "versions/v1/lib/twin-garage-model.ts",
+      "sha256": "4d10433a1343a68a40d1cc1b2490ba734a047a2faee5a101825488cda232401c"
+    },
+    {
+      "source": "lib/twin-garage.ts",
+      "destination": "versions/v1/lib/twin-garage.ts",
+      "sha256": "a4ca4e44247065ffeab060ffd3b9edc5b12eb3eada54b964b60d3270037fc40f"
+    },
+    {
+      "source": "lib/twin-interior.ts",
+      "destination": "versions/v1/lib/twin-interior.ts",
+      "sha256": "f0c70e0251d688d6ec546c8faf208df1448a5544c266de9f7109d515045576d2"
+    },
+    {
+      "source": "lib/twin-render-frame.ts",
+      "destination": "versions/v1/lib/twin-render-frame.ts",
+      "sha256": "a033d57f691145d87f6c0445fb7313a2359693d0d2a4e46eead433bb921004ef"
+    },
+    {
+      "source": "lib/twin-roof.ts",
+      "destination": "versions/v1/lib/twin-roof.ts",
+      "sha256": "9efebac64b40017da449aecb77c88c4902862c402d86fb0f6731f99e93cb0585"
+    },
+    {
+      "source": "lib/twin-site.ts",
+      "destination": "versions/v1/lib/twin-site.ts",
+      "sha256": "5a58f7b18d5749e01b700bdaf03a892cc3bd82040a9a7d4a0b059e33854f95c3"
+    },
+    {
+      "source": "lib/twin-superb-combi.ts",
+      "destination": "versions/v1/lib/twin-superb-combi.ts",
+      "sha256": "2db789b6fc2ff1408b645b9c3a494db2b9e3dacdb4ae29f74707c459467de6ae"
+    },
+    {
+      "source": "lib/twin-ui-mode.ts",
+      "destination": "versions/v1/lib/twin-ui-mode.ts",
+      "sha256": "551ddd66c944fed69c6b5b1ecaa20f56b0e98e78e0f4acd2d13dd5704100b6b2"
+    },
+    {
+      "source": "lib/twin-viewport-contract.ts",
+      "destination": "versions/v1/lib/twin-viewport-contract.ts",
+      "sha256": "a48e411aaf72176abd7e0f2a4052af79d8780b29a55f2a34513a43e76b55549c"
+    },
+    {
+      "source": "lib/twin-walk-assist.ts",
+      "destination": "versions/v1/lib/twin-walk-assist.ts",
+      "sha256": "f37c55b7a414b396ab56acf3f1d3041c677a74952f160a8590b70c00383af915"
+    },
+    {
+      "source": "public/assets/avatar/avatar.glb",
+      "destination": "public/v1-assets/avatar/avatar.glb",
+      "sha256": "f7bcac60d0218bc289dfa5fae48295e15e3dbf0e14774b60d421500b1426e36f"
+    },
+    {
+      "source": "public/assets/avatar/michelle-light-diffuse.png",
+      "destination": "public/v1-assets/avatar/michelle-light-diffuse.png",
+      "sha256": "e92107c3e1a17459b342755b5f7d6f12be24b1be239c66fd956ac1c0f3af15a8"
+    },
+    {
+      "source": "public/assets/avatar/robot-expressive.glb",
+      "destination": "public/v1-assets/avatar/robot-expressive.glb",
+      "sha256": "047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319"
+    },
+    {
+      "source": "public/assets/avatar/vanguard.glb",
+      "destination": "public/v1-assets/avatar/vanguard.glb",
+      "sha256": "dfb230fc1f942f259dd00281a1186953ad602fc5d69067ce63e24b2aa439736b"
+    },
+    {
+      "source": "public/assets/environment/suburban-field-01-2k.jpg",
+      "destination": "public/v1-assets/environment/suburban-field-01-2k.jpg",
+      "sha256": "5b16840f04ceafd36002e7f07b3afd0339aa46a8a80f15dcca255417cff8ea03"
+    },
+    {
+      "source": "public/assets/environment/suburban-field-01-4k.jpg",
+      "destination": "public/v1-assets/environment/suburban-field-01-4k.jpg",
+      "sha256": "8fe7b9b788fbd9eafa809d6afae66b58e24a56f982ef3943a4cee1a62f07660c"
+    },
+    {
+      "source": "public/assets/environment/suburban-field-01-8k.jpg",
+      "destination": "public/v1-assets/environment/suburban-field-01-8k.jpg",
+      "sha256": "34495159bd99090ddaa0ae902ef50fbec34e0be4c9e0f7f483255fe9daa180f5"
+    },
+    {
+      "source": "public/assets/textures/boucle-taupe-albedo.jpg",
+      "destination": "public/v1-assets/textures/boucle-taupe-albedo.jpg",
+      "sha256": "3e44df64378075b07b7308cda9b6cde1c31faa95f95a8a673fbfdd35cb3cf4f9"
+    },
+    {
+      "source": "public/assets/textures/boucle-taupe-normal.jpg",
+      "destination": "public/v1-assets/textures/boucle-taupe-normal.jpg",
+      "sha256": "330091afdd0a396040098f7b81f3200eabfa3c26e97b90b79e1d371854b33379"
+    },
+    {
+      "source": "public/assets/textures/concrete-albedo.jpg",
+      "destination": "public/v1-assets/textures/concrete-albedo.jpg",
+      "sha256": "1b348d93bbeb79f4019e4fff4dfb4c70281645d2baea59637dacfb31caf21d19"
+    },
+    {
+      "source": "public/assets/textures/concrete-normal.jpg",
+      "destination": "public/v1-assets/textures/concrete-normal.jpg",
+      "sha256": "095d1773d4a612d2c2caeeb7ac9fe47cbf7fdd5459afee741f3c837e11fd5ee1"
+    },
+    {
+      "source": "public/assets/textures/deck-plank-albedo.jpg",
+      "destination": "public/v1-assets/textures/deck-plank-albedo.jpg",
+      "sha256": "d97f978eb09c3f2295169f53beadff864bba80e8559195a6e30e4a387c4d54a9"
+    },
+    {
+      "source": "public/assets/textures/deck-plank-normal.jpg",
+      "destination": "public/v1-assets/textures/deck-plank-normal.jpg",
+      "sha256": "1e221425bde99e883b419a5ea681c3c1c11521e57c42561a688a13642758c50b"
+    },
+    {
+      "source": "public/assets/textures/epoxy-grey-albedo.jpg",
+      "destination": "public/v1-assets/textures/epoxy-grey-albedo.jpg",
+      "sha256": "47f67d2ab09e12ca49b77358b58ef8cbe211223f826c5e6e8a586f435af49286"
+    },
+    {
+      "source": "public/assets/textures/epoxy-grey-normal.jpg",
+      "destination": "public/v1-assets/textures/epoxy-grey-normal.jpg",
+      "sha256": "6e730eccf950637bd0c84b0ac20b640cc3eee051506c851ce0a11397f7c97d2b"
+    },
+    {
+      "source": "public/assets/textures/gravel-albedo.jpg",
+      "destination": "public/v1-assets/textures/gravel-albedo.jpg",
+      "sha256": "04fdf84a8cb33176c7bd5b1d3cd8047a75264d9775be0e4666beef7c7d380ae2"
+    },
+    {
+      "source": "public/assets/textures/gravel-normal.jpg",
+      "destination": "public/v1-assets/textures/gravel-normal.jpg",
+      "sha256": "15f15ad7d67c1a20c99106f93ab28ae7530f59f0c759421bcce8aa135f4317fc"
+    },
+    {
+      "source": "public/assets/textures/hedge-privet-albedo.png",
+      "destination": "public/v1-assets/textures/hedge-privet-albedo.png",
+      "sha256": "292f8afb1f30d4dd49def0e20292d3b9d5a0d430b266e6b6ae556771b340eadf"
+    },
+    {
+      "source": "public/assets/textures/larch-albedo.jpg",
+      "destination": "public/v1-assets/textures/larch-albedo.jpg",
+      "sha256": "b5948e905439a9e8f12a3b9d3dd1bcbd42bee51bace2a8e7ddbcd0ded5a46ae6"
+    },
+    {
+      "source": "public/assets/textures/larch-normal.jpg",
+      "destination": "public/v1-assets/textures/larch-normal.jpg",
+      "sha256": "a0b4212acf624826460ec01bd377547831ac3435f1843c8bb014772820dc1add"
+    },
+    {
+      "source": "public/assets/textures/lawn-albedo.jpg",
+      "destination": "public/v1-assets/textures/lawn-albedo.jpg",
+      "sha256": "ef8a70c1a75189aa7610254128214a8a3cc208b96c86b3230ae08554360748c7"
+    },
+    {
+      "source": "public/assets/textures/lawn-normal.jpg",
+      "destination": "public/v1-assets/textures/lawn-normal.jpg",
+      "sha256": "39667d0adef19c7a099807a04ccfdaa580140a4f657a4af5b09d7659e915bbb3"
+    },
+    {
+      "source": "public/assets/textures/metal-anthracite-albedo.jpg",
+      "destination": "public/v1-assets/textures/metal-anthracite-albedo.jpg",
+      "sha256": "2e0ab54ee5844543cbc704b719e6cdb25f7dbe596da6d767ac77b61b0c5ce57a"
+    },
+    {
+      "source": "public/assets/textures/metal-anthracite-normal.jpg",
+      "destination": "public/v1-assets/textures/metal-anthracite-normal.jpg",
+      "sha256": "db78996dc2e382a7ebdb1ad2ba967214e39501632e70b5b451b61449289cf470"
+    },
+    {
+      "source": "public/assets/textures/oak-veneer-albedo.jpg",
+      "destination": "public/v1-assets/textures/oak-veneer-albedo.jpg",
+      "sha256": "6638c505a9cbc8f6d55eafb04044bf129e020db5c7f3049779ddbd6ecdc22a9a"
+    },
+    {
+      "source": "public/assets/textures/oak-veneer-normal.jpg",
+      "destination": "public/v1-assets/textures/oak-veneer-normal.jpg",
+      "sha256": "9b052b993e0d54780092b153597b72f09c3b3c05f8cc3420942e3beae1fc26ae"
+    },
+    {
+      "source": "public/assets/textures/plaster-white-albedo.jpg",
+      "destination": "public/v1-assets/textures/plaster-white-albedo.jpg",
+      "sha256": "d69291c17cdd43fa97f9fb8332fda0925e4f094dab60bb5176280cc85405d6ea"
+    },
+    {
+      "source": "public/assets/textures/plaster-white-normal.jpg",
+      "destination": "public/v1-assets/textures/plaster-white-normal.jpg",
+      "sha256": "19056d1f8b707ab04e90247205ced7e009b0d5bddcaa36d38b9d835284c54707"
+    },
+    {
+      "source": "public/assets/textures/pool-water-normal.png",
+      "destination": "public/v1-assets/textures/pool-water-normal.png",
+      "sha256": "d5ed33734eaef8123d2d68ba1d2b4dd19a3851eade7b5c0d36c33e3cef997e4a"
+    },
+    {
+      "source": "public/assets/textures/rug-wool-taupe-albedo.jpg",
+      "destination": "public/v1-assets/textures/rug-wool-taupe-albedo.jpg",
+      "sha256": "01e6d951ea580768d2c07e3988f3f8538f453c240dfe88b4cf50205608ca4dc3"
+    },
+    {
+      "source": "public/assets/textures/rug-wool-taupe-normal.jpg",
+      "destination": "public/v1-assets/textures/rug-wool-taupe-normal.jpg",
+      "sha256": "cc1725cd1bdc07caf776af8cef446115c5a5f9a0b225622fd4e61597c679d89a"
+    },
+    {
+      "source": "public/assets/textures/stone-dark-albedo.jpg",
+      "destination": "public/v1-assets/textures/stone-dark-albedo.jpg",
+      "sha256": "4b588edc9dac51f8b6430a428195b0d0d30ba782e4e3740406c3aca83a4172e8"
+    },
+    {
+      "source": "public/assets/textures/stone-dark-normal.jpg",
+      "destination": "public/v1-assets/textures/stone-dark-normal.jpg",
+      "sha256": "2b132bf3cc6175f40a2906871600b4f812740c196f4952f7912b7fe8d00762a0"
+    },
+    {
+      "source": "public/assets/textures/tile-porcelain-albedo.jpg",
+      "destination": "public/v1-assets/textures/tile-porcelain-albedo.jpg",
+      "sha256": "2ab771f05ea77676574c3451f1f2549eb4e5b16d0d5f0c15bb6f1528ab790937"
+    },
+    {
+      "source": "public/assets/textures/tile-porcelain-normal.jpg",
+      "destination": "public/v1-assets/textures/tile-porcelain-normal.jpg",
+      "sha256": "311bf7517fca223409cdbc4fa01f19735b1b54b34a72b53d5d8a3d1f15dc8bc6"
+    },
+    {
+      "source": "public/assets/textures/tile-wall-albedo.jpg",
+      "destination": "public/v1-assets/textures/tile-wall-albedo.jpg",
+      "sha256": "449aa731d5e0c2872a4b70d868c99af4e3352eee32eae37915aaad5d8b93b0a1"
+    },
+    {
+      "source": "public/assets/textures/tile-wall-normal.jpg",
+      "destination": "public/v1-assets/textures/tile-wall-normal.jpg",
+      "sha256": "c977a6771ca9f25ff44cb42f0827959a97db53fae32924afa8fdf4ec48a61444"
+    },
+    {
+      "source": "public/assets/textures/vinyl-oak-albedo.jpg",
+      "destination": "public/v1-assets/textures/vinyl-oak-albedo.jpg",
+      "sha256": "7fe3d22bfb166239fbb758fd845bd8bd667e5a33075320441667c8c538ba4254"
+    },
+    {
+      "source": "public/assets/textures/vinyl-oak-normal.jpg",
+      "destination": "public/v1-assets/textures/vinyl-oak-normal.jpg",
+      "sha256": "ed2d81cfbb350d2ef581daa6fad97f356b1a9f640b1266ce22a3fef1d34464ee"
+    },
+    {
+      "source": "public/assets/vegetation/ornamental-grass-card.png",
+      "destination": "public/v1-assets/vegetation/ornamental-grass-card.png",
+      "sha256": "0f603d68be529b3adcb37815704822abe8c68de5adadfb045732ecebaeb5daec"
+    },
+    {
+      "source": "public/assets/vegetation/perennial-cluster-card.png",
+      "destination": "public/v1-assets/vegetation/perennial-cluster-card.png",
+      "sha256": "09c5b97195f823daa9cf9c4a36c6471e2e4c43804621532f66fd54fa60b9dbde"
+    }
+  ]
+}
