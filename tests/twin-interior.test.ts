@@ -1,3 +1,4 @@
+// Historical source-plan contract; active C geometry is covered by twin-interior-c.test.ts.
 import { describe, expect, it } from "vitest";
 
 import {
@@ -23,7 +24,7 @@ import {
   totalActiveFloorAreaM2,
   totalDocumentedFloorAreaM2,
   type RectMm,
-} from "../lib/twin-interior";
+} from "../lib/twin-interior-baseline";
 import { GARAGE_DEPTH_REVISION, HOUSE, SOURCES } from "../lib/twin-site";
 import { roofHeightMm } from "../lib/twin-roof";
 import { WALK_CAMERA, WALK_COLLISION_ELLIPSOID_M } from "../lib/twin-viewport-contract";

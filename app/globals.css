@@ -1008,6 +1008,7 @@ kbd.key {
   inset: 0;
   z-index: 6;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   padding: var(--hud-gutter);
   pointer-events: none;
@@ -1638,6 +1639,42 @@ kbd.key {
 
 .touch-pad {
   display: none;
+}
+
+.walk-controls { padding: 12px; width: 218px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); color: var(--text-hi); }
+.walk-controls-tip, .walk-controls-status { margin: 0; font-size: 12px; line-height: 1.45; }
+.walk-controls-tip span, .walk-controls-status { color: var(--text-mid); }
+.walk-controls-buttons { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; margin: 10px 0; }
+.walk-controls-buttons button { min-height: 54px; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--glass-bg); color: var(--text-hi); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; user-select: none; }
+.walk-controls-buttons button span { font-size: 12px; }
+.walk-controls-buttons button:active { background: var(--accent); color: #171a17; }
+.walk-control-forward { grid-column: 2; grid-row: 1; }
+.walk-control-left { grid-column: 1; grid-row: 1; }
+.walk-control-right { grid-column: 3; grid-row: 1; }
+.walk-control-backward { grid-column: 2; grid-row: 2; }
+.walk-controls-buttons .walk-control-stop { grid-column: 3; grid-row: 2; }
+.walk-room-picker { display: flex; flex-direction: column; padding: 8px 12px; max-width: 300px; width: 100%; color: var(--text-hi); background: var(--glass-bg); backdrop-filter: var(--glass-blur); }
+.walk-room-picker > span { font-size: 12px; color: var(--text-mid); }
+.walk-room-picker select { width: 100%; min-height: 32px; font-size: 14px; color: var(--text-hi); background: transparent; border: 0; }
+.walk-room-picker option { background: #263331; color: #fff; }
+.hud[data-walking="true"] .dock .key { display: none; }
+@media (max-width: 1000px) {
+  .hud[data-walking="true"] .hud-row-bottom { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .hud[data-walking="true"] .hud-row-bottom .hud-start { grid-row: 2; justify-self: center; width: min(100%,370px); }
+  .hud[data-walking="true"] .hud-row-bottom .hud-center { grid-row: 1; }
+  .walk-controls { width: min(100%, 370px); padding: 10px; }
+  .walk-controls-buttons { grid-template-columns: repeat(5,minmax(0,1fr)); margin: 7px 0; }
+  .walk-controls-buttons > button { grid-column: auto; grid-row: 1; min-height: 48px; }
+  .walk-controls-buttons .walk-control-stop { grid-column: auto; grid-row: 1; }
+  .walk-controls-tip br { display: none; }
+  .walk-controls-tip br::after { content: " "; }
+}
+
+@media (max-width: 520px) {
+  .hud[data-walking="true"] .hud-row-top .hud-end { display: none; }
+  .hud[data-walking="true"] .walk-room-picker { max-width: 100%; }
+  .hud[data-walking="true"] .dock-button { flex-direction: column; justify-content: center; gap: 3px; padding: 0 8px; }
+  .hud[data-walking="true"] .dock-button span { display: inline; font-size: 11px; }
 }
 
 .touch-pad button {

@@ -16,6 +16,8 @@ await mkdir(output, { recursive: true });
 const server = await createServer({
   root,
   configFile: false,
+  // Export and the user's preview may run together; each needs its own optimizer cache.
+  cacheDir: resolve(root, "node_modules/.vite-archviz"),
   publicDir: "public",
   server: { host: "127.0.0.1", port: 0 },
   logLevel: "error",

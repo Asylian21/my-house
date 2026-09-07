@@ -100,12 +100,12 @@ export function chromeContract(
 ): ChromeContract {
   const experience = workspace === "experience";
   return {
-    autoHide: experience,
+    autoHide: experience && movement !== "walk",
     dockedPanels: !experience,
     appRails: !experience,
     surveyOverlays: !experience,
     cameraPresets: !experience && movement === "orbit",
-    reticle: experience && movement === "walk",
+    reticle: false,
     virtualPad: experience && movement !== "orbit",
   };
 }

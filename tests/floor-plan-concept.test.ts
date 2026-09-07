@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BED_LENGTH, createVestibuleConcept as createConcept, DEFAULT_CONCEPT, normalizeConcept, rect } from '../lib/floor-plan-concept';
-import { INTERIOR_ROOMS, INTERIOR_WALLS, type RectMm } from '../lib/twin-interior';
+import { INTERIOR_ROOMS, INTERIOR_WALLS, type RectMm } from '../lib/twin-interior-baseline';
 import { HOUSE } from '../lib/twin-site';
 
 const overlaps = (a:RectMm,b:RectMm) => a.x0<b.x1 && a.x1>b.x0 && a.y0<b.y1 && a.y1>b.y0;

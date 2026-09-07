@@ -3,7 +3,7 @@ import { createExperiment, DEFAULT_EXPERIMENT, normalizeExperiment, bedroomDoorO
 import { createConcept, DEFAULT_CONCEPT, rect } from '../lib/floor-plan-concept';
 import { HOUSE, GARAGE_DEPTH_REVISION } from '../lib/twin-site';
 import { GARAGE_VEHICLE } from '../lib/twin-garage';
-import { INTERIOR_ROOMS, INTERIOR_WALLS, INTERIOR_DOORS } from '../lib/twin-interior';
+import { INTERIOR_ROOMS, INTERIOR_WALLS, INTERIOR_DOORS } from '../lib/twin-interior-baseline';
 import { contains, intersects, opening, swingHits, openLeaf, walkingPath, check } from './floor-plan-geometry';
 
 describe('independent stepped private wardrobe study E',()=>{

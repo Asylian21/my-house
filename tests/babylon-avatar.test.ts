@@ -24,6 +24,21 @@ async function assetDataUrl(publicUrl: string) {
 }
 
 describe("Babylon adaptive walk surfaces", () => {
+  it.each([30,60,144,240])("keeps the viewing direction while backing up at %i FPS",fps=>{
+    const engine=new NullEngine(),scene=new Scene(engine);
+    scene.useRightHandedSystem=true;scene.collisionsEnabled=true;
+    const floor=CreateGround('backwards test floor',{width:20,height:20},scene);
+    floor.metadata={walkSurface:true,walkSurfaceKind:'interior'};
+    const avatar=new AvatarController(scene,()=>undefined);
+    try{
+      avatar.place(0,0,0);
+      const initialAlpha=avatar.camera.alpha;
+      for(let i=0;i<fps*3;i++)avatar.update(1000/fps,new Set(['backward']),{boost:false,precision:false});
+      expect(avatar.camera.alpha).toBeCloseTo(initialAlpha,7);
+      expect(avatar.pose.z).toBeLessThan(-2.5);
+      expect(Math.abs(avatar.pose.x)).toBeLessThan(.02);
+    }finally{avatar.dispose();scene.dispose();engine.dispose();}
+  });
   it("places the feet on tagged interior and terrain geometry only", () => {
     const engine = new NullEngine();
     const scene = new Scene(engine);

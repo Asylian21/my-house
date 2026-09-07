@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createConcept, DEFAULT_CONCEPT, normalizeConcept, area, rect } from '../lib/floor-plan-concept';
-import { INTERIOR_ROOMS, INTERIOR_WALLS, INTERIOR_DOORS } from '../lib/twin-interior';
+import { INTERIOR_ROOMS, INTERIOR_WALLS, INTERIOR_DOORS } from '../lib/twin-interior-baseline';
 import { HOUSE } from '../lib/twin-site';
 import { contains, intersects, opening, swingHits, openLeaf, walkingPath, check } from './floor-plan-geometry';
 

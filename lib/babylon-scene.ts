@@ -1,3 +1,5 @@
+import { HOUSE } from "./twin-active-house";
+import { resolveWalkFloor } from "./babylon-walk-picking";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
 import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
@@ -57,7 +59,6 @@ import earcut from "earcut";
 import {
   CADASTRAL_PARCELS,
   GARDEN_POOL,
-  HOUSE,
   LAYERS,
   PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
   POOL_SURROUND_DECK,
@@ -109,6 +110,7 @@ import {
 import { slatCenterDistancesMm } from "./twin-fence";
 import { buildInterior } from "./babylon-interior";
 import { AvatarController } from "./babylon-avatar";
+import { WalkDestination, easeWalkHeading, turnWalkHeading, type WalkTurn } from "./twin-walk-navigation";
 import { ArchvizPresentation } from "./babylon-archviz";
 import type { WalkAvatarId } from "./twin-avatar";
 import {
@@ -835,7 +837,7 @@ function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
   return { x: point.x + offset.x, y: point.y + offset.y };
 }
 
-/** Where a walker entering a room looks first: toward its largest glazing. */
+/** Frame the room's useful interior when entering from the room picker. */
 function walkLookTargetMm(room: InteriorRoom): Point2Mm {
   switch (room.id) {
     case "ROOM-1-03":
@@ -846,14 +848,18 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
       return { x: 22100, y: 6500 };
     case "ROOM-1-12":
       return { x: 8500, y: 3000 };
-    case "ROOM-1-09":
+    case "ROOM-DRESSING":
+      return { x: 12243, y: 7900 };
     case "ROOM-1-10":
-      return { x: room.standingPointMm.x, y: 11500 };
+      return { x: 12200, y: 9200 };
+    case "ROOM-1-09":
+      return { x: 15550, y: 9800 };
     case "ROOM-1-04":
       // Frame both sides of the compact room: the west-wall workstation and
       // the shortened east-wall printer cabinet.
       return OFFICE_FITOUT.cameraLookTargetMm;
     case "ROOM-1-08":
+      return { x: 15550, y: 4150 };
     case "ROOM-1-11":
       return { x: room.standingPointMm.x, y: 2500 };
     case "ROOM-1-06":
@@ -915,6 +921,9 @@ export class TwinSceneController {
   private readonly onVisibilityChange: () => void;
   private readonly keyboardFlightCommands = new Set<FlightCommand>();
   private readonly manualFlightCommands = new Set<FlightCommand>();
+  private readonly manualWalkTurns = new Set<WalkTurn>();
+  private readonly keyboardWalkTurns = new Set<WalkTurn>();
+  private readonly walkDestination = new WalkDestination();
   private readonly flightModifierCodes = new Set<string>();
   private readonly activePointers = new Set<number>();
   private pointerGesture: PointerGestureState | null = null;
@@ -1686,6 +1695,7 @@ export class TwinSceneController {
 
     this.scene.onPointerDown = (event) => {
       if (this.garageCinematicActive) return;
+      if (this.navigationMode === "walk") this.stopWalking();
       if (this.navigationMode === "orbit") this.cancelOrbitZoomGlide();
       if (
         this.navigationMode === "walk" &&
@@ -1771,6 +1781,8 @@ export class TwinSceneController {
           this.doors.getInteraction(doorId)?.id === doorId
         ) {
           this.toggleDoorInteraction(true, doorId);
+        } else {
+          this.walkToScreenPoint();
         }
       }
       this.pointerGesture = null;
@@ -1865,6 +1877,17 @@ export class TwinSceneController {
       event.preventDefault();
       return;
     }
+    if (this.navigationMode === "walk" && (event.code === "ArrowLeft" || event.code === "ArrowRight")) {
+      this.stopWalking();
+      this.keyboardWalkTurns.add(event.code === "ArrowLeft" ? "left" : "right");
+      event.preventDefault();
+      return;
+    }
+    if (this.navigationMode === "walk" && event.code === "Space") {
+      this.clearFlightInput();
+      event.preventDefault();
+      return;
+    }
     if (event.code.startsWith("Shift") || event.code.startsWith("Alt")) {
       this.flightModifierCodes.add(event.code);
       event.preventDefault();
@@ -1872,11 +1895,15 @@ export class TwinSceneController {
     }
     const command = flightCommandForCode(event.code);
     if (!command) return;
+    this.stopWalking();
     this.keyboardFlightCommands.add(command);
     event.preventDefault();
   };
 
   private readonly handleFlightKeyUp = (event: KeyboardEvent) => {
+    if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+      this.keyboardWalkTurns.delete(event.code === "ArrowLeft" ? "left" : "right");
+    }
     if (this.garageCinematicActive) {
       this.clearFlightInput();
       return;
@@ -1894,6 +1921,9 @@ export class TwinSceneController {
   };
 
   private readonly clearFlightInput = () => {
+    this.stopWalking();
+    this.manualWalkTurns.clear();
+    this.keyboardWalkTurns.clear();
     this.keyboardFlightCommands.clear();
     this.manualFlightCommands.clear();
     this.flightModifierCodes.clear();
@@ -2479,17 +2509,41 @@ export class TwinSceneController {
 
   private updateWalkMotion() {
     const avatar = this.avatar;
+    const deltaMs = this.engine.getDeltaTime();
+    const turn = Number(this.manualWalkTurns.has("right") || this.keyboardWalkTurns.has("right"))
+      - Number(this.manualWalkTurns.has("left") || this.keyboardWalkTurns.has("left"));
+    const third = this.scene.activeCamera === avatar.camera;
+    const currentForward = third
+      ? {x:-Math.cos(avatar.camera.alpha),z:-Math.sin(avatar.camera.alpha)}
+      : this.flightCamera.getForwardRay(1).direction;
+    let yaw = Math.atan2(currentForward.x, currentForward.z);
+    const travel = this.walkDestination.step(avatar.pose, deltaMs);
+    if (turn) yaw = turnWalkHeading(yaw, turn, deltaMs);
+    if (travel) yaw = easeWalkHeading(yaw, Math.atan2(travel.heading.x, travel.heading.z), deltaMs);
+    if (turn || travel) {
+      if (third) {
+        avatar.noteCameraInput();
+        avatar.camera.alpha = Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
+        avatar.camera.inertialAlphaOffset = 0;
+      } else {
+        const eye = avatar.eyePosition;
+        const pitch = this.flightCamera.rotation.x;
+        this.flightCamera.setTarget(eye.add(new Vector3(Math.sin(yaw), 0, Math.cos(yaw))));
+        this.flightCamera.rotation.x = pitch;
+        this.flightCamera.cameraRotation.setAll(0);
+      }
+    }
     const commands = new Set<FlightCommand>([
       ...this.keyboardFlightCommands,
       ...this.manualFlightCommands,
     ]);
+    if (travel) commands.add("forward");
     const modifiers = {
       boost: [...this.flightModifierCodes].some((code) => code.startsWith("Shift")),
-      precision: [...this.flightModifierCodes].some((code) => code.startsWith("Alt")),
+      precision: travel?.precision || [...this.flightModifierCodes].some((code) => code.startsWith("Alt")),
     };
-    const third = this.scene.activeCamera === avatar.camera;
     if (third) {
-      avatar.update(this.engine.getDeltaTime(), commands, modifiers);
+      avatar.update(deltaMs, commands, modifiers, travel?.heading);
     } else {
       // First person: the walker follows the eyes; mouse look stays on the
       // free camera, the body (and its collider) walks underneath it.
@@ -2501,7 +2555,7 @@ export class TwinSceneController {
           z: forward.z / horizontalLength,
         };
       }
-      avatar.update(this.engine.getDeltaTime(), commands, modifiers, this.flightHeading);
+      avatar.update(deltaMs, commands, modifiers, travel?.heading ?? this.flightHeading);
       this.flightCamera.position.copyFrom(avatar.eyePosition);
       this.flightCamera.rotation.x = Math.max(
         -Math.PI * 0.4,
@@ -2515,6 +2569,36 @@ export class TwinSceneController {
       this.walkRoomId = roomId;
       this.canvas.dataset.walkRoom = room?.number ?? "";
     }
+    this.canvas.dataset.walkTravel = this.walkDestination.status;
+    this.canvas.dataset.walkView = this.walkView;
+  }
+
+  /** Only the nearest visible surface is selectable; walls/doors/furniture occlude it. */
+  private walkToScreenPoint() {
+    const hit = this.scene.pick(this.scene.pointerX, this.scene.pointerY, mesh =>
+      mesh.isEnabled() && !mesh.isDisposed() &&
+      mesh.metadata?.walkCollisionOnly !== true && !mesh.isDescendantOf(this.avatar.root) &&
+      (mesh.metadata?.walkSurface === true || mesh.checkCollisions || mesh.metadata?.cameraOccluder === true || (mesh.isVisible && mesh.visibility > 0)),
+    );
+    const destination = resolveWalkFloor(this.scene, hit, this.avatar.pose.y);
+    if (!destination) return;
+    this.walkDestination.start(this.avatar.pose, destination);
+    this.canvas.focus({preventScroll:true});
+  }
+
+  stopWalking() { this.walkDestination.cancel(); }
+  stopWalkMotion() { this.clearFlightInput(); }
+  getWalkTravelStatus() { return this.walkDestination.status; }
+
+  setWalkTurn(turn: WalkTurn, active: boolean) {
+    if (this.navigationMode !== "walk" || this.garageCinematicActive) return;
+    if (active) { this.stopWalking(); this.manualWalkTurns.add(turn); }
+    else this.manualWalkTurns.delete(turn);
+  }
+
+  nudgeWalkTurn(turn: WalkTurn) {
+    this.setWalkTurn(turn, true);
+    window.setTimeout(() => this.setWalkTurn(turn, false), 240);
   }
 
   private animateWaterSurface() {
@@ -7430,6 +7514,7 @@ export class TwinSceneController {
   setNavigationMode(mode: NavigationMode) {
     if (this.garageCinematicActive) return;
     if (mode === this.navigationMode) return;
+    this.clearFlightInput();
     if (mode === "walk") {
       this.enterWalkthrough();
       return;
@@ -7560,8 +7645,8 @@ export class TwinSceneController {
     // Once the glTF arrives, hand over to the chase camera.
     void avatar.load().then(() => {
       this.canvas.dataset.walkAvatar = avatar.avatarId;
-      if (this.navigationMode === "walk" && !this.garageCinematicActive) {
-        this.applyWalkView();
+      if (this.navigationMode === "walk" && this.walkView === "third" && this.scene.activeCamera !== avatar.camera && !this.garageCinematicActive) {
+        this.applyWalkView(this.scene.activeCamera?.getForwardRay(1).direction.clone());
       }
     }).catch(() => undefined);
     this.canvas.focus({ preventScroll: true });
@@ -7580,7 +7665,7 @@ export class TwinSceneController {
 
   private walkRoomId: string | null = null;
   private readonly avatar: AvatarController;
-  private walkView: "third" | "first" = "third";
+  private walkView: "third" | "first" = "first";
 
   private leaveWalkCollisions() {
     this.flightCamera.checkCollisions = false;
@@ -7603,19 +7688,27 @@ export class TwinSceneController {
   /** Switches between the chase camera and the walker's own eyes. */
   setWalkView(view: "third" | "first") {
     if (this.garageCinematicActive) return;
+    if (view === this.walkView) return;
+    const gaze = this.scene.activeCamera?.getForwardRay(1).direction.clone();
+    this.clearFlightInput();
     this.walkView = view;
-    if (this.navigationMode === "walk") this.applyWalkView();
+    if (this.navigationMode === "walk") this.applyWalkView(gaze);
   }
 
   getWalkView() {
     return this.walkView;
   }
 
-  private applyWalkView() {
+  private applyWalkView(gaze?: Vector3) {
     if (this.garageCinematicActive) return;
     const avatar = this.ensureAvatar();
     const third = this.walkView === "third" && avatar.isLoaded;
     if (third) {
+      if (gaze) {
+        avatar.camera.alpha = Math.atan2(-gaze.z, -gaze.x);
+        avatar.camera.inertialAlphaOffset = 0;
+        avatar.camera.inertialBetaOffset = 0;
+      }
       this.flightCamera.detachControl();
       this.flightCamera.checkCollisions = false;
       this.flightCamera.minZ = 0.18;
@@ -7629,7 +7722,9 @@ export class TwinSceneController {
       const { yaw } = avatar.pose;
       this.flightCamera.position.copyFrom(eye);
       this.flightCamera.rotationQuaternion = null;
-      this.flightCamera.setTarget(eye.add(new Vector3(Math.sin(yaw), -0.04, Math.cos(yaw))));
+      this.flightCamera.setTarget(eye.add(gaze ?? new Vector3(Math.sin(yaw), -0.20, Math.cos(yaw))));
+      this.flightCamera.angularSensibility = 650;
+      this.flightCamera.inertia = 0.35;
       this.flightCamera.checkCollisions = false;
       this.flightCamera.minZ = 0.04;
       if (this.scene.activeCamera !== this.flightCamera) {
@@ -7644,7 +7739,7 @@ export class TwinSceneController {
       this.manualFlightCommands.delete(command);
       return;
     }
-    if (active) this.manualFlightCommands.add(command);
+    if (active) { this.stopWalking(); this.manualFlightCommands.add(command); }
     else this.manualFlightCommands.delete(command);
   }
 
@@ -7652,6 +7747,7 @@ export class TwinSceneController {
     if (this.garageCinematicActive) return;
     if (this.navigationMode === "walk") {
       // A tap is a short step: hold the command for a few frames.
+      this.stopWalking();
       this.manualFlightCommands.add(command);
       window.setTimeout(() => this.manualFlightCommands.delete(command), 220);
       return;
@@ -7844,9 +7940,11 @@ export class TwinSceneController {
 
   recoverWalkthrough() {
     if (this.navigationMode !== "walk" || this.garageCinematicActive) return;
+    const gaze = this.scene.activeCamera!.getForwardRay(1).direction.clone();
+    gaze.y = -0.04;
     this.clearFlightInput();
     this.avatar.recover();
-    this.applyWalkView();
+    this.applyWalkView(gaze);
     this.canvas.focus({ preventScroll: true });
   }
 

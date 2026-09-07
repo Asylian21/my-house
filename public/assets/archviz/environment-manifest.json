@@ -1,6 +1,6 @@
 {
   "source": "dom-archviz.blend",
-  "sourceSha256": "13164a1745182252f31d9fd527e61934392a9e776ef10469a9a695d96c3594db",
+  "sourceSha256": "316035a83018738960a1c59e2ec743ea7542bfe7a16ceaf79052007e2f7e6e57",
   "blender": "5.2.1 LTS",
   "skyType": "MULTIPLE_SCATTERING",
   "skySunDisc": false,
@@ -71,7 +71,7 @@
   "height": 1024,
   "samples": 16,
   "renderedMeshObjects": 0,
-  "elapsedSeconds": 17.09,
+  "elapsedSeconds": 3.17,
   "files": [
     {
       "file": "sky.hdr",
@@ -80,8 +80,8 @@
     },
     {
       "file": "sky.jpg",
-      "bytes": 99988,
-      "sha256": "79c8b9938fa2a691f7f2e1d2c56e41ff98a16707ec4ebab7d306c85c354777d2"
+      "bytes": 99995,
+      "sha256": "43c197c6e5391f7d660557137309f943d71aced83d936d26d6a9410440865ab9"
     }
   ],
   "orientationVerification": "Independent 256x128 panorama with RGB emissive markers confirmed native +X at u=.498, native -Z at u=.248, native +Y at top, within half a source pixel."

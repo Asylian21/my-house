@@ -57,11 +57,11 @@ describe("Babylon interior fit-out", () => {
       expect(architecturalDoors.map(({ id }) => id).sort()).toEqual(
         INTERIOR_DOORS.map(({ id }) => id).sort(),
       );
-      expect(architecturalDoors).toHaveLength(11);
+      expect(architecturalDoors).toHaveLength(10);
       expect(applianceDoors.map(({ id }) => id).sort()).toEqual(
         BATHROOM_FITOUT.builtIn.appliances.map(({ door }) => door.id).sort(),
       );
-      expect(doors).toHaveLength(13);
+      expect(doors).toHaveLength(12);
 
       const walkSurfaces = scene.meshes.filter(
         (mesh) => mesh.metadata?.walkSurface === true,
@@ -114,7 +114,7 @@ describe("Babylon interior fit-out", () => {
           expect(Math.hypot(
             movingRoot?.position.x ?? 0,
             movingRoot?.position.z ?? 0,
-          )).toBeCloseTo(0.76, 8);
+          )).toBeCloseTo(INTERIOR_DOORS.find(spec=>spec.id===door.id)!.pocketTravelMm! / 1000, 8);
           expect(movingRoot?.rotation.y ?? 0).toBe(0);
         } else {
           expect(Math.abs(movingRoot?.rotation.y ?? 0)).toBeCloseTo(
@@ -239,14 +239,43 @@ describe("Babylon interior fit-out", () => {
           ).toBe(true);
         }
 
+        const mattress=roomMeshes.find(mesh=>mesh.name.includes('· BED · matrac'))!;
+        mattress.computeWorldMatrix(true);
+        const bounds=mattress.getBoundingInfo().boundingBox;
+        expect(bounds.maximumWorld.x-bounds.minimumWorld.x).toBeCloseTo(1.4,3);
+        expect(bounds.maximumWorld.z-bounds.minimumWorld.z).toBeCloseTo(2,3);
+        expect(bounds.maximumWorld.y).toBeCloseTo(.46,3);
+        const positions=mattress.getVerticesData('position')!;
+        const normals=mattress.getVerticesData('normal')!;
+        const indices=mattress.getIndices()!;
+        for(let i=0;i<indices.length;i+=3){
+          const [a,b,c]=[indices[i]*3,indices[i+1]*3,indices[i+2]*3];
+          const ab=[0,1,2].map(axis=>positions[b+axis]-positions[a+axis]);
+          const ac=[0,1,2].map(axis=>positions[c+axis]-positions[a+axis]);
+          const cross=[ab[1]*ac[2]-ab[2]*ac[1],ab[2]*ac[0]-ab[0]*ac[2],ab[0]*ac[1]-ab[1]*ac[0]];
+          expect(cross.reduce((sum,value,axis)=>sum+value*normals[a+axis],0),'upholstery front face follows Babylon winding').toBeLessThan(0);
+        }
+        expect(roomMeshes.filter(mesh=>mesh.name.includes('čalúnené čelo'))).toHaveLength(2);
+        const duvet=roomMeshes.find(mesh=>mesh.name.includes('mäkko skladaná ľanová prikrývka'))!;
+        const duvetNormals=duvet.getVerticesData('normal')!;
+        const duvetPositions=duvet.getVerticesData('position')!;
+        const layerVertices=duvetPositions.length/6;
+        const centerVertex=Math.floor(layerVertices/2);
+        expect(duvetPositions[centerVertex*3+1]).toBeGreaterThan(duvetPositions[(centerVertex+layerVertices)*3+1]);
+        expect(duvetNormals[centerVertex*3+1]).toBeGreaterThan(.9);
+        expect(duvetNormals[(centerVertex+layerVertices)*3+1]).toBeLessThan(-.9);
+
         const guards = roomMeshes.filter((mesh) => mesh.metadata?.walkCollisionOnly === true);
         expect(guards.map((guard) => guard.name)).toEqual(expect.arrayContaining([
           expect.stringContaining("· BED · navigačný obrys"),
           expect.stringContaining("· WARDROBE · navigačný obrys"),
           expect.stringContaining("· DESK · navigačný obrys"),
-          expect.stringContaining("· CHAIR · navigačný obrys pojazdu"),
+          expect.stringContaining("· CHAIR · navigačný obrys"),
+          expect.stringContaining("· TOYS · navigačný obrys"),
+          expect.stringContaining("· BOOKS · navigačný obrys"),
+          expect.stringContaining("· READING · navigačný obrys"),
         ]));
-        expect(guards).toHaveLength(4);
+        expect(guards).toHaveLength(7);
         for (const guard of guards) {
           expect(guard.checkCollisions).toBe(true);
           expect(guard.isVisible).toBe(false);

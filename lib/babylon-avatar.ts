@@ -1132,7 +1132,7 @@ export class AvatarController {
     if (
       !cameraStillMoving &&
       speed > 0.3 &&
-      (commands.has("forward") || commands.has("backward")) &&
+      commands.has("forward") && !commands.has("backward") &&
       this.sinceUserOrbitS > WALK_CAMERA.recenterDelayS
     ) {
       const behind = Math.atan2(-Math.cos(this.yaw), -Math.sin(this.yaw));

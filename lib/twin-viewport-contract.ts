@@ -480,8 +480,8 @@ export function isSelectionTap({
 export const WALK_EYE_HEIGHT_M = 1.65;
 export const WALK_SPEED_MPS = Object.freeze({
   precision: 0.5,
-  normal: 1.55,
-  boost: 3.6,
+  normal: 1.15,
+  boost: 2.4,
 });
 /**
  * Third-person chase camera and the walker's motion feel: short
@@ -1060,14 +1060,14 @@ export type RenderQualityTier = RenderQualityProfile["tier"];
 export const INTERIOR_RENDER_QUALITY = Object.freeze({
   ambientOcclusion: Object.freeze({
     /** World-space kernel: reads plinths, skirtings and door linings, not eaves. */
-    radiusM: 0.34,
-    totalStrength: 1.05,
+    radiusM: 0.18,
+    totalStrength: 0.55,
     /** Lifts the darkest AO so corners stay readable, never crushed. */
-    base: 0.1,
+    base: 0.12,
     /** Fades AO out past the far wall of the living space. */
     maxZ: 14,
     minZAspect: 0.25,
-    epsilon: 0.02,
+    epsilon: 0.03,
     samples: Object.freeze({ ULTRA: 20, HIGH: 12 }),
     ssaoRatio: Object.freeze({ ULTRA: 0.75, HIGH: 0.5 }),
     blurRatio: 1,

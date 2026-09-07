@@ -249,7 +249,9 @@ test("keeps the two workspaces and the auto-hiding chrome wired to one model", a
   assert.match(globals, /@container viewport \(max-width: \d+px\)/);
   assert.match(globals, /\.hud-slot \{[\s\S]{0,220}?max-width: 100%;/);
   assert.match(viewport, /\{chrome\.reticle && /);
-  assert.match(viewport, /data-enabled=\{chrome\.virtualPad\}/);
+  assert.match(viewport, /data-enabled=\{chrome\.virtualPad && navigationMode === "flight"\}/);
+  assert.match(viewport, /<WalkControls/);
+  assert.match(viewport, /aria-label="Prejsť do miestnosti"/);
 
   // One searchable surface replaces the scattered buttons it grew out of.
   assert.match(viewport, /aria-label="Otvoriť príkazy modelu"/);
@@ -380,11 +382,11 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /aria-live="polite"/);
   assert.match(
     viewport,
-    /E alebo dotyk na výzvu ovláda blízke dvere, dvierka spotrebičov, poklop bazénovej šachty aj zostup po rebríku/,
+    /Dvere otvoríte kliknutím na dvere alebo na ponúknuté tlačidlo/,
   );
   assert.match(
     viewport,
-    /pochôdzny poklop aj riadený rebrík majú samostatnú bezpečnú interakciu/,
+    /medzerník zastaví pohyb a Escape ukončí prehliadku/,
   );
   // The door key is disclosed in the one help sheet rather than in a panel.
   assert.match(viewport, /<dt>Dvere, poklop, rebrík<\/dt>\s*<dd>E<\/dd>/);

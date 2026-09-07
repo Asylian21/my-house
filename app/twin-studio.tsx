@@ -1,5 +1,7 @@
 "use client";
 
+import { HOUSE } from "../lib/twin-active-house";
+
 import {
   Building2,
   Cable,
@@ -38,7 +40,7 @@ import {
 import { CommandPalette } from "./command-palette";
 import { useChromeVisibility } from "./use-chrome-visibility";
 import type { NavigationMode } from "@/lib/twin-viewport-contract";
-import { INTERIOR_ROOMS } from "@/lib/twin-interior";
+import { INTERIOR_ROOMS, totalActiveFloorAreaM2 } from "@/lib/twin-interior";
 import { WALK_AVATARS, type WalkAvatarId } from "@/lib/twin-avatar";
 import {
   buildCommands,
@@ -57,7 +59,6 @@ import {
   DEFAULT_LAYER_VISIBILITY,
   FOUNDATIONS,
   GARDEN_POOL,
-  HOUSE,
   LAYERS,
   POOL_SURROUND_DECK,
   POOL_TECHNOLOGY_SHAFT,
@@ -347,11 +348,11 @@ function getEntityDetail(
       eyebrow: "RODINNÝ DOM",
       title: "Novostavba RD Březí u Mikulova",
       subtitle: "Dve pretínajúce sa sedlové hmoty",
-      status: "Projektovaný stav · aktívna D1.1.002",
+      status: "Dispozícia C · 7. 9. 2026",
       statusTone: "design",
       rows: [
         { label: "Odvodená obálka D1", value: fmt(HOUSE.derivedFootprintAreaM2), unit: "m²" },
-        { label: "Úžitková plocha miestností", value: fmt(HOUSE.floorAreaM2), unit: "m²" },
+        { label: "Úžitková plocha miestností", value: fmt(totalActiveFloorAreaM2()), unit: "m²" },
         { label: "Terasy · súpis D1", value: fmt(HOUSE.terraceAreaM2), unit: "m²" },
         { label: "Aktívny pôdorys D1.1.002", value: "21 600 × 19 035", unit: "mm" },
         { label: "C3 · staršia situačná revízia", value: "20 800 × 19 044", unit: "mm" },
@@ -361,7 +362,7 @@ function getEntityDetail(
         { label: "Výškový systém", value: "±0,000 = 184,00", unit: "m Bpv" },
       ],
       sourceIds: HOUSE.sourceIds,
-      note: "3D hmota vychádza z neskoršieho pôdorysu D1.1.002 bez zrkadlenia: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Aktívna revízia predlžuje garáž o 1 000 mm na úkor záhradnej lodžie a znižuje D1 terasy z pôvodných 84,35 m² na 80,15 m². Žltá plocha C3 53 m² ostáva samostatnou staršou georeferencovanou revíziou.",
+      note: "Aktívny interiér zodpovedá variantu C: spálňa do dvora, samostatný šatník, kúpeľňa z chodby, zväčšená pracovňa a nové zádverie. Vonkajší obrys a strecha zostávajú podľa D1.1.002: garážový koniec je na lokálnom −X a obytné krídlo na +X. Umiestnenie do parcely je odvodené zarovnaním pravého okraja, zalomenia a hornej hrany na georeferencovanú C3; nejde o vytyčovací podklad. Aktívna revízia predlžuje garáž o 1 000 mm na úkor záhradnej lodžie a znižuje D1 terasy z pôvodných 84,35 m² na 80,15 m². Žltá plocha C3 53 m² ostáva samostatnou staršou georeferencovanou revíziou.",
     };
   }
 
@@ -524,7 +525,7 @@ export function TwinStudio() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [walkAvatarId, setWalkAvatarId] = useState<WalkAvatarId>("michelle");
-  const [walkView, setWalkView] = useState<"first" | "third">("third");
+  const [walkView, setWalkView] = useState<"first" | "third">("first");
   const [draftWidth, setDraftWidth] = useState("");
   const [inputError, setInputError] = useState("");
   const [history, setHistory] = useState<readonly HistoryItem[]>([]);
@@ -866,7 +867,7 @@ export function TwinStudio() {
             <div className="brand">
               <div className="brand-mark" aria-hidden="true"><span /><span /><span /></div>
               <div className="brand-copy">
-                <span>DIGITÁLNE DVOJČA</span>
+                <span>DIGITÁLNE DVOJČA · VARIANT C</span>
                 <strong>DOM 6012/26</strong>
               </div>
             </div>

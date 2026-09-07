@@ -924,9 +924,9 @@ describe("interior photographic contract", () => {
       false,
     );
     const ao = INTERIOR_RENDER_QUALITY.ambientOcclusion;
-    // The kernel must read skirtings and linings, not the roof's eave stack.
-    expect(ao.radiusM).toBeGreaterThan(0.2);
-    expect(ao.radiusM).toBeLessThan(0.5);
+    // Keep contact shadows local to low furniture instead of darkening broad floor areas.
+    expect(ao.radiusM).toBeGreaterThan(0.1);
+    expect(ao.radiusM).toBeLessThan(0.25);
     expect(ao.base).toBeGreaterThan(0);
     expect(ao.samples.ULTRA).toBeGreaterThan(ao.samples.HIGH);
     expect(ao.ssaoRatio.ULTRA).toBeGreaterThan(ao.ssaoRatio.HIGH);

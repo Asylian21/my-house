@@ -1,7 +1,7 @@
 import { createGarageEnvelope } from './floor-plan-garage';
-import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior';
+import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior-baseline';
 
-/** Separate study in plan millimetres. Never mutates the canonical 3D model. */
+/** Studies derive from the preserved drawing; the active 3D model consumes variant C. */
 export interface ConceptSettings { expansion: number; bedWidth: number; wardrobe: boolean; garageConnected: boolean; layout: 'private' | 'nested' | 'wardrobe' | 'vestibule'; wardrobeDepth: number; gardenRecess: boolean; garageBayWidth: number; nestedClosetDepth: number }
 export const DEFAULT_CONCEPT: ConceptSettings = { expansion: 0, bedWidth: 1800, wardrobe: true, garageConnected: true, layout: 'private', wardrobeDepth: 2000, gardenRecess: true, garageBayWidth: 1500, nestedClosetDepth: 1700 };
 export const DEFAULT_NESTED_CONCEPT: ConceptSettings = {...DEFAULT_CONCEPT,layout:'nested',garageConnected:false};

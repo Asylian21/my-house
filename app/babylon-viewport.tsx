@@ -57,6 +57,9 @@ import {
   type WalkAvatarId,
 } from "@/lib/twin-avatar";
 import { COMMAND_ICONS } from "./hud-icons";
+import { WalkControls } from "./walk-controls";
+import { INTERIOR_ROOMS } from "@/lib/twin-interior";
+import type { WalkTravelStatus } from "@/lib/twin-walk-navigation";
 
 export interface BabylonViewportHandle {
   setCameraPreset: (preset: CameraPreset) => void;
@@ -125,6 +128,7 @@ export const BabylonViewport = forwardRef<
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<TwinSceneController | null>(null);
+  const snapshotRef = useRef({foundations,selectionId,visibleLayers,viewMode});
   const onSelectRef = useRef(onSelect);
   const navigationModeRef = useRef(navigationMode);
   const onNavigationModeChangeRef = useRef(onNavigationModeChange);
@@ -136,7 +140,8 @@ export const BabylonViewport = forwardRef<
   const [walkRoomId, setWalkRoomId] = useState<string | null>(null);
   const [garageParkingState, setGarageParkingState] =
     useState<GarageParkingState>("away");
-  const [walkView, setWalkView] = useState<"third" | "first">("third");
+  const [walkView, setWalkView] = useState<"third" | "first">("first");
+  const [walkTravel, setWalkTravel] = useState<WalkTravelStatus>("idle");
   const [walkBlocked, setWalkBlocked] = useState(false);
   const [doorInteraction, setDoorInteraction] =
     useState<DoorInteractionSnapshot | null>(null);
@@ -146,6 +151,7 @@ export const BabylonViewport = forwardRef<
   const [walkAvatarMessage, setWalkAvatarMessage] = useState("");
 
   onSelectRef.current = onSelect;
+  snapshotRef.current = {foundations,selectionId,visibleLayers,viewMode};
   navigationModeRef.current = navigationMode;
   onNavigationModeChangeRef.current = onNavigationModeChange;
   onWalkAvatarChangeRef.current = onWalkAvatarChange;
@@ -235,6 +241,8 @@ export const BabylonViewport = forwardRef<
         );
         controller = createdController;
         controllerRef.current = createdController;
+        // Async creation / Fast Refresh must inherit the current layer choices.
+        createdController.update(snapshotRef.current);
         try {
           const storedAvatarId = window.localStorage.getItem(
             WALK_AVATAR_STORAGE_KEY,
@@ -261,6 +269,7 @@ export const BabylonViewport = forwardRef<
         dprQuery.addEventListener("change", onDprChange);
         await createdController.whenReady();
         if (!active) return;
+        createdController.update(snapshotRef.current);
         setArchvizUnavailable(createdController.getArchvizStatus().status === "fallback");
         setStatus("ready");
       })
@@ -310,6 +319,8 @@ export const BabylonViewport = forwardRef<
       );
       setWalkRoomId(room?.id ?? null);
       setWalkBlocked(controllerRef.current?.isWalkBlocked() ?? false);
+      setWalkTravel(controllerRef.current?.getWalkTravelStatus() ?? "idle");
+      setWalkView(controllerRef.current?.getWalkView() ?? "first");
       setDoorInteraction(controllerRef.current?.getDoorInteraction() ?? null);
       setGarageParkingState(
         controllerRef.current?.getGarageParkingState() ?? "away",
@@ -387,10 +398,10 @@ export const BabylonViewport = forwardRef<
       ? walkRoom || "Interiér 1.NP"
       : navigationMode === "flight"
         ? "Voľný prelet"
-        : "Dom 6012/26";
+        : "Dom 6012/26 · C";
   const contextMeta =
     navigationMode === "walk"
-      ? `${walkAvatarOption(walkAvatarId).label} · WASD · E interakcia`
+      ? "Klik na podlahu · potiahnutím rozhľad"
       : navigationMode === "flight"
         ? "WASD pohyb · Q/E výška · Shift turbo"
         : "Březí u Mikulova · 753 m²";
@@ -424,7 +435,7 @@ export const BabylonViewport = forwardRef<
         {navigationMode === "flight"
           ? "Voľný 3D prelet. Ťahaním sa rozhliadate, W A S D ovládajú vodorovný pohyb, E a Q výšku, Shift zrýchľuje, Alt spomaľuje a Escape ukončí prelet."
           : navigationMode === "walk"
-            ? "Prechádzka domom s voliteľnou postavou. Postavu vyberiete v paneli príkazov pod Command K, kde nájdete aj všetkých dvanásť miestností. W A S D ovládajú chôdzu v smere kamery, ťahaním otáčate kameru okolo postavy, Shift je beh, E alebo dotyk na výzvu ovláda blízke dvere, dvierka spotrebičov, poklop bazénovej šachty aj zostup po rebríku, koliesko približuje, V prepína pohľad z očí, R vystredí kameru alebo vyslobodí postavu a Escape ukončí prechádzku. Všetkých 18 dverových systémov, obe dvierka spotrebičov, pochôdzny poklop aj riadený rebrík majú samostatnú bezpečnú interakciu."
+            ? "Kliknutím na voľnú podlahu prejdete na vybrané miesto. Potiahnutím myšou alebo prstom sa rozhliadnete. Podržaním tlačidiel Dopredu a Dozadu kráčate; Doľava a Doprava otáčajú pohľad. Pri prekážke sa chôdza zastaví. Miestnosť vyberiete hore. Dvere otvoríte kliknutím na dvere alebo na ponúknuté tlačidlo. Fungujú aj šípky na klávesnici; medzerník zastaví pohyb a Escape ukončí prehliadku."
             : "Interaktívny technický model. Ťahaním model otáčate, kolieskom alebo gestom priblížite. Klávesy 1 až 5 nastavia pohľady, F zameria výber, H spustí voľný 3D prelet a G prechádzku interiérom."}
       </p>
       <canvas
@@ -470,6 +481,7 @@ export const BabylonViewport = forwardRef<
           data-autohide={chrome.autoHide}
           data-visible={chromeVisible}
           data-pad={chrome.virtualPad}
+          data-walking={navigationMode === "walk"}
         >
           <div className="hud-row hud-row-top">
             <div className="hud-slot hud-start">
@@ -496,6 +508,14 @@ export const BabylonViewport = forwardRef<
                   <small>ČÚZK · overené 24. 8. 2026</small>
                 </div>
               )}
+              {navigationMode === "walk" && <label className="walk-room-picker glass">
+                <span>Miestnosť</span>
+                <select aria-label="Prejsť do miestnosti" value={walkRoomId ?? ""} disabled={sceneBusy}
+                  onChange={event=>controllerRef.current?.enterWalkthrough(event.target.value)}>
+                  <option value="" disabled>Terasa a záhrada</option>
+                  {INTERIOR_ROOMS.map(room=><option key={room.id} value={room.id}>{room.name}</option>)}
+                </select>
+              </label>}
             </div>
             <div className="hud-slot hud-center" />
             <div className="hud-slot hud-end">
@@ -587,7 +607,7 @@ export const BabylonViewport = forwardRef<
                     </div>
                     <div>
                       <dt>Prechádzka</dt>
-                      <dd>G · WASD</dd>
+                      <dd>G · šípky · medzerník zastaví</dd>
                     </div>
                     <div>
                       <dt>Dvere, poklop, rebrík</dt>
@@ -621,12 +641,18 @@ export const BabylonViewport = forwardRef<
 
           <div className="hud-row hud-row-bottom">
             <div className="hud-slot hud-start">
+              {navigationMode === "walk" && <WalkControls disabled={sceneBusy} travel={walkTravel}
+                onMove={(direction,active)=>controllerRef.current?.setFlightCommand(direction,active)}
+                onStep={direction=>controllerRef.current?.nudgeFlight(direction)}
+                onTurn={(direction,active)=>controllerRef.current?.setWalkTurn(direction,active)}
+                onTurnStep={direction=>controllerRef.current?.nudgeWalkTurn(direction)}
+                onStop={()=>controllerRef.current?.stopWalkMotion()}/>}
               {/* Provenance has one home: the evidence rail in Documentation.
                   A floating copy of it over the render was the duplication
                   that made the old interface feel noisy. */}
               <div
                 className="touch-pad"
-                data-enabled={chrome.virtualPad}
+                data-enabled={chrome.virtualPad && navigationMode === "flight"}
                 data-vertical={navigationMode === "flight"}
                 role="group"
                 aria-label={
@@ -778,7 +804,7 @@ export const BabylonViewport = forwardRef<
                   </div>
                 )}
 
-                {experience && (
+                {experience && navigationMode !== "walk" && (
                   <>
                     {chrome.cameraPresets && (
                       <span className="dock-divider" aria-hidden="true" />
@@ -840,16 +866,17 @@ export const BabylonViewport = forwardRef<
                         className="dock-button"
                         disabled={sceneBusy}
                         aria-keyshortcuts="V"
+                        title={walkView === "first" ? walkAvatarOption(walkAvatarId).label : "Pohľad z očí"}
                         aria-label={
                           walkView === "third"
-                            ? "Prepnúť na pohľad z očí"
-                            : "Prepnúť na pohľad tretej osoby"
+                            ? "Pozerať vlastnými očami"
+                            : "Zobraziť postavu"
                         }
                         onClick={toggleWalkView}
                       >
                         <Eye size={17} strokeWidth={1.7} />
                         <span>
-                          {walkView === "third" ? "Z očí" : "Tretia osoba"}
+                          {walkView === "third" ? "Z očí" : "Postava"}
                         </span>
                         <kbd className="key">V</kbd>
                       </button>
@@ -861,7 +888,7 @@ export const BabylonViewport = forwardRef<
                         aria-label={
                           walkBlocked
                             ? "Vyslobodiť zaseknutú postavu"
-                            : "Vystrediť kameru za postavou"
+                            : walkView === "first" ? "Narovnať pohľad" : "Vystrediť kameru za postavou"
                         }
                         onClick={(event) => {
                           event.stopPropagation();
@@ -869,7 +896,7 @@ export const BabylonViewport = forwardRef<
                         }}
                       >
                         <Crosshair size={17} strokeWidth={1.7} />
-                        <span>{walkBlocked ? "Vyslobodiť" : "Vystrediť"}</span>
+                        <span>{walkBlocked ? "Vyslobodiť" : walkView === "first" ? "Narovnať" : "Vystrediť"}</span>
                         <kbd className="key">R</kbd>
                       </button>
                     </div>

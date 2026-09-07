@@ -134,8 +134,9 @@ describe("chrome contract", () => {
     expect(chromeContract("experience", "walk").cameraPresets).toBe(false);
   });
 
-  it("shows the reticle only while aiming at doors on foot", () => {
-    expect(chromeContract("experience", "walk").reticle).toBe(true);
+  it("keeps walking controls visible without a game-like aiming reticle", () => {
+    expect(chromeContract("experience", "walk").autoHide).toBe(false);
+    expect(chromeContract("experience", "walk").reticle).toBe(false);
     expect(chromeContract("experience", "flight").reticle).toBe(false);
     expect(chromeContract("documentation", "orbit").reticle).toBe(false);
   });

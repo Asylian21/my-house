@@ -33,15 +33,15 @@ const actor = (
 });
 
 describe("animated architectural doors", () => {
-  it("keeps 18 architectural systems plus appliance and pool access interactions", () => {
-    expect(ARCHITECTURAL_DOOR_INVENTORY).toHaveLength(18);
-    expect(new Set(ARCHITECTURAL_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(18);
+  it("keeps 17 variant C architectural systems plus appliance and pool access interactions", () => {
+    expect(ARCHITECTURAL_DOOR_INVENTORY).toHaveLength(17);
+    expect(new Set(ARCHITECTURAL_DOOR_INVENTORY.map(({ id }) => id)).size).toBe(17);
     expect(
       ARCHITECTURAL_DOOR_INVENTORY.reduce<Record<string, number>>(
         (counts, { kind }) => ({ ...counts, [kind]: (counts[kind] ?? 0) + 1 }),
         {},
       ),
-    ).toEqual({ HINGED: 13, SLIDING: 4, OVERHEAD: 1 });
+    ).toEqual({ HINGED: 10, SLIDING: 6, OVERHEAD: 1 });
     expect(
       ARCHITECTURAL_DOOR_INVENTORY.find(({ id }) => id === "DOOR-102-106"),
     ).toEqual({ id: "DOOR-102-106", kind: "SLIDING" });

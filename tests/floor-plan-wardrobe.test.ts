@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { area, createConcept, DEFAULT_CONCEPT as BASE_DEFAULT, rect } from '../lib/floor-plan-concept';
-import { INTERIOR_ROOMS, INTERIOR_WALLS, type RectMm } from '../lib/twin-interior';
+import { INTERIOR_ROOMS, INTERIOR_WALLS, type RectMm } from '../lib/twin-interior-baseline';
 import { HOUSE } from '../lib/twin-site';
 
 const DEFAULT_CONCEPT={...BASE_DEFAULT,layout:'wardrobe' as const};

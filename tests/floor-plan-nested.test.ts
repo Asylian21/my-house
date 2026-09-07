@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { area, createConcept, DEFAULT_CONCEPT as BASE_DEFAULT, DEFAULT_NESTED_CONCEPT, normalizeConcept, rect } from '../lib/floor-plan-concept';
-import { INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS } from '../lib/twin-interior';
+import { INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS } from '../lib/twin-interior-baseline';
 import { HOUSE } from '../lib/twin-site';
 
 const DEFAULT_CONCEPT=DEFAULT_NESTED_CONCEPT;

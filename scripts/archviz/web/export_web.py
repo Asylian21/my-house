@@ -10,9 +10,10 @@ START=time.monotonic()
 parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[3]);parser.add_argument('--output',type=Path);parser.add_argument('--source',type=Path);args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
 ROOT=args.root.resolve();OUT=(args.output or ROOT/'output/archviz/web').resolve();OUT.mkdir(parents=True,exist_ok=True);SOURCE=(args.source or ROOT/'output/archviz/dom-archviz.blend').resolve()
 if Path(bpy.data.filepath).resolve()!=SOURCE:bpy.ops.wm.open_mainfile(filepath=str(SOURCE))
-SCENE=json.loads((ROOT/'output/archviz/scene.json').read_text()); RECORDS={r['id']:r for r in SCENE['objects']}
+SCENE=json.loads((SOURCE.parent/'scene.json').read_text()); RECORDS={r['id']:r for r in SCENE['objects']}
 TEXTURES=json.loads((OUT/'texture-index.json').read_text()); ASSETS=ROOT/'output/archviz/assets'
 manifest={'version':1,'source':'dom-archviz.blend','sourceSha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'blender':bpy.app.version_string,'units':'metres','up':'Y','files':[],'hiddenSourceNames':[],'appearanceHiddenSourceNames':[],'disabledSourceNames':[],'plantPrototypes':[],'notes':['Source .blend remains unchanged.','Cycles shaders converted to portable PBR with original scanned source maps, 1024px maximum.','World-position box materials converted to metre-scaled UVs; foliage uses alpha cutout.','No baked global illumination; web renderer supplies sun, IBL, shadows and ambient occlusion.']}
+manifest.update(sourceGeometrySha256=SCENE.get('objSha256'),sourceFiles=SCENE.get('sourceFiles',{}),layoutId=SCENE.get('layoutId'))
 def progress(*a):print('WEB_EXPORT',*a,flush=True)
 # Remove lawn geometry-node distribution before dependency graph evaluation.
 for o in list(bpy.data.objects):

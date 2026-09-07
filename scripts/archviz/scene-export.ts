@@ -1,3 +1,5 @@
+import { ACTIVE_LAYOUT_ID } from "../../lib/twin-interior";
+import { HOUSE as activeHouse } from "../../lib/twin-active-house";
 import { EngineStore } from "@babylonjs/core/Engines/engineStore";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
@@ -111,7 +113,8 @@ function capture() {
     meshes,
     skipped,
     model: {
-      house: site.HOUSE,
+      house: activeHouse,
+      layoutId: ACTIVE_LAYOUT_ID,
       pool: site.GARDEN_POOL,
       fence: site.SITE_FENCE,
       surfaces: site.SITE_SURFACES,
