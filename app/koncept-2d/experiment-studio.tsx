@@ -35,9 +35,11 @@ export function ExperimentalFloorPlanStudio({rawSettings,setSettings,variant,onV
     const copy=svg.current.cloneNode(true) as SVGSVGElement;
     copy.setAttribute('xmlns','http://www.w3.org/2000/svg');
     const bounds=copy.getAttribute('viewBox')!.split(' ').map(Number);
-    copy.setAttribute('width','1730');copy.setAttribute('height',String(Math.round(1730*bounds[3]/bounds[2])));
+    const exportHeight=Math.round(1730*bounds[3]/bounds[2]);
+    copy.setAttribute('width','1730');copy.setAttribute('height',String(exportHeight));
+    copy.setAttribute('class','fp-export-plan');
     const style=document.createElementNS('http://www.w3.org/2000/svg','style');
-    style.textContent=Array.from(document.styleSheets).flatMap(s=>{try{return Array.from(s.cssRules).map(r=>r.cssText).filter(t=>t.includes('fp-'));}catch{return [];}}).join('\n')+'\n.fp-plan{font-family:Arial,sans-serif}.fp-dimension text{font:145px monospace}';
+    style.textContent=Array.from(document.styleSheets).flatMap(s=>{try{return Array.from(s.cssRules).map(r=>r.cssText).filter(t=>t.includes('fp-'));}catch{return [];}}).join('\n')+'\n.fp-export-plan{font-family:Arial,sans-serif}.fp-dimension text{font:145px monospace}';
     copy.prepend(style);
     const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(copy)],{type:'image/svg+xml;charset=utf-8'}));
     const a=document.createElement('a');a.href=url;a.download='dom-koncept-e-zalomenie.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -93,7 +95,7 @@ export function ExperimentalFloorPlanStudio({rawSettings,setSettings,variant,onV
             {dimensions&&<><VerticalDimension x={model.bathLeft+250} y0={5744} y1={model.stepY} label={`${m(model.frontAisle)} m priechod`}/><Dimension x0={model.returnRight} x1={model.suiteRight} y={7500} label={`${m(model.entranceWidth)} m`}/><Label x={8400} y={settings.gardenRecess?8420:9550} className="fp-clearance-label">{m(3898)} × {m(model.garageDepth)} m</Label></>}
             {dimensions&&<g className="fp-dimension"><path d={`M${model.alcoveRight},-7741L${Math.min(model.bed.x1,model.alcoveRight)},${-model.bed.y0}`}/><Label x={model.alcoveRight+350} y={(7741+model.bed.y0)/2-170} className="fp-turn-label">roh {Math.floor(model.turnClearance)} mm</Label></g>}
             <g className="fp-scale"><path d="M6900,-2050h2000m-2000,-75v150m1000,-150v150m1000,-150v150"/><Label x={6900} y={2250}>0</Label><Label x={7900} y={2250}>1</Label><Label x={8900} y={2250}>2 m</Label></g>
-          </svg></div></div><div className="fp-sheet-footer"><div className="fp-legend"><span><i className="parent"/>Súkromná spálňa</span><span><i className="private-closet"/>Súkromný šatník</span><span><i className="children"/>Detské izby</span><span><i className="new"/>Nové priečky</span></div><span>Oranžová trasa: spoločný prechod mimo spálne</span></div></div>
+          </svg></div></div><div className="fp-sheet-footer"><div className="fp-legend"><span><i className="parent"/>Súkromná spálňa</span><span><i className="private-closet"/>Súkromný šatník</span><span><i className="children"/>Detské izby</span><span><i className="walls"/>Steny a priečky</span></div><span>Oranžová trasa: spoločný prechod mimo spálne</span></div></div>
       <div className="fp-bottom-note"><LockKeyhole size={15}/><span>Pevný obrys 21,60 × 19,035 m · nočné krídlo 8,20 m</span></div>
     </section><aside className="fp-inspector" aria-label="Nastavenie experimentu E">
       <div className="fp-inspector-title"><span className="fp-eyebrow">VARIANT E / ZALOMENIE A KRYTÝ ZÁREZ</span><h2>Šatník dovnútra.<br/>Prechod okolo<span>.</span></h2><p>Priečka sa zalomí okolo súkromných skríň. {settings.garageConnected?'Rodina prejde krátkym vstupom do garáže alebo kúpeľne.':'Rodina prejde krátkym vstupom do kúpeľne. Garáž je teraz prístupná zvonka.'} Spálňa aj šatník sú za jednými dverami.</p></div>

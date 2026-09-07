@@ -637,10 +637,55 @@ test("selects every floor-plan variant on one route with one accessible tab pane
     assert.match(main, /Rohový stĺpik 1,00 × 0,50 m/);
     assert.match(main, /class="fp-terrace fp-garden-recess"/);
     assert.match(main, /Garáž → záhrada · 900 mm/);
+    assert.match(main, /Steny a priečky/);
+    // Every rendered sweep must rotate the actual leaf by 90 degrees around
+    // its hinge, even when the masonry opening is wider than the leaf.
+    const hingedDoors = [...main.matchAll(/<g class="fp-door">([\s\S]*?)<\/g>/g)];
+    assert.ok(hingedDoors.length > 5, variant);
+    for (const [, door] of hingedDoors) {
+      const paths = [...door.matchAll(/<path d="([^"]+)"/g)].map(match => match[1]);
+      assert.match(paths[1], /^M[-\d.,]+A/);
+      const [hx, hy, lx, ly] = paths[0].match(/-?\d+(?:\.\d+)?/g).map(Number);
+      const [cx, cy, rx, ry, rotation, large, sweep, ax, ay] = paths[1].match(/-?\d+(?:\.\d+)?/g).map(Number);
+      assert.equal(rx, ry);
+      assert.equal(Math.hypot(lx-hx, ly-hy), rx);
+      assert.equal(Math.hypot(cx-hx, cy-hy), rx);
+      assert.deepEqual([ax, ay], [lx, ly]);
+      assert.equal(Math.abs((cx-hx)*(lx-hx)+(cy-hy)*(ly-hy)), 0);
+      assert.deepEqual([rotation, large], [0, 0]);
+      assert.equal(sweep, Number((cx-hx)*(ly-hy)-(cy-hy)*(lx-hx)>0));
+    }
     if (variant === "e") assert.match(main, /id="alcove-width"/);
     else assert.doesNotMatch(main, /id="alcove-width"/);
     if (variant === "c") {
+      assert.match(main, /role="switch" aria-checked="false" aria-labelledby="closet-garage-label"/);
+      assert.match(main, /Dve súvislé skrine po 1,86 m/);
+      assert.doesNotMatch(main, /Garáž → šatník · 800 mm/);
+      assert.match(main, /M14403,-8720V-5140/);
+      assert.match(main, /Dvere sú presne oproti spálni/);
+      assert.match(main, /WC je pri uličnej stene, umývadlová skrinka 60 × 50 cm pri pravej stene/);
+      assert.match(main, /aria-label="Vyrovnané detské izby"/);
+      assert.match(main, /data-facing="EAST"><title>Súvislá skriňa v zádverí · posuvné čelá · 1,90 × 0,70 m/);
+      assert.match(main, /Vstavaná skriňa z chodby · dvor · 2,80 × 0,70 m/);
+      assert.match(main, /Lavička s botníkom · 0,85 × 0,45 m/);
+      assert.match(main, /Zádverie → centrálna chodba · posuvné 900 mm/);
+      assert.match(main, /Zádverie → pracovňa · 800 mm/);
+      assert.match(main, /data-pocket-direction="-1"/);
+      assert.match(main, /M20690,-6460\.5h900/);
+      assert.doesNotMatch(main, /data-facing="SOUTH"|data-facing="NORTH"/);
+      assert.match(main, /id="expansion"[^>]*max="100"/);
+      assert.match(main, /15,88/);
+      assert.match(main, /15,97/);
+      assert.match(main, /6,32/);
+      assert.match(main, /12,34/);
+      assert.match(main, /ZÁDVERIE 2,50 m/);
+      assert.match(main, /4,61/);
       assert.match(main, /Spálňa za novou priečkou · dvere 800 mm/);
+      assert.match(main, /11,42/);
+      assert.match(main, /4,09/);
+      assert.match(main, /Šatník má pevnú hĺbku/);
+      assert.doesNotMatch(main, /id="nested-closet-depth"/);
+      assert.match(main, /Stena šatníka, vstup do spálne a stena detskej izby sú v jednej línii bez odskoku/);
       assert.match(main, /Otvorený vstup z chodby → kúpeľňa · 800 mm/);
       assert.doesNotMatch(main, /Chodba → spálňa · 800 mm/);
     }

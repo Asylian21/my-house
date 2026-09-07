@@ -4,13 +4,23 @@ import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type In
 /** Separate study in plan millimetres. Never mutates the canonical 3D model. */
 export interface ConceptSettings { expansion: number; bedWidth: number; wardrobe: boolean; garageConnected: boolean; layout: 'private' | 'nested' | 'wardrobe' | 'vestibule'; wardrobeDepth: number; gardenRecess: boolean; garageBayWidth: number; nestedClosetDepth: number }
 export const DEFAULT_CONCEPT: ConceptSettings = { expansion: 0, bedWidth: 1800, wardrobe: true, garageConnected: true, layout: 'private', wardrobeDepth: 2000, gardenRecess: true, garageBayWidth: 1500, nestedClosetDepth: 1700 };
+export const DEFAULT_NESTED_CONCEPT: ConceptSettings = {...DEFAULT_CONCEPT,layout:'nested',garageConnected:false};
 export const BED_LENGTH = 2200;
+// C keeps both child rooms within 16 ± 0.5 m², including every slider step.
+export const NESTED_MAX_EXPANSION = 100;
+export interface ConceptCabinet {
+  id: string;
+  label: string;
+  roomNumber: '1.01' | '1.02';
+  facing: 'NORTH' | 'SOUTH' | 'EAST';
+  rectMm: RectMm;
+}
 export const rect = (x0: number, y0: number, x1: number, y1: number): RectMm => ({ x0, y0, x1, y1 });
 export const area = (rects: readonly RectMm[]) => rects.reduce((sum, r) => sum + (r.x1-r.x0)*(r.y1-r.y0)/1e6, 0);
 export function normalizeConcept(input: Partial<ConceptSettings>): ConceptSettings {
   const bounded = (v: unknown, fallback: number, lo: number, hi: number) => typeof v === 'number' && Number.isFinite(v) ? Math.round(Math.max(lo, Math.min(hi, v))/50)*50 : fallback;
   const layout=input.layout==='vestibule'?'vestibule':input.layout==='wardrobe'?'wardrobe':input.layout==='nested'?'nested':'private';
-  return { expansion: bounded(input.expansion, 0, 0, 600), bedWidth: bounded(input.bedWidth, 1800, 1600, 2200), wardrobe: typeof input.wardrobe === 'boolean' ? input.wardrobe : true, garageConnected: typeof input.garageConnected === 'boolean' ? input.garageConnected : true, layout, wardrobeDepth: bounded(input.wardrobeDepth, 2000, 2000, 2200), gardenRecess: typeof input.gardenRecess === 'boolean' ? input.gardenRecess : true, garageBayWidth: bounded(input.garageBayWidth,1500,1000,1700), nestedClosetDepth: bounded(input.nestedClosetDepth,1700,layout==='private'?1700:1600,1900) };
+  return { expansion: bounded(input.expansion, 0, 0, 600), bedWidth: bounded(input.bedWidth, 1800, 1600, 2200), wardrobe: typeof input.wardrobe === 'boolean' ? input.wardrobe : true, garageConnected: typeof input.garageConnected === 'boolean' ? input.garageConnected : layout!=='nested', layout, wardrobeDepth: bounded(input.wardrobeDepth, 2000, 2000, 2200), gardenRecess: typeof input.gardenRecess === 'boolean' ? input.gardenRecess : true, garageBayWidth: bounded(input.garageBayWidth,1500,1000,1700), nestedClosetDepth: bounded(input.nestedClosetDepth,1700,layout==='private'?1700:1600,1900) };
 }
 export function createVestibuleConcept(input: ConceptSettings, original = false) {
   const settings = normalizeConcept(input);
@@ -177,34 +187,108 @@ export function createNestedConcept(input: ConceptSettings, original = false) {
   };
 }
 
-/** C's added bedroom wall leaves the bathroom approach open to the shared hall. */
+/** C keeps the closet, bedroom entrance and child's corridor wall in one line. */
 function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
-  const right=base.suiteRight, top=base.dressing!.y1, bedroomBottom=top+140;
-  const entranceTop=Math.min(top,7601);
+  const right=base.suiteRight;
+  const hallWall=base.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm;
+  const top=hallWall.y0, bedroomBottom=hallWall.y1;
+  // This alignment fixes the closet's depth; old slider values cannot restore a step.
+  const dressing={...base.dressing!,y1:top};
+  const settings={...base.settings,nestedClosetDepth:top-dressing.y0};
+  const storageRuns=base.storageRuns.map(r=>({...r,y1:top}));
+  const bedroomDepth=10699-bedroomBottom, sideClearance=Math.floor((bedroomDepth-settings.bedWidth)/2);
+  const bed=rect(base.bed.x0,bedroomBottom+sideClearance,base.bed.x1,bedroomBottom+sideClearance+settings.bedWidth);
+  const doorStart=right-1000, doorEnd=right-200;
+  // The WC backs onto the street wall; the vanity sits on the east wall.
+  // Reserve their approaches as well as the inward swing of the aligned door.
+  const fixtures={...base.fixtures,
+    basin:rect(right-500,4204,right,4804),
+    toilet:rect(right-1400,3504,right-1000,4204),
+  };
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
   Object.assign(rooms.find(room=>room.number==='1.10')!,{
     rectsMm:[rect(11143,bedroomBottom,right,10699)],
   });
+  rooms.find(room=>room.number==='1.14')!.rectsMm=[dressing];
   const hall=rooms.find(room=>room.number==='1.02')!;
-  hall.rectsMm.push(rect(13483,5744,right,top),rect(right,6560,right+140,entranceTop));
-  const walls=base.walls.filter(w=>!['B-SUITE-WALL-S','B-SUITE-WALL-N'].includes(w.id));
+  hall.rectsMm.push(rect(13483,5744,right,top),rect(right,6560,right+140,top));
+  const walls=base.walls.filter(w=>!['B-SUITE-WALL-S','B-SUITE-WALL-N'].includes(w.id))
+    .map(w=>w.id==='C-CLOSET-EAST'?{...w,rectMm:{...w.rectMm,y1:bedroomBottom}}
+      :['C-CLOSET-NORTH-W','C-CLOSET-NORTH-E'].includes(w.id)?{...w,rectMm:{...w.rectMm,y0:top,y1:bedroomBottom}}
+      :w.id==='C-BATH-NORTH-W'?{...w,rectMm:{...w.rectMm,x1:doorStart}}
+      :w.id==='C-BATH-NORTH-E'?{...w,rectMm:{...w.rectMm,x0:doorEnd}}:w);
   const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
-  add('C-BED-PRIVACY-W',rect(13483,top,right-1000,bedroomBottom));
-  add('C-BED-PRIVACY-E',rect(right-200,top,right,bedroomBottom));
+  add('C-BED-PRIVACY-W',rect(13483,top,doorStart,bedroomBottom));
+  add('C-BED-PRIVACY-E',rect(doorEnd,top,right,bedroomBottom));
   add('C-OPEN-HALL-S',rect(right,3504,right+140,6560));
-  add('C-OPEN-HALL-N',rect(right,entranceTop,right+140,10699));
+  add('C-OPEN-HALL-N',rect(right,top,right+140,10699));
   const doors=base.doors.filter(d=>d.id!=='C-HALL-BED').map(d=>d.id==='C-BED-BATH'
-    ? {...d,id:'C-HALL-BATH',label:'Otvorený vstup z chodby → kúpeľňa · 800 mm',fromRoomId:'ROOM-1-02'}
-    : d);
-  doors.push({id:'C-PRIVATE-BED',label:'Spálňa za novou priečkou · dvere 800 mm',axis:'X',wallSpanMm:[top,bedroomBottom],startMm:right-1000,widthMm:800,heightMm:2100,leafWidthMm:800,swing:1,hinge:1,motion:'HINGED',fromRoomId:'ROOM-1-02',toRoomId:'ROOM-1-10'});
-  return {...base,rooms,walls,doors,bedroomArea:area(rooms.find(room=>room.number==='1.10')!.rectsMm),sharedHallArea:area(hall.rectsMm)};
+    ? {...d,id:'C-HALL-BATH',label:'Otvorený vstup z chodby → kúpeľňa · 800 mm',startMm:doorStart,hinge:1 as const,fromRoomId:'ROOM-1-02'}
+    : d.id==='C-BED-CLOSET'?{...d,wallSpanMm:[top,bedroomBottom] as const}:d);
+  doors.push({id:'C-PRIVATE-BED',label:'Spálňa za novou priečkou · dvere 800 mm',axis:'X',wallSpanMm:[top,bedroomBottom],startMm:doorStart,widthMm:800,heightMm:2100,leafWidthMm:800,swing:1,hinge:1,motion:'HINGED',fromRoomId:'ROOM-1-02',toRoomId:'ROOM-1-10'});
+  return {...base,settings,rooms,walls,doors,dressing,storageRuns,fixtures,wardrobeRect:storageRuns[0],
+    storageLength:storageRuns.reduce((sum,r)=>sum+r.y1-r.y0,0),bed,sideClearance,bedroomDepth,
+    bedroomArea:area(rooms.find(room=>room.number==='1.10')!.rectsMm),sharedHallArea:area(hall.rectsMm)};
+}
+
+/** C pairs deeper storage with a continuous, furnished entrance lobby. */
+function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
+  const streetEast=20702, gardenEast=20541, storageBack=20842, hallLine=21543;
+  const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
+  const street=rooms.find(room=>room.number==='1.08')!;
+  street.rectsMm=[rect(base.suiteRight+140,3504,streetEast,6361)];
+  const garden=rooms.find(room=>room.number==='1.09')!;
+  garden.rectsMm=[rect(base.suiteRight+140,7741,gardenEast,10699)];
+  // Move the office return 650 mm into the lobby, aligning it with the open door leaf.
+  const office=rooms.find(room=>room.number==='1.04')!;
+  office.rectsMm=[rect(23542,3504,27541,5400),...office.rectsMm.slice(1)];
+  const entry=rooms.find(room=>room.number==='1.01')!;
+  entry.rectsMm=[rect(storageBack,3504,22639,6361),rect(22639,3504,23339,5201)];
+  const hall=rooms.find(room=>room.number==='1.02')!;
+  // The former door approach is now inside the entrance lobby. Cabinet fronts
+  // stay on the same corridor line; the extra 100 mm comes from both rooms.
+  hall.rectsMm=hall.rectsMm.map(r=>r.x0===21543&&r.y0===5341
+    ?rect(r.x0,6560,r.x1,r.y1)
+    :r.x0===20942&&r.y0===7902?rect(storageBack,r.y0,r.x1,r.y1):r);
+  const removed=new Set(['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-CLOSET-SOUTH','IW-ENTRY-TOP-W','IW-ENTRY-TOP-E','IW-ENTRY-EAST','IW-ENTRY-STUDY']);
+  const walls=base.walls.filter(w=>!removed.has(w.id));
+  walls.push(
+    {id:'C-KID-ENTRY-PARTITION',role:'PARTITION',changed:true,rectMm:rect(streetEast,3504,storageBack,6361)},
+    {id:'C-KID-HALL-POCKET-WALL',role:'PARTITION',changed:true,rectMm:rect(18042,6361,21640,6560)},
+    {id:'C-ENTRY-HALL-JAMB',role:'PARTITION',changed:true,rectMm:rect(22540,6361,22639,6560)},
+    {id:'C-GARDEN-KID-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(gardenEast,7741,storageBack,10699)},
+    {id:'C-GARDEN-CLOSET-SOUTH',role:'PARTITION',changed:true,rectMm:rect(storageBack,7741,hallLine,7902)},
+    {id:'C-ENTRY-OFFICE-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(23339,3504,23542,5201)},
+    {id:'C-ENTRY-OFFICE-RETURN',role:'LOAD_BEARING',changed:true,rectMm:rect(22842,5201,23542,5400)},
+    // Close the change in thickness between the office jamb and corridor spine.
+    {id:'C-OFFICE-NORTH-JAMB',role:'PARTITION',changed:true,rectMm:rect(22783,6352,22842,6412)},
+  );
+  const structuralChanges=[...base.structuralChanges,...INTERIOR_WALLS.filter(w=>removed.has(w.id)&&w.role==='LOAD_BEARING')];
+  const doors=base.doors.map(d=>d.id==='DOOR-101-102'
+    ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[6361,6560] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
+    :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}:d);
+  const entryCabinet=rect(storageBack,4461,hallLine,6361);
+  const entryBench=rect(storageBack,3554,storageBack+450,4404);
+  const builtInCabinets:ConceptCabinet[]=[
+    {id:'C-ENTRY-CABINET',label:'Súvislá skriňa v zádverí · posuvné čelá',roomNumber:'1.01',facing:'EAST',rectMm:entryCabinet},
+    {id:'C-GARDEN-HALL-CABINET',label:'Vstavaná skriňa z chodby · dvor',roomNumber:'1.02',facing:'EAST',rectMm:rect(storageBack,7902,hallLine,10699)},
+  ];
+  return {...base,rooms,walls,doors,structuralChanges,builtInCabinets,entryBench,
+    kidStreetArea:area(street.rectsMm),kidGardenArea:area(garden.rectsMm),entryArea:area(entry.rectsMm),officeArea:area(office.rectsMm),
+    entryClearArea:area(entry.rectsMm)-area([entryCabinet,entryBench]),
+    sharedHallArea:area(hall.rectsMm),
+    streetKidDesk:rect(19400,3650,20650,4250),gardenKidBed:rect(gardenEast-900,8000,gardenEast,10000),
+  };
 }
 
 /** D separates sleeping from the shared routes, within C's existing suite. */
 export function createConcept(input: ConceptSettings, original = false) {
   const settings=normalizeConcept(input);
+  if(!original&&settings.layout==='nested') settings.expansion=Math.min(settings.expansion,NESTED_MAX_EXPANSION);
   const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original);
-  if(original||settings.layout!=='private') return {...(!original&&settings.layout==='nested'?encloseNestedBedroom(base):base),isPrivate:false};
+  const entryArea=area(base.rooms.find(r=>r.number==='1.01')!.rectsMm);
+  const entryDefaults={builtInCabinets:[] as ConceptCabinet[],entryBench:null as RectMm|null,entryArea,entryClearArea:entryArea,officeArea:area(base.rooms.find(r=>r.number==='1.04')!.rectsMm),streetKidDesk:rect(19900,3650,21150,4250),gardenKidBed:rect(19400,8000,20300,10000)};
+  if(original||settings.layout!=='private') return {...entryDefaults,...(!original&&settings.layout==='nested'?balanceNestedChildRooms(encloseNestedBedroom(base)):base),isPrivate:false};
   const right=base.suiteRight, top=base.dressing!.y1, bedroomBottom=top+140;
   const dressing=rect(11143,5744,right,top);
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
@@ -222,7 +306,7 @@ export function createConcept(input: ConceptSettings, original = false) {
   doors.push({id:'D-PRIVATE-BED',label:'Súkromná spálňa · zatvárateľné dvere 800 mm',axis:'X',wallSpanMm:[top,bedroomBottom],startMm:right-1000,widthMm:800,heightMm:2100,leafWidthMm:800,swing:1,hinge:-1,motion:'HINGED',fromRoomId:'ROOM-DRESSING',toRoomId:'ROOM-1-10'});
   // A single straight bank has fully accessible frontage; no double-counted L corner.
   const storageRuns=[rect(11143,top-600,right-1200,top)];
-  return {...base,settings,isPrivate:true,rooms,walls,doors,dressing,storageRuns,wardrobeRect:storageRuns[0],
+  return {...base,...entryDefaults,settings,isPrivate:true,rooms,walls,doors,dressing,storageRuns,wardrobeRect:storageRuns[0],
     storageLength:right-1200-11143,dressingAisle:settings.nestedClosetDepth-600,
     bedroomArea:area(rooms.find(r=>r.number==='1.10')!.rectsMm)};
 }

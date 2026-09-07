@@ -5,20 +5,21 @@ import { HOUSE } from '../lib/twin-site';
 import { contains, intersects, opening, swingHits, openLeaf, walkingPath, check } from './floor-plan-geometry';
 
 describe('private bedroom study D',()=>{
-  it('keeps C sleeping, bathroom, garage bay and exterior while separating sleeping from the lobby',()=>{
+  it('preserves D sleeping space, bathroom, garage bay and exterior independently of C alignment',()=>{
     const before=JSON.stringify({HOUSE,INTERIOR_ROOMS,INTERIOR_WALLS,INTERIOR_DOORS});
     const m=createConcept(DEFAULT_CONCEPT), c=createConcept({...DEFAULT_CONCEPT,layout:'nested'});
     expect(m.isPrivate).toBe(true);
-    expect(m.bed).toEqual(c.bed);
+    expect(m.bed).toEqual(rect(11143,8241,13343,10041));
     expect(m.bedroomArea).toBeCloseTo(12.0239);
     expect(area([m.dressing!])).toBeCloseTo(6.562);
     expect(m.bathroomArea).toBe(c.bathroomArea);
     expect(m.garageBay).toEqual(c.garageBay);
-    expect(m.fixtures).toEqual(c.fixtures);
+    expect(m.fixtures).toEqual({bath:rect(12532,3554,13282,5354),basin:rect(14503,4554,15003,5454),toilet:rect(13853,3504,14253,4204)});
     expect(m.sideClearance).toBe(657);
     expect(m.storageLength).toBe(2660);
     expect(m.dressingAisle).toBe(1100);
-    expect(m.structuralChanges).toEqual(c.structuralChanges);
+    expect(m.structuralChanges).toEqual(c.structuralChanges.filter(w=>!['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-ENTRY-STUDY','IW-ENTRY-EAST'].includes(w.id)));
+    expect(m.walls.find(w=>w.id==='IW-BED-108-EAST')!.rectMm).toEqual(INTERIOR_WALLS.find(w=>w.id==='IW-BED-108-EAST')!.rectMm);
     expect(m.doors.filter(d=>d.fromRoomId==='ROOM-1-10'||d.toRoomId==='ROOM-1-10').map(d=>d.id)).toEqual(['D-PRIVATE-BED']);
     expect(JSON.stringify({HOUSE,INTERIOR_ROOMS,INTERIOR_WALLS,INTERIOR_DOORS})).toBe(before);
   });
