@@ -1654,6 +1654,7 @@ export class TwinSceneController {
       layers: this.layerMeshes,
       compact: window.matchMedia("(pointer: coarse)").matches,
       technicalVisibility: (mesh) => this.realisticOnlyMeshes.includes(mesh) ? 0 : mesh.visibility,
+      realisticMaterial: (mesh) => this.appearances.get(mesh)?.realistic ?? mesh.material,
       castsShadow: (mesh) => this.shadowGenerator.getShadowMap()?.renderList?.includes(mesh) ?? false,
       setShadow: (mesh, enabled) => {
         if (enabled) this.shadowGenerator.addShadowCaster(mesh, false);

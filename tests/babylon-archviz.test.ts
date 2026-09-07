@@ -1,14 +1,72 @@
+import { readFileSync } from "node:fs";
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { describe, expect, it } from "vitest";
 
-import { anchorToSource, matchingSource, sourceBounds, sourceRestBounds } from "../lib/babylon-archviz";
+import { anchorToSource, archvizMaterialForFaces, hasDuplicatedBackFaces, matchingSource, sourceBounds, sourceRestBounds } from "../lib/babylon-archviz";
 import { deriveArchvizRenderQualityProfile } from "../lib/twin-viewport-contract";
 
 describe("Blender presentation keeps the live house authoritative", () => {
+  it.each([
+    ["dom-architecture.glb", "Krytá terasa · štít nad vencom · interiérová omietka"],
+    ["dom-interior-01.glb", "1.03 · južný štít podhľadu"],
+  ])("isolates corrected gable normals from shared materials in %s", (file, sourceName) => {
+    const bytes = readFileSync(new URL(`../public/assets/archviz/${file}`, import.meta.url));
+    const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
+    const gable = gltf.nodes.find((node: { extras?: { source_name?: string } }) =>
+      node.extras?.source_name === sourceName,
+    );
+    expect(gable).toBeDefined();
+    const exported = gltf.materials[gltf.meshes[gable.mesh].primitives[0].material];
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    try {
+      const material = new PBRMaterial(exported.name, scene);
+      material.backFaceCulling = !exported.doubleSided;
+      material.twoSidedLighting = !!exported.doubleSided;
+      const originalPolicy = [material.backFaceCulling, material.twoSidedLighting];
+      const cache = new Map<PBRMaterial, PBRMaterial>();
+      const corrected = archvizMaterialForFaces(material, true, cache);
+      expect([corrected.backFaceCulling, corrected.twoSidedLighting]).toEqual([true, false]);
+      expect(archvizMaterialForFaces(material, true, cache)).toBe(corrected);
+      // The same exported material can also serve walls without reverse copies.
+      expect(archvizMaterialForFaces(material, false, cache)).toBe(material);
+      expect([material.backFaceCulling, material.twoSidedLighting]).toEqual(originalPolicy);
+      material.dispose();
+      expect(cache.size).toBe(0);
+      expect(scene.materials).not.toContain(corrected);
+    } finally { scene.dispose(); engine.dispose(); }
+  });
+
+  it("detects the complete duplicated back-face layout without changing ordinary solids", () => {
+    const engine = new NullEngine();
+    const scene = new Scene(engine);
+    try {
+      const solid = CreateBox("ceiling slab", { size: 1 }, scene);
+      const doubled = CreateBox("double-sided solid", { size: 1, sideOrientation: Mesh.DOUBLESIDE }, scene);
+      expect(hasDuplicatedBackFaces(solid)).toBe(false);
+      expect(hasDuplicatedBackFaces(doubled)).toBe(true);
+      expect(hasDuplicatedBackFaces(new Mesh("empty", scene))).toBe(false);
+      const plant = new PBRMaterial("intentionally two-sided leaves", scene);
+      plant.backFaceCulling = false;
+      plant.twoSidedLighting = true;
+      const cache = new Map<PBRMaterial, PBRMaterial>();
+      const requiresCulling = plant.backFaceCulling && hasDuplicatedBackFaces(doubled);
+      expect(archvizMaterialForFaces(plant, requiresCulling, cache)).toBe(plant);
+      expect([plant.backFaceCulling, plant.twoSidedLighting]).toEqual([false, true]);
+      const glass = new PBRMaterial("transparent pane", scene);
+      glass.alpha = 0.2;
+      glass.backFaceCulling = false;
+      expect(archvizMaterialForFaces(glass, true, cache)).toBe(glass);
+      expect(cache.size).toBe(0);
+    } finally { scene.dispose(); engine.dispose(); }
+  });
+
   it("bounds GPU surfaces on mobile Retina and large desktop screens", () => {
     for (const [widthPx, heightPx, isCoarsePointer] of [[390, 844, true], [1200, 850, false], [3840, 2160, false]] as const) {
       const profile = deriveArchvizRenderQualityProfile({ widthPx, heightPx, isCoarsePointer, devicePixelRatio: 3, maxMsaaSamples: 8 });

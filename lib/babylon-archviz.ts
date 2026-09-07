@@ -1,6 +1,7 @@
 import type { AssetContainer } from "@babylonjs/core/assetContainer";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import type { Material } from "@babylonjs/core/Materials/material";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
@@ -45,18 +46,58 @@ interface NativeSource {
   technicalVisibility: number;
   originalVisibility: number;
   castsShadow: boolean;
+  cullDuplicatedFaces: boolean;
 }
 
 interface ArchvizHost {
   scene: Scene;
   layers: ReadonlyMap<LayerId, AbstractMesh[]>;
   technicalVisibility: (mesh: AbstractMesh) => number;
+  realisticMaterial: (mesh: AbstractMesh) => Material | null;
   castsShadow: (mesh: AbstractMesh) => boolean;
   setShadow: (mesh: AbstractMesh, enabled: boolean) => void;
   register: (mesh: AbstractMesh, layer: LayerId, entityId?: string) => void;
   unregister: (mesh: AbstractMesh) => void;
   onStatus: (status: ArchvizStatus) => void;
   compact: boolean;
+}
+
+/** Babylon DOUBLESIDE appends the same vertices with opposite normals. */
+export function hasDuplicatedBackFaces(mesh: AbstractMesh) {
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
+  if (!positions?.length || positions.length % 6 !== 0 || normals?.length !== positions.length) return false;
+  const half = positions.length / 2;
+  for (let i = 0; i < half; i++) {
+    if (Math.abs(positions[i] - positions[i + half]) > 1e-6 ||
+      Math.abs(normals[i] + normals[i + half]) > 1e-6) return false;
+  }
+  return true;
+}
+
+/** Isolate the culling fix from other meshes sharing an exported material. */
+export function archvizMaterialForFaces(
+  material: PBRMaterial,
+  cullDuplicatedFaces: boolean,
+  cache: Map<PBRMaterial, PBRMaterial>,
+) {
+  if (!cullDuplicatedFaces || material.backFaceCulling || material.needAlphaBlending()) return material;
+  const existing = cache.get(material);
+  if (existing) return existing;
+  // Coplanar reverse faces otherwise write inward normals into the SSAO buffer.
+  const clone = material.clone(`Culled duplicate faces | ${material.name}`);
+  clone.backFaceCulling = true;
+  clone.twoSidedLighting = false;
+  const originalTextures = new Set(material.getActiveTextures());
+  const ownedTextures = clone.getActiveTextures().filter(texture => !originalTextures.has(texture));
+  const disposal = material.onDisposeObservable.addOnce(() => clone.dispose(false, false));
+  clone.onDisposeObservable.addOnce(() => {
+    material.onDisposeObservable.remove(disposal);
+    for (const texture of ownedTextures) texture.dispose();
+    cache.delete(material);
+  });
+  cache.set(material, clone);
+  return clone;
 }
 
 /** Blender stores Z-up bounds in millimetres; the running scene is Y-up, metres. */
@@ -171,6 +212,7 @@ export class ArchvizPresentation {
   private readonly replaced = new Set<NativeSource>();
   private readonly anchors: TransformNode[] = [];
   private readonly owned = new Set<AbstractMesh>();
+  private readonly faceMaterials = new Map<PBRMaterial, PBRMaterial>();
   private grassContainer: AssetContainer | null = null;
   private grass: GrassPlacements | null = null;
   private readonly abort = new AbortController();
@@ -191,6 +233,8 @@ export class ArchvizPresentation {
         technicalVisibility: host.technicalVisibility(mesh),
         originalVisibility: mesh.visibility,
         castsShadow: host.castsShadow(mesh),
+        // Snapshot the physical policy, even if the mesh currently shows CAD.
+        cullDuplicatedFaces: !!host.realisticMaterial(mesh)?.backFaceCulling && hasDuplicatedBackFaces(mesh),
       };
     }));
     this.ready = this.load();
@@ -289,6 +333,7 @@ export class ArchvizPresentation {
         }
         if (provenance && source) nodeSources.set(provenance.node, source);
         if (provenance && mesh.material instanceof PBRMaterial) {
+          mesh.material = archvizMaterialForFaces(mesh.material, source?.cullDuplicatedFaces ?? false, this.faceMaterials);
           mesh.material = warmLivingMaterial(this.host.scene, provenance.extras.source_name ?? "", mesh.material);
         }
         registrations.push({ mesh, source, layer: source?.layer ?? "street" });
