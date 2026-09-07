@@ -1848,6 +1848,7 @@ function buildTechnicalHeatingFitout(
   materials: InteriorMaterials,
 ) {
   const fitout = TECHNICAL_HEATING_FITOUT;
+  const boilerMeshStart=context.scene.meshes.length;
   const boiler = fitout.boiler;
   const assemblyRect = boiler.assemblyFootprintMm;
   const bodyRect = boiler.body.footprintMm;
@@ -1928,7 +1929,7 @@ function buildTechnicalHeatingFitout(
     context.scene,
     `${fitout.id} · WOOD-PELLET-BOILER · horná antracitová regulačná lišta`,
     { x: bodyCenter.x, y: frontYmm + 4 },
-    bodyRect.x1 - bodyRect.x0 + 28,
+    bodyRect.x1 - bodyRect.x0 - 12,
     38,
     0.13,
     1.075,
@@ -2031,8 +2032,8 @@ function buildTechnicalHeatingFitout(
     `${fitout.id} · PELLET-HOPPER · zásobník peliet približne ${hopper.nominalPelletCapacityKg} kg`,
     hopperCenter,
     hopperRect.x1 - hopperRect.x0,
-    hopperRect.y1 - hopperRect.y0 - 92,
-    0.7,
+    hopperRect.y1 - hopperRect.y0,
+    (hopper.heightMm-745)*MM_TO_M,
     0.69,
     1,
   );
@@ -2042,12 +2043,12 @@ function buildTechnicalHeatingFitout(
     `${fitout.id} · PELLET-HOPPER · výklopné plniace veko`,
     { x: hopperCenter.x, y: hopperCenter.y - 12 },
     hopperRect.x1 - hopperRect.x0 - 34,
-    hopperRect.y1 - hopperRect.y0 - 126,
+    hopperRect.y1 - hopperRect.y0 - 34,
     0.045,
-    hopper.heightMm * MM_TO_M - 0.045,
+    hopper.heightMm * MM_TO_M - 0.060,
     1,
   );
-  hopperLid.rotation.x = -0.055;
+  hopperLid.rotation.x = 0;
   finish(context, hopperLid, materials.boilerEnamel, { shadow: true, pickable: true });
   const hopperGrip = texturedBox(
     context.scene,
@@ -2056,7 +2057,7 @@ function buildTechnicalHeatingFitout(
     190,
     24,
     0.025,
-    hopper.heightMm * MM_TO_M + 0.004,
+    hopper.heightMm * MM_TO_M - 0.025,
     1,
   );
   finish(context, hopperGrip, materials.fireplace, { shadow: true });
@@ -2099,7 +2100,7 @@ function buildTechnicalHeatingFitout(
   const burnerFace = texturedBox(
     context.scene,
     `${fitout.id} · PELLET-BURNER · čelný servisný kryt`,
-    { x: burnerCenter.x, y: burnerRect.y1 + 10 },
+    { x: burnerCenter.x, y: burnerRect.y1 - 12 },
     burnerRect.x1 - burnerRect.x0 - 44,
     20,
     0.25,
@@ -2110,7 +2111,7 @@ function buildTechnicalHeatingFitout(
   const burnerWindow = texturedBox(
     context.scene,
     `${fitout.id} · PELLET-BURNER · kontrolné okienko plameňa`,
-    { x: burnerCenter.x - 82, y: burnerRect.y1 + 23 },
+    { x: burnerCenter.x - 82, y: burnerRect.y1 - 5 },
     80,
     8,
     0.055,
@@ -2145,22 +2146,25 @@ function buildTechnicalHeatingFitout(
     { height: 0.06, diameter: 0.23, tessellation: 32 },
     context.scene,
   );
-  flueCollar.position.set(xM(bodyCenter.x), bodyHeightM + 0.03, zM(bodyRect.y0 + 145));
+  flueCollar.rotation.x=Math.PI/2;
+  flueCollar.position.set(xM(bodyCenter.x), .964, zM(bodyRect.y0-30));
   finish(context, flueCollar, materials.fireplace);
   const flueStub = CreateCylinder(
     `${fitout.id} · WOOD-PELLET-BOILER · koncept napojenia dymovodu Ø${boiler.flueOutletDiameterMm}`,
-    { height: 0.14, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
+    { height: (bodyRect.y0-assemblyRect.y0)*MM_TO_M, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
     context.scene,
   );
-  flueStub.position.set(xM(bodyCenter.x), bodyHeightM + 0.1, zM(bodyRect.y0 + 145));
+  flueStub.rotation.x=Math.PI/2;
+  flueStub.position.set(xM(bodyCenter.x), .964, zM((bodyRect.y0+assemblyRect.y0)/2));
   finish(context, flueStub, materials.fireplace);
 
-  navigationGuard(
-    context,
-    materials,
-    `${fitout.id} · WOOD-PELLET-ASSEMBLY · navigačný obrys celej zostavy`,
-    assemblyRect,
-  );
+  for(const [name,r] of [['teleso',bodyRect],['zásobník',hopper.footprintMm],['horák',burnerRect]] as const)
+    navigationGuard(context,materials,`${fitout.id} · WOOD-PELLET-ASSEMBLY · navigačný obrys ${name}`,r);
+  for(const mesh of context.scene.meshes.slice(boilerMeshStart))mesh.position.y+=boiler.baseElevationMm*MM_TO_M;
+  for(const [name,r] of [['teleso',bodyRect],['zásobník',hopperRect],['horák',burnerRect]] as const){
+    const base=texturedBox(context.scene,`${fitout.id} · BOILER-BASE · nehorľavý podstavec 50 mm · ${name}`,rectCenter(r),r.x1-r.x0,r.y1-r.y0,.05,0,1);
+    finish(context,base,materials.steel,{shadow:true});
+  }
 
   const tank = fitout.accumulator;
   const tankRadiusMm = tank.outerDiameterMm / 2;
@@ -2202,7 +2206,7 @@ function buildTechnicalHeatingFitout(
   for (const elevationM of [0.58, 1.48]) {
     const band = CreateCylinder(
       `${fitout.id} · BUFFER-TANK-1000L · oceľová obruč`,
-      { height: 0.028, diameter: tank.outerDiameterMm * MM_TO_M + 0.018, tessellation: 48 },
+      { height: 0.028, diameter: tank.outerDiameterMm * MM_TO_M - 0.002, tessellation: 48 },
       context.scene,
     );
     band.position.set(xM(tank.centerMm.x), elevationM, zM(tank.centerMm.y));
@@ -2258,6 +2262,31 @@ function buildTechnicalHeatingFitout(
     zM(tank.centerMm.y),
   );
   finish(context, gaugeFace, materials.kitchenUpper);
+  buildTechnicalStorageReserve(context,materials);
+}
+
+/** Space allocations are visible, but never presented as certified fire compartments. */
+function buildTechnicalStorageReserve(context:InteriorBuildContext,materials:InteriorMaterials){
+  const storage=TECHNICAL_HEATING_FITOUT.storage,r=storage.footprintMm,c=rectCenter(r);
+  const box=(name:string,center:Point2Mm,w:number,d:number,h:number,bottom:number,material=materials.steel)=>{
+    const mesh=texturedBox(context.scene,`${storage.id} · ${name}`,center,w,d,h*MM_TO_M,bottom*MM_TO_M,1);
+    finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
+  };
+  box('STORAGE-CABINET · uzavretá skladová rezerva, požiarne oddelenie na overenie',{x:r.x0+8,y:c.y},16,450,storage.heightMm,0);
+  for(const y of [r.y0+8,r.y1-8])box('STORAGE-CABINET · oceľová bočnica',{x:c.x,y},500,16,storage.heightMm,0);
+  for(const z of [30,470,1184])box('STORAGE-CABINET · oceľová polica',c,468,418,16,z);
+  // A sliding tambour face has no door sweep into the tank or boiler access.
+  for(let i=0;i<12;i++)box('STORAGE-CABINET · posuvné roletové čelo',{x:r.x1-8,y:c.y},16,434,96,i*100);
+  const vacuum=storage.vacuumSizeMm;
+  box('VACUUM · kompaktný vysávač – rozmerová rezerva',{x:c.x,y:c.y},vacuum.width,vacuum.depth,vacuum.height,70,materials.fireplace);
+  for(let i=0;i<3;i++)box(`PELLET-BAG-${i+1} · vrece peliet 15 kg`,c,storage.bagSizeMm.width,storage.bagSizeMm.depth,storage.bagSizeMm.height,500+i*160,materials.childCork);
+  navigationGuard(context,materials,`${storage.id} · STORAGE-CABINET · navigačný obrys`,r);
+  const h=TECHNICAL_HEATING_FITOUT.hydraulicReserve;
+  // Open framing makes the unselected hydraulic envelope visually explicit.
+  for(const y of [r.y0+10,r.y1-10])for(const x of [r.x0+10,r.x1-10])
+    box('HYDRAULIC-RESERVE · rám rezervy hydrauliky',{x,y},20,20,h.heightMm,h.bottomMm);
+  const k=h.safetyGroupMm;
+  box('SAFETY-GROUP · KSG mini 2,5 bar',{x:r.x1-55,y:r.y0+100},k.depth,k.width,k.height,1500,materials.fireplace);
 }
 
 /** Practical long-axis fitout for the enlarged room 1.06. */
@@ -2320,7 +2349,7 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   softEllipsoid(
     context,
     `${fitout.id} · WALL-HUNG-WC · keramická misa`,
-    { x: toiletCenter.x, y: toiletCenter.y + 10 },
+    { x: toiletCenter.x, y: toiletCenter.y },
     [0.37, 0.28, 0.52],
     0.32,
     materials.sanitaryCeramic,
@@ -2341,9 +2370,9 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
   toiletSeat.position.set(
     xM(toiletCenter.x),
     toilet.seatElevationMm * MM_TO_M,
-    zM(toiletCenter.y + 35),
+    zM(toiletCenter.y),
   );
-  toiletSeat.scaling.set(0.98, 0.68, 1.42);
+  toiletSeat.scaling.set(0.94, 0.68, 1.28);
   finish(context, toiletSeat, materials.sanitaryCeramic, { shadow: true, pickable: true });
 
   const basin = fitout.basin;
@@ -2351,11 +2380,12 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     x: (basin.footprintMm.x0 + basin.footprintMm.x1) / 2,
     y: (basin.footprintMm.y0 + basin.footprintMm.y1) / 2,
   };
+  const basinWidth=basin.footprintMm.x1-basin.footprintMm.x0,basinLength=basin.footprintMm.y1-basin.footprintMm.y0;
   softEllipsoid(
     context,
-    `${fitout.id} · COMPACT-BASIN · keramické umývadlo 400 × 250`,
+    `${fitout.id} · COMPACT-BASIN · keramické umývadlo ${basinLength} × ${basinWidth}`,
     basinCenter,
-    [0.25, 0.16, 0.4],
+    [basinWidth*MM_TO_M, 0.16, basinLength*MM_TO_M],
     0.77,
     materials.sanitaryCeramic,
   );
@@ -2363,7 +2393,7 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     context,
     `${fitout.id} · COMPACT-BASIN · vnútorná misa`,
     { x: basinCenter.x - 18, y: basinCenter.y },
-    [0.19, 0.025, 0.31],
+    [(basinWidth-60)*MM_TO_M, 0.025, (basinLength-90)*MM_TO_M],
     basin.rimElevationMm * MM_TO_M + 0.008,
     materials.mirrorGlass,
   );
@@ -2373,11 +2403,11 @@ function buildWcFitout(context: InteriorBuildContext, materials: InteriorMateria
     context.scene,
   );
   basinRim.position.set(
-    xM(basinCenter.x - 15),
+    xM(basinCenter.x),
     basin.rimElevationMm * MM_TO_M + 0.018,
     zM(basinCenter.y),
   );
-  basinRim.scaling.set(0.88, 0.65, 1.45);
+  basinRim.scaling.set((basinWidth-24)/311, 0.65, (basinLength-24)/311);
   finish(context, basinRim, materials.sanitaryCeramic, { shadow: true });
   const drain = CreateCylinder(
     `${fitout.id} · COMPACT-BASIN · chrómový odtok`,
@@ -3934,9 +3964,9 @@ function hallwayWardrobeFrontX(
 }
 
 /**
- * Full-height, handleless oak cabinetry fitted into the two corridor recesses
- * marked by the client. Every visible layer stays inside the measured 601 mm
- * niche depth; one smooth invisible guard per cabinet provides stable avatar
+ * Full-height, handleless oak cabinetry fitted into the measured recesses.
+ * End clearances leave room for projecting door linings beside the hall end.
+ * One smooth invisible guard per cabinet provides stable avatar
  * collision without catching on panel reveals or the reeded accent.
  */
 function buildHallwayBuiltInWardrobes(
@@ -3944,7 +3974,11 @@ function buildHallwayBuiltInWardrobes(
   materials: InteriorMaterials,
 ) {
   for (const wardrobe of HALLWAY_BUILT_IN_WARDROBES) {
-    const rect = wardrobe.footprintMm;
+    const endClearance = wardrobe.endClearanceMm ?? 0;
+    const rect = { ...wardrobe.footprintMm,
+      y0: wardrobe.footprintMm.y0 + endClearance,
+      y1: wardrobe.footprintMm.y1 - endClearance,
+    };
     const heightM = wardrobe.heightMm * MM_TO_M;
     const bodyRect: RectMm = wardrobe.facing === "EAST"
       ? { ...rect, x1: rect.x1 - 38 }
@@ -4115,7 +4149,7 @@ function buildHallwayBuiltInWardrobes(
       context,
       materials,
       `${wardrobe.id} · WARDROBE · hladký navigačný obrys niky`,
-      rect,
+      wardrobe.footprintMm,
     );
   }
 }
@@ -4236,7 +4270,7 @@ function childBedding(context: InteriorBuildContext, name: string, rect: RectMm,
 }
 
 /** Rounded upholstery with true curved geometry, shared by the live view and GLB export. */
-function childUpholsteredBox(
+function upholsteredBox(
   context: InteriorBuildContext, name: string, rect: RectMm,
   heightM: number, baseM: number, radiusM: number, material: PBRMaterial,
 ) {
@@ -4319,17 +4353,17 @@ function buildChildBed(
   const frameTopM = bed.frameHeightMm * MM_TO_M;
   const upholstery=pbr(context.scene,`${fitout.id}-woven-bed-upholstery`,theme.primary.albedoColor.toHexString(),.98);
   upholstery.sheen.isEnabled=true;upholstery.sheen.intensity=.18;upholstery.sheen.roughness=.95;
-  childUpholsteredBox(context,`${fitout.id} · BED · zaoblený čalúnený rám`,bedRect,
+  upholsteredBox(context,`${fitout.id} · BED · zaoblený čalúnený rám`,bedRect,
     frameTopM-.065,.065,.055,upholstery);
 
   const mattressTopM = bed.mattressTopElevationMm * MM_TO_M;
-  childUpholsteredBox(context,`${fitout.id} · BED · matrac ${bed.mattressWidthMm} × ${bed.mattressLengthMm}`,mattressRect,
+  upholsteredBox(context,`${fitout.id} · BED · matrac ${bed.mattressWidthMm} × ${bed.mattressLengthMm}`,mattressRect,
     mattressTopM-frameTopM,frameTopM,.042,materials.bedroomLinen);
 
   // Two broad padded panels give the headboard a soft seam without a hard slab silhouette.
   const head=bed.headboardRectMm, middle=(head.x0+head.x1)/2;
   for(const [index,rect] of [{...head,x1:middle-3},{...head,x0:middle+3}].entries()){
-    childUpholsteredBox(context,`${fitout.id} · BED · čalúnené čelo ${index+1}`,rect,
+    upholsteredBox(context,`${fitout.id} · BED · čalúnené čelo ${index+1}`,rect,
       bed.headboardTopElevationMm*MM_TO_M-.065,.065,.048,upholstery);
   }
 
@@ -4592,7 +4626,7 @@ function buildChildPinboard(
   );
   finish(context, board, materials.childCork, { shadow: true, pickable: true });
 
-  const alongX = true;
+  const alongX = pinboard.facing !== 'WEST';
   const longStart = alongX ? rect.x0 : rect.y0;
   const longEnd = alongX ? rect.x1 : rect.y1;
   const noteMaterials = [theme.secondary, materials.kitchenUpper, theme.primary];
@@ -5318,7 +5352,7 @@ export function buildLivingDiningFitout(
 ) {
   const fitout = LIVING_DINING_FITOUT;
 
-  // ---- handleless TV wall: warm greige storage, a stone media bay and oak
+  // ---- handleless TV wall: natural oak storage, a limestone media bay and oak
   // floating console. It starts 329 mm after the flue pier and stops before
   // the rear gable lining, so the fireplace and fixed glazing remain legible.
   const wall = fitout.tvWall.rectMm;
@@ -5452,8 +5486,8 @@ export function buildLivingDiningFitout(
   }
   navigationGuard(context, materials, "LIVING-103-TV-WALL · hladký navigačný obrys", wall);
 
-  // ---- soft low-profile L sofa, oriented to the TV. The chaise terminates on
-  // the solid gable section east of the fixed pane rather than obscuring it.
+  // ---- tailored L sofa: broad flat cushions, narrow eased edges and an oak
+  // plinth. Keep the plan footprints and navigation envelopes authoritative.
   const sofa = fitout.sofa;
   const rugRect: RectMm = { x0: 22520, y0: 15580, x1: 27190, y1: 18880 };
   const rug = texturedBox(
@@ -5467,101 +5501,34 @@ export function buildLivingDiningFitout(
     1,
   );
   finish(context, rug, materials.rug);
+  // New source names prevent the older capsule-shaped GLB export from
+  // replacing these pieces; both presentation modes use this upholstery.
+  const tailored = (label: string, rect: RectMm, height: number, base: number, radius: number, material = materials.upholstery) =>
+    upholsteredBox(context, `LIVING-103-SOFA-L · TAILORED · ${label}`, rect, height, base, radius, material);
+  const main = sofa.mainRectMm, chaise = sofa.chaiseRectMm;
+  const seatTop = sofa.seatHeightMm * MM_TO_M, seatThickness = 0.19;
+  const seatBase = seatTop - seatThickness;
   for (const [rect, label] of [
-    [sofa.mainRectMm, "hlavný modul"],
-    [sofa.chaiseRectMm, "ležadlo"],
+    [{ ...main, y1: chaise.y0 }, "hlavný modul"],
+    [chaise, "ležadlo"],
   ] as const) {
-    const base = texturedBox(
-      context.scene,
-      `LIVING-103-SOFA-L · ${label} · skrytá nízka báza`,
-      rectCenter(rect),
-      rect.x1 - rect.x0,
-      rect.y1 - rect.y0,
-      0.18,
-      0.08,
-      1,
-    );
-    finish(context, base, materials.upholstery, { shadow: true, pickable: true });
+    tailored(`${label} · zapustený dubový sokel`,
+      { x0: rect.x0+65, y0: rect.y0+50, x1: rect.x1-65, y1: rect.y1-50 },
+      0.1, 0.055, 0.012, materials.kitchenFront);
+    tailored(`${label} · čalúnený rám`, rect, seatBase - 0.14, 0.14, 0.025);
   }
-  const backRail = texturedBox(
-    context.scene,
-    "LIVING-103-SOFA-L · mäkké chrbtové jadro",
-    { x: sofa.mainRectMm.x1 - 150, y: (sofa.mainRectMm.y0 + sofa.mainRectMm.y1) / 2 },
-    300,
-    sofa.mainRectMm.y1 - sofa.mainRectMm.y0 - 180,
-    0.55,
-    0.23,
-    1,
-  );
-  finish(context, backRail, materials.upholstery, { shadow: true, pickable: true });
-  for (const [index, centerY] of [16320, 17220].entries()) {
-    softCapsule(
-      context,
-      `LIVING-103-SOFA-L · sedací vankúš ${index + 1}`,
-      { x: 26490, y: centerY },
-      0.355,
-      0.82,
-      0.22,
-      new Vector3(0, 0, 1),
-      [2.18, 0.4, 1],
-      materials.upholstery,
-    );
+  tailored("rovné čalúnené operadlo", { x0: main.x1-210, y0: main.y0+20, x1: main.x1-20, y1: main.y1-20 }, 0.56, 0.24, 0.03);
+  const seatRanges = [[16025,16820], [16835,17630], [17670,18565]] as const;
+  for (const [index, [y0,y1]] of seatRanges.entries()) {
+    tailored(`sedák ${index+1} · piesková tkanina`, { x0:main.x0+20,y0,x1:main.x1-245,y1 }, seatThickness, seatBase, 0.035);
+    const back = tailored(`chrbtový vankúš ${index+1}`, { x0:main.x1-370,y0,x1:main.x1-155,y1 }, 0.49, seatTop - 0.025, 0.045);
+    back.rotation.z = -0.085;
   }
-  softCapsule(
-    context,
-    "LIVING-103-SOFA-L · predĺžený vankúš ležadla",
-    { x: 25830, y: 18210 },
-    0.36,
-    2.5,
-    0.22,
-    new Vector3(1, 0, 0),
-    [1, 0.42, 1.72],
-    materials.upholstery,
-  );
-  for (const [index, centerY] of [16320, 17220, 18200].entries()) {
-    const backCushion = softCapsule(
-      context,
-      `LIVING-103-SOFA-L · chrbtový vankúš ${index + 1}`,
-      { x: 27060, y: centerY },
-      0.67,
-      index === 2 ? 0.84 : 0.79,
-      0.2,
-      new Vector3(0, 0, 1),
-      [0.7, 1.5, 1],
-      materials.upholstery,
-    );
-    backCushion.rotation.z = -0.055;
-  }
-  softCapsule(
-    context,
-    "LIVING-103-SOFA-L · južná mäkká podrúčka",
-    { x: 26580, y: sofa.mainRectMm.y0 + 95 },
-    0.44,
-    1.02,
-    0.18,
-    new Vector3(1, 0, 0),
-    [1, 1.34, 0.58],
-    materials.upholstery,
-  );
-  softCapsule(
-    context,
-    "LIVING-103-SOFA-L · zadná mäkká podrúčka ležadla",
-    { x: 25860, y: sofa.chaiseRectMm.y1 - 95 },
-    0.43,
-    2.5,
-    0.18,
-    new Vector3(1, 0, 0),
-    [1, 1.28, 0.58],
-    materials.upholstery,
-  );
-  softEllipsoid(
-    context,
-    "LIVING-103-SOFA-L · akcentový vankúš koňak",
-    { x: 26820, y: 17740 },
-    [0.24, 0.5, 0.48],
-    0.66,
-    materials.accentFabric,
-  );
+  tailored("sedák ležadla · piesková tkanina", { x0:chaise.x0+20,y0:chaise.y0+20,x1:main.x0+5,y1:18565 }, seatThickness, seatBase, 0.035);
+  tailored("rovná južná podrúčka", { x0:main.x0,y0:main.y0,x1:main.x1,y1:main.y0+155 }, 0.46, 0.18, 0.035);
+  tailored("rovná podrúčka ležadla", { x0:chaise.x0,y0:chaise.y1-160,x1:chaise.x1,y1:chaise.y1 }, 0.46, 0.18, 0.035);
+  const accent = tailored("ľanový vankúš · tlmená oliva", { x0:26720,y0:17200,x1:26900,y1:17600 }, 0.4, seatTop - 0.015, 0.055, materials.accentFabric);
+  accent.rotation.z = -0.15;
   navigationGuard(
     context,
     materials,
@@ -5575,7 +5542,7 @@ export function buildLivingDiningFitout(
     sofa.chaiseRectMm,
   );
 
-  // Two quiet sculptural tables sit completely inside the conversation zone.
+  // Limestone and natural oak tables sit inside the conversation zone.
   for (const [index, spec] of [
     { center: { x: 24380, y: 16680 }, diameter: 1.15, scaleX: 1.12, scaleZ: 0.7, top: 0.34 },
     { center: { x: 25020, y: 17140 }, diameter: 0.78, scaleX: 1.05, scaleZ: 0.76, top: 0.42 },
@@ -5592,12 +5559,12 @@ export function buildLivingDiningFitout(
       pickable: true,
     });
     const pedestal = CreateCylinder(
-      `LIVING-103-SOFA-L · podnož konferenčného stolíka ${index + 1}`,
+      `LIVING-103-SOFA-L · dubová podnož konferenčného stolíka ${index + 1}`,
       { height: spec.top - 0.025, diameter: index === 0 ? 0.34 : 0.24, tessellation: 32 },
       context.scene,
     );
     pedestal.position.set(xM(spec.center.x), (spec.top - 0.025) / 2, zM(spec.center.y));
-    finish(context, pedestal, materials.brushedBrass, { shadow: true });
+    finish(context, pedestal, materials.kitchenFront, { shadow: true });
   }
   navigationGuard(context, materials, "LIVING-103-SOFA-L · navigačný obrys stolíkov", {
     x0: 23700,

@@ -5,6 +5,7 @@ import type { Point2Mm } from './twin-site';
 import type { InteriorRoom, RectMm } from './twin-interior-baseline';
 import { CHILDREN_DESIGN_ID } from './twin-children-design';
 export * from './twin-interior-baseline';
+export { TECHNICAL_HEATING_FITOUT, WC_FITOUT, BATHROOM_FITOUT } from './technical-design';
 
 export const ACTIVE_LAYOUT_ID = 'C-2026-09-07';
 export const ACTIVE_CONCEPT = createConcept(DEFAULT_NESTED_CONCEPT);
@@ -57,18 +58,25 @@ export const BEDROOM_FITOUT = {
 };
 
 export type HallwayBuiltInWardrobe = Omit<original.HallwayBuiltInWardrobe,'roomId'|'nicheRectIndex'> & {
-  roomId:string; nicheRectIndex:number;
+  roomId:string; nicheRectIndex:number; endClearanceMm?:number;
 };
 const wardrobeStyle=original.HALLWAY_BUILT_IN_WARDROBES[0].style;
 export const HALLWAY_BUILT_IN_WARDROBES:readonly HallwayBuiltInWardrobe[] = [
-  ...ACTIVE_CONCEPT.builtInCabinets.map((cabinet,i)=>({
+  ...ACTIVE_CONCEPT.builtInCabinets.map(cabinet=>{
+    const isEntry=cabinet.roomNumber==='1.01';
+    const isHallEnd=cabinet.id==='C-HALL-END-CABINET';
+    const room=INTERIOR_ROOMS.find(room=>room.number===cabinet.roomNumber)!;
+    const r=cabinet.rectMm;
+    return {
     ...original.HALLWAY_BUILT_IN_WARDROBES[0],id:cabinet.id,label:cabinet.label,
-    sourceId:ACTIVE_LAYOUT_ID,roomId:i===0?'ROOM-1-01':'ROOM-1-02',nicheRectIndex:i===0?0:2,
+    sourceId:ACTIVE_LAYOUT_ID,roomId:room.id,
+    nicheRectIndex:room.rectsMm.findIndex(floor=>r.x0>=floor.x0&&r.x1<=floor.x1&&r.y0>=floor.y0&&r.y1<=floor.y1),
     footprintMm:cabinet.rectMm,facing:'EAST' as const,
-    doorCount:i===0?2 as const:4 as const,
-    frontClearanceRectMm:rect(21543,cabinet.rectMm.y0,22639,cabinet.rectMm.y1),
-    style:{...wardrobeStyle,reededPanelIndices:i===0?[1]:[1,2]},
-  })),
+    doorCount:isEntry||isHallEnd?2 as const:4 as const,
+    ...(isHallEnd?{endClearanceMm:16}:{}),
+    frontClearanceRectMm:rect(r.x1,r.y0,isHallEnd?r.x1+1000:22639,r.y1),
+    style:{...wardrobeStyle,reededPanelIndices:isHallEnd?[]:isEntry?[1]:[1,2]},
+  };}),
   ...ACTIVE_CONCEPT.storageRuns.map((r,i)=>({
     ...original.HALLWAY_BUILT_IN_WARDROBES[0],id:`C-DRESSING-${i}`,label:'Šatník · posuvné dubové čelá',
     sourceId:ACTIVE_LAYOUT_ID,roomId:'ROOM-DRESSING',nicheRectIndex:0,footprintMm:r,
@@ -126,7 +134,7 @@ export type ChildBedroomFitout=Omit<original.ChildBedroomFitout,'roomId'|'entryD
   wardrobe:Omit<original.ChildBedroomFitout['wardrobe'],'facing'|'doorCount'> & {facing:'WEST';doorCount:number};
   desk:Omit<original.ChildBedroomFitout['desk'],'facing'> & {facing:'NORTH'|'SOUTH'};
   chair:Omit<original.ChildBedroomFitout['chair'],'facing'|'wheelCount'> & {facing:'NORTH'|'SOUTH';wheelCount:0};
-  pinboard:Omit<original.ChildBedroomFitout['pinboard'],'facing'> & {facing:'NORTH'|'SOUTH'};
+  pinboard:Omit<original.ChildBedroomFitout['pinboard'],'facing'> & {facing:'NORTH'|'SOUTH'|'WEST'};
   childAgeRange:readonly [3,7];
   readingRectMm:RectMm; toyStorageRectMm:RectMm; bookcaseRectMm:RectMm;
   storageFacing:'NORTH'|'SOUTH'; artUrl:string;
@@ -149,7 +157,7 @@ export const CHILDRENS_BEDROOM_FITOUTS:readonly ChildBedroomFitout[]=[{
   desk:{...garden.desk,footprintMm:rect(19402,3504,20702,4054),facing:'NORTH',topElevationMm:540},
   chair:{...garden.chair,footprintMm:rect(19802,4154,20302,4654),centerMm:{x:20052,y:4404},facing:'SOUTH',seatElevationMm:300,backTopElevationMm:580,wheelCount:0},
   featureWall:{...garden.featureWall,footprintMm:rect(15143,3504,15165,6361),facing:'EAST',topElevationMm:1080,motif:'OAK_RIBBON'},
-  pinboard:{...garden.pinboard,footprintMm:rect(19452,3504,20652,3526),facing:'NORTH',bottomElevationMm:800,heightMm:650},
+  pinboard:{...garden.pinboard,footprintMm:rect(20680,3554,20702,4654),facing:'WEST',bottomElevationMm:800,heightMm:650},
   readingRectMm:rect(15193,5871,15943,6351),toyStorageRectMm:rect(18443,6011,20002,6361),bookcaseRectMm:rect(16193,6061,16843,6361),storageFacing:'SOUTH',artUrl:'/assets/textures/child-garden-albedo.png',
   clearEntryRectMm:rect(16880,5540,18300,6361),clearPlayRectMm:rect(16803,4154,19702,5450),windowClearanceRectMm:rect(16900,3504,19250,4154),
 }];

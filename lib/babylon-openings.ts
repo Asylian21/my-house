@@ -30,6 +30,7 @@ export interface FacadeOpeningStyleInput {
 export interface OpeningInteraction {
   readonly id: string;
   readonly label: string;
+  readonly layout?: 'DOUBLE_LEAF_OUTWARD';
 }
 
 export function resolveFacadeOpeningStyle(
@@ -145,6 +146,7 @@ function frameRing(
   barDepthMm: number,
   acrossCenterMm: number,
   material: Material,
+  omitBottom = false,
 ) {
   const meshes: Mesh[] = [];
   const barHeight = (topMm - bottomMm) * MM_TO_M;
@@ -169,6 +171,7 @@ function frameRing(
     ["spodný", bottomMm],
     ["horný", topMm - barWidthMm],
   ] as const) {
+    if(omitBottom&&part==='spodný')continue;
     meshes.push(solid(
       context,
       spec,
@@ -586,7 +589,41 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     }
   }
 
-  if (spec.kind === "door") {
+  if (spec.kind === 'door' && spec.interaction?.layout === 'DOUBLE_LEAF_OUTWARD') {
+    // Both leaves open outward. The clear transport band accounts for the
+    // perimeter frame and the opened leaves/handles at both jambs.
+    frameRing(context,spec,'zárubňa',start,end,0,top,FRAME_WIDTH_MM,150,planeAcross,frame,true);
+    const innerStart=start+FRAME_WIDTH_MM,innerEnd=end-FRAME_WIDTH_MM;
+    const half=(innerEnd-innerStart)/2;
+    const leaves=[-1,1].map(side=>{
+      const hingeAlong=side===-1?innerStart:innerEnd;
+      const farAlong=hingeAlong-side*half;
+      const leaf=solid(context,spec,`${spec.name} · transportné krídlo ${side===-1?'ľavé':'pravé'}`,
+        {alongMm:(hingeAlong+farAlong)/2,acrossMm:planeAcross},half-6,48,(top-FRAME_WIDTH_MM-32)*MM_TO_M,.026,context.materials.doorLeaf,{shadow:true,pickable:true});
+      const handles=[-40,40].flatMap(offset=>handle(context,spec,farAlong+side*80,planeAcross+outward*offset,1.05,true));
+      // Outswing axis is on the outer face of the 48mm leaf, so its entire
+      // thickness rotates into the opening rather than through the jamb.
+      const pivot=placedWorld(spec,hingeAlong,planeAcross+outward*28),endPoint=placedWorld(spec,farAlong,planeAcross);
+      const hinge=new TransformNode(`${spec.interaction!.id} · transportný pánt ${side}`,context.scene);
+      hinge.position.set(pivot.x,0,pivot.z);
+      parentAtWorldTransform([leaf,...handles],hinge);
+      for(const mesh of [leaf,...handles])mesh.metadata={...(mesh.metadata??{}),entityId:spec.interaction!.id,doorId:spec.interaction!.id,doorMotion:'HINGED',cameraOccluder:true,dynamicCameraOccluder:true};
+      leaf.checkCollisions=true;
+      const angle=side*(spec.axis==='X'?outward:-outward)*Math.PI/2;
+      return {leaf,handles,hinge,pivot,endPoint,angle};
+    });
+    solid(context,spec,`${spec.name} · nízky transportný prah`,{alongMm:spec.centerMm,acrossMm:planeAcross},innerEnd-innerStart,150,.02,0,context.materials.track);
+    context.registerAnimatedDoor?.({id:spec.interaction.id,label:spec.interaction.label,kind:'HINGED',
+      interactionPoint:placedWorld(spec,spec.centerMm,planeAcross),
+      passage:facadePassage(spec,spec.interaction.id,spec.centerMm,innerEnd-innerStart-192,spec.faceMm-outward*spec.wallThicknessMm/2),
+      apply:progress=>{for(const part of leaves){part.hinge.rotation.y=progress===0?0:part.angle*progress;for(const mesh of [part.leaf,...part.handles])mesh.computeWorldMatrix(true);}},
+      canOpen:(actor,progress=0)=>leaves.every(p=>hingedDoorSweepIsClear(actor,p.pivot,p.endPoint,p.angle,.048,progress,1)),
+      canClose:(actor,progress=1)=>leaves.every(p=>hingedDoorSweepIsClear(actor,p.pivot,p.endPoint,p.angle,.048,progress,0)),
+      actorDisplacement:(actor,progress)=>leaves.map(p=>hingedDoorActorDisplacement(actor,p.pivot,p.endPoint,p.angle,progress,.048)).find(Boolean)??null,
+    });
+  }
+
+  if (spec.kind === "door" && spec.interaction?.layout !== 'DOUBLE_LEAF_OUTWARD') {
     frameRing(context, spec, "zárubňa", start, end, 0, top, FRAME_WIDTH_MM, 150, planeAcross, frame);
     const leafWidth = Math.round(spec.widthMm * 0.72);
     const leafStart = start + FRAME_WIDTH_MM;

@@ -1,4 +1,5 @@
 import { createGarageEnvelope } from './floor-plan-garage';
+import { SERVICE_CORE_REVISION } from './technical-design';
 import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior-baseline';
 
 /** Studies derive from the preserved drawing; the active 3D model consumes variant C. */
@@ -235,6 +236,15 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
 function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const streetEast=20702, gardenEast=20541, storageBack=20842, hallLine=21543;
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
+  const core=SERVICE_CORE_REVISION;
+  const wc=rooms.find(room=>room.number==='1.06')!;
+  wc.rectsMm=wc.rectsMm.map(r=>({...r,x1:r.x1+core.wcExpansionMm}));
+  wc.standingPointMm={x:23550,y:9900};
+  const technical=rooms.find(room=>room.number==='1.07')!;
+  technical.rectsMm=[rect(core.technicalWestMm,8912,core.boilerBayWestMm,10712),rect(core.boilerBayWestMm,9112,25830,10712),rect(25830,9112,core.technicalFacadeInsideMm,11411),rect(core.boilerBayWestMm,7741,core.technicalFacadeInsideMm,9112)];
+  technical.standingPointMm={x:26500,y:10350};
+  const bathroom=rooms.find(room=>room.number==='1.05')!;
+  bathroom.rectsMm=[rect(22783,6602,core.bathroomEastMm,8772),rect(core.bathroomEastMm,6602,27541,7601)];
   const street=rooms.find(room=>room.number==='1.08')!;
   street.rectsMm=[rect(base.suiteRight+140,3504,streetEast,6361)];
   const garden=rooms.find(room=>room.number==='1.09')!;
@@ -251,7 +261,10 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
     ?rect(r.x0,6560,r.x1,r.y1)
     :r.x0===20942&&r.y0===7902?rect(storageBack,r.y0,r.x1,r.y1):r);
   const removed=new Set(['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-CLOSET-SOUTH','IW-ENTRY-TOP-W','IW-ENTRY-TOP-E','IW-ENTRY-EAST','IW-ENTRY-STUDY']);
-  const walls=base.walls.filter(w=>!removed.has(w.id));
+  const walls=base.walls.filter(w=>!removed.has(w.id)).map(w=>w.id==='IW-WC-EAST'?{...w,changed:true,rectMm:rect(24082+core.wcExpansionMm,8912,core.technicalWestMm,10712)}
+    :w.id==='IW-BATH-105-NORTH'?{...w,changed:true,rectMm:{...w.rectMm,x1:core.boilerBayWestMm}}
+    :w.id==='IW-BATH-105-SOUTH-E'?{...w,changed:true,rectMm:{...w.rectMm,x0:core.bathroomEastMm}}
+    :w.rectMm.x0===25399&&w.rectMm.x1===25543&&w.rectMm.y0===7741?{...w,changed:true,rectMm:rect(core.bathroomEastMm,7741,core.boilerBayWestMm,8772)}:w);
   walls.push(
     {id:'C-KID-ENTRY-PARTITION',role:'PARTITION',changed:true,rectMm:rect(streetEast,3504,storageBack,6361)},
     {id:'C-KID-HALL-POCKET-WALL',role:'PARTITION',changed:true,rectMm:rect(18042,6361,21640,6560)},
@@ -272,6 +285,8 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const builtInCabinets:ConceptCabinet[]=[
     {id:'C-ENTRY-CABINET',label:'Súvislá skriňa v zádverí · posuvné čelá',roomNumber:'1.01',facing:'EAST',rectMm:entryCabinet},
     {id:'C-GARDEN-HALL-CABINET',label:'Vstavaná skriňa z chodby · dvor',roomNumber:'1.02',facing:'EAST',rectMm:rect(storageBack,7902,hallLine,10699)},
+    // Stop at both door jambs, leaving a full metre between bedroom and bathroom.
+    {id:'C-HALL-END-CABINET',label:'Vstavaná skriňa na konci chodby · posuvné dubové čelá',roomNumber:'1.02',facing:'EAST',rectMm:rect(13483,base.dressing!.y0,base.suiteRight-1000,base.dressing!.y1)},
   ];
   return {...base,rooms,walls,doors,structuralChanges,builtInCabinets,entryBench,
     kidStreetArea:area(street.rectsMm),kidGardenArea:area(garden.rectsMm),entryArea:area(entry.rectsMm),officeArea:area(office.rectsMm),

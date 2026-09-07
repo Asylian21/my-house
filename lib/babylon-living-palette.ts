@@ -5,12 +5,12 @@ import type { Scene } from "@babylonjs/core/scene";
 
 const FINISHES = {
   fabric: { color: "#D8C8B2", texture: "living-boucle-ecru-albedo", roughness: 0.92 },
-  sofa: { color: "#D8C8B2", texture: "living-boucle-ecru-albedo", roughness: 0.99 },
-  cabinet: { color: "#CEA087", texture: null, roughness: 0.82 },
+  sofa: { color: "#B7AD99", texture: "living-boucle-ecru-albedo", roughness: 0.99 },
+  cabinet: { color: "#BE9566", texture: "living-natural-oak-albedo", roughness: 0.74 },
   stone: { color: "#BDAF98", texture: "living-warm-stone-albedo", roughness: 0.72 },
-  oak: { color: "#BE9566", texture: "living-natural-oak-albedo", roughness: 0.55 },
+  oak: { color: "#BE9566", texture: "living-natural-oak-albedo", roughness: 0.68 },
   rug: { color: "#BCAE96", texture: "living-wool-sand-albedo", roughness: 0.98 },
-  accent: { color: "#B67E63", texture: null, roughness: 0.94 },
+  accent: { color: "#898E73", texture: null, roughness: 0.98 },
 } as const;
 type LivingFinish = keyof typeof FINISHES;
 
@@ -52,8 +52,8 @@ export function warmLivingMaterial(scene: Scene, sourceName: string, original: P
   // Warm the actual surface reflectance: the saved blue daylight otherwise
   // makes neutral textiles and limestone read cold inside the shaded room.
   if (role === "fabric" || role === "rug") material.albedoColor.set(1, 0.9, 0.74);
-  if (role === "sofa") material.albedoColor.set(1, 0.95, 0.85);
-  if (role === "stone") material.albedoColor.set(1, 0.76, 0.63);
+  if (role === "sofa") material.albedoColor.set(0.69, 0.72, 0.72);
+  if (role === "stone") material.albedoColor.set(1, 0.96, 0.87);
   if (finish.texture) {
     const texture = new Texture(`/assets/textures/${finish.texture}.jpg`, scene, false, false, Texture.TRILINEAR_SAMPLINGMODE);
     texture.gammaSpace = true;
@@ -67,6 +67,10 @@ export function warmLivingMaterial(scene: Scene, sourceName: string, original: P
     material.albedoTexture = texture;
     ownedTextures.add(texture);
   } else material.albedoTexture = null;
+  if (role === "cabinet" || role === "oak") {
+    material.clearCoat.isEnabled = false;
+    material.metallicF0Factor = 0.55;
+  }
   // PBRMaterial.clone also clones texture wrappers. Release the discarded
   // albedo wrapper without touching any wrapper retained by another channel.
   const activeTextures = new Set(material.getActiveTextures());

@@ -450,7 +450,7 @@ describe("Babylon interior fit-out", () => {
       const heatingGuards = heatingMeshes.filter(
         (mesh) => mesh.metadata?.walkCollisionOnly === true,
       );
-      expect(heatingGuards).toHaveLength(1);
+      expect(heatingGuards).toHaveLength(3);
       expect(heatingGuards[0].name).toContain("· WOOD-PELLET-ASSEMBLY · navigačný obrys");
       expect(heatingGuards[0].checkCollisions).toBe(true);
       expect(heatingGuards[0].isVisible).toBe(false);
@@ -561,8 +561,8 @@ describe("Babylon interior fit-out", () => {
       const basinGuardSize = planSize(basinGuard);
       expect(toiletGuardSize.x).toBeCloseTo(0.37, 8);
       expect(toiletGuardSize.z).toBeCloseTo(0.52, 8);
-      expect(basinGuardSize.x).toBeCloseTo(0.25, 8);
-      expect(basinGuardSize.z).toBeCloseTo(0.4, 8);
+      expect(basinGuardSize.x).toBeCloseTo(0.35, 8);
+      expect(basinGuardSize.z).toBeCloseTo(0.55, 8);
 
       const toiletBowl = scene.meshes.find((mesh) =>
         mesh.name.startsWith(WC_FITOUT.id)
@@ -570,14 +570,14 @@ describe("Babylon interior fit-out", () => {
       )!;
       const basinBowl = scene.meshes.find((mesh) =>
         mesh.name.startsWith(WC_FITOUT.id)
-        && mesh.name.includes("COMPACT-BASIN · keramické umývadlo 400 × 250"),
+        && mesh.name.includes("COMPACT-BASIN · keramické umývadlo 550 × 350"),
       )!;
       const toiletBowlSize = planSize(toiletBowl);
       const basinBowlSize = planSize(basinBowl);
       expect(toiletBowlSize.x).toBeCloseTo(0.37, 6);
       expect(toiletBowlSize.z).toBeCloseTo(0.52, 6);
-      expect(basinBowlSize.x).toBeCloseTo(0.25, 6);
-      expect(basinBowlSize.z).toBeCloseTo(0.4, 6);
+      expect(basinBowlSize.x).toBeCloseTo(0.35, 6);
+      expect(basinBowlSize.z).toBeCloseTo(0.55, 6);
 
       const garageMeshes = scene.meshes.filter((mesh) => mesh.name.startsWith(GARAGE_FITOUT.id));
       for (const required of [

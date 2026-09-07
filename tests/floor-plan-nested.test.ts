@@ -56,17 +56,17 @@ describe('nested bedroom, closet and garage study C', () => {
       expect(m.kidStreetArea).toBe(area(children[0].rectsMm));
       expect(m.kidGardenArea).toBe(area(children[1].rectsMm));
       expect(contains(children[0].rectsMm[0], m.streetKidDesk)).toBe(true);
-      expect(m.builtInCabinets).toHaveLength(2);
+      expect(m.builtInCabinets).toHaveLength(3);
       expect(contains(m.rooms.find(r=>r.number==='1.01')!.rectsMm[0],m.entryBench!)).toBe(true);
       expect(contains(children[1].rectsMm[0],m.gardenKidBed)).toBe(true);
-      expect(m.builtInCabinets.map(c => c.facing)).toEqual(['EAST', 'EAST']);
+      expect(m.builtInCabinets.map(c => c.facing)).toEqual(['EAST', 'EAST', 'EAST']);
       for (const cabinet of m.builtInCabinets) {
         const r = cabinet.rectMm;
         expect(m.rooms.find(room => room.number === cabinet.roomNumber)!.rectsMm.some(floor => contains(floor, r))).toBe(true);
         expect(children.every(room => room.rectsMm.every(floor => !intersects(floor, r)))).toBe(true);
         expect(m.walls.every(wall => !intersects(wall.rectMm, r))).toBe(true);
       }
-      expect(m.builtInCabinets.map(c => [c.rectMm.x1-c.rectMm.x0, c.rectMm.y1-c.rectMm.y0])).toEqual([[701,1900],[701,2797]]);
+      expect(m.builtInCabinets.map(c => [c.rectMm.x1-c.rectMm.x0, c.rectMm.y1-c.rectMm.y0])).toEqual([[701,1900],[701,2797],[520+m.settings.expansion,1857]]);
     }
     for (const layout of ['private', 'wardrobe', 'vestibule'] as const) {
       const other = createConcept({ ...BASE_DEFAULT, layout, expansion: 600 });

@@ -34,7 +34,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(INTERIOR_ROOMS).toHaveLength(13);
     expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.337492,6);
     expect(INTERIOR_DOORS.some(d=>d.id==='DOOR-102-112'||d.id==='DOOR-108-111')).toBe(false);
-    for(const id of ['ROOM-1-03','ROOM-1-05','ROOM-1-06','ROOM-1-07']){
+    for(const id of ['ROOM-1-03']){
       expect(INTERIOR_ROOMS.find(r=>r.id===id)!.rectsMm).toEqual(baseline.INTERIOR_ROOMS.find(r=>r.id===id)!.rectsMm);
     }
   });
@@ -69,6 +69,20 @@ describe('active 3D house matches the approved default C plan',()=>{
         const p=room.standingPointMm;
         expect(intersects(f.rect,rect(p.x-220,p.y-220,p.x+220,p.y+220)),`${room.id} spawn versus ${f.id}`).toBe(false);
       }
+    }
+  });
+  it('fits storage against the dressing-room wall without narrowing either end-of-hall doorway',()=>{
+    const cabinet=HALLWAY_BUILT_IN_WARDROBES.find(w=>w.id==='C-HALL-END-CABINET')!;
+    const wall=INTERIOR_WALLS.find(w=>w.id==='C-CLOSET-EAST')!.rectMm;
+    expect(cabinet.footprintMm).toEqual(rect(13483,5744,14003,7601));
+    expect(cabinet.footprintMm.x0).toBe(wall.x1);
+    expect(cabinet.frontClearanceRectMm).toEqual(rect(14003,5744,15003,7601));
+    expect(cabinet).toMatchObject({roomId:'ROOM-1-02',facing:'EAST',doorCount:2,heightMm:2550});
+    for(const id of ['C-HALL-BATH','C-PRIVATE-BED']){
+      const door=INTERIOR_DOORS.find(d=>d.id===id)!;
+      expect(cabinet.footprintMm.x1).toBe(door.startMm);
+      expect(swingHits(door,cabinet.footprintMm)).toBe(false);
+      expect(contains(cabinet.frontClearanceRectMm,rect(door.startMm,6560,door.startMm+door.widthMm,7601))).toBe(true);
     }
   });
   it('provides 440mm walking paths between entrance, office, bath, bedroom and closet',()=>{
@@ -109,7 +123,17 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.name).toContain('Chlapčenská');
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.name).toContain('Dievčenská');
     expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:16900,widthMm:2200,sillMm:0});
-    for(const id of ['FRONT-04','FRONT-05'])expect(HOUSE.facades.front.openings.find(o=>o.id===id)).toMatchObject({widthMm:1050,heightMm:1600,sillMm:900});
+    const windows=HOUSE.facades.front.openings.filter(o=>['FRONT-GIRL-BED','FRONT-04','FRONT-05'].includes(o.id));
+    expect(windows).toHaveLength(3);
+    expect(windows.map(w=>[w.startXmm,w.widthMm,w.sillMm,w.heightMm])).toEqual([[15450,1000,1250,1250],[17100,1600,550,1950],[19450,1050,900,1600]]);
+    expect(windows.every(w=>w.sillMm+w.heightMm===2500)).toBe(true);
+    expect(windows.reduce((sum,w)=>sum+w.widthMm*w.heightMm/1e6,0)).toBeCloseTo(6.05,6);
+    expect(windows[1]).toMatchObject({kind:'fixed',frameWidthMm:45});
+    for(let i=1;i<windows.length;i++)expect(windows[i].startXmm-windows[i-1].startXmm-windows[i-1].widthMm).toBeGreaterThanOrEqual(650);
+    const girl=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-08')!;
+    expect(windows[0].sillMm-girl.bed.headboardTopElevationMm).toBe(200);
+    expect(windows[2].sillMm-girl.desk.topElevationMm).toBe(360);
+    expect(girl.pinboard.facing).toBe('WEST');
   });
   it('renders moved accessories, lights and collision guards in the same room, with clear 80/90cm doors',()=>{
     const engine=new NullEngine({renderWidth:256,renderHeight:256,textureSize:256,deterministicLockstep:false,lockstepMaxSteps:4});
@@ -117,6 +141,18 @@ describe('active 3D house matches the approved default C plan',()=>{
     const mat=(n:string)=>new PBRMaterial(n,scene);
     try {
       buildInterior({scene,anisotropy:1,wall:mat('wall'),soffit:mat('soffit'),glassFrame:mat('frame'),chimneyMetal:mat('metal'),timber:mat('timber'),register:()=>{},realisticOnly:()=>{},castShadow:()=>{},registerAnimatedDoor:d=>doors.push(d)});
+      // The door linings project 12 mm into the alcove. Include their actual
+      // meshes, since floor-plan door swings alone cannot catch this overlap.
+      const endCabinet=scene.meshes.filter(m=>m.name.startsWith('C-HALL-END-CABINET')&&!m.metadata?.walkCollisionOnly);
+      for(const id of ['C-HALL-BATH','C-PRIVATE-BED']){
+        const door=INTERIOR_DOORS.find(d=>d.id===id)!;
+        const jamb=scene.meshes.find(m=>m.name===`${door.label} · ľavá zárubňa`)!;
+        jamb.computeWorldMatrix(true);
+        for(const mesh of endCabinet){
+          mesh.computeWorldMatrix(true);
+          expect(mesh.intersectsMesh(jamb,false),`${mesh.name} clears ${id} lining`).toBe(false);
+        }
+      }
       const groups=[BEDROOM_FITOUT,ENTRY_FITOUT,ENSUITE_BATHROOM_FITOUT,GARAGE_FITOUT,OFFICE_FITOUT,...CHILDRENS_BEDROOM_FITOUTS,...HALLWAY_BUILT_IN_WARDROBES];
       for(const group of groups){
         const room=INTERIOR_ROOMS.find(r=>r.id===group.roomId)!;

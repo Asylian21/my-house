@@ -7,6 +7,7 @@ import { DEFAULT_EXPERIMENT } from '@/lib/floor-plan-experiment';
 import { StandardFloorPlanStudio } from './standard-studio';
 import { ExperimentalFloorPlanStudio } from './experiment-studio';
 import { normalizeVariant, usePlanView, type PlanVariant } from './variant-tabs';
+import { DocumentationStudio } from './documentation-studio';
 
 export function FloorPlanStudio() {
   const searchParams=useSearchParams();
@@ -25,6 +26,7 @@ export function FloorPlanStudio() {
     if(restoreTabFocus)requestAnimationFrame(()=>document.getElementById(`floor-plan-tab-${next}`)?.focus());
   };
   const navigation={variant,onVariantChange,view};
+  if(variant==='c'&&searchParams.get('mode')!=='study')return <DocumentationStudio initialManual={searchParams.get('view')==='manual'}/>;
   return variant==='e'
     ? <ExperimentalFloorPlanStudio {...navigation} rawSettings={experimentSettings} setSettings={setExperimentSettings}/>
     : <StandardFloorPlanStudio {...navigation} rawSettings={variant==='c'?nestedSettings:standardSettings} setSettings={variant==='c'?setNestedSettings:setStandardSettings}/>;

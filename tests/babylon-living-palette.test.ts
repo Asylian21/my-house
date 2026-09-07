@@ -4,7 +4,7 @@ import { Scene } from '@babylonjs/core/scene';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import { RawTexture } from '@babylonjs/core/Materials/Textures/rawTexture';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
-import { warmLivingMaterial } from '../lib/babylon-living-palette';
+import { livingFinishFor, warmLivingMaterial } from '../lib/babylon-living-palette';
 
 const livingCabinetName = 'LIVING-103-TV-WALL · vysoká bezúchytková skriňa pri krbe';
 let engine: NullEngine | undefined;
@@ -37,7 +37,7 @@ describe('warm living material resource lifetime', () => {
     const { scene, original, albedo, normal, originalTextures } = fixture();
     const warm = warmLivingMaterial(scene, livingCabinetName, original);
     expect(warm).not.toBe(original);
-    expect(warm.albedoTexture).toBeNull();
+    expect((warm.albedoTexture as Texture).url).toBe('/assets/textures/living-natural-oak-albedo.jpg');
     expect(scene.textures).toContain(albedo);
     expect(scene.textures).toContain(normal);
     const retainedNormal = warm.bumpTexture as Texture;
@@ -45,7 +45,7 @@ describe('warm living material resource lifetime', () => {
     expect(retainedNormal.gammaSpace).toBe(false);
     expect(warm.invertNormalMapX).toBe(true);
     const addedTextures = scene.textures.filter(texture => !originalTextures.has(texture));
-    expect(addedTextures).toEqual([retainedNormal]);
+    expect(new Set(addedTextures)).toEqual(new Set([retainedNormal,warm.albedoTexture]));
   });
 
   it('disposes the warm clone and only its owned texture wrappers when the source material is disposed', () => {
@@ -79,5 +79,25 @@ describe('warm living material resource lifetime', () => {
     original.dispose();
     expect(scene.materials).not.toContain(second);
     expect(scene.textures.filter(texture => !originalTextures.has(texture))).toEqual([]);
+  });
+
+  it('uses matte oak for both the TV storage and smaller table, with no changes to other rooms',()=>{
+    const { scene, original }=fixture();
+    const cabinet=warmLivingMaterial(scene,livingCabinetName,original);
+    const table=warmLivingMaterial(scene,'LIVING-103-SOFA-L · oválny konferenčný stolík 2',original);
+    expect(table).toBe(cabinet);
+    expect(cabinet.metallic).toBe(0);
+    expect(cabinet.roughness).toBeGreaterThanOrEqual(.7);
+    expect(cabinet.clearCoat.isEnabled).toBe(false);
+    expect(warmLivingMaterial(scene,'C-BEDROOM-110 · skrinka',original)).toBe(original);
+    expect(livingFinishFor('LIVING-103-SOFA-L · TAILORED · sedák','real-interior-upholstery')).toBe('sofa');
+    const fabric=new PBRMaterial('real-interior-upholstery',scene);
+    const sofa=warmLivingMaterial(scene,'LIVING-103-SOFA-L · TAILORED · sedák',fabric);
+    expect(sofa.albedoColor.asArray()).toEqual([.69,.72,.72]);
+    expect(sofa.roughness).toBe(.99);
+    expect(sofa.metallic).toBe(0);
+    const seating=warmLivingMaterial(scene,'LIVING-103-DINING · stolička',fabric);
+    expect(seating).not.toBe(sofa);
+    expect(seating.albedoColor.asArray()).toEqual([1,.9,.74]);
   });
 });

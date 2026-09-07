@@ -623,7 +623,7 @@ test("renders variant E in the shared studio with its private storage and covere
 
 test("selects every floor-plan variant on one route with one accessible tab panel", async () => {
   for (const variant of ["existing", "a", "b", "c", "d", "e"]) {
-    const response = await render(`/koncept-2d?variant=${variant}`);
+    const response = await render(`/koncept-2d?variant=${variant}&mode=study`);
     assert.equal(response.status, 200);
     const html = await response.text();
     const main = html.match(/<main[\s\S]*?<\/main>/)?.[0];
@@ -700,4 +700,30 @@ test("redirects the previous experimental address to the E tab", async () => {
   const response = await render("/koncept-2d-2");
   assert.equal(response.status, 307);
   assert.equal(response.headers.get("location"), "/koncept-2d?variant=e");
+});
+
+test("renders active C as a measured model manual while retaining the editable study", async () => {
+  const response=await render('/koncept-2d?variant=c');
+  assert.equal(response.status,200);
+  const html=await response.text();
+  for(const label of ['Pôdorys &amp; manuál','Aktuálny 3D model','Miestnosti a súpis predmetov','Detail a rozmery vybraného prvku','Terasy pri dome','Zobraziť celý dom','Jednotky rozmerov','Hľadať prvky v zvolenej oblasti'])assert.ok(html.includes(label),label);
+  assert.match(html,/class="pd-plan"/);
+  assert.match(html,/data-item="Spálňa za novou priečkou"/);
+  assert.match(html,/Práčka/);
+  assert.match(html,/Sušička/);
+  assert.match(html,/Terasová stolička 1/);
+  assert.match(html,/Terasová stolička 2/);
+  assert.match(html,/id="pd-help-title"/);
+  assert.match(html,/aria-labelledby="pd-help-title"/);
+  assert.doesNotMatch(html,/NaN|Infinity|This page couldn’t load|id="expansion"/);
+  assert.ok(html.length<1_300_000,'The canvas must not eagerly render all manual room sheets.');
+  const manual=await render('/koncept-2d?variant=c&view=manual');
+  assert.equal(manual.status,200);
+  const manualHtml=await manual.text();
+  assert.match(manualHtml,/Manuál vášho domu\./);
+  assert.match(manualHtml,/class="pd-room-sheet-plan"/);
+  assert.match(manualHtml,/Tlačiť \/ uložiť PDF/);
+  const study=await render('/koncept-2d?variant=c&mode=study');
+  assert.equal(study.status,200);
+  assert.match(await study.text(),/id="expansion"/);
 });

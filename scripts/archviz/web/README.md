@@ -49,6 +49,8 @@ The GLBs retain physical transmission and IOR. The web integration uses full-res
 
 ## Living-room finishes
 
-`lib/babylon-living-palette.ts` applies the warm ecru, sand, oak, limestone, cashmere and terracotta palette to `LIVING-103-` objects. The native collision model and imported GLBs use the same room-scoped finish resolver. Shared bedroom, hallway, bathroom and kitchen materials retain their original finish. Imported materials are cloned before batching; source GLBs and the saved Blender file remain the unmodified export.
+`lib/babylon-living-palette.ts` applies a matte sand/taupe sofa, natural oak cabinetry and tables, limestone, ecru and muted olive accents to `LIVING-103-` objects. The native collision model and imported GLBs use the same room-scoped finish resolver. Shared bedroom, hallway, bathroom and kitchen materials retain their original finish. Imported materials are cloned before batching; source GLBs and the saved Blender file remain the unmodified export.
+
+The current sofa uses `TAILORED` source names and the native rounded-box upholstery builder for broad flat cushions with 25–55 mm edge radii. The earlier capsule-shaped exported pieces no longer match these sources and stay disabled; the new sofa remains visible in both ArchViz and fallback. Its original floor footprints and navigation guards are preserved.
 
 The four `public/assets/textures/living-*-albedo.jpg` files retain the grain of the existing material maps. Reproduce them with `python3 scripts/archviz/web/prepare_living_palette.py`; the default output is `output/archviz/living-palette/`. Normal and roughness maps retain their original scale. The renderer additionally uses warmer surface reflectance to balance these finishes against the saved blue daylight inside the shaded living room.

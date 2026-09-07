@@ -21,7 +21,10 @@
     "archviz:render": "node scripts/archviz/run.mjs render",
     "archviz:open": "node scripts/archviz/run.mjs open",
     "archviz:test": "node --test tests/archviz-export.test.mjs && python3 -m unittest discover -s scripts/archviz -p \"test_*.py\"",
-    "archviz:validate": "node scripts/archviz/validate.mjs"
+    "archviz:validate": "node scripts/archviz/validate.mjs",
+    "docs:generate": "node scripts/plan-documentation/generate.mjs",
+    "predev": "npm run docs:generate",
+    "prebuild": "npm run docs:generate"
   },
   "dependencies": {
     "@babylonjs/core": "^9.21.2",
