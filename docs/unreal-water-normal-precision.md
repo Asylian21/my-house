@@ -1,0 +1,25 @@
+# Presnosť normál vody — 9. september 2026
+
+Kandidát vyššej presnosti bol zamietnutý ako vizuálna oprava vody: v natívnom zábere nepriniesol presvedčivé zlepšenie dominantného pravidelného vzoru odrazov. Konfigurácia je obnovená bajtovo zhodne s pôvodným stavom a nový build aj natívne 4K overenie obnovy prešli. Parametre vody, svetlo, geometria a prijatý materiál lemu bazéna sa nemenili.
+
+Ohraničený test menil jediný riadok konfigurácie: `r.GBufferFormat=3` v sekcii `[/Script/Engine.RendererSettings]`.
+
+Predchádzajúci balík skutočne čítal hodnotu `1`, `LastSetBy: Constructor`. Dôkaz je v `output/unreal/water-precision-study/query-01-native-file.log:890`; stdout zobrazil len ozvenu príkazu. Samostatný proces PID 27185 skončil s exit 0 a potvrdil natívnu 4K scénu aj RHI textúru počas 300 meraných snímok po 1200 zahrievacích. Priemer 67,053 ms (14,91 fps), P95 75,499 ms. Ide o statický pohľad na bazén.
+
+Voda pri tomto teste mala štyri súvislé sínusové vlny. Zdrojový výpočet jednotiek a normál bol konzistentný, ale pravidelné odrazené oválne ostrovčeky mohli súvisieť aj s týmto vlnovým modelom. Jediný záber neoddeľuje tvar vĺn, kvantizáciu normál a spracovanie odrazov. Test presnosti preto nie je vyhlásením príčiny artefaktu.
+
+Nainštalované zdroje UE 5.8 potvrdzujú načítanie tejto sekcie pri štarte commandletu aj hry (`LaunchEngineLoop.cpp:2811`), väzbu nastavenia s požadovaným reštartom (`RendererSettings.h:1006`) a použitie rovnakej hodnoty pri kompilácii aj runtime parametroch GBuffer (`ShaderGenerationUtil.cpp:2286`, `2314`). Nastavenie `3` používa vyššiu presnosť normál; zmena je globálna pre príslušné GBuffer ciele, nie iba lokálna pre bazén. Pri 4K môže samotný prechod normal targetu z RGB10A2 na RGBA16F pridať približne 31,64 MiB aj vyššiu pamäťovú priepustnosť. Nie je to návrh na zrýchlenie. Odkazy na presné súbory a kontrolované hashe sú v `output/unreal/water-precision-study/gbuffer3-proposal/README.md` a `manifest.json`.
+
+Pred úpravou sa zachoval pôvodný `DefaultEngine.ini` aj report balenia v `output/unreal/water-precision-study/before/`. Čerstvý BuildCookRun prešiel za 77,10 s. Porovnanie reportov potvrdilo jediný rozdiel v natívnych zdrojoch — tento konfiguračný súbor — a žiadnu zmenu vstupov importu, mapy, materiálov alebo optiky. Reimport geometrie nebol potrebný. Package porovnanie: `output/unreal/water-precision-study/package-01-comparison.json`.
+
+Nový proces PID 29727 skončil s exit 0. Pôvodný natívny súborový log prečítal hodnotu `3`, `LastSetBy: ProjectSetting`, na riadku 895 v `output/unreal/water-precision-study/candidate-01-native-file.log`. Po 1200 zahrievacích a 300 meraných snímkach s plným fokusom a natívnou 4K scénou aj RHI textúrou dosiahol priemer 69,076 ms (**14,48 fps**), P95 80,118 ms. Zhodovalo sa všetkých 2475 odkazov na vstupné hashe, teda 2462 rôznych súborov, aj obsah `.app` pred a po spustení. Dotaz dokazuje hodnotu CVar, nie priamy GPU readback formátu textúry. Dve jednotlivé merania nepreukazujú výkonový náklad zmeny.
+
+Záber `water-gbuffer-pool-day-35e68614-20c8-4d17-b2ab-0fc4a6917946/capture.png` bol porovnaný s predchádzajúcim `water-gbuffer-pool-day-f71348ad-a6f6-4547-8d67-e9f7978b4f4a/capture.png`. Oba pôvodné PNG majú 3840 × 2160 pixelov; nástrojové zobrazenie ich zmenšilo na 2048 × 1152. Pravidelný raster oválnych ostrovčekov a zúbkovaných pásov zostáva. Root aj nezávislý vizuálny reviewer nevidia presvedčivý prínos, ktorý by odôvodnil prijatie kandidáta. Rozdielna fáza vĺn a zmenšené zobrazenie nevylučujú drobné zlepšenie presnosti; nepreukazujú ani to, že kvantizácia nemá žiadny vplyv. Toto je rozhodnutie o konkrétnom kandidátovi, nie univerzálny záver o GBuffer 3.
+
+## Overená obnova
+
+Obnovený BuildCookRun prešiel za 69,12 s. Všetky natívne zdrojové hashe aj vstupy importu sa zhodujú s balíkom pred experimentom; mapa a autorský stav zostali rovnaké. Nový package receipt má SHA `aa3cb398a42f5dbbafaa97c8ea823149356a60000e93e095b241e54912792121`. Zamietnutý kandidát je zachovaný v package-history.
+
+Proces PID 31548 skončil s exit 0 a natívny súborový log znovu potvrdil `r.GBufferFormat = "1"`, `LastSetBy: Constructor`. Záber `water-gbuffer-pool-day-0953d423-9394-480a-ad26-f83bc0a77963/capture.png` ukazuje zachovaný nový lem a pôvodný stav vody. Overenie opäť prešlo s 1200 zahrievacími a 300 meranými snímkami, aktívnym oknom aj aplikáciou a natívnou 4K scénou aj RHI textúrou. Priemer 67,352 ms (**14,85 fps**), P95 77,930 ms. Zhodovala sa celá uzávierka 2475 odkazov na hashe / 2462 rôznych vstupných súborov a obsah aplikácie pred aj po spustení. Dôkaz: `output/unreal/water-precision-study/restore-01-verification.json`.
+
+Na túto obnovu nadviazala samostatná [iterácia rozloženia vĺn](unreal-water-waves.md): preladenie štyroch vĺn bolo po natívnom teste zamietnuté a dvanásť slabších režimov prijatých ako lokálne vizuálne zlepšenie. Tento dokument zachováva historický test presnosti a jeho pôvodné balíky. Fyzikálne kaustiky v scéne, prirodzenosť vody v pohybe, plynulý 4K výkon a celkový fotorealizmus zostávajú otvorené.

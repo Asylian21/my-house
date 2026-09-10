@@ -1,0 +1,4310 @@
+{
+  "schemaVersion": 1,
+  "status": "authored-ornamental-geometry-validated",
+  "revision": "AUTHORED-GREEN-FOUNTAIN-72X6-20260909-1",
+  "seed": 601226,
+  "generatorSha256": "19ff48905a5282abe7d08a3561a7d698367a732d14071827d53ea0fd925deb46",
+  "sourceManifestSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "sourceObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "sourceFiles": {
+    "output/unreal/geometry/scene.json": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+    "output/unreal/geometry/dom-mm.obj": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+    "lib/babylon-scene.ts": "39b12a2396c5eef49db12af59dffdb365c25d629cd566b5f905de3d8328df678",
+    "scripts/unreal/vegetation.py": "03ef25914526be546fd11abdd663e9d1a125c42a3f90972c5e0d13d2059ca60b"
+  },
+  "groups": [
+    {
+      "id": "ORNAMENTAL_GRASS_01",
+      "sourceIds": [
+        "DOM_01841",
+        "DOM_01842",
+        "DOM_01843"
+      ],
+      "rootSourceMm": [
+        -10500,
+        4300,
+        -35
+      ],
+      "rootUnrealCm": [
+        -1050.0,
+        -430.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01841": "e176b46752e6dbe279c52d1bdcfd7da4ac80bf30d5f3aa62bd4f6fec505ff724",
+        "DOM_01842": "129e4cd5be9a7047bcd69cebb1bd8276603032325792d1181b2a1124db543ef0",
+        "DOM_01843": "bcee3b9655b70c69b4d216eb975eef0dc60a83292ff9ccc20f0f9673b6462525"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          -11118.633943,
+          4302.229258
+        ],
+        [
+          -10822.678043,
+          3746.719843
+        ],
+        [
+          -10209.475487,
+          3696.161202
+        ],
+        [
+          -9991.36476,
+          4297.288565
+        ],
+        [
+          -10177.321957,
+          4853.280538
+        ],
+        [
+          -10845.107109,
+          4808.336326
+        ]
+      ],
+      "sourceBedIdsAtRoot": [
+        "DOM_01821"
+      ],
+      "supportPolicy": "existing-mulch-polygon",
+      "sourceSupportId": "DOM_01821",
+      "sourceSupportTopZMm": -29.0,
+      "authoredLowestRowExtensionMm": 0.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 1008.0,
+      "originalCardHeightMm": 1344.0,
+      "material": {
+        "baseColorSRGB8": [
+          71,
+          104,
+          45
+        ],
+        "baseColorLinear": [
+          0.06301001765316767,
+          0.13843161503245183,
+          0.026241221894849898
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 847.6870150307939,
+          "reachParameterMm": 178.8577101007104,
+          "maxWidthParameterMm": 21.026988685131073,
+          "azimuth": -0.1164770137425512,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 927.6965971007198,
+          "reachParameterMm": 122.70971889607608,
+          "maxWidthParameterMm": 22.860501832328737,
+          "azimuth": 2.228266604935541,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 995.9178057627753,
+          "reachParameterMm": 99.84589112922549,
+          "maxWidthParameterMm": 14.294999489560723,
+          "azimuth": 4.58087990573938,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 980.9424354761838,
+          "reachParameterMm": 176.4976550359279,
+          "maxWidthParameterMm": 22.46860455814749,
+          "azimuth": 7.337671416108798,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 828.4596555471048,
+          "reachParameterMm": 123.31089176237583,
+          "maxWidthParameterMm": 14.4275819696486,
+          "azimuth": 9.38146231194688,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 869.0343169657142,
+          "reachParameterMm": 109.6475191321224,
+          "maxWidthParameterMm": 12.32944246660918,
+          "azimuth": 12.12855850881792,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 882.3011260569468,
+          "reachParameterMm": 140.51066206768155,
+          "maxWidthParameterMm": 13.96759389154613,
+          "azimuth": 14.502836047746845,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 800.4165518577397,
+          "reachParameterMm": 98.56682122685015,
+          "maxWidthParameterMm": 14.998609167523682,
+          "azimuth": 17.006655466232843,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 887.0830801052973,
+          "reachParameterMm": 191.92921679466963,
+          "maxWidthParameterMm": 12.929434426128864,
+          "azimuth": 19.265387953244336,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 929.4432386105508,
+          "reachParameterMm": 188.09472533874214,
+          "maxWidthParameterMm": 18.907136007212102,
+          "azimuth": 21.49341869804633,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 815.1471633954719,
+          "reachParameterMm": 185.53385278210044,
+          "maxWidthParameterMm": 13.909555928781629,
+          "azimuth": 23.906609999693693,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 870.3949987766147,
+          "reachParameterMm": 180.26616384275258,
+          "maxWidthParameterMm": 13.407947451807559,
+          "azimuth": 26.60015674674839,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 898.6139225020632,
+          "reachParameterMm": 150.25148257613182,
+          "maxWidthParameterMm": 13.639785777777433,
+          "azimuth": 28.606557129464388,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 973.6858462042361,
+          "reachParameterMm": 118.80043915472925,
+          "maxWidthParameterMm": 22.15550738852471,
+          "azimuth": 31.12366665542412,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 828.3488598636166,
+          "reachParameterMm": 95.58693582192063,
+          "maxWidthParameterMm": 16.73980592750013,
+          "azimuth": 33.75596805987399,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 889.3935694228113,
+          "reachParameterMm": 108.7723205331713,
+          "maxWidthParameterMm": 11.834769626148045,
+          "azimuth": 36.165048436137496,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 802.3926953182743,
+          "reachParameterMm": 123.89201749116182,
+          "maxWidthParameterMm": 20.42123158276081,
+          "azimuth": 38.54146799620092,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1004.0418498679251,
+          "reachParameterMm": 175.10333131067455,
+          "maxWidthParameterMm": 22.8610146259889,
+          "azimuth": 40.619261115463615,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 870.2313224636391,
+          "reachParameterMm": 173.94254950806499,
+          "maxWidthParameterMm": 12.048074150457978,
+          "azimuth": 43.34801438668924,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 883.7234323525429,
+          "reachParameterMm": 160.50310936756432,
+          "maxWidthParameterMm": 20.058873244561255,
+          "azimuth": 45.73294477123182,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 882.0314168721065,
+          "reachParameterMm": 160.69155983626842,
+          "maxWidthParameterMm": 18.516967374831438,
+          "azimuth": 48.13480153985833,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 832.4910079405457,
+          "reachParameterMm": 140.79541116021574,
+          "maxWidthParameterMm": 11.246807019226253,
+          "azimuth": 50.39955641204237,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 884.7793719429151,
+          "reachParameterMm": 193.84022058919072,
+          "maxWidthParameterMm": 19.135379312559962,
+          "azimuth": 52.69470711192958,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 835.1260631288588,
+          "reachParameterMm": 200.68051711656153,
+          "maxWidthParameterMm": 12.852533278055489,
+          "azimuth": 55.1114534886189,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 822.7099704750627,
+          "reachParameterMm": 209.60543230175972,
+          "maxWidthParameterMm": 15.797126553952694,
+          "azimuth": 57.406543159682855,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 688.0938389454782,
+          "reachParameterMm": 327.88731161504984,
+          "maxWidthParameterMm": 18.915352105163038,
+          "azimuth": 60.09570726355945,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 777.8229556987435,
+          "reachParameterMm": 235.66736586391926,
+          "maxWidthParameterMm": 21.531850846484303,
+          "azimuth": 62.48136664155512,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 751.3833815485239,
+          "reachParameterMm": 191.51450004428625,
+          "maxWidthParameterMm": 15.843050942756236,
+          "azimuth": 64.58163920354835,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 657.4851013874262,
+          "reachParameterMm": 246.8593406677246,
+          "maxWidthParameterMm": 14.688712026923895,
+          "azimuth": 67.39640893729374,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 768.6326876963675,
+          "reachParameterMm": 344.7963922098279,
+          "maxWidthParameterMm": 12.834031361155212,
+          "azimuth": 69.66084699559163,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 859.6463140142708,
+          "reachParameterMm": 282.8835766762495,
+          "maxWidthParameterMm": 18.854394918307662,
+          "azimuth": 71.87030114397709,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 836.771766744554,
+          "reachParameterMm": 275.97629617899656,
+          "maxWidthParameterMm": 21.69952127803117,
+          "azimuth": 74.54232272633818,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 676.1431756963581,
+          "reachParameterMm": 301.22996017336845,
+          "maxWidthParameterMm": 21.851621598005295,
+          "azimuth": 76.92870159371458,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 780.5978954283893,
+          "reachParameterMm": 271.4631465449929,
+          "maxWidthParameterMm": 16.67620465811342,
+          "azimuth": 79.09366420104968,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 812.7970356253535,
+          "reachParameterMm": 349.3607971817255,
+          "maxWidthParameterMm": 16.566704193130136,
+          "azimuth": 81.56767422583918,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 641.5517586100101,
+          "reachParameterMm": 247.03847464174032,
+          "maxWidthParameterMm": 21.456319474615157,
+          "azimuth": 84.011841316281,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 702.0837567716092,
+          "reachParameterMm": 311.849180161953,
+          "maxWidthParameterMm": 13.663267109543085,
+          "azimuth": 86.41072113390443,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 638.5145226426423,
+          "reachParameterMm": 227.5033201649785,
+          "maxWidthParameterMm": 19.830243463627994,
+          "azimuth": 88.94100283783457,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 791.456406924203,
+          "reachParameterMm": 220.57643674314022,
+          "maxWidthParameterMm": 17.20411135070026,
+          "azimuth": 91.20173979529872,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 780.0060366645455,
+          "reachParameterMm": 268.4174279496074,
+          "maxWidthParameterMm": 18.785805952735245,
+          "azimuth": 93.72789487305023,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 856.7706206294149,
+          "reachParameterMm": 261.8753792345524,
+          "maxWidthParameterMm": 18.574287332594395,
+          "azimuth": 95.78785517878923,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 715.8965446351468,
+          "reachParameterMm": 297.48932365328074,
+          "maxWidthParameterMm": 17.389032795093954,
+          "azimuth": 98.57511076399382,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 791.8132960901409,
+          "reachParameterMm": 329.03732366859913,
+          "maxWidthParameterMm": 19.625786351040006,
+          "azimuth": 100.85056911280802,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 856.1889784258605,
+          "reachParameterMm": 240.83211209625006,
+          "maxWidthParameterMm": 18.032750190235674,
+          "azimuth": 103.4161030656065,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 785.888728588745,
+          "reachParameterMm": 301.8820971250534,
+          "maxWidthParameterMm": 12.39785460755229,
+          "azimuth": 105.4484739847929,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 832.8060897780954,
+          "reachParameterMm": 300.7060920074582,
+          "maxWidthParameterMm": 11.432441922836006,
+          "azimuth": 108.15116171037766,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 684.5522194958478,
+          "reachParameterMm": 237.1215020865202,
+          "maxWidthParameterMm": 11.856777450069785,
+          "azimuth": 110.38739502939548,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 644.4863664409518,
+          "reachParameterMm": 296.5255309268832,
+          "maxWidthParameterMm": 15.82297330070287,
+          "azimuth": 112.70789839860372,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 808.3596374275535,
+          "reachParameterMm": 214.02795657515526,
+          "maxWidthParameterMm": 21.595075234770775,
+          "azimuth": 115.34175515086874,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 626.7548653011023,
+          "reachParameterMm": 219.81319401413202,
+          "maxWidthParameterMm": 22.915263823233545,
+          "azimuth": 117.50067569079525,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 865.9423456136137,
+          "reachParameterMm": 349.4512788206339,
+          "maxWidthParameterMm": 18.082395965233445,
+          "azimuth": 120.10169841244699,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 653.1097828173637,
+          "reachParameterMm": 316.4424705132842,
+          "maxWidthParameterMm": 17.058709361590445,
+          "azimuth": 122.53838021629537,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 593.4249490759894,
+          "reachParameterMm": 332.69435580819845,
+          "maxWidthParameterMm": 16.61898361518979,
+          "azimuth": 124.72156301303049,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 565.9945870888978,
+          "reachParameterMm": 386.42404267098755,
+          "maxWidthParameterMm": 22.473123381845653,
+          "azimuth": 127.20646284967108,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 606.4173427130654,
+          "reachParameterMm": 348.2603302318603,
+          "maxWidthParameterMm": 11.357444791123271,
+          "azimuth": 129.56416175898707,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 575.7041262061894,
+          "reachParameterMm": 387.86804808769375,
+          "maxWidthParameterMm": 15.1131854923442,
+          "azimuth": 132.20475464394096,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 513.3578707575425,
+          "reachParameterMm": 374.0621264837682,
+          "maxWidthParameterMm": 20.379630140960217,
+          "azimuth": 134.59950772638373,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 600.7214402695745,
+          "reachParameterMm": 361.58546816091985,
+          "maxWidthParameterMm": 15.4588543465361,
+          "azimuth": 136.65471574720104,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 462.0176214519516,
+          "reachParameterMm": 431.5757993515581,
+          "maxWidthParameterMm": 22.592790665104985,
+          "azimuth": 139.2936149964602,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 527.4046217063069,
+          "reachParameterMm": 431.9082331703976,
+          "maxWidthParameterMm": 11.036920682527125,
+          "azimuth": 141.4559854667119,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 524.6491655446216,
+          "reachParameterMm": 362.0929391682148,
+          "maxWidthParameterMm": 19.89276283606887,
+          "azimuth": 144.1003090346572,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 509.5674237636477,
+          "reachParameterMm": 390.84961933549494,
+          "maxWidthParameterMm": 15.521845030598342,
+          "azimuth": 146.2898750820088,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 592.3830177764967,
+          "reachParameterMm": 441.19641796685755,
+          "maxWidthParameterMm": 11.381780182942748,
+          "azimuth": 148.894098471012,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 479.35976130232217,
+          "reachParameterMm": 334.5393760735169,
+          "maxWidthParameterMm": 17.588243369944394,
+          "azimuth": 151.2542809460981,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 413.2851701452956,
+          "reachParameterMm": 374.06957069411874,
+          "maxWidthParameterMm": 16.1746027469635,
+          "azimuth": 153.5825897272337,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 403.4008361016959,
+          "reachParameterMm": 433.445169175975,
+          "maxWidthParameterMm": 16.042852765880525,
+          "azimuth": 156.00789385130196,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 628.8515758532658,
+          "reachParameterMm": 333.7701591383666,
+          "maxWidthParameterMm": 15.228999564424157,
+          "azimuth": 158.20016812327052,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 385.15365620791914,
+          "reachParameterMm": 387.27145318407565,
+          "maxWidthParameterMm": 20.90052776876837,
+          "azimuth": 160.919041573814,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 499.9303065947816,
+          "reachParameterMm": 440.59655997902155,
+          "maxWidthParameterMm": 22.445213083177805,
+          "azimuth": 163.29822378368183,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 631.22893760629,
+          "reachParameterMm": 346.032354994677,
+          "maxWidthParameterMm": 11.73678710591048,
+          "azimuth": 165.81352494852845,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 526.6831995900347,
+          "reachParameterMm": 406.8259621132165,
+          "maxWidthParameterMm": 16.743878168985248,
+          "azimuth": 167.95856785162746,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 450.03684524908664,
+          "reachParameterMm": 415.18186947796494,
+          "maxWidthParameterMm": 19.598648947663605,
+          "azimuth": 170.47389376320504,
+          "xyEnvelopeScale": 1.0
+        }
+      ],
+      "file": "ornamental_grass_01.glb",
+      "sha256": "9bef8a02b2d84f7d886daa0f732023988472564dffa8ed0be85e5bb9f4280678",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.4386835992336273,
+          -0.435143381357193,
+          0.0
+        ],
+        "max": [
+          0.4527566134929657,
+          0.39535507559776306,
+          0.9999555945396423
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          -10938.683599233627,
+          3864.856618642807,
+          -35.0
+        ],
+        "max": [
+          -10047.243386507034,
+          4695.355075597763,
+          964.9555945396423
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          -1093.8683599233627,
+          -469.5355075597763,
+          -3.5
+        ],
+        "max": [
+          -1004.7243386507034,
+          -386.4856618642807,
+          96.49555945396423
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": true,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": true,
+        "allProjectedTrianglesWithinBed": true,
+        "bedException": null,
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    },
+    {
+      "id": "ORNAMENTAL_GRASS_02",
+      "sourceIds": [
+        "DOM_01844",
+        "DOM_01845",
+        "DOM_01846"
+      ],
+      "rootSourceMm": [
+        -7600,
+        6000,
+        -35
+      ],
+      "rootUnrealCm": [
+        -760.0,
+        -600.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01844": "a6e9bd635cbd6158f10454e47e3a186f1d6c45cdd1c96704b9e4cb4a8fd1462d",
+        "DOM_01845": "4a1d63d4b6fddac7a9d26f0f88901b26d5f42744d79943dadcee53adb92028f9",
+        "DOM_01846": "b5fad805764770a53ecade4a152c97e5ade30fa626bb66c599536c55545ebdc5"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          -8263.879325,
+          6278.165718
+        ],
+        [
+          -8216.608965,
+          5597.450177
+        ],
+        [
+          -7512.927144,
+          5426.221312
+        ],
+        [
+          -6936.120484,
+          5721.834282
+        ],
+        [
+          -7070.932424,
+          6469.157298
+        ],
+        [
+          -7673.159511,
+          6682.895242
+        ]
+      ],
+      "sourceBedIdsAtRoot": [
+        "DOM_01821"
+      ],
+      "supportPolicy": "existing-mulch-polygon",
+      "sourceSupportId": "DOM_01821",
+      "sourceSupportTopZMm": -29.0,
+      "authoredLowestRowExtensionMm": 0.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 1132.8,
+      "originalCardHeightMm": 1510.3999999999999,
+      "material": {
+        "baseColorSRGB8": [
+          78,
+          110,
+          50
+        ],
+        "baseColorLinear": [
+          0.07618538148130785,
+          0.1559264637078274,
+          0.03189603307301153
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 1045.6625591319503,
+          "reachParameterMm": 121.26959606073797,
+          "maxWidthParameterMm": 14.310167367570102,
+          "azimuth": -0.17339242577552796,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 899.4262060892432,
+          "reachParameterMm": 157.93807284906507,
+          "maxWidthParameterMm": 18.69636888615787,
+          "azimuth": 2.2130998012160648,
+          "xyEnvelopeScale": 0.5386151140948994
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 972.1166277896762,
+          "reachParameterMm": 134.6556440088898,
+          "maxWidthParameterMm": 11.436052751727402,
+          "azimuth": 4.8152239908869845,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1077.2469118437318,
+          "reachParameterMm": 208.27200662344694,
+          "maxWidthParameterMm": 19.119865275919437,
+          "azimuth": 7.053784204977867,
+          "xyEnvelopeScale": 0.39529179875968146
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 964.7416779673397,
+          "reachParameterMm": 107.47191491536796,
+          "maxWidthParameterMm": 12.627399577759206,
+          "azimuth": 9.774029337435122,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 989.4245348643511,
+          "reachParameterMm": 143.6263226531446,
+          "maxWidthParameterMm": 13.456370340660214,
+          "azimuth": 11.864304883572155,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 901.3459216457605,
+          "reachParameterMm": 209.85530038364232,
+          "maxWidthParameterMm": 21.461634875275195,
+          "azimuth": 14.22450992125147,
+          "xyEnvelopeScale": 0.42052319016987394
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 964.7216663662343,
+          "reachParameterMm": 104.702378064394,
+          "maxWidthParameterMm": 13.522626619786024,
+          "azimuth": 16.81505384601878,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 963.0667429401577,
+          "reachParameterMm": 145.87681791745126,
+          "maxWidthParameterMm": 21.59543505590409,
+          "azimuth": 19.37817057961058,
+          "xyEnvelopeScale": 0.5386151140948994
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 982.4947870451064,
+          "reachParameterMm": 130.94228887930512,
+          "maxWidthParameterMm": 12.165687283501029,
+          "azimuth": 21.569327335270096,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1103.035258036673,
+          "reachParameterMm": 150.09747334755957,
+          "maxWidthParameterMm": 16.07277797628194,
+          "azimuth": 24.128522976187753,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 956.2366644161492,
+          "reachParameterMm": 180.65931636840105,
+          "maxWidthParameterMm": 12.706252619624138,
+          "azimuth": 26.35158518184863,
+          "xyEnvelopeScale": 0.4473650959253978
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1073.8286651679575,
+          "reachParameterMm": 112.55368868820369,
+          "maxWidthParameterMm": 13.939818731509149,
+          "azimuth": 28.75186234971629,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 960.9317940981836,
+          "reachParameterMm": 93.0231118015945,
+          "maxWidthParameterMm": 20.16807829774916,
+          "azimuth": 31.395687574477005,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1077.567283065319,
+          "reachParameterMm": 168.42717823572457,
+          "maxWidthParameterMm": 20.737389960326254,
+          "azimuth": 33.77248212885563,
+          "xyEnvelopeScale": 0.5729948022286164
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1007.0576272306591,
+          "reachParameterMm": 194.8929836601019,
+          "maxWidthParameterMm": 12.06933431699872,
+          "azimuth": 35.85995006801246,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1009.1452388249337,
+          "reachParameterMm": 100.95884322188795,
+          "maxWidthParameterMm": 12.859896193258464,
+          "azimuth": 38.53449926483296,
+          "xyEnvelopeScale": 0.6898697810559997
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1027.3586387109608,
+          "reachParameterMm": 208.26578887179494,
+          "maxWidthParameterMm": 22.766637293621898,
+          "azimuth": 40.984724836498664,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 947.6653286256194,
+          "reachParameterMm": 126.28344283439219,
+          "maxWidthParameterMm": 12.468590524978936,
+          "azimuth": 43.14804907092075,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1071.8341034395248,
+          "reachParameterMm": 95.94098713248968,
+          "maxWidthParameterMm": 16.96357249468565,
+          "azimuth": 45.7823958666471,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 911.6356372356713,
+          "reachParameterMm": 104.2914869170636,
+          "maxWidthParameterMm": 22.377690642140806,
+          "azimuth": 47.79975679531274,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1100.741760260269,
+          "reachParameterMm": 171.40383487567306,
+          "maxWidthParameterMm": 22.77286577410996,
+          "azimuth": 50.27666797456077,
+          "xyEnvelopeScale": 0.7807489599999998
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1013.2100647462606,
+          "reachParameterMm": 97.8669831622392,
+          "maxWidthParameterMm": 19.843509987927973,
+          "azimuth": 52.79360409146086,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 904.912355783835,
+          "reachParameterMm": 171.38863295316696,
+          "maxWidthParameterMm": 16.404959317296743,
+          "azimuth": 55.13533421601245,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 829.8671075329185,
+          "reachParameterMm": 298.5391454771161,
+          "maxWidthParameterMm": 17.22974859457463,
+          "azimuth": 57.596081987435554,
+          "xyEnvelopeScale": 0.25633787466375935
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 914.2078901099861,
+          "reachParameterMm": 288.14317278563976,
+          "maxWidthParameterMm": 22.895588850602508,
+          "azimuth": 59.895823448090226,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 941.6457416807413,
+          "reachParameterMm": 291.16675566881895,
+          "maxWidthParameterMm": 18.846306865103543,
+          "azimuth": 62.376357893372095,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 731.729598509699,
+          "reachParameterMm": 276.95349022746086,
+          "maxWidthParameterMm": 14.031053721904755,
+          "azimuth": 64.95325948752269,
+          "xyEnvelopeScale": 0.3086236607781505
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 964.989033200562,
+          "reachParameterMm": 229.1920867934823,
+          "maxWidthParameterMm": 17.614454335533082,
+          "azimuth": 67.21558262356528,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 865.5369086345136,
+          "reachParameterMm": 279.6422705799341,
+          "maxWidthParameterMm": 13.53221500851214,
+          "azimuth": 69.81400549849631,
+          "xyEnvelopeScale": 0.27269986666357376
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 709.2665526909828,
+          "reachParameterMm": 292.304751239717,
+          "maxWidthParameterMm": 17.347904198803008,
+          "azimuth": 71.92692434727516,
+          "xyEnvelopeScale": 0.4473650959253978
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 714.9927273104488,
+          "reachParameterMm": 208.46754282712936,
+          "maxWidthParameterMm": 22.366850558668375,
+          "azimuth": 74.30122193027755,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 931.5585526658892,
+          "reachParameterMm": 331.3281275704503,
+          "maxWidthParameterMm": 13.107313121668994,
+          "azimuth": 76.79693981980607,
+          "xyEnvelopeScale": 0.25633787466375935
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 937.2452801196276,
+          "reachParameterMm": 257.78561018407345,
+          "maxWidthParameterMm": 17.52483962289989,
+          "azimuth": 78.98033351245203,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 935.1394565681218,
+          "reachParameterMm": 247.8882448002696,
+          "maxWidthParameterMm": 16.03494463581592,
+          "azimuth": 81.78697918292168,
+          "xyEnvelopeScale": 0.475920314814253
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 773.1666892811357,
+          "reachParameterMm": 232.092737108469,
+          "maxWidthParameterMm": 13.461743481457233,
+          "azimuth": 84.13898050309356,
+          "xyEnvelopeScale": 0.42052319016987394
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 807.3031622362732,
+          "reachParameterMm": 276.5460455790162,
+          "maxWidthParameterMm": 19.056703134439886,
+          "azimuth": 86.2179690611585,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 844.103311297506,
+          "reachParameterMm": 283.4931058436632,
+          "maxWidthParameterMm": 18.443692224100232,
+          "azimuth": 88.71552157267524,
+          "xyEnvelopeScale": 0.27269986666357376
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 758.1305816996097,
+          "reachParameterMm": 302.1078720316291,
+          "maxWidthParameterMm": 16.600464255549014,
+          "azimuth": 91.4006296181003,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 857.3804437418282,
+          "reachParameterMm": 237.79226124286652,
+          "maxWidthParameterMm": 13.960081588476896,
+          "azimuth": 93.6299603940353,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 840.2389641761183,
+          "reachParameterMm": 226.2352680042386,
+          "maxWidthParameterMm": 11.772596183232963,
+          "azimuth": 96.18345467417593,
+          "xyEnvelopeScale": 0.3492798333840545
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 839.9276355604827,
+          "reachParameterMm": 310.4465126246214,
+          "maxWidthParameterMm": 21.960427513346076,
+          "azimuth": 98.25878519621004,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 787.4506741486787,
+          "reachParameterMm": 222.6314414665103,
+          "maxWidthParameterMm": 11.008785148151219,
+          "azimuth": 100.71011992504312,
+          "xyEnvelopeScale": 0.475920314814253
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 849.4374602665007,
+          "reachParameterMm": 274.3800114095211,
+          "maxWidthParameterMm": 19.667819812893867,
+          "azimuth": 103.07814022744662,
+          "xyEnvelopeScale": 0.37157429083410054
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 749.50822139436,
+          "reachParameterMm": 258.9879808202386,
+          "maxWidthParameterMm": 19.82074715849012,
+          "azimuth": 105.64388273712069,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 771.8522363985478,
+          "reachParameterMm": 291.21247328817844,
+          "maxWidthParameterMm": 22.87376012839377,
+          "azimuth": 107.8054902602079,
+          "xyEnvelopeScale": 0.25633787466375935
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 723.9064648418426,
+          "reachParameterMm": 206.53166886419058,
+          "maxWidthParameterMm": 20.647126742638648,
+          "azimuth": 110.54649793433178,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 840.9378046205342,
+          "reachParameterMm": 305.7217636704445,
+          "maxWidthParameterMm": 19.67776306346059,
+          "azimuth": 112.70599395848198,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 778.7160371319651,
+          "reachParameterMm": 254.41748816519976,
+          "maxWidthParameterMm": 15.734852234832942,
+          "azimuth": 115.19069742762036,
+          "xyEnvelopeScale": 0.3283230433810112
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 966.483095836848,
+          "reachParameterMm": 340.39681516587734,
+          "maxWidthParameterMm": 13.349943159148097,
+          "azimuth": 117.64366911520898,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 940.3101617563963,
+          "reachParameterMm": 286.3701615855098,
+          "maxWidthParameterMm": 17.1764358850196,
+          "azimuth": 119.83586747630382,
+          "xyEnvelopeScale": 0.3086236607781505
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 802.9228496982156,
+          "reachParameterMm": 222.7175958454609,
+          "maxWidthParameterMm": 15.115904115140438,
+          "azimuth": 122.43661245513755,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 508.02184581676124,
+          "reachParameterMm": 338.2724690018222,
+          "maxWidthParameterMm": 11.459175824187696,
+          "azimuth": 124.62370580782397,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 565.331757570371,
+          "reachParameterMm": 400.78883490525186,
+          "maxWidthParameterMm": 14.940590413287282,
+          "azimuth": 127.06752888592338,
+          "xyEnvelopeScale": 0.21291013728972386
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 528.9457952960729,
+          "reachParameterMm": 445.94544634688646,
+          "maxWidthParameterMm": 15.893935666419566,
+          "azimuth": 129.43185175995885,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 458.7568956348449,
+          "reachParameterMm": 379.99486446380615,
+          "maxWidthParameterMm": 16.571355249732733,
+          "azimuth": 131.79312976778263,
+          "xyEnvelopeScale": 0.475920314814253
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 629.4446845329702,
+          "reachParameterMm": 341.54215005692095,
+          "maxWidthParameterMm": 19.83414627891034,
+          "azimuth": 134.55625604705827,
+          "xyEnvelopeScale": 0.3086236607781505
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 504.68013164953885,
+          "reachParameterMm": 320.68635524250567,
+          "maxWidthParameterMm": 11.940342431887984,
+          "azimuth": 136.85607695951234,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 598.7883457093835,
+          "reachParameterMm": 415.5066758627072,
+          "maxWidthParameterMm": 11.41989300120622,
+          "azimuth": 139.1748926893649,
+          "xyEnvelopeScale": 0.18812739730919997
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 523.7848748761564,
+          "reachParameterMm": 359.2057760991156,
+          "maxWidthParameterMm": 19.272373646497726,
+          "azimuth": 141.77857908619075,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 630.0892368159592,
+          "reachParameterMm": 396.8049958301708,
+          "maxWidthParameterMm": 15.437420344911516,
+          "azimuth": 143.99381408198408,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 668.1391357879489,
+          "reachParameterMm": 335.9437287878245,
+          "maxWidthParameterMm": 14.646876255050302,
+          "azimuth": 146.45498866136955,
+          "xyEnvelopeScale": 0.25633787466375935
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 482.2483858659267,
+          "reachParameterMm": 330.1529322983697,
+          "maxWidthParameterMm": 16.521104955114424,
+          "azimuth": 148.64901111756456,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 713.2101104203016,
+          "reachParameterMm": 386.19439382106066,
+          "maxWidthParameterMm": 18.07098052278161,
+          "azimuth": 151.02930338407106,
+          "xyEnvelopeScale": 0.27269986666357376
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 611.3245040542781,
+          "reachParameterMm": 418.75408054795116,
+          "maxWidthParameterMm": 19.09291636478156,
+          "azimuth": 153.5315637142524,
+          "xyEnvelopeScale": 0.29010624113146144
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 434.2500781978816,
+          "reachParameterMm": 339.31267310865223,
+          "maxWidthParameterMm": 16.08575893752277,
+          "azimuth": 156.02984211840234,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 438.36201004976033,
+          "reachParameterMm": 356.9934809813276,
+          "maxWidthParameterMm": 11.883603823371232,
+          "azimuth": 158.57665303798126,
+          "xyEnvelopeScale": 0.24095760218393378
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 528.4135741758496,
+          "reachParameterMm": 423.32390828058124,
+          "maxWidthParameterMm": 19.298674024641514,
+          "azimuth": 160.6450457510994,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 690.3840201071798,
+          "reachParameterMm": 425.9508103458211,
+          "maxWidthParameterMm": 13.360316230915487,
+          "azimuth": 163.2466551456607,
+          "xyEnvelopeScale": 0.39529179875968146
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 645.8673591326326,
+          "reachParameterMm": 377.3518973495811,
+          "maxWidthParameterMm": 16.76264481432736,
+          "azimuth": 165.628845309813,
+          "xyEnvelopeScale": 0.24095760218393378
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 517.3141711875201,
+          "reachParameterMm": 366.29608028102666,
+          "maxWidthParameterMm": 13.64708095882088,
+          "azimuth": 168.1422467133256,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 609.3937734517604,
+          "reachParameterMm": 420.8520261198282,
+          "maxWidthParameterMm": 21.555735867470503,
+          "azimuth": 170.52884441244976,
+          "xyEnvelopeScale": 0.18812739730919997
+        }
+      ],
+      "file": "ornamental_grass_02.glb",
+      "sha256": "f77c724ad1c7694357e69cd38ccae8f692e4c6dd4551db066a223d5c418d671f",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.4078349769115448,
+          -0.38793298602104187,
+          0.0
+        ],
+        "max": [
+          0.35753968358039856,
+          0.09342131018638611,
+          1.097887635231018
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          -8007.834976911545,
+          5612.067013978958,
+          -35.0
+        ],
+        "max": [
+          -7242.460316419601,
+          6093.421310186386,
+          1062.887635231018
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          -800.7834976911545,
+          -609.3421310186386,
+          -3.5
+        ],
+        "max": [
+          -724.2460316419601,
+          -561.2067013978958,
+          106.2887635231018
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": true,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": true,
+        "allProjectedTrianglesWithinBed": true,
+        "bedException": null,
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    },
+    {
+      "id": "ORNAMENTAL_GRASS_03",
+      "sourceIds": [
+        "DOM_01847",
+        "DOM_01848",
+        "DOM_01849"
+      ],
+      "rootSourceMm": [
+        7100,
+        12500,
+        -35
+      ],
+      "rootUnrealCm": [
+        710.0,
+        -1250.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01847": "97d06b3dc45448036a69224830708ec4f562668a6f238c140794f9c2c768794b",
+        "DOM_01848": "db6c82e3b196a73e0483fe31b9a95a7b3d9e0b2d692c951aad84a142c72dd90c",
+        "DOM_01849": "c736a122d17033def349bdddbb5d8e13e7feb870896c2083abc84055b94db13f"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          6493.531176,
+          12415.993377
+        ],
+        [
+          6800.741291,
+          11805.316432
+        ],
+        [
+          7584.849273,
+          11937.593443
+        ],
+        [
+          7815.718702,
+          12571.183518
+        ],
+        [
+          7399.258518,
+          13194.683568
+        ],
+        [
+          6680.880631,
+          13150.60808
+        ]
+      ],
+      "sourceBedIdsAtRoot": [
+        "DOM_01692"
+      ],
+      "supportPolicy": "existing-mulch-polygon",
+      "sourceSupportId": "DOM_01692",
+      "sourceSupportTopZMm": -2.0,
+      "authoredLowestRowExtensionMm": 0.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 1190.4,
+      "originalCardHeightMm": 1587.2,
+      "material": {
+        "baseColorSRGB8": [
+          68,
+          98,
+          43
+        ],
+        "baseColorLinear": [
+          0.05780543019106723,
+          0.12213877222960187,
+          0.024157632448504756
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 946.6016848963202,
+          "reachParameterMm": 183.68148202076554,
+          "maxWidthParameterMm": 19.59334605000913,
+          "azimuth": 0.2096921621914953,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1044.7379788366557,
+          "reachParameterMm": 193.16642680205405,
+          "maxWidthParameterMm": 14.532235939987004,
+          "azimuth": 2.197932997496589,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1116.9450697112381,
+          "reachParameterMm": 169.4653968885541,
+          "maxWidthParameterMm": 20.57710601389408,
+          "azimuth": 4.609568076034589,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1105.5980523424746,
+          "reachParameterMm": 120.04635821096599,
+          "maxWidthParameterMm": 15.771125993691385,
+          "azimuth": 7.209896993846935,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1049.2212763764562,
+          "reachParameterMm": 91.63293806836009,
+          "maxWidthParameterMm": 22.827217185869813,
+          "azimuth": 9.726596362923365,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1053.1803682022096,
+          "reachParameterMm": 177.6051261741668,
+          "maxWidthParameterMm": 14.583298214711249,
+          "azimuth": 12.04005125832639,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1102.3825248741211,
+          "reachParameterMm": 159.19993869960308,
+          "maxWidthParameterMm": 16.95567585900426,
+          "azimuth": 14.386183794756093,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1082.2967881674172,
+          "reachParameterMm": 110.83793490193784,
+          "maxWidthParameterMm": 12.046644072048366,
+          "azimuth": 16.623452225804723,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 976.4696011348666,
+          "reachParameterMm": 99.8244190402329,
+          "maxWidthParameterMm": 18.261435685679317,
+          "azimuth": 19.05095320597682,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 967.2760925992728,
+          "reachParameterMm": 193.7898524198681,
+          "maxWidthParameterMm": 17.424238559789956,
+          "azimuth": 21.64523597249386,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1105.6096097233594,
+          "reachParameterMm": 114.6610939130187,
+          "maxWidthParameterMm": 18.236000023782253,
+          "azimuth": 23.910435952681812,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 981.8226892088056,
+          "reachParameterMm": 181.05246889404953,
+          "maxWidthParameterMm": 12.004557787440717,
+          "azimuth": 26.543013616948873,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 945.6559941019715,
+          "reachParameterMm": 194.85589480027556,
+          "maxWidthParameterMm": 14.239851685240865,
+          "azimuth": 28.897167569968197,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1119.6928471877577,
+          "reachParameterMm": 187.24578444845974,
+          "maxWidthParameterMm": 18.180649206973612,
+          "azimuth": 31.22770849352989,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1036.4931213475766,
+          "reachParameterMm": 121.2674206495285,
+          "maxWidthParameterMm": 12.73497399315238,
+          "azimuth": 33.78899619783726,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1066.1964411050678,
+          "reachParameterMm": 161.01364678703249,
+          "maxWidthParameterMm": 12.303899007849395,
+          "azimuth": 35.99485169988742,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1173.327853196472,
+          "reachParameterMm": 198.02566895261407,
+          "maxWidthParameterMm": 17.298560803756118,
+          "azimuth": 38.527530533465,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 973.4688139439822,
+          "reachParameterMm": 121.42824643291533,
+          "maxWidthParameterMm": 22.672259961254895,
+          "azimuth": 40.910188557533715,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 964.0016502924265,
+          "reachParameterMm": 198.6243361607194,
+          "maxWidthParameterMm": 12.889106899499893,
+          "azimuth": 43.38808375515225,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 959.0489936547876,
+          "reachParameterMm": 151.37886489741504,
+          "maxWidthParameterMm": 13.868271744810045,
+          "azimuth": 45.39184696206238,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1124.3268815128506,
+          "reachParameterMm": 167.89141399785876,
+          "maxWidthParameterMm": 14.238413909450173,
+          "azimuth": 47.904712050767145,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1080.3071225981714,
+          "reachParameterMm": 202.01225859113038,
+          "maxWidthParameterMm": 22.298924528993666,
+          "azimuth": 50.59377953707918,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1084.576135248095,
+          "reachParameterMm": 121.89374573528767,
+          "maxWidthParameterMm": 20.551640663295984,
+          "azimuth": 52.892501070992125,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1165.5895842542052,
+          "reachParameterMm": 142.0967487897724,
+          "maxWidthParameterMm": 19.957385356537998,
+          "azimuth": 55.159214943406,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 772.5461817728877,
+          "reachParameterMm": 227.4728586524725,
+          "maxWidthParameterMm": 18.662370635196567,
+          "azimuth": 57.785620815188246,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 799.2760167081357,
+          "reachParameterMm": 248.3990339562297,
+          "maxWidthParameterMm": 14.875825596041977,
+          "azimuth": 60.13593963262101,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 750.9761957693697,
+          "reachParameterMm": 346.66614547371864,
+          "maxWidthParameterMm": 16.160762883722782,
+          "azimuth": 62.27134914518907,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 960.0283830810786,
+          "reachParameterMm": 202.39248041063547,
+          "maxWidthParameterMm": 12.219056501053274,
+          "azimuth": 64.88487977149701,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 942.1499484295249,
+          "reachParameterMm": 211.52483291924,
+          "maxWidthParameterMm": 20.54019664414227,
+          "azimuth": 67.03475630983681,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 911.3759172291756,
+          "reachParameterMm": 214.48814895004034,
+          "maxWidthParameterMm": 14.230398655869067,
+          "azimuth": 69.52716400140102,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 784.9645460384488,
+          "reachParameterMm": 301.7259258031845,
+          "maxWidthParameterMm": 15.841413479298353,
+          "azimuth": 71.98354755057323,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 824.0129691814185,
+          "reachParameterMm": 300.95878947526217,
+          "maxWidthParameterMm": 11.03417983930558,
+          "azimuth": 74.50012113421691,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 849.854980196178,
+          "reachParameterMm": 201.42629496753216,
+          "maxWidthParameterMm": 16.363004645332694,
+          "azimuth": 76.66517804589756,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 738.4506964008808,
+          "reachParameterMm": 244.10807382315397,
+          "maxWidthParameterMm": 18.37347458768636,
+          "azimuth": 79.3070028238544,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 1005.5032464700341,
+          "reachParameterMm": 306.4156924188137,
+          "maxWidthParameterMm": 15.503185078501701,
+          "azimuth": 81.56628414000417,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 867.3184226714372,
+          "reachParameterMm": 217.1469995751977,
+          "maxWidthParameterMm": 17.46716748829931,
+          "azimuth": 83.82611968990612,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 867.577466953218,
+          "reachParameterMm": 241.24291099607944,
+          "maxWidthParameterMm": 12.450139159336686,
+          "azimuth": 86.46521698841256,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 1019.9923915157318,
+          "reachParameterMm": 339.4828915223479,
+          "maxWidthParameterMm": 17.05714098457247,
+          "azimuth": 88.93004030751592,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 968.190860479653,
+          "reachParameterMm": 223.63930732011795,
+          "maxWidthParameterMm": 15.996817160397768,
+          "azimuth": 91.15951944090187,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 880.8021328943968,
+          "reachParameterMm": 207.16709453612566,
+          "maxWidthParameterMm": 21.134357224218547,
+          "azimuth": 93.53202591502034,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 754.1206542450786,
+          "reachParameterMm": 190.59515677392483,
+          "maxWidthParameterMm": 16.97090503387153,
+          "azimuth": 96.13905416956263,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 919.8319119365216,
+          "reachParameterMm": 323.40370159596205,
+          "maxWidthParameterMm": 14.531822231598198,
+          "azimuth": 98.38245962842625,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 719.8872805843951,
+          "reachParameterMm": 276.22555926442146,
+          "maxWidthParameterMm": 14.391783945262432,
+          "azimuth": 101.00967073727823,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 774.1399784513712,
+          "reachParameterMm": 307.92791072279215,
+          "maxWidthParameterMm": 21.30288943555206,
+          "azimuth": 103.18017738928675,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 956.6444526552558,
+          "reachParameterMm": 216.09386451542377,
+          "maxWidthParameterMm": 15.243639709427953,
+          "azimuth": 105.39929148944847,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 948.1975859713556,
+          "reachParameterMm": 281.7188545688987,
+          "maxWidthParameterMm": 22.315078333951533,
+          "azimuth": 107.89981881003816,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 1022.5109627779127,
+          "reachParameterMm": 335.94183564186096,
+          "maxWidthParameterMm": 17.43747603520751,
+          "azimuth": 110.26560083926807,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 1006.2869990762473,
+          "reachParameterMm": 314.91799641400576,
+          "maxWidthParameterMm": 11.532552826218307,
+          "azimuth": 112.70408951836026,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 991.4932971813082,
+          "reachParameterMm": 294.80701975524426,
+          "maxWidthParameterMm": 21.87462923489511,
+          "azimuth": 115.03963970437198,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 981.5809577486516,
+          "reachParameterMm": 300.98043631762266,
+          "maxWidthParameterMm": 15.78462249506265,
+          "azimuth": 117.7866625396227,
+          "xyEnvelopeScale": 0.8835999999999999
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 953.6084109054208,
+          "reachParameterMm": 223.28904435038567,
+          "maxWidthParameterMm": 16.270475804805756,
+          "azimuth": 120.01003654016066,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 916.2073175107241,
+          "reachParameterMm": 288.9927211776376,
+          "maxWidthParameterMm": 13.173098868690431,
+          "azimuth": 122.33484469397972,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 664.5003236633241,
+          "reachParameterMm": 343.8505821954459,
+          "maxWidthParameterMm": 18.2993680331856,
+          "azimuth": 124.96584860261744,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 519.7422250885963,
+          "reachParameterMm": 415.1536271395162,
+          "maxWidthParameterMm": 19.40805744472891,
+          "azimuth": 127.36859492217569,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 693.1326836910547,
+          "reachParameterMm": 403.63056246191263,
+          "maxWidthParameterMm": 20.43042654171586,
+          "azimuth": 129.73954176093062,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 581.887876326263,
+          "reachParameterMm": 372.12168083991855,
+          "maxWidthParameterMm": 18.029525007121265,
+          "azimuth": 131.82150489162433,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 716.6494931649864,
+          "reachParameterMm": 449.02217363007367,
+          "maxWidthParameterMm": 19.28866241686046,
+          "azimuth": 134.5130043677328,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 648.8602513421774,
+          "reachParameterMm": 419.7872423240915,
+          "maxWidthParameterMm": 20.42183051723987,
+          "azimuth": 136.61743817182366,
+          "xyEnvelopeScale": 0.6484775941926397
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 712.8496113952697,
+          "reachParameterMm": 399.4375523738563,
+          "maxWidthParameterMm": 12.246995337307453,
+          "azimuth": 139.05617038226958,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 477.996264484942,
+          "reachParameterMm": 426.50331902783364,
+          "maxWidthParameterMm": 15.507826610468328,
+          "azimuth": 141.66117270566963,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 704.6696639579237,
+          "reachParameterMm": 431.5170524921268,
+          "maxWidthParameterMm": 22.982077853754163,
+          "azimuth": 143.887319129311,
+          "xyEnvelopeScale": 0.94
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 504.8497620184422,
+          "reachParameterMm": 421.0378382401541,
+          "maxWidthParameterMm": 13.77190747950226,
+          "azimuth": 146.18010224073032,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 611.5628451850713,
+          "reachParameterMm": 359.10944662988186,
+          "maxWidthParameterMm": 21.6604297272861,
+          "azimuth": 148.8439237641171,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 635.2490111355186,
+          "reachParameterMm": 437.8494115686044,
+          "maxWidthParameterMm": 18.553717675618827,
+          "azimuth": 151.244325822044,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 499.1474960457981,
+          "reachParameterMm": 323.4385904017836,
+          "maxWidthParameterMm": 22.011229982599616,
+          "azimuth": 153.4805377012711,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 733.8640034247637,
+          "reachParameterMm": 385.18017704132944,
+          "maxWidthParameterMm": 16.128665109165013,
+          "azimuth": 156.0517903855027,
+          "xyEnvelopeScale": 0.7807489599999998
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 476.2594417926372,
+          "reachParameterMm": 380.2168028242886,
+          "maxWidthParameterMm": 20.538208082318306,
+          "azimuth": 158.513137952692,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 655.715994665444,
+          "reachParameterMm": 459.3763633770868,
+          "maxWidthParameterMm": 17.696820280514657,
+          "azimuth": 160.81104992838473,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 562.982698748678,
+          "reachParameterMm": 411.3050607126206,
+          "maxWidthParameterMm": 16.27541937865317,
+          "azimuth": 163.1950865076396,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 611.9648278255463,
+          "reachParameterMm": 408.67143970448524,
+          "maxWidthParameterMm": 21.78850252274424,
+          "azimuth": 165.44416567109755,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 465.2487846103013,
+          "reachParameterMm": 325.7661984488368,
+          "maxWidthParameterMm": 22.55028374865651,
+          "azimuth": 167.88592557502372,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 749.2877111379505,
+          "reachParameterMm": 426.5221827616915,
+          "maxWidthParameterMm": 11.5128227872774,
+          "azimuth": 170.58379506169447,
+          "xyEnvelopeScale": 1.0
+        }
+      ],
+      "file": "ornamental_grass_03.glb",
+      "sha256": "5e2ebb99ba0fecb96a6ae27b34fbd24b9eba5a55e599575b73e277d83e7212b2",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.4299628436565399,
+          -0.2840389311313629,
+          0.0
+        ],
+        "max": [
+          0.4290710985660553,
+          0.4302692413330078,
+          1.1679792404174805
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          6670.03715634346,
+          12215.961068868637,
+          -35.0
+        ],
+        "max": [
+          7529.071098566055,
+          12930.269241333008,
+          1132.9792404174805
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          667.003715634346,
+          -1293.0269241333008,
+          -3.5
+        ],
+        "max": [
+          752.9071098566055,
+          -1221.5961068868637,
+          113.29792404174805
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": true,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": true,
+        "allProjectedTrianglesWithinBed": true,
+        "bedException": null,
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    },
+    {
+      "id": "ORNAMENTAL_GRASS_04",
+      "sourceIds": [
+        "DOM_01850",
+        "DOM_01851",
+        "DOM_01852"
+      ],
+      "rootSourceMm": [
+        12200,
+        12250,
+        -35
+      ],
+      "rootUnrealCm": [
+        1220.0,
+        -1225.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01850": "71d0850e034d4ca1ac7158d8dc8f2df75a6a0d674756842e9c393e72d71958b7",
+        "DOM_01851": "ca67f78d3f4b95d86c05675df2f2708ce00bb54f7b92d086e703fb869e10937c",
+        "DOM_01852": "f41a74a869abeee9c8df439dab297c9a8368d010a33a165bb49094b29278c81e"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          11588.195537,
+          12363.262353
+        ],
+        [
+          11831.720878,
+          11734.963056
+        ],
+        [
+          12364.506517,
+          11682.065347
+        ],
+        [
+          12811.804081,
+          12136.737647
+        ],
+        [
+          12639.701317,
+          12681.376818
+        ],
+        [
+          11998.753752,
+          12714.251181
+        ]
+      ],
+      "sourceBedIdsAtRoot": [],
+      "supportPolicy": "original-root-on-parcel-no-mulch-bed",
+      "sourceSupportId": "DOM_00001",
+      "sourceSupportTopZMm": -65.0,
+      "authoredLowestRowExtensionMm": 32.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 979.1999999999999,
+      "originalCardHeightMm": 1305.6,
+      "material": {
+        "baseColorSRGB8": [
+          71,
+          104,
+          45
+        ],
+        "baseColorLinear": [
+          0.06301001765316767,
+          0.13843161503245183,
+          0.026241221894849898
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 859.0666439942121,
+          "reachParameterMm": 126.09336798079312,
+          "maxWidthParameterMm": 12.87652473244816,
+          "azimuth": 0.15277675015851858,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 941.2923709635883,
+          "reachParameterMm": 108.39478075504303,
+          "maxWidthParameterMm": 22.368102993816137,
+          "azimuth": 2.182766193777113,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 791.6185884229839,
+          "reachParameterMm": 204.2751497682184,
+          "maxWidthParameterMm": 17.71815927606076,
+          "azimuth": 4.843912161182193,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 887.7075844032614,
+          "reachParameterMm": 151.82070979848504,
+          "maxWidthParameterMm": 12.422386711463332,
+          "azimuth": 7.366009782716002,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 892.2089818208814,
+          "reachParameterMm": 195.79396122135222,
+          "maxWidthParameterMm": 21.02703479398042,
+          "azimuth": 9.679163388411608,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 877.3862975942642,
+          "reachParameterMm": 91.583929695189,
+          "maxWidthParameterMm": 15.710226088762283,
+          "azimuth": 12.215797633080625,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 828.83553156057,
+          "reachParameterMm": 108.54457701556385,
+          "maxWidthParameterMm": 12.449716842733324,
+          "azimuth": 14.547857668260717,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 946.6408316406458,
+          "reachParameterMm": 116.97349173948169,
+          "maxWidthParameterMm": 22.570661524310708,
+          "azimuth": 16.871850605590662,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 773.9685671002865,
+          "reachParameterMm": 173.77202016301453,
+          "maxWidthParameterMm": 14.927436315454543,
+          "azimuth": 19.163735832343065,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 947.6820296954064,
+          "reachParameterMm": 136.6374159604311,
+          "maxWidthParameterMm": 22.682789836078882,
+          "azimuth": 21.721144609717626,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 865.4349768734872,
+          "reachParameterMm": 199.22471447847784,
+          "maxWidthParameterMm": 20.399222071282566,
+          "azimuth": 24.132348929175873,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 788.6792265649884,
+          "reachParameterMm": 181.445621419698,
+          "maxWidthParameterMm": 11.302862955257297,
+          "azimuth": 26.294442052049117,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 833.1638570925593,
+          "reachParameterMm": 157.15810091234744,
+          "maxWidthParameterMm": 14.53988463897258,
+          "azimuth": 28.602472790220098,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 805.8073716340809,
+          "reachParameterMm": 161.468457095325,
+          "maxWidthParameterMm": 16.193220116198063,
+          "azimuth": 31.059729412582772,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 773.741895904094,
+          "reachParameterMm": 194.10766306333244,
+          "maxWidthParameterMm": 16.732558025978506,
+          "azimuth": 33.80551026681889,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 883.5576722982377,
+          "reachParameterMm": 127.13430991396308,
+          "maxWidthParameterMm": 12.53846369870007,
+          "azimuth": 36.12975333176239,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 852.3695788332224,
+          "reachParameterMm": 175.0924946833402,
+          "maxWidthParameterMm": 21.73722541425377,
+          "azimuth": 38.520561802097035,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 919.0894375918059,
+          "reachParameterMm": 154.59070399403572,
+          "maxWidthParameterMm": 22.57788262888789,
+          "azimuth": 40.83565227856876,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 972.4018639545142,
+          "reachParameterMm": 150.9652294870466,
+          "maxWidthParameterMm": 13.30962327402085,
+          "azimuth": 43.18811843938376,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 856.9216141986698,
+          "reachParameterMm": 206.8167426623404,
+          "maxWidthParameterMm": 22.77297099493444,
+          "azimuth": 45.44129805747766,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 856.0430377269387,
+          "reachParameterMm": 111.49134107865393,
+          "maxWidthParameterMm": 18.09913717675954,
+          "azimuth": 48.00966730622155,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 825.7908195333034,
+          "reachParameterMm": 112.6206823065877,
+          "maxWidthParameterMm": 21.824983283877373,
+          "azimuth": 50.47089109959758,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 908.4770249303878,
+          "reachParameterMm": 145.92050830833614,
+          "maxWidthParameterMm": 21.259771338663995,
+          "azimuth": 52.9913980505234,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 929.7384890796392,
+          "reachParameterMm": 112.80486462637782,
+          "maxWidthParameterMm": 11.509811395779252,
+          "azimuth": 55.18309567079955,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 808.2123192701339,
+          "reachParameterMm": 316.4065718278289,
+          "maxWidthParameterMm": 20.094992675818503,
+          "azimuth": 57.53515964294094,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 779.2824647407829,
+          "reachParameterMm": 208.6548951268196,
+          "maxWidthParameterMm": 18.856062341481447,
+          "azimuth": 59.93605581715179,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 676.1040040857196,
+          "reachParameterMm": 242.16553527861834,
+          "maxWidthParameterMm": 13.475218902342021,
+          "azimuth": 62.60634039700604,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 692.29750762555,
+          "reachParameterMm": 287.8314705938101,
+          "maxWidthParameterMm": 22.407059280201793,
+          "azimuth": 64.81650005547135,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 715.845562238574,
+          "reachParameterMm": 193.8575790449977,
+          "maxWidthParameterMm": 11.465938952751458,
+          "azimuth": 67.29392999610835,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 751.1844080871641,
+          "reachParameterMm": 309.33402732014656,
+          "maxWidthParameterMm": 14.928582303225994,
+          "azimuth": 69.68032250430572,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 678.2984686852096,
+          "reachParameterMm": 311.147100366652,
+          "maxWidthParameterMm": 14.334922759793699,
+          "azimuth": 72.04017075387132,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 737.5896787255704,
+          "reachParameterMm": 233.45003612339497,
+          "maxWidthParameterMm": 11.701509119942784,
+          "azimuth": 74.25902033815628,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 592.9029872310161,
+          "reachParameterMm": 231.524462364614,
+          "maxWidthParameterMm": 19.618696168996394,
+          "azimuth": 76.97341627198905,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 659.3013261897861,
+          "reachParameterMm": 230.4305374622345,
+          "maxWidthParameterMm": 19.22210955247283,
+          "azimuth": 79.19367213525676,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 591.2821322001814,
+          "reachParameterMm": 204.9431400373578,
+          "maxWidthParameterMm": 14.971425521187484,
+          "azimuth": 81.78558909708667,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 758.5481673400104,
+          "reachParameterMm": 202.20126204192638,
+          "maxWidthParameterMm": 21.472591495141387,
+          "azimuth": 83.95325887671869,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 729.4665383087396,
+          "reachParameterMm": 205.93977641314268,
+          "maxWidthParameterMm": 17.843575184233487,
+          "azimuth": 86.27246491566663,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 693.811373925358,
+          "reachParameterMm": 235.47267720103264,
+          "maxWidthParameterMm": 15.670589745044708,
+          "azimuth": 88.7045590423566,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 682.9049106157422,
+          "reachParameterMm": 305.1707426086068,
+          "maxWidthParameterMm": 15.393170065246522,
+          "azimuth": 91.35840926370345,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 707.9361051522195,
+          "reachParameterMm": 336.5419278293848,
+          "maxWidthParameterMm": 16.3086328599602,
+          "azimuth": 93.43409143600539,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 768.9338514275549,
+          "reachParameterMm": 314.95504554361105,
+          "maxWidthParameterMm": 22.1692138845101,
+          "azimuth": 96.09465366494933,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 787.232712518245,
+          "reachParameterMm": 336.3608905673027,
+          "maxWidthParameterMm": 19.10321694985032,
+          "azimuth": 98.50613406064247,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 758.2449860302805,
+          "reachParameterMm": 329.81967706233263,
+          "maxWidthParameterMm": 17.774782742373645,
+          "azimuth": 100.86922154951333,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 793.9176262869537,
+          "reachParameterMm": 341.4758100360632,
+          "maxWidthParameterMm": 22.937959058210254,
+          "azimuth": 103.28221455112688,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 671.3624341253042,
+          "reachParameterMm": 333.19974821060896,
+          "maxWidthParameterMm": 22.666532260365784,
+          "azimuth": 105.59470024177625,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 638.1516579779684,
+          "reachParameterMm": 272.2252358496189,
+          "maxWidthParameterMm": 21.756396539509296,
+          "azimuth": 107.99414735986839,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 801.8537988429665,
+          "reachParameterMm": 305.35200241953135,
+          "maxWidthParameterMm": 14.227825327776372,
+          "azimuth": 110.42470374420438,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 674.000078247875,
+          "reachParameterMm": 324.114229157567,
+          "maxWidthParameterMm": 15.387342588976026,
+          "azimuth": 112.70218507823854,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 703.4469702093601,
+          "reachParameterMm": 335.19655134528875,
+          "maxWidthParameterMm": 16.014406234957278,
+          "azimuth": 115.3285819811236,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 779.4244545367062,
+          "reachParameterMm": 261.564057469368,
+          "maxWidthParameterMm": 18.2193018309772,
+          "azimuth": 117.48965596403643,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 756.0291649412512,
+          "reachParameterMm": 320.20792711526155,
+          "maxWidthParameterMm": 15.36451572459191,
+          "azimuth": 120.18420560401748,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 813.2568578550516,
+          "reachParameterMm": 195.26784650981426,
+          "maxWidthParameterMm": 11.230293622240424,
+          "azimuth": 122.2330769328219,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 409.2726821578145,
+          "reachParameterMm": 349.4286953890696,
+          "maxWidthParameterMm": 13.139560242183506,
+          "azimuth": 124.8679913974109,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 611.1831856603771,
+          "reachParameterMm": 429.5184193737805,
+          "maxWidthParameterMm": 11.87552447617054,
+          "azimuth": 127.229660958428,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 438.29072873881455,
+          "reachParameterMm": 361.3156785769388,
+          "maxWidthParameterMm": 12.966917417012155,
+          "azimuth": 129.6072317619024,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 560.7468386369794,
+          "reachParameterMm": 364.24849721603096,
+          "maxWidthParameterMm": 19.487694764509797,
+          "azimuth": 131.84988001546603,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 390.1077521524429,
+          "reachParameterMm": 416.5021972032264,
+          "maxWidthParameterMm": 18.743178554810584,
+          "azimuth": 134.4697526884073,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 386.43084097905455,
+          "reachParameterMm": 378.8881294056773,
+          "maxWidthParameterMm": 16.903318602591753,
+          "azimuth": 136.81879938413496,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 410.35588087579606,
+          "reachParameterMm": 383.3684288850054,
+          "maxWidthParameterMm": 13.074097673408687,
+          "azimuth": 139.3774480751743,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 578.4177543225735,
+          "reachParameterMm": 353.80086195655167,
+          "maxWidthParameterMm": 11.74327957443893,
+          "azimuth": 141.54376632514848,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 614.6418455130457,
+          "reachParameterMm": 326.22910915408283,
+          "maxWidthParameterMm": 18.52673536259681,
+          "azimuth": 143.7808241766379,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 497.81528716935213,
+          "reachParameterMm": 366.13194769248366,
+          "maxWidthParameterMm": 12.89693870395422,
+          "azimuth": 146.34521582009108,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 589.2607452749312,
+          "reachParameterMm": 388.065960961394,
+          "maxWidthParameterMm": 14.799754499457777,
+          "azimuth": 148.59883641066966,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 428.5834280657619,
+          "reachParameterMm": 349.50442931614816,
+          "maxWidthParameterMm": 19.036454828456044,
+          "azimuth": 151.01934826001695,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 537.5450927785635,
+          "reachParameterMm": 368.123100255616,
+          "maxWidthParameterMm": 12.929543600417674,
+          "azimuth": 153.42951168828978,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 587.1559391330034,
+          "reachParameterMm": 431.04768097400665,
+          "maxWidthParameterMm": 16.171571280807257,
+          "azimuth": 156.07373865260308,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 404.60050435504314,
+          "reachParameterMm": 403.4401246672496,
+          "maxWidthParameterMm": 17.19281234126538,
+          "azimuth": 158.44962286740275,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 377.19429588644203,
+          "reachParameterMm": 355.4288184735924,
+          "maxWidthParameterMm": 16.0949665363878,
+          "azimuth": 160.9770541056701,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 574.2247155523896,
+          "reachParameterMm": 396.65931107942015,
+          "maxWidthParameterMm": 19.19052252639085,
+          "azimuth": 163.14351786961845,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 448.4887217815071,
+          "reachParameterMm": 439.99098205938935,
+          "maxWidthParameterMm": 14.814360231161118,
+          "azimuth": 165.69948603238208,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 563.0394140212834,
+          "reachParameterMm": 425.23631661664695,
+          "maxWidthParameterMm": 19.453486538492143,
+          "azimuth": 168.06960443672187,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 461.13502842365205,
+          "reachParameterMm": 432.1923394035548,
+          "maxWidthParameterMm": 13.469909707084298,
+          "azimuth": 170.19874571093916,
+          "xyEnvelopeScale": 1.0
+        }
+      ],
+      "file": "ornamental_grass_04.glb",
+      "sha256": "f8643de8a4a9229b6b6c964062367b0bf6fb50f4148f45e152fc53abb61ffa69",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.3564797639846802,
+          -0.43602442741394043,
+          -0.03200000151991844
+        ],
+        "max": [
+          0.3952184021472931,
+          0.4534895122051239,
+          0.9678846001625061
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          11843.52023601532,
+          11813.97557258606,
+          -67.00000151991844
+        ],
+        "max": [
+          12595.218402147293,
+          12703.489512205124,
+          932.8846001625061
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          1184.352023601532,
+          -1270.3489512205124,
+          -6.700000151991844
+        ],
+        "max": [
+          1259.5218402147293,
+          -1181.397557258606,
+          93.28846001625061
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": false,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": null,
+        "allProjectedTrianglesWithinBed": null,
+        "bedException": "Original root outside all three checked source mulch polygons; not moved and no bed invented.",
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    },
+    {
+      "id": "ORNAMENTAL_GRASS_05",
+      "sourceIds": [
+        "DOM_01853",
+        "DOM_01854",
+        "DOM_01855"
+      ],
+      "rootSourceMm": [
+        13900,
+        6300,
+        -35
+      ],
+      "rootUnrealCm": [
+        1390.0,
+        -630.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01853": "02b5a14c41bf6ecf37c60388bd4ce73313e7b6e76a39030b590974a75f187fe7",
+        "DOM_01854": "c3a3bc9eb788ba5fab6ec092f2a349ee22a7757e726c657c499ec4f3565bbb7f",
+        "DOM_01855": "cf006e44b7133a75c8680c5af2885f07eea64eff70d7ea22b1602b8ec4412a28"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          13405.092396,
+          6089.015689
+        ],
+        [
+          13778.971317,
+          5652.412683
+        ],
+        [
+          14442.081753,
+          5907.175209
+        ],
+        [
+          14498.653256,
+          6474.42082
+        ],
+        [
+          14021.02792,
+          6947.587698
+        ],
+        [
+          13441.45554,
+          6764.389847
+        ]
+      ],
+      "sourceBedIdsAtRoot": [
+        "DOM_01822"
+      ],
+      "supportPolicy": "existing-mulch-polygon",
+      "sourceSupportId": "DOM_01822",
+      "sourceSupportTopZMm": -29.0,
+      "authoredLowestRowExtensionMm": 0.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 1036.8000000000002,
+      "originalCardHeightMm": 1382.4,
+      "material": {
+        "baseColorSRGB8": [
+          78,
+          110,
+          50
+        ],
+        "baseColorLinear": [
+          0.07618538148130785,
+          0.1559264637078274,
+          0.03189603307301153
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 994.7404199812712,
+          "reachParameterMm": 188.5052539408207,
+          "maxWidthParameterMm": 18.15970341488719,
+          "azimuth": 0.09586133812554179,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 865.6639425224663,
+          "reachParameterMm": 143.623134708032,
+          "maxWidthParameterMm": 18.20397004764527,
+          "azimuth": 2.6075993900576373,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 921.2736502515974,
+          "reachParameterMm": 119.0849026478827,
+          "maxWidthParameterMm": 14.859212538227439,
+          "azimuth": 4.638256246329798,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 916.9111160699131,
+          "reachParameterMm": 183.5950613860041,
+          "maxWidthParameterMm": 21.07364742923528,
+          "azimuth": 7.082122571585071,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 975.5458403326572,
+          "reachParameterMm": 179.95498437434435,
+          "maxWidthParameterMm": 19.226852402091026,
+          "azimuth": 9.63173041389985,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 940.7083854086997,
+          "reachParameterMm": 125.5627332162112,
+          "maxWidthParameterMm": 16.837153962813318,
+          "azimuth": 11.95154400783486,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1012.7695072189273,
+          "reachParameterMm": 177.8892153315246,
+          "maxWidthParameterMm": 19.943757826462388,
+          "azimuth": 14.26953154176534,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 844.2775831918718,
+          "reachParameterMm": 123.10904857702553,
+          "maxWidthParameterMm": 21.09467897657305,
+          "azimuth": 16.680248985376604,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1006.246736172706,
+          "reachParameterMm": 127.71962128579617,
+          "maxWidthParameterMm": 11.593436945229769,
+          "azimuth": 19.276518458709308,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 946.661788685024,
+          "reachParameterMm": 199.4849795009941,
+          "maxWidthParameterMm": 15.941341112367809,
+          "azimuth": 21.797053246941392,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 869.7355281362237,
+          "reachParameterMm": 163.78833504393697,
+          "maxWidthParameterMm": 22.562444118782878,
+          "azimuth": 23.91426190566993,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1032.7363538893462,
+          "reachParameterMm": 181.83877394534647,
+          "maxWidthParameterMm": 22.601168123073876,
+          "azimuth": 26.48587048714936,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 940.7111256593766,
+          "reachParameterMm": 119.46030702441931,
+          "maxWidthParameterMm": 14.839917592704296,
+          "azimuth": 28.747778010472,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 948.9272597427965,
+          "reachParameterMm": 135.69112974219024,
+          "maxWidthParameterMm": 14.205791025422513,
+          "azimuth": 31.331750331635657,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 953.4881767180862,
+          "reachParameterMm": 146.94790547713637,
+          "maxWidthParameterMm": 20.73014205880463,
+          "azimuth": 33.38202433580052,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 942.4405992743971,
+          "reachParameterMm": 93.25497304089367,
+          "maxWidthParameterMm": 12.773028389550745,
+          "azimuth": 35.82465496363735,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1000.815220798284,
+          "reachParameterMm": 152.15932041406631,
+          "maxWidthParameterMm": 14.175890024751425,
+          "azimuth": 38.51359307072908,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 880.7191095866563,
+          "reachParameterMm": 187.7531615551561,
+          "maxWidthParameterMm": 22.48350529652089,
+          "azimuth": 40.76111599960381,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1001.8616066205205,
+          "reachParameterMm": 103.3061228133738,
+          "maxWidthParameterMm": 13.730139648541808,
+          "azimuth": 42.98815312361526,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 979.356799541116,
+          "reachParameterMm": 142.25462042726576,
+          "maxWidthParameterMm": 19.677670245058835,
+          "azimuth": 45.49074915289294,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 833.5445758801999,
+          "reachParameterMm": 175.0912681594491,
+          "maxWidthParameterMm": 21.95986044406891,
+          "azimuth": 48.11462256167596,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1025.5488450220228,
+          "reachParameterMm": 143.22910602204502,
+          "maxWidthParameterMm": 21.35104203876108,
+          "azimuth": 50.34800266211598,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 979.2028723784389,
+          "reachParameterMm": 169.9472708813846,
+          "maxWidthParameterMm": 21.967902014032006,
+          "azimuth": 52.65029503005467,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 953.6670486531259,
+          "reachParameterMm": 203.51298046298325,
+          "maxWidthParameterMm": 15.062237435020506,
+          "azimuth": 55.206976398193106,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 769.0776373277307,
+          "reachParameterMm": 245.34028500318527,
+          "maxWidthParameterMm": 21.52761471644044,
+          "azimuth": 57.72469847069364,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 684.5335919955969,
+          "reachParameterMm": 328.91075629740953,
+          "maxWidthParameterMm": 22.836299086920917,
+          "azimuth": 60.176172001682566,
+          "xyEnvelopeScale": 0.8305839999999999
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 777.673614234388,
+          "reachParameterMm": 297.664925083518,
+          "maxWidthParameterMm": 22.78967492096126,
+          "azimuth": 62.50133164882301,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 629.8880278480054,
+          "reachParameterMm": 213.2704607769847,
+          "maxWidthParameterMm": 20.59506205935031,
+          "azimuth": 64.74812033944569,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 695.3260362980963,
+          "reachParameterMm": 336.1903251707554,
+          "maxWidthParameterMm": 14.391681261360645,
+          "azimuth": 67.11310368237989,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 796.9644277364017,
+          "reachParameterMm": 244.17990569025278,
+          "maxWidthParameterMm": 15.626765950582922,
+          "azimuth": 69.39348100721041,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 752.7179590532186,
+          "reachParameterMm": 320.5682749301195,
+          "maxWidthParameterMm": 12.828432040289044,
+          "azimuth": 72.0967939571694,
+          "xyEnvelopeScale": 0.7807489599999998
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 844.2658986783028,
+          "reachParameterMm": 325.94128277152777,
+          "maxWidthParameterMm": 12.368838400579989,
+          "azimuth": 74.45791954209564,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 784.9309940033556,
+          "reachParameterMm": 261.62262976169586,
+          "maxWidthParameterMm": 22.874387692660093,
+          "azimuth": 76.84165449808053,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 753.0007787092925,
+          "reachParameterMm": 216.75300110131502,
+          "maxWidthParameterMm": 20.0707445172593,
+          "azimuth": 79.08034144665913,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 645.9339761018158,
+          "reachParameterMm": 263.4705876559019,
+          "maxWidthParameterMm": 14.439665963873267,
+          "azimuth": 81.56489405416916,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 850.9309274103643,
+          "reachParameterMm": 347.25552450865507,
+          "maxWidthParameterMm": 13.478015501983464,
+          "azimuth": 84.08039806353125,
+          "xyEnvelopeScale": 0.94
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 789.120682013333,
+          "reachParameterMm": 330.6366418302059,
+          "maxWidthParameterMm": 11.237011209130287,
+          "azimuth": 86.5197128429207,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 850.4351453415156,
+          "reachParameterMm": 291.46246287971735,
+          "maxWidthParameterMm": 14.284038505516946,
+          "azimuth": 88.91907777719727,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 872.4565679070355,
+          "reachParameterMm": 226.70217789709568,
+          "maxWidthParameterMm": 14.789522970095277,
+          "azimuth": 91.11729908650501,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 732.0085661315918,
+          "reachParameterMm": 305.91676112264395,
+          "maxWidthParameterMm": 11.48290849570185,
+          "azimuth": 93.77615695699045,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 701.9477455306651,
+          "reachParameterMm": 279.3149343132973,
+          "maxWidthParameterMm": 15.367522735148668,
+          "azimuth": 96.05025316033604,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 865.9371149743797,
+          "reachParameterMm": 349.31807953864336,
+          "maxWidthParameterMm": 11.674611668102443,
+          "azimuth": 98.18980849285867,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 709.1286653160454,
+          "reachParameterMm": 223.4137948602438,
+          "maxWidthParameterMm": 21.15778153948486,
+          "azimuth": 100.72877236174843,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 737.4183772809507,
+          "reachParameterMm": 215.02370934933424,
+          "maxWidthParameterMm": 12.573028680868447,
+          "azimuth": 103.38425171296701,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 858.0702252658011,
+          "reachParameterMm": 290.30563190579414,
+          "maxWidthParameterMm": 18.089424811303616,
+          "azimuth": 105.79010899410405,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 795.0984712382556,
+          "reachParameterMm": 262.73161713033915,
+          "maxWidthParameterMm": 21.19771474506706,
+          "azimuth": 108.08847590969863,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 807.469274371326,
+          "reachParameterMm": 274.76216919720173,
+          "maxWidthParameterMm": 11.018174620345235,
+          "azimuth": 110.58380664914067,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 820.4187680239678,
+          "reachParameterMm": 333.3104619011283,
+          "maxWidthParameterMm": 19.242132351733744,
+          "azimuth": 112.70028063811681,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 626.0937293120028,
+          "reachParameterMm": 215.58608293533325,
+          "maxWidthParameterMm": 22.154183235019445,
+          "azimuth": 115.17752425787522,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 795.6205534275772,
+          "reachParameterMm": 222.1476786211133,
+          "maxWidthParameterMm": 20.653981166891754,
+          "azimuth": 117.63264938845015,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 770.4407731856705,
+          "reachParameterMm": 257.12680988013744,
+          "maxWidthParameterMm": 14.458555644378066,
+          "azimuth": 119.9183746678743,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 654.6359746277334,
+          "reachParameterMm": 261.54297184199095,
+          "maxWidthParameterMm": 21.287488375790417,
+          "azimuth": 122.57130917166407,
+          "xyEnvelopeScale": 0.94
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 547.1367452118695,
+          "reachParameterMm": 355.00680858269334,
+          "maxWidthParameterMm": 19.97975245118141,
+          "azimuth": 124.77013419220438,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 582.3915633421541,
+          "reachParameterMm": 443.8832116080448,
+          "maxWidthParameterMm": 16.34299150761217,
+          "azimuth": 127.0907269946803,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 583.6488642472924,
+          "reachParameterMm": 459.000794691965,
+          "maxWidthParameterMm": 17.50340829230845,
+          "azimuth": 129.47492176287417,
+          "xyEnvelopeScale": 0.7339040223999997
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 421.45832388067254,
+          "reachParameterMm": 356.37531359214336,
+          "maxWidthParameterMm": 20.94586452189833,
+          "azimuth": 131.8782551393077,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 461.13194314876205,
+          "reachParameterMm": 383.9822207763791,
+          "maxWidthParameterMm": 18.197694692760706,
+          "azimuth": 134.42650100908185,
+          "xyEnvelopeScale": 0.7807489599999998
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 512.3877858948113,
+          "reachParameterMm": 337.98901648726314,
+          "maxWidthParameterMm": 13.384806687943637,
+          "azimuth": 136.5801605964463,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 507.3199078310431,
+          "reachParameterMm": 367.2993053961545,
+          "maxWidthParameterMm": 13.901200009509921,
+          "azimuth": 139.258725768079,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 549.3653290804625,
+          "reachParameterMm": 421.0984048852697,
+          "maxWidthParameterMm": 19.97873253840953,
+          "azimuth": 141.42635994462736,
+          "xyEnvelopeScale": 0.6095689385410813
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 428.6499503526986,
+          "reachParameterMm": 360.94116581603885,
+          "maxWidthParameterMm": 14.071392871439457,
+          "azimuth": 144.11432922396483,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 614.4892214697004,
+          "reachParameterMm": 451.22605714481324,
+          "maxWidthParameterMm": 12.021969928406179,
+          "azimuth": 146.51032939945185,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 455.9947737891377,
+          "reachParameterMm": 417.02247529290617,
+          "maxWidthParameterMm": 19.939079271629453,
+          "azimuth": 148.7937490572222,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 613.5070391085148,
+          "reachParameterMm": 401.1594470636919,
+          "maxWidthParameterMm": 19.51919198129326,
+          "azimuth": 151.2343706979899,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 444.3894171837867,
+          "reachParameterMm": 412.80761010944843,
+          "maxWidthParameterMm": 15.847857218235731,
+          "azimuth": 153.37848567530847,
+          "xyEnvelopeScale": 0.6898697810559997
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 604.2171736251713,
+          "reachParameterMm": 336.91518490668386,
+          "maxWidthParameterMm": 16.2144774524495,
+          "azimuth": 156.09568691970347,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 441.9944574523867,
+          "reachParameterMm": 426.66344651021063,
+          "maxWidthParameterMm": 13.847416600212455,
+          "azimuth": 158.3861077821135,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 486.8569120641948,
+          "reachParameterMm": 391.481273570098,
+          "maxWidthParameterMm": 14.493112792260945,
+          "azimuth": 160.70305828295545,
+          "xyEnvelopeScale": 0.7339040223999997
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 466.46551011541493,
+          "reachParameterMm": 382.0135614462197,
+          "maxWidthParameterMm": 22.105625674128532,
+          "azimuth": 163.0919492315973,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 416.73919836097963,
+          "reachParameterMm": 331.31052441429347,
+          "maxWidthParameterMm": 19.840217939577997,
+          "azimuth": 165.51480639366662,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 527.9020757336319,
+          "reachParameterMm": 384.7064347844571,
+          "maxWidthParameterMm": 16.356689328327775,
+          "azimuth": 167.81328329842,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 583.1158108320237,
+          "reachParameterMm": 437.8624960454181,
+          "maxWidthParameterMm": 15.426996626891196,
+          "azimuth": 170.25369636018388,
+          "xyEnvelopeScale": 1.0
+        }
+      ],
+      "file": "ornamental_grass_05.glb",
+      "sha256": "83d3a32b768e53b1c194711cb474a4596aa716bf13c15493570c5935a8d4003b",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.2775188684463501,
+          -0.396513432264328,
+          0.0
+        ],
+        "max": [
+          0.3854326605796814,
+          0.4471610486507416,
+          1.028490424156189
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          13622.48113155365,
+          5903.486567735672,
+          -35.0
+        ],
+        "max": [
+          14285.432660579681,
+          6747.161048650742,
+          993.490424156189
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          1362.248113155365,
+          -674.7161048650742,
+          -3.5
+        ],
+        "max": [
+          1428.5432660579681,
+          -590.3486567735672,
+          99.3490424156189
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": true,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": true,
+        "allProjectedTrianglesWithinBed": true,
+        "bedException": null,
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    },
+    {
+      "id": "ORNAMENTAL_GRASS_06",
+      "sourceIds": [
+        "DOM_01856",
+        "DOM_01857",
+        "DOM_01858"
+      ],
+      "rootSourceMm": [
+        14700,
+        11300,
+        -35
+      ],
+      "rootUnrealCm": [
+        1470.0,
+        -1130.0,
+        -3.5
+      ],
+      "sourceRecordHashes": {
+        "DOM_01856": "6ec63866c4c5dea71041ef48e9b1a926c004dd29e75a261acad1bbe75e6d16d7",
+        "DOM_01857": "b3ee104311238016a8266ce4232771e61879005356f0077677de71e3d48da7a6",
+        "DOM_01858": "26db5c3171f20e2f2744fd39c3378c31fb86e611254909b1a47714d8b6a3ab99"
+      },
+      "sourceGroupXYEnvelopeMm": [
+        [
+          14045.653689,
+          11030.68826
+        ],
+        [
+          14613.360008,
+          10544.150892
+        ],
+        [
+          15149.596267,
+          10886.237929
+        ],
+        [
+          15354.345929,
+          11569.312122
+        ],
+        [
+          14801.244179,
+          11946.823534
+        ],
+        [
+          14163.285203,
+          11646.600893
+        ]
+      ],
+      "sourceBedIdsAtRoot": [
+        "DOM_01822"
+      ],
+      "supportPolicy": "existing-mulch-polygon",
+      "sourceSupportId": "DOM_01822",
+      "sourceSupportTopZMm": -29.0,
+      "authoredLowestRowExtensionMm": 0.0,
+      "rootZProof": "GROUND_Y=-0.035 in actual builder and recovered independently from all3sourcecardcentres",
+      "originalCardEnvelopeWithinBed": false,
+      "authoredHeightParameterMm": 1113.6,
+      "originalCardHeightMm": 1484.8,
+      "material": {
+        "baseColorSRGB8": [
+          68,
+          98,
+          43
+        ],
+        "baseColorLinear": [
+          0.05780543019106723,
+          0.12213877222960187,
+          0.024157632448504756
+        ],
+        "roughness": 0.72,
+        "metallic": 0,
+        "twoSided": true,
+        "alphaMode": "OPAQUE",
+        "measuredReflectance": false
+      },
+      "leaves": [
+        {
+          "ring": "inner",
+          "heightParameterMm": 926.0160390774607,
+          "reachParameterMm": 130.91713990084827,
+          "maxWidthParameterMm": 11.442882097326219,
+          "azimuth": 0.03894592609256506,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1022.9410319916307,
+          "reachParameterMm": 178.851488661021,
+          "maxWidthParameterMm": 14.039837101474404,
+          "azimuth": 2.5924325863381616,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1078.760165558338,
+          "reachParameterMm": 153.894655527547,
+          "maxWidthParameterMm": 12.000265800394118,
+          "azimuth": 4.872600331477401,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 960.1111141316592,
+          "reachParameterMm": 95.36941297352314,
+          "maxWidthParameterMm": 17.724908147007227,
+          "azimuth": 7.238235360454139,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1080.9479521949888,
+          "reachParameterMm": 164.11600752733648,
+          "maxWidthParameterMm": 17.426670010201633,
+          "azimuth": 9.584297439388093,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1022.9691082108319,
+          "reachParameterMm": 159.5415367372334,
+          "maxWidthParameterMm": 17.964081836864352,
+          "azimuth": 12.127290382589095,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 999.1256702467202,
+          "reachParameterMm": 127.23385364748538,
+          "maxWidthParameterMm": 15.437798810191453,
+          "azimuth": 14.431205415269964,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 970.9174006770551,
+          "reachParameterMm": 129.24460541456938,
+          "maxWidthParameterMm": 19.618696428835392,
+          "azimuth": 16.928647365162544,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1047.511515991151,
+          "reachParameterMm": 201.6672224085778,
+          "maxWidthParameterMm": 20.259437575004995,
+          "azimuth": 19.389301085075548,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 955.8137345151007,
+          "reachParameterMm": 142.33254304155707,
+          "maxWidthParameterMm": 21.199892388656735,
+          "azimuth": 21.43296188416516,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 884.1005943667889,
+          "reachParameterMm": 128.3519556093961,
+          "maxWidthParameterMm": 12.72566616628319,
+          "azimuth": 24.13617488216399,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1087.6853696469962,
+          "reachParameterMm": 182.23192647099495,
+          "maxWidthParameterMm": 21.899473290890455,
+          "azimuth": 26.2372989222496,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1073.2671819124819,
+          "reachParameterMm": 201.76251313649118,
+          "maxWidthParameterMm": 15.139950546436012,
+          "azimuth": 28.893083230723903,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 888.1719523167907,
+          "reachParameterMm": 109.91380238905549,
+          "maxWidthParameterMm": 12.218361934646964,
+          "azimuth": 31.16377125068854,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 934.4360971287489,
+          "reachParameterMm": 99.78814789094031,
+          "maxWidthParameterMm": 12.727726091630757,
+          "azimuth": 33.39853840478216,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1019.6717340846955,
+          "reachParameterMm": 179.37563616782427,
+          "maxWidthParameterMm": 13.00759308040142,
+          "azimuth": 35.95955659551231,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 946.6818813859819,
+          "reachParameterMm": 129.22614614479244,
+          "maxWidthParameterMm": 18.61455463524908,
+          "azimuth": 38.50662433936112,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1080.5321560555994,
+          "reachParameterMm": 100.9156191162765,
+          "maxWidthParameterMm": 22.389127964153886,
+          "azimuth": 40.68657972063885,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1046.2783685045242,
+          "reachParameterMm": 175.647016139701,
+          "maxWidthParameterMm": 14.150656023062766,
+          "azimuth": 43.228187807846766,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 895.4091889669597,
+          "reachParameterMm": 197.69249819219112,
+          "maxWidthParameterMm": 16.58236949518323,
+          "azimuth": 45.54020024830822,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1050.8940961316227,
+          "reachParameterMm": 118.69119524024427,
+          "maxWidthParameterMm": 13.820583711378276,
+          "azimuth": 47.77957781713036,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1030.0401947610676,
+          "reachParameterMm": 173.83752973750234,
+          "maxWidthParameterMm": 20.877100793644786,
+          "azimuth": 50.22511422463439,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 1070.3028870402572,
+          "reachParameterMm": 193.97403345443308,
+          "maxWidthParameterMm": 22.676032689400017,
+          "azimuth": 52.74919200958595,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "inner",
+          "heightParameterMm": 991.268450266689,
+          "reachParameterMm": 174.22109629958868,
+          "maxWidthParameterMm": 18.61466347426176,
+          "azimuth": 55.23085712558666,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 732.9492804926633,
+          "reachParameterMm": 334.27399817854166,
+          "maxWidthParameterMm": 22.960236757062376,
+          "azimuth": 57.47423729844633,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 873.7727649520039,
+          "reachParameterMm": 289.16661746799946,
+          "maxWidthParameterMm": 14.816535832360387,
+          "azimuth": 59.976288186213345,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 901.6555413994789,
+          "reachParameterMm": 193.16431488841772,
+          "maxWidthParameterMm": 20.1041309395805,
+          "azimuth": 62.39632290063999,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 855.3100663999913,
+          "reachParameterMm": 298.7094509601593,
+          "maxWidthParameterMm": 18.78306483849883,
+          "azimuth": 64.67974062342002,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 679.5644625302552,
+          "reachParameterMm": 318.5230712965131,
+          "maxWidthParameterMm": 17.317423569969833,
+          "azimuth": 67.37227736865141,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 857.7095092082618,
+          "reachParameterMm": 339.025784060359,
+          "maxWidthParameterMm": 16.32494959793985,
+          "azimuth": 69.54663951011511,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 845.5514313132762,
+          "reachParameterMm": 329.989449493587,
+          "maxWidthParameterMm": 11.32194132078439,
+          "azimuth": 72.15341716046747,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 685.244749024093,
+          "reachParameterMm": 258.43252941966057,
+          "maxWidthParameterMm": 13.036167681217194,
+          "azimuth": 74.216818746035,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 722.3302325767278,
+          "reachParameterMm": 291.7207971587777,
+          "maxWidthParameterMm": 14.130079216323793,
+          "azimuth": 76.70989272417202,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 867.7635632598995,
+          "reachParameterMm": 203.07546474039555,
+          "maxWidthParameterMm": 20.91937948204577,
+          "azimuth": 79.4070107580615,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 715.1233713026045,
+          "reachParameterMm": 321.998035274446,
+          "maxWidthParameterMm": 13.90790640655905,
+          "azimuth": 81.78419901125166,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 675.7270742377638,
+          "reachParameterMm": 332.30978697538376,
+          "maxWidthParameterMm": 17.48343950882554,
+          "azimuth": 84.20753725034382,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 865.558735224366,
+          "reachParameterMm": 295.33350724726915,
+          "maxWidthParameterMm": 16.630447234027088,
+          "azimuth": 86.32696077017476,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 748.2842965527176,
+          "reachParameterMm": 347.45224855840206,
+          "maxWidthParameterMm": 12.897487265989184,
+          "azimuth": 88.69359651203796,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 807.9930035183428,
+          "reachParameterMm": 308.23361318558455,
+          "maxWidthParameterMm": 14.185875874944031,
+          "azimuth": 91.31618890930659,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 767.3590399047731,
+          "reachParameterMm": 275.2915944159031,
+          "maxWidthParameterMm": 18.6571841314435,
+          "azimuth": 93.6782224779755,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 922.9499578388929,
+          "reachParameterMm": 243.6748230829835,
+          "maxWidthParameterMm": 20.565831585787237,
+          "azimuth": 96.00585265572275,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 675.3409486497044,
+          "reachParameterMm": 202.27526850998402,
+          "maxWidthParameterMm": 16.246006386354566,
+          "azimuth": 98.3134829250749,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 950.5316019473074,
+          "reachParameterMm": 277.00791265815496,
+          "maxWidthParameterMm": 12.540780336596072,
+          "azimuth": 100.58832317398353,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 681.1972093185782,
+          "reachParameterMm": 248.57160866260529,
+          "maxWidthParameterMm": 14.20809830352664,
+          "azimuth": 103.04628887480713,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 790.2157461844682,
+          "reachParameterMm": 247.41151560097933,
+          "maxWidthParameterMm": 13.512317362241447,
+          "azimuth": 105.54551774643183,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 692.7122073560356,
+          "reachParameterMm": 253.23799841105938,
+          "maxWidthParameterMm": 20.639032950624824,
+          "azimuth": 108.18280445952888,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 822.6514630372523,
+          "reachParameterMm": 244.1723359748721,
+          "maxWidthParameterMm": 19.808523912914097,
+          "azimuth": 110.30290955407698,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 706.3351643273234,
+          "reachParameterMm": 342.50669464468956,
+          "maxWidthParameterMm": 11.096922114491463,
+          "azimuth": 112.69837619799509,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 834.4795700486898,
+          "reachParameterMm": 255.97561452537775,
+          "maxWidthParameterMm": 16.293960235081613,
+          "azimuth": 115.02646653462685,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 822.7065368440747,
+          "reachParameterMm": 342.7312997728586,
+          "maxWidthParameterMm": 11.088660502806306,
+          "azimuth": 117.77564281286388,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 795.2230463218688,
+          "reachParameterMm": 194.04569264501333,
+          "maxWidthParameterMm": 13.552595564164221,
+          "azimuth": 120.09254373173113,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "middle",
+          "heightParameterMm": 770.9107084588408,
+          "reachParameterMm": 327.81809717416763,
+          "maxWidthParameterMm": 19.34468312934041,
+          "azimuth": 122.46954141050624,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 431.48342198807,
+          "reachParameterMm": 360.58492177631706,
+          "maxWidthParameterMm": 14.819944660179317,
+          "azimuth": 124.67227698699786,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 555.992284402281,
+          "reachParameterMm": 458.2480038423091,
+          "maxWidthParameterMm": 20.810458539053798,
+          "azimuth": 127.3917930309326,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 476.9159471594095,
+          "reachParameterMm": 416.68591080699116,
+          "maxWidthParameterMm": 22.039899167604744,
+          "azimuth": 129.78261176384598,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 546.0428269669711,
+          "reachParameterMm": 348.50212996825576,
+          "maxWidthParameterMm": 22.40403427928686,
+          "azimuth": 131.9066302631494,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 546.9277762987017,
+          "reachParameterMm": 351.46224434953183,
+          "maxWidthParameterMm": 17.65221083071083,
+          "azimuth": 134.38324932975635,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 661.2145052314103,
+          "reachParameterMm": 437.08990356884897,
+          "maxWidthParameterMm": 21.86629477329552,
+          "azimuth": 136.7815218087576,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 623.1190834515095,
+          "reachParameterMm": 351.23018190730363,
+          "maxWidthParameterMm": 14.728302345611155,
+          "azimuth": 139.14000346098368,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 522.309687836498,
+          "reachParameterMm": 348.39594781398773,
+          "maxWidthParameterMm": 16.214185502380133,
+          "azimuth": 141.74895356410622,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 500.1991452940106,
+          "reachParameterMm": 395.65322247799486,
+          "maxWidthParameterMm": 21.616050380282104,
+          "azimuth": 144.00783427129173,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 475.47100755277273,
+          "reachParameterMm": 396.3201665971428,
+          "maxWidthParameterMm": 11.147001152858138,
+          "azimuth": 146.23544297881264,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 587.8046577833891,
+          "reachParameterMm": 445.9789896244183,
+          "maxWidthParameterMm": 13.078404043801129,
+          "azimuth": 148.98866170377474,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 552.0954054698645,
+          "reachParameterMm": 452.81446481123567,
+          "maxWidthParameterMm": 20.001929134130478,
+          "azimuth": 151.00939313596285,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 621.6885117926001,
+          "reachParameterMm": 457.49211996328086,
+          "maxWidthParameterMm": 18.76617083605379,
+          "azimuth": 153.76745966232716,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 630.2020326078235,
+          "reachParameterMm": 382.7826888393611,
+          "maxWidthParameterMm": 16.257383624091744,
+          "azimuth": 156.11763518680385,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 489.3356683545112,
+          "reachParameterMm": 449.88676835317165,
+          "maxWidthParameterMm": 22.50202085915953,
+          "azimuth": 158.32259269682424,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 616.8747120753228,
+          "reachParameterMm": 427.53372866660357,
+          "maxWidthParameterMm": 12.891259048134089,
+          "azimuth": 160.86906246024083,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 627.3971491404176,
+          "reachParameterMm": 367.3678118130192,
+          "maxWidthParameterMm": 13.020728821866214,
+          "azimuth": 163.0403805935762,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 663.5715398997366,
+          "reachParameterMm": 362.6300667691976,
+          "maxWidthParameterMm": 12.866075647994876,
+          "azimuth": 165.77012675495115,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 493.6925327979326,
+          "reachParameterMm": 344.17655295226723,
+          "maxWidthParameterMm": 13.259892118163407,
+          "azimuth": 167.99696216011813,
+          "xyEnvelopeScale": 1.0
+        },
+        {
+          "ring": "outer",
+          "heightParameterMm": 449.7910776540935,
+          "reachParameterMm": 443.53265268728137,
+          "maxWidthParameterMm": 17.384083546698093,
+          "azimuth": 170.3086470094286,
+          "xyEnvelopeScale": 1.0
+        }
+      ],
+      "file": "ornamental_grass_06.glb",
+      "sha256": "b89deb60181cbb3874ef5ce1a9d1e7018b9a0d9c27c210ba856bf45a684b103b",
+      "vertices": 1368,
+      "triangles": 1584,
+      "leafCount": 72,
+      "segmentsPerLeaf": 6,
+      "localBoundsMetres": {
+        "min": [
+          -0.45768946409225464,
+          -0.44758617877960205,
+          0.0
+        ],
+        "max": [
+          0.45264101028442383,
+          0.46533477306365967,
+          1.0830906629562378
+        ]
+      },
+      "boundsSourceMm": {
+        "min": [
+          14242.310535907745,
+          10852.413821220398,
+          -35.0
+        ],
+        "max": [
+          15152.641010284424,
+          11765.33477306366,
+          1048.0906629562378
+        ]
+      },
+      "boundsUnrealCm": {
+        "min": [
+          1424.2310535907745,
+          -1176.533477306366,
+          -3.5
+        ],
+        "max": [
+          1515.2641010284424,
+          -1085.2413821220398,
+          104.80906629562378
+        ]
+      },
+      "verification": {
+        "sourceRootPositionPreserved": true,
+        "allVerticesWithinSourceXYEnvelope": true,
+        "bedPolygonChecked": true,
+        "allVerticesWithinParcel": true,
+        "allLeafBasalRowsReachSourceSupport": true,
+        "allVerticesWithinBed": true,
+        "allProjectedTrianglesWithinBed": true,
+        "bedException": null,
+        "nativeImportVerified": false,
+        "nativeNormalsVerified": false,
+        "renderedVerified": false,
+        "speciesCalibrated": false
+      }
+    }
+  ],
+  "sourceIds": [
+    "DOM_01841",
+    "DOM_01842",
+    "DOM_01843",
+    "DOM_01844",
+    "DOM_01845",
+    "DOM_01846",
+    "DOM_01847",
+    "DOM_01848",
+    "DOM_01849",
+    "DOM_01850",
+    "DOM_01851",
+    "DOM_01852",
+    "DOM_01853",
+    "DOM_01854",
+    "DOM_01855",
+    "DOM_01856",
+    "DOM_01857",
+    "DOM_01858"
+  ],
+  "geometryIsAuthoredIllustrativeCandidate": true,
+  "isScannedAsset": false,
+  "nativeApplied": false,
+  "heightPolicy": "0.75 x source first-card height, an explicit authored visual correction; not a measured species or change to canonical geometry",
+  "palettePolicy": "Three authored green diffuse colours in sRGB8 converted to linear; no texture/photos or radiometric calibration",
+  "broadCreamPlumes": false,
+  "canonicalSourceActorsModified": false,
+  "roadsideCardsModified": false,
+  "perennialsModified": false
+}

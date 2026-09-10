@@ -1,0 +1,18 @@
+{
+  "status": "one-record-frozen-GPU-test-fixture-not-complete-native-validation",
+  "sourceContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "originalCaptureSha256": "74737ef7d7c44f82827c3f3b35f75431acb33ea510326e32d1ab1ec3f98f7e90",
+  "originalPhotonBufferSha256": "6a9b6e4e2d3ee470da3a956dd37e5703146f596b463d6a4984f1652428f82677",
+  "photonIndex": 1022,
+  "photonRecordHex": "5c8f2240bfb3a8c0c4470ebd0000803ff82b7f38fbd17f3807008038d482fa3cc28b7e3d000000420000c34300000000",
+  "launchSize": [
+    512,
+    230
+  ],
+  "sunRayDirection": [
+    0.7560315728187561,
+    0.45195430517196655,
+    -0.47344857454299927
+  ],
+  "shaderTimeSeconds": 0
+}

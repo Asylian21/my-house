@@ -43,12 +43,13 @@ export function* serializeObj(meshes, manifest) {
     const id = `DOM_${String(index).padStart(5, "0")}`;
     const materialNames = mesh.materials.map((m) => m.name);
     const slots = mesh.materials.map((m) => {
-      if (!materialIds.has(m.name)) {
+      const signature = JSON.stringify(m);
+      if (!materialIds.has(signature)) {
         const key = `MAT_${String(materialIds.size).padStart(4, "0")}`;
-        materialIds.set(m.name, key);
+        materialIds.set(signature, key);
         manifest.materials[key] = m;
       }
-      return materialIds.get(m.name);
+      return materialIds.get(signature);
     });
     const bounds = {
       min: [Infinity, Infinity, Infinity],

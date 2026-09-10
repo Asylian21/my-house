@@ -1,0 +1,2706 @@
+{
+  "schemaVersion": 1,
+  "status": "output-only-source-audited-proposal-not-implemented",
+  "actualSourceChanged": false,
+  "nativeAssetsImported": false,
+  "nativeVisualImprovementVerified": false,
+  "scope": {
+    "photoOverrideIds": [
+      "DOM_00613",
+      "DOM_00643",
+      "DOM_00647",
+      "DOM_00650",
+      "DOM_01328",
+      "DOM_01345",
+      "DOM_01354",
+      "DOM_01363",
+      "DOM_01372"
+    ],
+    "optionalRoundedVisualIds": [
+      "DOM_01328",
+      "DOM_01345",
+      "DOM_01354",
+      "DOM_01363",
+      "DOM_01372",
+      "DOM_01344",
+      "DOM_01353",
+      "DOM_01362",
+      "DOM_01371"
+    ],
+    "uniqueCandidateObjects": 13,
+    "chairSourceIdsAudited": [
+      "DOM_01337",
+      "DOM_01338",
+      "DOM_01339",
+      "DOM_01340",
+      "DOM_01341",
+      "DOM_01342",
+      "DOM_01343",
+      "DOM_01344",
+      "DOM_01345",
+      "DOM_01346",
+      "DOM_01347",
+      "DOM_01348",
+      "DOM_01349",
+      "DOM_01350",
+      "DOM_01351",
+      "DOM_01352",
+      "DOM_01353",
+      "DOM_01354",
+      "DOM_01355",
+      "DOM_01356",
+      "DOM_01357",
+      "DOM_01358",
+      "DOM_01359",
+      "DOM_01360",
+      "DOM_01361",
+      "DOM_01362",
+      "DOM_01363",
+      "DOM_01364",
+      "DOM_01365",
+      "DOM_01366",
+      "DOM_01367",
+      "DOM_01368",
+      "DOM_01369",
+      "DOM_01370",
+      "DOM_01371",
+      "DOM_01372"
+    ],
+    "sourceWoodObjectCount": 158,
+    "otherWoodObjectsToPreserve": 149,
+    "alreadyActiveTVOverridesToPreserve": [
+      "DOM_01293",
+      "DOM_01296",
+      "DOM_01300"
+    ],
+    "deferredChairIds": [
+      "DOM_01337",
+      "DOM_01338",
+      "DOM_01339",
+      "DOM_01340",
+      "DOM_01341",
+      "DOM_01342",
+      "DOM_01343",
+      "DOM_01346",
+      "DOM_01347",
+      "DOM_01348",
+      "DOM_01349",
+      "DOM_01350",
+      "DOM_01351",
+      "DOM_01352",
+      "DOM_01355",
+      "DOM_01356",
+      "DOM_01357",
+      "DOM_01358",
+      "DOM_01359",
+      "DOM_01360",
+      "DOM_01361",
+      "DOM_01364",
+      "DOM_01365",
+      "DOM_01366",
+      "DOM_01367",
+      "DOM_01368",
+      "DOM_01369",
+      "DOM_01370"
+    ],
+    "deferredTableApronAndLegIds": [
+      "DOM_01329",
+      "DOM_01330",
+      "DOM_01331",
+      "DOM_01332",
+      "DOM_01333",
+      "DOM_01334",
+      "DOM_01335",
+      "DOM_01336"
+    ]
+  },
+  "pinnedInputs": {
+    "scene": {
+      "path": "output/unreal/geometry/scene.json",
+      "sha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b"
+    },
+    "obj": {
+      "path": "output/unreal/geometry/dom-mm.obj",
+      "sha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455"
+    },
+    "sourceBuilder": {
+      "path": "lib/babylon-interior.ts",
+      "sha256": "6699ddc01cfcde972a88d8edf076ad3bc018ed55a43e47cbcb96ce6429c869e4"
+    },
+    "nativeMaterialRecipe": {
+      "path": "scripts/unreal/materials.py",
+      "sha256": "4f588f2825f555febade35e736663348f94ca0c37e836cc87ca1d7e15b5a15ed"
+    },
+    "photoCandidate": {
+      "path": "output/unreal/wood-study/candidate.json",
+      "sha256": "cc55af12711bf8217ac391ac2546239794cb7858a20c4c8348b4d2d5a5876122"
+    },
+    "baselineCapture": {
+      "path": "output/unreal/runtime/walking-interior-standing-hwrt-8e3850b3-9940-4ac2-afe8-2b476c619e2e/capture.png",
+      "sha256": "ed88087ef6c96ae323f4f188268ca69480deb9e1db66885631a04f82142234ba",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    }
+  },
+  "photoAsset": {
+    "status": "candidate-downloaded-not-imported",
+    "source": "Poly Haven",
+    "page": "https://polyhaven.com/a/oak_veneer_01",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "authors": {
+      "Jenelle van Heerden": "All"
+    },
+    "dimensionsMillimetres": [
+      1830.0000429153442,
+      1830.0000429153442
+    ],
+    "resolution": "4k",
+    "maps": {
+      "Diffuse": {
+        "size": 12587069,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_diff_4k.jpg",
+        "md5": "d4c13847045d1a10475a23b0787bf384",
+        "path": "output/unreal/wood-study/oak_veneer_01_diff_4k.jpg",
+        "sha256": "7e8c64811e580ef6664c20524606359c739e6fe030eff5c2c06c3482ecc8b1cf"
+      },
+      "nor_gl": {
+        "size": 11584844,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_nor_gl_4k.jpg",
+        "md5": "03b22c26ed6dc71c46ba5f7a19ccc80a",
+        "path": "output/unreal/wood-study/oak_veneer_01_nor_gl_4k.jpg",
+        "sha256": "e9bb26f63682773895ce3f0dfd9a43554a719c4caae65b6bcf41712ecfaf3d26"
+      },
+      "Rough": {
+        "size": 18638525,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_rough_4k.jpg",
+        "md5": "b63d5e096d3f8a18b2725659be233121",
+        "path": "output/unreal/wood-study/oak_veneer_01_rough_4k.jpg",
+        "sha256": "3e7eb00705c173babfc01443de1ed1e8d40d055b97de278a6e817b65e8decb38"
+      }
+    },
+    "verifiedAtUtc": "2026-09-08T04:19:51.293537+00:00",
+    "scope": "Proposed photographed veneer asset. Not the actual selected product or a measured finish of this house; source palette and UV physical scale need matching before native use."
+  },
+  "materials": {
+    "MAT_0039": {
+      "sourceMaterial": {
+        "name": "real-interior-kitchen-front",
+        "color": [
+          0.9529411764705882,
+          0.9215686274509803,
+          0.8745098039215686
+        ],
+        "roughness": 0.55,
+        "metallic": 0,
+        "alpha": 1,
+        "texture": "/assets/textures/oak-veneer-albedo.jpg",
+        "emission": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sourceMaterialSha256": "ca1173126b5a11f9c96f9f683a0b72fd81713422afc90ad4613bee50ecc8f807",
+      "sourceTextureSha256": "6638c505a9cbc8f6d55eafb04044bf129e020db5c7f3049779ddbd6ecdc22a9a",
+      "sourceTextureLinearMean": [
+        0.5984255251624686,
+        0.42572963676687786,
+        0.23473394748652956
+      ],
+      "sourceNativeRecipeColorMultiplier": [
+        0.9529411764705882,
+        0.9215686274509803,
+        0.8745098039215686
+      ],
+      "targetLinearMean": [
+        0.5702643239783524,
+        0.39233907702045606,
+        0.20527713839018075
+      ],
+      "paletteLinearMultiplier": [
+        1.578107059115973,
+        1.8456267412673573,
+        2.0627853302568844
+      ],
+      "saturatedScanLinearMean": [
+        0.57026418356515,
+        0.39233906376928096,
+        0.2052771383901808
+      ],
+      "saturationMeanLoss": [
+        1.4041320239854826e-07,
+        1.3251175101647306e-08,
+        -5.551115123125783e-17
+      ],
+      "saturatedTexelCountRGB": [
+        60,
+        2,
+        0
+      ],
+      "scanRoughnessMean": 0.5304041633418962,
+      "roughnessExpression": "sourceMean + 0.12 * (scanRoughness - scanMean)",
+      "authoredRoughnessMean": 0.55,
+      "roughnessRange": [
+        0.4863515003989725,
+        0.6063515003989725
+      ],
+      "normalStrength": 0.25,
+      "calibration": "Mean preserved over full texture texels using the current authored native material recipe, not measured furniture reflectance or a rendered image match; roughness modulation and normal strength are authored."
+    },
+    "MAT_0080": {
+      "sourceMaterial": {
+        "name": "Living warm oak | real-interior-kitchen-front",
+        "color": [
+          1,
+          1,
+          1
+        ],
+        "roughness": 0.68,
+        "metallic": 0,
+        "alpha": 1,
+        "texture": "/assets/textures/living-natural-oak-albedo.jpg",
+        "emission": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sourceMaterialSha256": "85fa1e6ec0f431f51e480df51456b3234a770daa2efd2a762b5324904729f144",
+      "sourceTextureSha256": "3a4b4434352fddb00bc338cf55128ea3c9f33d2fb98384bf2d3471575636bd52",
+      "sourceTextureLinearMean": [
+        0.5160589851937696,
+        0.30194568744301303,
+        0.13243419959108355
+      ],
+      "sourceNativeRecipeColorMultiplier": [
+        1,
+        1,
+        1
+      ],
+      "targetLinearMean": [
+        0.5160589851937696,
+        0.30194568744301303,
+        0.13243419959108355
+      ],
+      "paletteLinearMultiplier": [
+        1.4281032377635254,
+        1.4204015551734712,
+        1.3308024765112707
+      ],
+      "saturatedScanLinearMean": [
+        0.5160589652699655,
+        0.3019456874430131,
+        0.13243419959108357
+      ],
+      "saturationMeanLoss": [
+        1.992380405102523e-08,
+        -5.551115123125783e-17,
+        -2.7755575615628914e-17
+      ],
+      "saturatedTexelCountRGB": [
+        5,
+        0,
+        0
+      ],
+      "scanRoughnessMean": 0.5304041633418962,
+      "roughnessExpression": "sourceMean + 0.12 * (scanRoughness - scanMean)",
+      "authoredRoughnessMean": 0.68,
+      "roughnessRange": [
+        0.6163515003989725,
+        0.7363515003989725
+      ],
+      "normalStrength": 0.25,
+      "calibration": "Mean preserved over full texture texels using the current authored native material recipe, not measured furniture reflectance or a rendered image match; roughness modulation and normal strength are authored."
+    }
+  },
+  "objects": [
+    {
+      "id": "DOM_00613",
+      "sourceId": "KITCHEN-RUN · spodné skrinky zadnej linky 2300 mm",
+      "sourceRecordSha256": "869961e8d33f2fb11d94dd0de21f85019e9435c908de946ef5a43997573f0563",
+      "boundsMm": {
+        "min": [
+          8190.999603271484,
+          149.00000405311587,
+          99.99998927116394
+        ],
+        "max": [
+          10490.999603271484,
+          730.0000040531158,
+          859.9999892711639
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0039"
+      ],
+      "sourceCollisionFlag": true,
+      "role": "kitchenBody",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "verticalZ",
+      "proposedInwardEdgeRadiusMm": null,
+      "nativeGeometryChange": "none",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_00643",
+      "sourceId": "KITCHEN-RUN · FRIDGE-600 · vstavaná chladnička s mrazničkou",
+      "sourceRecordSha256": "cb0d3c28ee25751945162a54e671adabfabe26df82cc6b77a1ab60abbac976af",
+      "boundsMm": {
+        "min": [
+          7590.999794006348,
+          158.9999945163727,
+          0
+        ],
+        "max": [
+          8190.999794006349,
+          739.9999945163727,
+          2250
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0039"
+      ],
+      "sourceCollisionFlag": true,
+      "role": "kitchenBody",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "verticalZ",
+      "proposedInwardEdgeRadiusMm": null,
+      "nativeGeometryChange": "none",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_00647",
+      "sourceId": "KITCHEN-RUN · polostrov 4150 × 600",
+      "sourceRecordSha256": "68f5ce77cafb16f296b89e8f4b7c76406e8496db2d470d233f13137d0b17083e",
+      "boundsMm": {
+        "min": [
+          8190.999794006349,
+          1753.9999103546143,
+          99.99998927116394
+        ],
+        "max": [
+          12340.999794006348,
+          2333.9999103546143,
+          859.9999892711639
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0039"
+      ],
+      "sourceCollisionFlag": true,
+      "role": "kitchenBody",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "verticalZ",
+      "proposedInwardEdgeRadiusMm": null,
+      "nativeGeometryChange": "none",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_00650",
+      "sourceId": "KITCHEN-RUN · L-RETURN-EAST · dubová spodná kredencová linka",
+      "sourceRecordSha256": "76b08d8c8888323e2146a818fbf57e8f2af459e204bc50cd04a775c3e56d0977",
+      "boundsMm": {
+        "min": [
+          11741.000366210938,
+          749.999979019165,
+          99.99998927116394
+        ],
+        "max": [
+          12341.000366210938,
+          1743.999979019165,
+          859.9999892711639
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0039"
+      ],
+      "sourceCollisionFlag": true,
+      "role": "kitchenBody",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "verticalZ",
+      "proposedInwardEdgeRadiusMm": null,
+      "nativeGeometryChange": "none",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01328",
+      "sourceId": "LIVING-103-DINING · klasický dubový stôl · doska",
+      "sourceRecordSha256": "74935dce6a3c488b1b804f14f751015593d45641dbfab68ebc775645c9f67b78",
+      "boundsMm": {
+        "min": [
+          8550,
+          3550.000047683716,
+          708.000027179718
+        ],
+        "max": [
+          9950,
+          4350.000047683716,
+          760.000027179718
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0080"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "tableTop",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "longitudinalX",
+      "proposedInwardEdgeRadiusMm": 3,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01345",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-SW · horná dubová priečka",
+      "sourceRecordSha256": "05ada64a4816ffad052a7703d6bc98a400724ccaf379546f2356f76c2de4be6e",
+      "boundsMm": {
+        "min": [
+          8755.000381469727,
+          3418.999933242798,
+          854.999988079071
+        ],
+        "max": [
+          9195.000381469727,
+          3470.999933242798,
+          919.999988079071
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0080"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairTopRail",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "longitudinalX",
+      "proposedInwardEdgeRadiusMm": 2.5,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01354",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-SE · horná dubová priečka",
+      "sourceRecordSha256": "0a999ed9c4e49594d18b461a6403f900e94b1345aa5c5589eb3f3079da552a68",
+      "boundsMm": {
+        "min": [
+          9304.999618530273,
+          3418.999933242798,
+          854.999988079071
+        ],
+        "max": [
+          9744.999618530273,
+          3470.999933242798,
+          919.999988079071
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0080"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairTopRail",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "longitudinalX",
+      "proposedInwardEdgeRadiusMm": 2.5,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01363",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-NW · horná dubová priečka",
+      "sourceRecordSha256": "da087d5e12b50bd7a2d0ce6d45c8217d731f7e305657722abc71ece8bf067daa",
+      "boundsMm": {
+        "min": [
+          8755.000381469727,
+          4428.999923706055,
+          854.999988079071
+        ],
+        "max": [
+          9195.000381469727,
+          4480.999923706055,
+          919.999988079071
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0080"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairTopRail",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "longitudinalX",
+      "proposedInwardEdgeRadiusMm": 2.5,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01372",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-NE · horná dubová priečka",
+      "sourceRecordSha256": "bd6fbdd91f219fe3044a2abfb8b074d1208b384fd133e85af2821391fa894cce",
+      "boundsMm": {
+        "min": [
+          9304.999618530273,
+          4428.999923706055,
+          854.999988079071
+        ],
+        "max": [
+          9744.999618530273,
+          4480.999923706055,
+          919.999988079071
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0080"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairTopRail",
+      "proposedPhotoOverride": true,
+      "proposedGrainFrame": "longitudinalX",
+      "proposedInwardEdgeRadiusMm": 2.5,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01344",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-SW · čalúnená výplň operadla",
+      "sourceRecordSha256": "f1c1984dab74ccf27399535e0e3553c032a0091b1bccd2458452c1984fbe8da8",
+      "boundsMm": {
+        "min": [
+          8800.000381469727,
+          3422.999933242798,
+          569.9999952316284
+        ],
+        "max": [
+          9150.000381469727,
+          3466.999933242798,
+          814.9999952316284
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0085"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairBackPad",
+      "proposedPhotoOverride": false,
+      "proposedGrainFrame": null,
+      "proposedInwardEdgeRadiusMm": 8,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01353",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-SE · čalúnená výplň operadla",
+      "sourceRecordSha256": "26c1c091bf12b7fe6464d505337897170bb846ad23c69e5ae539395337f9a190",
+      "boundsMm": {
+        "min": [
+          9349.999618530273,
+          3422.999933242798,
+          569.9999952316284
+        ],
+        "max": [
+          9699.999618530273,
+          3466.999933242798,
+          814.9999952316284
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0085"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairBackPad",
+      "proposedPhotoOverride": false,
+      "proposedGrainFrame": null,
+      "proposedInwardEdgeRadiusMm": 8,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01362",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-NW · čalúnená výplň operadla",
+      "sourceRecordSha256": "62f3159a80ee7b4a13d876c10ae3e4e1821c8187b60b4ab9eabed6088ca7976a",
+      "boundsMm": {
+        "min": [
+          8800.000381469727,
+          4432.999923706055,
+          569.9999952316284
+        ],
+        "max": [
+          9150.000381469727,
+          4476.999923706055,
+          814.9999952316284
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0085"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairBackPad",
+      "proposedPhotoOverride": false,
+      "proposedGrainFrame": null,
+      "proposedInwardEdgeRadiusMm": 8,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    },
+    {
+      "id": "DOM_01371",
+      "sourceId": "LIVING-103-DINING · DINING-CHAIR-NE · čalúnená výplň operadla",
+      "sourceRecordSha256": "7b331d4fe9288affdc318c9028e584d3ddee14ea3f23f7750bca3670cdce529c",
+      "boundsMm": {
+        "min": [
+          9349.999618530273,
+          4432.999923706055,
+          569.9999952316284
+        ],
+        "max": [
+          9699.999618530273,
+          4476.999923706055,
+          814.9999952316284
+        ]
+      },
+      "sourceMaterialSlots": [
+        "MAT_0085"
+      ],
+      "sourceCollisionFlag": false,
+      "role": "chairBackPad",
+      "proposedPhotoOverride": false,
+      "proposedGrainFrame": null,
+      "proposedInwardEdgeRadiusMm": 8,
+      "nativeGeometryChange": "optional visual derivative only; canonical source proxy and collision state retained",
+      "derivativeVerticesValidated": false
+    }
+  ],
+  "sourceAudit": {
+    "DOM_00613": {
+      "recordSha256": "869961e8d33f2fb11d94dd0de21f85019e9435c908de946ef5a43997573f0563",
+      "triangleDataSha256": "f404bf460c87d9e3fa3e1888b380195108b674a6f37568b6d65cc70bac0d8eb8",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 2.714841684792191e-07,
+      "sourceCollisionFlag": true,
+      "objFirstFaceLine": 124940,
+      "objLastFaceLine": 124951,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 2.714841684792191e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            124946,
+            124947
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            124940,
+            124941
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            124950,
+            124951
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            124948,
+            124949
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            124942,
+            124943
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            124944,
+            124945
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          303.13038206428143,
+          1569.706320339883
+        ],
+        "V": [
+          917.3689038783706,
+          4750.427022081224
+        ]
+      }
+    },
+    "DOM_00643": {
+      "recordSha256": "cb0d3c28ee25751945162a54e671adabfabe26df82cc6b77a1ab60abbac976af",
+      "triangleDataSha256": "e5b8825bd3c0a631a36954a2ba307baa24e203d5ce9f4fa2b46672bebbc24ccc",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.83627331959724e-07,
+      "sourceCollisionFlag": true,
+      "objFirstFaceLine": 128020,
+      "objLastFaceLine": 128031,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.83627331959724e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            128026,
+            128027
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            128020,
+            128021
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            128030,
+            128031
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            128028,
+            128029
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            128022,
+            128023
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            128024,
+            128025
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          1162.0,
+          4647.156869427285
+        ],
+        "V": [
+          309.86666666666673,
+          1239.2418318472758
+        ]
+      }
+    },
+    "DOM_00647": {
+      "recordSha256": "68f5ce77cafb16f296b89e8f4b7c76406e8496db2d470d233f13137d0b17083e",
+      "triangleDataSha256": "631624f860dd4e7e080996f92d13c07ff92a2f6225ad3b6024f0c508c5f4eb54",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 3.5461425795801915e-07,
+      "sourceCollisionFlag": true,
+      "objFirstFaceLine": 128380,
+      "objLastFaceLine": 128391,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 3.5461425795801915e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            128386,
+            128387
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            128380,
+            128381
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            128390,
+            128391
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            128388,
+            128389
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            128382,
+            128383
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            128384,
+            128385
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          167.71085953839608,
+          1572.4148775275016
+        ],
+        "V": [
+          915.789955678924,
+          8586.212818077804
+        ]
+      }
+    },
+    "DOM_00650": {
+      "recordSha256": "76b08d8c8888323e2146a818fbf57e8f2af459e204bc50cd04a775c3e56d0977",
+      "triangleDataSha256": "86bc821601b097029d00fcf19a70e08f9591643aa28fe47e672b358998a3b492",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 2.711639410790667e-07,
+      "sourceCollisionFlag": true,
+      "objFirstFaceLine": 128650,
+      "objLastFaceLine": 128661,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 2.711639410790667e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            128656,
+            128657
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            128650,
+            128651
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            128660,
+            128661
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            128658,
+            128659
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            128652,
+            128653
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            128654,
+            128655
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          917.505399398551,
+          1987.9999999999998
+        ],
+        "V": [
+          724.3463679462245,
+          1569.474510249742
+        ]
+      }
+    },
+    "DOM_01328": {
+      "recordSha256": "74935dce6a3c488b1b804f14f751015593d45641dbfab68ebc775645c9f67b78",
+      "triangleDataSha256": "2fcdf2815757e8d86109f104aa42263b084389dab15db51442aa6adbac260950",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 3.1628405849915e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 804448,
+      "objLastFaceLine": 804459,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 3.1628405849915e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            804454,
+            804455
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            804448,
+            804449
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            804458,
+            804459
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            804456,
+            804457
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            804450,
+            804451
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            804452,
+            804453
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          77.9999610000195,
+          1199.9996571429551
+        ],
+        "V": [
+          1200.0092308402373,
+          18461.68047446519
+        ]
+      }
+    },
+    "DOM_01337": {
+      "recordSha256": "0d96fa48eff7334d4fdc4e7edd89f900aada30a6089c88066939fb0f1b36d957",
+      "triangleDataSha256": "d7c4c2b0e7e8ce855876712274300e0127cee6b277abd8ce4f0a96a3e1ad4124",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805250,
+      "objLastFaceLine": 805261
+    },
+    "DOM_01338": {
+      "recordSha256": "c62f58494c04e5324b43be2ec52d6087f647990630103fce1ba7c5ae6e6c09ec",
+      "triangleDataSha256": "342a03803ac3b510222d854f9b143ee6af46302460e8568e59714b0ef1e8fdcf",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805334,
+      "objLastFaceLine": 805349
+    },
+    "DOM_01339": {
+      "recordSha256": "8167b2ed33c9b26b9a8c47aeec8d4f2b9915601eddfba3f79dadadab3ca73f84",
+      "triangleDataSha256": "b7c88f847b071ccd9f2e5598e7c71c2653f46d90df33006da11a71c3835cd57d",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.4378111851983704e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805422,
+      "objLastFaceLine": 805437
+    },
+    "DOM_01340": {
+      "recordSha256": "45910e8f6a03b4848529f506c7502b5e559b59e352588125762f40f7abf7bd57",
+      "triangleDataSha256": "4a06b6bb0f284136207f079653c375630b7747804dce7c1a0c860c3095b7b366",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805510,
+      "objLastFaceLine": 805525
+    },
+    "DOM_01341": {
+      "recordSha256": "69473df90f3e21345fdc18c8dbba1e5c9f41adeac398b0d1ca52d742f7e3ee81",
+      "triangleDataSha256": "86db043c440d4076d92a293129c4a7468ba6bc23ed86338ce25f44b14b6d936b",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.4378111851983704e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805598,
+      "objLastFaceLine": 805613
+    },
+    "DOM_01342": {
+      "recordSha256": "c81e0e0c09edc501471d962fbdf4751b476fdf6b8e63dd481f8ddfaf2d023e09",
+      "triangleDataSha256": "02b51a4f83cecbaddf2f88fd0d09a20b7cfb32e8b9b8ca9f25bcdf20f25e7a5f",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805692,
+      "objLastFaceLine": 805703
+    },
+    "DOM_01343": {
+      "recordSha256": "a2cdea30a6e91686d51f2a9ffa0c541652430b3cb0c6dc134f5a6ff8b91a6a5e",
+      "triangleDataSha256": "f438a71215743a766aa007bfd86b9b14cc7912eb7ec6f1651271c26fe790ae22",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805782,
+      "objLastFaceLine": 805793
+    },
+    "DOM_01344": {
+      "recordSha256": "f1c1984dab74ccf27399535e0e3553c032a0091b1bccd2458452c1984fbe8da8",
+      "triangleDataSha256": "90fe8c5e463200135e2db1b1bf8384494275897d9db3530124d7ab35cc0a08a0",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805872,
+      "objLastFaceLine": 805883,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            805878,
+            805879
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            805872,
+            805873
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            805882,
+            805883
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            805880,
+            805881
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            805874,
+            805875
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            805876,
+            805877
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          100.57142857142857,
+          4454.545454545454
+        ],
+        "V": [
+          143.6734693877551,
+          6363.636363636363
+        ]
+      }
+    },
+    "DOM_01345": {
+      "recordSha256": "05ada64a4816ffad052a7703d6bc98a400724ccaf379546f2356f76c2de4be6e",
+      "triangleDataSha256": "150a6f0616eb88290cf2934540e8bd8c447785a35fbb04a839754266b88a31c1",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 805962,
+      "objLastFaceLine": 805973,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            805968,
+            805969
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            805962,
+            805963
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            805972,
+            805973
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            805970,
+            805971
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            805964,
+            805965
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            805966,
+            805967
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          118.18181818181819,
+          1250.0000000000002
+        ],
+        "V": [
+          800.0,
+          8461.538461538463
+        ]
+      }
+    },
+    "DOM_01346": {
+      "recordSha256": "85e5ef89925b6cf7e238f3f823cc92b00fef6e322d693a070b0cb7885a74a597",
+      "triangleDataSha256": "02c72bf7b318b8239af5842fdcaefe1005c0e59d957721567386fcb3ab6cdacc",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806052,
+      "objLastFaceLine": 806063
+    },
+    "DOM_01347": {
+      "recordSha256": "5330a41a02e43322665204d7caaaf2d28ef6ac3e99c77ce80e388a8fb2b98563",
+      "triangleDataSha256": "826b0e7a490dd28ceb5b1db1ab99404f30bb183a5e8af8f0d35017f34d1bd254",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806136,
+      "objLastFaceLine": 806151
+    },
+    "DOM_01348": {
+      "recordSha256": "026e7ed166ee542a88fad994db33325310bc19c118fd10883f152e1fce53394f",
+      "triangleDataSha256": "ddb5a4510e722c5f150548683d30c2a2880df981fbf7edd0c5cbb1ad97f8979e",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.4378111851983704e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806224,
+      "objLastFaceLine": 806239
+    },
+    "DOM_01349": {
+      "recordSha256": "a220c9ab35f00c0c58700bb6b3d80886430f2068c8a1d66a94dfbc38e9fdbbb9",
+      "triangleDataSha256": "e300be6211379979de7f2bb81f2475f8100c86da58b5e8bdd8a97eccc7cee0b1",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806312,
+      "objLastFaceLine": 806327
+    },
+    "DOM_01350": {
+      "recordSha256": "5ea7b7800e11a89ac3fa0e3329a2365a3230514feb3067a984c10bf839c30edd",
+      "triangleDataSha256": "0e836711242049c399ec54272e0f9c02613e1bf4d653118d644c95b8fdbaf58f",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.4378111851983704e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806400,
+      "objLastFaceLine": 806415
+    },
+    "DOM_01351": {
+      "recordSha256": "2f1a7358ff59931f6fd08ba9391963d6cf33cd2e8f87ec7371a910f4159f1ce0",
+      "triangleDataSha256": "cf16b2a2ff37102feaf7bfd05447e62d7a32190a3e93c35df49e577e20078733",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806494,
+      "objLastFaceLine": 806505
+    },
+    "DOM_01352": {
+      "recordSha256": "4e225f8caf6c5ccf659f16a13d8e44fa5301cea497e906f1fac3ae1019cd9540",
+      "triangleDataSha256": "20e3abb49712b8b4f98e7392b2394c409f710f25c0e38d23c568f3e06d11170b",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806584,
+      "objLastFaceLine": 806595
+    },
+    "DOM_01353": {
+      "recordSha256": "26c1c091bf12b7fe6464d505337897170bb846ad23c69e5ae539395337f9a190",
+      "triangleDataSha256": "c180307ba41a21770bb3dfd0b295db655f1c668018fa3681af3a090a921e5b38",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806674,
+      "objLastFaceLine": 806685,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            806680,
+            806681
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            806674,
+            806675
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            806684,
+            806685
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            806682,
+            806683
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            806676,
+            806677
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            806678,
+            806679
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          100.57142857142857,
+          4454.545454545454
+        ],
+        "V": [
+          143.6734693877551,
+          6363.636363636363
+        ]
+      }
+    },
+    "DOM_01354": {
+      "recordSha256": "0a999ed9c4e49594d18b461a6403f900e94b1345aa5c5589eb3f3079da552a68",
+      "triangleDataSha256": "5094e1a8239f4af935a6c3dbb4413cbcb76a180771ed33dec1c1ba1690af55f1",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806764,
+      "objLastFaceLine": 806775,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            806770,
+            806771
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            806764,
+            806765
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            806774,
+            806775
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            806772,
+            806773
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            806766,
+            806767
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            806768,
+            806769
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          118.18181818181819,
+          1250.0000000000002
+        ],
+        "V": [
+          800.0,
+          8461.538461538463
+        ]
+      }
+    },
+    "DOM_01355": {
+      "recordSha256": "cbd37370b6ce8fe9cc3d9e1f5cd91964590828a2cb8bcb4e6cb61597c8c72a0c",
+      "triangleDataSha256": "7227153e8703a912fe29cd5e8eb60750a5ea174ae9734394c84f7e8b5e7fda07",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806854,
+      "objLastFaceLine": 806865
+    },
+    "DOM_01356": {
+      "recordSha256": "9c81171cfe9ba3332ad3272a8d4f659ab53e0627b0a98640565a86840f15cb4f",
+      "triangleDataSha256": "3fa6ea7abcf9bd5562fdfad5aabd9b85ee852e715d2fd57041abf2c55ac4f5c2",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 806938,
+      "objLastFaceLine": 806953
+    },
+    "DOM_01357": {
+      "recordSha256": "9c47e32754daa9e576bb8acc0e9c5ee0d434fb4ad89cacbc6f5db7c7483b5e74",
+      "triangleDataSha256": "f9e24673124d8a039e5659c2150ba8eda3c1061de06ca759da54c61406c23e4a",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807026,
+      "objLastFaceLine": 807041
+    },
+    "DOM_01358": {
+      "recordSha256": "5e1489182aba8e0d40e0a073e074087bc4184277fbfacc19c6186221449101b5",
+      "triangleDataSha256": "59cab1dfc02a35aab25aee5e3f525a0dd008707f4ad4facd776e41ac22c2664f",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807114,
+      "objLastFaceLine": 807129
+    },
+    "DOM_01359": {
+      "recordSha256": "dbe850a99946e5487d3f314d0eb2321f40ad65f7bbe4c523ddd9b003fe0710e6",
+      "triangleDataSha256": "a627d064334f5d10760a71869092ec5f6c4ef739e1f09871b68fa07df978a407",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807202,
+      "objLastFaceLine": 807217
+    },
+    "DOM_01360": {
+      "recordSha256": "bed9b183b76cdac1351b527568d7ecd7b06a042aab3b2ad3e00b11ead4f29fcc",
+      "triangleDataSha256": "429d963ecf0a26aaeb57f3ba3c75c73ca5eef14b6a25fd92f742c537302189a6",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807296,
+      "objLastFaceLine": 807307
+    },
+    "DOM_01361": {
+      "recordSha256": "7e2785cd38cd49b3ef265320e04e218aeb85d37d794e8416c233ae06968e2aa8",
+      "triangleDataSha256": "f9a811384bd4fcb67c5e1c60e6d73ee5ff511c4897f292e5257fab757e792642",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807386,
+      "objLastFaceLine": 807397
+    },
+    "DOM_01362": {
+      "recordSha256": "62f3159a80ee7b4a13d876c10ae3e4e1821c8187b60b4ab9eabed6088ca7976a",
+      "triangleDataSha256": "e8e37034f5bd931ea6c335b6580f70836a05a51437478a08f3ae404d39d735ed",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807476,
+      "objLastFaceLine": 807487,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            807482,
+            807483
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            807476,
+            807477
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            807486,
+            807487
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            807484,
+            807485
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            807478,
+            807479
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            807480,
+            807481
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          100.57142857142857,
+          4454.545454545454
+        ],
+        "V": [
+          143.6734693877551,
+          6363.636363636363
+        ]
+      }
+    },
+    "DOM_01363": {
+      "recordSha256": "da087d5e12b50bd7a2d0ce6d45c8217d731f7e305657722abc71ece8bf067daa",
+      "triangleDataSha256": "8986bb18577cfdffc92ff2ec674a24c9a39133093aa731c44339fcb8cef0c6cb",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807566,
+      "objLastFaceLine": 807577,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            807572,
+            807573
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            807566,
+            807567
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            807576,
+            807577
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            807574,
+            807575
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            807568,
+            807569
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            807570,
+            807571
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          118.18181818181819,
+          1250.0000000000002
+        ],
+        "V": [
+          800.0,
+          8461.538461538463
+        ]
+      }
+    },
+    "DOM_01364": {
+      "recordSha256": "a38885b0958fe8ef7ca429d9ca3af7a17aac881f4f1cae6640011d940339eec4",
+      "triangleDataSha256": "a39c7da1f9d267fcc23a711a71b6ee1072b2c6856c07941db3f296fec0dd4318",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807656,
+      "objLastFaceLine": 807667
+    },
+    "DOM_01365": {
+      "recordSha256": "cc6a245de7d3c5fc315033ab005411ae82008f43f52d6b9999a453fedce664fe",
+      "triangleDataSha256": "118d58f6f7c850eff35c07f6cccd25632aa528097d2f9ddf6a3aa3c84e2e5fd4",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807740,
+      "objLastFaceLine": 807755
+    },
+    "DOM_01366": {
+      "recordSha256": "a9ab89309a0cf9ab1928ad53bd016ecc8ddcff6cd2555977e357887d8e3c56d6",
+      "triangleDataSha256": "950e3a145bac568f8122bf750d815c86d29e26b313a92b03a9807ff9657f557d",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807828,
+      "objLastFaceLine": 807843
+    },
+    "DOM_01367": {
+      "recordSha256": "a34af0ede254b7573d21ac8592cbab33f96d9878565354a4b69fd2c4b5997d73",
+      "triangleDataSha256": "ea899c33e4fd5e2fba0a87826fe22bf0b69a79beab0843bdf958282196528277",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 807916,
+      "objLastFaceLine": 807931
+    },
+    "DOM_01368": {
+      "recordSha256": "75db8b3c508f4d59e8e4186b27ad6f39aeb0a9e38f14eeade0d1905be43adb6f",
+      "triangleDataSha256": "821f25e12a3c3ceb527b72e523bc20d84126a0a0fce91edbbfb6025b06211de4",
+      "triangles": 16,
+      "uniquePositions": 10,
+      "sourceBoundsVsOBJMaxErrorMm": 4.237213602209522e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 808004,
+      "objLastFaceLine": 808019
+    },
+    "DOM_01369": {
+      "recordSha256": "f2c6bcdb8606869fecf9d30ee7fc5763465b82446da7db3c6ccba53bbefad7e7",
+      "triangleDataSha256": "7d7b3470211e5ba7a17cd94dc9a5e52a67a5fbb8d08a928fa511c00c62ada089",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 808098,
+      "objLastFaceLine": 808109
+    },
+    "DOM_01370": {
+      "recordSha256": "a7e4d61e2beaa5718d07a90231fad4eb30b30819a322e7f2a67c1de3969cfba0",
+      "triangleDataSha256": "e3deb167dfa47c1ea138fc8f27aac1df34b2f422effe6e427807ec335f274b17",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.5767217216052813e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 808188,
+      "objLastFaceLine": 808199
+    },
+    "DOM_01371": {
+      "recordSha256": "7b331d4fe9288affdc318c9028e584d3ddee14ea3f23f7750bca3670cdce529c",
+      "triangleDataSha256": "d9aa0cd06ae3e50210c0aa54729e90dfced93562eddcb36a0c1a30849a5fa71d",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 808278,
+      "objLastFaceLine": 808289,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            808284,
+            808285
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            808278,
+            808279
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            808288,
+            808289
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            808286,
+            808287
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            808280,
+            808281
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            808282,
+            808283
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          100.57142857142857,
+          4454.545454545454
+        ],
+        "V": [
+          143.6734693877551,
+          6363.636363636363
+        ]
+      }
+    },
+    "DOM_01372": {
+      "recordSha256": "bd6fbdd91f219fe3044a2abfb8b074d1208b384fd133e85af2821391fa894cce",
+      "triangleDataSha256": "957fae9850ee14f6480c46b209cc8e639adca878f11bd6b42b8e49bb33ad7970",
+      "triangles": 12,
+      "uniquePositions": 8,
+      "sourceBoundsVsOBJMaxErrorMm": 4.6972672862466425e-07,
+      "sourceCollisionFlag": false,
+      "objFirstFaceLine": 808368,
+      "objLastFaceLine": 808379,
+      "axisAlignedBoxVerified": true,
+      "cornerMaxErrorMm": 4.6972672862466425e-07,
+      "faceReferences": [
+        {
+          "normalSite": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            7,
+            8
+          ],
+          "objLines": [
+            808374,
+            808375
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            -1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            1,
+            2
+          ],
+          "objLines": [
+            808368,
+            808369
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "objectTriangles1Based": [
+            11,
+            12
+          ],
+          "objLines": [
+            808378,
+            808379
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "objectTriangles1Based": [
+            9,
+            10
+          ],
+          "objLines": [
+            808376,
+            808377
+          ]
+        },
+        {
+          "normalSite": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            3,
+            4
+          ],
+          "objLines": [
+            808370,
+            808371
+          ]
+        },
+        {
+          "normalSite": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "objectTriangles1Based": [
+            5,
+            6
+          ],
+          "objLines": [
+            808372,
+            808373
+          ]
+        }
+      ],
+      "sourceUVFullPeriodMm": {
+        "U": [
+          118.18181818181819,
+          1250.0000000000002
+        ],
+        "V": [
+          800.0,
+          8461.538461538463
+        ]
+      }
+    }
+  },
+  "sourceAuditSummary": {
+    "objects": 41,
+    "selectedAxialBoxes": 13,
+    "selectedSourceTriangles": 156,
+    "maxBoundsVsOBJErrorMm": 4.83627331959724e-07,
+    "containmentToleranceMm": 0.001,
+    "sourceOnlyNotGeneratedGeometry": true
+  },
+  "projection": {
+    "physicalPeriodMm": [
+      1830.0000429153442,
+      1830.0000429153442
+    ],
+    "physicalPeriodCm": [
+      183.00000429153442,
+      183.00000429153442
+    ],
+    "coordinateTransform": "UE cm = (OBJ X / 10, -OBJ Y / 10, OBJ Z / 10); OBJ source is site-centred Z-up",
+    "scanGrainAxis": "V",
+    "materialOnlyCardinalFrames": {
+      "verticalZ": [
+        {
+          "normalUnreal": [
+            -1,
+            0,
+            0
+          ],
+          "U": [
+            0,
+            1,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            1,
+            0,
+            0
+          ],
+          "U": [
+            0,
+            -1,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            -1,
+            0
+          ],
+          "U": [
+            -1,
+            0,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            1,
+            0
+          ],
+          "U": [
+            1,
+            0,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            0,
+            -1
+          ],
+          "U": [
+            0,
+            -1,
+            0
+          ],
+          "V_grain": [
+            -1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            0,
+            1
+          ],
+          "U": [
+            0,
+            1,
+            0
+          ],
+          "V_grain": [
+            -1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        }
+      ],
+      "longitudinalX": [
+        {
+          "normalUnreal": [
+            -1,
+            0,
+            0
+          ],
+          "U": [
+            0,
+            1,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            1,
+            0,
+            0
+          ],
+          "U": [
+            0,
+            -1,
+            0
+          ],
+          "V_grain": [
+            0,
+            0,
+            -1
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            -1,
+            0
+          ],
+          "U": [
+            0,
+            0,
+            -1
+          ],
+          "V_grain": [
+            1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            1,
+            0
+          ],
+          "U": [
+            0,
+            0,
+            1
+          ],
+          "V_grain": [
+            1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            0,
+            -1
+          ],
+          "U": [
+            0,
+            1,
+            0
+          ],
+          "V_grain": [
+            1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        },
+        {
+          "normalUnreal": [
+            0,
+            0,
+            1
+          ],
+          "U": [
+            0,
+            -1,
+            0
+          ],
+          "V_grain": [
+            1,
+            0,
+            0
+          ],
+          "UcrossVEqualsN": true
+        }
+      ]
+    },
+    "textureAndNormalUVIdentical": true,
+    "normalMapConvention": "Pinned OpenGL normal input; native normal sampler with GL-to-DX green flip exactly once, then use the same signed U,V,N basis to return world-space normal; no tangent-space output flag on world-space result.",
+    "anchorPolicy": "One fixed source-derived anchor for all four kitchen bodies; per-source-object anchor for tabletop and rails. Record actual anchors during implementation. No randomized offsets or source UV mutation.",
+    "roundedDerivativeConstraint": "Cardinal face frame table is valid for current axial source boxes only. Bevels require explicit per-chart physical UVs and corresponding tangent frames derived from actual rounded geometry; no blind dominant-axis normal snapping on the bevel. Canonical UVs remain untouched.",
+    "endFaceLimit": "Veneer scan is an appearance candidate, not a measured solid-oak end-grain texture; longitudinal end faces use the explicit transverse fallback and must be visually reviewed."
+  },
+  "rounding": {
+    "candidateOnly": true,
+    "radiiMm": {
+      "tableTop": 3,
+      "chairTopRail": 2.5,
+      "chairBackPad": 8
+    },
+    "method": "Inward rounded-box visual derivative, identical source center/orientation and full outer AABB; every vertex stays inside the source bounds. Broad planes and framed-chair design retained.",
+    "limits": [
+      "No change to cabinet collision geometry; kitchen is material-only.",
+      "No seat/back incline, tufting, piping, leg shape, posture, thickness increase or moved parts.",
+      "Keep back-pad MAT_0085 material and existing fabric textures; do not put oak on upholstery.",
+      "Derivative has NoCollision and no navigation contribution; retained canonical proxies keep their exact prior collision/navigation/picking contracts.",
+      "Successful derivative asset save/reload and actual per-vertex containment proof must precede any canonical render-proxy hiding."
+    ]
+  },
+  "futureNativeGates": [
+    "Exact input/source-record/material-slot guards and exact nine per-object photo bindings; preserve all remaining current bindings including three active TV overrides.",
+    "All nine photo textures/material graph parameters read back using native getters and saved/reloaded validation; preserve source albedo mean and authored roughness means separately for MAT_0039/MAT_0080.",
+    "Round visual objects only after measured vertex/AABB/normal/tangent checks; source geometry/source UVs/source material assets/collision/navigation state stay unchanged.",
+    "Same native 3840x2160 standing camera/day/exposure baseline and candidate with material-only and rounded-edge steps separately reviewable; inspect the veneer end-face approximation and narrow chair rails.",
+    "No photorealism or calibrated physical finish claim until actual rendering and source-photo review."
+  ]
+}

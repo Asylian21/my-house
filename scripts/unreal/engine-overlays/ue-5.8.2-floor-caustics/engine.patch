@@ -1,0 +1,807 @@
+--- a/Engine/Shaders/Private/BasePassPixelShader.usf
++++ b/Engine/Shaders/Private/BasePassPixelShader.usf
+@@ -1736,6 +1736,7 @@
+ 			SingleLayerWater.SceneWithoutSingleLayerWaterTextureSize,
+ 			SingleLayerWater.SceneWithoutSingleLayerWaterInvTextureSize,
+ 			SingleLayerWater.SceneColorWithoutSingleLayerWaterTexture, SingleLayerWaterSceneColorSampler,
++			SingleLayerWater.FloorCausticsCompanionTexture, SingleLayerWater.bFloorCausticsCompanion,
+ 			SLWRefractionMinMaxUV.xy,
+ 			SLWRefractionMinMaxUV.zw,
+ 			SingleLayerWater.RefractionMaskTexture,
+--- a/Engine/Shaders/Private/DeferredLightPixelShaders.usf
++++ b/Engine/Shaders/Private/DeferredLightPixelShaders.usf
+@@ -116,6 +116,8 @@
+ }
+ 
+ Texture2D<uint> LightingChannelsTexture;
++Texture2D FloorCausticsReplacement;
++uint bFloorCausticsSelectedSun;
+ 
+ uint bLightingChannelEnabled;
+ uint GetLightingChannelMask(float2 UV)
+@@ -442,9 +444,17 @@
+ 		float SurfaceShadow = 1.0f;
+ 		
+ 		float4 LightAttenuation = GetLightAttenuationFromShadow(InputParams, SceneDepth, DerivedParams.TranslatedWorldPosition);
+-		float4 Radiance = GetDynamicLighting(DerivedParams.TranslatedWorldPosition, DerivedParams.CameraVector, ScreenSpaceData.GBuffer, ScreenSpaceData.AmbientOcclusion, LightData, LightAttenuation, Dither, uint2(InputParams.PixelPos), SurfaceShadow);
+-
+-		OutColor += Radiance;
++		if (bFloorCausticsSelectedSun != 0 && FloorCausticsReplacement.Load(int3(uint2(InputParams.PixelPos), 0)).a > 0.5)
++		{
++			FDeferredLightingSplit Split = GetDynamicLightingSplit(DerivedParams.TranslatedWorldPosition, DerivedParams.CameraVector, ScreenSpaceData.GBuffer, ScreenSpaceData.AmbientOcclusion, LightData, LightAttenuation, Dither, uint2(InputParams.PixelPos), SurfaceShadow);
++			// Selected receiver: replace only diffuse RGB; stock specular and alpha remain.
++			OutColor += float4(Split.SpecularLighting.rgb, (Split.SpecularLighting + Split.DiffuseLighting).a);
++		}
++		else
++		{
++			float4 Radiance = GetDynamicLighting(DerivedParams.TranslatedWorldPosition, DerivedParams.CameraVector, ScreenSpaceData.GBuffer, ScreenSpaceData.AmbientOcclusion, LightData, LightAttenuation, Dither, uint2(InputParams.PixelPos), SurfaceShadow);
++			OutColor += Radiance;
++		}
+ 	}
+ 
+ #endif // SUBSTRATE_ENABLED==1
+--- /dev/null
++++ b/Engine/Shaders/Private/FloorCaustics.usf
+@@ -0,0 +1,56 @@
++// Source-pinned direct diffuse only. No light function or material emission.
++#include "Common.ush"
++#include "DeferredShadingCommon.ush"
++#include "ShadingEnergyConservation.ush"
++
++Texture2D NormalizedIrradiance;
++SamplerState IrradianceSampler;
++float3 SourceMinTranslated;
++float3 SourceMaxTranslated;
++float3 SourceSunIlluminance;
++float SourceDiffuseScale;
++uint SourceStencil;
++uint OccluderExclusionCount;
++float4 OccluderExclusions[32];
++RWBuffer<uint> ValidationCounters;
++
++void PreparePS(float4 SvPosition : SV_Position, out float4 Out : SV_Target0)
++{
++    ResolvedView = ResolveView();
++    Out = 0;
++    uint2 Pixel = uint2(SvPosition.xy);
++    float2 UV = SvPosition.xy * View.BufferSizeAndInvSize.zw;
++    if (CalcSceneCustomStencil(Pixel) != SourceStencil) return;
++    float Z = CalcSceneDepth(UV), CustomZ = CalcSceneCustomDepth(UV);
++    if (!isfinite(Z) || !isfinite(CustomZ) || abs(Z - CustomZ) > 0.05) return;
++    FGBufferData G = GetGBufferData(UV);
++    if (G.ShadingModelID != SHADINGMODELID_DEFAULT_LIT || G.WorldNormal.z < 0.8) return;
++    float3 P = SvPositionToResolvedTranslatedWorld(float4(SvPosition.xy, LookupDeviceZ(UV), 1));
++    if (any(!isfinite(P)) || any(!isfinite(G.WorldNormal))) return;
++    if (abs(P.z - SourceMaxTranslated.z) > 0.05 ||
++        any(P.xy <= SourceMinTranslated.xy + 0.05) || any(P.xy >= SourceMaxTranslated.xy - 0.05)) return;
++    [loop] for (uint Index = 0; Index < OccluderExclusionCount; ++Index)
++    {
++        float4 R = OccluderExclusions[Index];
++        if (all(P.xy >= R.xy) && all(P.xy <= R.zw))
++        { InterlockedAdd(ValidationCounters[3], 1); return; }
++    }
++    float2 AtlasUV = (P.xy - SourceMinTranslated.xy) / (SourceMaxTranslated.xy - SourceMinTranslated.xy);
++    float3 E = NormalizedIrradiance.SampleLevel(IrradianceSampler, AtlasUV, 0).rgb;
++    if (any(!isfinite(E)) || any(E < 0)) { InterlockedAdd(ValidationCounters[1], 1); return; }
++    float NoV = saturate(abs(dot(G.WorldNormal, GetCameraVectorFromTranslatedWorldPosition(P))) + 1e-5);
++    FBxDFEnergyTerms Energy = ComputeGGXSpecEnergyTerms(G.Roughness, NoV, G.SpecularColor);
++    // Same optional stock GGX specular-layer energy preservation on Lambert diffuse.
++    float3 C = ComputeEnergyPreservation(Energy) * G.DiffuseColor * E * SourceSunIlluminance * (SourceDiffuseScale / PI) * View.PreExposure;
++    if (any(!isfinite(C)) || any(C < 0) || any(C > 60000))
++    { InterlockedAdd(ValidationCounters[2], 1); return; }
++    InterlockedAdd(ValidationCounters[0], 1);
++    Out = float4(C, 1); // active zero irradiance deliberately removes stock diffuse
++}
++
++Texture2D Replacement;
++void CompositePS(float4 SvPosition : SV_Position, out float4 Out : SV_Target0)
++{
++    float4 C = Replacement.Load(int3(uint2(SvPosition.xy), 0));
++    Out = float4(C.a > 0.5 ? C.rgb : 0, 0);
++}
+--- a/Engine/Shaders/Private/MobileBasePassPixelShader.usf
++++ b/Engine/Shaders/Private/MobileBasePassPixelShader.usf
+@@ -1135,6 +1135,7 @@
+ 			ResolvedView.BufferSizeAndInvSize.xy,
+ 			ResolvedView.BufferSizeAndInvSize.zw,
+ 			SceneColorCopyTexture, SceneColorCopySampler,
++			SceneColorCopyTexture, 0u, // typed unused companion; mobile stays stock
+ 			SLWBufferBilinearUVMinMax.xy,
+ 			SLWBufferBilinearUVMinMax.zw,
+ #endif
+--- a/Engine/Shaders/Private/SingleLayerWaterShading.ush
++++ b/Engine/Shaders/Private/SingleLayerWaterShading.ush
+@@ -52,6 +52,7 @@
+ #endif
+ #if SINGLE_LAYER_WATER_SHADING_QUALITY == SINGLE_LAYER_WATER_SHADING_QUALITY_FULL
+ 	Texture2D SceneColorWithoutSingleLayerWaterTexture, SamplerState SceneColorWithoutSingleLayerWaterSampler,
++	Texture2D FloorCausticsCompanionTexture, uint bFloorCausticsCompanion,
+ 	float2 SceneWithoutSingleLayerWaterMinUV,
+ 	float2 SceneWithoutSingleLayerWaterMaxUV,
+ 	#if SINGLE_LAYER_WATER_USE_REFRACTION_MASK
+@@ -209,7 +210,18 @@
+ 		const float3 BehindWaterSceneLuminance = 0.0f; // Cannot read back the scene color in this case
+ #else
+ 		float3 BehindWaterSceneLuminance = SampleSceneColorWithoutWaterBilateral(SceneColorWithoutSingleLayerWaterTexture, SceneColorWithoutSingleLayerWaterSampler, BehindWaterUV, BehindWaterSceneColorWeights);
+-		BehindWaterSceneLuminance *= MeanTransmittanceToLightSources * ResolvedView.OneOverPreExposure;
++		if (bFloorCausticsCompanion != 0)
++		{
++			// Full-resolution only, identical refracted UV and bilateral depth weights.
++			float3 C = SampleSceneColorWithoutWaterBilateral(FloorCausticsCompanionTexture, SceneColorWithoutSingleLayerWaterSampler, BehindWaterUV, BehindWaterSceneColorWeights);
++			// C already includes incoming photon Fresnel/Beer. Preserve outgoing SLW below.
++			// Do not clamp S-C: a significant negative remainder is diagnostic failure.
++			BehindWaterSceneLuminance = ((BehindWaterSceneLuminance - C) * MeanTransmittanceToLightSources + C) * ResolvedView.OneOverPreExposure;
++		}
++		else
++		{
++			BehindWaterSceneLuminance *= MeanTransmittanceToLightSources * ResolvedView.OneOverPreExposure;
++		}
+ #endif
+ 
+ 		float3 SunScattLuminance = DirLightPhaseValue * SunIlluminance;
+--- a/Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp
++++ b/Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp
+@@ -5,6 +5,7 @@
+ =============================================================================*/
+ 
+ #include "DeferredShadingRenderer.h"
++#include "FloorCausticsRenderingInternal.h"
+ #include "CoreMinimal.h"
+ #include "DeferredShadingRendererTypes.h"
+ #include "BasePassRendering.h"
+@@ -3464,7 +3465,14 @@
+ 				GatherTranslucencyVolumeMarkedVoxels(GraphBuilder, SortedLightSet);
+ 			}
+ 
++			if (!EnumHasAnyFlags(GetTranslucencyViews(Views), ETranslucencyView::UnderWater))
++			{
++				for (const FViewInfo& View : Views) PrepareFloorCaustics(GraphBuilder, View, SceneTextures);
++			}
+ 			RenderLights(GraphBuilder, SceneTextures, LightingChannelsTexture, SortedLightSet);
++			for (const FViewInfo& View : Views)
++				ObserveFloorCausticsDownstream(GraphBuilder, View, SceneTextures,
++					EFloorCausticsObservationStage::AfterRenderLights);
+ 
+ 			if (MegaLightsContext.IsValid())
+ 			{
+@@ -3862,6 +3870,9 @@
+ 			}
+ 		};
+ 
++		// Add only after AO/reflections: C must remain unchanged until the SLW scene-color copy.
++		for (const FViewInfo& View : Views) CompositeFloorCaustics(GraphBuilder, View, SceneTextures);
++
+ 		if (bShouldRenderSingleLayerWater)
+ 		{
+ 			if (bIsCameraUnderWater)
+@@ -3884,6 +3895,9 @@
+ 			{
+ 				SceneTextures.Depth = SingleLayerWaterPrePassResult->DepthPrepassTexture;
+ 			}
++			for (const FViewInfo& View : Views)
++				ObserveFloorCausticsDownstream(GraphBuilder, View, SceneTextures,
++					EFloorCausticsObservationStage::AfterSingleLayerWater);
+ 		}
+ 
+ 		// Rebuild scene textures to include scene color.
+--- /dev/null
++++ b/Engine/Source/Runtime/Renderer/Private/FloorCausticsRendering.cpp
+@@ -0,0 +1,403 @@
++// Project-local UE 5.8.2 overlay; no default provider, no persistent RDG resources.
++#include "FloorCausticsRendering.h"
++#include "FloorCausticsRenderingInternal.h"
++#include "GlobalShader.h"
++#include "Misc/ScopeExit.h"
++#include "RenderingThread.h"
++#include "RHIStaticStates.h"
++#include "RenderUtils.h"
++#include "ShaderParameterStruct.h"
++#include "HAL/IConsoleManager.h"
++#include "LightSceneInfo.h"
++#include "LightSceneProxy.h"
++#include "MaterialShared.h"
++#include "Materials/Material.h"
++#include "Materials/MaterialRenderProxy.h"
++#include "MeshBatch.h"
++#include "PixelShaderUtils.h"
++#include "PrimitiveSceneInfo.h"
++#include "PrimitiveSceneProxy.h"
++#include "RenderGraphBuilder.h"
++#include "RenderGraphUtils.h"
++#include "ScenePrivate.h"
++#include "SceneRendering.h"
++#include "SceneRenderTargetParameters.h"
++#include "SceneTextures.h"
++#include "SystemTextures.h"
++#include "StaticMeshBatch.h"
++
++static TAutoConsoleVariable<int32> CVarFloorCaustics(TEXT("r.Brezi.FloorCaustics"), 0,
++    TEXT("Opt-in project provider for first-order primary floor diffuse. Default dormant."), ECVF_RenderThreadSafe);
++static TSharedPtr<IFloorCausticsProvider, ESPMode::ThreadSafe> GFloorCausticsProvider;
++
++bool RegisterFloorCausticsProvider_RenderThread(TSharedRef<IFloorCausticsProvider, ESPMode::ThreadSafe> Provider)
++{
++    check(IsInRenderingThread());
++    if (GFloorCausticsProvider) return false;
++    GFloorCausticsProvider = Provider;
++    return true;
++}
++void UnregisterFloorCausticsProvider_RenderThread(const IFloorCausticsProvider* Provider)
++{
++    check(IsInRenderingThread());
++    if (GFloorCausticsProvider.Get() == Provider) GFloorCausticsProvider.Reset();
++}
++
++class FFloorCausticsPreparePS : public FGlobalShader
++{
++    DECLARE_GLOBAL_SHADER(FFloorCausticsPreparePS);
++    SHADER_USE_PARAMETER_STRUCT(FFloorCausticsPreparePS, FGlobalShader);
++    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
++        SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
++        SHADER_PARAMETER_RDG_UNIFORM_BUFFER(FSceneTextureUniformParameters, SceneTextures)
++        SHADER_PARAMETER_RDG_TEXTURE(Texture2D, NormalizedIrradiance)
++        SHADER_PARAMETER_SAMPLER(SamplerState, IrradianceSampler)
++        SHADER_PARAMETER(FVector3f, SourceMinTranslated)
++        SHADER_PARAMETER(FVector3f, SourceMaxTranslated)
++        SHADER_PARAMETER(FVector3f, SourceSunIlluminance)
++        SHADER_PARAMETER(float, SourceDiffuseScale)
++        SHADER_PARAMETER(uint32, SourceStencil)
++        SHADER_PARAMETER(uint32, OccluderExclusionCount)
++        SHADER_PARAMETER_ARRAY(FVector4f, OccluderExclusions, [32])
++        SHADER_PARAMETER_RDG_BUFFER_UAV(RWBuffer<uint>, ValidationCounters)
++        RENDER_TARGET_BINDING_SLOTS()
++    END_SHADER_PARAMETER_STRUCT()
++    static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& P)
++    { return IsFeatureLevelSupported(P.Platform, ERHIFeatureLevel::SM5); }
++    static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& P, FShaderCompilerEnvironment& E)
++    {
++        FGlobalShader::ModifyCompilationEnvironment(P, E);
++        E.SetRenderTargetOutputFormat(0, PF_FloatRGBA);
++    }
++};
++IMPLEMENT_GLOBAL_SHADER(FFloorCausticsPreparePS, "/Engine/Private/FloorCaustics.usf", "PreparePS", SF_Pixel);
++
++class FFloorCausticsCompositePS : public FGlobalShader
++{
++    DECLARE_GLOBAL_SHADER(FFloorCausticsCompositePS);
++    SHADER_USE_PARAMETER_STRUCT(FFloorCausticsCompositePS, FGlobalShader);
++    BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
++        SHADER_PARAMETER_RDG_TEXTURE(Texture2D, Replacement)
++        RENDER_TARGET_BINDING_SLOTS()
++    END_SHADER_PARAMETER_STRUCT()
++    static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& P)
++    { return IsFeatureLevelSupported(P.Platform, ERHIFeatureLevel::SM5); }
++    static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& P, FShaderCompilerEnvironment& E)
++    {
++        FGlobalShader::ModifyCompilationEnvironment(P, E);
++        E.SetRenderTargetOutputFormat(0, PF_FloatRGBA);
++    }
++};
++IMPLEMENT_GLOBAL_SHADER(FFloorCausticsCompositePS, "/Engine/Private/FloorCaustics.usf", "CompositePS", SF_Pixel);
++
++struct FFloorCausticsGraphRecord
++{
++    const FSceneView* View = nullptr;
++    const FLightSceneInfo* Sun = nullptr;
++    FRDGTextureRef Companion = nullptr;
++    FFloorCausticsBuildInputs Inputs;
++    bool bComposited = false;
++};
++struct FFloorCausticsGraphState { FFloorCausticsGraphRecord Record; };
++RDG_REGISTER_BLACKBOARD_STRUCT(FFloorCausticsGraphState);
++
++static bool IntCvarEquals(const TCHAR* Name, int32 Expected)
++{
++    const IConsoleVariable* Cvar = IConsoleManager::Get().FindConsoleVariable(Name);
++    return Cvar && Cvar->GetInt() == Expected;
++}
++static bool IsSha256(const FString& Text)
++{
++    if (Text.Len() != 64) return false;
++    for (TCHAR C : Text) if (!(C >= '0' && C <= '9') && !(C >= 'a' && C <= 'f')) return false;
++    return true;
++}
++static bool FinitePositive(const FVector3f& V)
++{
++    return !V.ContainsNaN() && V.X > 0 && V.Y > 0 && V.Z > 0;
++}
++
++// Only a surface mesh that can contribute opaque/masked main-pass depth can
++// create the coincident-depth ambiguity. Proxy flags alone also describe empty
++// line/point helpers and are not evidence of a material mesh batch.
++static bool IsFloorCausticsOccluderBatch(const FMeshBatch& Mesh, ERHIFeatureLevel::Type FeatureLevel)
++{
++    if (!Mesh.bUseForMaterial || !Mesh.HasAnyDrawCalls() ||
++        Mesh.Type == PT_LineList || Mesh.Type == PT_PointList) return false;
++    // Retain uncertain batches. Do not trigger compilation through the fallback
++    // getter or mistake an incomplete shader map for absent opaque geometry.
++    if (!Mesh.MaterialRenderProxy) return true;
++    const FMaterial* Material = Mesh.MaterialRenderProxy->GetMaterialNoFallback(FeatureLevel);
++    if (!Material || !Material->IsRenderingThreadShaderMapComplete()) return true;
++    return IsOpaqueOrMaskedBlendMode(Material->GetBlendMode());
++}
++
++static bool IsFloorCausticsOccluder(const FViewInfo& View, const FPrimitiveSceneInfo& Info)
++{
++    const FPrimitiveSceneProxy* Proxy = Info.Proxy;
++    if (!Proxy || !Proxy->ShouldRenderInMainPass() || !Proxy->IsShown(&View)) return false;
++    // Game's always-visible Nanite primitives can have uninitialized CPU view
++    // relevance. Keep their bounds conservative; CPU maps are not GPU coverage.
++    if (Proxy->IsNaniteMesh()) return Proxy->IsOpaqueOrMasked();
++
++    const int32 Index = Info.GetIndex(); // Packed scene index, never ComponentId.PrimIDValue.
++    if (Index < 0 || Index >= View.PrimitiveVisibilityMap.Num() ||
++        !View.PrimitiveViewRelevanceMap.IsValidIndex(Index)) return true;
++    if (!View.PrimitiveVisibilityMap[Index]) return false;
++    const FPrimitiveViewRelevance& Relevance = View.PrimitiveViewRelevanceMap[Index];
++    if (!Relevance.bInitializedThisFrame) return true;
++    if (!Relevance.bDrawRelevance || !Relevance.bRenderInMainPass ||
++        Relevance.bEditorPrimitiveRelevance) return false;
++    // Do not reject HasTranslucency(): one primitive may also own opaque sections.
++    if (Relevance.bStaticRelevance)
++    {
++        for (const FStaticMeshBatch& Mesh : Info.StaticMeshes)
++        {
++            if (Mesh.Id < 0 || Mesh.Id >= View.StaticMeshVisibilityMap.Num()) return true;
++            if (View.StaticMeshVisibilityMap[Mesh.Id] &&
++                IsFloorCausticsOccluderBatch(Mesh, View.GetFeatureLevel())) return true;
++        }
++    }
++    if (Relevance.bDynamicRelevance)
++    {
++        if (!View.DynamicMeshElementRanges.IsValidIndex(Index)) return true;
++        const FInt32Vector2 StoredRange = View.DynamicMeshElementRanges[Index];
++        if (StoredRange.X < 0 || StoredRange.X > StoredRange.Y ||
++            StoredRange.Y > View.DynamicMeshElements.Num()) return true;
++        const FInt32Range Range = View.GetDynamicMeshElementRange(Index);
++        if (!Range.IsEmpty())
++        {
++            for (int32 MeshIndex = Range.GetLowerBoundValue(); MeshIndex < Range.GetUpperBoundValue(); ++MeshIndex)
++            {
++                const FMeshBatchAndRelevance& Batch = View.DynamicMeshElements[MeshIndex];
++                if (Batch.PrimitiveSceneProxy != Proxy || !Batch.Mesh) return true;
++                if (IsFloorCausticsOccluderBatch(*Batch.Mesh, View.GetFeatureLevel())) return true;
++            }
++        }
++    }
++    return false;
++}
++
++void PrepareFloorCaustics(FRDGBuilder& GraphBuilder, const FViewInfo& View, const FSceneTextures& SceneTextures)
++{
++    check(IsInRenderingThread());
++    TSharedPtr<IFloorCausticsProvider, ESPMode::ThreadSafe> Provider = GFloorCausticsProvider;
++    if (CVarFloorCaustics.GetValueOnRenderThread() != 1 || !Provider) return;
++    bool bPrepared = false;
++    const TCHAR* Rejection = TEXT("unsupported-view-or-render-format");
++    ON_SCOPE_EXIT { if (!bPrepared) Provider->Rejected_RenderThread(View, Rejection); };
++    const auto RejectIf = [&Rejection](bool Condition, const TCHAR* Reason)
++    {
++        if (Condition) Rejection = Reason;
++        return Condition;
++    };
++    // Match UE's actual legacy MATERIAL_ROUGHDIFFUSE selection. The Mac
++    // r.Substrate.RoughDiffuse default is irrelevant while Substrate is disabled.
++    if (RejectIf(!View.Family || !View.Family->Scene, TEXT("missing-view-family-or-scene")) ||
++        RejectIf(View.Family->Views.Num() != 1, TEXT("multiple-views-unsupported")) ||
++        RejectIf(View.bIsSceneCapture || View.bIsReflectionCapture || View.bIsPlanarReflection ||
++            View.bIsInstancedStereoEnabled, TEXT("capture-or-stereo-view-unsupported")) ||
++        RejectIf(View.IsUnderwater(), TEXT("underwater-view-unsupported")) ||
++        RejectIf(!View.ShouldRenderView(), TEXT("view-not-rendered")) ||
++        RejectIf(Substrate::IsSubstrateEnabled(), TEXT("substrate-view-unsupported")) ||
++        RejectIf(!IntCvarEquals(TEXT("r.Material.RoughDiffuse"), 0), TEXT("legacy-rough-diffuse-unsupported")) ||
++        RejectIf(IsForwardShadingEnabled(View.GetShaderPlatform()), TEXT("forward-shading-unsupported")) ||
++        RejectIf(!IntCvarEquals(TEXT("r.CustomDepth"), 3), TEXT("custom-depth-mode-not-three")) ||
++        RejectIf(!IntCvarEquals(TEXT("r.CustomDepthTemporalAAJitter"), 1), TEXT("custom-depth-jitter-disabled")) ||
++        RejectIf(!IntCvarEquals(TEXT("r.Water.SingleLayer.RefractionDownsampleFactor"), 1), TEXT("refraction-downsample-not-one")) ||
++        RejectIf(!IntCvarEquals(TEXT("r.Water.SingleLayer.UnderwaterFogWhenCameraIsAboveWater"), 0), TEXT("above-water-underwater-fog-enabled")) ||
++        RejectIf(!HasBeenProduced(SceneTextures.CustomDepth.Depth), TEXT("custom-depth-not-produced")) ||
++        RejectIf(!SceneTextures.CustomDepth.Stencil, TEXT("custom-stencil-missing")) ||
++        RejectIf(!SceneTextures.Color.Target, TEXT("scene-color-target-missing")) ||
++        RejectIf(SceneTextures.Color.Target != SceneTextures.Color.Resolve, TEXT("scene-color-resolve-differs")) ||
++        RejectIf(!RHIPixelFormatHasCapabilities(PF_FloatRGBA, EPixelFormatCapabilities::RenderTarget |
++            EPixelFormatCapabilities::TextureBlendable | EPixelFormatCapabilities::TextureSample), TEXT("float-rgba-capabilities-missing")) ||
++        RejectIf(SceneTextures.Color.Target->Desc.NumSamples != 1, TEXT("scene-color-multisampled")) ||
++        RejectIf(SceneTextures.Color.Target->Desc.Format != PF_FloatRGBA, TEXT("scene-color-not-float-rgba"))) return;
++
++    FFloorCausticsGraphRecord& Record = GraphBuilder.Blackboard.GetOrCreate<FFloorCausticsGraphState>().Record;
++    if (Record.View) return; // exactly one prepare per graph; never replace a live frame
++    Rejection = TEXT("invalid-source-selection-or-water-side");
++    FFloorCausticsSelection Selection;
++    if (!Provider->Select_RenderThread(View, Selection) ||
++        Selection.SceneToken != View.Family->Scene || !Selection.Generation ||
++        !Selection.Floor.IsValid() || !Selection.Sun.IsValid() || !Selection.UniqueStencil ||
++        !Selection.SourceBoundsCm.IsValid || !IsSha256(Selection.SourceContractSha256) ||
++        Selection.SourceBoundsCm.Min.ContainsNaN() || Selection.SourceBoundsCm.Max.ContainsNaN() ||
++        Selection.SourceBoundsCm.GetSize().GetMin() <= 0 ||
++        !FMath::IsFinite(Selection.WaterSurfaceZCm) ||
++        Selection.WaterSurfaceZCm <= Selection.SourceBoundsCm.Max.Z ||
++        View.ViewLocation.Z <= Selection.WaterSurfaceZCm + 0.05) return;
++
++    Rejection = TEXT("primitive-identity-stencil-or-bounds-rejected");
++    FScene* Scene = View.Family->Scene->GetRenderScene();
++    if (!Scene || Scene->HasVolumetricCloud()) return; // SLW cloud-copy modulation needs paired transport first
++    const FPrimitiveSceneProxy* Floor = nullptr;
++    constexpr double EdgeGuardCm = 0.05;
++    TArray<FPrimitiveComponentId, TInlineAllocator<32>> ExcludedIds;
++    TArray<FVector4f, TInlineAllocator<32>> Exclusions;
++    int32 FloorIdCount = 0, StencilOwners = 0;
++    for (const FPrimitiveSceneInfo* Info : Scene->Primitives)
++    {
++        if (!Info || !Info->Proxy) continue;
++        const FPrimitiveSceneProxy* Proxy = Info->Proxy;
++        if (Proxy->GetPrimitiveComponentId() == Selection.Floor) { ++FloorIdCount; Floor = Proxy; }
++        // Equal custom/scene depth cannot disambiguate a coincident foreign
++        // primitive. Exclude its conservative XY bounds locally; do not turn
++        // known submerged steps into a reason to disable the entire floor.
++        if (!(Proxy->GetPrimitiveComponentId() == Selection.Floor) &&
++            Proxy->ShouldRenderInMainPass() && Proxy->IsShown(&View))
++        {
++            const FBox Other = Proxy->GetBounds().GetBox();
++            const FBox& B = Selection.SourceBoundsCm;
++            if (Other.Min.Z <= B.Max.Z + EdgeGuardCm && Other.Max.Z >= B.Max.Z - EdgeGuardCm &&
++                Other.Min.X < B.Max.X - EdgeGuardCm && Other.Max.X > B.Min.X + EdgeGuardCm &&
++                Other.Min.Y < B.Max.Y - EdgeGuardCm && Other.Max.Y > B.Min.Y + EdgeGuardCm &&
++                IsFloorCausticsOccluder(View, *Info))
++            {
++                if (Exclusions.Num() == 32) return; // bounded shader interface
++                ExcludedIds.Add(Proxy->GetPrimitiveComponentId());
++                Exclusions.Add(FVector4f(Other.Min.X - EdgeGuardCm, Other.Min.Y - EdgeGuardCm,
++                    Other.Max.X + EdgeGuardCm, Other.Max.Y + EdgeGuardCm));
++            }
++        }
++        if (!Proxy->ShouldRenderCustomDepth()) continue;
++        // Partial masks on any custom-depth primitive could synthesize our
++        // stencil value; reject instead of guessing per-pixel identity.
++        if (Proxy->GetStencilWriteMask() != EStencilMask::SM_Default &&
++            Proxy->GetStencilWriteMask() != EStencilMask::SM_255) return;
++        if (Proxy->GetCustomDepthStencilValue() == Selection.UniqueStencil)
++        {
++            ++StencilOwners;
++            if (!(Proxy->GetPrimitiveComponentId() == Selection.Floor)) return;
++        }
++    }
++    if (FloorIdCount != 1 || !Floor || !Floor->ShouldRenderCustomDepth() || StencilOwners != 1 ||
++        !Floor->GetBounds().GetBox().Min.Equals(Selection.SourceBoundsCm.Min, 0.05) ||
++        !Floor->GetBounds().GetBox().Max.Equals(Selection.SourceBoundsCm.Max, 0.05)) return;
++
++    Rejection = TEXT("sun-identity-or-unsupported-light-modulation");
++    const FLightSceneInfo* Sun = nullptr;
++    int32 SunCount = 0;
++    for (const FLightSceneInfoCompact& Compact : Scene->Lights)
++    {
++        if (Compact.LightSceneInfo && Compact.LightSceneInfo->Proxy &&
++            Compact.LightSceneInfo->Proxy->GetLightComponentId() == Selection.Sun)
++        { ++SunCount; Sun = Compact.LightSceneInfo; }
++    }
++    if (SunCount != 1 || !Sun || !Sun->ShouldRenderLight(View) ||
++        Sun->Proxy->GetLightType() != LightType_Directional || Sun->Proxy->GetLightFunctionMaterial() ||
++        Sun->Proxy->GetPerPixelTransmittanceEnabled() || Sun->Proxy->GetCastCloudShadows() ||
++        !(Sun->Proxy->GetLightingChannelMask() & Floor->GetLightingChannelMask())) return;
++    const FLinearColor Color = Sun->Proxy->GetSunIlluminanceOnGroundPostTransmittance();
++    FFloorCausticsBuildInputs Inputs;
++    Inputs.Selection = Selection;
++    Inputs.ConservativeExcludedPrimitives.Append(ExcludedIds);
++    Inputs.ConservativeExcludedBoundsXYCm.Append(Exclusions);
++    Inputs.FrameCounter = View.Family->FrameCounter;
++    Inputs.FrameNumber = View.Family->FrameNumber;
++    Inputs.WorldTimeSeconds = float(View.Family->Time.GetWorldTimeSeconds());
++    Inputs.ViewPreExposure = View.PreExposure;
++    Inputs.SunTravelDirection = FVector3f(Sun->Proxy->GetDirection());
++    Inputs.SunIlluminance = FVector3f(Color.R, Color.G, Color.B);
++    if (!FinitePositive(Inputs.SunIlluminance) || !FMath::IsFinite(Inputs.WorldTimeSeconds) ||
++        Inputs.SunTravelDirection.ContainsNaN() || Inputs.SunTravelDirection.Z >= -1e-5f) return;
++    Rejection = TEXT("unvalidated-or-unpaired-producer-frame");
++    FFloorCausticsProducedFrame Produced;
++    if (!Provider->Build_RenderThread(GraphBuilder, View, Inputs, Produced) ||
++        !Produced.bSourceTransportValidated || Produced.SceneToken != Selection.SceneToken ||
++        Produced.Generation != Selection.Generation || Produced.FrameCounter != Inputs.FrameCounter ||
++        Produced.FrameNumber != Inputs.FrameNumber || Produced.WorldTimeSeconds != Inputs.WorldTimeSeconds ||
++        !Produced.NormalizedIrradiance || !HasBeenProduced(Produced.NormalizedIrradiance) ||
++        Produced.NormalizedIrradiance->Desc.NumSamples != 1 ||
++        !EnumHasAllFlags(Produced.NormalizedIrradiance->Desc.Flags, TexCreate_ShaderResource) ||
++        Produced.NormalizedIrradiance->Desc.Format != PF_FloatRGBA ||
++        Produced.NormalizedIrradiance->Desc.Dimension != ETextureDimension::Texture2D ||
++        Produced.NormalizedIrradiance->Desc.Extent.GetMin() < 2) return;
++
++    FRDGTextureRef Companion = GraphBuilder.CreateTexture(FRDGTextureDesc::Create2D(
++        SceneTextures.Config.Extent, PF_FloatRGBA, FClearValueBinding::Black,
++        TexCreate_ShaderResource | TexCreate_RenderTargetable), TEXT("FloorCaustics.Companion"));
++    FRDGBufferRef Counters = GraphBuilder.CreateBuffer(FRDGBufferDesc::CreateBufferDesc(sizeof(uint32), 4),
++        TEXT("FloorCaustics.ValidationCounters"));
++    FRDGBufferUAVRef CounterUAV = GraphBuilder.CreateUAV(Counters, PF_R32_UINT);
++    AddClearUAVPass(GraphBuilder, CounterUAV, 0u);
++    auto* P = GraphBuilder.AllocParameters<FFloorCausticsPreparePS::FParameters>();
++    P->View = View.ViewUniformBuffer;
++    P->SceneTextures = CreateSceneTextureUniformBuffer(GraphBuilder, &SceneTextures, View.GetFeatureLevel(), ESceneTextureSetupMode::All);
++    P->NormalizedIrradiance = Produced.NormalizedIrradiance;
++    P->IrradianceSampler = TStaticSamplerState<SF_Bilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI();
++    P->SourceMinTranslated = FVector3f(Selection.SourceBoundsCm.Min + View.ViewMatrices.GetPreViewTranslation());
++    P->SourceMaxTranslated = FVector3f(Selection.SourceBoundsCm.Max + View.ViewMatrices.GetPreViewTranslation());
++    P->SourceSunIlluminance = Inputs.SunIlluminance;
++    P->SourceDiffuseScale = FMath::Clamp(Sun->Proxy->GetDiffuseScale(), 0.0f, 1.0f);
++    P->SourceStencil = Selection.UniqueStencil;
++    P->OccluderExclusionCount = Exclusions.Num();
++    const FVector Translation = View.ViewMatrices.GetPreViewTranslation();
++    for (uint32 Index = 0; Index < 32; ++Index)
++    {
++        const FVector4f E = Index < uint32(Exclusions.Num()) ? Exclusions[Index] : FVector4f(0, 0, 0, 0);
++        P->OccluderExclusions[Index] = E + FVector4f(Translation.X, Translation.Y, Translation.X, Translation.Y);
++    }
++    P->ValidationCounters = CounterUAV;
++    P->RenderTargets[0] = FRenderTargetBinding(Companion, ERenderTargetLoadAction::EClear);
++    TShaderMapRef<FFloorCausticsPreparePS> Shader(View.ShaderMap);
++    FPixelShaderUtils::AddFullscreenPass(GraphBuilder, View.ShaderMap,
++        RDG_EVENT_NAME("FloorCaustics Prepare"), Shader, P, View.ViewRect);
++    Record.View = &View;
++    Record.Sun = Sun;
++    Record.Companion = Companion;
++    Record.Inputs = Inputs;
++    bPrepared = true;
++    Provider->Observe_RenderThread(GraphBuilder, View, Inputs, Companion, Counters);
++}
++
++FRDGTextureRef GetFloorCausticsCompanion(FRDGBuilder& GraphBuilder, const FSceneView& View, bool bRequireComposited)
++{
++    const auto& R = GraphBuilder.Blackboard.GetOrCreate<FFloorCausticsGraphState>().Record;
++    return R.View == &View && (!bRequireComposited || R.bComposited) ? R.Companion : nullptr;
++}
++bool IsFloorCausticsSelectedSun(FRDGBuilder& GraphBuilder, const FSceneView& View, const FLightSceneInfo& Light)
++{
++    const auto& R = GraphBuilder.Blackboard.GetOrCreate<FFloorCausticsGraphState>().Record;
++    return R.View == &View && R.Companion && R.Sun == &Light;
++}
++void ObserveFloorCausticsDownstream(FRDGBuilder& GraphBuilder,
++    const FViewInfo& View, const FSceneTextures& SceneTextures,
++    EFloorCausticsObservationStage Stage)
++{
++    check(IsInRenderingThread());
++    TSharedPtr<IFloorCausticsProvider, ESPMode::ThreadSafe> Provider = GFloorCausticsProvider;
++    if (!Provider) return;
++    const auto& R = GraphBuilder.Blackboard.GetOrCreate<FFloorCausticsGraphState>().Record;
++    const bool bPreparedForView = R.View == &View && R.Companion;
++    FFloorCausticsObservation Observation;
++    Observation.Stage = Stage;
++    Observation.SceneColor = SceneTextures.Color.Target;
++    Observation.SceneDepth = SceneTextures.Depth.Target;
++    Observation.Companion = bPreparedForView ? R.Companion : nullptr;
++    Observation.PreparedInputs = bPreparedForView ? &R.Inputs : nullptr;
++    Observation.bComposited = bPreparedForView && R.bComposited;
++    Observation.ViewPreExposure = View.PreExposure;
++    Provider->ObserveDownstream_RenderThread(GraphBuilder, View, Observation);
++}
++
++void CompositeFloorCaustics(FRDGBuilder& GraphBuilder, const FViewInfo& View, const FSceneTextures& SceneTextures)
++{
++    ObserveFloorCausticsDownstream(GraphBuilder, View, SceneTextures,
++        EFloorCausticsObservationStage::BeforeComposite);
++    auto& R = GraphBuilder.Blackboard.GetOrCreate<FFloorCausticsGraphState>().Record;
++    if (R.View == &View && R.Companion && !R.bComposited)
++    {
++        auto* P = GraphBuilder.AllocParameters<FFloorCausticsCompositePS::FParameters>();
++        P->Replacement = R.Companion;
++        P->RenderTargets[0] = FRenderTargetBinding(SceneTextures.Color.Target, ERenderTargetLoadAction::ELoad);
++        TShaderMapRef<FFloorCausticsCompositePS> Shader(View.ShaderMap);
++        FPixelShaderUtils::AddFullscreenPass(GraphBuilder, View.ShaderMap,
++            RDG_EVENT_NAME("FloorCaustics Composite"), Shader, P, View.ViewRect,
++            TStaticBlendState<CW_RGB, BO_Add, BF_One, BF_One>::GetRHI());
++        R.bComposited = true;
++    }
++    ObserveFloorCausticsDownstream(GraphBuilder, View, SceneTextures,
++        EFloorCausticsObservationStage::AfterComposite);
++}
+--- /dev/null
++++ b/Engine/Source/Runtime/Renderer/Private/FloorCausticsRenderingInternal.h
+@@ -0,0 +1,19 @@
++#pragma once
++#include "FloorCausticsRendering.h"
++
++class FViewInfo;
++class FLightSceneInfo;
++struct FSceneTextures;
++
++void PrepareFloorCaustics(FRDGBuilder& GraphBuilder, const FViewInfo& View,
++    const FSceneTextures& SceneTextures);
++void CompositeFloorCaustics(FRDGBuilder& GraphBuilder, const FViewInfo& View,
++    const FSceneTextures& SceneTextures);
++FRDGTextureRef GetFloorCausticsCompanion(FRDGBuilder& GraphBuilder,
++    const FSceneView& View, bool bRequireComposited);
++bool IsFloorCausticsSelectedSun(FRDGBuilder& GraphBuilder,
++    const FSceneView& View, const FLightSceneInfo& Light);
++
++void ObserveFloorCausticsDownstream(FRDGBuilder& GraphBuilder,
++    const FViewInfo& View, const FSceneTextures& SceneTextures,
++    EFloorCausticsObservationStage Stage);
+--- a/Engine/Source/Runtime/Renderer/Private/LightRendering.cpp
++++ b/Engine/Source/Runtime/Renderer/Private/LightRendering.cpp
+@@ -5,6 +5,7 @@
+ =============================================================================*/
+ 
+ #include "LightRendering.h"
++#include "FloorCausticsRenderingInternal.h"
+ #include "LogRenderer.h"
+ #include "DeferredShadingRenderer.h"
+ #include "ScenePrivate.h"
+@@ -951,6 +952,8 @@
+ 		SHADER_PARAMETER_STRUCT_INCLUDE(FVolumetricCloudShadowAOParameters, CloudShadowAO)
+ 		SHADER_PARAMETER_STRUCT_INCLUDE(FLightCloudTransmittanceParameters, CloudShadow)
+ 		SHADER_PARAMETER_RDG_UNIFORM_BUFFER(FForwardLightUniformParameters, ForwardLightStruct)
++		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, FloorCausticsReplacement)
++		SHADER_PARAMETER(uint32, bFloorCausticsSelectedSun)
+ 		SHADER_PARAMETER(uint32, bLightingChannelEnabled)
+ 		SHADER_PARAMETER(uint32, bCloudShadowEnabled)
+ 		SHADER_PARAMETER(uint32, bAtmosphereTransmittanceEnabled)
+@@ -2798,6 +2801,9 @@
+ 	// PS - General parameters
+ 	const FVolumetricCloudRenderSceneInfo* CloudInfo = bCloudShadow ? Scene->GetVolumetricCloudSceneInfo() : nullptr;
+ 	Out.SceneTextures = SceneTexturesUniformBuffer;
++	FRDGTextureRef FloorCompanion = GetFloorCausticsCompanion(GraphBuilder, View, false);
++	Out.FloorCausticsReplacement = FloorCompanion ? FloorCompanion : GSystemTextures.GetBlackDummy(GraphBuilder);
++	Out.bFloorCausticsSelectedSun = IsFloorCausticsSelectedSun(GraphBuilder, View, *LightSceneInfo) ? 1u : 0u;
+ 	Out.HairStrands = HairStrandsUniformBuffer;
+ 	Out.ForwardLightStruct = View.ForwardLightingResources.ForwardLightUniformBuffer;
+ 	Out.Substrate = Substrate::BindSubstrateGlobalUniformParameters(View);
+@@ -3573,6 +3579,8 @@
+ 	
+ 	// PS - General parameters
+ 	Out.SceneTextures = SceneTextures.UniformBuffer;
++	Out.FloorCausticsReplacement = GSystemTextures.GetBlackDummy(GraphBuilder);
++	Out.bFloorCausticsSelectedSun = 0u; // simple lights never own the source sun
+ 	Out.HairStrands = View.HairStrandsViewData.UniformBuffer;
+ 	Out.ForwardLightStruct = View.ForwardLightingResources.ForwardLightUniformBuffer;
+ 	Out.Substrate = Substrate::BindSubstrateGlobalUniformParameters(View);
+--- a/Engine/Source/Runtime/Renderer/Private/SingleLayerWaterRendering.cpp
++++ b/Engine/Source/Runtime/Renderer/Private/SingleLayerWaterRendering.cpp
+@@ -1,6 +1,7 @@
+ // Copyright Epic Games, Inc. All Rights Reserved.
+ 
+ #include "SingleLayerWaterRendering.h"
++#include "FloorCausticsRenderingInternal.h"
+ #include "BasePassRendering.h"
+ #include "DeferredShadingRenderer.h"
+ #include "DistortionRendering.h"
+@@ -405,6 +406,8 @@
+ }
+ 
+ BEGIN_UNIFORM_BUFFER_STRUCT(FSingleLayerWaterPassUniformParameters, )
++	SHADER_PARAMETER_RDG_TEXTURE(Texture2D, FloorCausticsCompanionTexture)
++	SHADER_PARAMETER(uint32, bFloorCausticsCompanion)
+ 	SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneColorWithoutSingleLayerWaterTexture)
+ 	SHADER_PARAMETER_SAMPLER(SamplerState, SceneColorWithoutSingleLayerWaterSampler)
+ 	SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthWithoutSingleLayerWaterTexture)
+@@ -741,6 +744,10 @@
+ 	const FIntVector DepthTextureSize = SceneDepthWithoutWater->Desc.GetSize();
+ 	const FRDGSystemTextures& SystemTextures = FRDGSystemTextures::Get(GraphBuilder);
+ 
++	// Depth-only prepass gets a typed black dummy and cannot activate the branch.
++	FRDGTextureRef FloorCompanion = SceneColorWithoutWater ? GetFloorCausticsCompanion(GraphBuilder, View, true) : nullptr;
++	SLWUniformParameters->FloorCausticsCompanionTexture = FloorCompanion ? FloorCompanion : SystemTextures.Black;
++	SLWUniformParameters->bFloorCausticsCompanion = FloorCompanion ? 1u : 0u;
+ 	SLWUniformParameters->SceneColorWithoutSingleLayerWaterTexture = SceneColorWithoutWater ? SceneColorWithoutWater : SystemTextures.Black;
+ 	SLWUniformParameters->SceneColorWithoutSingleLayerWaterSampler = TStaticSamplerState<SF_Bilinear>::GetRHI();
+ 	SLWUniformParameters->SceneDepthWithoutSingleLayerWaterTexture = SceneDepthWithoutWater;
+--- /dev/null
++++ b/Engine/Source/Runtime/Renderer/Public/FloorCausticsRendering.h
+@@ -0,0 +1,111 @@
++// Project-local UE 5.8.2 overlay. Default dormant; no UObject ownership on RT.
++#pragma once
++
++#include "CoreMinimal.h"
++#include "LightComponentId.h"
++#include "PrimitiveComponentId.h"
++#include "RenderGraphFwd.h"
++
++class FSceneInterface;
++class FSceneView;
++
++struct FFloorCausticsSelection
++{
++    const FSceneInterface* SceneToken = nullptr;
++    uint64 Generation = 0;
++    FPrimitiveComponentId Floor;
++    FLightComponentId Sun;
++    FBox SourceBoundsCm = FBox(ForceInit);
++    double WaterSurfaceZCm = 0;
++    uint8 UniqueStencil = 0;
++    FString SourceContractSha256;
++};
++
++struct FFloorCausticsBuildInputs
++{
++    FFloorCausticsSelection Selection;
++    uint64 FrameCounter = 0;
++    uint32 FrameNumber = 0;
++    float WorldTimeSeconds = 0;
++    // Actual renderer FViewInfo CPU value, not an independently read GPU uniform.
++    float ViewPreExposure = 0;
++    FVector3f SunTravelDirection = FVector3f::ZeroVector;
++    // Normal-incidence solar illuminance in UE's linear light units, after
++    // its ground atmosphere transmittance. NOT pre-exposed, NOT divided by PI.
++    FVector3f SunIlluminance = FVector3f::ZeroVector;
++    // Conservative renderer-owned coplanar/near-plane exclusions. Preserve
++    // these exact IDs/rectangles in diagnostic receipts; never guess new hulls.
++    TArray<FPrimitiveComponentId> ConservativeExcludedPrimitives;
++    TArray<FVector4f> ConservativeExcludedBoundsXYCm;
++};
++
++struct FFloorCausticsProducedFrame
++{
++    const FSceneInterface* SceneToken = nullptr;
++    uint64 Generation = 0;
++    uint64 FrameCounter = 0;
++    uint32 FrameNumber = 0;
++    float WorldTimeSeconds = 0;
++    // Linear RGB dimensionless floor irradiance PER UNIT input SunIlluminance.
++    // Includes projected packet measure, Fresnel and underwater Beer exactly
++    // once; excludes albedo, PI, native sun magnitude and view pre-exposure.
++    // XY maps source-bounds Min.XY -> 0 and Max.XY -> 1 without repeat.
++    FRDGTextureRef NormalizedIrradiance = nullptr;
++    bool bSourceTransportValidated = false;
++};
++
++// Diagnostic snapshots of the real HDR pipeline, before tonemapping/fog after SLW.
++// These names identify scheduling boundaries, not independent lighting proofs.
++enum class EFloorCausticsObservationStage : uint8
++{
++    AfterRenderLights,
++    BeforeComposite,
++    AfterComposite,
++    AfterSingleLayerWater
++};
++
++struct FFloorCausticsObservation
++{
++    EFloorCausticsObservationStage Stage = EFloorCausticsObservationStage::AfterRenderLights;
++    FRDGTextureRef SceneColor = nullptr;
++    FRDGTextureRef SceneDepth = nullptr;
++    FRDGTextureRef Companion = nullptr;
++    // Null when no accepted prepared frame exists (including an inactive control).
++    // This pointer and all textures are callback/graph-local: never retain them.
++    const FFloorCausticsBuildInputs* PreparedInputs = nullptr;
++    bool bComposited = false;
++    // Valid also for an inactive observation with no PreparedInputs.
++    float ViewPreExposure = 0;
++};
++
++class IFloorCausticsProvider
++{
++public:
++    virtual ~IFloorCausticsProvider() = default;
++    // Opt-in but unsupported/invalid frames keep stock lighting and emit an
++    // explicit stage reason. This is not a GPU validation result.
++    virtual void Rejected_RenderThread(const FSceneView&, const TCHAR* StageReason) {}
++    virtual bool Select_RenderThread(const FSceneView& View, FFloorCausticsSelection& Out) = 0;
++    virtual bool Build_RenderThread(FRDGBuilder& GraphBuilder, const FSceneView& View,
++        const FFloorCausticsBuildInputs& Inputs, FFloorCausticsProducedFrame& Out) = 0;
++    // Optional diagnostic hook: graph-local copies/readbacks only. Alpha is
++    // validated receiver ownership, RGB is pre-exposed replacement radiance.
++    // Counters: [owned pixels, invalid irradiance pixels, radiance overflow, excluded pixels].
++    virtual void Observe_RenderThread(FRDGBuilder&, const FSceneView&,
++        const FFloorCausticsBuildInputs&, FRDGTextureRef, FRDGBufferRef) {}
++    // Optional explicit diagnostic subscriber, also called with CVar=0 so an
++    // inactive control can observe the same real stages. No registered provider
++    // means no callback or readback. Implementations must gate a single eligible
++    // frame, issue graph-local copy/readback passes here, and own their fences.
++    // Missing stages and incomplete fences must fail the diagnostic, not pass.
++    virtual void ObserveDownstream_RenderThread(FRDGBuilder&, const FSceneView&,
++        const FFloorCausticsObservation&) {}
++};
++
++// Call via a project-owned enqueued render command. Exactly one provider;
++// registration conflict returns false. Unregister, FlushRenderingCommands,
++// then release project source resources. No provider means stock rendering.
++RENDERER_API bool RegisterFloorCausticsProvider_RenderThread(
++    TSharedRef<IFloorCausticsProvider, ESPMode::ThreadSafe> Provider);
++RENDERER_API void UnregisterFloorCausticsProvider_RenderThread(
++    const IFloorCausticsProvider* Provider);
+--- a/Engine/Source/Runtime/Renderer/Renderer.Build.cs
++++ b/Engine/Source/Runtime/Renderer/Renderer.Build.cs
+@@ -6,6 +6,8 @@
+ {
+ 	public Renderer(ReadOnlyTargetRules Target) : base(Target)
+ 	{
++		// ISOLATED ENGINE CANDIDATE ONLY: override installed rules default.
++		bUsePrecompiled = false;
+ 		PrivateIncludePaths.AddRange(
+ 			new string[] {
+ 				EngineDirectory + "/Shaders/Private", // For HaltonUtilities.ush

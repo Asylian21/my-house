@@ -1,0 +1,202 @@
+{
+  "revision": "facade-hinoki-world-1",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "objSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "sourceObjects": {
+    "DOM_00061": {
+      "slot": "MAT_0011",
+      "triangles": 24,
+      "recordSha256": "e3df9e5a03db1c4b0b6fa2ced8a028d9c7b018a9ef5179b3212719814efcfbb5"
+    },
+    "DOM_00062": {
+      "slot": "MAT_0011",
+      "triangles": 40,
+      "recordSha256": "51d8f5bc4d99c0086ff2e1ff5a0b6dea98ca6d7477c7478a2ac2e337b3a90187"
+    },
+    "DOM_00063": {
+      "slot": "MAT_0011",
+      "triangles": 32,
+      "recordSha256": "f48fb8f7ba0a564beb2690a4dc62248dc1d26d8753f48abd074a5b176a903390"
+    },
+    "DOM_00126": {
+      "slot": "MAT_0012",
+      "triangles": 12,
+      "recordSha256": "377e6db2206e229a70b632f986913c250734b2da0aa888139d0610874c753502"
+    },
+    "DOM_00147": {
+      "slot": "MAT_0019",
+      "triangles": 12,
+      "recordSha256": "56964ad8d87da18dee034468c97402c05790db9ec049d94bd6d70741b1e05458"
+    },
+    "DOM_00149": {
+      "slot": "MAT_0020",
+      "triangles": 12,
+      "recordSha256": "a6dde848dcc162f50f9c5e4352ed0293e501dbe7226d2dc3f12ebed84a8747e4"
+    },
+    "DOM_00151": {
+      "slot": "MAT_0021",
+      "triangles": 12,
+      "recordSha256": "aefef306e5bf8c1f16e72304d7f3f0a088536062c63ac9686484dbdea521099f"
+    },
+    "DOM_00157": {
+      "slot": "MAT_0022",
+      "triangles": 12,
+      "recordSha256": "9bee90e083e7fe75d1cea7589cddbfc1bbaa55d4738a93c84db26873fd4c5f80"
+    },
+    "DOM_00158": {
+      "slot": "MAT_0023",
+      "triangles": 12,
+      "recordSha256": "b2790793519bfc80a6170cd7a3176b1824857f0a2acaff2366dcb1eff368b396"
+    },
+    "DOM_00159": {
+      "slot": "MAT_0024",
+      "triangles": 12,
+      "recordSha256": "881c1d1eea164333ddbec474be8734ceb9d3b3b5c33409fcf10c6c7d1588966c"
+    },
+    "DOM_00164": {
+      "slot": "MAT_0025",
+      "triangles": 12,
+      "recordSha256": "bc96ff7c37039256c9f71b2dbb203c5c2c5544e18654a3fa3fecea126be64c94"
+    },
+    "DOM_00165": {
+      "slot": "MAT_0026",
+      "triangles": 12,
+      "recordSha256": "5eae147ab3a048b711d2678feab042a196a0b3311218fd5a5dbf6fedb6a4838f"
+    }
+  },
+  "excluded": {
+    "DOM_01876": "MAT_0111"
+  },
+  "anchorCm": [
+    0,
+    0,
+    0
+  ],
+  "grainNativeBySlot": {
+    "MAT_0011": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0012": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0019": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0020": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0021": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0022": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0023": [
+      0.82088129,
+      0,
+      0.57109885
+    ],
+    "MAT_0024": [
+      0.82088129,
+      0,
+      -0.57109885
+    ],
+    "MAT_0025": [
+      0,
+      0,
+      1
+    ],
+    "MAT_0026": [
+      0,
+      0,
+      1
+    ]
+  },
+  "pitchMm": 50,
+  "jointMm": 1.953125,
+  "jointShade": 0.42,
+  "periodCm": 189.0,
+  "photoBandStarts": [
+    0.025,
+    0.103,
+    0.179,
+    0.256,
+    0.41,
+    0.565,
+    0.796,
+    0.9475
+  ],
+  "normalStrength": 0.35,
+  "roughness": "raw photograph R, no scalar remapping",
+  "albedo": "photograph sRGB decoded by texture sample, source joint shade only; no tint",
+  "maps": {
+    "Diffuse": {
+      "role": "Diffuse",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Diffuse-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_diff_4k.jpg",
+      "bytes": 8284068,
+      "md5": "185a461f281e54ebbeaf95c6d17f9286",
+      "sha256": "5aa56a1aa470a99b8e9c100f5ec06a3e888089105fa230cdf871ba72fb1c0420"
+    },
+    "nor_gl": {
+      "role": "nor_gl",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/nor_gl-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_nor_gl_4k.jpg",
+      "bytes": 10596354,
+      "md5": "1cf5cd943d1bdc3c35c8b405f196862f",
+      "sha256": "c51a062512a3f5ab73cdc7f1950d81d5ef9fddf3d42f613bccd92c31377d2293"
+    },
+    "Rough": {
+      "role": "Rough",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Rough-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_rough_4k.jpg",
+      "bytes": 2802151,
+      "md5": "34c8d08d865bbc784a76eec14f212c82",
+      "sha256": "2c5a2cc300f09fcba04980090953b53203366d6f8d1a2b7e5bda759dfb77fea4"
+    }
+  },
+  "evidence": {
+    "output/unreal/facade-wood-study/source-audit.json": "b9a2770f0903f4a0949ac5775c5fa64177f1414f3baedbe3cef22b4a8c784501",
+    "output/unreal/facade-wood-study/photo-strip-audit.json": "587cb91e5a561c6cb5510071dfb6ce0577488ae6ec58ad27b3f63c4edfb6a717",
+    "output/unreal/facade-wood-study/hinoki_planks/download-receipt.json": "c8fde2d7a32ec0e22410fd14ade324f3b2afa323a5b468cd7b63d9d2c939e12d",
+    "output/unreal/facade-wood-study/hinoki_planks/info.json": "9c1abe989ca04337b906520d02ac44c1235ce21d256cd6b761d37adb0a7fa61c",
+    "output/unreal/facade-wood-study/hinoki_planks/files.json": "47c4a726345fbf757b6a563f8985cd21edb313d9dc72c47521ac43e07663706b"
+  },
+  "sourceIntentFiles": {
+    "lib/babylon-scene.ts": "39b12a2396c5eef49db12af59dffdb365c25d629cd566b5f905de3d8328df678",
+    "lib/twin-site.ts": "5a58f7b18d5749e01b700bdaf03a892cc3bd82040a9a7d4a0b059e33854f95c3",
+    "tools/generate-visual-assets.py": "e2645c272269095fa91f54ed12335de4ae37d4662cee3972bec4da81bc71d77b",
+    "public/assets/textures/larch-albedo.jpg": "b5948e905439a9e8f12a3b9d3dd1bcbd42bee51bace2a8e7ddbcd0ded5a46ae6",
+    "public/assets/textures/larch-normal.jpg": "a0b4212acf624826460ec01bd377547831ac3435f1843c8bb014772820dc1add"
+  },
+  "source": "https://polyhaven.com/a/hinoki_planks",
+  "license": "CC0-1.0",
+  "author": "Charlotte Baglioni",
+  "intentCorrections": [
+    "All wall faces use source-intended vertical grain, including DOM_00157 whose source UV0 V runs horizontally.",
+    "Soffit grain follows the audited positive-X roof-pitch axis; sign changes across back faces are harmless for intended grain orientation.",
+    "Nominal 50mm is source design intent; world pitch deliberately does not retain accidental per-object UV/raster scaling.",
+    "All material slots share an authored source-origin texture phase; this is not a surveyed physical joint origin."
+  ],
+  "limits": [
+    "Photographed Hinoki cypress is an appearance proxy for source-named larch, not verified site timber/species or measured facade finish.",
+    "Full-photo U repeats its grain/knots every1.89m. Independent board phases reduce aligned repetition but do not create unique wood.",
+    "At least88 base-texel main-seam gutters do not guarantee arbitrary coarse mip/aniso safety.",
+    "Source50mm is nominal authoring intent; existing raster pitch is51/1024m and some source UV bases/scales differ. Worldphysical mapping is an explicit visual correction.",
+    "Worldnormal basis, native compiled graph, actual filtering and cooked visual result remain untested.",
+    "No geometry/WPO/UV0/normal/tangent setter; native source position and UV0 readback before/after are required. Normal/tangent attributes have no direct reflected readback in this bounded helper.",
+    "This pass authors ten immutable recipe materials and three texture assets; saving a material does not prove Metal/cook/render success."
+  ]
+}

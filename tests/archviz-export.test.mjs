@@ -59,3 +59,18 @@ test("keeps material slots and writes valid OBJ when attributes are absent", () 
   assert.match(obj, /usemtl MAT_0001\ns 1\nf 1 2 3\n/);
   assert.equal(manifest.objects[0].materialSlots.length, 2);
 });
+test("same-named materials with different physical values stay separate", () => {
+  const mesh = {
+    name: "variants", sourceId: "variants", enabled: true,
+    positions: [0, 0, 0, 1, 0, 0, 0, 1, 0], normals: [], uvs: [],
+    indices: [0, 1, 2], transforms: [identity], normalTransforms: [identity],
+    materials: [{ name: "paint", color: [1, 1, 1], roughness: 0.9 },
+      { name: "paint", color: [0, 0, 0], roughness: 0.1 }],
+    subMeshes: [{ start: 0, count: 3, material: 1 }],
+  };
+  const manifest = { materials: {}, objects: [] };
+  const obj = [...serializeObj([mesh], manifest)].join("");
+  assert.equal(Object.keys(manifest.materials).length, 2);
+  assert.deepEqual(manifest.materials.MAT_0001.color, [0, 0, 0]);
+  assert.match(obj, /usemtl MAT_0001/);
+});

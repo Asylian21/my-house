@@ -14,6 +14,11 @@ zostaví scénu s PBR materiálmi a umožní 4K rendery. Spustenie:
 `npm run archviz:setup`, `npm run archviz:preview`, `npm run archviz:render`.
 Podrobnosti, ovládanie prechádzky a výstupy sú v [návode ArchViz](scripts/archviz/README.md).
 
+Samostatná macOS vetva v Unreal Engine používa ten istý zdroj geometrie:
+[Unreal export, audit a build](scripts/unreal/README.md). `npm run unreal:export`
+vytvorí GLB aktívnej scény a oddelený technický archív s kontrolou rozmerov,
+revízií a pôvodu dát. Natívny projekt žije v `unreal/BreziTwin`.
+
 Publikovaná 4K vizualizácia je dostupná tlačidlom **4K** v ovládaní modelu
 a priamo na `/archviz/garden-4k.jpg`. Web používa JPEG kópiu finálneho renderu;
 pôvodný 16-bitový PNG a Blender scéna zostávajú v lokálnom `output/archviz/`.

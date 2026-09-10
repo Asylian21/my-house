@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "status": "source-derived-opaque-geometry-test-cases-native-pending",
+  "coordinateSystem": "unreal-axes-centimetres",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "sourceObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "receiverContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "sourceBridgeSha256": "7e3e2278edf0e081a7b9a90f3ab59f63f07ce0344b39fe09c127f3145426ea12",
+  "solarTravelDirection": [
+    0.7560315884415654,
+    0.45195429987504515,
+    -0.473448569649314
+  ],
+  "waterMeanPlaneMetres": -0.012000000104308128,
+  "launchOffsetMetres": 0.002,
+  "positiveControlOffsetMetres": 0.02,
+  "sourceSamplingGrid": [
+    32,
+    16
+  ],
+  "cases": [
+    {
+      "id": "solar-grid-0512",
+      "sourceSampleIndex": 512,
+      "role": "off-aperture-source-roof-positive-control",
+      "originMetres": [
+        -3.8782127015645016,
+        0.9757057526641677,
+        3.92719769527368
+      ],
+      "originCm": [
+        -387.82127015645017,
+        97.57057526641677,
+        392.719769527368
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "blocked",
+      "expectedHitDistanceCm": 2.000000000000037,
+      "expectedSourceObjectId": "DOM_01484",
+      "expectedSourceFaceIndex": 0,
+      "expectedSourceTriangleMetres": [
+        [
+          -8.76,
+          -0.4,
+          3.125
+        ],
+        [
+          -8.76,
+          3.7,
+          5.56
+        ],
+        [
+          5.84,
+          -0.4,
+          3.125
+        ]
+      ]
+    },
+    {
+      "id": "solar-grid-0514",
+      "sourceSampleIndex": 514,
+      "role": "off-aperture-source-roof-positive-control",
+      "originMetres": [
+        7.021787298435498,
+        -7.614294247335831,
+        3.92719769527368
+      ],
+      "originCm": [
+        702.1787298435498,
+        -761.4294247335831,
+        392.719769527368
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "blocked",
+      "expectedHitDistanceCm": 2.000000000000069,
+      "expectedSourceObjectId": "DOM_01485",
+      "expectedSourceFaceIndex": 0,
+      "expectedSourceTriangleMetres": [
+        [
+          5.84,
+          -11.235,
+          3.125
+        ],
+        [
+          5.84,
+          -0.4,
+          3.125
+        ],
+        [
+          9.34,
+          -11.235,
+          5.56
+        ]
+      ]
+    },
+    {
+      "id": "solar-grid-0515",
+      "sourceSampleIndex": 515,
+      "role": "off-aperture-source-roof-positive-control",
+      "originMetres": [
+        8.188453965102164,
+        -2.6359609140024993,
+        4.738864361940346
+      ],
+      "originCm": [
+        818.8453965102165,
+        -263.5960914002499,
+        473.88643619403456
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "blocked",
+      "expectedHitDistanceCm": 2.000000000000111,
+      "expectedSourceObjectId": "DOM_01485",
+      "expectedSourceFaceIndex": 1,
+      "expectedSourceTriangleMetres": [
+        [
+          9.34,
+          -11.235,
+          5.56
+        ],
+        [
+          5.84,
+          -0.4,
+          3.125
+        ],
+        [
+          9.34,
+          3.7,
+          5.56
+        ]
+      ]
+    },
+    {
+      "id": "solar-grid-0000",
+      "sourceSampleIndex": 0,
+      "role": "pool-aperture-solar-ray",
+      "originMetres": [
+        -3.3662500083446503,
+        -5.215625047683716,
+        -0.010000000104308128
+      ],
+      "originCm": [
+        -336.625000834465,
+        -521.5625047683716,
+        -1.0000000104308129
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "unblocked",
+      "expectedHitDistanceCm": null,
+      "expectedSourceObjectId": null,
+      "expectedSourceFaceIndex": null,
+      "expectedSourceTriangleMetres": null
+    },
+    {
+      "id": "solar-grid-0256",
+      "sourceSampleIndex": 256,
+      "role": "pool-aperture-solar-ray",
+      "originMetres": [
+        -3.3662500083446503,
+        -3.8656250476837153,
+        -0.010000000104308128
+      ],
+      "originCm": [
+        -336.625000834465,
+        -386.5625047683715,
+        -1.0000000104308129
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "unblocked",
+      "expectedHitDistanceCm": null,
+      "expectedSourceObjectId": null,
+      "expectedSourceFaceIndex": null,
+      "expectedSourceTriangleMetres": null
+    },
+    {
+      "id": "solar-grid-0511",
+      "sourceSampleIndex": 511,
+      "role": "pool-aperture-solar-ray",
+      "originMetres": [
+        2.4462499916553497,
+        -2.684375047683716,
+        -0.010000000104308128
+      ],
+      "originCm": [
+        244.62499916553497,
+        -268.4375047683716,
+        -1.0000000104308129
+      ],
+      "directionTowardSun": [
+        -0.7560315884415654,
+        -0.45195429987504515,
+        0.473448569649314
+      ],
+      "tMinCm": 0.01,
+      "tMaxCm": 50000,
+      "expected": "unblocked",
+      "expectedHitDistanceCm": null,
+      "expectedSourceObjectId": null,
+      "expectedSourceFaceIndex": null,
+      "expectedSourceTriangleMetres": null
+    }
+  ],
+  "derivation": {
+    "sourceObjects": 1895,
+    "sourceTriangles": 393739,
+    "relevantOpaqueObjects": 17,
+    "relevantOpaqueTriangles": 1868,
+    "sourceOpaqueEligibleCounts": {
+      "blocked": 4,
+      "unblocked": 512
+    },
+    "excludedUnverifiedVolumeRays": 0,
+    "uncertainSourceObjectIds": [
+      "DOM_00001",
+      "DOM_00009",
+      "DOM_00010",
+      "DOM_00011",
+      "DOM_00012",
+      "DOM_00013",
+      "DOM_00014",
+      "DOM_00015",
+      "DOM_00016",
+      "DOM_00017",
+      "DOM_00018",
+      "DOM_00019",
+      "DOM_00020",
+      "DOM_00021",
+      "DOM_00022",
+      "DOM_00023",
+      "DOM_00024",
+      "DOM_00025",
+      "DOM_00026",
+      "DOM_00027",
+      "DOM_00028",
+      "DOM_00029",
+      "DOM_00030",
+      "DOM_00031",
+      "DOM_00032",
+      "DOM_00033",
+      "DOM_00034",
+      "DOM_00035",
+      "DOM_00133",
+      "DOM_00145",
+      "DOM_00153",
+      "DOM_00174",
+      "DOM_00182",
+      "DOM_00183",
+      "DOM_00192",
+      "DOM_00200",
+      "DOM_00201",
+      "DOM_00210",
+      "DOM_00218",
+      "DOM_00219",
+      "DOM_00224",
+      "DOM_00230",
+      "DOM_00231",
+      "DOM_00240",
+      "DOM_00248",
+      "DOM_00249",
+      "DOM_00256",
+      "DOM_00266",
+      "DOM_00272",
+      "DOM_00273",
+      "DOM_00282",
+      "DOM_00287",
+      "DOM_00292",
+      "DOM_00293",
+      "DOM_00302",
+      "DOM_00307",
+      "DOM_00312",
+      "DOM_00313",
+      "DOM_00322",
+      "DOM_00330",
+      "DOM_00331",
+      "DOM_00340",
+      "DOM_00348",
+      "DOM_00349",
+      "DOM_00372",
+      "DOM_00380",
+      "DOM_00381",
+      "DOM_00390",
+      "DOM_00398",
+      "DOM_00399",
+      "DOM_00408",
+      "DOM_00413",
+      "DOM_00418",
+      "DOM_00419",
+      "DOM_00526",
+      "DOM_00713",
+      "DOM_00798",
+      "DOM_00833",
+      "DOM_00834",
+      "DOM_00835",
+      "DOM_00836",
+      "DOM_00837",
+      "DOM_00887",
+      "DOM_01691",
+      "DOM_01725",
+      "DOM_01823",
+      "DOM_01824",
+      "DOM_01825",
+      "DOM_01826",
+      "DOM_01827",
+      "DOM_01828",
+      "DOM_01829",
+      "DOM_01830",
+      "DOM_01831",
+      "DOM_01832",
+      "DOM_01833",
+      "DOM_01834",
+      "DOM_01835",
+      "DOM_01836",
+      "DOM_01837",
+      "DOM_01838",
+      "DOM_01839",
+      "DOM_01840",
+      "DOM_01841",
+      "DOM_01842",
+      "DOM_01843",
+      "DOM_01844",
+      "DOM_01845",
+      "DOM_01846",
+      "DOM_01847",
+      "DOM_01848",
+      "DOM_01849",
+      "DOM_01850",
+      "DOM_01851",
+      "DOM_01852",
+      "DOM_01853",
+      "DOM_01854",
+      "DOM_01855",
+      "DOM_01856",
+      "DOM_01857",
+      "DOM_01858"
+    ],
+    "referenceAlgorithm": "float64 exact source OBJ triangle BVH; uncertain AABB exclusion before first hit"
+  },
+  "nativeHitDistanceToleranceCm": 0.05,
+  "cameraInvarianceDistanceToleranceCm": 0.02,
+  "minimumDistinctCameraDistanceCm": 100,
+  "productionLightingBound": false,
+  "sunVisibilityImplemented": false,
+  "limitations": [
+    "Finite 500m canonical source test only; no complete optical visibility claim.",
+    "Off-aperture roof positive controls do not imply an opaque shadow reaches the pool.",
+    "Landscape and nonopaque source material volumes excluded, not converted to solid optical geometry.",
+    "Native TLAS is per-view culled and can use Nanite fallback; opaque inline rays ignore leaf alpha and transmission.",
+    "Source first face is CPU evidence; native TLAS instance/primitive IDs are not canonical IDs."
+  ]
+}

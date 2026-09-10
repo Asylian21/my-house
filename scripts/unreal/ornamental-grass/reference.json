@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "authoredInputVersion": "authored-v1",
+  "reportSha256": "d71364646f81b9943b3186deb922a80e3fde4302887575a9637cd48b66339308",
+  "generatorSha256": "19ff48905a5282abe7d08a3561a7d698367a732d14071827d53ea0fd925deb46",
+  "transmissionScale": 0.35,
+  "transmissionMeaning": "Authored TwoSidedFoliage subsurface-colour multiplier, not measured optical transmission"
+}

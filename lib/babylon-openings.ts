@@ -3,7 +3,8 @@ import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
 import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder.pure";
-import type { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
+import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 
@@ -18,6 +19,7 @@ import {
 import type { LayerId, Point2Mm } from "./twin-site";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
 import type { WalkPassage } from "./twin-walk-assist";
+import { createFoldedCurtainGeometry } from "./twin-curtain-geometry";
 
 export type OpeningKind = "window" | "door" | "sliding" | "fixed";
 
@@ -757,20 +759,28 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
   if (spec.curtains !== false && spec.kind !== "door") {
     const curtainWidthMm = Math.max(150, Math.min(420, spec.widthMm * 0.18));
     for (let index = 0; index < 2; index += 1) {
-      solid(
-        context,
+      const heightMm = Math.max(200, spec.heightMm - 130);
+      const geometry = createFoldedCurtainGeometry(curtainWidthMm, heightMm);
+      const mesh = new Mesh(`${spec.name} · záclona ${index + 1}`, context.scene);
+      const vertices = new VertexData();
+      vertices.positions = geometry.positionsMm.map(value => value * MM_TO_M);
+      vertices.normals = geometry.normals;
+      vertices.uvs = geometry.uvs;
+      vertices.indices = geometry.indices;
+      vertices.applyToMesh(mesh);
+      const center = placedWorld(
         spec,
-        `${spec.name} · záclona ${index + 1}`,
-        {
-          alongMm: spec.centerMm + (index === 0 ? -1 : 1) * (spec.widthMm / 2 - curtainWidthMm / 2 - 55),
-          acrossMm: inward(spec.wallThicknessMm + 110 + (index % 2) * 18),
-        },
-        curtainWidthMm,
-        16,
-        Math.max(0.2, (spec.heightMm - 130) * MM_TO_M),
-        (spec.sillMm + 65) * MM_TO_M,
-        context.materials.curtain,
+        spec.centerMm + (index === 0 ? -1 : 1) * (spec.widthMm / 2 - curtainWidthMm / 2 - 55),
+        inward(spec.wallThicknessMm + 110 + (index % 2) * 18),
       );
+      mesh.position.set(center.x, (spec.sillMm + 65 + heightMm / 2) * MM_TO_M, center.z);
+      // Rotate, rather than reflect, to keep winding and normals intact on X walls.
+      if (spec.axis === "X") mesh.rotation.y = Math.PI / 2;
+      mesh.material = context.materials.curtain;
+      mesh.isPickable = false;
+      mesh.receiveShadows = true;
+      context.realisticOnly(mesh);
+      context.register(mesh, "building");
     }
   }
   return built;

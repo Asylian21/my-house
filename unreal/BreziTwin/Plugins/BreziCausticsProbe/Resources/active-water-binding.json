@@ -1,0 +1,426 @@
+{
+  "absorptionPerMetre": [
+    0.13,
+    0.045,
+    0.02
+  ],
+  "authoredWaves": [
+    {
+      "amplitudeMetres": 0.00036783869184896917,
+      "direction": [
+        0.9547607995027975,
+        0.297374874077786
+      ],
+      "phaseCycles": 0.8030508075688771,
+      "wavelengthMetres": 0.38613701371430004
+    },
+    {
+      "amplitudeMetres": 0.00031430516296357,
+      "direction": [
+        -0.9048847407593247,
+        0.4256566761380935
+      ],
+      "phaseCycles": 0.5351016151377543,
+      "wavelengthMetres": 0.32994043234464987
+    },
+    {
+      "amplitudeMetres": 0.0002764786837273154,
+      "direction": [
+        0.3797068926649919,
+        -0.9251068455387714
+      ],
+      "phaseCycles": 0.26715242270663175,
+      "wavelengthMetres": 0.2902322557572601
+    },
+    {
+      "amplitudeMetres": 0.0002362412646371277,
+      "direction": [
+        0.34491664987334575,
+        0.9386333174569012
+      ],
+      "phaseCycles": 0.999203230275509,
+      "wavelengthMetres": 0.247993205892883
+    },
+    {
+      "amplitudeMetres": 0.00020780973902270888,
+      "direction": [
+        -0.888368498960274,
+        -0.4591311469014812
+      ],
+      "phaseCycles": 0.7312540378443861,
+      "wavelengthMetres": 0.21814733964942384
+    },
+    {
+      "amplitudeMetres": 0.00017756607811058496,
+      "direction": [
+        0.9651939169235703,
+        -0.26153528009378807
+      ],
+      "phaseCycles": 0.4633048454132629,
+      "wavelengthMetres": 0.18639919252087117
+    },
+    {
+      "amplitudeMetres": 0.00015172393865587255,
+      "direction": [
+        -0.5350394123396292,
+        0.8448270990227907
+      ],
+      "phaseCycles": 0.19535565298214053,
+      "wavelengthMetres": 0.15927152276195344
+    },
+    {
+      "amplitudeMetres": 0.00013346403366069331,
+      "direction": [
+        -0.17615109451445862,
+        -0.9843631402594056
+      ],
+      "phaseCycles": 0.9274064605510173,
+      "wavelengthMetres": 0.1401032695526354
+    },
+    {
+      "amplitudeMetres": 0.00011404030021595225,
+      "direction": [
+        0.7948160822084165,
+        0.6068503896866704
+      ],
+      "phaseCycles": 0.659457268119894,
+      "wavelengthMetres": 0.11971329265859405
+    },
+    {
+      "amplitudeMetres": 0.00010031560346728655,
+      "direction": [
+        -0.9959941911187946,
+        0.08941795825010745
+      ],
+      "phaseCycles": 0.39150807568877166,
+      "wavelengthMetres": 0.10530585392498713
+    },
+    {
+      "amplitudeMetres": 8.571613806336648e-05,
+      "direction": [
+        0.6740141563471598,
+        -0.7387184287965385
+      ],
+      "phaseCycles": 0.1235588832576493,
+      "wavelengthMetres": 0.08998013072670655
+    },
+    {
+      "amplitudeMetres": 7.324141081296573e-05,
+      "direction": [
+        0.0020000665695739297,
+        0.9999979998648584
+      ],
+      "phaseCycles": 0.855609690826526,
+      "wavelengthMetres": 0.07688484185658427
+    }
+  ],
+  "coordinateSystem": "unreal-axes-centimetres-for-normal",
+  "diagnosticOnly": true,
+  "evidence": {
+    "gpuNormalArithmeticEquivalenceVerified": false,
+    "nativeExecutionPerformedByExporter": false,
+    "opticalCoefficientNativeValueReadback": false,
+    "opticalCoefficientsSourceAndImportVerified": true,
+    "productionTransportVerified": false,
+    "savedNormalGraphVerified": true
+  },
+  "fileHashes": {
+    "output/unreal/geometry/dom-mm.obj": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+    "output/unreal/geometry/scene.json": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+    "output/unreal/geometry/viewpoints.json": "31b9d86ad3851ff51dde6ff710357ad0f537d4bf953b43574d200c0833daf0f4",
+    "output/unreal/hidden-collision-source-proof.json": "42f04e9b8b7349934ad61d269dec078b1a0d6de0684759b1d96b926e92870fa8",
+    "output/unreal/import-report.json": "6859f492debbe62c4187bbf12f8594c62b43858914baed14ac12e430ee52b873",
+    "output/unreal/water-wave-study/saved-water-readback-12.json": "a8be8f0902d82c8a857083272b9d9f21d2c547a1a53f85aaa9658491891d02b5",
+    "scripts/unreal/optics.py": "a0556f658fda7eb89cb306d966f41fe9c35b85262c69b3e07fda376fb20d0d59",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00133.uasset": "aab5f671871beafa5ce9c185387b73070314d115a1e2f0160643467e93bcd4da",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00145.uasset": "76e70e18a374fe003687bd2250ccc87ea3659c13a968098049095613ba733aaa",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00153.uasset": "7bd975b9a7044d968e664324881e8d30c3c1ceced904852ae3d139affed43ff1",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00174.uasset": "8de68e983ad8c5887f820f1e3aa496f353af686b72ac0ef623395113cab7fe2e",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00192.uasset": "236d82e2f887ce74f30576039b59882e682154fc1b7eee3b34ca0d6c09917fc6",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00210.uasset": "6aa03c711d7173e40bcd0924c0c65d311428d40b5744fcc91ee784849cc6636d",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00224.uasset": "f02c751ad5dce66c461d0b5e411274dfde187002a6c8ad270919e3ea9764fa77",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00240.uasset": "997fb23554ff789568f98a1606b309c50ea1ca8fb536015de9c1c208dc4171f8",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00256.uasset": "fd58a3152b2a783e893561ab42f3ea0446fc2864142c40840d80692ea1cd222e",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00266.uasset": "6339198db5ed77f5bb41b9922b386a747d2304a744bd630841f251e60d89b9b9",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00282.uasset": "7f0581c2efca940b8a2c2c5768c699eb8346b31519f1770787b155566e4df0cd",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00287.uasset": "922b55f20b454029c6028d1fce01ee66f44a805940753354eebfc0c33278fccf",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00302.uasset": "29b4bcbbd42e1199d4bd7bdfab784b69af9e4a7356dd8ba36cce6e62901837e2",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00307.uasset": "3a69c4960ae3d659a235820ed9070364e0efdcc3379ad88c0be0c648270941e7",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00322.uasset": "6289c2663fc6d8d958e4198ed760bbddafce6af1dcf66e55271cddd894a4c822",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00340.uasset": "84a8ae4241e36d3756ea27f1056fa4ea28a4165c703ef0bb337e97ac6f2d5ae9",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00372.uasset": "b7da0a808f0f791ea273013455447c0465e023a44253db8674f5674f735233b3",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00390.uasset": "57ff06dd6b2b5a56d3cf16a4fc5a9c0c3e032c306b72459cd2a91f3cc3185821",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00408.uasset": "3b93d4053fe525658e65a1b7808e5edd5d9a6d5226c5592680430e9b725ea9f8",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00413.uasset": "48d694844f55d6a874a8059c9771bac98492f6ba1436ba8ef3190d222f1c159d",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00526.uasset": "ac4b51089111c98ebff66ea5b7cb78a1bcd3dc79556a6c64a2ae7c9f7af2dcde",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_00798.uasset": "f5e489226135104485cbf8cf29c9e9d8da1df56b01776b54c1878a5b4bf9b085",
+    "unreal/BreziTwin/Content/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_01725.uasset": "ea021e470721be49870c48dc9fec147774a8881786a500ad9504550bf4a0872b",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/MI_MAT_0015_real_glass.uasset": "57c11799325f170cff9e43b81e94abb812e5c53ef9c553f24a25f70261b922e6",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/MI_MAT_0036_real_interior_fireplace_glass.uasset": "a8b2e3921e2b16202d703a31512c54330b9e9a72480a1d6bc9b94f09a52ab8b7",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/MI_MAT_0056_real_bathroom_shower_glass.uasset": "17fdc8d844aa71abd1133d313a645f1c64e70783c990aaf0d68b5d1d51756659",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/MI_MAT_0101_real_pool_water.uasset": "ff0c64bd739ee151c1b083580c8dcbdfa9d7974287b1658cd6dbe1d24d848349",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/M_ArchitecturalGlass.uasset": "4b263d734079b439a4535cc7d4587f6b922ede6a05222644908f6ed9b3db0e8e",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/M_PoolWater.uasset": "b9d77656cf5f25cd18170d8008710260c854e7d9ccfea9fa334ed35abfc834bf",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/M_StoveGlass.uasset": "19e0f8112608ca01f8b7655371ae1baa5ccddf339f1b45f4bbec5ecd6afe9db3",
+    "unreal/BreziTwin/Content/Brezi/OpticsGenerated/M_ThinGlass.uasset": "9edd09fa7b82815e3bc1d0d5045a8e1073c2096907ea47198a115133c0553a5a",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Resources/receiver-contract.json": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Resources/receiver-identity-policy.json": "eebb440994ea88ed58a358e3412b5c72cf4ea72fffb701186ac904dbed17bd43",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Resources/receiver-identity-test-fixture.json": "d01b0c6201b03597e9b5c144a50451ea13346c443d7d06789e2a9b54f725bc89",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Resources/source-binding.json": "43b78fa787ebd3858ba5dc80058783628e163ce65465292e1d48cbc6947a7e79",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Source/BreziCausticsProbe/Private/BreziCausticsContract.h": "cae680c5b23161309077df4bfd863d81361fcae68b50ef1fb0717c5605d3ab4d",
+    "unreal/BreziTwin/Plugins/BreziCausticsProbe/Tools/water_binding.py": "80b51c05c64ff2b117227bf373a1b239377416ab2e45a5d48f39411d2f26615f"
+  },
+  "iorAirToWater": 1.333,
+  "limitations": [
+    "Saved float32 graph constants are exact; GPU arithmetic/compiler equivalence is not yet measured.",
+    "Optical coefficients are pinned source/import values, not a new native coefficient getter proof.",
+    "Fixed canonical plane with shading normals; no displaced free surface.",
+    "Receiver source geometry proof does not certify live native primitive/material/visibility state."
+  ],
+  "material": {
+    "asset": "/Game/Brezi/OpticsGenerated/M_PoolWater.M_PoolWater",
+    "path": "unreal/BreziTwin/Content/Brezi/OpticsGenerated/M_PoolWater.uasset",
+    "projectRelativePath": "Content/Brezi/OpticsGenerated/M_PoolWater.uasset",
+    "sha1": "4c92d95d6378fbdd6bfaef7625ecd7f18d82863f",
+    "sha256": "b9d77656cf5f25cd18170d8008710260c854e7d9ccfea9fa334ed35abfc834bf"
+  },
+  "normalFormula": "normalize(sum(slopeVector*cos(2*pi*((dot(worldCm,positionCyclesPerCm)+gameTime*timeCyclesPerSecond)+phaseCycles)))+float3(0,0,1))",
+  "provenance": {
+    "exporter": {
+      "path": "unreal/BreziTwin/Plugins/BreziCausticsProbe/Tools/water_binding.py",
+      "sha256": "80b51c05c64ff2b117227bf373a1b239377416ab2e45a5d48f39411d2f26615f"
+    },
+    "importReport": {
+      "path": "output/unreal/import-report.json",
+      "sha256": "6859f492debbe62c4187bbf12f8594c62b43858914baed14ac12e430ee52b873"
+    },
+    "receiverGeometry": {
+      "allOrderedOBJTrianglesEqual": true,
+      "allRetainedRecordsEqual": true,
+      "bvhNodeCount": 359,
+      "currentSceneObjectCount": 1895,
+      "nativeWorldVerified": false,
+      "receiverObjectCount": 45,
+      "receiverTriangleCount": 1076
+    },
+    "savedReadback": {
+      "path": "output/unreal/water-wave-study/saved-water-readback-12.json",
+      "sha256": "a8be8f0902d82c8a857083272b9d9f21d2c547a1a53f85aaa9658491891d02b5"
+    }
+  },
+  "receiverContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "savedNormalRows": [
+    {
+      "cosinePeriod": 1.0,
+      "index": 0,
+      "phaseCycles": 0.8030508160591125,
+      "positionCyclesPerCm": [
+        0.024725958704948425,
+        0.007701278664171696,
+        0.0
+      ],
+      "slopeVector": [
+        -0.005714660510420799,
+        -0.001779918442480266,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.0108230113983154
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 1,
+      "phaseCycles": 0.535101592540741,
+      "positionCyclesPerCm": [
+        -0.027425700798630714,
+        0.01290101557970047,
+        0.0
+      ],
+      "slopeVector": [
+        0.005416130181401968,
+        -0.0025477411691099405,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.1753382682800293
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 2,
+      "phaseCycles": 0.26715242862701416,
+      "positionCyclesPerCm": [
+        0.013082863762974739,
+        -0.03187470883131027,
+        0.0
+      ],
+      "slopeVector": [
+        -0.0022727116011083126,
+        0.005537168588489294,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.3193790912628174
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 3,
+      "phaseCycles": 0.9992032051086426,
+      "positionCyclesPerCm": [
+        0.013908310793340206,
+        0.03784915432333946,
+        0.0
+      ],
+      "slopeVector": [
+        -0.0020644767209887505,
+        -0.005618130322545767,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.509138822555542
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 4,
+      "phaseCycles": 0.7312540411949158,
+      "positionCyclesPerCm": [
+        -0.040723323822021484,
+        -0.02104683592915535,
+        0.0
+      ],
+      "slopeVector": [
+        0.005317273549735546,
+        0.002748100319877267,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.6752822399139404
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 5,
+      "phaseCycles": 0.4633048474788666,
+      "positionCyclesPerCm": [
+        0.05178101360797882,
+        -0.014030923135578632,
+        0.0
+      ],
+      "slopeVector": [
+        -0.005777107086032629,
+        0.001565402839332819,
+        0.0
+      ],
+      "timeCyclesPerSecond": -2.894160032272339
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 6,
+      "phaseCycles": 0.19535565376281738,
+      "positionCyclesPerCm": [
+        -0.03359290957450867,
+        0.053043197840452194,
+        0.0
+      ],
+      "slopeVector": [
+        0.003202444640919566,
+        -0.00505665922537446,
+        0.0
+      ],
+      "timeCyclesPerSecond": -3.1309454441070557
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 7,
+      "phaseCycles": 0.9274064898490906,
+      "positionCyclesPerCm": [
+        -0.012572946958243847,
+        -0.07025982439517975,
+        0.0
+      ],
+      "slopeVector": [
+        0.0010543412063270807,
+        0.005891843233257532,
+        0.0
+      ],
+      "timeCyclesPerSecond": -3.3382620811462402
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 8,
+      "phaseCycles": 0.659457266330719,
+      "positionCyclesPerCm": [
+        0.06639330089092255,
+        0.05069198086857796,
+        0.0
+      ],
+      "slopeVector": [
+        -0.004757321439683437,
+        -0.0036322646774351597,
+        0.0
+      ],
+      "timeCyclesPerSecond": -3.6113815307617188
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 9,
+      "phaseCycles": 0.3915080726146698,
+      "positionCyclesPerCm": [
+        -0.09458108246326447,
+        0.00849126186221838,
+        0.0
+      ],
+      "slopeVector": [
+        0.0059614600613713264,
+        -0.0005352055304683745,
+        0.0
+      ],
+      "timeCyclesPerSecond": -3.850510597229004
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 10,
+      "phaseCycles": 0.1235588863492012,
+      "positionCyclesPerCm": [
+        0.07490699738264084,
+        -0.08209794759750366,
+        0.0
+      ],
+      "slopeVector": [
+        -0.004034269135445356,
+        0.0044215526431798935,
+        0.0
+      ],
+      "timeCyclesPerSecond": -4.165539741516113
+    },
+    {
+      "cosinePeriod": 1.0,
+      "index": 11,
+      "phaseCycles": 0.8556097149848938,
+      "positionCyclesPerCm": [
+        0.0002601379528641701,
+        0.13006438314914703,
+        0.0
+      ],
+      "slopeVector": [
+        -1.1971272215305362e-05,
+        -0.005985424853861332,
+        0.0
+      ],
+      "timeCyclesPerSecond": -4.50634241104126
+    }
+  ],
+  "scatteringPerMetre": [
+    0.002,
+    0.004,
+    0.006
+  ],
+  "schemaVersion": 1,
+  "sourceGeometrySha256": {
+    "output/unreal/geometry/dom-mm.obj": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+    "output/unreal/geometry/scene.json": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+    "output/unreal/geometry/viewpoints.json": "31b9d86ad3851ff51dde6ff710357ad0f537d4bf953b43574d200c0833daf0f4"
+  },
+  "sourceWriter": {
+    "path": "scripts/unreal/optics.py",
+    "sha256": "a0556f658fda7eb89cb306d966f41fe9c35b85262c69b3e07fda376fb20d0d59"
+  },
+  "status": "active-water-binding-source-and-saved-graph-validated",
+  "timePolicy": "View.GameTime; paused material Time; no period override",
+  "waterMeanPlaneMetres": -0.012000000104308128,
+  "waterObjectId": "DOM_01725",
+  "waveCount": 12
+}

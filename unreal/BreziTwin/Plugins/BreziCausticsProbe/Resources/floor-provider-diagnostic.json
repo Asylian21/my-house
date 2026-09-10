@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "scope": "synthetic-inactive-zero-or-constant-normalized-RGB; diagnostic-not-physical-transport",
+  "receiverContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "sourceObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "floorObjectId": "DOM_01720",
+  "floorAsset": "/Game/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_01720.DOM_01720",
+  "sourceBoundsCm": {
+    "min": [
+      -346.000000834465,
+      -530.0000047683716,
+      -153.2000002861023
+    ],
+    "max": [
+      253.99999916553497,
+      -260.0000047683716,
+      -141.2000002861023
+    ]
+  },
+  "waterSurfaceZCm": -1.2000000104308128,
+  "constantNormalizedRGB": [
+    0.125,
+    0.25,
+    0.5
+  ],
+  "atlasPixels": [
+    2,
+    2
+  ],
+  "observationStages": [
+    "AfterRenderLights",
+    "BeforeComposite",
+    "AfterComposite",
+    "AfterSingleLayerWater"
+  ],
+  "sceneColorReadback": "PF_FloatRGBA native pre-exposed RGBA16F",
+  "sceneDepthReadback": "device Z copied with Texture2D.Load to PF_R32_FLOAT; not linear distance",
+  "downstreamFramePolicy": "one common eligible frame; four completed stages required; active frame equals Prepare readback frame"
+}

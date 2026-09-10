@@ -1,0 +1,41 @@
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/RayTracing/RayTracingCommon.ush"
+#include "/Engine/Private/RayTracing/TraceRayInline.ush"
+
+// Geometry-only opaque shadow rays. The Engine helper forces opaque treatment
+// and skips procedural geometry. Alpha/transmission are deliberately NOT solved.
+struct SolarRay { float4 OriginAndMinCm; float4 DirectionAndMaxCm; };
+struct SolarResult { float4 HitPositionAndDistanceCm; uint4 NativeIdentity; uint4 State; };
+RaytracingAccelerationStructure SolarTLAS;
+StructuredBuffer<SolarRay> SolarRays;
+RWStructuredBuffer<SolarResult> SolarResults;
+float3 SolarPreViewTranslationCm;
+uint SolarRayCount;
+
+[numthreads(32,1,1)]
+void SolarVisibilityCS(uint3 dispatch : SV_DispatchThreadID)
+{
+    if (dispatch.x >= SolarRayCount) return;
+    SolarRay source = SolarRays[dispatch.x];
+    FRayDesc ray;
+    ray.Origin = source.OriginAndMinCm.xyz + SolarPreViewTranslationCm;
+    ray.Direction = source.DirectionAndMaxCm.xyz;
+    ray.TMin = source.OriginAndMinCm.w;
+    ray.TMax = source.DirectionAndMaxCm.w;
+    FTraceRayInlineContext context = CreateTraceRayInlineContext();
+    context.MaxIterations = 128;
+    FTraceRayInlineResult hit = TraceRayInline(SolarTLAS, RAY_FLAG_NONE,
+        RAY_TRACING_MASK_OPAQUE_SHADOW, ray.GetNativeDesc(), context);
+    SolarResult result = (SolarResult)0;
+    result.NativeIdentity = uint4(0xffffffff,0xffffffff,0xffffffff,0xffffffff);
+    result.HitPositionAndDistanceCm = float4(source.OriginAndMinCm.xyz,-1);
+    result.State = uint4(0,dispatch.x,RAY_TRACING_MASK_OPAQUE_SHADOW,hit.bIsCompleted ? 1 : 0);
+    if (!hit.bIsCompleted) result.State.x = 2;
+    else if (hit.IsHit())
+    {
+        result.State.x = 1;
+        result.HitPositionAndDistanceCm = float4(source.OriginAndMinCm.xyz + ray.Direction*hit.HitT,hit.HitT);
+        result.NativeIdentity = uint4(hit.InstanceID,hit.InstanceIndex,hit.PrimitiveIndex,hit.GeometryIndex);
+    }
+    SolarResults[dispatch.x] = result;
+}

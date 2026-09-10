@@ -1,0 +1,35 @@
+{
+  "status": "candidate-material-study-only",
+  "sourceLinearMean": [
+    0.5160589851937696,
+    0.30194568744301303,
+    0.13243419959108355
+  ],
+  "scanLinearMean": [
+    0.3613597193448993,
+    0.21257769420432443,
+    0.09951454248737411
+  ],
+  "proposedPaletteMultiplier": [
+    1.4281032377635254,
+    1.4204015551734712,
+    1.3308024765112707
+  ],
+  "scanRoughnessMeanLinear": 0.5304041633418962,
+  "scanRoughnessExtremaLinear": [
+    0.0,
+    1.0
+  ],
+  "proposedScope": [
+    "DOM_01293",
+    "DOM_01296",
+    "DOM_01300"
+  ],
+  "proposedPhysicalProjection": "Use source-derived face axes/actual world lengths at 1830.000043 mm scan period. Per-face source UV scale varies, so copying UV0 with one multiplier is unsuitable. No geometry or source texture changes.",
+  "notYetImplemented": [
+    "physical world projection and orientation",
+    "palette/roughness centering graphs",
+    "native material import and map reload",
+    "day/night 4K visual comparison"
+  ]
+}

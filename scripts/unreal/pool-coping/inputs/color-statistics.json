@@ -1,0 +1,22 @@
+{
+  "method": "Read-only full-resolution RGB channel histograms, sRGB decoding and arithmetic means; no images modified.",
+  "pixels": 16777216,
+  "mapMeanLinear": [
+    0.4931575667832092,
+    0.47182104785022105,
+    0.44634486992533534
+  ],
+  "sourceSrgbHex": "#d6d2c6",
+  "baseColorLinear": [
+    0.6724431569576875,
+    0.6444796819705821,
+    0.5647115057049292
+  ],
+  "tintLinear": [
+    1.363546262392222,
+    1.365940932281536,
+    1.2651909851666814
+  ],
+  "albedoMix": 0.35,
+  "colorCalibrated": false
+}

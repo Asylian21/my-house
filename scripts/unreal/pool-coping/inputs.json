@@ -1,0 +1,1004 @@
+{
+  "schemaVersion": 1,
+  "revision": "POOL-COPING-PBR-1",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "objSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "sourceRecords": {
+    "DOM_01726": {
+      "id": "DOM_01726",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 1",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 1",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3760.000082439846,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          -3033.7778602176245,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01727": {
+      "id": "DOM_01727",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 2",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 2",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3025.777670330471,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          -2299.5554481082495,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01728": {
+      "id": "DOM_01728",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 3",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 3",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -2291.5554966396753,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          -1565.3332744174534,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01729": {
+      "id": "DOM_01729",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 4",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 4",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -1557.3333229488796,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          -831.1111007266574,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01730": {
+      "id": "DOM_01730",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 5",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 5",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -823.1111194557615,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          -96.88889723353917,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01731": {
+      "id": "DOM_01731",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 6",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 6",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -88.8888861603207,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          637.3333360619016,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01732": {
+      "id": "DOM_01732",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 7",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 7",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          645.3333173327975,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          1371.5555395550198,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01733": {
+      "id": "DOM_01733",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 8",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 8",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          1379.555610232883,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          2105.777832455105,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01734": {
+      "id": "DOM_01734",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 9",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 9",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2113.777783923679,
+          2326.0000591278076,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000006145901,
+          2600.0000591278076,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01735": {
+      "id": "DOM_01735",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 10",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 10",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3760.000082439846,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          -3033.7778602176245,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01736": {
+      "id": "DOM_01736",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 11",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 11",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3025.777670330471,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          -2299.5554481082495,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01737": {
+      "id": "DOM_01737",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 12",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 12",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -2291.5554966396753,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          -1565.3332744174534,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01738": {
+      "id": "DOM_01738",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 13",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 13",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -1557.3333229488796,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          -831.1111007266574,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01739": {
+      "id": "DOM_01739",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 14",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 14",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -823.1111194557615,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          -96.88889723353917,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01740": {
+      "id": "DOM_01740",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 15",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 15",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -88.8888861603207,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          637.3333360619016,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01741": {
+      "id": "DOM_01741",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 16",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 16",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          645.3333173327975,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          1371.5555395550198,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01742": {
+      "id": "DOM_01742",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 17",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 17",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          1379.555610232883,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          2105.777832455105,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01743": {
+      "id": "DOM_01743",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 18",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 18",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2113.777783923679,
+          5299.999809265137,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000006145901,
+          5599.999809265137,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01744": {
+      "id": "DOM_01744",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 19",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 19",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3759.999895095825,
+          2600.0000698089602,
+          -34.99999983236194
+        ],
+        "max": [
+          -3459.999895095825,
+          3133.6000698089597,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01745": {
+      "id": "DOM_01745",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 20",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 20",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3759.999895095825,
+          3141.600058746338,
+          -34.99999983236194
+        ],
+        "max": [
+          -3459.999895095825,
+          3675.2000587463376,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01746": {
+      "id": "DOM_01746",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 21",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 21",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3759.999895095825,
+          3683.200047683716,
+          -34.99999983236194
+        ],
+        "max": [
+          -3459.999895095825,
+          4216.800047683716,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01747": {
+      "id": "DOM_01747",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 22",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 22",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3759.999895095825,
+          4224.800036621094,
+          -34.99999983236194
+        ],
+        "max": [
+          -3459.999895095825,
+          4758.400036621094,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01748": {
+      "id": "DOM_01748",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 23",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 23",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -3759.999895095825,
+          4766.399787139892,
+          -34.99999983236194
+        ],
+        "max": [
+          -3459.999895095825,
+          5299.999787139893,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01749": {
+      "id": "DOM_01749",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 24",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 24",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2540.000057220459,
+          2600.0000698089602,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000057220459,
+          3133.6000698089597,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01750": {
+      "id": "DOM_01750",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 25",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 25",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2540.000057220459,
+          3141.600058746338,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000057220459,
+          3675.2000587463376,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01751": {
+      "id": "DOM_01751",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 26",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 26",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2540.000057220459,
+          3683.200047683716,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000057220459,
+          4216.800047683716,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01752": {
+      "id": "DOM_01752",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 27",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 27",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2540.000057220459,
+          4224.800036621094,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000057220459,
+          4758.400036621094,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    },
+    "DOM_01753": {
+      "id": "DOM_01753",
+      "name": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 28",
+      "sourceId": "Bazén 6,0 × 2,7 m · porcelánová platňa lemu 28",
+      "group": "Pool",
+      "enabled": true,
+      "metadata": {
+        "entityId": "POOL-COURTYARD-6X27",
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          2540.000057220459,
+          4766.399787139892,
+          -34.99999983236194
+        ],
+        "max": [
+          2840.000057220459,
+          5299.999787139893,
+          20.000000167638063
+        ]
+      },
+      "materialNames": [
+        "real-stone"
+      ],
+      "materialSlots": [
+        "MAT_0102"
+      ],
+      "instances": 1,
+      "triangles": 12
+    }
+  },
+  "sourceMaterial": {
+    "name": "real-stone",
+    "color": [
+      0.8392156862745098,
+      0.8235294117647058,
+      0.7764705882352941
+    ],
+    "roughness": 0.9,
+    "metallic": 0,
+    "alpha": 1,
+    "texture": null,
+    "emission": [
+      0,
+      0,
+      0
+    ]
+  },
+  "excludedSharedSlotIds": [
+    "DOM_01817",
+    "DOM_01818",
+    "DOM_01819",
+    "DOM_01820"
+  ],
+  "source": {
+    "provider": "ambientCG",
+    "asset": "Granite002A",
+    "page": "https://ambientcg.com/a/Granite002A",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://docs.ambientcg.com/license/",
+    "tileMm": 500,
+    "creationMethod": "PBRProcedural",
+    "providerDimensions": [
+      0,
+      0,
+      0
+    ],
+    "physicalScaleProvenance": "Authored 500 mm period for a fine stone-look porcelain concept; provider dimensions are unknown/zero. Not a measured scan or selected product.",
+    "measuredSiteMaterial": false,
+    "providerMetadataNote": "The legacy API enum says PBRProcedural but its display text says height-field photogrammetry. We make no scan claim and retain the raw response.",
+    "checksumProvenance": "SHA-256 and MD5 computed locally from original ZIP members; provider download size verified, provider checksum unavailable."
+  },
+  "maps": {
+    "Diffuse": {
+      "path": "public/assets/archviz/pool-coping/Granite002A/Granite002A_4K-JPG_Color.jpg",
+      "zipMember": "Granite002A_4K-JPG_Color.jpg",
+      "bytes": 17885966,
+      "sha256": "c9321fc150ba0206c73fb541c0ed9214af61c116cade5f37db932f8c139293c9",
+      "md5": "4639ca499c4fa185ae8f024f32ee32da",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "RGB"
+    },
+    "nor_gl": {
+      "path": "public/assets/archviz/pool-coping/Granite002A/Granite002A_4K-JPG_NormalGL.jpg",
+      "zipMember": "Granite002A_4K-JPG_NormalGL.jpg",
+      "bytes": 7163458,
+      "sha256": "0a1ea57a5414f4e9e6e399d9fa45aec36ca0d8480a450649ca80dfd168b8600d",
+      "md5": "ca6811565216b5ca07ef2625ea03f8ff",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "RGB"
+    },
+    "Rough": {
+      "path": "public/assets/archviz/pool-coping/Granite002A/Granite002A_4K-JPG_Roughness.jpg",
+      "zipMember": "Granite002A_4K-JPG_Roughness.jpg",
+      "bytes": 5820735,
+      "sha256": "00de36a32c20606fd2bc3982ed80a9574ad9b174bcfe3b19cde985fd94d25b64",
+      "md5": "0a7b3f41d815f4b0c6227915f6d17511",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "L",
+      "rawLinearRoughnessMean": 0.022735210259755452,
+      "rawLinearRoughnessBounds": [
+        0,
+        0.3137254901960784
+      ]
+    }
+  },
+  "sourceIntentFiles": {
+    "lib/babylon-scene.ts": "39b12a2396c5eef49db12af59dffdb365c25d629cd566b5f905de3d8328df678",
+    "lib/twin-site.ts": "5a58f7b18d5749e01b700bdaf03a892cc3bd82040a9a7d4a0b059e33854f95c3",
+    "lib/twin-domain.ts": "5afe508640f72aa956b6653093d719720568d10e383e86c9e8b9b43b85d64a84"
+  },
+  "evidence": {
+    "scripts/unreal/pool-coping/inputs/provider-query.json": "4dd42ed8f62228750ab21c9b8933361765bf87cf22b3edde6fe4d733e77aee51",
+    "scripts/unreal/pool-coping/inputs/download.json": "f23f595729e1e7133a9a47afa8434e4c7b869ffbb1b0925bd1ce6a3d5e0d2980",
+    "scripts/unreal/pool-coping/inputs/color-statistics.json": "edf49fc3c0cef0aa43369ba487212f664944ce893d2e7a4c96f7eeda6a4078a8"
+  },
+  "material": {
+    "tileMm": 500,
+    "normalStrength": 0.25,
+    "tintLinear": [
+      1.363546262392222,
+      1.365940932281536,
+      1.2651909851666814
+    ],
+    "baseColorLinear": [
+      0.6724431569576875,
+      0.6444796819705821,
+      0.5647115057049292
+    ],
+    "albedoMix": 0.35,
+    "sourceSrgbHex": "#d6d2c6",
+    "roughness": {
+      "base": 0.9,
+      "amplitude": 0.1,
+      "mapMean": 0.022735210259755452,
+      "min": 0.82,
+      "max": 0.96
+    },
+    "metallic": 0,
+    "specular": 0.5,
+    "geometryDisplacement": false,
+    "sourceUvChanged": false,
+    "additionalGrout": false,
+    "measuredBrdf": false,
+    "colorProvenance": "Authored visualization: decode the source-intended #d6d2c6 from sRGB to linear, normalize original map mean to that target, blend35percent grain. Not a calibrated porcelain albedo or a claim that source color was a defect.",
+    "roughnessProvenance": "Authored matte porcelain finish about source roughness .9; raw procedural polished-granite roughness is only low-amplitude variation."
+  }
+}

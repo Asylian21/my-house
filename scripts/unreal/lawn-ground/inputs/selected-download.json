@@ -1,0 +1,161 @@
+{
+  "status": "downloaded-unmodified-selected-members",
+  "originalUrl": "https://ambientcg.com/get?file=Grass004_4K-JPG.zip",
+  "resolvedUrl": "https://acg-download.struffelproductions.com/file/ambientCG-Web/download/Grass004_8f7ZrdgN/Grass004_4K-JPG.zip",
+  "remoteArchiveSize": 151897993,
+  "remoteArchiveFileId": "4_z753f349018de0fd087a8061b_f1145a09d5a6df2fd_d20251106_m090715_c003_v0312032_t0052_u01762420035940",
+  "remoteArchiveReportedSha1": "d9fbe654ce841ae9186acbf7e7a865580121f414",
+  "wholeArchiveSha1Verified": false,
+  "bytesTransferred": 81974101,
+  "rangeRequests": [
+    {
+      "range": [
+        151897971,
+        151897992
+      ],
+      "bytes": 22,
+      "sha256": "9dfd290cddab26216d23084646558913ff2bbc879d5b59091255c71903986186"
+    },
+    {
+      "range": [
+        151897951,
+        151897970
+      ],
+      "bytes": 20,
+      "sha256": "de47c9b27eb8d300dbb5f2c353e632c393262cf06340c4fa7f1b40c4cbd36f90"
+    },
+    {
+      "range": [
+        151896749,
+        151897970
+      ],
+      "bytes": 1222,
+      "sha256": "1bf94b1168fd9f2a63d1a8065c7b182b402c25cd949e148d98400f052e4eae9b"
+    },
+    {
+      "range": [
+        14178088,
+        14178117
+      ],
+      "bytes": 30,
+      "sha256": "30f93c185fbb3d770d2e9fdf3b77ca67729e760b8c901646957d1e1c594ba552"
+    },
+    {
+      "range": [
+        14178118,
+        14178142
+      ],
+      "bytes": 25,
+      "sha256": "b7a0fff78fe0213c90a8a9f4c40db0a971b4cc3657e0e27d3d296a0fa65a6a06"
+    },
+    {
+      "range": [
+        14178143,
+        14178175
+      ],
+      "bytes": 33,
+      "sha256": "7e609e979d5cbc6bc95fd65abdf1e5560886055883974ec90af4f293f3cecc20"
+    },
+    {
+      "range": [
+        14178176,
+        42327258
+      ],
+      "bytes": 28149083,
+      "sha256": "2494e4ea560c093d07b45835c5f9fb36c53de9ac8aff7bfc763da79702ff19fc"
+    },
+    {
+      "range": [
+        96413422,
+        96413451
+      ],
+      "bytes": 30,
+      "sha256": "a795b039d898cd3845a00740ca8ebd89b7641cfd0407ccb93b27a9f0f2d05d8f"
+    },
+    {
+      "range": [
+        96413452,
+        96413479
+      ],
+      "bytes": 28,
+      "sha256": "7b82f7cb8c49e5ba486e267733783cd56f09a11e525e8418b2889fdd87b71f84"
+    },
+    {
+      "range": [
+        96413480,
+        96413503
+      ],
+      "bytes": 24,
+      "sha256": "236dea7754b55df408182ca2627c638654998fa34bac986326d5a013c19c7873"
+    },
+    {
+      "range": [
+        96413504,
+        137921752
+      ],
+      "bytes": 41508249,
+      "sha256": "55e0aa5a47b21d438e3e13e4a65ff40afa37607b29da9866a4eb6bf61075c51c"
+    },
+    {
+      "range": [
+        137921753,
+        137921782
+      ],
+      "bytes": 30,
+      "sha256": "f6c1f9e1be1c10ebbb41e90ab7dbbf00405bc96363703209bc15b86d790e55f5"
+    },
+    {
+      "range": [
+        137921783,
+        137921811
+      ],
+      "bytes": 29,
+      "sha256": "0b03b32f5a52fa7f8f7a0e94126c0a2e498db4e83a02bd0c9a8069c898cafbb0"
+    },
+    {
+      "range": [
+        137921812,
+        137921855
+      ],
+      "bytes": 44,
+      "sha256": "45926bcf5d1f9cd8525e286ac249a9967dad1b5b95754c4c7ede8cafa935b6f7"
+    },
+    {
+      "range": [
+        137921856,
+        150237087
+      ],
+      "bytes": 12315232,
+      "sha256": "9a06ae858f3a710b4df866415bd3e34bff3d5122f3f2a65b23e087bbde9c9332"
+    }
+  ],
+  "files": [
+    {
+      "path": "Grass004-4K/Grass004_4K-JPG_Color.jpg",
+      "zipMember": "Grass004_4K-JPG_Color.jpg",
+      "size": 28149083,
+      "compressedSize": 28149083,
+      "crc32": "e99d9812",
+      "sha256": "2494e4ea560c093d07b45835c5f9fb36c53de9ac8aff7bfc763da79702ff19fc",
+      "zipMemberCrcVerified": true
+    },
+    {
+      "path": "Grass004-4K/Grass004_4K-JPG_NormalGL.jpg",
+      "zipMember": "Grass004_4K-JPG_NormalGL.jpg",
+      "size": 41508249,
+      "compressedSize": 41508249,
+      "crc32": "45acf776",
+      "sha256": "55e0aa5a47b21d438e3e13e4a65ff40afa37607b29da9866a4eb6bf61075c51c",
+      "zipMemberCrcVerified": true
+    },
+    {
+      "path": "Grass004-4K/Grass004_4K-JPG_Roughness.jpg",
+      "zipMember": "Grass004_4K-JPG_Roughness.jpg",
+      "size": 12315232,
+      "compressedSize": 12315232,
+      "crc32": "358ea152",
+      "sha256": "9a06ae858f3a710b4df866415bd3e34bff3d5122f3f2a65b23e087bbde9c9332",
+      "zipMemberCrcVerified": true
+    }
+  ]
+}

@@ -100,6 +100,15 @@ export function archvizMaterialForFaces(
   return clone;
 }
 
+/** Borrow the matched live PV material, including its procedural cell texture. */
+export function bindSourceSolarMaterial(mesh: AbstractMesh, sourceMaterial: Material | null) {
+  if (sourceMaterial?.name !== "real-solar") return false;
+  // The scene owns this material and its texture; keep them out of the imported
+  // container and face-material cache so releasing the presentation retains them.
+  mesh.material = sourceMaterial;
+  return true;
+}
+
 /** Blender stores Z-up bounds in millimetres; the running scene is Y-up, metres. */
 export function sourceBounds(extras: SourceExtras) {
   const raw = typeof extras.source_bounds_mm === "string"
@@ -332,7 +341,8 @@ export class ArchvizPresentation {
           continue;
         }
         if (provenance && source) nodeSources.set(provenance.node, source);
-        if (provenance && mesh.material instanceof PBRMaterial) {
+        const usesSourceSolar = source && bindSourceSolarMaterial(mesh, this.host.realisticMaterial(source.mesh));
+        if (!usesSourceSolar && provenance && mesh.material instanceof PBRMaterial) {
           mesh.material = archvizMaterialForFaces(mesh.material, source?.cullDuplicatedFaces ?? false, this.faceMaterials);
           mesh.material = warmLivingMaterial(this.host.scene, provenance.extras.source_name ?? "", mesh.material);
         }

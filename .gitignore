@@ -46,3 +46,15 @@ yarn-error.log*
 /.playwright-cli/
 *.tsbuildinfo
 /scripts/archviz/__pycache__/
+/scripts/unreal/__pycache__/
+/unreal/**/Binaries/
+/unreal/**/Intermediate/
+/unreal/**/Saved/
+/unreal/**/DerivedDataCache/
+/unreal/**/.vs/
+/unreal/**/*.xcworkspace/
+/unreal/**/*.xcodeproj/
+/unreal/**/Content/Brezi/
+/unreal/**/Content/Data/
+/unreal/**/Build/Mac/*.PackageVersionCounter
+/unreal/**/Build/Mac/FileOpenOrder/

@@ -1,0 +1,39 @@
+{
+  "asset": "hinoki_planks",
+  "page": "https://polyhaven.com/a/hinoki_planks",
+  "infoSha256": "9c1abe989ca04337b906520d02ac44c1235ce21d256cd6b761d37adb0a7fa61c",
+  "filesSha256": "47c4a726345fbf757b6a563f8985cd21edb313d9dc72c47521ac43e07663706b",
+  "dimensionsMm": [
+    1889.9999856948853,
+    1889.9999856948853
+  ],
+  "authors": {
+    "Charlotte Baglioni": "All"
+  },
+  "files": [
+    {
+      "role": "Diffuse",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Diffuse-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_diff_4k.jpg",
+      "bytes": 8284068,
+      "md5": "185a461f281e54ebbeaf95c6d17f9286",
+      "sha256": "5aa56a1aa470a99b8e9c100f5ec06a3e888089105fa230cdf871ba72fb1c0420"
+    },
+    {
+      "role": "nor_gl",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/nor_gl-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_nor_gl_4k.jpg",
+      "bytes": 10596354,
+      "md5": "1cf5cd943d1bdc3c35c8b405f196862f",
+      "sha256": "c51a062512a3f5ab73cdc7f1950d81d5ef9fddf3d42f613bccd92c31377d2293"
+    },
+    {
+      "role": "Rough",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Rough-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_rough_4k.jpg",
+      "bytes": 2802151,
+      "md5": "34c8d08d865bbc784a76eec14f212c82",
+      "sha256": "2c5a2cc300f09fcba04980090953b53203366d6f8d1a2b7e5bda759dfb77fea4"
+    }
+  ]
+}

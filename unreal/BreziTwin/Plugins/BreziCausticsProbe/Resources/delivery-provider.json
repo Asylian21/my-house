@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 4,
+  "scope": "project-configured-or-explicit-cli-continuous-12-wave-opaque-TLAS-normalized-floor-irradiance",
+  "receiverContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "sourceObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "floorObjectId": "DOM_01720",
+  "floorAsset": "/Game/Brezi/Geometry/brezi-twin/StaticMeshes/DOM_01720.DOM_01720",
+  "sourceBoundsCm": {
+    "min": [
+      -346.000000834465,
+      -530.0000047683716,
+      -153.2000002861023
+    ],
+    "max": [
+      253.99999916553497,
+      -260.0000047683716,
+      -141.2000002861023
+    ]
+  },
+  "waterSurfaceZCm": -1.2000000104308128,
+  "atlasPixels": [
+    512,
+    256
+  ],
+  "launchPixels": [
+    512,
+    230
+  ],
+  "originalSampleCount": 117760,
+  "visibilityRecords": 117766,
+  "visibilityStrideBytes": 48,
+  "photonStrideBytes": 48,
+  "incomingOriginOffsetCm": 0.2,
+  "incomingTMinCm": 0.01,
+  "incomingTMaxCm": 50000,
+  "incompleteGateBit": 1,
+  "sentinelMismatchGateBit": 2,
+  "waterBindingSha256": "05186c2144e8415f6f6d68043f50d996320130bc717b2ef1b7f0088987a7049d",
+  "solarCasesSha256": "8ac28c7cf18d0b24ea634798e5f82151fef2ac54eb4c8a5f3fab34265a3b2e59",
+  "sceneBindingSha256": "af9cc202a4fb4a204a47f915e457f249e4180e43b1fc55bf105c02ae1b743737",
+  "traceShaderSha256": "f10d9a8950fb750c2c7ae541194317e2f472769b431f09a1614efeb126333d2a",
+  "incomingShaderSha256": "9fbda687e1ebbfe8fba05e754f3f96a76aa0ab3da79c0567507f8eb9d25ded8a",
+  "timeSource": "same dispatch View.GameTime; same actual water-material View uniform; no offset",
+  "requiredTimeOverride": -1,
+  "supportedSun": "frozen canonical daylight direction within1e-5; min RGB illuminance1; other frames contribute nothing",
+  "heavyDiagnosticReadbacks": false,
+  "motionQA": {
+    "flag": "BreziCausticsMotionQA",
+    "requires": "BreziMotionQA",
+    "frames": 64,
+    "gpuEvidenceBytesPerFrame": 36,
+    "atlasFrames": [
+      52,
+      63
+    ],
+    "fourStageHDR": false,
+    "photonReadback": false
+  },
+  "fullPhysicalValidated": false,
+  "limitations": [
+    "Opaque shadow-mask4 current per-view TLAS only; forced-opaque triangle geometry and procedural geometry skipped.",
+    "No alpha/transmission, finite solar disk, general TLAS coverage or actual displaced water geometry proof.",
+    "Receiver first-hit uses frozen source BVH, verified against live Editor assets/poses; incoming uses native TLAS and can use Nanite fallback.",
+    "Irradiance is normalized to unit directional illumination; no producer lux, material albedo, pi, or exposure multiplication.",
+    "Incoming starts 0.2cm above mean plane; refraction and underwater path remain at exact mean plane.",
+    "Only canonical daytime sun direction; night and changing/unsupported sun safely skip the current contribution.",
+    "Cooked geometry/material identity requires the separately sealed cook/package join; runtime does not claim Editor source triangles were read from cooked assets.",
+    "Optional motion readbacks perturb timings and do not prove full alpha/glass transport."
+  ],
+  "pluginDefaultActive": false,
+  "candidateProjectDefaultActive": true,
+  "activation": {
+    "configFile": "DefaultGame.ini",
+    "section": "BreziFloorCaustics",
+    "key": "Mode",
+    "value": "transport-continuous",
+    "explicitCliModeOverridesConfig": true,
+    "commandletRuntimeActivation": false
+  }
+}

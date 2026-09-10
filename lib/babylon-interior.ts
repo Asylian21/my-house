@@ -3,6 +3,8 @@ import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Quaternion, Vector3, Vector4 } from "@babylonjs/core/Maths/math.vector";
 import { PointLight } from "@babylonjs/core/Lights/pointLight";
+import { KITCHEN_TASK_LIGHT } from "./twin-interior-lighting";
+import { createKitchenTaskLight } from "./babylon-interior-lighting";
 import type { AbstractMesh } from "@babylonjs/core/Meshes/abstractMesh";
 import { CreatePlane } from "@babylonjs/core/Meshes/Builders/planeBuilder.pure";
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder.pure";
@@ -1530,6 +1532,8 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     1,
   );
   finish(context, ledStrip, materials.ceiling);
+  ledStrip.metadata = { ...(ledStrip.metadata ?? {}), interiorLightId: KITCHEN_TASK_LIGHT.id };
+  createKitchenTaskLight(context.scene);
   // Dedicated 600 mm integrated fridge-freezer at the quiet west end. Its oak
   // fronts align with the kitchen, while the freezer split, recessed handle
   // and plinth vent make the appliance legible without a freestanding box.
@@ -4285,10 +4289,19 @@ function childBedding(context: InteriorBuildContext, name: string, rect: RectMm,
   finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
 }
 
-/** Rounded upholstery with true curved geometry, shared by the live view and GLB export. */
+/** Keep the existing interior registration and finish around the shared geometry. */
 function upholsteredBox(
   context: InteriorBuildContext, name: string, rect: RectMm,
   heightM: number, baseM: number, radiusM: number, material: PBRMaterial,
+) {
+  const mesh = createUpholsteredBox(context.scene, name, rect, heightM, baseM, radiusM);
+  finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
+}
+
+/** Rounded upholstery geometry; callers retain their own material and registration. */
+export function createUpholsteredBox(
+  scene: Scene, name: string, rect: RectMm,
+  heightM: number, baseM: number, radiusM: number,
 ) {
   const half = [(rect.x1-rect.x0)*MM_TO_M/2, heightM/2, (rect.y1-rect.y0)*MM_TO_M/2];
   const radius = Math.min(radiusM, ...half.map(value => value*.95));
@@ -4314,9 +4327,9 @@ function upholsteredBox(
     }
   }
   const data=new VertexData();data.positions=positions;data.normals=normals;data.uvs=uvs;data.indices=indices;
-  const mesh=new Mesh(name,context.scene);data.applyToMesh(mesh);
+  const mesh=new Mesh(name,scene);data.applyToMesh(mesh);
   const center=rectCenter(rect);mesh.position.set(xM(center.x),baseM+heightM/2,zM(center.y));
-  finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
+  return mesh;
 }
 
 function buildChildBed(
@@ -5475,7 +5488,8 @@ export function buildLivingDiningFitout(
     (tv.centerElevationMm - tv.heightMm / 2) * MM_TO_M,
     1,
   );
-  finish(context, tvScreen, materials.tvScreen, { pickable: true });
+  // An off TV uses the existing non-emissive black glazing; office screens stay unchanged.
+  finish(context, tvScreen, materials.blackGlass, { pickable: true });
   const soundbar = texturedBox(
     context.scene,
     "LIVING-103-TV-WALL · subtílny soundbar",

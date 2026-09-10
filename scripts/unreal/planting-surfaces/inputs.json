@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "revision": "MULCH-WOOD-CHIPS-PHYSICAL-1",
+  "source": {
+    "provider": "Poly Haven",
+    "asset": "wood_chips",
+    "page": "https://polyhaven.com/a/wood_chips",
+    "infoApi": "https://api.polyhaven.com/info/wood_chips",
+    "filesApi": "https://api.polyhaven.com/files/wood_chips",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://polyhaven.com/license",
+    "credit": "eye-candy.xyz / Poly Haven",
+    "tileMm": 2000,
+    "infoSha256": "7d2e10ae7ac154c0e5c2ef9d2b0adf9e2defb7bd770c05a01527b87fe26dcc07",
+    "filesSha256": "44dcc26e6ae2ed954fde5808ffbc3e6ef49df053aeb9edfca27e0e9dab057c8f",
+    "measuredSiteMaterial": false
+  },
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "objSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "sourceRecords": {
+    "DOM_01821": {
+      "id": "DOM_01821",
+      "name": "Mulčovaný trvalkový záhon 1 · ilustračný koncept",
+      "sourceId": "Mulčovaný trvalkový záhon 1 · ilustračný koncept",
+      "group": "Interior",
+      "enabled": true,
+      "metadata": {
+        "walkSurface": true,
+        "walkSurfaceKind": "terrain",
+        "walkSurfaceId": "mulch-bed-1",
+        "walkSurfaceElevationOffsetM": 0,
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          -11600,
+          3400,
+          -29.000000000000004
+        ],
+        "max": [
+          -6850.000000000001,
+          6100.000000000001,
+          -29.000000000000004
+        ]
+      },
+      "materialNames": [
+        "real-mulch"
+      ],
+      "materialSlots": [
+        "MAT_0091"
+      ],
+      "instances": 1,
+      "triangles": 5
+    },
+    "DOM_01822": {
+      "id": "DOM_01822",
+      "name": "Mulčovaný trvalkový záhon 2 · ilustračný koncept",
+      "sourceId": "Mulčovaný trvalkový záhon 2 · ilustračný koncept",
+      "group": "Interior",
+      "enabled": true,
+      "metadata": {
+        "walkSurface": true,
+        "walkSurfaceKind": "terrain",
+        "walkSurfaceId": "mulch-bed-2",
+        "walkSurfaceElevationOffsetM": 0,
+        "babylonCheckCollisions": false
+      },
+      "boundsMm": {
+        "min": [
+          13500,
+          4300,
+          -29.000000000000004
+        ],
+        "max": [
+          15400,
+          12100,
+          -29.000000000000004
+        ]
+      },
+      "materialNames": [
+        "real-mulch"
+      ],
+      "materialSlots": [
+        "MAT_0091"
+      ],
+      "instances": 1,
+      "triangles": 3
+    }
+  },
+  "sourceMaterial": {
+    "name": "real-mulch",
+    "color": [
+      0.1803921568627451,
+      0.13725490196078433,
+      0.09019607843137255
+    ],
+    "roughness": 1,
+    "metallic": 0,
+    "alpha": 1,
+    "texture": null,
+    "emission": [
+      0,
+      0,
+      0
+    ]
+  },
+  "excludedSharedSlotIds": [
+    "DOM_01692"
+  ],
+  "sourceIntentFiles": {
+    "lib/babylon-scene.ts": "39b12a2396c5eef49db12af59dffdb365c25d629cd566b5f905de3d8328df678"
+  },
+  "maps": {
+    "Diffuse": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_chips/wood_chips_diff_4k.jpg",
+      "bytes": 16125374,
+      "md5": "121e93a67dd699a5282108cf3c745e11",
+      "sha256": "6835128a639127995358ec63a7dd8f227e7980fa4ea0d832e7b30c5263df89bb",
+      "path": "public/assets/archviz/wood_chips/wood_chips_diff_4k.jpg"
+    },
+    "nor_gl": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_chips/wood_chips_nor_gl_4k.jpg",
+      "bytes": 19758949,
+      "md5": "207bb8816bbf3e56848440b61ab7ffda",
+      "sha256": "3e237d07662f0a7ae3a399b43bee2f709f27dd0a3100d60e00535907dab7c382",
+      "path": "public/assets/archviz/wood_chips/wood_chips_nor_gl_4k.jpg"
+    },
+    "Rough": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_chips/wood_chips_rough_4k.jpg",
+      "bytes": 5550567,
+      "md5": "d0883d01da9e224eeef46c5560490ef7",
+      "sha256": "beb944b8c49ad6c14dfd40e8554007abfb5ab0b79f7c9b7f263c6e5bcb43877c",
+      "path": "public/assets/archviz/wood_chips/wood_chips_rough_4k.jpg"
+    }
+  },
+  "material": {
+    "tileMm": 2000,
+    "tintLinear": [
+      1,
+      1,
+      1
+    ],
+    "metallic": 0,
+    "specular": 0.5,
+    "roughness": "raw-linear-map-no-remap",
+    "normalStrength": 1,
+    "worldUV": "UE_XY_cm / 200; equals source X,-Y mm / 2000",
+    "worldBasis": [
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ],
+    "normalConvention": "OpenGL input green inverted exactly once by native Texture2D import; decoded DX tangent components become +UE X,+UE Y,+UE Z world vector; no source UV0 tangent dependency",
+    "geometryDisplacement": false
+  },
+  "evidence": {
+    "inputs/wood-chips-info.json": "7d2e10ae7ac154c0e5c2ef9d2b0adf9e2defb7bd770c05a01527b87fe26dcc07",
+    "inputs/wood-chips-files.json": "44dcc26e6ae2ed954fde5808ffbc3e6ef49df053aeb9edfca27e0e9dab057c8f"
+  }
+}

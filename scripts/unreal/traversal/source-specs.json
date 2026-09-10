@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "status": "source-selections-not-native-test-evidence",
+  "cases": [
+    {
+      "id": "spine-wall-144mm",
+      "targetObjectId": "DOM_00486",
+      "targetSourceId": "Vnútorná stena IW-SPINE-EAST-2 · priečka 144 mm",
+      "movementAxis": "x",
+      "transverse": {
+        "type": "fixed",
+        "cm": 300
+      },
+      "supports": [
+        {
+          "objectId": "DOM_00438",
+          "sourceId": "1.02 Spoločná chodba · podlaha 2"
+        },
+        {
+          "objectId": "DOM_00456",
+          "sourceId": "1.05 Kúpeľňa a práčovňa · podlaha 1"
+        }
+      ]
+    },
+    {
+      "id": "entry-hall-closed-900mm",
+      "targetObjectId": "DOM_00545",
+      "targetSourceId": "Zádverie → centrálna chodba · posuvné 900 mm · animované krídlo",
+      "movementAxis": "y",
+      "transverse": {
+        "type": "target-midpoint"
+      },
+      "supports": [
+        {
+          "objectId": "DOM_00438",
+          "sourceId": "1.02 Spoločná chodba · podlaha 2"
+        },
+        {
+          "objectId": "DOM_00432",
+          "sourceId": "1.01 Zádverie, chodba, vstup · podlaha 1"
+        }
+      ]
+    },
+    {
+      "id": "study-closed-800mm",
+      "targetObjectId": "DOM_00553",
+      "targetSourceId": "Zádverie → pracovňa · 800 mm · animované krídlo",
+      "movementAxis": "x",
+      "transverse": {
+        "type": "target-midpoint"
+      },
+      "supports": [
+        {
+          "objectId": "DOM_00432",
+          "sourceId": "1.01 Zádverie, chodba, vstup · podlaha 1"
+        },
+        {
+          "objectId": "DOM_00454",
+          "sourceId": "1.04 Pracovňa · podlaha 2"
+        }
+      ]
+    }
+  ]
+}

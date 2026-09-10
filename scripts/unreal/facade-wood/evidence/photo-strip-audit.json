@@ -1,0 +1,353 @@
+{
+  "status": "cpu-original-hinoki-photo-strips-inspected",
+  "officialAsset": "https://polyhaven.com/a/hinoki_planks",
+  "license": "CC0; official asset page checked2026-09-08",
+  "author": "Charlotte Baglioni",
+  "downloadReceiptSha256": "c8fde2d7a32ec0e22410fd14ade324f3b2afa323a5b468cd7b63d9d2c939e12d",
+  "maps": [
+    {
+      "role": "Diffuse",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Diffuse-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_diff_4k.jpg",
+      "bytes": 8284068,
+      "md5": "185a461f281e54ebbeaf95c6d17f9286",
+      "sha256": "5aa56a1aa470a99b8e9c100f5ec06a3e888089105fa230cdf871ba72fb1c0420"
+    },
+    {
+      "role": "nor_gl",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/nor_gl-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_nor_gl_4k.jpg",
+      "bytes": 10596354,
+      "md5": "1cf5cd943d1bdc3c35c8b405f196862f",
+      "sha256": "c51a062512a3f5ab73cdc7f1950d81d5ef9fddf3d42f613bccd92c31377d2293"
+    },
+    {
+      "role": "Rough",
+      "path": "output/unreal/facade-wood-study/hinoki_planks/Rough-4k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_rough_4k.jpg",
+      "bytes": 2802151,
+      "md5": "34c8d08d865bbc784a76eec14f212c82",
+      "sha256": "2c5a2cc300f09fcba04980090953b53203366d6f8d1a2b7e5bda759dfb77fea4"
+    }
+  ],
+  "physicalDimensionsMm": [
+    1889.9999856948853,
+    1889.9999856948853
+  ],
+  "photoLongGrainAxis": "U",
+  "longitudinalPeriodMetres": 1.8899999856948853,
+  "physical50mmVSpan": 0.02645502665526042,
+  "selectedBands": [
+    {
+      "photoBoardIndex": 0,
+      "v": [
+        0.025,
+        0.051455026655260416
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        102.4,
+        210.75978917994667
+      ],
+      "mainSeamGuttersPixels": [
+        94.4,
+        90.24021082005333
+      ],
+      "minimumMainSeamGutterPixels": 90.24021082005333
+    },
+    {
+      "photoBoardIndex": 1,
+      "v": [
+        0.103,
+        0.1294550266552604
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        421.888,
+        530.2477891799466
+      ],
+      "mainSeamGuttersPixels": [
+        92.88799999999998,
+        90.75221082005339
+      ],
+      "minimumMainSeamGutterPixels": 90.75221082005339
+    },
+    {
+      "photoBoardIndex": 2,
+      "v": [
+        0.179,
+        0.20545502665526041
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        733.184,
+        841.5437891799467
+      ],
+      "mainSeamGuttersPixels": [
+        95.18399999999997,
+        95.45621082005334
+      ],
+      "minimumMainSeamGutterPixels": 95.18399999999997
+    },
+    {
+      "photoBoardIndex": 3,
+      "v": [
+        0.256,
+        0.2824550266552604
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        1048.576,
+        1156.9357891799466
+      ],
+      "mainSeamGuttersPixels": [
+        94.57600000000002,
+        91.0642108200534
+      ],
+      "minimumMainSeamGutterPixels": 91.0642108200534
+    },
+    {
+      "photoBoardIndex": 5,
+      "v": [
+        0.41,
+        0.43645502665526037
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        1679.36,
+        1787.7197891799465
+      ],
+      "mainSeamGuttersPixels": [
+        95.3599999999999,
+        93.28021082005353
+      ],
+      "minimumMainSeamGutterPixels": 93.28021082005353
+    },
+    {
+      "photoBoardIndex": 7,
+      "v": [
+        0.565,
+        0.5914550266552604
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        2314.24,
+        2422.5997891799466
+      ],
+      "mainSeamGuttersPixels": [
+        89.23999999999978,
+        89.40021082005342
+      ],
+      "minimumMainSeamGutterPixels": 89.23999999999978
+    },
+    {
+      "photoBoardIndex": 10,
+      "v": [
+        0.796,
+        0.8224550266552605
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        3260.416,
+        3368.775789179947
+      ],
+      "mainSeamGuttersPixels": [
+        88.41600000000017,
+        88.22421082005303
+      ],
+      "minimumMainSeamGutterPixels": 88.22421082005303
+    },
+    {
+      "photoBoardIndex": 12,
+      "v": [
+        0.9475,
+        0.9739550266552605
+      ],
+      "physicalWidthMm": 50,
+      "floatPixelRows": [
+        3880.96,
+        3989.319789179947
+      ],
+      "mainSeamGuttersPixels": [
+        92.96000000000004,
+        90.68021082005316
+      ],
+      "minimumMainSeamGutterPixels": 90.68021082005316
+    }
+  ],
+  "normalSeamDetection": {
+    "blueBelow": 240,
+    "dilationRadiusPixels": 1,
+    "minimumConnectedComponentWidthPixels": 301,
+    "retainedU": [
+      0,
+      1
+    ],
+    "envelopes": [
+      {
+        "seedRow": 1,
+        "inclusivePixelBounds": [
+          0,
+          0,
+          4095,
+          8
+        ],
+        "normalMaskPixels": 26312
+      },
+      {
+        "seedRow": 311,
+        "inclusivePixelBounds": [
+          0,
+          301,
+          4095,
+          329
+        ],
+        "normalMaskPixels": 44642
+      },
+      {
+        "seedRow": 629,
+        "inclusivePixelBounds": [
+          0,
+          621,
+          4095,
+          638
+        ],
+        "normalMaskPixels": 43765
+      },
+      {
+        "seedRow": 946,
+        "inclusivePixelBounds": [
+          0,
+          937,
+          4095,
+          954
+        ],
+        "normalMaskPixels": 49238
+      },
+      {
+        "seedRow": 1261,
+        "inclusivePixelBounds": [
+          0,
+          1248,
+          4095,
+          1266
+        ],
+        "normalMaskPixels": 50075
+      },
+      {
+        "seedRow": 1577,
+        "inclusivePixelBounds": [
+          0,
+          1565,
+          4095,
+          1584
+        ],
+        "normalMaskPixels": 45235
+      },
+      {
+        "seedRow": 1886,
+        "inclusivePixelBounds": [
+          0,
+          1881,
+          4095,
+          1905
+        ],
+        "normalMaskPixels": 48450
+      },
+      {
+        "seedRow": 2209,
+        "inclusivePixelBounds": [
+          0,
+          2190,
+          4095,
+          2225
+        ],
+        "normalMaskPixels": 46714
+      },
+      {
+        "seedRow": 2516,
+        "inclusivePixelBounds": [
+          0,
+          2512,
+          4095,
+          2527
+        ],
+        "normalMaskPixels": 38956
+      },
+      {
+        "seedRow": 2832,
+        "inclusivePixelBounds": [
+          0,
+          2828,
+          4095,
+          2843
+        ],
+        "normalMaskPixels": 42360
+      },
+      {
+        "seedRow": 3153,
+        "inclusivePixelBounds": [
+          0,
+          3136,
+          4095,
+          3172
+        ],
+        "normalMaskPixels": 47550
+      },
+      {
+        "seedRow": 3461,
+        "inclusivePixelBounds": [
+          0,
+          3457,
+          4095,
+          3477
+        ],
+        "normalMaskPixels": 50388
+      },
+      {
+        "seedRow": 3783,
+        "inclusivePixelBounds": [
+          0,
+          3770,
+          4095,
+          3788
+        ],
+        "normalMaskPixels": 53922
+      },
+      {
+        "seedRow": 4095,
+        "inclusivePixelBounds": [
+          0,
+          4080,
+          4095,
+          4095
+        ],
+        "normalMaskPixels": 22396
+      }
+    ],
+    "meaning": "Broad connected main-joint heuristic, not an exhaustive defect or mip-safety proof"
+  },
+  "mappingRecommendation": {
+    "sourceBoardPitchMm": 50,
+    "sourceRasterJointReconstructionMm": 1.953125,
+    "sourceRasterJointShadeFactor": 0.42,
+    "photoBandSelection": "deterministic board index and plane family hash modulo8",
+    "photoU": "frac(physicalGrainDistance/1.8899999856948853 + deterministic board phase); gradients from unwrapped coordinate",
+    "photoV": "one selected50mm band mapped over one source-intended50mm slat pitch, independent authored joint mask",
+    "commonAnchorNativeCm": [
+      0,
+      0,
+      0
+    ],
+    "anchorMeaning": "Authored texture-phase anchor in canonical source/native origin, not surveyed slat origin",
+    "materials": "same map coordinates for albedo, GL-normal and raw scan roughness; candidate normal strength0.35 is authored, not measured"
+  },
+  "limits": [
+    "Photographed Hinoki cypress is an appearance proxy for source-named larch, not verified site timber/species or measured facade finish.",
+    "Full-photo U repeats its grain/knots every1.89m. Independent board phases reduce aligned repetition but do not create unique wood.",
+    "At least88 base-texel main-seam gutters do not guarantee arbitrary coarse mip/aniso safety.",
+    "Source50mm is nominal authoring intent; existing raster pitch is51/1024m and some source UV bases/scales differ. Worldphysical mapping is an explicit visual correction.",
+    "Worldnormal basis, native compiled graph, actual filtering and cooked visual result remain untested."
+  ],
+  "nativePerformed": false
+}

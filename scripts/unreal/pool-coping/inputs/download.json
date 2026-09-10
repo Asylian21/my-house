@@ -1,0 +1,80 @@
+{
+  "asset": "Granite002A",
+  "source": "https://ambientcg.com/a/Granite002A",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://docs.ambientcg.com/license/",
+  "creationMethod": "PBRProcedural",
+  "providerDimensions": [
+    0,
+    0,
+    0
+  ],
+  "authoredTileMm": 500,
+  "scaleMeasured": false,
+  "zipUrl": "https://ambientcg.com/get?file=Granite002A_4K-JPG.zip",
+  "resolvedUrl": "https://acg-download.struffelproductions.com/file/ambientCG-Web/download/Granite002A_8gQ1AzHx/Granite002A_4K-JPG.zip",
+  "zipBytes": 41458093,
+  "zipSha256": "85e0f68bb81ab770106998e4b7213d6cc8f38fbf1201ed4ba2457ef1404667a4",
+  "zipMd5": "99d1a3dc073fda12b0a2473c232eb66a",
+  "providerSizeVerified": true,
+  "providerChecksumAvailable": false,
+  "files": [
+    {
+      "path": "output/unreal/pool-coping-study/references/Granite002A-4k/Granite002A_4K-JPG_Color.jpg",
+      "zipMember": "Granite002A_4K-JPG_Color.jpg",
+      "bytes": 17885966,
+      "sha256": "c9321fc150ba0206c73fb541c0ed9214af61c116cade5f37db932f8c139293c9",
+      "md5": "4639ca499c4fa185ae8f024f32ee32da",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "output/unreal/pool-coping-study/references/Granite002A-4k/Granite002A_4K-JPG_NormalGL.jpg",
+      "zipMember": "Granite002A_4K-JPG_NormalGL.jpg",
+      "bytes": 7163458,
+      "sha256": "0a1ea57a5414f4e9e6e399d9fa45aec36ca0d8480a450649ca80dfd168b8600d",
+      "md5": "ca6811565216b5ca07ef2625ea03f8ff",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "RGB"
+    },
+    {
+      "path": "output/unreal/pool-coping-study/references/Granite002A-4k/Granite002A_4K-JPG_Roughness.jpg",
+      "zipMember": "Granite002A_4K-JPG_Roughness.jpg",
+      "bytes": 5820735,
+      "sha256": "00de36a32c20606fd2bc3982ed80a9574ad9b174bcfe3b19cde985fd94d25b64",
+      "md5": "0a7b3f41d815f4b0c6227915f6d17511",
+      "md5Provenance": "locally computed, not provider checksum",
+      "pixels": [
+        4096,
+        4096
+      ],
+      "mode": "L",
+      "rawLinearRoughnessMean": 0.022735210259755452,
+      "rawLinearRoughnessBounds": [
+        0.0,
+        0.3137254901960784
+      ]
+    }
+  ],
+  "recommendation": {
+    "visualChoice": "Light neutral gray grout-free fine mineral pattern for authored stone-look porcelain",
+    "authoredTileMm": 500,
+    "tileProvenance": "Artist mapping assumption; provider dimensions are unknown/zero",
+    "colorChoice": "Source warm color as explicit author tint, not calibrated product albedo",
+    "roughnessWarning": "Original material is polished countertop-like, raw map mean near .023. Do not apply raw roughness as matte coping. Source-centered affine variation about authored .9 is an explicit material redesign, not original measured porcelain.",
+    "geometry": "Existing28slabs and8mm joints unchanged; no painted grout",
+    "rejectedCandidates": {
+      "Granite001A": "Pink/brown and higher perceived color contrast in original1KColor",
+      "smooth_concrete_floor": "Official metadata says reddish-brown scuffed/scratched/cracked floor; rejected before image fetch",
+      "granite_tile_04": "Original1KDiffuse viewed; darkweathered surface and pronounced grouted grid; could only use materialinterior crops, excluded from directmapping"
+    }
+  }
+}

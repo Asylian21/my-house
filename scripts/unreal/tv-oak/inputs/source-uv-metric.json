@@ -1,0 +1,65 @@
+{
+  "status": "source-triangle-uv-metric-measured",
+  "sourceSceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "sourceObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "selectedMaterialId": "MAT_0078",
+  "assetPhysicalPeriodMm": 1830.0000429153442,
+  "rows": [
+    {
+      "id": "DOM_01293",
+      "name": "LIVING-103-TV-WALL · vysoká bezúchytková skriňa pri krbe",
+      "triangleCount": 12,
+      "millimetresPerU": [
+        1199.998901602836,
+        6000.004615388165
+      ],
+      "millimetresPerV": [
+        239.99996307692876,
+        1199.9998153846439
+      ],
+      "maxUVAxisNonorthogonality": 0.0
+    },
+    {
+      "id": "DOM_01296",
+      "name": "LIVING-103-TV-WALL · vysoká bezúchytková skriňa pri zadnom okne",
+      "triangleCount": 12,
+      "millimetresPerU": [
+        1199.998901602836,
+        5672.731398350107
+      ],
+      "millimetresPerV": [
+        253.8461147929054,
+        1199.9998153846439
+      ],
+      "maxUVAxisNonorthogonality": 0.0
+    },
+    {
+      "id": "DOM_01300",
+      "name": "LIVING-103-TV-WALL · horný úložný most",
+      "triangleCount": 12,
+      "millimetresPerU": [
+        140.86954071834074,
+        6315.783692646506
+      ],
+      "millimetresPerV": [
+        227.99996034783302,
+        10222.222222222223
+      ],
+      "maxUVAxisNonorthogonality": 0.0
+    },
+    {
+      "id": "DOM_01326",
+      "name": "LIVING-103-SOFA-L · oválny konferenčný stolík 2",
+      "triangleCount": 192,
+      "millimetresPerU": [
+        818.9928593916985,
+        2568.5493335180868
+      ],
+      "millimetresPerV": [
+        45.0,
+        592.8046416819144
+      ],
+      "maxUVAxisNonorthogonality": 9.657055662999125e-06
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 2,
+  "version": "LAWN-GROUND-GRASS004-ARTIST-EFFECTIVE-ROUGHNESS-2",
+  "sceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "objSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "sourceRecord": {
+    "id": "DOM_00001",
+    "name": "Parcela 6012/26 · 753 m²",
+    "sourceId": "Parcela 6012/26 · 753 m²",
+    "group": "Landscape",
+    "enabled": true,
+    "metadata": {
+      "walkSurface": true,
+      "walkSurfaceKind": "exterior",
+      "walkSurfaceId": "parcel-6012-26",
+      "walkSurfaceElevationOffsetM": 0,
+      "babylonCheckCollisions": false
+    },
+    "boundsMm": {
+      "min": [
+        -16146,
+        -10800,
+        -65
+      ],
+      "max": [
+        15987,
+        13697.000000000002,
+        -65
+      ]
+    },
+    "materialNames": [
+      "real-grass"
+    ],
+    "materialSlots": [
+      "MAT_0001"
+    ],
+    "instances": 1,
+    "triangles": 27
+  },
+  "sourceMaterial": {
+    "name": "real-grass",
+    "color": [
+      0.7764705882352941,
+      0.8235294117647058,
+      0.7372549019607844
+    ],
+    "roughness": 0.95,
+    "metallic": 0,
+    "alpha": 1,
+    "texture": "/assets/textures/lawn-albedo.jpg",
+    "emission": [
+      0,
+      0,
+      0
+    ]
+  },
+  "maps": {
+    "Diffuse": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_Color.jpg",
+      "bytes": 28149083,
+      "sha256": "2494e4ea560c093d07b45835c5f9fb36c53de9ac8aff7bfc763da79702ff19fc"
+    },
+    "nor_gl": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_NormalGL.jpg",
+      "bytes": 41508249,
+      "sha256": "55e0aa5a47b21d438e3e13e4a65ff40afa37607b29da9866a4eb6bf61075c51c"
+    },
+    "Rough": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_Roughness.jpg",
+      "bytes": 12315232,
+      "sha256": "9a06ae858f3a710b4df866415bd3e34bff3d5122f3f2a65b23e087bbde9c9332"
+    }
+  },
+  "provider": {
+    "name": "ambientCG Grass004",
+    "page": "https://ambientcg.com/view?id=Grass004",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://docs.ambientcg.com/license/",
+    "creator": "ambientCG / Lennart Demes",
+    "technique": "Procedural",
+    "scanClaim": false,
+    "approximateTileMetres": [
+      1.4,
+      1.4
+    ]
+  },
+  "material": {
+    "tintLinear": [
+      1,
+      1,
+      1
+    ],
+    "tintMeaning": "Identity: raw sRGB-decoded provider base colour. Original source tint is an artist alternative and is not applied.",
+    "unusedSourceArtistTint": [
+      0.7764705882352941,
+      0.8235294117647058,
+      0.7372549019607844
+    ],
+    "normalStrength": 1,
+    "roughness": {
+      "kind": "artist-effective-undisplaced-turf",
+      "input": "linear-provider-roughness",
+      "offset": 0.72,
+      "scale": 0.23,
+      "bounds": [
+        0.72,
+        0.95
+      ],
+      "vendorRadiometricCalibration": false
+    },
+    "metallic": 0,
+    "specular": 0.5,
+    "noGeometryDisplacement": true,
+    "roughnessMeaning": "Artist effective roughness for the undisplaced turf base: 0.72 + 0.23 * blended raw linear provider roughness. Preserves map variation; not a vendor calibration or measured site BRDF."
+  },
+  "sampling": {
+    "uv0Scale": [
+      22.952142857142857,
+      17.497857142857143
+    ],
+    "phaseCount": 3,
+    "method": "barycentric-translation-only",
+    "textureSamples": 9,
+    "explicitContinuousGradients": true,
+    "sameOffsetsAndWeightsAllMaps": true,
+    "tangentBasisPreserved": true
+  },
+  "sourceIntentFiles": {
+    "lib/babylon-scene.ts": "39b12a2396c5eef49db12af59dffdb365c25d629cd566b5f905de3d8328df678",
+    "scripts/archviz/scene-export.ts": "7dbd423eb9de58a2343a86393dbc2f01f127fb82eccee76e8a7e3a459c423de6",
+    "scripts/archviz/geometry.mjs": "7314811e22410a13e4274dcc8be98e8e78234372d6a97c3572468ce37df53839"
+  },
+  "evidence": {
+    "scripts/unreal/lawn-ground/inputs/Grass004-official-page.html": "d1a0ef23260fa85dd1d878b4656c5a764480cd40c2ebe309dad95bfbde0fcbd2",
+    "scripts/unreal/lawn-ground/inputs/ambientCG-license.html": "60138e09b277c89977841462634b36e99d7bae5b77174777813502069c59461c",
+    "scripts/unreal/lawn-ground/inputs/selected-download.json": "18479714981e298ef4b8e2b08db97940cf8e67a0441d46e51681c1b3da210a2e",
+    "scripts/unreal/lawn-ground/inputs/Grass004_4K-JPG.mtlx": "bfd2706f79d0a92c5891b4ef7da8b0b75329e02108ffb05bbb286bef11912ffd",
+    "scripts/unreal/lawn-ground/inputs/Grass004_4K-JPG.tres": "3a35f9cd112d783b8d369c9ed6e8c454b9dc117777fe1f1c5ec06aa2413175bd",
+    "scripts/unreal/lawn-ground/inputs/workflow-download.json": "e75410ec2c138029df80e081e90738160e219ed364dba0c84c9b7d315109b99b"
+  }
+}

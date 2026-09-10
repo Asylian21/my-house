@@ -1,0 +1,2610 @@
+{
+    "searchQuery": {
+        "forceSpecificAssetId": false,
+        "category": [],
+        "assetId": [],
+        "dataType": [],
+        "creationMethod": null,
+        "queryString": "granite",
+        "sort": "Popular",
+        "createdUsingAssetId": null,
+        "basedOnAssetId": null,
+        "variationsOfAssetId": null,
+        "limit": 100,
+        "offset": 0
+    },
+    "numberOfResults": 15,
+    "currentPageHttp": "https://ambientcg.com/api/v2/full_json?q=granite&sort=popular&limit=100&include=statisticsData%2ClabelData%2CpreviewData%2CtechnicalData%2CfileData",
+    "foundAssets": [
+        {
+            "assetId": "Granite002A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 31177,
+            "downloadCountMonth": 1191,
+            "downloadCountWeek": 311,
+            "popularityScore": 5.269429218933352,
+            "tags": [
+                "2",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 002 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite002A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_1K-JPG.zip",
+                                    "fileName": "Granite002A_1K-JPG.zip",
+                                    "size": 4394418,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_2K-JPG.zip",
+                                    "fileName": "Granite002A_2K-JPG.zip",
+                                    "size": 12172455,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_4K-JPG.zip",
+                                    "fileName": "Granite002A_4K-JPG.zip",
+                                    "size": 41458093,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_8K-JPG.zip",
+                                    "fileName": "Granite002A_8K-JPG.zip",
+                                    "size": 160261300,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_1K-PNG.zip",
+                                    "fileName": "Granite002A_1K-PNG.zip",
+                                    "size": 12984811,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_2K-PNG.zip",
+                                    "fileName": "Granite002A_2K-PNG.zip",
+                                    "size": 45702521,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_4K-PNG.zip",
+                                    "fileName": "Granite002A_4K-PNG.zip",
+                                    "size": 171773920,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002A_8K-PNG.zip",
+                                    "fileName": "Granite002A_8K-PNG.zip",
+                                    "size": 610222948,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Color.jpg?34795&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Displacement.jpg?66694&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_NormalDX.jpg?75978&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Roughness.jpg?98110",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Color.jpg?14102,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Displacement.jpg?4449,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_NormalDX.jpg?36161,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002A/Granite002A_SQ_Roughness.jpg?48320&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite002A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite002A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite002A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite002A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite002A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite002A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite002A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite002A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite002A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite002A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite002A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite002A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite002A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite002A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite002A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite002A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite002A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite002A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite002A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite002A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite002A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite002A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite002A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite002A.webp"
+            }
+        },
+        {
+            "assetId": "Granite002B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 24287,
+            "downloadCountMonth": 860,
+            "downloadCountWeek": 175,
+            "popularityScore": 4.3259013837198674,
+            "tags": [
+                "2",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 002 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite002B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_1K-JPG.zip",
+                                    "fileName": "Granite002B_1K-JPG.zip",
+                                    "size": 7551091,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_2K-JPG.zip",
+                                    "fileName": "Granite002B_2K-JPG.zip",
+                                    "size": 25540720,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_4K-JPG.zip",
+                                    "fileName": "Granite002B_4K-JPG.zip",
+                                    "size": 94567559,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_8K-JPG.zip",
+                                    "fileName": "Granite002B_8K-JPG.zip",
+                                    "size": 390024131,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_1K-PNG.zip",
+                                    "fileName": "Granite002B_1K-PNG.zip",
+                                    "size": 17364567,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_2K-PNG.zip",
+                                    "fileName": "Granite002B_2K-PNG.zip",
+                                    "size": 63375228,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_4K-PNG.zip",
+                                    "fileName": "Granite002B_4K-PNG.zip",
+                                    "size": 242748416,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite002B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite002B_8K-PNG.zip",
+                                    "fileName": "Granite002B_8K-PNG.zip",
+                                    "size": 965790280,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Color.jpg?23546&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Displacement.jpg?3495&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_NormalDX.jpg?61371&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Roughness.jpg?87982",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Color.jpg?92788,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Displacement.jpg?35772,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_NormalDX.jpg?63566,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite002B/Granite002B_SQ_Roughness.jpg?75539&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite002B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite002B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite002B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite002B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite002B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite002B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite002B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite002B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite002B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite002B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite002B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite002B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite002B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite002B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite002B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite002B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite002B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite002B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite002B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite002B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite002B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite002B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite002B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite002B.webp"
+            }
+        },
+        {
+            "assetId": "Granite001A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 17177,
+            "downloadCountMonth": 850,
+            "downloadCountWeek": 224,
+            "popularityScore": 3.3522463897622665,
+            "tags": [
+                "1",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 001 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite001A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_1K-JPG.zip",
+                                    "fileName": "Granite001A_1K-JPG.zip",
+                                    "size": 5151099,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_2K-JPG.zip",
+                                    "fileName": "Granite001A_2K-JPG.zip",
+                                    "size": 15661008,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_4K-JPG.zip",
+                                    "fileName": "Granite001A_4K-JPG.zip",
+                                    "size": 55153186,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_8K-JPG.zip",
+                                    "fileName": "Granite001A_8K-JPG.zip",
+                                    "size": 212535826,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_1K-PNG.zip",
+                                    "fileName": "Granite001A_1K-PNG.zip",
+                                    "size": 13548357,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_2K-PNG.zip",
+                                    "fileName": "Granite001A_2K-PNG.zip",
+                                    "size": 48911885,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_4K-PNG.zip",
+                                    "fileName": "Granite001A_4K-PNG.zip",
+                                    "size": 185547974,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001A_8K-PNG.zip",
+                                    "fileName": "Granite001A_8K-PNG.zip",
+                                    "size": 672401965,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Color.jpg?14163&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Displacement.jpg?58507&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_NormalDX.jpg?49262&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Roughness.jpg?48581",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Color.jpg?88629,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Displacement.jpg?96423,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_NormalDX.jpg?72622,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001A/Granite001A_SQ_Roughness.jpg?1795&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite001A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite001A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite001A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite001A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite001A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite001A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite001A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite001A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite001A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite001A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite001A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite001A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite001A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite001A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite001A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite001A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite001A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite001A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite001A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite001A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite001A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite001A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite001A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite001A.webp"
+            }
+        },
+        {
+            "assetId": "Granite005A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 15520,
+            "downloadCountMonth": 699,
+            "downloadCountWeek": 161,
+            "popularityScore": 3.1253341077668031,
+            "tags": [
+                "5",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 005 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite005A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_1K-JPG.zip",
+                                    "fileName": "Granite005A_1K-JPG.zip",
+                                    "size": 5249934,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_2K-JPG.zip",
+                                    "fileName": "Granite005A_2K-JPG.zip",
+                                    "size": 16712658,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_4K-JPG.zip",
+                                    "fileName": "Granite005A_4K-JPG.zip",
+                                    "size": 60115591,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_8K-JPG.zip",
+                                    "fileName": "Granite005A_8K-JPG.zip",
+                                    "size": 232626132,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_1K-PNG.zip",
+                                    "fileName": "Granite005A_1K-PNG.zip",
+                                    "size": 13619503,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_2K-PNG.zip",
+                                    "fileName": "Granite005A_2K-PNG.zip",
+                                    "size": 49730213,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_4K-PNG.zip",
+                                    "fileName": "Granite005A_4K-PNG.zip",
+                                    "size": 189914674,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005A_8K-PNG.zip",
+                                    "fileName": "Granite005A_8K-PNG.zip",
+                                    "size": 695849762,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Color.jpg?90184&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Displacement.jpg?47402&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_NormalDX.jpg?55223&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Roughness.jpg?78522",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Color.jpg?11106,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Displacement.jpg?44552,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_NormalDX.jpg?66268,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005A/Granite005A_SQ_Roughness.jpg?69330&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite005A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite005A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite005A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite005A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite005A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite005A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite005A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite005A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite005A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite005A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite005A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite005A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite005A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite005A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite005A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite005A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite005A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite005A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite005A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite005A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite005A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite005A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite005A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite005A.webp"
+            }
+        },
+        {
+            "assetId": "Granite005B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 14650,
+            "downloadCountMonth": 610,
+            "downloadCountWeek": 145,
+            "popularityScore": 3.0061948890968857,
+            "tags": [
+                "5",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 005 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite005B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_1K-JPG.zip",
+                                    "fileName": "Granite005B_1K-JPG.zip",
+                                    "size": 8399765,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_2K-JPG.zip",
+                                    "fileName": "Granite005B_2K-JPG.zip",
+                                    "size": 30673118,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_4K-JPG.zip",
+                                    "fileName": "Granite005B_4K-JPG.zip",
+                                    "size": 116549054,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_8K-JPG.zip",
+                                    "fileName": "Granite005B_8K-JPG.zip",
+                                    "size": 468208873,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_1K-PNG.zip",
+                                    "fileName": "Granite005B_1K-PNG.zip",
+                                    "size": 17789359,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_2K-PNG.zip",
+                                    "fileName": "Granite005B_2K-PNG.zip",
+                                    "size": 66669214,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_4K-PNG.zip",
+                                    "fileName": "Granite005B_4K-PNG.zip",
+                                    "size": 257637471,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite005B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite005B_8K-PNG.zip",
+                                    "fileName": "Granite005B_8K-PNG.zip",
+                                    "size": 1025073670,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Color.jpg?34683&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Displacement.jpg?25833&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_NormalDX.jpg?69224&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Roughness.jpg?54465",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Color.jpg?99240,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Displacement.jpg?83492,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_NormalDX.jpg?10565,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite005B/Granite005B_SQ_Roughness.jpg?48745&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite005B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite005B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite005B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite005B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite005B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite005B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite005B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite005B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite005B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite005B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite005B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite005B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite005B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite005B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite005B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite005B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite005B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite005B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite005B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite005B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite005B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite005B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite005B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite005B.webp"
+            }
+        },
+        {
+            "assetId": "Granite003A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 14285,
+            "downloadCountMonth": 653,
+            "downloadCountWeek": 158,
+            "popularityScore": 2.956211193907782,
+            "tags": [
+                "3",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 003 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite003A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_1K-JPG.zip",
+                                    "fileName": "Granite003A_1K-JPG.zip",
+                                    "size": 5147199,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_2K-JPG.zip",
+                                    "fileName": "Granite003A_2K-JPG.zip",
+                                    "size": 15851002,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_4K-JPG.zip",
+                                    "fileName": "Granite003A_4K-JPG.zip",
+                                    "size": 56354388,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_8K-JPG.zip",
+                                    "fileName": "Granite003A_8K-JPG.zip",
+                                    "size": 218357802,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_1K-PNG.zip",
+                                    "fileName": "Granite003A_1K-PNG.zip",
+                                    "size": 13478845,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_2K-PNG.zip",
+                                    "fileName": "Granite003A_2K-PNG.zip",
+                                    "size": 48813033,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_4K-PNG.zip",
+                                    "fileName": "Granite003A_4K-PNG.zip",
+                                    "size": 185890913,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003A_8K-PNG.zip",
+                                    "fileName": "Granite003A_8K-PNG.zip",
+                                    "size": 678676778,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Color.jpg?28909&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Displacement.jpg?91270&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_NormalDX.jpg?37861&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Roughness.jpg?73556",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Color.jpg?75419,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Displacement.jpg?3184,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_NormalDX.jpg?87156,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003A/Granite003A_SQ_Roughness.jpg?21087&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite003A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite003A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite003A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite003A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite003A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite003A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite003A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite003A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite003A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite003A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite003A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite003A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite003A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite003A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite003A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite003A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite003A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite003A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite003A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite003A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite003A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite003A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite003A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite003A.webp"
+            }
+        },
+        {
+            "assetId": "Granite001B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 14270,
+            "downloadCountMonth": 679,
+            "downloadCountWeek": 160,
+            "popularityScore": 2.9541570694479562,
+            "tags": [
+                "1",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 001 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite001B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_1K-JPG.zip",
+                                    "fileName": "Granite001B_1K-JPG.zip",
+                                    "size": 8105367,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_2K-JPG.zip",
+                                    "fileName": "Granite001B_2K-JPG.zip",
+                                    "size": 28658032,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_4K-JPG.zip",
+                                    "fileName": "Granite001B_4K-JPG.zip",
+                                    "size": 107685571,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_8K-JPG.zip",
+                                    "fileName": "Granite001B_8K-JPG.zip",
+                                    "size": 435048275,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_1K-PNG.zip",
+                                    "fileName": "Granite001B_1K-PNG.zip",
+                                    "size": 17602021,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_2K-PNG.zip",
+                                    "fileName": "Granite001B_2K-PNG.zip",
+                                    "size": 65371859,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_4K-PNG.zip",
+                                    "fileName": "Granite001B_4K-PNG.zip",
+                                    "size": 251776790,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite001B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite001B_8K-PNG.zip",
+                                    "fileName": "Granite001B_8K-PNG.zip",
+                                    "size": 1000164313,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Color.jpg?64320&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Displacement.jpg?93964&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_NormalDX.jpg?52262&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Roughness.jpg?35913",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Color.jpg?69138,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Displacement.jpg?69392,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_NormalDX.jpg?5801,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite001B/Granite001B_SQ_Roughness.jpg?28870&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite001B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite001B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite001B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite001B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite001B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite001B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite001B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite001B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite001B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite001B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite001B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite001B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite001B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite001B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite001B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite001B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite001B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite001B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite001B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite001B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite001B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite001B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite001B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite001B.webp"
+            }
+        },
+        {
+            "assetId": "Granite003B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 12630,
+            "downloadCountMonth": 558,
+            "downloadCountWeek": 124,
+            "popularityScore": 2.7295727951736293,
+            "tags": [
+                "3",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 003 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite003B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_1K-JPG.zip",
+                                    "fileName": "Granite003B_1K-JPG.zip",
+                                    "size": 8449804,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_2K-JPG.zip",
+                                    "fileName": "Granite003B_2K-JPG.zip",
+                                    "size": 30382917,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_4K-JPG.zip",
+                                    "fileName": "Granite003B_4K-JPG.zip",
+                                    "size": 115238649,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_8K-JPG.zip",
+                                    "fileName": "Granite003B_8K-JPG.zip",
+                                    "size": 464464682,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_1K-PNG.zip",
+                                    "fileName": "Granite003B_1K-PNG.zip",
+                                    "size": 17864838,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_2K-PNG.zip",
+                                    "fileName": "Granite003B_2K-PNG.zip",
+                                    "size": 66636245,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_4K-PNG.zip",
+                                    "fileName": "Granite003B_4K-PNG.zip",
+                                    "size": 257329827,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite003B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite003B_8K-PNG.zip",
+                                    "fileName": "Granite003B_8K-PNG.zip",
+                                    "size": 1025974030,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Color.jpg?53454&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Displacement.jpg?8386&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_NormalDX.jpg?25884&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Roughness.jpg?25711",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Color.jpg?85026,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Displacement.jpg?31675,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_NormalDX.jpg?36452,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite003B/Granite003B_SQ_Roughness.jpg?97867&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite003B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite003B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite003B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite003B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite003B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite003B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite003B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite003B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite003B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite003B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite003B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite003B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite003B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite003B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite003B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite003B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite003B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite003B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite003B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite003B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite003B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite003B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite003B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite003B.webp"
+            }
+        },
+        {
+            "assetId": "Granite006A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 12111,
+            "downloadCountMonth": 550,
+            "downloadCountWeek": 119,
+            "popularityScore": 2.6585000888636436,
+            "tags": [
+                "6",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 006 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite006A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_1K-JPG.zip",
+                                    "fileName": "Granite006A_1K-JPG.zip",
+                                    "size": 5069941,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_2K-JPG.zip",
+                                    "fileName": "Granite006A_2K-JPG.zip",
+                                    "size": 15344284,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_4K-JPG.zip",
+                                    "fileName": "Granite006A_4K-JPG.zip",
+                                    "size": 53628541,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_8K-JPG.zip",
+                                    "fileName": "Granite006A_8K-JPG.zip",
+                                    "size": 205211128,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_1K-PNG.zip",
+                                    "fileName": "Granite006A_1K-PNG.zip",
+                                    "size": 13266417,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_2K-PNG.zip",
+                                    "fileName": "Granite006A_2K-PNG.zip",
+                                    "size": 47886569,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_4K-PNG.zip",
+                                    "fileName": "Granite006A_4K-PNG.zip",
+                                    "size": 181136749,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006A_8K-PNG.zip",
+                                    "fileName": "Granite006A_8K-PNG.zip",
+                                    "size": 655102925,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Color.jpg?83270&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Displacement.jpg?53214&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_NormalDX.jpg?57793&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Roughness.jpg?76446",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Color.jpg?40043,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Displacement.jpg?55820,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_NormalDX.jpg?82197,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006A/Granite006A_SQ_Roughness.jpg?77192&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite006A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite006A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite006A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite006A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite006A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite006A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite006A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite006A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite006A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite006A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite006A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite006A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite006A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite006A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite006A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite006A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite006A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite006A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite006A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite006A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite006A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite006A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite006A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite006A.webp"
+            }
+        },
+        {
+            "assetId": "Granite007A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 10594,
+            "downloadCountMonth": 528,
+            "downloadCountWeek": 135,
+            "popularityScore": 2.4507596351598915,
+            "tags": [
+                "7",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 007 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite007A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_1K-JPG.zip",
+                                    "fileName": "Granite007A_1K-JPG.zip",
+                                    "size": 4699704,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_2K-JPG.zip",
+                                    "fileName": "Granite007A_2K-JPG.zip",
+                                    "size": 13120226,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_4K-JPG.zip",
+                                    "fileName": "Granite007A_4K-JPG.zip",
+                                    "size": 43889252,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_8K-JPG.zip",
+                                    "fileName": "Granite007A_8K-JPG.zip",
+                                    "size": 166665778,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_1K-PNG.zip",
+                                    "fileName": "Granite007A_1K-PNG.zip",
+                                    "size": 12842301,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_2K-PNG.zip",
+                                    "fileName": "Granite007A_2K-PNG.zip",
+                                    "size": 45111135,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_4K-PNG.zip",
+                                    "fileName": "Granite007A_4K-PNG.zip",
+                                    "size": 169821822,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007A_8K-PNG.zip",
+                                    "fileName": "Granite007A_8K-PNG.zip",
+                                    "size": 601726764,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Color.jpg?6683&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Displacement.jpg?4291&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_NormalDX.jpg?12423&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Roughness.jpg?37917",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Color.jpg?3729,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Displacement.jpg?68429,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_NormalDX.jpg?88879,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007A/Granite007A_SQ_Roughness.jpg?81470&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite007A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite007A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite007A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite007A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite007A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite007A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite007A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite007A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite007A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite007A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite007A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite007A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite007A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite007A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite007A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite007A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite007A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite007A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite007A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite007A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite007A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite007A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite007A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite007A.webp"
+            }
+        },
+        {
+            "assetId": "Granite004B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 10547,
+            "downloadCountMonth": 625,
+            "downloadCountWeek": 156,
+            "popularityScore": 2.444323378519103,
+            "tags": [
+                "004",
+                "4",
+                "beige",
+                "brown",
+                "countertop",
+                "granite",
+                "indoor",
+                "kitchen",
+                "modern",
+                "natural",
+                "rough",
+                "spotted",
+                "stone"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 004 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite004B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_1K-JPG.zip",
+                                    "fileName": "Granite004B_1K-JPG.zip",
+                                    "size": 8191816,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_2K-JPG.zip",
+                                    "fileName": "Granite004B_2K-JPG.zip",
+                                    "size": 28424714,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_4K-JPG.zip",
+                                    "fileName": "Granite004B_4K-JPG.zip",
+                                    "size": 104949054,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_8K-JPG.zip",
+                                    "fileName": "Granite004B_8K-JPG.zip",
+                                    "size": 422255735,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_1K-PNG.zip",
+                                    "fileName": "Granite004B_1K-PNG.zip",
+                                    "size": 17900183,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_2K-PNG.zip",
+                                    "fileName": "Granite004B_2K-PNG.zip",
+                                    "size": 65739935,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_4K-PNG.zip",
+                                    "fileName": "Granite004B_4K-PNG.zip",
+                                    "size": 250972884,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004B_8K-PNG.zip",
+                                    "fileName": "Granite004B_8K-PNG.zip",
+                                    "size": 992290668,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Color.jpg?98449&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Displacement.jpg?69931&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_NormalDX.jpg?12855&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Roughness.jpg?92229",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Color.jpg?18671,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Displacement.jpg?33578,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_NormalDX.jpg?79973,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004B/Granite004B_SQ_Roughness.jpg?59197&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite004B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite004B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite004B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite004B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite004B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite004B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite004B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite004B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite004B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite004B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite004B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite004B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite004B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite004B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite004B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite004B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite004B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite004B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite004B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite004B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite004B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite004B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite004B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite004B.webp"
+            }
+        },
+        {
+            "assetId": "Granite006B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 10006,
+            "downloadCountMonth": 479,
+            "downloadCountWeek": 112,
+            "popularityScore": 2.370237956334706,
+            "tags": [
+                "6",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 006 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite006B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_1K-JPG.zip",
+                                    "fileName": "Granite006B_1K-JPG.zip",
+                                    "size": 8084801,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_2K-JPG.zip",
+                                    "fileName": "Granite006B_2K-JPG.zip",
+                                    "size": 28625241,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_4K-JPG.zip",
+                                    "fileName": "Granite006B_4K-JPG.zip",
+                                    "size": 107338913,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_8K-JPG.zip",
+                                    "fileName": "Granite006B_8K-JPG.zip",
+                                    "size": 431037622,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_1K-PNG.zip",
+                                    "fileName": "Granite006B_1K-PNG.zip",
+                                    "size": 17380204,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_2K-PNG.zip",
+                                    "fileName": "Granite006B_2K-PNG.zip",
+                                    "size": 64625928,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_4K-PNG.zip",
+                                    "fileName": "Granite006B_4K-PNG.zip",
+                                    "size": 248489059,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite006B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite006B_8K-PNG.zip",
+                                    "fileName": "Granite006B_8K-PNG.zip",
+                                    "size": 986765918,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Color.jpg?23322&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Displacement.jpg?50013&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_NormalDX.jpg?30338&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Roughness.jpg?43548",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Color.jpg?35579,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Displacement.jpg?80902,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_NormalDX.jpg?40197,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite006B/Granite006B_SQ_Roughness.jpg?38026&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite006B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite006B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite006B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite006B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite006B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite006B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite006B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite006B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite006B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite006B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite006B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite006B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite006B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite006B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite006B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite006B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite006B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite006B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite006B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite006B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite006B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite006B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite006B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite006B.webp"
+            }
+        },
+        {
+            "assetId": "Granite004A",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 9648,
+            "downloadCountMonth": 491,
+            "downloadCountWeek": 141,
+            "popularityScore": 2.3212128525601878,
+            "tags": [
+                "4",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 004 A",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite004A",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_1K-JPG.zip",
+                                    "fileName": "Granite004A_1K-JPG.zip",
+                                    "size": 4928908,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_2K-JPG.zip",
+                                    "fileName": "Granite004A_2K-JPG.zip",
+                                    "size": 14580540,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_4K-JPG.zip",
+                                    "fileName": "Granite004A_4K-JPG.zip",
+                                    "size": 50086596,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_8K-JPG.zip",
+                                    "fileName": "Granite004A_8K-JPG.zip",
+                                    "size": 190678401,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_1K-PNG.zip",
+                                    "fileName": "Granite004A_1K-PNG.zip",
+                                    "size": 13560479,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_2K-PNG.zip",
+                                    "fileName": "Granite004A_2K-PNG.zip",
+                                    "size": 48302381,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_4K-PNG.zip",
+                                    "fileName": "Granite004A_4K-PNG.zip",
+                                    "size": 181411778,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite004A_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite004A_8K-PNG.zip",
+                                    "fileName": "Granite004A_8K-PNG.zip",
+                                    "size": 649762456,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Color.jpg?69961&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Displacement.jpg?70370&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_NormalDX.jpg?96605&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Roughness.jpg?60327",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Color.jpg?34149,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Displacement.jpg?28079,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_NormalDX.jpg?31763,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite004A/Granite004A_SQ_Roughness.jpg?3074&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite004A.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite004A.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite004A.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite004A.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite004A.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite004A.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite004A.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite004A.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite004A.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite004A.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite004A.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite004A.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite004A.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite004A.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite004A.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite004A.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite004A.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite004A.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite004A.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite004A.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite004A.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite004A.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite004A.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite004A.webp"
+            }
+        },
+        {
+            "assetId": "Granite007B",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Material",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 9076,
+            "downloadCountMonth": 463,
+            "downloadCountWeek": 107,
+            "popularityScore": 2.2428822398254837,
+            "tags": [
+                "7",
+                "countertop",
+                "granite"
+            ],
+            "dataTypeName": "Material",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite 007 B",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite",
+            "shortLink": "https://ambientcg.com/a/Granite007B",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "zip": {
+                            "title": "zip",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_1K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_1K-JPG.zip",
+                                    "fileName": "Granite007B_1K-JPG.zip",
+                                    "size": 7566905,
+                                    "filetype": "zip",
+                                    "attribute": "1K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_2K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_2K-JPG.zip",
+                                    "fileName": "Granite007B_2K-JPG.zip",
+                                    "size": 25378438,
+                                    "filetype": "zip",
+                                    "attribute": "2K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_4K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_4K-JPG.zip",
+                                    "fileName": "Granite007B_4K-JPG.zip",
+                                    "size": 93264909,
+                                    "filetype": "zip",
+                                    "attribute": "4K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_8K-JPG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_8K-JPG.zip",
+                                    "fileName": "Granite007B_8K-JPG.zip",
+                                    "size": 385658326,
+                                    "filetype": "zip",
+                                    "attribute": "8K-JPG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_1K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_1K-PNG.zip",
+                                    "fileName": "Granite007B_1K-PNG.zip",
+                                    "size": 17002395,
+                                    "filetype": "zip",
+                                    "attribute": "1K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_2K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_2K-PNG.zip",
+                                    "fileName": "Granite007B_2K-PNG.zip",
+                                    "size": 61960164,
+                                    "filetype": "zip",
+                                    "attribute": "2K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_4K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_4K-PNG.zip",
+                                    "fileName": "Granite007B_4K-PNG.zip",
+                                    "size": 238094700,
+                                    "filetype": "zip",
+                                    "attribute": "4K-PNG",
+                                    "zipContent": []
+                                },
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=Granite007B_8K-PNG.zip",
+                                    "downloadLink": "https://ambientcg.com/get?file=Granite007B_8K-PNG.zip",
+                                    "fileName": "Granite007B_8K-PNG.zip",
+                                    "size": 953652239,
+                                    "filetype": "zip",
+                                    "attribute": "8K-PNG",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [
+                {
+                    "url": "https://releases.pbr.one/main/material-shading.html#normal_type=directx&color_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Color.jpg?34526&displacement_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Displacement.jpg?67840&normal_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_NormalDX.jpg?38498&roughness_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Roughness.jpg?33312",
+                    "name": {
+                        "id": 4,
+                        "slug": "pbr-one-material-shading",
+                        "title": "3D Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                },
+                {
+                    "url": "https://releases.pbr.one/main/texture-tiling.html#texture_url=https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Color.jpg?90608,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Displacement.jpg?98678,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_NormalDX.jpg?87028,https://f003.backblazeb2.com/file/ambientCG-Web/media/surface-preview/Granite007B/Granite007B_SQ_Roughness.jpg?72378&texture_name=Color,Displacement,Normal,Roughness",
+                    "name": {
+                        "id": 3,
+                        "slug": "pbr-one-material-maps",
+                        "title": "Tiling Preview",
+                        "description": "description"
+                    },
+                    "displayName": "",
+                    "iconName": ""
+                }
+            ],
+            "previewType": "Default",
+            "maps": [
+                "color",
+                "displacement",
+                "normal",
+                "roughness"
+            ],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/Granite007B.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/Granite007B.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/Granite007B.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/Granite007B.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/Granite007B.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/Granite007B.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/Granite007B.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/Granite007B.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/Granite007B.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/Granite007B.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/Granite007B.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/Granite007B.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/Granite007B.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/Granite007B.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/Granite007B.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/Granite007B.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/Granite007B.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/Granite007B.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/Granite007B.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/Granite007B.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/Granite007B.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/Granite007B.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/Granite007B.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/Granite007B.webp"
+            }
+        },
+        {
+            "assetId": "GraniteSubstance001",
+            "releaseDate": "2022-12-29 19:00:00",
+            "earlyReleaseDate": "2022-12-04 21:00:00",
+            "dataType": "Substance",
+            "creationMethod": "PBRProcedural",
+            "category": null,
+            "downloadCount": 2863,
+            "downloadCountMonth": 69,
+            "downloadCountWeek": 18,
+            "popularityScore": 1.392063888565487,
+            "tags": [
+                "1",
+                "countertop",
+                "granite",
+                "substance"
+            ],
+            "dataTypeName": "Substance",
+            "dataTypeDescription": "A photo texture with PBR maps.",
+            "creationMethodName": "Height field photogrammetry",
+            "creationMethodDescription": "Displacement generated using photogrammetry.",
+            "displayName": "Granite Substance 001",
+            "customDisplayName": "",
+            "description": "",
+            "displayCategory": "Granite Substance",
+            "shortLink": "https://ambientcg.com/a/GraniteSubstance001",
+            "dimensionX": 0,
+            "dimensionY": 0,
+            "dimensionZ": 0,
+            "createdUsing": [],
+            "basedOnThis": [],
+            "variations": [],
+            "nextVariationAssetId": null,
+            "previousVariationAssetId": null,
+            "nextAssetId": null,
+            "previousAssetId": null,
+            "downloadFolders": {
+                "default": {
+                    "title": "default",
+                    "downloadFiletypeCategories": {
+                        "sbsar": {
+                            "title": "sbsar",
+                            "downloads": [
+                                {
+                                    "fullDownloadPath": "https://ambientcg.com/get?file=GraniteSubstance001_COMPILED.sbsar",
+                                    "downloadLink": "https://ambientcg.com/get?file=GraniteSubstance001_COMPILED.sbsar",
+                                    "fileName": "GraniteSubstance001_COMPILED.sbsar",
+                                    "size": 524336,
+                                    "filetype": "sbsar",
+                                    "attribute": "COMPILED",
+                                    "zipContent": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "previewLinks": [],
+            "previewType": "Default",
+            "maps": [],
+            "hasUsd": false,
+            "previewImage": {
+                "64-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-PNG/GraniteSubstance001.png",
+                "128-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-PNG/GraniteSubstance001.png",
+                "256-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-PNG/GraniteSubstance001.png",
+                "512-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-PNG/GraniteSubstance001.png",
+                "1024-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-PNG/GraniteSubstance001.png",
+                "2048-PNG": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-PNG/GraniteSubstance001.png",
+                "64-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "128-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "256-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "512-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "1024-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "2048-JPG-FFFFFF": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-FFFFFF/GraniteSubstance001.jpg",
+                "64-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-JPG-242424/GraniteSubstance001.jpg",
+                "128-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-JPG-242424/GraniteSubstance001.jpg",
+                "256-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-JPG-242424/GraniteSubstance001.jpg",
+                "512-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-JPG-242424/GraniteSubstance001.jpg",
+                "1024-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-JPG-242424/GraniteSubstance001.jpg",
+                "2048-JPG-242424": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-JPG-242424/GraniteSubstance001.jpg",
+                "64-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/64-WEBP/GraniteSubstance001.webp",
+                "128-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/128-WEBP/GraniteSubstance001.webp",
+                "256-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/256-WEBP/GraniteSubstance001.webp",
+                "512-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/512-WEBP/GraniteSubstance001.webp",
+                "1024-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/1024-WEBP/GraniteSubstance001.webp",
+                "2048-WEBP": "https://acg-media.struffelproductions.com/file/ambientCG-Web/media/thumbnail/2048-WEBP/GraniteSubstance001.webp"
+            }
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+  "status": "source-contract-rebound-geometry-unchanged-native-pending",
+  "previousContractSha256": "8be10d129e4e602af5837ebdc41086403d5d79086a83c679d321687bec02983d",
+  "contractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "previousSceneSha256": "97f3af06c3f4eeebf632ccdfc7985949358930af57f6e96923ea074149149e70",
+  "currentSceneSha256": "61ba228f4b72a5ee5fc754e60e112ff70d03605f8cf56fec97bccc3519b8863b",
+  "canonicalObjSha256": "a42e9eb169d929bc67056ad21bf3885e3f1a32838f15c328cb98bacd008fa455",
+  "canonicalProofSha256": "42f04e9b8b7349934ad61d269dec078b1a0d6de0684759b1d96b926e92870fa8",
+  "receiverGeometrySha256": "e91d45bd89b5ae7757b37ceb4f478aa734538d27c69c4353c607ea02bed181ac",
+  "receiverObjectCount": 45,
+  "receiverTriangleCount": 1076,
+  "bvhNodeCount": 359,
+  "allReceiverRecordFieldsEqualCurrentCanonical": true,
+  "onlyContractFieldChanged": "sourceSha256.output/unreal/geometry/scene.json",
+  "nativeBuildExecuted": false,
+  "gpuExecuted": false,
+  "cpuReferenceOriginSha256": "b6d005c0092890f2bcadd83457f4b712fed2fc8c182e410fcd2ec495dc38c873"
+}

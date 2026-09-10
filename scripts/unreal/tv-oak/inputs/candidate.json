@@ -1,0 +1,40 @@
+{
+  "status": "candidate-downloaded-not-imported",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/oak_veneer_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "authors": {
+    "Jenelle van Heerden": "All"
+  },
+  "dimensionsMillimetres": [
+    1830.0000429153442,
+    1830.0000429153442
+  ],
+  "resolution": "4k",
+  "maps": {
+    "Diffuse": {
+      "size": 12587069,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_diff_4k.jpg",
+      "md5": "d4c13847045d1a10475a23b0787bf384",
+      "path": "output/unreal/wood-study/oak_veneer_01_diff_4k.jpg",
+      "sha256": "7e8c64811e580ef6664c20524606359c739e6fe030eff5c2c06c3482ecc8b1cf"
+    },
+    "nor_gl": {
+      "size": 11584844,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_nor_gl_4k.jpg",
+      "md5": "03b22c26ed6dc71c46ba5f7a19ccc80a",
+      "path": "output/unreal/wood-study/oak_veneer_01_nor_gl_4k.jpg",
+      "sha256": "e9bb26f63682773895ce3f0dfd9a43554a719c4caae65b6bcf41712ecfaf3d26"
+    },
+    "Rough": {
+      "size": 18638525,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_rough_4k.jpg",
+      "md5": "b63d5e096d3f8a18b2725659be233121",
+      "path": "output/unreal/wood-study/oak_veneer_01_rough_4k.jpg",
+      "sha256": "3e7eb00705c173babfc01443de1ed1e8d40d055b97de278a6e817b65e8decb38"
+    }
+  },
+  "verifiedAtUtc": "2026-09-08T04:19:51.293537+00:00",
+  "scope": "Proposed photographed veneer asset. Not the actual selected product or a measured finish of this house; source palette and UV physical scale need matching before native use."
+}

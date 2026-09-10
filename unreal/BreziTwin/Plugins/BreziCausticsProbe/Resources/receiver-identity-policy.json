@@ -1,0 +1,196 @@
+{
+  "status": "reviewed-diagnostic-source-transport-policy",
+  "sourceContractSha256": "c7c8011b3d7623e8780c30ea77775472a0cab7ebefa0f5cb97528f96580d404a",
+  "reviewedReceiverClasses": {
+    "DOM_01724": "nonfloor-first-hit-terminal-flux",
+    "DOM_01749": "nonfloor-first-hit-terminal-flux",
+    "DOM_01750": "nonfloor-first-hit-terminal-flux",
+    "DOM_01751": "nonfloor-first-hit-terminal-flux",
+    "DOM_01752": "nonfloor-first-hit-terminal-flux",
+    "DOM_01753": "nonfloor-first-hit-terminal-flux"
+  },
+  "reviewedTriangles": [
+    {
+      "index": 54,
+      "identity": [
+        "DOM_01724",
+        6
+      ],
+      "triangleSha256": "6fc6c987b089d697667d264f50f02ab5c7b0532b9b7f8f75913999d68c3973a5"
+    },
+    {
+      "index": 55,
+      "identity": [
+        "DOM_01724",
+        7
+      ],
+      "triangleSha256": "12c5b1c29fa54fe41dc69bfe34149be7ed2897a6aff38c10000b4263d88fbf9a"
+    },
+    {
+      "index": 342,
+      "identity": [
+        "DOM_01749",
+        6
+      ],
+      "triangleSha256": "190a8c8c404b1f00a860f068d25ab4c8074079bb8e5085f1c5d814e710c421dc"
+    },
+    {
+      "index": 343,
+      "identity": [
+        "DOM_01749",
+        7
+      ],
+      "triangleSha256": "ba7ab1e1146192932d6b60280a0ca7c6be650a29a817c9f08c99c248b746969d"
+    },
+    {
+      "index": 354,
+      "identity": [
+        "DOM_01750",
+        6
+      ],
+      "triangleSha256": "7609a46978ad40e58a7ac4660432934ce60e41a6bd5c81540cb5d66d192bf4f6"
+    },
+    {
+      "index": 355,
+      "identity": [
+        "DOM_01750",
+        7
+      ],
+      "triangleSha256": "464bc6744ee005443a1ea79b6dc503f293036119e6474faa0861f34f78e2647a"
+    },
+    {
+      "index": 366,
+      "identity": [
+        "DOM_01751",
+        6
+      ],
+      "triangleSha256": "aa050b690feb3ffc700c0f47ea44ab34fd4b94727caa4db0868b85fd1dd07988"
+    },
+    {
+      "index": 367,
+      "identity": [
+        "DOM_01751",
+        7
+      ],
+      "triangleSha256": "dd336644c1fedc12aa96c9ebea2986fcb396ac0dc389a002c2f7a0d5e9a09f1d"
+    },
+    {
+      "index": 378,
+      "identity": [
+        "DOM_01752",
+        6
+      ],
+      "triangleSha256": "45d921e2d29902081fd4d2ae4617b9a11cc93c07c146180b50a16ccb51c2aff8"
+    },
+    {
+      "index": 379,
+      "identity": [
+        "DOM_01752",
+        7
+      ],
+      "triangleSha256": "5fb1fbd1404511b36dd8987bd2bce693652ed80a74d798a67c5d8555e3ce427f"
+    },
+    {
+      "index": 390,
+      "identity": [
+        "DOM_01753",
+        6
+      ],
+      "triangleSha256": "9c56558790224c90d4b222ffb55ffbfc662cbe9eec6f951e28ff69b378f43ee6"
+    },
+    {
+      "index": 391,
+      "identity": [
+        "DOM_01753",
+        7
+      ],
+      "triangleSha256": "c779b75c3981fd067595cd992bfea4022c0de64f47baa2e46a5d7e4538fce791"
+    }
+  ],
+  "reviewedDirectedPairs": [
+    [
+      54,
+      342
+    ],
+    [
+      54,
+      343
+    ],
+    [
+      54,
+      354
+    ],
+    [
+      54,
+      355
+    ],
+    [
+      54,
+      366
+    ],
+    [
+      54,
+      367
+    ],
+    [
+      54,
+      378
+    ],
+    [
+      54,
+      379
+    ],
+    [
+      54,
+      390
+    ],
+    [
+      54,
+      391
+    ],
+    [
+      55,
+      342
+    ],
+    [
+      55,
+      343
+    ],
+    [
+      55,
+      354
+    ],
+    [
+      55,
+      355
+    ],
+    [
+      55,
+      366
+    ],
+    [
+      55,
+      367
+    ],
+    [
+      55,
+      378
+    ],
+    [
+      55,
+      379
+    ],
+    [
+      55,
+      390
+    ],
+    [
+      55,
+      391
+    ]
+  ],
+  "unexplainedMismatchThreshold": 0.001,
+  "originalExactIdentityMismatchThresholdUnchanged": true,
+  "floorEquivalenceAllowed": false,
+  "policyScope": "Diagnostic nonfloor first-hit terminal flux only. Wall and coping source object, triangle, material and BRDF identities remain distinct; no production consumer or floor equivalence."
+}

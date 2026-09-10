@@ -1,0 +1,23 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.2-diagnostic",
+  "FriendlyName": "Brezi Caustics Probe",
+  "Description": "Isolated source-triangle first-refraction HDR floor atlas; no production light binding.",
+  "Category": "Rendering",
+  "EnabledByDefault": false,
+  "CanContainContent": false,
+  "Modules": [
+    {
+      "Name": "BreziCausticsProbe",
+      "Type": "Runtime",
+      "LoadingPhase": "PostConfigInit",
+      "PlatformAllowList": [
+        "Mac"
+      ]
+    }
+  ],
+  "SupportedTargetPlatforms": [
+    "Mac"
+  ]
+}

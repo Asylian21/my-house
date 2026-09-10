@@ -1,0 +1,110 @@
+{
+  "originalUrl": "https://ambientcg.com/get?file=Grass004_4K-JPG.zip",
+  "resolvedUrl": "https://acg-download.struffelproductions.com/file/ambientCG-Web/download/Grass004_8f7ZrdgN/Grass004_4K-JPG.zip",
+  "remoteFileId": "4_z753f349018de0fd087a8061b_f1145a09d5a6df2fd_d20251106_m090715_c003_v0312032_t0052_u01762420035940",
+  "files": [
+    {
+      "zipMember": "Grass004_4K-JPG.mtlx",
+      "bytes": 2257,
+      "crc32": "2df171ed",
+      "sha256": "bfd2706f79d0a92c5891b4ef7da8b0b75329e02108ffb05bbb286bef11912ffd"
+    },
+    {
+      "zipMember": "Grass004_4K-JPG.tres",
+      "bytes": 1015,
+      "crc32": "b4c79896",
+      "sha256": "3a35f9cd112d783b8d369c9ed6e8c454b9dc117777fe1f1c5ec06aa2413175bd"
+    }
+  ],
+  "bytesTransferred": 4755,
+  "ranges": [
+    {
+      "range": [
+        151897971,
+        151897992
+      ],
+      "bytes": 22,
+      "sha256": "9dfd290cddab26216d23084646558913ff2bbc879d5b59091255c71903986186"
+    },
+    {
+      "range": [
+        151897951,
+        151897970
+      ],
+      "bytes": 20,
+      "sha256": "de47c9b27eb8d300dbb5f2c353e632c393262cf06340c4fa7f1b40c4cbd36f90"
+    },
+    {
+      "range": [
+        151896749,
+        151897970
+      ],
+      "bytes": 1222,
+      "sha256": "1bf94b1168fd9f2a63d1a8065c7b182b402c25cd949e148d98400f052e4eae9b"
+    },
+    {
+      "range": [
+        151346196,
+        151346225
+      ],
+      "bytes": 30,
+      "sha256": "b14f82cd628adb4f2e990bb01338d0a42e6cb32ac21f11ddc8536dbbe9efb9f3"
+    },
+    {
+      "range": [
+        151346226,
+        151346245
+      ],
+      "bytes": 20,
+      "sha256": "a1f34f248b0327e1c3f1767c096cc83fb6ae9f1072bd1806f139c8c273927e81"
+    },
+    {
+      "range": [
+        151346246,
+        151346303
+      ],
+      "bytes": 58,
+      "sha256": "25800082627ec1423d79eadd3bbed1fbf46833ff77cf84331c860111a2b0e8cf"
+    },
+    {
+      "range": [
+        151346304,
+        151348560
+      ],
+      "bytes": 2257,
+      "sha256": "bfd2706f79d0a92c5891b4ef7da8b0b75329e02108ffb05bbb286bef11912ffd"
+    },
+    {
+      "range": [
+        151348561,
+        151348590
+      ],
+      "bytes": 30,
+      "sha256": "18fa2fc4c0e3e60eb15d6cef257017e062393a51db9af32ad9c404bf9b9a50a5"
+    },
+    {
+      "range": [
+        151348591,
+        151348610
+      ],
+      "bytes": 20,
+      "sha256": "c825699c04ca65b48c70b1148a33111dacae5f32a58e773cbfc3520bac06e0f5"
+    },
+    {
+      "range": [
+        151348611,
+        151348671
+      ],
+      "bytes": 61,
+      "sha256": "7a1283bb43a6c1e38ec0eea4e5c48eff311897a64316b993eae8671876825ca9"
+    },
+    {
+      "range": [
+        151348672,
+        151349686
+      ],
+      "bytes": 1015,
+      "sha256": "3a35f9cd112d783b8d369c9ed6e8c454b9dc117777fe1f1c5ec06aa2413175bd"
+    }
+  ]
+}

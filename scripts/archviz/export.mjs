@@ -9,10 +9,22 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import proj4 from "proj4";
 import { serializeObj, classify } from "./geometry.mjs";
+import { buildHiddenCollisionGlb } from "../unreal/hidden-collision-export.mjs";
+import gltfValidator from "gltf-validator";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = resolve(root, process.env.ARCHVIZ_OUTPUT ?? "output/archviz");
 await mkdir(output, { recursive: true });
+async function sourceHashes() {
+  const names = (await readdir(resolve(root, "lib")))
+    .filter((name) => name.endsWith(".ts")).sort().map((name) => `lib/${name}`);
+  names.push("scripts/archviz/export.mjs", "scripts/archviz/scene-export.ts", "scripts/archviz/geometry.mjs", "scripts/unreal/hidden-collision-export.mjs", "scripts/unreal/interior-lighting.mjs", "package-lock.json");
+  return Object.fromEntries(await Promise.all(names.map(async (name) => [name,
+    createHash("sha256").update(await readFile(resolve(root, name))).digest("hex")])));
+}
+// Capture a stable input snapshot before Vite reads modules, and reject edits
+// during capture rather than assigning fresh hashes to an older loaded scene.
+const capturedSourceFiles = await sourceHashes();
 const server = await createServer({
   root,
   configFile: false,
@@ -47,10 +59,17 @@ try {
     timeout: 180000,
   });
   const data = await page.evaluate(() => window.captureArchviz());
+  if (JSON.stringify(await sourceHashes()) !== JSON.stringify(capturedSourceFiles)) {
+    throw new Error("Source changed during scene capture; rerun the export");
+  }
   const manifest = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim(),
+    sourceWorktreeStatus: execFileSync("git", ["status", "--short", "--", "lib", "scripts/archviz"], {
       cwd: root,
       encoding: "utf8",
     }).trim(),
@@ -64,14 +83,7 @@ try {
     objects: [],
     materials: {},
   };
-  manifest.sourceFiles = {};
-  for (const name of (await readdir(resolve(root, "lib")))
-    .filter((n) => n.endsWith(".ts"))
-    .sort()) {
-    manifest.sourceFiles[`lib/${name}`] = createHash("sha256")
-      .update(await readFile(resolve(root, "lib", name)))
-      .digest("hex");
-  }
+  manifest.sourceFiles = capturedSourceFiles;
   // EPSG:5514 S-JTSK/Krovak East North (same frame as twin-site).
   proj4.defs(
     "EPSG:5514",
@@ -120,6 +132,18 @@ try {
     resolve(output, "scene.json"),
     JSON.stringify(manifest, null, 2),
   );
+  // Independent supplemental namespace: never append these hulls to serializeObj(data.meshes).
+  const hiddenCapture = { mainObjSha256: manifest.objSha256, colliders: data.hiddenCollisionMeshes };
+  const hidden = buildHiddenCollisionGlb(manifest, hiddenCapture,
+    createHash("sha256").update(await readFile(resolve(output, "scene.json"))).digest("hex"));
+  const hiddenValidation = await gltfValidator.validateBytes(new Uint8Array(hidden.glb), { maxIssues: 0 });
+  if (hiddenValidation.issues.numErrors || hiddenValidation.issues.numWarnings || hiddenValidation.issues.truncated)
+    throw new Error("Hidden collision GLB did not pass full Khronos validation");
+  await writeFile(resolve(output, "hidden-collision-source.json"), JSON.stringify(hiddenCapture));
+  await writeFile(resolve(output, "brezi-collision-only.glb"), hidden.glb);
+  await writeFile(resolve(output, "hidden-collision.json"), JSON.stringify({ ...hidden.contract,
+    sourceCaptureSha256: createHash("sha256").update(JSON.stringify(hiddenCapture)).digest("hex"),
+    gltfValidation: hiddenValidation.issues }, null, 2));
   const mtl = Object.entries(manifest.materials)
     .map(
       ([id, m]) =>

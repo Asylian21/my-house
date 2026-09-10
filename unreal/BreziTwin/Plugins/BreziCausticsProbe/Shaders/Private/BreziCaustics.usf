@@ -1,0 +1,151 @@
+#include "/Engine/Private/Common.ush"
+// All geometric quantities are UE axes in metres, not translated camera space.
+struct TriangleData { float4 A; float4 B; float4 C; };
+struct NodeData { float4 Low; float4 High; float4 Meta; };
+struct PhotonData { float4 HitAndStatus; float4 PowerAndPath; float4 Metadata; };
+StructuredBuffer<TriangleData> Triangles;
+StructuredBuffer<NodeData> Nodes;
+StructuredBuffer<uint> LeafIndices;
+RWStructuredBuffer<PhotonData> RWPhotons;
+StructuredBuffer<PhotonData> Photons;
+// Exact float32 constants read from the saved water material graph.
+float4 WaveSpatialTime[12]; // position cycles/cm xyz, signed cycles/second
+float4 WaveSlopePhase[12]; // signed world-normal slope xyz, phase cycles
+float3 SunDirection;
+float3 Extinction;
+float4 Aperture; // min x,y and size x,y
+float WaterZ;
+float FloorZ;
+uint FloorObjectIndex;
+uint2 LaunchSize;
+uint2 AtlasSize;
+#if BREZI_TRANSPORT_OPAQUE
+struct IncomingResult { float4 HitPositionAndDistanceCm; uint4 NativeIdentity; uint4 State; };
+StructuredBuffer<IncomingResult> IncomingVisibility;
+StructuredBuffer<uint> TransportGates;
+RWStructuredBuffer<float4> RWTransportGPUUniform;
+#endif
+
+bool BoxHit(float3 o, float3 d, NodeData node, float limit)
+{
+    float low = 0, high = limit;
+    [unroll] for (uint i=0; i<3; ++i)
+    {
+        if (abs(d[i]) < 1e-12) { if (o[i] < node.Low[i]-1e-6 || o[i] > node.High[i]+1e-6) return false; }
+        else
+        {
+            float a=(node.Low[i]-o[i])/d[i], b=(node.High[i]-o[i])/d[i];
+            low=max(low,min(a,b)-1e-6); high=min(high,max(a,b)+1e-6);
+            if (low>high) return false;
+        }
+    }
+    return true;
+}
+
+[numthreads(8,8,1)]
+void TraceCS(uint3 dispatch : SV_DispatchThreadID)
+{
+    if (any(dispatch.xy >= LaunchSize)) return;
+    uint index=dispatch.y*LaunchSize.x+dispatch.x;
+#if BREZI_TRANSPORT_OPAQUE
+    if (index==0) RWTransportGPUUniform[0]=float4(View.GameTime,View.PreExposure,0,0);
+#endif
+    float2 xy=Aperture.xy+(float2(dispatch.xy)+.5)/float2(LaunchSize)*Aperture.zw;
+    float3 origin=float3(xy,WaterZ), incident=normalize(SunDirection);
+    float3 normalSum=0;
+    [unroll] for (uint j=0;j<12;++j)
+    {
+        float4 spatialTime=WaveSpatialTime[j], slopePhase=WaveSlopePhase[j];
+        float phase=(dot(spatialTime.xyz,origin*100)+View.GameTime*spatialTime.w)+slopePhase.w;
+        normalSum+=slopePhase.xyz*cos(2*PI*phase);
+    }
+    float3 normal=normalize(normalSum+float3(0,0,1));
+    float ci=-dot(incident,normal), eta=1/1.333;
+    PhotonData photon=(PhotonData)0;
+    photon.HitAndStatus.w=3; photon.Metadata=float4(0,-1,-1,View.GameTime);
+    if (ci<=0 || incident.z>=0) { RWPhotons[index]=photon; return; }
+    float ct=sqrt(max(0,1-eta*eta*(1-ci*ci)));
+    float3 direction=eta*incident+(eta*ci-ct)*normal;
+    float rs=(ci-1.333*ct)/(ci+1.333*ct), rp=(ct-1.333*ci)/(ct+1.333*ci);
+    float fresnel=.5*(rs*rs+rp*rp);
+    float packet=-incident.z*Aperture.z*Aperture.w/(LaunchSize.x*LaunchSize.y);
+#if BREZI_TRANSPORT_OPAQUE
+    // Preserve N and all receiver geometry/path evidence, including blocked rays.
+    // The separate dispatch has completed before this SRV read. Incomplete is never clear.
+    IncomingResult incoming=IncomingVisibility[index];
+    if (TransportGates[0]!=0 || incoming.State.x!=0 || incoming.State.w!=1) packet=0;
+#endif
+    photon.Metadata.x=fresnel;
+    photon.HitAndStatus.w=2; // escaped: retain transmitted power, never send it to floor
+    photon.PowerAndPath=float4(packet*(1-fresnel).xxx,0);
+    if (direction.z>=0) { photon.HitAndStatus.w=3; RWPhotons[index]=photon; return; }
+    uint stack[64]; uint top=1; stack[0]=0; float closest=1e20; int hit=-1;
+    while (top>0)
+    {
+        uint nodeIndex=stack[--top]; NodeData node=Nodes[nodeIndex];
+        if (!BoxHit(origin,direction,node,closest)) continue;
+        if (node.Meta.w==0)
+        {
+            if (top+2>64) { photon.HitAndStatus.w=4; RWPhotons[index]=photon; return; }
+            stack[top++]=(uint)node.Meta.x; stack[top++]=(uint)node.Meta.y; continue;
+        }
+        for (uint k=0;k<(uint)node.Meta.w;++k)
+        {
+            uint ti=LeafIndices[(uint)node.Meta.z+k]; TriangleData tri=Triangles[ti];
+            float3 e1=tri.B.xyz-tri.A.xyz, e2=tri.C.xyz-tri.A.xyz;
+            float3 p=cross(direction,e2); float det=dot(e1,p);
+            if (abs(det)<1e-10) continue;
+            float inv=1/det;float3 delta=origin-tri.A.xyz;float u=dot(delta,p)*inv;
+            if (u < -1e-6 || u > 1+1e-6) continue;
+            float3 q=cross(delta,e1);float v=dot(direction,q)*inv;
+            if (v < -1e-6 || u+v>1+1e-6) continue;
+            float distance=dot(e2,q)*inv;
+            if (distance>1e-6 && distance<closest) {closest=distance;hit=(int)ti;}
+        }
+    }
+    if (hit>=0)
+    {
+        float3 location=origin+closest*direction; TriangleData tri=Triangles[hit];
+        photon.Metadata.y=tri.A.w; photon.Metadata.z=hit;
+        photon.HitAndStatus=float4(location,1); // source nonfloor first hit retained
+        if ((uint)tri.A.w==FloorObjectIndex && abs(location.z-FloorZ)<.0005) photon.HitAndStatus.w=0;
+        photon.PowerAndPath=float4(packet*(1-fresnel)*exp(-Extinction*closest),closest);
+    }
+    RWPhotons[index]=photon;
+}
+
+struct SplatVarying
+{
+    float4 Position : SV_POSITION;
+    nointerpolation float2 Center : TEXCOORD0;
+    nointerpolation float4 Density : TEXCOORD1;
+};
+
+SplatVarying SplatVS(uint vertexId : SV_VertexID)
+{
+    uint photonIndex=vertexId/6; uint corner=vertexId%6;
+    PhotonData p=Photons[photonIndex]; SplatVarying output=(SplatVarying)0;
+    if (p.HitAndStatus.w != 0) { output.Position=float4(2,2,0,1); return output; }
+    float2 center=(p.HitAndStatus.xy-Aperture.xy)/Aperture.zw*float2(AtlasSize)-.5;
+    float2 base=floor(center);float2 fraction=center-base;
+    float sum=0;
+    [unroll] for (uint y=0;y<2;++y) [unroll] for (uint x=0;x<2;++x)
+    {
+        float2 pixel=base+float2(x,y);
+        if (all(pixel>=0) && all(pixel<float2(AtlasSize)))
+            sum+=(x?fraction.x:1-fraction.x)*(y?fraction.y:1-fraction.y);
+    }
+    static const float2 Corners[6]={float2(0,0),float2(0,2),float2(2,0),float2(2,0),float2(0,2),float2(2,2)};
+    float2 position=base+Corners[corner];
+    output.Position=float4(position/float2(AtlasSize)*float2(2,-2)+float2(-1,1),0,1);
+    output.Center=center;
+    float pixelArea=Aperture.z*Aperture.w/(AtlasSize.x*AtlasSize.y);
+    output.Density=float4(p.PowerAndPath.rgb/(pixelArea*max(sum,1e-20)),1/max(sum,1e-20));
+    return output;
+}
+
+float4 SplatPS(SplatVarying input) : SV_Target0
+{
+    float2 weight=max(0,1-abs((input.Position.xy-.5)-input.Center));
+    return input.Density*(weight.x*weight.y);
+}

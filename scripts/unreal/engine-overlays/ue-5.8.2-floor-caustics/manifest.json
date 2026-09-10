@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "status": "reviewed-source-promotion-staging-native-delivery-pending",
+  "engineVersion": {
+    "MajorVersion": 5,
+    "MinorVersion": 8,
+    "PatchVersion": 2,
+    "Changelist": 56702186,
+    "CompatibleChangelist": 55116800,
+    "IsLicenseeVersion": 0,
+    "IsPromotedBuild": 1,
+    "BranchName": "++UE5+Release-5.8"
+  },
+  "engineBuildVersionSha256": "ff99fc3dd98e7c7fd2f5700334bc792dfb7baced3828cdee32940bb69581a6a4",
+  "patchSha256": "5bff480d71d4b6b212751a01400392d879ba6cda16069048b546eb2577fafb4e",
+  "publicHeaderSha256": "0db646fb2813cd4ba7f7d03c921822bc55b9992a836c4904368c71386d9c8c52",
+  "files": [
+    {
+      "path": "Engine/Shaders/Private/BasePassPixelShader.usf",
+      "baseSha256": "ba8b1c5efd4fba2e67bdc22b16820b004102f2123b8bbaf66dff87cc2d17e1ef",
+      "resultSha256": "7040c3a6ab8d23b9ee488517b615eeabecfae0855d35c2e9c57cab1b97ebdfe9"
+    },
+    {
+      "path": "Engine/Shaders/Private/DeferredLightPixelShaders.usf",
+      "baseSha256": "b70428aed24d0089db7f5440fe0f3be92ffbcf62291ab1117f52e9b09e4897fe",
+      "resultSha256": "94f30ef9a82f29df453bfb9e29d6d583e64750af620152bd4ec2dd773167a414"
+    },
+    {
+      "path": "Engine/Shaders/Private/FloorCaustics.usf",
+      "baseSha256": null,
+      "resultSha256": "0749d7f1e0086153f55b0aabf530dccdd01d0efeacef2314525ea2b833c2fab5"
+    },
+    {
+      "path": "Engine/Shaders/Private/MobileBasePassPixelShader.usf",
+      "baseSha256": "ebaf15aaa486b5641632d731347f637563c692daf7f4b0466e5a084f55c25e7e",
+      "resultSha256": "09b75765e40b9e3fc90cd560b2e5c27d97c7e0b97050bb19f3ef6bdc405bda12"
+    },
+    {
+      "path": "Engine/Shaders/Private/SingleLayerWaterShading.ush",
+      "baseSha256": "a130a2f7b919a2c22175abc2ecd43c7c03429c8ac5a97d1448248c89ba5d07ce",
+      "resultSha256": "ec9ddd45e6bf609bc72afd1e47364ff04da6b394080b32ae74d3fb227485ecc0"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Private/DeferredShadingRenderer.cpp",
+      "baseSha256": "614c74f45d025b73cbbb215485fcb0e5cfa92a65f9faaeed3b68e0f43980795b",
+      "resultSha256": "f4f49c782e6e9c3536d56a6b40ce8a50bd1d61d4325d3ff1053f8482e30554fd"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Private/FloorCausticsRendering.cpp",
+      "baseSha256": null,
+      "resultSha256": "86120ef7a661ddfcc5a76f35410c5d868eaa1dad3c3d8a32abb2c944d6965360"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Private/FloorCausticsRenderingInternal.h",
+      "baseSha256": null,
+      "resultSha256": "35e7d39e6ce1782a6d4d07022eaecf9eca4b538b63157dcb0fadeb20540080b8"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Private/LightRendering.cpp",
+      "baseSha256": "44fc8a637fd0bc68645a09b1bc5a354b0aaab9e3a670e3ea1c05321908250f54",
+      "resultSha256": "a43f94cac94e792362ea0dd716e077cb077d659a79db36cfd4cbccc5716ffd0b"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Private/SingleLayerWaterRendering.cpp",
+      "baseSha256": "8ef5e74976091ba592d50bfe19a5587e292097e517ab44fd9765483285392e6a",
+      "resultSha256": "69289207860eb7faf59aa127233acb29f8a9912f01480d9d673d6cf45157bbd8"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Public/FloorCausticsRendering.h",
+      "baseSha256": null,
+      "resultSha256": "0db646fb2813cd4ba7f7d03c921822bc55b9992a836c4904368c71386d9c8c52"
+    },
+    {
+      "path": "Engine/Source/Runtime/Renderer/Renderer.Build.cs",
+      "baseSha256": "baddd62c02f8b08c5b0542a69c1f1777932def056250be440c37dfdc6c82c322",
+      "resultSha256": "a8f2bf1a35c6a3679ab2018b89a1776811bdcbbc3605532887fef058e2c8c044"
+    }
+  ]
+}

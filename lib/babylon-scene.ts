@@ -1,4 +1,6 @@
 import { HOUSE } from "./twin-active-house";
+import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
+import { DECK_BOARD_LAYOUT, planDeckBoards } from "./deck-boards";
 import { resolveWalkFloor } from "./babylon-walk-picking";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 import type { FreeCameraMouseInput } from "@babylonjs/core/Cameras/Inputs/freeCameraMouseInput";
@@ -108,7 +110,7 @@ import {
   type RoofVertexMm,
 } from "./twin-roof";
 import { slatCenterDistancesMm } from "./twin-fence";
-import { buildInterior } from "./babylon-interior";
+import { buildInterior, createUpholsteredBox } from "./babylon-interior";
 import { AvatarController } from "./babylon-avatar";
 import { WalkDestination, easeWalkHeading, turnWalkHeading, type WalkTurn } from "./twin-walk-navigation";
 import { ArchvizPresentation } from "./babylon-archviz";
@@ -203,6 +205,12 @@ export interface SceneSnapshot {
 
 const CENTER_X_M = SCENE_CENTER_MM.x * MM_TO_M;
 const GROUND_Y = -0.035;
+// Authored flat background beyond the surveyed parcel; dimensions are not survey data.
+const VISUALIZATION_CONTEXT = {
+  outerExtentMm: 5_000_000,
+  cameraFarM: 20_000,
+  skyboxSizeM: 20_000,
+} as const;
 /** Cascade horizon for the exterior: reaches the far parcel boundary and road. */
 const EXTERIOR_SHADOW_MAX_Z = 78;
 
@@ -377,7 +385,7 @@ function createFlatPolygon(
   return mesh;
 }
 
-function createGradedPolygon(
+export function createGradedPolygon(
   scene: Scene,
   name: string,
   ring: readonly Point2Mm[],
@@ -407,10 +415,13 @@ function createGradedPolygon(
   const triangulated = earcut(planar, undefined, 2);
   const indices: number[] = [];
   for (let index = 0; index < triangulated.length; index += 3) {
+    // zM mirrors plan Y. Preserve Earcut's ground-facing order, as in
+    // createFlatPolygonWithHoles, so ComputeNormals points above the slope.
+    // Reversing it also exports downward normals and back-facing ground.
     indices.push(
       triangulated[index],
-      triangulated[index + 2],
       triangulated[index + 1],
+      triangulated[index + 2],
     );
   }
   const normals = new Array(positions.length).fill(0);
@@ -430,6 +441,12 @@ function createGradedPolygonEdgeSkirt(
   ring: readonly Point2Mm[],
   elevationForPoint: (point: Point2Mm) => number,
   baseElevationM: number,
+  publicShoulder?: {
+    minYmm: number;
+    maxYmm: number;
+    elevationForPoint: (point: Point2Mm) => number;
+    transitionCurbs: readonly PlanBoxInstance[];
+  },
 ) {
   const openRing =
     ring.length > 1 &&
@@ -440,18 +457,8 @@ function createGradedPolygonEdgeSkirt(
   const positions: number[] = [];
   const indices: number[] = [];
 
-  for (let index = 0; index < openRing.length; index += 1) {
-    const start = openRing[index];
-    const end = openRing[(index + 1) % openRing.length];
-    const topStart = elevationForPoint(start);
-    const topEnd = elevationForPoint(end);
+  const appendFace = (quad: number[]) => {
     const vertexOffset = positions.length / 3;
-    const quad = [
-      xM(start.x), topStart, zM(start.y),
-      xM(end.x), topEnd, zM(end.y),
-      xM(end.x), baseElevationM, zM(end.y),
-      xM(start.x), baseElevationM, zM(start.y),
-    ];
     // Duplicate each face with the opposite winding. The restraints are visible
     // from both the grass and paving sides without changing shared materials.
     positions.push(...quad, ...quad);
@@ -469,6 +476,58 @@ function createGradedPolygonEdgeSkirt(
       vertexOffset + 7,
       vertexOffset + 6,
     );
+  };
+
+  for (let index = 0; index < openRing.length; index += 1) {
+    const start = openRing[index];
+    const end = openRing[(index + 1) % openRing.length];
+    const topStart = elevationForPoint(start);
+    const topEnd = elevationForPoint(end);
+    appendFace([
+      xM(start.x), topStart, zM(start.y),
+      xM(end.x), topEnd, zM(end.y),
+      xM(end.x), baseElevationM, zM(end.y),
+      xM(start.x), baseElevationM, zM(start.y),
+    ]);
+
+    // Only the two public front accesses have a higher shoulder beside them.
+    if (!publicShoulder || start.x !== end.x || start.y === end.y) continue;
+    const y0 = Math.max(Math.min(start.y, end.y), publicShoulder.minYmm);
+    const y1 = Math.min(Math.max(start.y, end.y), publicShoulder.maxYmm);
+    if (y1 <= y0) continue;
+    const curbs = publicShoulder.transitionCurbs.filter((curb) =>
+      Math.abs(Math.abs(start.x - curb.centerMm.x) - curb.widthMm / 2) < 0.000001 &&
+      curb.centerMm.y + curb.depthMm / 2 > y0 &&
+      curb.centerMm.y - curb.depthMm / 2 < y1,
+    );
+    const cuts = [...new Set([y0, y1, ...curbs.flatMap((curb) => [
+      Math.max(y0, curb.centerMm.y - curb.depthMm / 2),
+      Math.min(y1, curb.centerMm.y + curb.depthMm / 2),
+    ])])].sort((left, right) => left - right);
+    // Interpolate the actual polygon edge, which has no vertex at parcel Y=0.
+    // Calling elevationForPoint there would invent a different ramp profile.
+    const rampAt = (y: number) => topStart +
+      ((y - start.y) / (end.y - start.y)) * (topEnd - topStart);
+    for (let part = 0; part + 1 < cuts.length; part += 1) {
+      const a = { x: start.x, y: cuts[part] };
+      const b = { x: start.x, y: cuts[part + 1] };
+      const midpointY = (a.y + b.y) / 2;
+      const coveredTop = Math.max(-Infinity, ...curbs
+        .filter((curb) => Math.abs(midpointY - curb.centerMm.y) < curb.depthMm / 2)
+        .map((curb) => (curb.baseElevationMm + curb.heightMm) * MM_TO_M));
+      // Existing lower skirts and end-curb faces already cover the bottom.
+      const lowerA = Math.max(rampAt(a.y), coveredTop);
+      const lowerB = Math.max(rampAt(b.y), coveredTop);
+      const upperA = publicShoulder.elevationForPoint(a);
+      const upperB = publicShoulder.elevationForPoint(b);
+      if (upperA <= lowerA || upperB <= lowerB) continue;
+      appendFace([
+        xM(a.x), upperA, zM(a.y),
+        xM(b.x), upperB, zM(b.y),
+        xM(b.x), lowerB, zM(b.y),
+        xM(a.x), lowerA, zM(a.y),
+      ]);
+    }
   }
 
   const mesh = new Mesh(name, scene);
@@ -889,6 +948,7 @@ export class TwinSceneController {
   private readonly layerMeshes = new Map<LayerId, AbstractMesh[]>();
   private readonly entityMeshes = new Map<string, AbstractMesh[]>();
   private readonly foundationMeshes = new Map<string, Mesh>();
+  private visualizationBackground: Mesh | null = null;
   private readonly materials: Record<string, StandardMaterial>;
   private readonly realisticMaterials: Record<string, PBRMaterial>;
   private readonly larchClones = new Map<string, PBRMaterial>();
@@ -1003,11 +1063,17 @@ export class TwinSceneController {
       () => { sky.isVisible = false; },
     );
     environment.isBlocking = false;
-    const sky = CreateBox("Blender physical sky", { size: 200 }, this.scene);
+    const sky = CreateBox(
+      "Blender physical sky",
+      { size: VISUALIZATION_CONTEXT.skyboxSizeM },
+      this.scene,
+    );
     sky.infiniteDistance = true;
     const skyMaterial = new StandardMaterial("Blender HDR sky", this.scene);
     skyMaterial.backFaceCulling = false;
     skyMaterial.disableLighting = true;
+    // Keep the sky beyond the distant ground and out of the scene depth buffer.
+    skyMaterial.disableDepthWrite = true;
     skyMaterial.diffuseColor = Color3.Black();
     skyMaterial.specularColor = Color3.Black();
     const skyTexture = environment.clone();
@@ -1048,7 +1114,7 @@ export class TwinSceneController {
     this.orbitCamera.useNaturalPinchZoom = ORBIT_ZOOM.useNaturalPinchZoom;
     this.orbitCamera.inertia = 0.72;
     this.orbitCamera.minZ = EXTERIOR_RENDER_STABILITY.orbitNearClipM;
-    this.orbitCamera.maxZ = 220;
+    this.orbitCamera.maxZ = VISUALIZATION_CONTEXT.cameraFarM;
     this.orbitCamera.fov = gardenCamera.fov;
     this.orbitCamera.attachControl(canvas, !ORBIT_ZOOM.preventBrowserGesture);
     this.orbitZoomTargetM = this.orbitCamera.radius;
@@ -1068,7 +1134,7 @@ export class TwinSceneController {
     this.flightCamera.angularSensibility = 2600;
     this.flightCamera.inertia = 0.68;
     this.flightCamera.minZ = 0.18;
-    this.flightCamera.maxZ = 220;
+    this.flightCamera.maxZ = VISUALIZATION_CONTEXT.cameraFarM;
     this.flightCamera.fov = this.orbitCamera.fov;
     this.flightCamera.setTarget(this.orbitCamera.target);
     this.flightCamera.detachControl();
@@ -1080,7 +1146,7 @@ export class TwinSceneController {
     );
     this.garageCinematicCamera.inputs.clear();
     this.garageCinematicCamera.minZ = 0.12;
-    this.garageCinematicCamera.maxZ = 220;
+    this.garageCinematicCamera.maxZ = VISUALIZATION_CONTEXT.cameraFarM;
     this.garageCinematicCamera.detachControl();
     this.configureGarageCinematicCamera(
       garageAnimationFrame("park", 0).vehiclePose,
@@ -1093,6 +1159,7 @@ export class TwinSceneController {
       this.castShadow(mesh);
       this.realisticOnly(mesh);
     });
+    this.avatar.camera.maxZ = VISUALIZATION_CONTEXT.cameraFarM;
 
     const ambient = new HemisphericLight(
       "ambient-light",
@@ -1409,25 +1476,9 @@ export class TwinSceneController {
     const cellHeight = 640 / cellRows;
     for (let row = 0; row < cellRows; row += 1) {
       for (let column = 0; column < cellColumns; column += 1) {
-        const gradient = solarContext.createLinearGradient(
-          column * cellWidth,
-          row * cellHeight,
-          (column + 1) * cellWidth,
-          (row + 1) * cellHeight,
-        );
-        gradient.addColorStop(0, row % 2 === 0 ? "#102d43" : "#0c273b");
-        gradient.addColorStop(0.52, "#183d55");
-        gradient.addColorStop(1, "#091e31");
-        solarContext.fillStyle = gradient;
+        // Authored dark-neutral cell appearance; not a measured product color.
+        solarContext.fillStyle = "#121c25";
         solarContext.fillRect(
-          column * cellWidth + cellGap,
-          row * cellHeight + cellGap,
-          cellWidth - cellGap * 2,
-          cellHeight - cellGap * 2,
-        );
-        solarContext.strokeStyle = "rgba(189, 216, 225, 0.36)";
-        solarContext.lineWidth = 2;
-        solarContext.strokeRect(
           column * cellWidth + cellGap,
           row * cellHeight + cellGap,
           cellWidth - cellGap * 2,
@@ -2977,16 +3028,17 @@ export class TwinSceneController {
   private buildStreetAndSite() {
     const paverRepeatMm =
       ROAD_CONTEXT.surfaceFinish.visualModuleMm.length * 8;
+    const frontShoulderElevationForPoint = (point: Point2Mm) =>
+      -0.02 -
+      ((point.y - ROAD_CONTEXT.frontAsphaltEdgeYmm) /
+        Math.abs(ROAD_CONTEXT.frontAsphaltEdgeYmm)) *
+        0.015;
     for (const [index, ring] of ROAD_CONTEXT.frontReserveSurfacePolygonsMm.entries()) {
       const roadReserve = createGradedPolygon(
         this.scene,
         `Cestná rezerva 6012/1 · hlinená krajnica ${index + 1} s otvormi pre vstupy`,
         ring,
-        (point) =>
-          -0.02 -
-          ((point.y - ROAD_CONTEXT.frontAsphaltEdgeYmm) /
-            Math.abs(ROAD_CONTEXT.frontAsphaltEdgeYmm)) *
-            0.015,
+        frontShoulderElevationForPoint,
       );
       this.appearance(
         roadReserve,
@@ -3367,6 +3419,12 @@ export class TwinSceneController {
           surface.polygonMm,
           elevationForPoint,
           -0.12,
+          isStreetRamp ? {
+            minYmm: ROAD_CONTEXT.frontAsphaltEdgeYmm,
+            maxYmm: 0,
+            elevationForPoint: frontShoulderElevationForPoint,
+            transitionCurbs: frontTransitionCurbs,
+          } : undefined,
         );
         this.appearance(
           edgeRestraint,
@@ -4543,16 +4601,18 @@ export class TwinSceneController {
     this.register(wingGable, "building", HOUSE.id);
 
     const gableRise = ridge - eave;
-    for (const [index, lamp] of [
-      { x: 22600, elevationM: 3.85 },
-      { x: 26400, elevationM: 3.85 },
-    ].entries()) {
+    const terraceLamp = EXTERIOR_LIGHTING_SOURCE_GEOMETRY.terrace;
+    for (const [index, x] of terraceLamp.xPositionsMm.entries()) {
+      const lamp = { x, elevationM: terraceLamp.baseElevationMm * MM_TO_M };
+      const design = EXTERIOR_LIGHTING.fixtures[index];
       const fixture = CreateCylinder(
-        `Nástenné svietidlo štítu ${index + 1} · ilustračný koncept`,
-        { height: 0.17, diameter: 0.07, tessellation: 24 },
+        design.geometry.sourceName,
+        { height: terraceLamp.lengthMm * MM_TO_M, diameter: terraceLamp.diameterMm * MM_TO_M, tessellation: terraceLamp.tessellation },
         this.scene,
       );
-      fixture.position.set(xM(lamp.x), lamp.elevationM + 0.085, zM(gableYmm + 55));
+      fixture.position.set(xM(lamp.x), lamp.elevationM + terraceLamp.lengthMm * MM_TO_M / 2,
+        zM(gableYmm + terraceLamp.bodyOffsetFromGableMm));
+      fixture.metadata = { ...(fixture.metadata ?? {}), exteriorLightId: design.id };
       fixture.material = this.realisticMaterials.fenceTrack;
       fixture.isPickable = false;
       this.realisticOnly(fixture);
@@ -4561,11 +4621,11 @@ export class TwinSceneController {
       const bracket = boxAtPlan(
         this.scene,
         `Nástenné svietidlo štítu ${index + 1} · konzola`,
-        { x: lamp.x, y: gableYmm + 24 },
-        24,
-        48,
-        0.03,
-        lamp.elevationM + 0.07,
+        { x: lamp.x, y: gableYmm + terraceLamp.bracket.offsetFromGableMm },
+        terraceLamp.bracket.widthMm,
+        terraceLamp.bracket.depthMm,
+        terraceLamp.bracket.heightMm * MM_TO_M,
+        lamp.elevationM + terraceLamp.bracket.baseOffsetMm * MM_TO_M,
       );
       bracket.material = this.realisticMaterials.fenceTrack;
       bracket.isPickable = false;
@@ -5806,11 +5866,8 @@ export class TwinSceneController {
   }
 
   private buildDeckZone(zone: DeckZone) {
-    const plankMm = 145;
-    const gapMm = 8;
-    const stepMm = plankMm + gapMm;
-    const thicknessM = 0.028;
-    const topM = 0.02;
+    const thicknessM = DECK_BOARD_LAYOUT.thicknessMm * MM_TO_M;
+    const topM = DECK_BOARD_LAYOUT.topMm * MM_TO_M;
     const material = this.realisticMaterials.deck.clone(
       `${zone.id} · PBR materiál`,
     ) as PBRMaterial;
@@ -5854,53 +5911,33 @@ export class TwinSceneController {
     }
 
     const planks: Mesh[] = [];
-    let rowIndex = 0;
-    for (const rect of zone.rectsMm) {
-      for (let y = rect.y0 + gapMm; y < rect.y1 - 40; y += stepMm) {
-        const y1 = Math.min(y + plankMm, rect.y1);
-        const totalLengthMm = rect.x1 - rect.x0;
-        const segmentCount = Math.max(1, Math.ceil(totalLengthMm / 3_600));
-        const boundaries = [rect.x0];
-        for (let segment = 1; segment < segmentCount; segment += 1) {
-          const staggerMm = (((rowIndex + segment) % 3) - 1) * 170;
-          boundaries.push(
-            rect.x0 + (totalLengthMm * segment) / segmentCount + staggerMm,
-          );
-        }
-        boundaries.push(rect.x1);
-        for (let segment = 0; segment < boundaries.length - 1; segment += 1) {
-          const segmentStartMm = boundaries[segment] + (segment > 0 ? 4 : 0);
-          const segmentEndMm =
-            boundaries[segment + 1] -
-            (segment < boundaries.length - 2 ? 4 : 0);
-          const lengthM = (segmentEndMm - segmentStartMm) * MM_TO_M;
-          const u0 = (rowIndex * 0.317 + segment * 0.19) % 0.72;
-          const uSpan = Math.min(0.98 - u0, Math.max(0.22, lengthM / 4.1));
-          const v0 = (rowIndex % 4) * 0.25;
-          const faceUV: Vector4[] = [];
-          for (let face = 0; face < 6; face += 1) {
-            faceUV.push(new Vector4(u0, v0, u0 + uSpan, v0 + 0.24));
-          }
-          const plank = CreateBox(
-            `${zone.label} · doska ${rowIndex + 1}.${segment + 1}`,
-            {
-              width: lengthM,
-              depth: (y1 - y) * MM_TO_M,
-              height: thicknessM,
-              faceUV,
-              wrap: true,
-            },
-            this.scene,
-          );
-          plank.position.set(
-            xM((segmentStartMm + segmentEndMm) / 2),
-            topM - thicknessM / 2,
-            zM((y + y1) / 2),
-          );
-          planks.push(plank);
-        }
-        rowIndex += 1;
+    for (const board of planDeckBoards(zone)) {
+      const { row: rowIndex, segment } = board;
+      const lengthM = (board.x1 - board.x0) * MM_TO_M;
+      const u0 = (rowIndex * 0.317 + segment * 0.19) % 0.72;
+      const uSpan = Math.min(0.98 - u0, Math.max(0.22, lengthM / 4.1));
+      const v0 = (rowIndex % 4) * 0.25;
+      const faceUV: Vector4[] = [];
+      for (let face = 0; face < 6; face += 1) {
+        faceUV.push(new Vector4(u0, v0, u0 + uSpan, v0 + 0.24));
       }
+      const plank = CreateBox(
+        `${zone.label} · doska ${rowIndex + 1}.${segment + 1}`,
+        {
+          width: lengthM,
+          depth: (board.y1 - board.y0) * MM_TO_M,
+          height: thicknessM,
+          faceUV,
+          wrap: true,
+        },
+        this.scene,
+      );
+      plank.position.set(
+        xM((board.x0 + board.x1) / 2),
+        topM - thicknessM / 2,
+        zM((board.y0 + board.y1) / 2),
+      );
+      planks.push(plank);
     }
     if (planks.length === 0) return;
     const merged = Mesh.MergeMeshes(planks, true, true, undefined, false, false);
@@ -5916,7 +5953,8 @@ export class TwinSceneController {
 
   private buildGardenPool() {
     const pool = GARDEN_POOL;
-    const waterSurfaceM = -0.012;
+    const poolLamp = EXTERIOR_LIGHTING_SOURCE_GEOMETRY.pool;
+    const waterSurfaceM = poolLamp.waterSurfaceElevationMm * MM_TO_M;
     const sharedTerraceTopM =
       pool.terraceConnection.sharedTopElevationMm * MM_TO_M;
     const floorTopM = waterSurfaceM - pool.proposedWaterDepthMm * MM_TO_M;
@@ -6144,17 +6182,19 @@ export class TwinSceneController {
       this.register(stair, "street", pool.id);
     }
 
-    for (const [index, offsetMm] of [-1_150, 0, 1_150].entries()) {
+    for (const [index, offsetMm] of poolLamp.offsetsFromCenterXmm.entries()) {
+      const design = EXTERIOR_LIGHTING.fixtures[index + 2];
       const light = CreateCylinder(
-        `${pool.label} · diskrétne zapustené podvodné svetlo ${index + 1}`,
-        { height: 0.022, diameter: 0.135, tessellation: 24 },
+        design.geometry.sourceName,
+        { height: poolLamp.lengthMm * MM_TO_M, diameter: poolLamp.diameterMm * MM_TO_M, tessellation: poolLamp.tessellation },
         this.scene,
       );
       light.position.set(
         xM(pool.centerMm.x + offsetMm),
-        waterSurfaceM - 0.64,
-        zM(pool.centerMm.y + pool.waterWidthMm / 2 - 8),
+        waterSurfaceM - poolLamp.centerBelowWaterMm * MM_TO_M,
+        zM(pool.centerMm.y + pool.waterWidthMm / 2 - poolLamp.insetFromInnerWallMm),
       );
+      light.metadata = { ...(light.metadata ?? {}), exteriorLightId: design.id };
       light.rotation.x = Math.PI / 2;
       light.material = this.realisticMaterials.poolLed;
       light.isPickable = false;
@@ -6998,13 +7038,23 @@ export class TwinSceneController {
   }
 
   private buildGardenFurniture() {
+    // Keep the four existing cushion envelopes; only ease their hard box edges.
+    const cushionAtPlan = (
+      name: string, center: Point2Mm, widthMm: number, depthMm: number,
+      heightM: number, baseM: number,
+    ) => createUpholsteredBox(
+      this.scene, name,
+      { x0: center.x-widthMm/2, x1: center.x+widthMm/2,
+        y0: center.y-depthMm/2, y1: center.y+depthMm/2 },
+      heightM, baseM,
+      0.20 * Math.min(widthMm*MM_TO_M, depthMm*MM_TO_M, heightM),
+    );
     // Two light garden chairs on the loggia deck (reference photograph).
     for (const [index, center] of [
       { x: 8300, y: 12150, r: -0.12 },
       { x: 9500, y: 12250, r: 0.16 },
     ].entries()) {
-      const seat = boxAtPlan(
-        this.scene,
+      const seat = cushionAtPlan(
         `Záhradné kreslo ${index + 1} · ilustračný koncept`,
         center,
         620,
@@ -7018,8 +7068,7 @@ export class TwinSceneController {
       this.realisticOnly(seat);
       this.castShadow(seat);
       this.register(seat, "street");
-      const back = boxAtPlan(
-        this.scene,
+      const back = cushionAtPlan(
         `Operadlo záhradného kresla ${index + 1}`,
         { x: center.x, y: center.y + 300 },
         620,
@@ -7262,6 +7311,60 @@ export class TwinSceneController {
     this.register(sewerTank, "sewer", "OBJ-SEWER-TANK");
   }
 
+  private buildVisualizationBackground() {
+    if (this.visualizationBackground) return;
+    // Keep the existing finite terrain and parcel cutout unchanged. These
+    // four outer strips are visualization context, not surveyed DMR terrain.
+    const extent = VISUALIZATION_CONTEXT.outerExtentMm;
+    const strips = [
+      [-extent, -extent, -120_000, extent],
+      [120_000, -extent, extent, extent],
+      [-120_000, -extent, 120_000, -100_000],
+      [-120_000, 100_000, 120_000, extent],
+    ] as const;
+    const positions: number[] = [];
+    const normals: number[] = [];
+    const uvs: number[] = [];
+    const indices: number[] = [];
+    for (const [minX, minY, maxX, maxY] of strips) {
+      const base = positions.length / 3;
+      for (const [dx, dy] of [
+        [minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY],
+      ]) {
+        positions.push(
+          xM(SCENE_CENTER_MM.x + dx),
+          EXTERIOR_RENDER_STABILITY.contextTerrainElevationM,
+          zM(SCENE_CENTER_MM.y + dy),
+        );
+        normals.push(0, 1, 0);
+        // Extrapolate DOM_00000's original UV frame. Reusing 0..1 on each
+        // strip would stretch the existing 78 x 66 lawn repetitions.
+        uvs.push((dx + 120_000) / 240_000, (dy + 100_000) / 200_000);
+      }
+      // Babylon clockwise front faces with explicit upward surface normals.
+      indices.push(base, base + 2, base + 1, base, base + 3, base + 2);
+    }
+    const mesh = new Mesh("Trávnaté vizualizačné pozadie · plochý kontext 10 km", this.scene);
+    const data = new VertexData();
+    data.positions = positions;
+    data.normals = normals;
+    data.uvs = uvs;
+    data.indices = indices;
+    data.applyToMesh(mesh);
+    mesh.checkCollisions = false;
+    mesh.isPickable = false;
+    mesh.receiveShadows = true;
+    mesh.metadata = {
+      visualizationBackground: true,
+      sourceSurfaceId: "VISUALIZATION-CONTEXT-OUTER-01",
+      provenance: "AUTHORED_FLAT_VISUALIZATION_BACKGROUND_NOT_SURVEYED_TERRAIN",
+    };
+    this.appearance(mesh, this.materials.terrain, this.realisticMaterials.terrain);
+    this.realisticOnly(mesh);
+    // Deliberately no walk-surface tag, collision proxy, or cadastral entity.
+    this.visualizationBackground = mesh;
+  }
+
   private updateFoundations(foundations: readonly FoundationStrip[]) {
     const incoming = new Set(foundations.map((item) => item.id));
     for (const [id, mesh] of this.foundationMeshes) {
@@ -7299,6 +7402,8 @@ export class TwinSceneController {
     this.clearSelection();
     this.snapshot = snapshot;
     this.updateFoundations(snapshot.foundations);
+    // Append after the first foundation update so existing export IDs stay in order.
+    this.buildVisualizationBackground();
     for (const [layer, meshes] of this.layerMeshes) {
       const visible =
         snapshot.visibleLayers[layer] ||
