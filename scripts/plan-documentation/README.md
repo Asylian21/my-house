@@ -18,6 +18,7 @@ Dokumentácia pokrýva prízemie, stavebné otvory, obvodové steny a sedenie na
 - V = výber, H = posun, M = dvojbodové meranie, +/− = zoom, 0 = celý dom, šípky = posun, Escape = zrušenie.
 - Manuál má prehľad domu, listy miestností, terasové vybavenie a voliteľnú prílohu všetkých dielov. Tlač používa vlastné statické pohľady nezávislé od aktuálneho zoomu.
 - SVG je vektorový pôdorys, CSV je úplný súpis rozmerov a výškového osadenia komponentov.
+- Tlačidlo „Export PNG“ na `/koncept-2d?variant=c` vykreslí jeden ucelený výkres A1 (1 : 50, na A3 1 : 100) v konvenciách výkresu D1.1.002: šrafované rezy stien podľa materiálu, červené kóty (šírka otvoru nad čiarou, výška (parapet) pod ňou), razítka miestností, hranica pozemku, terasy 1.13, legenda miestností s povrchmi, legenda materiálov a klasická rozpiska; navyše modulové osi A–F / 1–6, kódy O#/D#/N#/Z# a päť úrovní podrobnosti (L1 obrys → L5 kompletný interiér), farebne aj čiernobielo (`lib/plan-export.ts`, `app/koncept-2d/export-sheet.tsx`).
 
 ## Overenie
 

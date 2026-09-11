@@ -3,12 +3,14 @@
 import { memo, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
-import { ArrowDownToLine, ArrowLeft, ArrowUpRight, BookOpen, Box as BoxIcon, Check, ChevronDown, ChevronRight, CircleHelp, FileSpreadsheet, Focus, Hand, Layers3, List, Maximize2, Minus, MousePointer2, Plus, Printer, Ruler, Search, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowUpRight, BookOpen, Box as BoxIcon, Check, ChevronDown, ChevronRight, CircleHelp, Contrast, FileSpreadsheet, Focus, Hand, ImageDown, Layers3, List, Maximize2, Minus, MousePointer2, Palette, Plus, Printer, Ruler, Search, X } from 'lucide-react';
 import { PLAN_ROOM_NOTES, PLAN_CATEGORIES, PLAN_FULL_BOUNDS, PLAN_ITEMS, PLAN_ITEM_BY_ID, PLAN_MESH_BY_ID, PLAN_ROOMS, fitPlanRect, formatMm, numberSk, rectSize, searchPlanItems, zoomPlanAt, type PlanCategory, type PlanItem } from '@/lib/plan-documentation';
+import { EXPORT_LEVELS, type ExportLevel } from '@/lib/plan-export';
 import type { RectMm } from '@/lib/twin-interior';
 import { HEATING_SOURCES } from '@/lib/technical-design';
 import { Box } from './plan-svg';
 import { ItemMiniature, PlanDimensions, PlanGeometry, ROOM_COLORS, StaticPlan, TechnicalClearances, TechnicalLegend } from './documentation-plan';
+import { ExportSheet, PX_PER_MM, SHEET } from './export-sheet';
 import './documentation.css';
 
 type Point={x:number;y:number};
@@ -16,7 +18,28 @@ type Units='mm'|'cm'|'m';
 const INITIAL_LAYERS={furniture:true,equipment:true,lighting:false,walls:true,openings:true,finishes:true};
 const defaultView=fitPlanRect(PLAN_FULL_BOUNDS,1.25,0);
 const allParts=PLAN_ITEMS.reduce((sum,item)=>sum+item.meshes.length,0);
-function download(name:string,content:string,type:string){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function download(name:string,content:string|Blob,type:string){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+interface ExportJob { level:ExportLevel; color:boolean }
+/** Rasterises the hidden export sheet to a PNG; falls back to a smaller canvas when the browser refuses the full size. */
+function rasterizeSheet(source:SVGSVGElement,scales:number[]):Promise<{blob:Blob;scale:number}> {
+  const markup=new XMLSerializer().serializeToString(source);
+  const url=URL.createObjectURL(new Blob([markup],{type:'image/svg+xml;charset=utf-8'}));
+  return new Promise((resolve,reject)=>{
+    const image=new Image();
+    image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG sa nepodarilo vykresliť.'));};
+    image.onload=()=>{
+      const attempt=(index:number)=>{
+        const scale=scales[index];if(scale===undefined){URL.revokeObjectURL(url);reject(new Error('Prehliadač odmietol vytvoriť PNG.'));return;}
+        const canvas=document.createElement('canvas');canvas.width=Math.round(SHEET.w*scale);canvas.height=Math.round(SHEET.h*scale);
+        const ctx=canvas.getContext('2d');if(!ctx){attempt(index+1);return;}
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        canvas.toBlob(blob=>{if(blob){URL.revokeObjectURL(url);resolve({blob,scale});}else attempt(index+1);},'image/png');
+      };
+      attempt(0);
+    };
+    image.src=url;
+  });
+}
 function Dimensions({rect,height,unit}:{rect:RectMm;height:number;unit:Units}) {
   const [x,y]=rectSize(rect);
   return <dl className="pd-dimension-grid"><div><dt>Rozmer ↔</dt><dd>{formatMm(x,unit)}</dd></div><div><dt>Rozmer ↕</dt><dd>{formatMm(y,unit)}</dd></div><div><dt>Výška</dt><dd>{formatMm(height,unit)}</dd></div></dl>;
@@ -31,6 +54,8 @@ export function DocumentationStudio({initialManual=false}:{initialManual?:boolea
   const [leftTab,setLeftTab]=useState<'rooms'|'objects'>('rooms'),[mobilePanel,setMobilePanel]=useState<'rooms'|'plan'|'detail'>('plan');
   const [manualOpen,setManualOpen]=useState(initialManual),[printParts,setPrintParts]=useState(false),[announcement,setAnnouncement]=useState('');
   const [canvasWidth,setCanvasWidth]=useState(800),[partsQuery,setPartsQuery]=useState('');
+  const [exportJob,setExportJob]=useState<ExportJob|null>(null),[exportColor,setExportColor]=useState(true);
+  const exportHost=useRef<HTMLDivElement>(null);
   const aspectRef=useRef(1.25);
   const viewRef=useRef(view);const pointers=useRef(new Map<number,Point>());const moved=useRef(false);const suppressClick=useRef(false);
   const lastGesture=useRef<{point:Point;distance:number}|null>(null);const pointerOrigin=useRef<Point|null>(null);
@@ -122,6 +147,20 @@ export function DocumentationStudio({initialManual=false}:{initialManual?:boolea
     const style=document.createElementNS('http://www.w3.org/2000/svg','style');style.textContent='text{font-family:Arial,sans-serif}.pd-doors path{fill:none;stroke:#536478;stroke-width:12}.fp-door-gap{fill:#fff}.pd-room-labels text{paint-order:stroke}';copy.prepend(style);
     download('dom-variant-c-podorys.svg',new XMLSerializer().serializeToString(copy),'image/svg+xml');setAnnouncement('Vektorový pôdorys bol stiahnutý.');
   };
+  useEffect(()=>{
+    if(!exportJob)return;
+    const source=exportHost.current?.querySelector('svg');
+    if(!source){setExportJob(null);setAnnouncement('Export PNG sa nepodaril: výkres sa nevykreslil.');return;}
+    let cancelled=false;
+    const mode=exportJob.color?'farebny':'ciernobiely';
+    rasterizeSheet(source,[PX_PER_MM,PX_PER_MM*.66,PX_PER_MM*.45]).then(({blob,scale})=>{
+      if(cancelled)return;
+      download(`dom-variant-c-podorys-L${exportJob.level}-${mode}.png`,blob,'image/png');
+      setAnnouncement(`Pôdorys úrovne ${exportJob.level} (${exportJob.color?'farebný':'čiernobiely'}) bol stiahnutý ako PNG ${Math.round(SHEET.w*scale)} × ${Math.round(SHEET.h*scale)} px.`);
+    }).catch((error:Error)=>{if(!cancelled)setAnnouncement(`Export PNG sa nepodaril: ${error.message}`);}).finally(()=>{if(!cancelled)setExportJob(null);});
+    return ()=>{cancelled=true;};
+  },[exportJob]);
+  const startExport=(level:ExportLevel)=>{setExportJob({level,color:exportColor});setAnnouncement(`Pripravujem PNG pôdorysu úrovne ${level}.`);};
   const measureEnd=measurement[1]??hoverPoint,measureDistance=measurement[0]&&measureEnd?Math.hypot(measureEnd.x-measurement[0].x,measureEnd.y-measurement[0].y):null;
   const scaleMm=view.width>50000?5000:view.width>7000?1000:100;
   return <main className="pd-root" data-mobile-panel={mobilePanel} data-manual={manualOpen}>
@@ -144,6 +183,12 @@ export function DocumentationStudio({initialManual=false}:{initialManual?:boolea
       <section className="pd-drawing" aria-label="Interaktívny pôdorys">
         <div className="pd-drawing-top"><div><span className="pd-overline">01 / PÔDORYS PRÍZEMIA</span><strong>{room?.name??(roomId==='EXTERIOR'?'Terasy pri dome':'Celý dom')}{roomId&&<button title="Celý dom" aria-label="Zrušiť výber miestnosti" onClick={()=>chooseRoom('')}><X size={14}/></button>}</strong></div><div className="pd-drawing-options">
           <details className="pd-menu"><summary aria-label="Vrstvy plánu"><Layers3 size={17}/><span>Vrstvy</span><ChevronDown size={12}/></summary><div className="pd-menu-panel"><b>Zobraziť v pláne</b>{Object.entries(PLAN_CATEGORIES).map(([id,label])=><label key={id}><input type="checkbox" checked={layers[id as PlanCategory]} onChange={event=>setLayers(prev=>({...prev,[id]:event.target.checked}))}/>{label}</label>)}<hr/><label><input type="checkbox" checked={clearances} onChange={e=>setClearances(e.target.checked)}/>Obsluha technickej miestnosti</label><label><input type="checkbox" checked={overhead} onChange={e=>setOverhead(e.target.checked)}/>Prvky nad 2,10 m</label><label><input type="checkbox" checked={details} onChange={e=>setDetails(e.target.checked)}/>Všetky drobné súčasti</label><label><input type="checkbox" checked={dimensions} onChange={e=>setDimensions(e.target.checked)}/>Kóty pôdorysu</label></div></details>
+          <details className="pd-menu pd-export-menu"><summary aria-label="Export pôdorysu do PNG"><ImageDown size={17}/><span>Export PNG</span><ChevronDown size={12}/></summary><div className="pd-menu-panel pd-export-panel"><b>Jeden ucelený výkres · A1 · 1 : 50 · PNG</b>
+            <div className="pd-export-mode" role="group" aria-label="Farebnosť exportu"><button aria-pressed={exportColor} onClick={()=>setExportColor(true)}><Palette size={14}/>Farebný</button><button aria-pressed={!exportColor} onClick={()=>setExportColor(false)}><Contrast size={14}/>Čiernobiely</button></div>
+            <p>Úroveň podrobnosti kótovania</p>
+            {EXPORT_LEVELS.map(spec=><button key={spec.level} className="pd-export-level" disabled={exportJob!==null} onClick={()=>startExport(spec.level)}><span>L{spec.level}</span><span><strong>{spec.title}</strong><small>{spec.summary}</small></span></button>)}
+            <small className="pd-export-note">{exportJob?`Pripravujem PNG úrovne ${exportJob.level}…`:'Modulové osi A–F (šírka) a 1–6 (hĺbka), kódy stien, otvorov a prvkov robia výkres čitateľným aj v čiernobielej tlači.'}</small>
+          </div></details>
           <details className="pd-menu"><summary aria-label="Stiahnuť dokumentáciu"><ArrowDownToLine size={17}/></summary><div className="pd-menu-panel pd-downloads"><button onClick={()=>setManualOpen(true)}><BookOpen size={16}/>Manuál a tlač do PDF</button><button onClick={exportSvg}><ArrowDownToLine size={16}/>Vektorový pôdorys SVG</button><button onClick={exportCsv}><FileSpreadsheet size={16}/>Kompletný súpis CSV</button><Link href="/koncept-2d?variant=c&amp;mode=study"><Layers3 size={16}/>Dispozičné štúdie</Link></div></details>
         </div></div>
         <div className={`pd-canvas pd-tool-${tool}`} ref={canvas}>
@@ -188,6 +233,7 @@ export function DocumentationStudio({initialManual=false}:{initialManual?:boolea
       </aside>
     </div>
     <ExportPlan/>
+    <div ref={exportHost} hidden aria-hidden="true">{exportJob&&<ExportSheet level={exportJob.level} color={exportJob.color}/>}</div>
     {manualOpen&&<DocumentationManual printParts={printParts} setPrintParts={setPrintParts} setManualOpen={setManualOpen}/>}
     <dialog className="pd-help" ref={help} aria-labelledby="pd-help-title"><form method="dialog"><button aria-label="Zavrieť pomoc"><X size={20}/></button></form><span className="pd-overline">RÝCHLY SPRIEVODCA</span><h2 id="pd-help-title">Dom pod kontrolou.</h2><p>Začni výberom miestnosti. Nábytok a steny môžeš vybrať priamo v pláne alebo v zozname prvkov.</p><dl><dt>Posun plánu</dt><dd>Ťahanie myšou alebo jedným prstom. Na klávesnici šípky.</dd><dt>Priblíženie</dt><dd>Koliesko, dva prsty alebo + / −. Kláves 0 zobrazí celý dom.</dd><dt>Detail</dt><dd>Klikni na predmet. Drobný diel vyber v zozname „Súčasti prvku“.</dd><dt>Meranie</dt><dd>Nástroj pravítko (M), potom dva body. Presnosť závisí od miesta kliknutia.</dd><dt>Ukončiť výber</dt><dd>Escape zruší výber aj meranie. V = výber, H = posun.</dd></dl><h3>Čo znamenajú rozmery</h3><p>↔ a ↕ sú vodorovný a zvislý smer plánu. Výška je tretí rozmer. „Rozmery podľa zadania“ pochádzajú zo špecifikácie nábytku; „priestorový rozsah“ zahŕňa všetky jeho diely a presahy. Najmenšie súčasti sú dostupné aj vtedy, keď nie sú pri oddialení viditeľné.</p><p>Manuál dokumentuje geometriu modelu. Pre výrobu nábytku a realizáciu treba rozmery overiť na stavbe.</p></dialog>
     <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
