@@ -1,3 +1,4 @@
+import { HEATING_LAYOUT_IDS, DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } from './technical-design';
 /**
  * Data behind the printable PNG sheet of /koncept-2d?variant=c.
  *
@@ -460,9 +461,9 @@ export const isFixedItem=(item:PlanItem)=>(item.category==='equipment'&&!LOOSE_E
 const roomOrder=(roomId:string)=>{const i=PLAN_ROOMS.findIndex(r=>r.id===roomId);return i<0?99:i;};
 const isPlanItem=(item:PlanItem)=>item.category!=='walls'&&item.category!=='openings'&&!HIDDEN_ITEM.test(item.id)&&!HIDDEN_ITEM.test(item.name)&&!ALWAYS_DRAWN.test(item.id);
 /** Codes are numbered per living-room layout; both layouts hold the same set of pieces, so codes outside 1.03 do not move. */
-function codeItems(layout:LivingLayoutId):CodedItem[] {
+function codeItems(layout:LivingLayoutId,heatingLayout:HeatingLayoutId):CodedItem[] {
   const counters:Record<ItemCode,number>={N:0,Z:0,L:0,F:0};
-  const items=planItemsFor(layout).filter(item=>isPlanItem(item)&&!CLUTTER.test(item.id))
+  const items=planItemsFor(layout,heatingLayout).filter(item=>isPlanItem(item)&&!CLUTTER.test(item.id))
     .sort((a,b)=>roomOrder(a.roomId)-roomOrder(b.roomId)||a.rect.x0-b.rect.x0||b.rect.y1-a.rect.y1);
   return items.map(item=>{
     const letter:ItemCode=item.category==='furniture'?'N':item.category==='equipment'?'Z':item.category==='lighting'?'L':'F';
@@ -473,13 +474,14 @@ function codeItems(layout:LivingLayoutId):CodedItem[] {
       width:Math.round(item.rect.x1-item.rect.x0),depth:Math.round(item.rect.y1-item.rect.y0),height:Math.round(item.z1-item.z0),mount:Math.round(item.z0),cell:gridCell(item.rect)};
   });
 }
-const CODED_BY_LAYOUT=Object.fromEntries(LIVING_LAYOUT_IDS.map(layout=>[layout,codeItems(layout)])) as Record<LivingLayoutId,CodedItem[]>;
-export const CODED_ITEMS:CodedItem[]=CODED_BY_LAYOUT[DEFAULT_LIVING_LAYOUT_ID];
-export const drawnItems=(level:ExportLevel,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID)=>level<4?[]:planItemsFor(layout).filter(item=>isPlanItem(item)&&(level>=5||isFixedItem(item)));
+const CODED_BY_LAYOUT=Object.fromEntries(LIVING_LAYOUT_IDS.flatMap(layout=>HEATING_LAYOUT_IDS.map(heating=>[`${layout}-${heating}`,codeItems(layout,heating)]))) as Record<string,CodedItem[]>;
+export const CODED_ITEMS:CodedItem[]=CODED_BY_LAYOUT[`${DEFAULT_LIVING_LAYOUT_ID}-${DEFAULT_HEATING_LAYOUT_ID}`];
+export const drawnItems=(level:ExportLevel,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID,heatingLayout:HeatingLayoutId=DEFAULT_HEATING_LAYOUT_ID)=>level<4?[]:planItemsFor(layout,heatingLayout).filter(item=>isPlanItem(item)&&(level>=5||isFixedItem(item)));
+
 export const STRUCTURAL_EXTRAS=PLAN_ITEMS.filter(item=>ALWAYS_DRAWN.test(item.id));
 /** Parts above the conventional 1,2 m cut are drawn dashed. */
 export const CUT_PLANE_MM=1200;
-export const codedItems=(level:ExportLevel,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID)=>CODED_BY_LAYOUT[layout].filter(c=>c.level<=level);
+export const codedItems=(level:ExportLevel,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID,heatingLayout:HeatingLayoutId=DEFAULT_HEATING_LAYOUT_ID)=>CODED_BY_LAYOUT[`${layout}-${heatingLayout}`].filter(c=>c.level<=level);
 
 // ---------------------------------------------------------------- rooms
 export type RoomKind='living'|'wet'|'tech'|'garage'|'circulation';

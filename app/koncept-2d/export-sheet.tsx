@@ -1,9 +1,11 @@
+import { DEFAULT_HEATING_LAYOUT_ID, HEATING_LAYOUTS, type HeatingLayoutId } from '@/lib/technical-design';
 import { Fragment, type ReactNode, type SVGProps } from 'react';
 import { PLAN_ROOMS, numberSk, type PlanItem, type PlanMesh } from '@/lib/plan-documentation';
 import { INTERIOR_DOORS, type RectMm } from '@/lib/twin-interior';
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, type LivingLayoutId } from '@/lib/twin-living-layouts';
 import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DOOR_TEXTS, EXPORT_LEVELS, EXPORT_REVISION, FACADES, FOOTPRINT as F, GRID_X, GRID_Y, INTERIOR_WALL_MESHES, ITEM_CODE_LABEL, MATERIAL_LEGEND, OPENING_BY_DOOR, PLAN_EXTENT, POOL, ROOM_KIND_LABEL, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, SITE_LABELS, STRUCTURAL_EXTRAS, TERRACES, TERRACE_AREA_M2, clearHeightLabel, codedItems, drawnItems, facadeChains, finishCeiling, finishFloor, finishWalls, fixedSk, innerDims, roomAxes, roomKind, roomLabelPos, roomRectsByArea, shellWallClass, wallClass, type ChainSpec, type CodedItem, type ExportLevel, type ItemCode, type PlanRoom, type RoomKind, type WallClass } from '@/lib/plan-export';
 import { Door } from './plan-svg';
+import { MeshSilhouette } from './documentation-plan';
 
 /** Paper: A1 landscape in millimetres, plan at 1:50 (prints 1:100 on A3). */
 export const SHEET={w:841,h:594,m:8};
@@ -263,10 +265,12 @@ function RoomLabels({pal,level}:{pal:Palette;level:ExportLevel}) {
     return <g key={room.id}>{lines.map((l,i)=><text key={i} x={x} y={tops[i]} fontSize={l.size} fontWeight={l.weight} fill={l.fill} letterSpacing={i===1?l.size*.06:0} strokeWidth={l.size*.3}>{l.text}</text>)}</g>;
   })}</g>;
 }
-function Items({pal,level,livingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId}) {
-  const items=drawnItems(level,livingLayout);
+function Items({pal,level,livingLayout,heatingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId;heatingLayout:HeatingLayoutId}) {
+  const items=drawnItems(level,livingLayout,heatingLayout);
   const parts=items.flatMap(item=>item.meshes.map(mesh=>({item,mesh}))).filter(({mesh})=>Math.min(mesh.rect.x1-mesh.rect.x0,mesh.rect.y1-mesh.rect.y0)>=35).sort((a,b)=>a.mesh.z0-b.mesh.z0);
-  const polygon=(_item:PlanItem,mesh:PlanMesh)=>mesh.z0>=CUT_PLANE_MM
+  const polygon=(_item:PlanItem,mesh:PlanMesh)=>mesh.silhouettePath
+    ?<MeshSilhouette key={mesh.id} mesh={mesh} fill={pal.itemStroke} fillOpacity={.55}/>
+    :mesh.z0>=CUT_PLANE_MM
     ?<polygon key={mesh.id} points={mesh.polygon} fill="none" stroke={pal.itemStroke} strokeWidth={T(.1)} strokeDasharray={`${T(.9)} ${T(.5)}`}/>
     :<polygon key={mesh.id} points={mesh.polygon} fill="#fff" fillOpacity={.55} stroke={pal.itemStroke} strokeWidth={T(.1)} strokeLinejoin="round"/>;
   return <g>
@@ -274,11 +278,11 @@ function Items({pal,level,livingLayout}:{pal:Palette;level:ExportLevel;livingLay
     {parts.map(({item,mesh})=>polygon(item,mesh))}
   </g>;
 }
-function ItemLabels({pal,level,livingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId}) {
+function ItemLabels({pal,level,livingLayout,heatingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId;heatingLayout:HeatingLayoutId}) {
   const fs=T(1.55),h=fs*1.45;
   const placed:Box[]=PLAN_ROOMS.map(room=>roomLabel(room,level,pal).box);
   const collides=(b:Box)=>placed.some(p=>b.x0<p.x1&&b.x1>p.x0&&b.y0<p.y1&&b.y1>p.y0);
-  const labels=codedItems(level,livingLayout).filter(c=>c.labeled).sort((a,b)=>(b.width*b.depth)-(a.width*a.depth)).map((c:CodedItem)=>{
+  const labels=codedItems(level,livingLayout,heatingLayout).filter(c=>c.labeled).sort((a,b)=>(b.width*b.depth)-(a.width*a.depth)).map((c:CodedItem)=>{
     const w=textWidth(c.code,fs)+fs*.9,cx=(c.item.rect.x0+c.item.rect.x1)/2,cy=-(c.item.rect.y0+c.item.rect.y1)/2;
     const tries=[[0,0],[0,-h*1.15],[0,h*1.15],[w*1.05,0],[-w*1.05,0],[w*1.05,-h*1.15],[-w*1.05,h*1.15],[0,-h*2.3],[0,h*2.3]];
     let x=cx,y=cy;
@@ -419,7 +423,7 @@ function materialBlock(pal:Palette):Block {
       return <g key="materials" fontFamily={FONT}><text x={x} y={y+fs*1.6} fontSize={fs*1.6} fontWeight={700} fill={pal.ink} letterSpacing={.2}>LEGENDA MATERIÁLOV</text>{nodes}</g>;
     }};
 }
-function panelBlocks(level:ExportLevel,pal:Palette,livingLayout:LivingLayoutId):Block[] {
+function panelBlocks(level:ExportLevel,pal:Palette,livingLayout:LivingLayoutId,heatingLayout:HeatingLayoutId):Block[] {
   const blocks:Block[]=[];
   const totalArea=PLAN_ROOMS.reduce((s,r)=>s+r.area,0);
   const footprint=((F.x1-F.x0)*(F.gardenY-F.y0)+(F.x1-F.wingX)*(F.y1-F.gardenY))/1e6;
@@ -442,14 +446,14 @@ function panelBlocks(level:ExportLevel,pal:Palette,livingLayout:LivingLayoutId):
   if(level>=3)blocks.push(tableBlock('SVETLÉ ROZMERY MIESTNOSTÍ (mm)',[{title:'OZN.',width:8},{title:'OBDĹŽNIKY ČISTEJ PODLAHY · ŠÍRKA × HĹBKA',width:92}],
     PLAN_ROOMS.map(r=>[r.number,roomRectsByArea(r).slice(0,4).map(p=>`${mm(p.x1-p.x0)} × ${mm(p.y1-p.y0)}`).join('  +  ')+(r.rectsMm.length>4?'  + …':'')]),pal));
   if(level>=4){
-    const items=codedItems(level,livingLayout);
-    blocks.push(tableBlock(`${level>=5?'SÚPIS PRVKOV':'PEVNÉ VYBAVENIE'} · ${items.length} · OBÝVAČKA ${livingLayout}`,[{title:'KÓD',width:8},{title:'PRVOK',width:44},{title:'MIEST.',width:9},{title:'↔',width:10,align:'r'},{title:'↕',width:10,align:'r'},{title:'VÝŠKA',width:10,align:'r'},{title:'OD PODL.',width:11,align:'r'},{title:'OD Z',width:10,align:'r'},{title:'OD J',width:10,align:'r'},{title:'OSI',width:17}],
+    const items=codedItems(level,livingLayout,heatingLayout);
+    blocks.push(tableBlock(`${level>=5?'SÚPIS PRVKOV':'PEVNÉ VYBAVENIE'} · ${items.length} · OBÝVAČKA ${livingLayout} · TECHNICKÁ ${heatingLayout}`,[{title:'KÓD',width:8},{title:'PRVOK',width:44},{title:'MIEST.',width:9},{title:'↔',width:10,align:'r'},{title:'↕',width:10,align:'r'},{title:'VÝŠKA',width:10,align:'r'},{title:'OD PODL.',width:11,align:'r'},{title:'OD Z',width:10,align:'r'},{title:'OD J',width:10,align:'r'},{title:'OSI',width:17}],
       items.map(c=>[c.code,c.item.name,c.room?.number??'ext.',mm(c.width),mm(c.depth),mm(c.height),c.mount>0?mm(c.mount):'0',mm(c.fromWest),mm(c.fromSouth),c.cell]),pal));
   }
   return blocks;
 }
-function Panel({level,pal,livingLayout}:{level:ExportLevel;pal:Palette;livingLayout:LivingLayoutId}) {
-  const blocks=panelBlocks(level,pal,livingLayout);
+function Panel({level,pal,livingLayout,heatingLayout}:{level:ExportLevel;pal:Palette;livingLayout:LivingLayoutId;heatingLayout:HeatingLayoutId}) {
+  const blocks=panelBlocks(level,pal,livingLayout,heatingLayout);
   // Base metrics at scale 1, then a uniform scale so the blocks fill the panel height.
   const baseFs=1.7,basePitch=2.9,gap=3.5;
   const baseHeight=blocks.reduce((s,b)=>s+b.height(baseFs,basePitch,TABLES.w)+gap,0);
@@ -470,7 +474,7 @@ function Panel({level,pal,livingLayout}:{level:ExportLevel;pal:Palette;livingLay
   </g>;
 }
 
-function TitleBlock({level,pal,color,livingLayout}:{level:ExportLevel;pal:Palette;color:boolean;livingLayout:LivingLayoutId}) {
+function TitleBlock({level,pal,color,livingLayout,heatingLayout}:{level:ExportLevel;pal:Palette;color:boolean;livingLayout:LivingLayoutId;heatingLayout:HeatingLayoutId}) {
   const spec=EXPORT_LEVELS.find(l=>l.level===level)!;
   const living=LIVING_LAYOUTS[livingLayout];
   const {x,y,w,h}=TITLE;
@@ -479,7 +483,7 @@ function TitleBlock({level,pal,color,livingLayout}:{level:ExportLevel;pal:Palett
   const value=(lx:number,ly:number,text:string,size=2.8,weight=500,anchor:'start'|'end'='start')=><text x={lx} y={ly} fontSize={size} fontWeight={weight} fill={pal.ink} textAnchor={anchor}>{text}</text>;
   const rule=(ly:number,x0=x,x1=x+w,width=.3)=><line x1={x0} x2={x1} y1={ly} y2={ly} stroke={pal.ink} strokeWidth={width}/>;
   const split=x+w*.66;
-  const meta:[string,string][]=[['FORMÁT','A1 · 841 × 594 mm'],['DÁTUM',date],['STUPEŇ',`DT · L${level}`],['REVÍZIA',EXPORT_REVISION],['MIERKA','1 : 50'],['VERZIA',color?'farebná':'čiernobiela']];
+  const meta:[string,string][]=[['FORMÁT','A1 · 841 × 594 mm'],['DÁTUM',date],['STUPEŇ',`DT · L${level}`],['REVÍZIA',EXPORT_REVISION],['MIERKA','1 : 50'],['VERZIA',`${color?'F':'ČB'} · T${heatingLayout} · ${HEATING_LAYOUTS[heatingLayout].label}`]];
   const scaleX=x,scaleY=y-9,marks=[0,1,2,3,4,5];
   return <g fontFamily={FONT}>
     <g stroke={pal.ink} strokeWidth={.3} fill="none">
@@ -518,7 +522,7 @@ function TitleBlock({level,pal,color,livingLayout}:{level:ExportLevel;pal:Palett
   </g>;
 }
 
-export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:{level:ExportLevel;color:boolean;livingLayout?:LivingLayoutId}) {
+export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID,heatingLayout=DEFAULT_HEATING_LAYOUT_ID}:{level:ExportLevel;color:boolean;livingLayout?:LivingLayoutId;heatingLayout?:HeatingLayoutId}) {
   const pal=color?COLOR:MONO;
   const chains=[...facadeChains(level),...(level>=3?SECTION_CHAINS:[]),...(level>=3?DOOR_CHAINS:[])];
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${SHEET.w} ${SHEET.h}`} width={SHEET.w*PX_PER_MM} height={SHEET.h*PX_PER_MM} fontFamily={FONT} role="img" aria-label={`Pôdorys 1. NP, úroveň ${level}`}>
@@ -532,7 +536,7 @@ export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:
         <Outdoor pal={pal}/>
         <Rooms pal={pal}/>
         <Grid pal={pal}/>
-        <Items pal={pal} level={level} livingLayout={livingLayout}/>
+        <Items pal={pal} level={level} livingLayout={livingLayout} heatingLayout={heatingLayout}/>
         <Walls pal={pal}/>
         <ExteriorOpenings pal={pal}/>
         <InteriorDoors/>
@@ -541,11 +545,11 @@ export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:
         {level>=2&&<OpeningCodes pal={pal}/>}
         {level>=2&&<DoorCodes pal={pal}/>}
         <RoomLabels pal={pal} level={level}/>
-        {level>=4&&<ItemLabels pal={pal} level={level} livingLayout={livingLayout}/>}
+        {level>=4&&<ItemLabels pal={pal} level={level} livingLayout={livingLayout} heatingLayout={heatingLayout}/>}
       </g>
     </g>
     <LegendStrip level={level} pal={pal} color={color}/>
-    <Panel level={level} pal={pal} livingLayout={livingLayout}/>
-    <TitleBlock level={level} pal={pal} color={color} livingLayout={livingLayout}/>
+    <Panel level={level} pal={pal} livingLayout={livingLayout} heatingLayout={heatingLayout}/>
+    <TitleBlock level={level} pal={pal} color={color} livingLayout={livingLayout} heatingLayout={heatingLayout}/>
   </svg>;
 }

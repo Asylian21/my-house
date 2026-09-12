@@ -16,7 +16,8 @@ describe('active export room-area authority', () => {
     // −0.17902 m² as that wall runs to the east facade: the technical room's
     // 1 680 × 699 mm protrusion (−1.17432 m²) becomes 1 850 × 538 mm of kitchen
     // bay (+0.9953 m²), the rest is the new 860 mm wall piece and the door.
-    expect(expected).toBeCloseTo(179.623603, 9);
+    // +0.005855 m² when the 144 mm laundry return aligns with the 139 mm WC wall.
+    expect(expected).toBeCloseTo(179.629458, 9);
     expect(serialized.house.floorAreaAuthority).toEqual({kind: 'ACTIVE_ROOM_RECTANGLE_SUM', layoutId: serialized.layoutId, source: 'lib/twin-interior.ts:INTERIOR_ROOMS', includesGarage: true});
     expect(serialized.interior.rooms.some((r: typeof INTERIOR_ROOMS[number]) => r.id === 'ROOM-1-12')).toBe(true);
   });

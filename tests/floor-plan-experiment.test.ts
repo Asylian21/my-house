@@ -31,10 +31,10 @@ describe('independent stepped private wardrobe study E',()=>{
     const porch=HOUSE.porches.gardenLoggia;
     expect(m.settings.gardenRecess).toBe(true);
     expect(m.loggia.depth).toBe(1953);
-    expect(m.loggia.openingWidth).toBe(3200);
+    expect(m.loggia.openingWidth).toBe(2200);
     expect(m.loggia.bounds).toEqual(rect(6440,porch.backFaceYmm,10640,11200));
-    expect(m.loggia.pier).toEqual(rect(6440,10700,7440,11200));
-    expect(m.loggia.westReturn).toEqual(rect(6440,9247,6944,9800));
+    expect(m.loggia.pier).toEqual(rect(6440,10700,8440,11200));
+    expect(m.loggia.pierReturn).toEqual(rect(6440,10200,6940,10700));
     for(const r of m.rooms.flatMap(r=>r.rectsMm))expect(intersects(r,m.loggia.bounds)).toBe(false);
     expect(m.garageBackOpening.y0).toBe(GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm);
     expect(m.garageBackOpening.y1).toBe(porch.backFaceYmm);

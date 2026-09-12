@@ -1,4 +1,4 @@
-import { GARAGE_DEPTH_REVISION, HOUSE as baseline } from './twin-site';
+import { GARAGE_DEPTH_REVISION, HOUSE as baseline, SITE_SURFACES, type Point2Mm } from './twin-site';
 import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, totalActiveFloorAreaM2 } from './twin-interior';
 import { CHILDREN_WINDOWS, withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
@@ -26,3 +26,20 @@ export const HOUSE={...baseline,
 },garden:{...baseline.facades.garden,openings:baseline.facades.garden.openings.map(withChildrenWindow)},
 east:{...baseline.facades.east,openings:baseline.facades.east.openings.map(o=>o.id==='EAST-03'?{...o,...SERVICE_CORE_REVISION.exteriorDoor}:o)},
 }};
+
+// Fan the existing approach toward the relocated door. The boundary gate and
+// lowered street kerb stay aligned with each other; only the house end moves.
+const originalSideDoor=baseline.facades.east.openings.find(o=>o.id==='EAST-03')!;
+const sideDoorShiftMm=SERVICE_CORE_REVISION.exteriorDoor.startYmm+SERVICE_CORE_REVISION.exteriorDoor.widthMm/2
+  -originalSideDoor.startYmm-originalSideDoor.widthMm/2;
+const alignHouseEdge=(points:readonly Point2Mm[])=>points.map(p=>Math.abs(p.x-HOUSE.facades.east.faceXmm)<=2?{...p,y:p.y+sideDoorShiftMm}:p);
+const polygonAreaM2=(points:readonly Point2Mm[])=>Math.abs(points.reduce((sum,p,i)=>{
+  const q=points[(i+1)%points.length];return sum+p.x*q.y-q.x*p.y;
+},0))/2_000_000;
+const sidePolygon=alignHouseEdge(SITE_SURFACES.sideEntryApproach.polygonMm);
+const sidePrivatePolygon=alignHouseEdge(SITE_SURFACES.sideEntryApproach.privatePolygonMm);
+export const SIDE_ENTRY_APPROACH={...SITE_SURFACES.sideEntryApproach,
+  sourceId:SERVICE_CORE_REVISION.id,placementStatus:'CURRENT_DOOR_WITH_RETAINED_BOUNDARY_GATE',
+  polygonMm:sidePolygon,privatePolygonMm:sidePrivatePolygon,areaM2:polygonAreaM2(sidePolygon),
+  streetConnection:{...SITE_SURFACES.sideEntryApproach.streetConnection,privateAreaM2:polygonAreaM2(sidePrivatePolygon)},
+};

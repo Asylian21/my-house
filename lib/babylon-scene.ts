@@ -1,4 +1,5 @@
-import { HOUSE } from "./twin-active-house";
+import { DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } from './technical-design';
+import { HOUSE, SIDE_ENTRY_APPROACH } from "./twin-active-house";
 import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
 import { DECK_BOARD_LAYOUT, planDeckBoards } from "./deck-boards";
 import { resolveWalkFloor } from "./babylon-walk-picking";
@@ -943,6 +944,7 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
 }
 
 export class TwinSceneController {
+  private readonly heatingLayout:HeatingLayoutId;
   private readonly archviz: ArchvizPresentation | null;
   private readonly engine: Engine;
   private readonly scene: Scene;
@@ -1029,8 +1031,9 @@ export class TwinSceneController {
     private readonly onRenderQualityChange: (
       profile: RenderQualityProfile,
     ) => void,
-    options: { loadArchviz?: boolean } = {},
+    options: { loadArchviz?: boolean; heatingLayout?: HeatingLayoutId } = {},
   ) {
+    this.heatingLayout=options.heatingLayout??DEFAULT_HEATING_LAYOUT_ID;
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
       stencil: true,
@@ -3371,13 +3374,13 @@ export class TwinSceneController {
     for (const surface of [
       SITE_SURFACES.driveway,
       SITE_SURFACES.entry,
-      SITE_SURFACES.sideEntryApproach,
+      SIDE_ENTRY_APPROACH,
     ]) {
       const isStreetRamp =
         surface.id === SITE_SURFACES.driveway.id ||
         surface.id === SITE_SURFACES.entry.id;
       const isSideStreetRamp =
-        surface.id === SITE_SURFACES.sideEntryApproach.id;
+        surface.id === SIDE_ENTRY_APPROACH.id;
       const yValues = surface.polygonMm.map((point) => point.y);
       const xValues = surface.polygonMm.map((point) => point.x);
       const minY = Math.min(...yValues);
@@ -5024,8 +5027,8 @@ export class TwinSceneController {
         heightMm: opening.heightMm,
         sillMm: opening.sillMm,
       }));
-    // Garden facade: two flush glazed openings plus the open loggia bay taken
-    // straight from D1.1.002 (P01 beam over a 3 200 mm opening).
+    // Garden facade: two flush glazed openings and the loggia bay beside the
+    // client's L-shaped corner support (12 Sep 2026).
     const gardenOpenings: readonly FacadeOpeningMm[] = [
       {
         id: loggia.id,
@@ -5109,7 +5112,7 @@ export class TwinSceneController {
       gardenOpenings,
       this.realisticMaterials.wall,
       {
-        // 1 000 × 500 corner pier of the loggia: exterior on both sides.
+        // Long arm of the L-shaped loggia support: exterior on both sides.
         solidMm: [[loggia.cornerPier.startXmm, loggia.cornerPier.endXmm]],
         // Outer corner with the insulated loggia cheek (room 1.10 west wall).
         masonryInsetMm: { [loggia.eastInnerXmm]: loggiaCheekEastXmm },
@@ -5140,11 +5143,8 @@ export class TwinSceneController {
       westOpenings,
       this.realisticMaterials.wall,
       {
-        // Rear return and front corner pier flanking the open loggia side.
-        solidMm: [
-          [loggia.backFaceYmm, HOUSE.facades.west.loggiaOpening.startYmm],
-          [loggia.cornerPier.startYmm, loggia.cornerPier.endYmm],
-        ],
+        // Short west arm; the side opening starts flush at the garage wall.
+        solidMm: [[loggia.cornerPier.returnStartYmm, loggia.cornerPier.endYmm]],
         masonryInsetMm: { [front]: front + insulationMm },
       },
     );
@@ -5287,6 +5287,7 @@ export class TwinSceneController {
   /** Interior fit-out of 1.NP traced from D1.1.002 (see twin-interior.ts). */
   private buildInteriorFitOut() {
     buildInterior({
+      heatingLayout:this.heatingLayout,
       scene: this.scene,
       anisotropy: this.renderQuality.anisotropy,
       wall: this.realisticMaterials.wall,
@@ -5337,7 +5338,7 @@ export class TwinSceneController {
     // Back wall of the garage towards the loggia: 300 mm masonry on the garage
     // side, 200 mm insulation on the loggia side. The masonry overlaps the
     // gable shell by 30 mm like every facade; the insulation starts at the
-    // gable's inner face because the rear return next to it is solid.
+    // gable's inner face at the corner of the recessed garage wall.
     const backWallOptions = this.facadeLayerOptions(HOUSE.exteriorWall.totalMm, {
       insulationInsetMm: { [loggia.cornerPier.startXmm + 500]: loggia.cornerPier.startXmm + FACADE_SHELL_THICKNESS_MM },
     });
@@ -8284,7 +8285,7 @@ export function createTwinScene(
   onSelect: (id: string) => void,
   onNavigationModeChange: (mode: NavigationMode) => void,
   onRenderQualityChange: (profile: RenderQualityProfile) => void,
-  options: { loadArchviz?: boolean } = {},
+  options: { loadArchviz?: boolean; heatingLayout?: HeatingLayoutId } = {},
 ) {
   return new TwinSceneController(
     canvas,

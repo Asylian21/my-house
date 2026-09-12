@@ -3,7 +3,7 @@ import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, HALLWAY_BUILT_IN_WARDROBES, 
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, LIVING_LAYOUT_IDS, diningTableRectMm, type LivingLayoutId } from './twin-living-layouts';
 import { HOUSE } from './twin-active-house';
 import { GIRL_WINDOW_DESIGN } from './twin-children-design';
-import { HEATING_SOURCES, SERVICE_CORE_REVISION, TECHNICAL_HEATING_FITOUT as heating } from './technical-design';
+import { HEATING_SOURCES, HEATING_LAYOUTS, DEFAULT_HEATING_LAYOUT_ID, heatingRoomNotes, heatingTransportNote, type HeatingLayoutId } from './technical-design';
 
 export type PlanCategory = 'furniture'|'equipment'|'lighting'|'walls'|'openings'|'finishes';
 export const PLAN_CATEGORIES:Record<PlanCategory,string>={furniture:'Nábytok',equipment:'Vybavenie',lighting:'Svetlá',walls:'Steny',openings:'Okná a dvere',finishes:'Povrchy a detaily'};
@@ -18,6 +18,7 @@ export interface PlanItem {
   rect:RectMm; z0:number; z1:number; nominal?:RectMm; note?:string;
   /** Living-room pieces exist once per layout; shared items carry no layout. */
   layout?:LivingLayoutId;
+  heatingLayout?:HeatingLayoutId;
   opening?:{width:number;height:number;sill:number;clearWidth?:number};
   product?:{label:string;dimensions:string;source:string};
 }
@@ -28,15 +29,15 @@ export const PLAN_ROOM_NOTES:Record<string,string[]>={
   'ROOM-1-10':['Nosná stena k detským izbám je o 100 mm ďalej a južná stena spálne leží na rovine chodby 7 651–7 791 mm: spálňa má 3 800 × 2 908 mm (11,05 m²), po bokoch postele zostáva 554 mm a pred nohami 1 600 mm. Šatník za posuvnými dverami má 2 200 × 1 907 mm (4,20 m²).'],
   'ROOM-1-11':['Kúpeľňa má po posune priečky ku garáži o 50 cm tvar L: 1 961 × 2 100 mm pri ulici a rozšírenie 1 460 × 808 mm pri chodbe, spolu 5,30 m². Garáž získala 1,05 m² a jej bočný výklenok má 2 000 × 2 100 mm. Dvere 800 mm oproti spálni aj obe malé okná zostávajú na svojich miestach. Úprava je spoločná pre varianty obývačky A aj B.','Podľa dodaného obrázka leží vaňa 1 961 × 750 mm pod vysokým oknom cez celú šírku kúpeľne, od steny pri garáži po protiľahlú nosnú stenu, bez bočnej medzery. Závesné WC je vpravo pri nosnej stene a smeruje doľava. Umývadlová skrinka 900 × 500 mm je vľavo pri priečke ku garáži, so zrkadlom na tejto stene. Medzi čelom umývadlovej skrinky a obrysom WC je 761 mm; pred umývadlom je vyhradený priestor 750 × 900 mm. Namiesto vysokej skrine je pri dverách na stene šatníka matný čierny rebríkový radiátor 600 × 1 500 mm s hĺbkou 100 mm, spodnou hranou 200 mm nad podlahou a 15 priečkami na uteráky.'],
   'ROOM-1-06':['WC získalo ďalších 370 mm oproti predchádzajúcej verzii. Medzi priečkami má 1 899 × 1 800 mm a plochu 3,42 m² (predtým 2,75 m²). Po 10 mm obklade je šírka približne 1 879 mm.','Misa je vystredená na novej osi miestnosti. Umývadlo má 550 × 350 mm. Klasické dvere s krídlom 700 mm sa otvárajú dovnútra k severnej stene; vstupný otvor zostáva na mieste. Celý oblúk vrátane kľučiek je bez kolízie so sanitou.','Severná stena k obývačke je od 12. 9. 2026 nosné murivo 300 mm (10 712–11 012 mm) namiesto priečky 140 mm: stojí nad priečnym základovým pásom a nesie veniec s oceľovými rámami krovu katedrálového stropu obývačky. Zhrubla smerom do kuchyne, takže južné líce na 10 712 mm, plocha WC aj dvere zostávajú.'],
-  'ROOM-1-05':['Zalomený múr pri práčovni ustúpil o 300 mm, aby kotol získal servisný odstup. Zostava má 2 316 mm; práčka a sušička zostávajú plnohodnotné 600 × 600 mm. Sprcha zostáva na pôvodnom mieste.'],
-  'ROOM-1-07':['Zostava podľa dohody zo 16.–17. 2. 2026: DEFRO Firewood Duo Plus 19 kW, násypka 180 kg a DBO-S 1 000 l. Pre 19 kW uvádza návod 1 000 l; objem sa neznižuje na 800 l.','Kotol: obal 1 238 × 1 298 × 1 391 mm na 50 mm podstavci. Celá zostava vrátane násypky, horáka a podstavcov je posunutá o 254,5 mm doprava a 250 mm k zadnej stene oproti predchádzajúcej verzii. Vpravo aj od zadnej roviny telesa ostáva 250 mm; vľavo 759 mm. Ide o požadovaný dispozičný návrh POD odstupmi 500 mm podľa výrobcu. Za modelovým zadným hrdlom je iba 37 mm; napojenie, čistenie a tento spôsob osadenia musí pred realizáciou potvrdiť dodávateľ kotla. Predný pás 1 794 mm (do 12. 9. 2026 2 000 mm, skrátený skriňou na nosnej stene) sa meria od čela telesa; zahŕňa aj horák.','Nádrž: Ø1 106 × 1 913 mm s izoláciou, Ø897 mm bez nej. Stojí vľavo pri stene WC (stred 25 416,5 / 9 812 mm): oproti predošlej verzii je o 355 mm ďalej od dverí do kuchyne, takže za celou šírkou dverí zostáva 600 mm voľnej podlahy. Prípojky smerujú na východ do voľnej plochy pred pásom obsluhy kotla, nie proti dverám. Vonkajšie dvere EAST-03 majú od 12. 9. 2026 jedno krídlo 900 mm otvárané von (čistý pás 648 mm, prah 20 mm) namiesto dvojkrídlových 1 700 mm: nádrž nimi neprejde, osadí sa pred zastrešením alebo sa zvolí delený zásobník.','Regál pri nádrži je odstránený. Hneď vedľa dverí z kuchyne, na južnom líci nosnej steny (26 760–27 480 mm), je plytká skriňa 720 × 261 × 1 750 mm: vľavo tri vrecia peliet vo zvislých priehradkách, vpravo tyčový vysávač na stene. Čelo sa posúva, nezasahuje do dverí; pás obsluhy kotla pred ňou končí, 1 794 mm od čela telesa namiesto 2 000 mm – dostatočnosť potvrdí dodávateľ kotla. Jej požiarne oddelenie zatiaľ nie je schválené. Návod požaduje odstup od horľavých predmetov; voľné vrecia sem nepatria.','Technická má 7,49 m² namiesto 8,67 m²: výstupok s dverami do kuchyne (25 830–27 510 × 10 712–11 411 mm) pripadol kuchynskému zálivu a dvere 800 mm sú v nosnej stene na rovnakom mieste (25 881–26 681 mm), otvárané do kuchyne s pántom pri východnom ostení. Zostava, nádrž aj skriňa sa obsluhujú zo spoločnej voľnej plochy; v modeli je overená súvislá trasa šírky 600 mm od dverí k skrini, prípojkám nádrže, kotlu aj násypke a konečné potrubia ju musia zachovať. Nad skriňou je rezerva na hydrauliku 720 × 261 × 650 mm, vo výške 1 850–2 500 mm. Presný rozmer DEFROmat, expanzia, potrubia, vetranie, komín a požiarna skladba vyžadujú dokončenie montážneho projektu. Model overuje priestor, nie povolenie na inštaláciu.','Stena k obývačke je od 12. 9. 2026 nosné murivo 300 mm (10 712–11 012 mm) v jednej línii od ústia chodby (22 639 mm) po východnú fasádu (27 541 mm) a nesie veniec s oceľovými rámami krovu katedrálového stropu; prerušujú ju iba dvere do kuchyne s prekladom, za ktorými pokračuje 860 mm muriva k fasáde. Zhrubla smerom do kuchyne, takže južné líce miestnosti zostáva na 10 712 mm.'],
+  'ROOM-1-05':['Priečka pri práčovni pokračuje v rovine steny WC bez zuba: líce technickej sa posunulo o 422 mm, kúpeľňové líce o 417 mm. Kúpeľňa a práčovňa má 6,98 m² namiesto 7,47 m². Zostava má 1 899 mm: umývadlová skrinka 1 213 mm s umývadlom 800 mm a vetraná veža pre práčku a sušičku, obe 600 × 600 mm. Pred spotrebičmi je vyhradený pás 900 mm. Sprcha zostáva na pôvodnom mieste.'],
+  'ROOM-1-07':heatingRoomNotes(DEFAULT_HEATING_LAYOUT_ID),
 };
 export const unionBounds=(rects:readonly RectMm[]):RectMm=>({x0:Math.min(...rects.map(r=>r.x0)),y0:Math.min(...rects.map(r=>r.y0)),x1:Math.max(...rects.map(r=>r.x1)),y1:Math.max(...rects.map(r=>r.y1))});
 export const rectSize=(r:RectMm)=>[r.x1-r.x0,r.y1-r.y0] as const;
 export const numberSk=(n:number,digits=0)=>n.toLocaleString('sk-SK',{maximumFractionDigits:digits});
 export const formatMm=(n:number,unit:'mm'|'cm'|'m'='mm')=>`${numberSk(n/(unit==='m'?1000:unit==='cm'?10:1),unit==='m'?3:unit==='cm'?1:0)} ${unit}`;
 export const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const names:Record<string,string>={BED:'Posteľ',WARDROBE:'Šatníková skriňa',DESK:'Pracovný stôl',CHAIR:'Stolička',FEATURE:'Nástenný panel',ART:'Obraz',LIGHT:'Svietidlo',BOOKS:'Knižnica',READING:'Čitateľský puf',PLAY:'Hrací koberec',DRAWING:'Kreslenie a pastelky',BENCH:'Lavička s botníkom',HOOKS:'Vešiakový panel',OVERHEAD:'Horná skriňa',MIRROR:'Zrkadlo',CABINET:'Skriňová zostava',PRINTER:'Tlačiareň','MONITOR-40-21:9':'Monitor',WHITEBOARD:'Magnetická tabuľa','UTILITY-SINK':'Pracovný drez','GARAGE-RACK':'Úložný regál','GARAGE-SHELF':'Nástenné police',PEGBOARD:'Náradie na stene','LONG-TOOL':'Záhradné náradie',MOWER:'Kosačka','GARAGE-CLUTTER':'Uložené predmety','WOOD-PELLET-BOILER':'Kotol na drevo a pelety','PELLET-HOPPER':'Zásobník peliet','PELLET-AUGER':'Podávač peliet','PELLET-BURNER':'Horák','PELLET-FEED-HOSE':'Hadica podávača','BUFFER-TANK-1000L':'Akumulačná nádrž','WALL-HUNG-WC':'Závesné WC','COMPACT-BASIN':'Umývadlo so zrkadlom','BATH-1700':'Vaňa','BATH-WALL':'Vaňa',WC:'WC',WINDOW:'Obklad pri okne','VANITY-900':'Umývadlová skrinka so zrkadlom','WALK-IN-1250':'Sprchovací kút','BUILT-IN-2616':'Kúpeľňová zostava','LAUNDRY-TOWER':'Práčovňová skriňa','TOWEL-RADIATOR-600':'Rebríkový radiátor','BATH-105-WASHER':'Práčka','BATH-105-DRYER':'Sušička'};
+const names:Record<string,string>={BED:'Posteľ',WARDROBE:'Šatníková skriňa',DESK:'Pracovný stôl',CHAIR:'Stolička',FEATURE:'Nástenný panel',ART:'Obraz',LIGHT:'Svietidlo',BOOKS:'Knižnica',READING:'Čitateľský puf',PLAY:'Hrací koberec',DRAWING:'Kreslenie a pastelky',BENCH:'Lavička s botníkom',HOOKS:'Vešiakový panel',OVERHEAD:'Horná skriňa',MIRROR:'Zrkadlo',CABINET:'Skriňová zostava',PRINTER:'Tlačiareň','MONITOR-40-21:9':'Monitor',WHITEBOARD:'Magnetická tabuľa','UTILITY-SINK':'Pracovný drez','GARAGE-RACK':'Úložný regál','GARAGE-SHELF':'Nástenné police',PEGBOARD:'Náradie na stene','LONG-TOOL':'Záhradné náradie',MOWER:'Kosačka','GARAGE-CLUTTER':'Uložené predmety','WOOD-PELLET-BOILER':'Kotol na drevo a pelety','PELLET-HOPPER':'Zásobník peliet','PELLET-AUGER':'Podávač peliet','PELLET-BURNER':'Horák','PELLET-FEED-HOSE':'Hadica podávača','BUFFER-TANK-1000L':'Akumulačná nádrž','BUFFER-TANK-800L':'Akumulačná nádrž','WALL-HUNG-WC':'Závesné WC','COMPACT-BASIN':'Umývadlo so zrkadlom','BATH-1700':'Vaňa','BATH-WALL':'Vaňa',WC:'WC',WINDOW:'Obklad pri okne','VANITY-900':'Umývadlová skrinka so zrkadlom','WALK-IN-1250':'Sprchovací kút','BUILT-IN-2616':'Kúpeľňová zostava','LAUNDRY-TOWER':'Práčovňová skriňa','TOWEL-RADIATOR-600':'Rebríkový radiátor','BATH-105-WASHER':'Práčka','BATH-105-DRYER':'Sušička'};
 function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   const n=mesh.name, [prefix,tag='',part='']=n.split(' · ');
   if(/^(Lounge pohovka|Lounge ležadlo|Nízky stolík|Terasový stôl|Terasová stolička)/.test(prefix))return [prefix,prefix.replace(' z 3D','').replace('Lounge pohovka','Terasová pohovka').replace('Lounge ležadlo','Terasové ležadlo'),'furniture'];
@@ -92,10 +93,12 @@ function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   if(tag==='DESK'&&/lampa|lampy/.test(n)){key='lamp';label='Stolová lampa';}
   if(tag.startsWith('PELLET-BAG-'))label=`Vrece peliet 15 kg · ${tag.slice(-1)}`;
   if(tag==='VACUUM')label='Tyčový vysávač na stene · rezerva';
-  if(tag==='STORAGE-CABINET')label='Plytká servisná skriňa pri dverách';
+  if(tag==='STORAGE-CABINET')label='Plytká servisná skriňa pri práčovni';
   if(tag==='HYDRAULIC-RESERVE')label='Rezerva pre hydrauliku';
   if(tag==='SAFETY-GROUP')label='Pojistná skupina KSG mini';
   if(tag==='BOILER-BASE')label='Nehorľavý podstavec kotla';
+  if(tag==='BOILER-FLUE')label='Dymovod nahor · montážny návrh';
+  if(tag==='OPEN-SHELVING')label='Oceľový regál pri vonkajších dverách';
   if(tag==='NIGHTSTAND'){key+=n.match(/\d+$/)?.[0]??'';label=`Nočný stolík ${n.match(/\d+$/)?.[0]??''}`;}
   if(tag==='GARAGE-CLUTTER'){key=part.replace('páska krabice','kartónová krabica');label=key;}
   if(prefix===BEDROOM_FITOUT.id&&tag==='LIGHT'){key+=part.match(/\d+$/)?.[0]??'-ceiling';label=/\d+$/.test(part)?`Čítacie svietidlo ${part.match(/\d+$/)?.[0]}`:'Stropné svietidlo';}
@@ -121,8 +124,9 @@ const grouped=new Map<string,PlanItem>();
 for(const mesh of generated.meshes) {
   const [base,name,category]=semantic(mesh);
   const layout=mesh.layout as LivingLayoutId|undefined;
+  const heatingLayout=mesh.heatingLayout as HeatingLayoutId|undefined;
   const id=layoutItemId(base,layout);
-  const item=grouped.get(id)??{id,name,category,roomId:'',meshes:[],rect:mesh.rect,z0:mesh.z0,z1:mesh.z1,...(layout?{layout}:{})};
+  const item=grouped.get(id)??{id,name,category,roomId:'',meshes:[],rect:mesh.rect,z0:mesh.z0,z1:mesh.z1,...(layout?{layout}:{}),...(heatingLayout?{heatingLayout}:{})};
   item.meshes.push(mesh);grouped.set(id,item);
 }
 const openingSpecs=[...HOUSE.facades.front.openings,...HOUSE.facades.east.openings,HOUSE.facades.west.garageWindow];
@@ -156,19 +160,33 @@ export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
   if(opening)item.opening={width:opening.widthMm,height:opening.heightMm,sill:opening.sillMm};
   if(opening&&GIRL_WINDOW_DESIGN[opening.id])Object.assign(item,GIRL_WINDOW_DESIGN[opening.id],{roomId:'ROOM-1-08'});
   if(opening?.id==='EAST-03'){
-    // 900 − 2 × 78 mm frame − 96 mm for the opened 48 mm leaf and its handle.
-    item.opening!.clearWidth=heating.accumulator.transport.clearWidthMm;
-    item.note=`Jedno plné krídlo ${opening.widthMm} mm sa otvára von, pánt pri južnom ostení; do 12. 9. 2026 tu boli dvojkrídlové transportné dvere ${SERVICE_CORE_REVISION.exteriorDoorRevision.previousWidthMm} mm, zúžené kvôli statike východnej fasády pri nosnej stene kuchyne. Čistý pás zohľadňuje rám, otvorené krídlo a kovanie. Prah 20 mm. Nádrž Ø${numberSk(heating.accumulator.outerDiameterMm)} mm (Ø${heating.accumulator.transportDiameterWithoutInsulationMm} mm bez izolácie) týmto otvorom neprejde: osadiť pred zastrešením alebo zvoliť delený zásobník.`;
+    item.opening!.clearWidth=HEATING_LAYOUTS.A.accumulator.transport.clearWidthMm;
+    item.note='Otvor 900 mm, posunutý o 300 mm k sprche, krídlo otvárané von. Pri kuchyni zostáva 812 mm muriva pre regál 750 × 300 mm. Čistý pás súčasného modelu rámu a otvoreného krídla je 648 mm. Pre nádrž s demontovanou izoláciou treba overiť skutočný voľný otvor: Ø897 mm pri 1 000 l, Ø745 mm pri 800 l. Nominálne dvere „90“ nie sú zárukou 900 mm čistého priechodu.';
   }
-  if(item.id===`${heating.id}-WOOD-PELLET-BOILER`){item.name='DEFRO Firewood Duo Plus 19 kW';item.product={label:'Celá zostava kotla a násypky',dimensions:'1 238 × 1 298 × 1 391 mm',source:HEATING_SOURCES.boiler};item.note='Rozmer výrobku zahŕňa celú zostavu; dole sú diely samotného telesa. Podstavec pridáva 50 mm. Navrhnuté odstupy 250 mm vpravo a vzadu sú menšie než 500 mm v nákrese výrobcu. Zadná kóta sa meria od telesa; za modelovým pripojením je iba 37 mm. Toto osadenie nie je montážne schválené. Servisný priestor je zakreslený osobitne.';}
-  if(item.id===`${heating.id}-BUFFER-TANK-1000L`){item.name='DEFRO DBO-S 1 000 l';item.product={label:'Nádrž s izoláciou',dimensions:'Ø1 106 × 1 913 mm',source:HEATING_SOURCES.accumulator};item.note='Bez izolácie Ø897 mm. Nádrž stojí vľavo pri stene WC, vystredená medzi jej obkladom a západným lícom násypky, 600 mm za dverami z kuchyne. Prípojky smerujú na východ do voľnej plochy pred pásom obsluhy kotla. Cez jednokrídlové dvere EAST-03 (900 mm) neprejde: osadiť pred zastrešením alebo zvoliť delený zásobník. Rozsah modelu navyše obsahuje navrhnuté hrdlá a odvzdušnenie; ich presahy treba potvrdiť pri objednaní.';}
-  if(item.id===`${heating.id}-PELLET-HOPPER`)item.note='Násypka 180 kg, šírka 614 mm; štvorcová hĺbka je odvodená z výrobného pôdorysu. Poloha zodpovedá predbežnému osadeniu v rámci celkového obalu zostavy; hĺbku a vzájomnú polohu s kotlom musí potvrdiť dodávateľ.';
-  if(item.id.startsWith(heating.storage.id)){
+  if(item.heatingLayout){
+    const h=HEATING_LAYOUTS[item.heatingLayout],b=h.boiler,t=h.accumulator;
     item.roomId='ROOM-1-07';
-    if(item.id.endsWith('-STORAGE-CABINET'))item.note='Skriňa 720 × 261 × 1 750 mm stojí pri dverách z kuchyne na južnom líci nosnej steny 300 mm. Tri priehradky vľavo sú pre zvislo uložené vrecia, pravý stĺpec pre tyčový vysávač. Požiarne oddelenie musí schváliť projektant; nejde o vybraný certifikovaný výrobok.';
-    if(item.id.endsWith('-VACUUM')){item.product={label:'Rozmerový príklad · Electrolux WQ61-40OG',dimensions:'255 × 140 × 1 105 mm pri otočenom uložení',source:HEATING_SOURCES.vacuum};item.note='Model je priestorový príklad tyčového vysávača. Držiak, napájanie a rozmery konkrétneho vybraného vysávača sa potvrdia pred výrobou skrine.';}
-    if(item.id.includes('-PELLET-BAG-'))item.note='Priestorová rezerva pre 15 kg vrece uložené zvislo v samostatnej priehradke. Rozmery balenia zvoleného dodávateľa treba pred výrobou skrine potvrdiť.';
-    if(item.id.endsWith('-HYDRAULIC-RESERVE'))item.note='Voľný priestor pre konečný hydraulický návrh. DEFROmat ani expanzná nádoba nemajú v tomto modeli potvrdené výrobné rozmery.';
+    if(item.id===`${h.id}-WOOD-PELLET-BOILER`){
+      item.name=`DEFRO Firewood Duo Plus ${b.referenceOutputKw} kW`;
+      item.nominal=b.body.footprintMm;
+      item.product={label:'Celá zostava kotla a násypky · š × h × v',dimensions:`${numberSk(b.catalogueSizeMm.width)} × ${numberSk(b.catalogueSizeMm.depth)} × 1 391 mm`,source:HEATING_SOURCES.boiler};
+      item.note=`Čelo smeruje doprava, dvierka sú zatvorené a násypka je pod kotlom v pôdoryse. Modulácia na pelety ${b.pelletOutputRangeKw.join('–')} kW. Podstavec +50 mm. ${heatingRoomNotes(item.heatingLayout)[3]}`;
+    }
+    if(item.id===`${h.id}-BUFFER-TANK-${t.nominalVolumeL}L`){
+      item.name=`DEFRO DBO-S ${numberSk(t.nominalVolumeL)} l`;
+      item.product={label:'Nádrž s izoláciou · priemer × výška',dimensions:`Ø${numberSk(t.outerDiameterMm)} × ${numberSk(t.heightMm)} mm`,source:HEATING_SOURCES.accumulator};
+      item.note=`Vľavo hore nad kotlom, 100 mm od hotových stien. Prípojky smerujú šikmo doprava dolu, mimo vstupu z kuchyne. ${heatingTransportNote(item.heatingLayout)}`;
+    }
+    if(item.id.endsWith('-PELLET-HOPPER'))item.note='Násypka 180 kg pod kotlom v pôdoryse, 100 mm od spodnej steny; výrobca umožňuje montáž na oboch stranách. Šírka 614 mm; štvorcová hĺbka je odvodená z výrobného pôdorysu. Poloha, dĺžka a sklon podávača aj hadica sú montážny návrh na potvrdenie dodávateľom.';
+    if(item.id.endsWith('-PELLET-BURNER'))item.note='Úzky horák na zatvorených dvierkach. Celkový predný presah J = 429 mm je z výrobného výkresu. Šírka 220 mm, výška 260 mm a delenie na teleso 350 mm + krčok 79 mm sú zaokrúhlené proporcie odvodené z výkresu; detailné montážne rozmery treba potvrdiť.';
+    if(item.id.endsWith('-BOILER-FLUE'))item.note=`Pevné hrdlo kotla 139 mm zostáva. Návrh kolena Ø159 mm s polomerom osi 100 mm a zvislej rúry do výšky 2 600 mm; odstup povrchu rúry od ľavej steny ${numberSk(h.flue.wallClearanceMm)} mm. Konkrétny diel, servis a pokračovanie nad strop nie sú potvrdené.`;
+    if(item.id.endsWith('-OPEN-SHELVING')){
+      item.nominal=h.shelving.footprintMm;
+      item.note='Oceľový regál 750 × 300 × 2 000 mm s piatimi policami. Otvorený smerom doľava, prístup 600 mm; stojí na stene uvoľnenej posunom vonkajších dverí. Bez výklopných dvierok v priechode.';
+    }
+    if(item.id.endsWith('-STORAGE-CABINET'))item.note='Servisná skriňa 720 × 261 × 1 750 mm vpravo dole pri východnej stene, čelom doľava do miestnosti. Priestor pre tri vrecia a vysávač; požiarne oddelenie ešte nie je navrhnuté.';
+    if(item.id.endsWith('-VACUUM'))item.product={label:'Rozmerový príklad · Electrolux WQ61-40OG',dimensions:'255 × 140 × 1 105 mm pri otočenom uložení',source:HEATING_SOURCES.vacuum};
+    if(item.id.endsWith('-HYDRAULIC-RESERVE'))item.note='Priestor pre montážny návrh hydrauliky. Rozvody ani expanzná nádoba nemajú potvrdené výrobné rozmery.';
   }
   const door=INTERIOR_DOORS.find(d=>d.label.split(' · ')[0]===item.id);
   if(door)item.opening={width:door.widthMm,height:door.heightMm,sill:0};
@@ -180,13 +198,13 @@ export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
   return item;
 });
 /** Items shown for one living-room layout: everything shared plus that layout's pieces. */
-export const planItemsFor=(layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID)=>PLAN_ITEMS_ALL.filter(item=>!item.layout||item.layout===layout);
+export const planItemsFor=(layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID,heatingLayout:HeatingLayoutId=DEFAULT_HEATING_LAYOUT_ID)=>PLAN_ITEMS_ALL.filter(item=>(!item.layout||item.layout===layout)&&(!item.heatingLayout||item.heatingLayout===heatingLayout));
 /** Items of the default layout; the active 3D model shows this arrangement. */
 export const PLAN_ITEMS:PlanItem[]=planItemsFor(DEFAULT_LIVING_LAYOUT_ID);
 export const PLAN_ITEM_BY_ID=new Map(PLAN_ITEMS_ALL.map(item=>[item.id,item]));
 export const PLAN_MESH_BY_ID=new Map(PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>[mesh.id,{mesh,item}] as const)));
 /** Guidance paragraphs of a room; the living room explains the selected layout. */
-export const planRoomNotes=(roomId:string,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID):string[]|undefined=>roomId==='ROOM-1-03'?[...LIVING_LAYOUTS[layout].notes]:PLAN_ROOM_NOTES[roomId];
+export const planRoomNotes=(roomId:string,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID,heatingLayout:HeatingLayoutId=DEFAULT_HEATING_LAYOUT_ID):string[]|undefined=>roomId==='ROOM-1-07'?heatingRoomNotes(heatingLayout):roomId==='ROOM-1-03'?[...LIVING_LAYOUTS[layout].notes]:PLAN_ROOM_NOTES[roomId];
 export const PLAN_ROOMS=INTERIOR_ROOMS.map(room=>({...room,name:room.name.replace('Hlavný obytný priestor s kuchyňou','Obývačka a kuchyňa').replace('Zádverie, chodba, vstup','Zádverie'),area:roomAreaM2(room),bounds:roomBoundsMm(room)}));
 export const PLAN_FULL_BOUNDS:RectMm={x0:5350,y0:1550,x1:29200,y1:23300};
 
@@ -200,7 +218,7 @@ export function zoomPlanAt(view:PlanViewBox,factor:number,anchor:{x:number;y:num
   const width=Math.min(140000,Math.max(600,view.width*factor)),ratio=width/view.width;
   return {x:anchor.x+(view.x-anchor.x)*ratio,y:anchor.y+(view.y-anchor.y)*ratio,width,height:view.height*ratio};
 }
-export function searchPlanItems(query:string,roomId:string,category:PlanCategory|'all',layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID) {
+export function searchPlanItems(query:string,roomId:string,category:PlanCategory|'all',layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID,heatingLayout:HeatingLayoutId=DEFAULT_HEATING_LAYOUT_ID) {
   const words=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);
-  return planItemsFor(layout).filter(item=>(!roomId||item.roomId===roomId)&&(category==='all'||item.category===category)&&words.every(word=>normalizeSearch(`${item.name} ${item.id} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.number} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.name} ${item.meshes.map(m=>m.name).join(' ')}`).includes(word)));
+  return planItemsFor(layout,heatingLayout).filter(item=>(!roomId||item.roomId===roomId)&&(category==='all'||item.category===category)&&words.every(word=>normalizeSearch(`${item.name} ${item.id} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.number} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.name} ${item.meshes.map(m=>m.name).join(' ')}`).includes(word)));
 }

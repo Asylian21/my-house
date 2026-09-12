@@ -1,13 +1,32 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { extractPlanGeometry, hull } from '../scripts/plan-documentation/extract';
+import { extractPlanGeometry, hull, triangleSilhouette } from '../scripts/plan-documentation/extract';
 import generated from '../lib/plan-geometry.generated.json';
 import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, planItemsFor, planRoomNotes, searchPlanItems, zoomPlanAt } from '../lib/plan-documentation';
 import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_RENDER_WALLS, KITCHEN_RUN } from '../lib/twin-interior';
 import { LIVING_LAYOUTS, diningTableRectMm } from '../lib/twin-living-layouts';
+import { HEATING_LAYOUTS, HEATING_LAYOUT_IDS, normalizeHeatingLayout } from '../lib/technical-design';
+import { codedItems, drawnItems } from '../lib/plan-export';
 import { HOUSE } from '../lib/twin-site';
 
 describe('Documentation of the active 3D model',()=>{
+  it('keeps the empty inside of a bent tube instead of filling its convex hull',()=>{
+    const points=[[0,0],[3,0],[3,1],[1,1],[1,3],[0,3]];
+    const path=triangleSilhouette(points,[0,1,2,0,3,2,0,3,5,3,4,5]);
+    const triangles=path.split('M').filter(Boolean).map(p=>p.replace('Z','').split('L').map(v=>v.split(',').map(Number)));
+    const cross=(a:number[],b:number[],p:number[])=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+    expect(triangles).toHaveLength(4);
+    for(const [a,b,c] of triangles)expect(cross(a,b,c)).toBeGreaterThan(0);
+    const covered=(p:number[])=>triangles.some(([a,b,c])=>cross(a,b,p)>=0&&cross(b,c,p)>=0&&cross(c,a,p)>=0);
+    expect(covered([.5,2])).toBe(true);
+    expect(covered([2,.5])).toBe(true);
+    expect(covered([2,1.5])).toBe(false);
+    for(const layout of HEATING_LAYOUT_IDS){
+      const hose=generated.meshes.find(m=>m.heatingLayout===layout&&m.name.includes('PELLET-FEED-HOSE'))!;
+      expect(hose.silhouettePath?.startsWith('M')).toBe(true);
+      expect(hose.silhouettePath?.split('Z').length).toBeGreaterThan(20);
+    }
+  });
   it('is an exact fresh projection of every eligible physical component',()=>{
     const actual=extractPlanGeometry(readFileSync(new URL('../public/assets/archviz/dom-terrace.glb',import.meta.url)));
     expect(generated).toEqual(actual);
@@ -75,6 +94,24 @@ describe('Documentation of the active 3D model',()=>{
     expect(searchPlanItems('sedacka','ROOM-1-03','all').map(i=>i.id)).toEqual(['sofa']);
     expect(searchPlanItems('kachle','','equipment','B').map(i=>i.id)).toEqual([LIVING_LAYOUTS.B.stove.id]);
     expect(planRoomNotes('ROOM-1-07')).toBeDefined();
+  });
+  it('selects technical equipment independently of the living layout, including inventory and exports',()=>{
+    for(const living of ['A','B'] as const)for(const heating of HEATING_LAYOUT_IDS){
+      const items=planItemsFor(living,heating),h=HEATING_LAYOUTS[heating];
+      const equipment=items.filter(i=>i.heatingLayout);
+      expect(equipment.length).toBeGreaterThan(8);
+      expect(equipment.every(i=>i.heatingLayout===heating&&i.roomId==='ROOM-1-07')).toBe(true);
+      expect(items.some(i=>i.layout&&i.layout!==living)).toBe(false);
+      expect(searchPlanItems('kotol','ROOM-1-07','all',living,heating).every(i=>!i.heatingLayout||i.heatingLayout===heating)).toBe(true);
+      expect(items.find(i=>i.id===`${h.id}-BUFFER-TANK-${h.accumulator.nominalVolumeL}L`)?.product?.dimensions).toContain(String(h.accumulator.outerDiameterMm).replace('1106','1 106'));
+      for(const exported of [drawnItems(5,living,heating),codedItems(5,living,heating).map(c=>c.item)]){
+        expect(exported.some(i=>i.id===`${h.id}-WOOD-PELLET-BOILER`)).toBe(true);
+        expect(exported.some(i=>i.heatingLayout&&i.heatingLayout!==heating)).toBe(false);
+      }
+      expect(planRoomNotes('ROOM-1-07',living,heating)?.join(' ')).toContain(`Plus ${h.boiler.referenceOutputKw} kW`);
+    }
+    expect(planItemsFor('B','A').filter(i=>!i.heatingLayout)).toEqual(planItemsFor('B','B').filter(i=>!i.heatingLayout));
+    expect(normalizeHeatingLayout('b')).toBe('B');expect(normalizeHeatingLayout('B')).toBe('B');expect(normalizeHeatingLayout('invalid')).toBe('A');
   });
   it('keeps every current interior wall and door, without treating vaulted ceilings as openings',()=>{
     for(const wall of INTERIOR_RENDER_WALLS){

@@ -70,10 +70,10 @@ describe('active 3D house matches the approved default C plan',()=>{
     }
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-06')!.rectsMm).toEqual([rect(22783,8912,24682,10712)]);
     const technical=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-07')!;
-    expect(technical.rectsMm).toEqual([rect(24821,8912,25243,10712),rect(25243,9112,27510,10712),rect(25243,7741,27510,9112)]);
-    // 422 × 1 800 + 2 267 × 1 600 + 2 267 × 1 371: the 1 680 × 699 mm protrusion is gone.
-    expect(roomAreaM2(technical)).toBeCloseTo(7.494857,6);
-    expect(8.669177-roomAreaM2(technical)).toBeCloseTo(1.17432,6);
+    expect(technical.rectsMm).toEqual([rect(24821,7741,27510,10712)]);
+    // The straight laundry/WC wall gives one 2 689 × 2 971 mm rectangle.
+    expect(roomAreaM2(technical)).toBeCloseTo(7.989019,6);
+    expect(roomAreaM2(technical)-7.494857).toBeCloseTo(0.494162,6);
     expect(roomAt(technical.standingPointMm)?.id).toBe('ROOM-1-07');
     expect(INTERIOR_DOORS.find(d=>d.id==='DOOR-102-106')).toMatchObject({startMm:9866,widthMm:800});
     // The technical-room door keeps its 800 mm opening at 25 881 but sits in the
@@ -90,7 +90,7 @@ describe('active 3D house matches the approved default C plan',()=>{
       expect(intersects(leaf,piece)).toBe(false);
       expect(swingHits(techDoor,piece)).toBe(false);
     }
-    expect(techDoor.startMm-KITCHEN_RUN.rectMm.x1).toBe(190);
+    expect(techDoor.startMm-KITCHEN_RUN.rectMm.x1).toBe(80);
     expect(KITCHEN_RUN.eastReturnRectMm.x0-(techDoor.startMm+techDoor.widthMm)).toBe(260);
     // From the corridor mouth to the facade; the spine starts on the wall's north face.
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-02')!.rectsMm.some(r=>r.x1===wall.rectMm.x0&&r.y1===11550)).toBe(true);
@@ -104,21 +104,23 @@ describe('active 3D house matches the approved default C plan',()=>{
     // 5 998 × 7 983 + 4 758 × 538: 0.9953 m² more than the first step's bay, 0.53002 m² more than the source.
     expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)).toBeCloseTo(50.441838,6);
     expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)-roomAreaM2(baseline.INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)).toBeCloseTo(0.53002,6);
-    expect(KITCHEN_RUN.rectMm).toEqual(rect(22791,11109,25691,11710));
+    expect(KITCHEN_RUN.rectMm).toEqual(rect(22791,11109,25801,11710));
+    expect(KITCHEN_RUN.eastReturnRectMm.y0).toBe(11109);
+    expect(baseline.KITCHEN_RUN.eastReturnRectMm.y0-KITCHEN_RUN.eastReturnRectMm.y0).toBe(441);
     expect(KITCHEN_RUN.fridgeUnitRectMm).toEqual(rect(22791,11109,23391,11710));
     expect(KITCHEN_RUN.rectMm.y0-wall.rectMm.y1).toBe(baseline.KITCHEN_RUN.rectMm.y0-baseline.INTERIOR_WALLS.find(w=>w.id==='IW-KITCHEN-BACK')!.rectMm.y1);
     expect(KITCHEN_RUN.rectMm.y0-baseline.KITCHEN_RUN.rectMm.y0).toBe(160);
     expect(KITCHEN_RUN.peninsulaRectMm.y0-KITCHEN_RUN.fridgeUnitRectMm.y1).toBe(1180);
-    for(const key of ['peninsulaRectMm','eastReturnRectMm','sinkCenterXmm','dishwasherXmm','hobCenterXmm','upperCabinets'] as const) expect(KITCHEN_RUN[key]).toEqual(baseline.KITCHEN_RUN[key]);
+    for(const key of ['peninsulaRectMm','sinkCenterXmm','dishwasherXmm','hobCenterXmm','upperCabinets'] as const) expect(KITCHEN_RUN[key]).toEqual(baseline.KITCHEN_RUN[key]);
     // The 601 mm deep run stays in the bay and stands 160 mm proud of the spine's north end, inside the main floor.
     expect(KITCHEN_RUN.rectMm.x0).toBeGreaterThanOrEqual(bay.x0);
     expect(KITCHEN_RUN.rectMm.x1).toBeLessThanOrEqual(bay.x1);
     expect(KITCHEN_RUN.rectMm.y1-bay.y1).toBe(160);
     expect(contains(living,rect(KITCHEN_RUN.rectMm.x0,bay.y1,KITCHEN_RUN.rectMm.x1,KITCHEN_RUN.rectMm.y1))).toBe(true);
     expect(baseline.KITCHEN_RUN.rectMm.y0).toBe(10949);
-    // The exterior door of the technical room is a 900 mm single leaf on the same south jamb.
-    expect(HOUSE.facades.east.openings.find(o=>o.id==='EAST-03')).toEqual({id:'EAST-03',startYmm:9300,widthMm:900,heightMm:2250,sillMm:0});
-    expect(east.rectMm.y0-(9300+900)).toBe(512);
+    // The exterior door of the technical room is a 900 mm single leaf moved 300 mm south to free storage wall.
+    expect(HOUSE.facades.east.openings.find(o=>o.id==='EAST-03')).toEqual({id:'EAST-03',startYmm:9000,widthMm:900,heightMm:2250,sillMm:0});
+    expect(east.rectMm.y0-(9000+900)).toBe(812);
     // Both living layouts document the wall, the door and the 1 180 mm aisle.
     for(const layout of Object.values(LIVING_LAYOUTS)){
       expect(layout.notes.some(n=>/nosné murivo hr\. 300 mm \(10 712–11 012 mm\)/.test(n))).toBe(true);

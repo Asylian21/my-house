@@ -318,7 +318,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   wc.rectsMm=wc.rectsMm.map(r=>({...r,x1:r.x1+core.wcExpansionMm}));
   wc.standingPointMm={x:23733,y:9900};
   const technical=rooms.find(room=>room.number==='1.07')!;
-  technical.rectsMm=[rect(core.technicalWestMm,8912,core.boilerBayWestMm,10712),rect(core.boilerBayWestMm,9112,25830,10712),rect(25830,9112,core.technicalFacadeInsideMm,11411),rect(core.boilerBayWestMm,7741,core.technicalFacadeInsideMm,9112)];
+  technical.rectsMm=[rect(core.technicalWestMm,7741,25830,10712),rect(25830,7741,core.technicalFacadeInsideMm,11411)];
   technical.standingPointMm={x:26500,y:10750};
   const bathroom=rooms.find(room=>room.number==='1.05')!;
   bathroom.rectsMm=[rect(22783,6602,core.bathroomEastMm,8772),rect(core.bathroomEastMm,6602,27541,7601)];
@@ -418,9 +418,9 @@ function bearKitchenWall(base:ReturnType<typeof balanceNestedChildRooms>) {
   // The kitchen bay starts on the wall's north face and now runs from the corridor spine to the east facade.
   living.rectsMm=living.rectsMm.map(r=>r.y0<bearing.y1&&r.y1>bearing.y1&&r.x0>=bearing.x0?rect(r.x0,bearing.y1,east.x1,r.y1):r);
   const technical=rooms.find(room=>room.number==='1.07')!;
-  // Everything north of the wall's south face leaves the technical room; the middle bay and the former protrusion become one rectangle.
-  technical.rectsMm=[rect(core.technicalWestMm,8912,core.boilerBayWestMm,bearing.y0),rect(core.boilerBayWestMm,9112,core.technicalFacadeInsideMm,bearing.y0),rect(core.boilerBayWestMm,7741,core.technicalFacadeInsideMm,9112)];
-  technical.standingPointMm={x:26400,y:10300};
+  // The laundry return aligns with the WC wall: no step or degenerate floor strips.
+  technical.rectsMm=[rect(core.technicalWestMm,7741,core.technicalFacadeInsideMm,bearing.y0)];
+  technical.standingPointMm={x:26710,y:10050};
   const spine=base.walls.find(w=>w.id==='IW-SPINE-EAST-3')!.rectMm;
   const removed=new Set(['IW-KITCHEN-BACK','IW-TECH-WEST','IW-TECH-PIER','IW-TECH-NORTH']);
   // The corridor spine now starts on the bearing wall's north face.

@@ -2,7 +2,8 @@ import { NullEngine } from '@babylonjs/core/Engines/nullEngine';
 import { Scene } from '@babylonjs/core/scene';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { buildInterior, buildLivingDiningFitout, buildLivingFireplace } from '../../lib/babylon-interior';
+import { buildInterior, buildLivingDiningFitout, buildLivingFireplace, buildTechnicalHeatingFitout } from '../../lib/babylon-interior';
+import { HEATING_LAYOUTS, type HeatingLayoutId } from '../../lib/technical-design';
 import { LIVING_LAYOUTS, type LivingLayoutId } from '../../lib/twin-living-layouts';
 import { SCENE_CENTER_MM } from '../../lib/twin-render-frame';
 import { TwinSceneController } from '../../lib/babylon-scene';
@@ -23,6 +24,19 @@ export function hull(points: number[][]): number[][] {
   const cross = (a:number[], b:number[], c:number[]) => (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
   const half = (list:number[][]) => { const out:number[][]=[]; for(const p of list) { while(out.length>1 && cross(out[out.length-2],out[out.length-1],p)<=0) out.pop(); out.push(p); } out.pop(); return out; };
   return [...half(sorted), ...half([...sorted].reverse())];
+}
+
+/** Same-winding projected triangles form a nonzero-filled union, preserving concave bends. */
+export function triangleSilhouette(projected:readonly number[][],indices:readonly number[]):string {
+  const paths:string[]=[];
+  for(let i=0;i<indices.length;i+=3){
+    const [a,b,c]=[projected[indices[i]],projected[indices[i+1]],projected[indices[i+2]]];
+    const cross=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+    if(Math.abs(cross)<1)continue;
+    const points=cross>0?[a,b,c]:[a,c,b];
+    paths.push(`M${points.map(p=>p.join(',')).join('L')}Z`);
+  }
+  return paths.join('');
 }
 
 export function extractPlanGeometry(terraceGlb?:Uint8Array) {
@@ -57,6 +71,11 @@ export function extractPlanGeometry(terraceGlb?:Uint8Array) {
     buildLivingFireplace(interiorContext,materials,LIVING_LAYOUTS.B.stove);
     buildLivingDiningFitout(interiorContext,materials,LIVING_LAYOUTS.B);
     for(const mesh of scene.meshes)if(!sharedMeshes.has(mesh))layoutOf.set(mesh,'B');
+    const heatingOf=new Map<AbstractMesh,HeatingLayoutId>();
+    for(const mesh of scene.meshes)if(mesh.name.startsWith('TECHNICAL'))heatingOf.set(mesh,'A');
+    const beforeHeatingB=new Set(scene.meshes);
+    buildTechnicalHeatingFitout(interiorContext,materials,HEATING_LAYOUTS.B);
+    for(const mesh of scene.meshes)if(!beforeHeatingB.has(mesh))heatingOf.set(mesh,'B');
     const vehicle=buildGarageSuperbVehicle(scene,{register:identity,realisticOnly:identity,castShadow:identity});
     vehicle.root.position.set((GARAGE_VEHICLE.route.parkedMm.x-SCENE_CENTER_MM.x)/1000,-GARAGE_VEHICLE.wheelGroundOffsetM,(SCENE_CENTER_MM.y-GARAGE_VEHICLE.route.parkedMm.y)/1000);
     vehicle.root.rotation.y=Math.PI/2;
@@ -103,10 +122,12 @@ export function extractPlanGeometry(terraceGlb?:Uint8Array) {
       }
       const round=(n:number)=>Math.round(n*100)/100||0;
       const surface=mesh.material as PBRMaterial|null;
-      const layout=layoutOf.get(mesh);
+      const layout=layoutOf.get(mesh), heatingLayout=heatingOf.get(mesh);
+      const silhouettePath=mesh.metadata?.planProjection==='TRIANGLE_SILHOUETTE'
+        ?triangleSilhouette(projected,Array.from(mesh.getIndices()??[])):undefined;
       return {id:`mesh-${index}`,name:mesh.name,source:shellNames.has(mesh)?'shell':'interior',rect:{x0:round(x0),y0:round(y0),x1:round(x1),y1:round(y1)},z0:round(z0),z1:round(z1),
-        polygon:hull(projected).map(p=>p.join(',')).join(' '),color:surface?.albedoColor?.toHexString() ?? '#c9cbd0',...(layout?{layout}:{})};
+        polygon:hull(projected).map(p=>p.join(',')).join(' '),...(silhouettePath?{silhouettePath}:{}),color:surface?.albedoColor?.toHexString() ?? '#c9cbd0',...(layout?{layout}:{}),...(heatingLayout?{heatingLayout}:{})};
     });
-    return {revision:2,projection:'World-space orthographic convex silhouettes; measurements in mm; at rest. Living-room pieces carry `layout` A or B; everything else is shared.',meshes};
+    return {revision:3,projection:'World-space orthographic convex silhouettes; measurements in mm; at rest. Living-room pieces carry `layout` A or B; technical-room pieces carry `heatingLayout` A or B; everything else is shared.',meshes};
   } finally { scene.dispose(); engine.dispose(); }
 }

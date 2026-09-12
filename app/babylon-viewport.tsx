@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeHeatingLayout } from '@/lib/technical-design';
 import {
   forwardRef,
   useEffect,
@@ -238,6 +239,7 @@ export const BabylonViewport = forwardRef<
           (id) => onSelectRef.current(id),
           (mode) => onNavigationModeChangeRef.current(mode),
           (profile) => setQuality(profile),
+          {heatingLayout:normalizeHeatingLayout(new URLSearchParams(window.location.search).get('heating'))},
         );
         controller = createdController;
         controllerRef.current = createdController;

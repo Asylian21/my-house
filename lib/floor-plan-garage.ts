@@ -12,7 +12,8 @@ export function createGarageEnvelope(gardenRecess=true) {
   const loggia={
     bounds:rect(pier.startXmm,porch.backFaceYmm,porch.eastInnerXmm,porch.faceYmm),
     pier:rect(pier.startXmm,pier.startYmm,pier.endXmm,pier.endYmm),
-    westReturn:rect(pier.startXmm,porch.backFaceYmm,6944,HOUSE.facades.west.loggiaOpening.startYmm),
+    pierReturn:rect(pier.startXmm,pier.returnStartYmm,pier.returnEndXmm,pier.startYmm),
+    pierPath:`M${pier.startXmm},${-pier.endYmm}H${pier.endXmm}V${-pier.startYmm}H${pier.returnEndXmm}V${-pier.returnStartYmm}H${pier.startXmm}Z`,
     depth:porch.faceYmm-porch.backFaceYmm,openingWidth:porch.openingEndXmm-porch.openingStartXmm,
     openingStart:porch.openingStartXmm,
   };
@@ -36,7 +37,7 @@ export type GarageEnvelope=ReturnType<typeof createGarageEnvelope>;
  * Outer 200 mm of every insulated exterior wall (client, 11. 9. 2026: 300 mm
  * masonry + 200 mm contact insulation = 500). Drawn over the solid shell, so
  * the shell reads as masonry and these bands as insulation. The insulation
- * wraps outer corners; the loggia corner pier and rear return are solid.
+ * wraps outer corners; the L-shaped loggia corner support stays solid.
  */
 function insulationBands(gardenRecess:boolean,loggia:{bounds:RectMm}):RectMm[] {
   const t=HOUSE.exteriorWall.insulationMm;

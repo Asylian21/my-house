@@ -205,8 +205,9 @@ export const CHILDRENS_BEDROOM_FITOUTS:readonly ChildBedroomFitout[]=[boy,girl];
 // and steel roof frames of the cathedral ceiling), running in one line from the
 // corridor mouth to the east facade with the technical-room door in it. The back
 // run keeps its 97 mm installation gap behind the carcasses and follows the
-// wall's north face; the peninsula, the east return and the appliances stay
-// where they are, so the working aisle narrows from 1 340 to 1 180 mm. Shared by
+// wall's north face; the peninsula and appliances stay
+// where they are; the east return now reaches this same back wall. The rear
+// counter stops 80 mm before the door opening. The working aisle is 1 180 mm. Shared by
 // living layouts A and B.
 export const KITCHEN_BEARING_WALL:RectMm=ACTIVE_CONCEPT.kitchenBearingWall!;
 /** The 860 mm piece between the technical-room door and the east facade. */
@@ -215,6 +216,7 @@ const kitchenGapMm=original.KITCHEN_RUN.rectMm.y0-original.INTERIOR_WALLS.find(w
 const kitchenShiftMm=KITCHEN_BEARING_WALL.y1+kitchenGapMm-original.KITCHEN_RUN.rectMm.y0;
 export const KITCHEN_RUN:original.KitchenRun=Object.freeze({
   ...original.KITCHEN_RUN,backRunRevisionSourceId:'C-KITCHEN-BEARING-WALL-2026-09-12',
-  rectMm:shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),
+  rectMm:{...shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),x1:KITCHEN_BEARING_WALL.x1-80},
+  eastReturnRectMm:{...original.KITCHEN_RUN.eastReturnRectMm,y0:KITCHEN_BEARING_WALL.y1+kitchenGapMm},
   fridgeUnitRectMm:shift(original.KITCHEN_RUN.fridgeUnitRectMm,0,kitchenShiftMm),
 });

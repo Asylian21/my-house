@@ -1836,7 +1836,7 @@ describe("documented D1 covered porches and terrace zones", () => {
   it("keeps the garden loggia recess consistent with the facade opening", () => {
     const loggia = HOUSE.porches.gardenLoggia;
     expect(loggia.faceYmm).toBe(HOUSE.facades.garden.faceYmm);
-    expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(3_200);
+    expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(2_200);
     expect(loggia.backDoor.widthMm).toBe(1_250);
     expect(loggia.backLarch.endXmm).toBe(loggia.backDoor.startXmm);
     expect(loggia.originalBackFaceYmm).toBe(
@@ -1849,12 +1849,12 @@ describe("documented D1 covered porches and terrace zones", () => {
     );
     expect(
       HOUSE.facades.west.loggiaOpening.startYmm - loggia.backFaceYmm,
-    ).toBeGreaterThanOrEqual(500);
-    expect(HOUSE.facades.west.loggiaOpening.widthMm).toBe(900);
+    ).toBe(0);
+    expect(HOUSE.facades.west.loggiaOpening.widthMm).toBe(953);
     expect(
       HOUSE.facades.west.loggiaOpening.startYmm +
         HOUSE.facades.west.loggiaOpening.widthMm,
-    ).toBe(loggia.cornerPier.startYmm);
+    ).toBe(loggia.cornerPier.returnStartYmm);
   });
 
   it("preserves the D1 terrace legend and applies the active one-metre revision", () => {

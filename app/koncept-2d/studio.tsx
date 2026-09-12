@@ -8,6 +8,7 @@ import { StandardFloorPlanStudio } from './standard-studio';
 import { ExperimentalFloorPlanStudio } from './experiment-studio';
 import { normalizeLivingLayout } from '@/lib/twin-living-layouts';
 import { normalizeVariant, usePlanView, type PlanVariant } from './variant-tabs';
+import { normalizeHeatingLayout } from '@/lib/technical-design';
 import { DocumentationStudio } from './documentation-studio';
 
 export function FloorPlanStudio() {
@@ -28,7 +29,7 @@ export function FloorPlanStudio() {
   };
   const navigation={variant,onVariantChange,view};
   // `living=b` opens the documentation with the alternative living-room layout.
-  if(variant==='c'&&searchParams.get('mode')!=='study')return <DocumentationStudio initialManual={searchParams.get('view')==='manual'} initialLivingLayout={normalizeLivingLayout(searchParams.get('living'))}/>;
+  if(variant==='c'&&searchParams.get('mode')!=='study')return <DocumentationStudio initialManual={searchParams.get('view')==='manual'} initialLivingLayout={normalizeLivingLayout(searchParams.get('living'))} initialHeatingLayout={normalizeHeatingLayout(searchParams.get('heating'))}/>;
   return variant==='e'
     ? <ExperimentalFloorPlanStudio {...navigation} rawSettings={experimentSettings} setSettings={setExperimentSettings}/>
     : <StandardFloorPlanStudio {...navigation} rawSettings={variant==='c'?nestedSettings:standardSettings} setSettings={variant==='c'?setNestedSettings:setStandardSettings}/>;

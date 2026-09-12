@@ -636,7 +636,7 @@ test("selects every floor-plan variant on one route with one accessible tab pane
     assert.equal((main.match(/id="bed-width"/g) ?? []).length, 1, variant);
     assert.doesNotMatch(main, /href="\/koncept-2d-2"|NaN/);
     assert.match(main, /class="fp-shell fp-loggia-pier"/);
-    assert.match(main, /Rohový stĺpik 1,00 × 0,50 m/);
+    assert.match(main, /Rohová podpera do L · 2,00 × 1,00 m/);
     assert.match(main, /class="fp-terrace fp-garden-recess"/);
     assert.match(main, /Garáž → záhrada · 900 mm/);
     assert.match(main, /Steny a priečky/);
@@ -797,4 +797,30 @@ test("renders active C as a measured model manual while retaining the editable s
   const study=await render('/koncept-2d?variant=c&mode=study');
   assert.equal(study.status,200);
   assert.match(await study.text(),/id="expansion"/);
+});
+
+test('renders either heating size independently of the living layout and carries it into the manual and 3D link', async () => {
+  for (const [id,kw,litres] of [['a',19,1000],['b',15,800]]) {
+    const response=await render(`/koncept-2d?variant=c&living=b&heating=${id}&view=manual`);
+    assert.equal(response.status,200);
+    const html=await response.text();
+    assert.match(html,/data-testid="pd-heating-switch"/);
+    assert.match(html,new RegExp(`aria-pressed="true"[^>]*><b>${id.toUpperCase()}<\\/b><span>${kw} kW`));
+    assert.match(html,new RegExp(`data-item="TECHNICAL-PLUS${kw}-DBOS${litres}-BUFFER-TANK-${litres}L"`));
+    assert.match(html,new RegExp(`data-item="TECHNICAL-PLUS${kw}-DBOS${litres}-BOILER-FLUE"`));
+    assert.match(html,new RegExp(`data-item="TECHNICAL-SHELVING-${id.toUpperCase()}-OPEN-SHELVING"`));
+    assert.doesNotMatch(html,new RegExp(`data-item="TECHNICAL-SHELVING-${id==='a'?'B':'A'}-OPEN-SHELVING"`));
+    assert.match(html,/Vonkajšie dvere sú posunuté o 300 mm/);
+    assert.match(html,/čelom doprava do miestnosti/);
+    assert.match(html,/Čelo kotla →/);
+    assert.match(html,/Dvierka sú zatvorené/);
+    assert.doesNotMatch(html,/Priestor dvierok\*/);
+    assert.match(html,/data-item="[^"]+-PELLET-FEED-HOSE"[^>]*style="stroke:none"/);
+    assert.doesNotMatch(html,new RegExp(`data-item="TECHNICAL-PLUS${kw===19?15:19}-DBOS`));
+    assert.match(html,/data-item="sofa-B"/);
+    assert.match(html,new RegExp(`href="/\\?heating=${id}"`));
+    assert.match(html,/Izolácia je odnímateľná/);
+    assert.match(html,/Primárne pelety/);
+    assert.doesNotMatch(html,/osadiť pred zastrešením|NaN|Infinity/);
+  }
 });

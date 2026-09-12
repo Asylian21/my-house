@@ -1066,11 +1066,10 @@ export const HOUSE = Object.freeze({
       },
       loggiaOpening: {
         id: "WEST-01",
-        // The one-metre garage extension shortens the side portal together
-        // with the loggia, retaining a useful 553 mm rear return and the
-        // existing 500 mm front corner pier.
-        startYmm: 9800,
-        widthMm: 900,
+        // Client sketch, 12 Sep 2026: open right from the garage back wall
+        // to the short leg of the L-shaped corner support.
+        startYmm: GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
+        widthMm: 10200 - GARAGE_DEPTH_REVISION.revisedLoggiaBackFaceYmm,
         heightMm: 2400,
         sillMm: 0,
         originalStartYmm: 9300,
@@ -1162,9 +1161,14 @@ export const HOUSE = Object.freeze({
       originalBackFaceYmm: GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
       garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
       revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
-      openingStartXmm: 7440,
+      openingStartXmm: 8440,
       openingEndXmm: 10640,
-      cornerPier: { startXmm: 6440, endXmm: 7440, startYmm: 10700, endYmm: 11200 },
+      // Approximate client sketch proportions: 2 m garden arm, 1 m west arm,
+      // both 500 mm thick. Coordinates describe the two legs, not a filled box.
+      cornerPier: {
+        startXmm: 6440, endXmm: 8440, startYmm: 10700, endYmm: 11200,
+        returnEndXmm: 6940, returnStartYmm: 10200,
+      },
       backLarch: { startXmm: 7236, endXmm: 9086 },
       backDoor: { id: "LOGGIA-DOOR", startXmm: 9086, widthMm: 1250, heightMm: 2400, sillMm: 0 },
       eastInnerXmm: 10640,

@@ -39,7 +39,6 @@ import {
   KITCHEN_BEARING_WALL_EAST,
   KITCHEN_RUN,
   OFFICE_FITOUT,
-  TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
   WING_RIDGE_XMM,
   ceilingElevationMm,
@@ -58,6 +57,7 @@ import {
   type LivingLayout,
   type LivingLayoutId,
 } from "./twin-living-layouts";
+import { DEFAULT_HEATING_LAYOUT_ID, HEATING_LAYOUTS, type HeatingLayoutId, type TechnicalHeatingFitout } from "./technical-design";
 import { type LayerId, type Point2Mm } from "./twin-site";
 import { HOUSE } from "./twin-active-house";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
@@ -85,6 +85,7 @@ export interface InteriorBuildContext {
   registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
   /** Arrangement of the living/dining zone in 1.03; the active model uses A. */
   readonly livingLayout?: LivingLayoutId;
+  readonly heatingLayout?: HeatingLayoutId;
 }
 
 export interface InteriorMaterials {
@@ -1906,13 +1907,16 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
  * the proportions of the client's product reference while the typed footprint
  * remains the source of truth for fit, service floor and walk collision.
  */
-function buildTechnicalHeatingFitout(
+export function buildTechnicalHeatingFitout(
   context: InteriorBuildContext,
   materials: InteriorMaterials,
+  fitout: TechnicalHeatingFitout = HEATING_LAYOUTS[context.heatingLayout ?? DEFAULT_HEATING_LAYOUT_ID],
 ) {
-  const fitout = TECHNICAL_HEATING_FITOUT;
   const boilerMeshStart=context.scene.meshes.length;
-  const boiler = fitout.boiler;
+  const installed = fitout.boiler;
+  const boiler = {...installed, assemblyFootprintMm:installed.model.assemblyFootprintMm,
+    body:{...installed.body,footprintMm:installed.model.body}, hopper:{...installed.hopper,footprintMm:installed.model.hopper},
+    burner:{footprintMm:installed.model.burner}};
   const assemblyRect = boiler.assemblyFootprintMm;
   const bodyRect = boiler.body.footprintMm;
   const bodyCenter = rectCenter(bodyRect);
@@ -1960,9 +1964,9 @@ function buildTechnicalHeatingFitout(
   finish(context, frontBackplate, materials.fireplace, { shadow: true });
 
   for (const door of [
-    { label: "horné prikladacie dvierka na kusové drevo", bottomM: 0.69, heightM: 0.37 },
-    { label: "stredné spaľovacie dvierka", bottomM: 0.36, heightM: 0.28 },
-    { label: "spodné popolníkové dvierka", bottomM: 0.12, heightM: 0.19 },
+    { label: "horné prikladacie dvierka na kusové drevo", bottomM: 0.81, heightM: 0.25 },
+    { label: "stredné spaľovacie dvierka", bottomM: 0.55, heightM: 0.22 },
+    { label: "spodné popolníkové dvierka", bottomM: 0.10, heightM: 0.40 },
   ] as const) {
     const panel = texturedBox(
       context.scene,
@@ -2125,9 +2129,15 @@ function buildTechnicalHeatingFitout(
   );
   finish(context, hopperGrip, materials.fireplace, { shadow: true });
 
+  // The feeder rises in front of the separate hopper, outside the boiler body.
+  // L extends beyond K on this side of the manufacturer's dimensioned drawing.
+  // Mounting proposal for the separate auger; length/incline need supplier confirmation.
+  const augerOutlet={x:fitout.boiler.feeder.outletAcrossMm,y:assemblyRect.y1-155/2,elevationM:1.09};
+  // Change the side of the pellet accessories without mirroring boiler hinges or controls.
+  const accessoryDirection=fitout.boiler.feeder.accessoryDirection;
   const augerPath = [
-    new Vector3(xM(hopperCenter.x + 22), 0.34, zM(hopperCenter.y + 10)),
-    new Vector3(xM(hopperRect.x1 + 118), 1.09, zM(bodyRect.y0 + 250)),
+    new Vector3(xM(hopperCenter.x + accessoryDirection*22), 0.34, zM(hopperCenter.y + 10)),
+    new Vector3(xM(augerOutlet.x),augerOutlet.elevationM,zM(augerOutlet.y)),
   ];
   const auger = CreateTube(
     `${fitout.id} · PELLET-AUGER · šikmý šnekový podávač`,
@@ -2138,7 +2148,7 @@ function buildTechnicalHeatingFitout(
   const augerMotor = texturedBox(
     context.scene,
     `${fitout.id} · PELLET-AUGER · motor s prevodovkou`,
-    { x: hopperRect.x1 + 116, y: bodyRect.y0 + 250 },
+    { x:augerOutlet.x,y:augerOutlet.y },
     155,
     155,
     0.19,
@@ -2148,15 +2158,19 @@ function buildTechnicalHeatingFitout(
   finish(context, augerMotor, materials.fireplace, { shadow: true, pickable: true });
 
   const burnerRect = boiler.burner.footprintMm;
-  const burnerCenter = rectCenter(burnerRect);
+  const burnerSpec=fitout.boiler.burner;
+  const burnerCenter = rectCenter({...burnerRect,y0:burnerRect.y0+burnerSpec.neckLengthMm});
+  const burnerNeck=texturedBox(context.scene,`${fitout.id} · PELLET-BURNER · pripojovací krčok zatvorených dvierok`,
+    {x:burnerCenter.x,y:burnerRect.y0+burnerSpec.neckLengthMm/2},120,burnerSpec.neckLengthMm,.13,.295,1);
+  finish(context,burnerNeck,materials.steel,{shadow:true,pickable:true});
   const burnerBody = texturedBox(
     context.scene,
     `${fitout.id} · PELLET-BURNER · automaticky čistený peletový horák`,
     burnerCenter,
     burnerRect.x1 - burnerRect.x0,
-    burnerRect.y1 - burnerRect.y0,
-    0.34,
-    0.34,
+    burnerSpec.housingDepthMm,
+    burnerSpec.heightMm*MM_TO_M,
+    burnerSpec.bottomMm*MM_TO_M,
     1,
   );
   finish(context, burnerBody, materials.fireplace, { shadow: true, pickable: true });
@@ -2166,26 +2180,26 @@ function buildTechnicalHeatingFitout(
     { x: burnerCenter.x, y: burnerRect.y1 - 12 },
     burnerRect.x1 - burnerRect.x0 - 44,
     20,
-    0.25,
-    0.385,
+    0.20,
+    0.26,
     1,
   );
   finish(context, burnerFace, materials.boilerEnamel, { shadow: true, pickable: true });
   const burnerWindow = texturedBox(
     context.scene,
     `${fitout.id} · PELLET-BURNER · kontrolné okienko plameňa`,
-    { x: burnerCenter.x - 82, y: burnerRect.y1 - 5 },
+    { x: burnerCenter.x - 32, y: burnerRect.y1 - 5 },
     80,
     8,
     0.055,
-    0.47,
+    0.34,
     1,
   );
   finish(context, burnerWindow, materials.blackGlass);
 
-  const hoseStart = { x: bodyRect.x0 + 18, elevationM: 1.08, y: frontYmm + 32 };
-  const hoseControl = { x: bodyRect.x1 + 86, elevationM: 1.03, y: frontYmm + 74 };
-  const hoseEnd = { x: burnerCenter.x, elevationM: 0.68, y: burnerRect.y0 + 195 };
+  const hoseStart = { x:augerOutlet.x+accessoryDirection*75,elevationM:augerOutlet.elevationM,y:augerOutlet.y };
+  const hoseControl = { x: accessoryDirection>0?bodyRect.x1+86:bodyRect.x0-86, elevationM: 1.03, y: frontYmm + 74 };
+  const hoseEnd = { x: burnerCenter.x, elevationM: (burnerSpec.bottomMm+burnerSpec.heightMm)*MM_TO_M, y: burnerRect.y0 + 195 };
   const hosePath = Array.from({ length: 13 }, (_, index) => {
     const t = index / 12;
     const oneMinusT = 1 - t;
@@ -2202,6 +2216,9 @@ function buildTechnicalHeatingFitout(
     { path: hosePath, radius: 0.038, tessellation: 24, cap: Mesh.CAP_ALL },
     context.scene,
   );
+  // A convex hull fills the inside of this bend and looks like an open door in plan.
+  // Preserve its actual projected triangles while retaining the hull for conservative bounds.
+  feedHose.metadata={...feedHose.metadata,planProjection:'TRIANGLE_SILHOUETTE'};
   finish(context, feedHose, materials.pelletFeedHose, { shadow: true, pickable: true });
 
   const flueCollar = CreateCylinder(
@@ -2213,7 +2230,7 @@ function buildTechnicalHeatingFitout(
   flueCollar.position.set(xM(bodyCenter.x), .964, zM(bodyRect.y0-30));
   finish(context, flueCollar, materials.fireplace);
   const flueStub = CreateCylinder(
-    `${fitout.id} · WOOD-PELLET-BOILER · koncept napojenia dymovodu Ø${boiler.flueOutletDiameterMm}`,
+    `${fitout.id} · WOOD-PELLET-BOILER · výrobné zadné hrdlo 139 mm · Ø${boiler.flueOutletDiameterMm}`,
     { height: (bodyRect.y0-assemblyRect.y0)*MM_TO_M, diameter: boiler.flueOutletDiameterMm * MM_TO_M, tessellation: 32 },
     context.scene,
   );
@@ -2221,26 +2238,47 @@ function buildTechnicalHeatingFitout(
   flueStub.position.set(xM(bodyCenter.x), .964, zM((bodyRect.y0+assemblyRect.y0)/2));
   finish(context, flueStub, materials.fireplace);
 
+  // Retain the factory outlet. The installation elbow and vertical rise are
+  // separate from the catalogue envelope and stop at the ceiling connection.
+  const flue=fitout.flue,fluePath=Array.from({length:25},(_,index)=>{
+    const angle=index/24*Math.PI/2;
+    return new Vector3(xM(bodyCenter.x),
+      (flue.outletElevationMm+flue.elbowCenterlineRadiusMm*(1-Math.cos(angle)))*MM_TO_M,
+      zM(-flue.stockRearProjectionMm-flue.elbowCenterlineRadiusMm*Math.sin(angle)));
+  });
+  fluePath.push(new Vector3(xM(bodyCenter.x),(flue.topElevationMm-boiler.baseElevationMm)*MM_TO_M,
+    zM(-flue.stockRearProjectionMm-flue.elbowCenterlineRadiusMm)));
+  const flueRise=CreateTube(`${fitout.id} · BOILER-FLUE · koleno nahor a zvislý dymovod · montážny návrh`,
+    {path:fluePath,radius:flue.diameterMm/2*MM_TO_M,tessellation:32,cap:Mesh.CAP_START},context.scene);
+  finish(context,flueRise,materials.fireplace,{shadow:true,pickable:true});
+
   for(const [name,r] of [['teleso',bodyRect],['zásobník',hopper.footprintMm],['horák',burnerRect]] as const)
     navigationGuard(context,materials,`${fitout.id} · WOOD-PELLET-ASSEMBLY · navigačný obrys ${name}`,r);
   for(const mesh of context.scene.meshes.slice(boilerMeshStart))mesh.position.y+=boiler.baseElevationMm*MM_TO_M;
-  for(const [name,r] of [['teleso',bodyRect],['zásobník',hopperRect],['horák',burnerRect]] as const){
+  for(const [name,r] of [['teleso',bodyRect],['zásobník',hopperRect]] as const){
     const base=texturedBox(context.scene,`${fitout.id} · BOILER-BASE · nehorľavý podstavec 50 mm · ${name}`,rectCenter(r),r.x1-r.x0,r.y1-r.y0,.05,0,1);
     finish(context,base,materials.steel,{shadow:true});
   }
+
+  const boilerRoot=new TransformNode(`${fitout.id} · orientácia kotla`,context.scene);
+  boilerRoot.position.set(xM(0),0,zM(0));
+  for(const mesh of context.scene.meshes.slice(boilerMeshStart))mesh.setParent(boilerRoot);
+  boilerRoot.scaling.x=installed.mirrorX?-1:1;
+  boilerRoot.rotation.y=installed.rotationDegrees*Math.PI/180;
+  boilerRoot.position.set(xM(installed.originMm.x),0,zM(installed.originMm.y));
 
   const tank = fitout.accumulator;
   const tankRadiusMm = tank.outerDiameterMm / 2;
   const tankHeightM = tank.heightMm * MM_TO_M;
   const tankBase = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · podstavec`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · podstavec`,
     { height: 0.08, diameter: tank.outerDiameterMm * MM_TO_M - 0.08, tessellation: 48 },
     context.scene,
   );
   tankBase.position.set(xM(tank.centerMm.x), 0.04, zM(tank.centerMm.y));
   finish(context, tankBase, materials.fireplace, { shadow: true });
   const tankBody = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · akumulačná nádrž ${tank.nominalVolumeL} l`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · akumulačná nádrž ${tank.nominalVolumeL} l`,
     {
       height: tankHeightM - 0.14,
       diameter: tank.outerDiameterMm * MM_TO_M,
@@ -2255,7 +2293,7 @@ function buildTechnicalHeatingFitout(
     pickable: true,
   });
   const tankTop = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · horné izolované veko`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · horné izolované veko`,
     {
       height: 0.08,
       diameterBottom: tank.outerDiameterMm * MM_TO_M,
@@ -2268,7 +2306,7 @@ function buildTechnicalHeatingFitout(
   finish(context, tankTop, materials.tankJacket, { shadow: true });
   for (const elevationM of [0.58, 1.48]) {
     const band = CreateCylinder(
-      `${fitout.id} · BUFFER-TANK-1000L · oceľová obruč`,
+      `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · oceľová obruč`,
       { height: 0.028, diameter: tank.outerDiameterMm * MM_TO_M - 0.002, tessellation: 48 },
       context.scene,
     );
@@ -2285,7 +2323,7 @@ function buildTechnicalHeatingFitout(
     const rootX = Math.sqrt(tankRadiusMm ** 2 - yOffsetMm ** 2) - 5;
     const tipX = tankRadiusMm + tank.connectionProjectionMm;
     const nozzle = CreateCylinder(
-      `${fitout.id} · BUFFER-TANK-1000L · hydraulické hrdlo ${index}`,
+      `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · hydraulické hrdlo ${index}`,
       { height: (tipX - rootX) * MM_TO_M, diameter: 0.055, tessellation: 20 },
       context.scene,
     );
@@ -2298,14 +2336,14 @@ function buildTechnicalHeatingFitout(
     finish(context, nozzle, materials.copperPipe);
   }
   const airVent = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · automatický odvzdušňovač`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · automatický odvzdušňovač`,
     { height: 0.12, diameter: 0.045, tessellation: 20 },
     context.scene,
   );
   airVent.position.set(xM(tank.centerMm.x), tankHeightM + 0.06, zM(tank.centerMm.y));
   finish(context, airVent, materials.brushedBrass);
   const gaugeRim = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · teplomer`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · teplomer`,
     { height: 0.045, diameter: 0.13, tessellation: 32 },
     context.scene,
   );
@@ -2317,7 +2355,7 @@ function buildTechnicalHeatingFitout(
   );
   finish(context, gaugeRim, materials.steel);
   const gaugeFace = CreateCylinder(
-    `${fitout.id} · BUFFER-TANK-1000L · ciferník teplomera`,
+    `${fitout.id} · BUFFER-TANK-${tank.nominalVolumeL}L · ciferník teplomera`,
     { height: 0.012, diameter: 0.102, tessellation: 32 },
     context.scene,
   );
@@ -2328,18 +2366,36 @@ function buildTechnicalHeatingFitout(
     zM(tank.centerMm.y),
   );
   finish(context, gaugeFace, materials.kitchenUpper);
-  // Turn the connection bank towards the kitchen approach, leaving the hopper accessible.
+  // Turn the connection bank into the right service aisle, clear of the kitchen entrance.
   // Keep the circular jacket independent so its exported diameter stays exact.
   const connectionRoot = new TransformNode(`${fitout.id} · orientácia prípojok nádrže`, context.scene);
   connectionRoot.position.set(xM(tank.centerMm.x), 0, zM(tank.centerMm.y));
   for (const mesh of context.scene.meshes.slice(connectionStart)) mesh.setParent(connectionRoot);
   connectionRoot.rotation.y = tank.connectionAzimuthDegrees * Math.PI / 180;
-  buildTechnicalStorageReserve(context,materials);
+  buildTechnicalStorageReserve(context,materials,fitout);
+  buildTechnicalShelving(context,materials,fitout);
+}
+
+/** A usable shallow rack on the wall freed by moving the exterior opening. */
+function buildTechnicalShelving(context:InteriorBuildContext,materials:InteriorMaterials,fitout:TechnicalHeatingFitout){
+  const shelving=fitout.shelving,r=shelving.footprintMm,c=rectCenter(r);
+  const box=(label:string,center:Point2Mm,width:number,depth:number,height:number,bottom:number)=>{
+    const mesh=texturedBox(context.scene,`${shelving.id} · OPEN-SHELVING · ${label}`,center,width,depth,height*MM_TO_M,bottom*MM_TO_M,1);
+    finish(context,mesh,materials.steel,{shadow:true,pickable:true});
+  };
+  for(const x of [r.x0+10,r.x1-10])for(const y of [r.y0+10,r.y1-10])
+    box('oceľová stojka',{x,y},20,20,shelving.heightMm,0);
+  for(let i=0;i<shelving.shelfCount;i++)box(`polica ${i+1}`,c,r.x1-r.x0,r.y1-r.y0,18,120+i*420);
+  for(const z of [420,1260,1940])box('zadná výstuha',{x:r.x1-10,y:c.y},20,r.y1-r.y0,25,z);
+  navigationGuard(context,materials,`${shelving.id} · OPEN-SHELVING · navigačný obrys`,r);
 }
 
 /** Space allocations are visible, but never presented as certified fire compartments. */
-function buildTechnicalStorageReserve(context:InteriorBuildContext,materials:InteriorMaterials){
-  const storage=TECHNICAL_HEATING_FITOUT.storage,r=storage.footprintMm,c=rectCenter(r);
+function buildTechnicalStorageReserve(context:InteriorBuildContext,materials:InteriorMaterials,fitout:TechnicalHeatingFitout){
+  const meshStart=context.scene.meshes.length;
+  const storage=fitout.storage,installed=storage.footprintMm,c=rectCenter(installed);
+  // Build the 720 × 261 cabinet in its canonical frame, then face it west.
+  const r={x0:c.x-360,x1:c.x+360,y0:c.y-130.5,y1:c.y+130.5};
   const box=(name:string,center:Point2Mm,w:number,d:number,h:number,bottom:number,material=materials.steel)=>{
     const mesh=texturedBox(context.scene,`${storage.id} · ${name}`,center,w,d,h*MM_TO_M,bottom*MM_TO_M,1);
     finish(context,mesh,material,{shadow:true,pickable:true});return mesh;
@@ -2360,12 +2416,18 @@ function buildTechnicalStorageReserve(context:InteriorBuildContext,materials:Int
   box('VACUUM · nástenný držiak, napájanie na dopracovanie',{x:vacuumCenter.x,y:r.y1-35},120,30,45,1100,materials.steel);
   for(let i=0;i<storage.pelletBagCount;i++)box(`PELLET-BAG-${i+1} · zvislo uložené vrece peliet 15 kg`,bagCenter,storage.bagSizeMm.width,storage.bagSizeMm.depth,storage.bagSizeMm.height,i===0?46:56+i*500,materials.childCork);
   navigationGuard(context,materials,`${storage.id} · STORAGE-CABINET · navigačný obrys`,r);
-  const h=TECHNICAL_HEATING_FITOUT.hydraulicReserve;
+  const h=fitout.hydraulicReserve;
   // Reserved upper compartment; product selection and pipework remain separate.
   for(const y of [r.y0+10,r.y1-10])for(const x of [r.x0+10,r.x1-10])
     box('HYDRAULIC-RESERVE · rám hornej hydraulickej rezervy',{x,y},20,20,h.heightMm,h.bottomMm);
   const k=h.safetyGroupMm;
   box('SAFETY-GROUP · KSG mini 2,5 bar',{x:r.x0+150,y:r.y1-55},k.width,k.depth,k.height,1950,materials.fireplace);
+  // The entire cabinet, contents, hydraulic reserve and collision guard share
+  // one orientation, including their collision guard.
+  const root=new TransformNode(`${storage.id} · orientácia skrine`,context.scene);
+  root.position.set(xM(c.x),0,zM(c.y));
+  for(const mesh of context.scene.meshes.slice(meshStart))mesh.setParent(root);
+  root.rotation.y=-Math.PI/2;
 }
 
 /** Practical long-axis fitout for the enlarged room 1.06. */
@@ -2889,8 +2951,8 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   const basinCenter = rectCenter(basin.footprintMm);
   const vanityX1 = builtIn.appliances[0].footprintMm.x0 - 36;
 
-  // One continuous 2 616 mm composition: stacking releases a 1 930 mm vanity
-  // beside one ventilated 600 mm laundry tower, all on a single top datum.
+  // The vanity adapts to the straight service-core partition; the 600 mm
+  // laundry tower retains its appliance and ventilation clearances.
   const vanityCabinet = texturedBox(
     context.scene,
     `${fitout.id} · BUILT-IN-2616 · plávajúca bezúchytková skrinka`,
@@ -2928,7 +2990,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     context,
     `${fitout.id} · BUILT-IN-2616 · veľké matne čierne umývadlo`,
     basinCenter,
-    [1.2, 0.16, 0.39],
+    [(basin.footprintMm.x1-basin.footprintMm.x0)*MM_TO_M, 0.16, 0.39],
     basin.rimElevationMm * MM_TO_M + 0.035,
     materials.blackCeramic,
   );
@@ -2936,7 +2998,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     context,
     `${fitout.id} · BUILT-IN-2616 · vnútorná čierna misa`,
     { x: basinCenter.x, y: basinCenter.y - 8 },
-    [1.0, 0.028, 0.27],
+    [(basin.footprintMm.x1-basin.footprintMm.x0-160)*MM_TO_M, 0.028, 0.27],
     basin.rimElevationMm * MM_TO_M + 0.095,
     materials.blackGlass,
   );

@@ -180,9 +180,11 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
     expect(solid).toEqual(expect.arrayContaining([
       { x0: 21040, y0: 21535, x1: 21540, y1: 22035 }, // porch corner pillar
       { x0: 27510, y0: 19535, x1: 28040, y1: 22035 }, // east wall end along the porch
-      { x0: 6440, y0: 10670, x1: 7440, y1: 11200 }, // loggia corner pier 1 000 × 500
-      { x0: 6440, y0: 9247, x1: 6970, y1: 9800 }, // loggia rear return
+      { x0: 6440, y0: 10670, x1: 8440, y1: 11200 }, // long garden arm of the L support
+      { x0: 6440, y0: 10200, x1: 6970, y1: 11200 }, // short west arm of the L support
     ]));
+    // The erased rear return in the client sketch is now a clear side passage.
+    expect(cut.some(({rect:r}) => r.x0 < 6940 && r.x1 > 6440 && r.y0 < 10200 && r.y1 > 9247)).toBe(false);
     const insulated = layers.filter((m) => exteriorWallLayer(m) === "insulation").map((m) => m.rect);
     for (const pier of solid) expect(insulated.some((r) => r.x0 < pier.x1 && r.x1 > pier.x0 && r.y0 < pier.y1 && r.y1 > pier.y0), JSON.stringify(pier)).toBe(false);
   });
@@ -216,6 +218,7 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
     const east = FACADES.find((f) => f.def.id === "E")!.segments;
     expect(east.filter((s) => s.a >= 19535).map((s) => s.kind)).toEqual(["wall"]);
     const west = FACADES.find((f) => f.def.id === "W")!.segments;
-    expect(west.find((s) => s.a === 9247)).toMatchObject({ b: 9800, kind: "wall" });
+    expect(west.find((s) => s.a === 9247)).toMatchObject({ b: 10200, kind: "open" });
+    expect(west.find((s) => s.a === 10200)).toMatchObject({ b: 11200, kind: "wall" });
   });
 });

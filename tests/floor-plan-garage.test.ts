@@ -14,16 +14,16 @@ describe('shared garden recess in all floor-plan variants',()=>{
     for(const m of variants){
       expect(m.gardenRecess).toBe(true);
       expect(m.loggia.depth).toBe(1953);
-      expect(m.loggia.pier).toEqual(rect(6440,10700,7440,11200));
-      expect(m.loggia.openingWidth).toBe(3200);
-      expect(m.loggia.pier.y0-m.loggia.westReturn.y1).toBe(HOUSE.facades.west.loggiaOpening.widthMm);
+      expect(m.loggia.pier).toEqual(rect(6440,10700,8440,11200));
+      expect(m.loggia.openingWidth).toBe(2200);
+      expect(m.loggia.pierReturn.y0-m.loggia.bounds.y0).toBe(HOUSE.facades.west.loggiaOpening.widthMm);
       expect(m.loggia.bounds.x1).toBe(HOUSE.porches.gardenLoggia.eastInnerXmm);
       expect(m.garageBackOpening.y0).toBe(GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm);
       for(const floor of m.rooms.flatMap(room=>room.rectsMm))expect(intersects(floor,m.loggia.bounds)).toBe(false);
       expect(swingHits(m.gardenDoor,m.car)).toBe(false);
       expect(contains(m.garageThreshold,rect(m.car.x0,m.car.y0,m.car.x1,3504))).toBe(true);
       const floors=[...m.rooms.find(room=>room.number==='1.12')!.rectsMm,opening(m.gardenDoor),m.loggia.bounds];
-      expect(walkingPath(floors,[m.car,openLeaf(m.gardenDoor),...m.garageShelves,m.loggia.pier,m.loggia.westReturn],[10300,6200],[9550,10200])).toBe(true);
+      expect(walkingPath(floors,[m.car,openLeaf(m.gardenDoor),...m.garageShelves,m.loggia.pier,m.loggia.pierReturn],[10300,6200],[9550,10200])).toBe(true);
     }
   });
   it('only encloses the garden recess when explicitly selected in a proposed layout',()=>{

@@ -15,9 +15,8 @@ export function GarageShell({garage}:{garage:GarageEnvelope}) {
       <title>Kontaktné zateplenie 200 mm na nosnom murive 300 mm</title>
     </g>
     {gardenRecess&&<g className="fp-loggia-structure">
-      <Box r={loggia.pier} className="fp-shell fp-loggia-pier"><title>Rohový stĺpik 1,00 × 0,50 m bez zateplenia</title></Box>
-      <Box r={loggia.westReturn} className="fp-shell"/>
-      <path className="fp-loggia-roof" d={`M${loggia.bounds.x0},${-loggia.westReturn.y1}V${-loggia.bounds.y1}H${loggia.bounds.x1}`}><title>Hrana zastrešenia nad otvoreným zárezom</title></path>
+      <path d={loggia.pierPath} className="fp-shell fp-loggia-pier"><title>Rohová podpera do L · 2,00 × 1,00 m · hrúbka 0,50 m bez zateplenia</title></path>
+      <path className="fp-loggia-roof" d={`M${loggia.bounds.x0},${-loggia.bounds.y0}V${-loggia.bounds.y1}H${loggia.bounds.x1}`}><title>Hrana zastrešenia nad otvoreným zárezom</title></path>
     </g>}
   </>;
 }
