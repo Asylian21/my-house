@@ -403,6 +403,15 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(KITCHEN_RUN.clearanceRevisionSourceId).toBe(
       SOURCES.clientKitchenClearanceRevision20260824.id,
     );
+    expect(KITCHEN_RUN.peninsulaAlignmentSourceId).toBe(SOURCES.clientKitchenDiningRevision20260911.id);
+    // 11. 9. 2026: the peninsula worktop edge lines up with the far reveal of the terrace door
+    // to the courtyard, which moved the carcass 346 mm toward the living room (aisle 994 → 1 340).
+    const terraceDoor = HOUSE.facades.wingWest.opening;
+    expect(KITCHEN_RUN.peninsulaAlignedOpeningId).toBe(terraceDoor.id);
+    expect(KITCHEN_RUN.peninsulaOverhangMm).toBe(310);
+    expect(KITCHEN_RUN.peninsulaRectMm.y1 + KITCHEN_RUN.peninsulaOverhangMm).toBe(terraceDoor.startYmm + terraceDoor.widthMm);
+    expect(KITCHEN_RUN.peninsulaRectMm.y0 - KITCHEN_RUN.rectMm.y1).toBe(1340);
+    expect(KITCHEN_RUN.peninsulaRectMm.y0 - 12544).toBe(346);
     expect(inside(KITCHEN_RUN.fridgeUnitRectMm, KITCHEN_RUN.rectMm)).toBe(true);
     expect(KITCHEN_RUN.fridgeUnitRectMm).toEqual({ x0: 22791, y0: 10949, x1: 23391, y1: 11550 });
     expect(KITCHEN_RUN.fridgeUnitRectMm.x1 - KITCHEN_RUN.fridgeUnitRectMm.x0).toBe(600);
@@ -438,11 +447,15 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     const eastWindow = HOUSE.facades.east.openings.find((opening) => opening.id === "EAST-04")!;
     expect(inside(eastReturn, INTERIOR_ROOMS.find((room) => room.number === "1.03")!.rectsMm[0])).toBe(true);
     expect(eastReturn.x1 - eastReturn.x0).toBe(600);
-    expect(eastReturn.y1 - eastReturn.y0).toBe(994);
+    expect(eastReturn.y1 - eastReturn.y0).toBe(1340);
     expect(eastReturn.x1).toBe(INTERIOR_ROOMS.find((room) => room.number === "1.03")!.rectsMm[0].x1);
     expect(eastReturn.y1).toBe(KITCHEN_RUN.peninsulaRectMm.y0);
     expect(eastReturn.x0 - (technicalDoor.startMm + technicalDoor.widthMm)).toBeGreaterThanOrEqual(250);
-    expect(eastWindow.startYmm - eastReturn.y1).toBeGreaterThanOrEqual(150);
+    // The return now runs 190 mm under the 900 mm sill of EAST-04 to keep meeting the peninsula;
+    // only the worktop passes below the window (the upstand stops before it, see the builder).
+    expect(eastWindow.sillMm).toBe(KITCHEN_RUN.counterHeightMm);
+    expect(eastReturn.y1 - eastWindow.startYmm).toBe(190);
+    expect(eastReturn.y1).toBeLessThan(eastWindow.startYmm + eastWindow.widthMm / 2);
     expect(overlaps(eastReturn, KITCHEN_RUN.peninsulaRectMm)).toBe(false);
     expect(KITCHEN_RUN.barStoolCount).toBe(0);
   });
@@ -463,7 +476,10 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(rearInnerFaceYmm - tvWall.y1).toBeGreaterThanOrEqual(250);
     expect(inside(tvWall, livingMain)).toBe(true);
 
-    const [bayY0, bayY1] = fitout.tvWall.centralBayYmm;
+    expect(fitout.tvWall.facing).toBe("EAST");
+    expect(fitout.sofa.facing).toBe("WEST");
+    expect(fitout.dining.axis).toBe("X");
+    const [bayY0, bayY1] = fitout.tvWall.centralBayMm;
     expect(bayY0).toBeGreaterThan(tvWall.y0);
     expect(bayY1).toBeLessThan(tvWall.y1);
     expect(bayY1 - bayY0).toBeGreaterThan(fitout.tvWall.tv.widthMm);
@@ -491,20 +507,35 @@ describe("interior of 1.NP traced from D1.1.002", () => {
     expect(KITCHEN_RUN.peninsulaRectMm.y1).toBeLessThan(tableRect.y0);
     expect(tableRect.y1).toBeLessThan(mainRectMm.y0);
     expect(tableRect.x0 - tvWall.x1).toBeGreaterThanOrEqual(1200);
-    expect(fitout.dining.tableLengthMm).toBe(1400);
-    expect(fitout.dining.tableDepthMm).toBe(800);
-    expect(fitout.dining.tableLengthMm * fitout.dining.tableDepthMm).toBeLessThanOrEqual(1_120_000);
+    // 11. 9. 2026: a six-seat table parallel to the moved peninsula.
+    expect(fitout.dining.tableLengthMm).toBe(2000);
+    expect(fitout.dining.tableDepthMm).toBe(900);
+    expect(tableRect).toEqual({ x0: 23800, x1: 25800, y0: 14580, y1: 15480 });
+    const worktopEdgeYmm = KITCHEN_RUN.peninsulaRectMm.y1 + KITCHEN_RUN.peninsulaOverhangMm;
+    expect(tableRect.y0 - fitout.dining.chairSeatDepthMm + 330 - worktopEdgeYmm).toBe(650);
+    expect(mainRectMm.y0 - (tableRect.y1 + fitout.dining.chairSeatDepthMm - 330)).toBe(240);
+    expect(tableRect.x0 - FIREPLACE_STOVE.footprintMm.x1).toBeGreaterThanOrEqual(1500);
     expect(fitout.dining.chairSeatWidthMm).toBe(470);
     expect(fitout.dining.chairSeatDepthMm).toBe(460);
-    expect(fitout.dining.chairs).toHaveLength(4);
-    expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(4);
+    expect(fitout.dining.chairs).toHaveLength(6);
+    expect(new Set(fitout.dining.chairs.map((chair) => chair.id)).size).toBe(6);
     expect(new Set(fitout.dining.chairs.map((chair) => chair.facing))).toEqual(
       new Set(["NORTH", "SOUTH"]),
     );
     const southChairs = fitout.dining.chairs.filter((chair) => chair.facing === "NORTH");
     const northChairs = fitout.dining.chairs.filter((chair) => chair.facing === "SOUTH");
+    expect(southChairs).toHaveLength(3);
+    expect(northChairs).toHaveLength(3);
     expect(Math.min(...southChairs.map((chair) => chair.centerMm.y)) - tableRect.y0).toBe(100);
     expect(tableRect.y1 - Math.max(...northChairs.map((chair) => chair.centerMm.y))).toBe(100);
+    for (const row of [southChairs, northChairs]) {
+      const xs = row.map((chair) => chair.centerMm.x).sort((a, b) => a - b);
+      expect(xs[1] - xs[0]).toBe(650);
+      expect(xs[2] - xs[1]).toBe(650);
+      expect(xs[1]).toBe(fitout.dining.tableCenterMm.x);
+      // Neighbouring seats keep a 180 mm gap.
+      expect(xs[1] - xs[0] - fitout.dining.chairSeatWidthMm).toBe(180);
+    }
     for (const chair of fitout.dining.chairs) {
       expect(roomAt(chair.centerMm)?.id, chair.id).toBe(living.id);
 

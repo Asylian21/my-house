@@ -192,6 +192,30 @@ export const SOURCES = {
     date: "23. 8. 2026",
     kind: "CLIENT_REVISION",
   },
+  clientLivingVariantB20260911: {
+    id: "SRC-CLIENT-LIVING-VARIANT-B-20260911",
+    title: "Návrh stavebníka · variant B obývacej zóny",
+    detail:
+      "Alternatívne rozloženie obývacieho priestoru 1.03 podľa náčrtu stavebníka: TV zostava na plnej časti záhradného štítu, L-sedačka chrbtom ku kuchyni s ležadlom pri východnej stene, jedálenský stôl pozdĺž západnej steny a valcové kachle v severozápadnom rohu pri pevnom presklení. Kuchyňa a polostrov zostávajú bez zmeny; variant sa prepína v dokumentácii, aktívny 3D model zostáva na variante A.",
+    date: "11. 9. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientExteriorWallRevision20260911: {
+    id: "SRC-CLIENT-EXTERIOR-WALL-20260911",
+    title: "Revízia stavebníka · skladba obvodovej steny 300 + 200",
+    detail:
+      "Obvodová stena zostáva celkovo 500 mm, ale kreslí sa v skutočnej skladbe: 300 mm nosné murivo zvnútra a 200 mm kontaktné zateplenie zvonka, vo všetkých pôdorysoch (dokumentácia C aj koncepty A a B). Murované stĺpiky a voľné úseky stien na terasách a v lodžii, ktoré neuzatvárajú vykurovaný priestor, zateplenie nemajú a zostávajú plné murivo 500 mm.",
+    date: "11. 9. 2026",
+    kind: "CLIENT_REVISION",
+  },
+  clientKitchenDiningRevision20260911: {
+    id: "SRC-CLIENT-KITCHEN-DINING-20260911",
+    title: "Revízia stavebníka · väčšia kuchyňa a stôl pre šesť",
+    detail:
+      "Kuchynský polostrov posunúť k obývačke tak, aby hrana jeho pracovnej dosky lícovala s ostením terasových dverí do dvora (WING-WEST-01), čím sa zväčší pracovný priechod v kuchyni; bočné rameno pri východnej stene sa predlžuje, aby na polostrov ďalej nadväzovalo. V obývacej zóne má byť v oboch variantoch A aj B jedálenský stôl pre šesť osôb namiesto štyroch.",
+    date: "11. 9. 2026",
+    kind: "CLIENT_REVISION",
+  },
   clientFireplaceRevision20260824: {
     id: "SRC-CLIENT-FIREPLACE-20260824",
     title: "Revízia stavebníka · valcové krbové kachle",
@@ -840,6 +864,21 @@ export const HOUSE = Object.freeze({
   terraceAreaM2: GARAGE_DEPTH_REVISION.revisedTerraceAreaM2,
   eavesElevationMm: 3125,
   ridgeElevationMm: 5560,
+  /**
+   * Build-up of the 500 mm exterior wall (client, 11. 9. 2026): load-bearing
+   * masonry on the room side plus contact insulation on the outer face. The
+   * insulation is measured exactly from the outer face; the masonry takes the
+   * remainder to the documented inner face (299–304 mm in the model). Wall
+   * pieces with exterior space on both sides — the loggia corner pier and rear
+   * return, the porch corner pillar and the east wall end along the porch —
+   * are solid uninsulated masonry of the full 500 mm.
+   */
+  exteriorWall: {
+    totalMm: 500,
+    masonryMm: 300,
+    insulationMm: 200,
+    sourceId: SOURCES.clientExteriorWallRevision20260911.id,
+  },
   flues: [
     {
       id: "FLUE-LIVING-103",
@@ -1213,6 +1252,7 @@ export const HOUSE = Object.freeze({
     SOURCES.clientFireplacePositionRevision20260825.id,
     SOURCES.clientBedroomDoorWindowRevision20260824.id,
     SOURCES.clientOfficeFixedWindowRevision20260824.id,
+    SOURCES.clientExteriorWallRevision20260911.id,
   ],
 });
 

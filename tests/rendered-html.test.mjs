@@ -640,6 +640,11 @@ test("selects every floor-plan variant on one route with one accessible tab pane
     assert.match(main, /class="fp-terrace fp-garden-recess"/);
     assert.match(main, /Garáž → záhrada · 900 mm/);
     assert.match(main, /Steny a priečky/);
+    // Exterior walls are drawn in their real build-up: 200 mm insulation bands over 300 mm masonry, solid piers on top.
+    assert.match(main, /Zateplenie 20 cm na murive 30 cm/);
+    assert.match(main, /<pattern id="fp-insulation"/);
+    assert.equal((main.match(/class="fp-insulation"/g) ?? []).length, 8, variant);
+    assert.ok(main.indexOf('class="fp-insulation"') < main.indexOf('class="fp-shell fp-loggia-pier"'), variant);
     // Every rendered sweep must rotate the actual leaf by 90 degrees around
     // its hinge, even when the masonry opening is wider than the leaf.
     const hingedDoors = [...main.matchAll(/<g class="fp-door">([\s\S]*?)<\/g>/g)];
@@ -661,30 +666,51 @@ test("selects every floor-plan variant on one route with one accessible tab pane
     else assert.doesNotMatch(main, /id="alcove-width"/);
     if (variant === "c") {
       assert.match(main, /role="switch" aria-checked="false" aria-labelledby="closet-garage-label"/);
-      assert.match(main, /Dve súvislé skrine po 1,86 m/);
+      assert.match(main, /Dve súvislé skrine po 1,91 m/);
       assert.doesNotMatch(main, /Garáž → šatník · 800 mm/);
-      assert.match(main, /M14403,-8720V-5140/);
+      // The route starts 400 mm inside the bed, which sits 554 mm off the 7791 bedroom wall.
+      assert.match(main, /M14343,-8745V-5140/);
       assert.match(main, /Dvere sú presne oproti spálni/);
       assert.match(main, /WC je pri uličnej stene, umývadlová skrinka 60 × 50 cm pri pravej stene/);
       assert.match(main, /aria-label="Vyrovnané detské izby"/);
       assert.match(main, /data-facing="EAST"><title>Súvislá skriňa v zádverí · posuvné čelá · 1,90 × 0,70 m/);
-      assert.match(main, /Vstavaná skriňa z chodby · dvor · 2,80 × 0,70 m/);
+      assert.match(main, /Vstavaná skriňa z chodby · dvor · 2,77 × 0,70 m/);
       assert.match(main, /Lavička s botníkom · 0,85 × 0,45 m/);
       assert.match(main, /Zádverie → centrálna chodba · posuvné 900 mm/);
       assert.match(main, /Zádverie → pracovňa · 800 mm/);
       assert.match(main, /data-pocket-direction="-1"/);
-      assert.match(main, /M20690,-6460\.5h900/);
+      // The pocket leaf sits on the centre line of the 140 mm hall partition (6412–6552).
+      assert.match(main, /M20690,-6482h900/);
+      assert.doesNotMatch(main, /M20690,-6431h900|M20690,-6460\.5h900/);
       assert.doesNotMatch(main, /data-facing="SOUTH"|data-facing="NORTH"/);
       assert.match(main, /id="expansion"[^>]*max="100"/);
-      assert.match(main, /15,88/);
-      assert.match(main, /15,97/);
-      assert.match(main, /6,32/);
+      // Both child rooms are 5 298 × 2 908 mm; the hall is centred between the facades.
+      const text = main.replaceAll("<!-- -->", "");
+      assert.match(text, /<dt>Do ulice<\/dt><dd>15,41 m²<\/dd>/);
+      assert.match(text, /<dt>Do dvora<\/dt><dd>15,41 m²<\/dd>/);
+      assert.match(text, /<dt>Rozdiel izieb<\/dt><dd>0,00 m²<\/dd>/);
+      assert.doesNotMatch(main, /15,14|15,67/);
+      assert.match(text, /Detské izby 5,30 × 2,91 m/);
+      // Both child-room doors are 900 mm openings at 17442–18342, exactly opposite each other.
+      assert.match(text, /obe majú zhodne 5,30 × 2,91 m, lebo chodba široká 1,10 m je vystredená medzi fasádami, a ich dvere 90 cm sú vystredené presne oproti sebe/);
+      assert.match(main, /x="17442" y="-6552" width="900" height="140" class="fp-door-gap"/);
+      assert.match(main, /x="17442" y="-7791" width="900" height="140" class="fp-door-gap"/);
+      assert.doesNotMatch(main, /y="-6501" width="900" height="140"|y="-7741" width="900" height="140"/);
+      // The bedroom door and the closet's pocket door share the garden room's wall line.
+      assert.match(main, /x="13943" y="-7791" width="800" height="140" class="fp-door-gap"/);
+      assert.match(main, /x="11793" y="-7791" width="800" height="140" class="fp-door-gap"/);
+      assert.match(main, /6,19/);
       assert.match(main, /12,34/);
-      assert.match(main, /ZÁDVERIE 2,50 m/);
-      assert.match(main, /4,61/);
+      assert.match(main, /ZÁDVERIE 2,40 m/);
+      assert.match(main, /4,47/);
+      assert.match(main, /nosné murivo 300 mm/);
+      assert.match(main, /priečka 140 mm; detská si drží plochu a chodba sa rozširuje na 1,10 m/);
+      assert.match(text, /Spoločná chodba je posunutá o 5 cm k dvoru a vystredená medzi fasádami, takže obe detské izby majú hĺbku 2,91 m/);
+      assert.match(main, /17,46/);
       assert.match(main, /Spálňa za novou priečkou · dvere 800 mm/);
-      assert.match(main, /11,42/);
-      assert.match(main, /4,09/);
+      assert.match(main, /11,05/);
+      assert.match(main, /4,20/);
+      assert.match(text, /554 mm k preskleniu/);
       assert.match(main, /Šatník má pevnú hĺbku/);
       assert.doesNotMatch(main, /id="nested-closet-depth"/);
       assert.match(main, /Stena šatníka, vstup do spálne a stena detskej izby sú v jednej línii bez odskoku/);
@@ -717,12 +743,37 @@ test("renders active C as a measured model manual while retaining the editable s
   assert.match(html,/aria-labelledby="pd-help-title"/);
   assert.doesNotMatch(html,/NaN|Infinity|This page couldn’t load|id="expansion"/);
   assert.ok(html.length<1_300_000,'The canvas must not eagerly render all manual room sheets.');
+  // Living-room layout switch in the right inspector: A is the default, only A pieces are drawn.
+  assert.match(html,/class="pd-living-switch"/);
+  assert.match(html,/aria-label="Variant obývacej zóny"/);
+  assert.match(html,/aria-pressed="true"[^>]*><b>A<\/b><span>TV stena pri západnej stene/);
+  assert.match(html,/aria-pressed="false"[^>]*><b>B<\/b><span>TV stena pri záhradnom štíte/);
+  assert.match(html,/data-item="sofa"/);
+  assert.doesNotMatch(html,/data-item="sofa-B"|data-item="FIREPLACE-STOVE-B-2026-09-11"/);
+  const livingB=await render('/koncept-2d?variant=c&living=b');
+  assert.equal(livingB.status,200);
+  const livingBHtml=await livingB.text();
+  assert.match(livingBHtml,/aria-pressed="true"[^>]*><b>B<\/b>/);
+  assert.match(livingBHtml,/data-item="sofa-B"/);
+  assert.match(livingBHtml,/data-item="LIVING-103-TV-WALL-B"/);
+  assert.match(livingBHtml,/data-item="FIREPLACE-STOVE-B-2026-09-11"/);
+  assert.doesNotMatch(livingBHtml,/data-item="sofa"|data-item="FIREPLACE-STOVE-2026-08-24"/);
+  assert.match(livingBHtml,/3D model zatiaľ ukazuje variant A/);
+  assert.doesNotMatch(livingBHtml,/NaN|Infinity/);
   const manual=await render('/koncept-2d?variant=c&view=manual');
   assert.equal(manual.status,200);
   const manualHtml=await manual.text();
   assert.match(manualHtml,/Manuál vášho domu\./);
   assert.match(manualHtml,/class="pd-room-sheet-plan"/);
   assert.match(manualHtml,/Tlačiť \/ uložiť PDF/);
+  assert.match(manualHtml,/obývačka 1\.03 vo variante A/);
+  const manualB=await render('/koncept-2d?variant=c&view=manual&living=b');
+  const manualBHtml=await manualB.text();
+  assert.match(manualBHtml,/obývačka 1\.03 vo variante B/);
+  assert.match(manualBHtml,/Jedálenský stôl 900 × 2 000 mm pre šesť osôb stojí pozdĺž západnej steny/);
+  assert.match(manualBHtml,/Polostrov je posunutý o 346 mm k obývačke/);
+  assert.match(manualHtml,/Jedálenský stôl 2 000 × 900 mm pre šesť osôb/);
+  assert.match(manualHtml,/Jedálenská stolička 6/);
   const study=await render('/koncept-2d?variant=c&mode=study');
   assert.equal(study.status,200);
   assert.match(await study.text(),/id="expansion"/);

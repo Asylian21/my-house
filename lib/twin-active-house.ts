@@ -1,6 +1,6 @@
 import { GARAGE_DEPTH_REVISION, HOUSE as baseline } from './twin-site';
 import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, totalActiveFloorAreaM2 } from './twin-interior';
-import { withChildrenWindow } from './twin-children-design';
+import { CHILDREN_WINDOWS, withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
 /** Same exterior/roof; C suite openings and client-approved children's glazing. */
 export const HOUSE={...baseline,
@@ -19,7 +19,7 @@ export const HOUSE={...baseline,
     sourceId: GARAGE_DEPTH_REVISION.sourceId,
   } as const,
   facades:{...baseline.facades,front:{...baseline.facades.front,
-  openings:[...baseline.facades.front.openings,{id:'FRONT-GIRL-BED',startXmm:15450,widthMm:1000,heightMm:1250,sillMm:1250}].map(opening=>({...withChildrenWindow(opening),
+  openings:[...baseline.facades.front.openings,{id:'FRONT-GIRL-BED',...CHILDREN_WINDOWS['FRONT-GIRL-BED']}].map(opening=>({...withChildrenWindow(opening),
     startXmm:opening.id==='FRONT-02'?ACTIVE_CONCEPT.garageWindowStart:
       opening.id==='FRONT-03'?ACTIVE_CONCEPT.frontWindowStart:withChildrenWindow(opening).startXmm,
   })).sort((a,b)=>a.startXmm-b.startXmm),

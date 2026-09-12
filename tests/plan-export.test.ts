@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { CODED_ITEMS, CODED_OPENINGS, DOOR_CHAINS, DOOR_TEXTS, FACADES, FOOTPRINT, GRID_X, GRID_Y, MATERIAL_LEGEND, PLAN_EXTENT, SECTION_CHAINS, SITE_BOUNDARY, TERRACES, TERRACE_AREA_M2, clearRects, codedItems, facadeChains, gridCell, innerDims, roomLabelPos } from "../lib/plan-export";
-import { PLAN_ROOMS } from "../lib/plan-documentation";
-import { INTERIOR_DOORS } from "../lib/twin-interior";
+import { CODED_ITEMS, CODED_OPENINGS, DOOR_CHAINS, DOOR_TEXTS, FACADES, FOOTPRINT, GRID_X, GRID_Y, MATERIAL_LEGEND, PLAN_EXTENT, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, TERRACES, TERRACE_AREA_M2, clearRects, codedItems, facadeChains, gridCell, innerDims, roomLabelPos } from "../lib/plan-export";
+import { PLAN_ROOMS, exteriorWallLayer } from "../lib/plan-documentation";
+import { INTERIOR_DOORS, INTERIOR_WALLS } from "../lib/twin-interior";
 
 const span = (points: number[]) => points[points.length - 1] - points[0];
 const monotonic = (points: number[]) => points.every((p, i) => i === 0 || p > points[i - 1]);
@@ -150,8 +150,72 @@ describe("export sheet site context follows D1.1.002", () => {
   });
 
   it("material legend covers every hatch class used by the model", () => {
-    expect(MATERIAL_LEGEND.map((e) => e.cls)).toEqual(["exterior", "bearing", "partition", "board"]);
-    expect(MATERIAL_LEGEND[0].codes).toBe("SO50");
+    expect(MATERIAL_LEGEND.map((e) => e.cls)).toEqual(["exterior", "insulation", "bearing", "partition", "board"]);
+    expect(MATERIAL_LEGEND[0].codes).toBe("SO30, SO50");
+    expect(MATERIAL_LEGEND[1].codes).toBe("TI20");
     for (const e of MATERIAL_LEGEND) expect(e.text).toMatch(/hr\. \d/);
+  });
+});
+
+describe("exterior walls are drawn in their real build-up (300 masonry + 200 insulation)", () => {
+  const cut = SHELL_WALL_MESHES.filter((m) => m.z0 <= 0);
+  const layers = cut.filter((m) => / · úsek \d+ · /.test(m.name));
+  const across = (m: (typeof cut)[number]) => Math.round(Math.min(m.rect.x1 - m.rect.x0, m.rect.y1 - m.rect.y0));
+
+  it("every insulated facade segment has a 200 mm insulation layer on the outer face and masonry behind it", () => {
+    const insulation = layers.filter((m) => exteriorWallLayer(m) === "insulation");
+    expect(insulation.length).toBeGreaterThan(20);
+    for (const m of insulation) expect(across(m), m.name).toBe(200);
+    for (const m of layers.filter((l) => exteriorWallLayer(l) === "masonry")) expect(across(m), m.name).toBeGreaterThanOrEqual(300);
+    // Outer faces of the insulation are the documented footprint faces.
+    expect(insulation.filter((m) => m.rect.y0 === 3000).length).toBeGreaterThan(5);
+    expect(insulation.filter((m) => m.rect.x1 === 28040).length).toBeGreaterThan(3);
+    expect(insulation.filter((m) => m.rect.y1 === 11200).length).toBeGreaterThan(2);
+    expect(insulation.filter((m) => m.rect.x0 === 6440).length).toBeGreaterThan(2);
+    expect(insulation.filter((m) => m.rect.x0 === 21040).length).toBeGreaterThan(1);
+  });
+
+  it("free-standing terrace piers stay solid 500 mm masonry without insulation", () => {
+    const solid = layers.filter((m) => exteriorWallLayer(m) === "solid").map((m) => m.rect);
+    expect(solid).toEqual(expect.arrayContaining([
+      { x0: 21040, y0: 21535, x1: 21540, y1: 22035 }, // porch corner pillar
+      { x0: 27510, y0: 19535, x1: 28040, y1: 22035 }, // east wall end along the porch
+      { x0: 6440, y0: 10670, x1: 7440, y1: 11200 }, // loggia corner pier 1 000 × 500
+      { x0: 6440, y0: 9247, x1: 6970, y1: 9800 }, // loggia rear return
+    ]));
+    const insulated = layers.filter((m) => exteriorWallLayer(m) === "insulation").map((m) => m.rect);
+    for (const pier of solid) expect(insulated.some((r) => r.x0 < pier.x1 && r.x1 > pier.x0 && r.y0 < pier.y1 && r.y1 > pier.y0), JSON.stringify(pier)).toBe(false);
+  });
+
+  it("the insulation wraps the outer corners and the masonry stops behind it", () => {
+    const rect = (name: RegExp) => cut.find((m) => name.test(m.name))!.rect;
+    expect(rect(/^Južná fasáda · úsek 1 · murivo$/).x0).toBe(6640);
+    expect(rect(/^Južná fasáda · úsek 1 · izolácia$/).x0).toBe(6440);
+    expect(rect(/^Východná fasáda · úsek 1 · murivo$/).y0).toBe(3200);
+    expect(rect(/^Garážový štít · úsek 1 · murivo$/).y0).toBe(3200);
+    expect(rect(/^Záhradná fasáda · úsek 3 · murivo$/).x0).toBe(10842);
+    expect(rect(/^Záhradná fasáda · úsek 3 · izolácia$/).x0).toBe(10640);
+    expect(rect(/^Západná stena krídla · úsek 3 · murivo$/).y1).toBe(19335);
+    expect(rect(/^Krytá terasa · murovaný pilier pri rohu · izolácia$/)).toEqual({ x0: 21040, y0: 19335, x1: 22040, y1: 19535 });
+    expect(rect(/^Krytá terasa · plná zadná stena · izolácia$/)).toEqual({ x0: 24040, y0: 19335, x1: 27840, y1: 19535 });
+  });
+
+  it("the loggia's east junction is closed: masonry corner up to the spine wall and a flush insulation cheek", () => {
+    const corner = cut.find((m) => m.name === "Lodžia · zadná stena · roh pri stene spálne")!;
+    const cheek = cut.find((m) => m.name === "Lodžia · východná bočná stena · izolácia")!;
+    const spine = INTERIOR_WALLS.find((w) => w.id === "C-GARAGE-SPINE-N")!.rectMm;
+    expect(corner.rect).toEqual({ x0: 10640, y0: 8747, x1: spine.x0, y1: 9247 });
+    expect(cheek.rect).toEqual({ x0: 10640, y0: 9247, x1: spine.x0, y1: 11200 });
+    expect(cut.some((m) => m.name === "Lodžia · východná bočná stena")).toBe(false);
+  });
+
+  it("facade dimension rows treat both layers of a segment as one wall and keep the piers as walls", () => {
+    for (const { def, segments } of FACADES) {
+      for (let i = 1; i < segments.length; i++) expect(segments[i].a, `${def.id} segment ${i}`).toBeGreaterThanOrEqual(segments[i - 1].b - 1);
+    }
+    const east = FACADES.find((f) => f.def.id === "E")!.segments;
+    expect(east.filter((s) => s.a >= 19535).map((s) => s.kind)).toEqual(["wall"]);
+    const west = FACADES.find((f) => f.def.id === "W")!.segments;
+    expect(west.find((s) => s.a === 9247)).toMatchObject({ b: 9800, kind: "wall" });
   });
 });

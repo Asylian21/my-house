@@ -80,9 +80,13 @@ import {
   type ViewMode,
 } from "./twin-site";
 import {
+  WALL_LAYER_LABEL,
+  exteriorWallLayers,
   segmentFacadeMm,
   type FacadeOpeningMm,
+  type WallLayerOptions,
 } from "./twin-facade";
+import { INTERIOR_WALLS } from "./twin-interior";
 import {
   AXONOMETRIC_CAMERA_ALPHA,
   MM_TO_M,
@@ -5075,45 +5079,74 @@ export class TwinSceneController {
       },
     ];
 
+    // Wall build-up 300 + 200: the insulation wraps every outer corner, so the
+    // masonry of one facade stops where the perpendicular facade's insulation
+    // begins. Free-standing pieces on the terraces stay solid 500 mm masonry.
+    const insulationMm = HOUSE.exteriorWall.insulationMm;
+    const west = HOUSE.facades.west.faceXmm;
+    const east = HOUSE.facades.east.faceXmm;
+    const front = HOUSE.facades.front.faceYmm;
+    const garden = HOUSE.facades.garden.faceYmm;
+    const loggiaCheekEastXmm = this.loggiaCheekEastXmm();
     this.buildRealisticZFacade(
       "Južná fasáda",
-      HOUSE.facades.front.faceYmm,
+      front,
       HOUSE.originMm.x,
-      HOUSE.facades.east.faceXmm,
+      east,
       -1,
       heightMm,
       frontOpenings,
       this.realisticMaterials.wall,
+      { masonryInsetMm: { [west]: west + insulationMm, [east]: east - insulationMm } },
     );
     this.buildRealisticZFacade(
       "Záhradná fasáda",
-      HOUSE.facades.garden.faceYmm,
+      garden,
       HOUSE.originMm.x,
       HOUSE.originMm.x + HOUSE.wing.xMm,
       1,
       heightMm,
       gardenOpenings,
       this.realisticMaterials.wall,
+      {
+        // 1 000 × 500 corner pier of the loggia: exterior on both sides.
+        solidMm: [[loggia.cornerPier.startXmm, loggia.cornerPier.endXmm]],
+        // Outer corner with the insulated loggia cheek (room 1.10 west wall).
+        masonryInsetMm: { [loggia.eastInnerXmm]: loggiaCheekEastXmm },
+      },
     );
     this.buildRealisticXFacade(
       "Východná fasáda",
-      HOUSE.facades.east.faceXmm,
+      east,
       HOUSE.originMm.y,
       HOUSE.originMm.y + HOUSE.maximumDepthMm,
       1,
       heightMm,
       eastOpenings,
       this.realisticMaterials.wall,
+      {
+        // East wall end along the covered porch (P04 east support).
+        solidMm: [[porch.glazingFaceYmm, HOUSE.originMm.y + HOUSE.maximumDepthMm]],
+        masonryInsetMm: { [front]: front + insulationMm },
+      },
     );
     this.buildRealisticXFacade(
       "Garážový štít",
-      HOUSE.facades.west.faceXmm,
+      west,
       HOUSE.originMm.y,
       HOUSE.originMm.y + HOUSE.lowerBar.depthMm,
       -1,
       heightMm,
       westOpenings,
       this.realisticMaterials.wall,
+      {
+        // Rear return and front corner pier flanking the open loggia side.
+        solidMm: [
+          [loggia.backFaceYmm, HOUSE.facades.west.loggiaOpening.startYmm],
+          [loggia.cornerPier.startYmm, loggia.cornerPier.endYmm],
+        ],
+        masonryInsetMm: { [front]: front + insulationMm },
+      },
     );
     this.buildRealisticXFacade(
       "Západná stena krídla",
@@ -5124,7 +5157,13 @@ export class TwinSceneController {
       heightMm,
       wingWestOpenings,
       this.realisticMaterials.wall,
-      500,
+      {
+        thicknessMm: 500,
+        // 500 × 500 corner pillar of the porch portal.
+        solidMm: [[porch.westOpening.endYmm, porch.frontYmm]],
+        // Outer corner with the insulated porch pier at the glazing line.
+        masonryInsetMm: { [porch.glazingFaceYmm]: porch.glazingFaceYmm - insulationMm },
+      },
     );
 
     this.buildGardenLoggia();
@@ -5263,10 +5302,28 @@ export class TwinSceneController {
     });
   }
 
+  /**
+   * West face of the garage spine wall that carries on as the masonry of the
+   * loggia's east cheek (room 1.10 west wall). The insulation on the loggia
+   * side fills the distance to the documented loggia face.
+   */
+  private loggiaCheekEastXmm() {
+    const loggia = HOUSE.porches.gardenLoggia;
+    const spine = INTERIOR_WALLS.find(
+      (wall) =>
+        wall.rectMm.x0 > loggia.eastInnerXmm &&
+        wall.rectMm.x0 < loggia.eastInnerXmm + HOUSE.exteriorWall.masonryMm &&
+        wall.rectMm.y0 < loggia.backFaceYmm &&
+        wall.rectMm.y1 > loggia.backFaceYmm,
+    );
+    return spine?.rectMm.x0 ?? loggia.eastInnerXmm + HOUSE.exteriorWall.insulationMm;
+  }
+
   /** Active garden loggia, shortened to 1 953 mm by the garage-depth revision. */
   private buildGardenLoggia() {
     const loggia = HOUSE.porches.gardenLoggia;
     const soffitM = loggia.soffitElevationMm * MM_TO_M;
+    const cheekEastXmm = this.loggiaCheekEastXmm();
 
     const backOpenings: readonly FacadeOpeningMm[] = [
       {
@@ -5277,29 +5334,57 @@ export class TwinSceneController {
         sillMm: loggia.backDoor.sillMm,
       },
     ];
+    // Back wall of the garage towards the loggia: 300 mm masonry on the garage
+    // side, 200 mm insulation on the loggia side. The masonry overlaps the
+    // gable shell by 30 mm like every facade; the insulation starts at the
+    // gable's inner face because the rear return next to it is solid.
+    const backWallOptions = this.facadeLayerOptions(HOUSE.exteriorWall.totalMm, {
+      insulationInsetMm: { [loggia.cornerPier.startXmm + 500]: loggia.cornerPier.startXmm + FACADE_SHELL_THICKNESS_MM },
+    });
     for (const [index, segment] of segmentFacadeMm(
       loggia.cornerPier.startXmm + 500,
       loggia.eastInnerXmm,
       loggia.soffitElevationMm,
       backOpenings,
     ).entries()) {
-      const mesh = boxAtPlan(
-        this.scene,
-        `Lodžia · zadná stena ${index + 1}`,
-        {
-          x: (segment.startMm + segment.endMm) / 2,
-          y: loggia.backFaceYmm - 250,
-        },
-        segment.endMm - segment.startMm,
-        500,
-        (segment.topMm - segment.bottomMm) * MM_TO_M,
-        segment.bottomMm * MM_TO_M,
-      );
-      mesh.material = this.realisticMaterials.wall;
-      mesh.receiveShadows = true;
-      this.realisticOnly(mesh);
-      this.register(mesh, "building", HOUSE.id);
+      for (const layer of exteriorWallLayers(segment, backWallOptions)) {
+        const mesh = boxAtPlan(
+          this.scene,
+          `Lodžia · zadná stena ${index + 1} · ${WALL_LAYER_LABEL[layer.kind]}`,
+          {
+            x: (layer.startMm + layer.endMm) / 2,
+            y: loggia.backFaceYmm - layer.offsetMm - layer.depthMm / 2,
+          },
+          layer.endMm - layer.startMm,
+          layer.depthMm,
+          (layer.topMm - layer.bottomMm) * MM_TO_M,
+          layer.bottomMm * MM_TO_M,
+        );
+        mesh.material = this.realisticMaterials.wall;
+        mesh.receiveShadows = true;
+        this.realisticOnly(mesh);
+        this.register(mesh, "building", HOUSE.id);
+      }
     }
+    // Masonry corner between the back wall and the garage spine wall. The
+    // back wall used to stop at the loggia face while the spine starts 202 mm
+    // further east, which left an open slit from the loggia into the garage.
+    const corner = boxAtPlan(
+      this.scene,
+      "Lodžia · zadná stena · roh pri stene spálne",
+      {
+        x: (loggia.eastInnerXmm + cheekEastXmm) / 2,
+        y: loggia.backFaceYmm - HOUSE.exteriorWall.totalMm / 2,
+      },
+      cheekEastXmm - loggia.eastInnerXmm,
+      HOUSE.exteriorWall.totalMm,
+      soffitM,
+      0,
+    );
+    corner.material = this.realisticMaterials.wall;
+    corner.receiveShadows = true;
+    this.realisticOnly(corner);
+    this.register(corner, "building", HOUSE.id);
     // Larch cladding band on the back wall (7 236 – 9 086 per plan).
     const larchWidthM = (loggia.backLarch.endXmm - loggia.backLarch.startXmm) * MM_TO_M;
     const backLarch = boxAtPlan(
@@ -5336,12 +5421,14 @@ export class TwinSceneController {
       { id: loggia.backDoor.id, label: "Dvere zo záhradnej lodžie" },
     );
 
-    // East inner cheek of the loggia (room 1.10 west wall).
+    // East inner cheek of the loggia (room 1.10 west wall): the garage spine
+    // wall is its masonry, this is the insulation on the loggia side, flush
+    // with the spine and reaching the garden facade line.
     const cheek = boxAtPlan(
       this.scene,
-      "Lodžia · východná bočná stena",
-      { x: loggia.eastInnerXmm + 200, y: (loggia.backFaceYmm + loggia.faceYmm) / 2 },
-      400,
+      "Lodžia · východná bočná stena · izolácia",
+      { x: (loggia.eastInnerXmm + cheekEastXmm) / 2, y: (loggia.backFaceYmm + loggia.faceYmm) / 2 },
+      cheekEastXmm - loggia.eastInnerXmm,
       loggia.faceYmm - loggia.backFaceYmm,
       EAVES_M,
       0,
@@ -5414,23 +5501,42 @@ export class TwinSceneController {
       500,
     );
 
-    // ---- masonry below the ring beam: west pier and the back wall
-    const masonry = (label: string, startXmm: number, endXmm: number, bottomMm: number, topMm: number) => {
-      const block = boxAtPlan(
-        this.scene,
-        label,
-        { x: (startXmm + endXmm) / 2, y: faceYmm - 250 },
-        endXmm - startXmm,
-        500,
-        (topMm - bottomMm) * MM_TO_M,
-        bottomMm * MM_TO_M,
-      );
-      block.material = this.realisticMaterials.wall;
-      block.receiveShadows = true;
-      block.checkCollisions = true;
-      this.castShadow(block);
-      this.realisticOnly(block);
-      this.register(block, "building", HOUSE.id);
+    // ---- masonry below the ring beam: west pier and the back wall, both in
+    // the real build-up (300 mm masonry to the room, 200 mm insulation to the
+    // porch). The insulation wraps the outer corner onto the wing west wall
+    // and runs to the east facade's insulation; the ring beam stays one band.
+    const wall = HOUSE.exteriorWall;
+    const masonry = (
+      label: string,
+      startXmm: number,
+      endXmm: number,
+      bottomMm: number,
+      topMm: number,
+      insulationSpan?: readonly [number, number],
+    ) => {
+      const layers = insulationSpan
+        ? [
+            { suffix: ` · ${WALL_LAYER_LABEL.masonry}`, x0: startXmm, x1: endXmm, offsetMm: wall.insulationMm, depthMm: wall.totalMm - wall.insulationMm },
+            { suffix: ` · ${WALL_LAYER_LABEL.insulation}`, x0: insulationSpan[0], x1: insulationSpan[1], offsetMm: 0, depthMm: wall.insulationMm },
+          ]
+        : [{ suffix: "", x0: startXmm, x1: endXmm, offsetMm: 0, depthMm: wall.totalMm }];
+      for (const layer of layers) {
+        const block = boxAtPlan(
+          this.scene,
+          `${label}${layer.suffix}`,
+          { x: (layer.x0 + layer.x1) / 2, y: faceYmm - layer.offsetMm - layer.depthMm / 2 },
+          layer.x1 - layer.x0,
+          layer.depthMm,
+          (topMm - bottomMm) * MM_TO_M,
+          bottomMm * MM_TO_M,
+        );
+        block.material = this.realisticMaterials.wall;
+        block.receiveShadows = true;
+        block.checkCollisions = true;
+        this.castShadow(block);
+        this.realisticOnly(block);
+        this.register(block, "building", HOUSE.id);
+      }
       const widthM = (endXmm - startXmm) * MM_TO_M;
       const heightM = (topMm - bottomMm) * MM_TO_M;
       const larch = boxAtPlan(
@@ -5448,8 +5554,8 @@ export class TwinSceneController {
       this.realisticOnly(larch);
       this.register(larch, "building", HOUSE.id);
     };
-    masonry("Krytá terasa · murovaný pilier pri rohu", porch.westPier.startXmm, porch.westPier.endXmm, 0, beam.bottomMm);
-    masonry("Krytá terasa · plná zadná stena", porch.backWall.startXmm, porch.backWall.endXmm, 0, porch.backWall.topMm);
+    masonry("Krytá terasa · murovaný pilier pri rohu", porch.westPier.startXmm, porch.westPier.endXmm, 0, beam.bottomMm, [HOUSE.facades.wingWest.faceXmm, porch.westPier.endXmm]);
+    masonry("Krytá terasa · plná zadná stena", porch.backWall.startXmm, porch.backWall.endXmm, 0, porch.backWall.topMm, [porch.backWall.startXmm, HOUSE.facades.east.faceXmm - wall.insulationMm]);
     // Ring beam band across the whole end wall, closed above the pane.
     masonry("Krytá terasa · pás venca +2,750 → +3,050", beam.spanStartXmm, beam.spanEndXmm, beam.bottomMm, beam.topMm);
 
@@ -5711,6 +5817,20 @@ export class TwinSceneController {
     }
   }
 
+  /**
+   * Facade segments are built in their real build-up (client, 11. 9. 2026):
+   * masonry on the room side and 200 mm contact insulation on the outer face,
+   * or one solid block where the wall stands free on a terrace. Both layers
+   * share the render finish; the split exists for the documentation, which
+   * reads the shell straight from these meshes.
+   */
+  private facadeLayerOptions(
+    thicknessMm: number,
+    shell?: Pick<WallLayerOptions, "solidMm" | "masonryInsetMm" | "insulationInsetMm">,
+  ): WallLayerOptions {
+    return { thicknessMm, insulationMm: HOUSE.exteriorWall.insulationMm, ...shell };
+  }
+
   private buildRealisticZFacade(
     name: string,
     faceYmm: number,
@@ -5720,27 +5840,29 @@ export class TwinSceneController {
     heightMm: number,
     openings: readonly FacadeOpeningMm[],
     finish: PBRMaterial,
-    thicknessMmOverride?: number,
+    shell?: Pick<WallLayerOptions, "solidMm" | "masonryInsetMm" | "insulationInsetMm"> & { thicknessMm?: number },
   ) {
-    const thicknessMm = thicknessMmOverride ?? FACADE_SHELL_THICKNESS_MM;
+    const options = this.facadeLayerOptions(shell?.thicknessMm ?? FACADE_SHELL_THICKNESS_MM, shell);
     for (const [index, segment] of segmentFacadeMm(startXmm, endXmm, heightMm, openings).entries()) {
-      const mesh = boxAtPlan(
-        this.scene,
-        `${name} · plášť ${index + 1}`,
-        {
-          x: (segment.startMm + segment.endMm) / 2,
-          y: faceYmm - outwardY * thicknessMm / 2,
-        },
-        segment.endMm - segment.startMm,
-        thicknessMm,
-        (segment.topMm - segment.bottomMm) * MM_TO_M,
-        segment.bottomMm * MM_TO_M,
-      );
-      mesh.material = finish;
-      mesh.receiveShadows = true;
-      this.castShadow(mesh);
-      this.realisticOnly(mesh);
-      this.register(mesh, "building", HOUSE.id);
+      for (const layer of exteriorWallLayers(segment, options)) {
+        const mesh = boxAtPlan(
+          this.scene,
+          `${name} · úsek ${index + 1} · ${WALL_LAYER_LABEL[layer.kind]}`,
+          {
+            x: (layer.startMm + layer.endMm) / 2,
+            y: faceYmm - outwardY * (layer.offsetMm + layer.depthMm / 2),
+          },
+          layer.endMm - layer.startMm,
+          layer.depthMm,
+          (layer.topMm - layer.bottomMm) * MM_TO_M,
+          layer.bottomMm * MM_TO_M,
+        );
+        mesh.material = finish;
+        mesh.receiveShadows = true;
+        this.castShadow(mesh);
+        this.realisticOnly(mesh);
+        this.register(mesh, "building", HOUSE.id);
+      }
     }
   }
 
@@ -5753,27 +5875,29 @@ export class TwinSceneController {
     heightMm: number,
     openings: readonly FacadeOpeningMm[],
     finish: PBRMaterial,
-    thicknessMmOverride?: number,
+    shell?: Pick<WallLayerOptions, "solidMm" | "masonryInsetMm" | "insulationInsetMm"> & { thicknessMm?: number },
   ) {
-    const thicknessMm = thicknessMmOverride ?? FACADE_SHELL_THICKNESS_MM;
+    const options = this.facadeLayerOptions(shell?.thicknessMm ?? FACADE_SHELL_THICKNESS_MM, shell);
     for (const [index, segment] of segmentFacadeMm(startYmm, endYmm, heightMm, openings).entries()) {
-      const mesh = boxAtPlan(
-        this.scene,
-        `${name} · plášť ${index + 1}`,
-        {
-          x: faceXmm - outwardX * thicknessMm / 2,
-          y: (segment.startMm + segment.endMm) / 2,
-        },
-        thicknessMm,
-        segment.endMm - segment.startMm,
-        (segment.topMm - segment.bottomMm) * MM_TO_M,
-        segment.bottomMm * MM_TO_M,
-      );
-      mesh.material = finish;
-      mesh.receiveShadows = true;
-      this.castShadow(mesh);
-      this.realisticOnly(mesh);
-      this.register(mesh, "building", HOUSE.id);
+      for (const layer of exteriorWallLayers(segment, options)) {
+        const mesh = boxAtPlan(
+          this.scene,
+          `${name} · úsek ${index + 1} · ${WALL_LAYER_LABEL[layer.kind]}`,
+          {
+            x: faceXmm - outwardX * (layer.offsetMm + layer.depthMm / 2),
+            y: (layer.startMm + layer.endMm) / 2,
+          },
+          layer.depthMm,
+          layer.endMm - layer.startMm,
+          (layer.topMm - layer.bottomMm) * MM_TO_M,
+          layer.bottomMm * MM_TO_M,
+        );
+        mesh.material = finish;
+        mesh.receiveShadows = true;
+        this.castShadow(mesh);
+        this.realisticOnly(mesh);
+        this.register(mesh, "building", HOUSE.id);
+      }
     }
   }
 

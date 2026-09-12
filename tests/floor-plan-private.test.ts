@@ -12,7 +12,13 @@ describe('private bedroom study D',()=>{
     expect(m.bed).toEqual(rect(11143,8241,13343,10041));
     expect(m.bedroomArea).toBeCloseTo(12.0239);
     expect(area([m.dressing!])).toBeCloseTo(6.562);
-    expect(m.bathroomArea).toBe(c.bathroomArea);
+    // D keeps the 140 mm suite partition at the original child-room line; C's
+    // 300 mm bearing wall sits 100 mm further east, so its bathroom is 60 mm shorter.
+    expect(m.suiteWallMm).toBe(140);
+    expect(m.suiteRight).toBe(15003);
+    expect(c.suiteRight).toBe(14943);
+    expect(m.bathroomArea).toBeCloseTo(5.2941,6);
+    expect(m.bathroomArea-c.bathroomArea).toBeCloseTo(0.126,6);
     expect(m.garageBay).toEqual(c.garageBay);
     expect(m.fixtures).toEqual({bath:rect(12532,3554,13282,5354),basin:rect(14503,4554,15003,5454),toilet:rect(13853,3504,14253,4204)});
     expect(m.sideClearance).toBe(657);

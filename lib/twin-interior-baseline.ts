@@ -83,6 +83,10 @@ export interface KitchenRun {
   readonly designSourceId: string;
   readonly eastReturnSourceId: string;
   readonly clearanceRevisionSourceId: string;
+  /** 11. 9. 2026: the peninsula moved toward the living room so its worktop edge lines up with the terrace door reveal. */
+  readonly peninsulaAlignmentSourceId: string;
+  /** Exterior opening whose far reveal the peninsula worktop edge lines up with. */
+  readonly peninsulaAlignedOpeningId: "WING-WEST-01";
   /** Back run against the 1.06/1.07 wall: sink and dishwasher (D1.1.002). */
   readonly rectMm: RectMm;
   readonly counterHeightMm: number;
@@ -91,9 +95,11 @@ export interface KitchenRun {
   readonly fridgeCabinetHeightMm: number;
   readonly sinkCenterXmm: number;
   readonly dishwasherXmm: readonly [number, number];
-  /** Parallel peninsula with the hob, 1 000 mm in front of the back run. */
+  /** Parallel peninsula carcass with the hob, 1 340 mm in front of the back run. */
   readonly peninsulaRectMm: RectMm;
-  /** Short return from the peninsula toward the technical-room wall. */
+  /** Worktop overhang on the living-room side; `peninsulaRectMm.y1 + peninsulaOverhangMm` is the worktop edge. */
+  readonly peninsulaOverhangMm: number;
+  /** Return from the peninsula along the east wall down to the technical-room wall. */
   readonly eastReturnRectMm: RectMm;
   readonly hobCenterXmm: number;
   /** Oven is centred directly below the peninsula hob. */
@@ -504,7 +510,9 @@ export interface FireplaceStove {
   readonly sourceId: string;
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly roomId: "ROOM-1-03";
-  readonly facing: "EAST";
+  /** Direction of the curved fire door; `facingAngleDeg` is the same direction as a plan angle (0° = east, 90° = garden). */
+  readonly facing: "EAST" | "SOUTH_EAST";
+  readonly facingAngleDeg: number;
   readonly centerMm: Point2Mm;
   readonly footprintMm: RectMm;
   readonly bodyDiameterMm: number;
@@ -513,10 +521,10 @@ export interface FireplaceStove {
     readonly bottomElevationMm: number;
     readonly heightMm: number;
     readonly arcDegrees: number;
-    readonly handleSide: "GARDEN";
+    readonly handleSide: "GARDEN" | "GLAZING";
   };
   readonly flue: {
-    readonly id: "FLUE-LIVING-103";
+    readonly id: "FLUE-LIVING-103" | "FLUE-LIVING-103-B";
     readonly outerDiameterMm: number;
     readonly startElevationMm: number;
     readonly terminationElevationMm: number;
@@ -593,8 +601,13 @@ export interface LivingDiningFitout {
   readonly status: "CLIENT_DESIGN_CONCEPT";
   readonly tvWall: {
     readonly rectMm: RectMm;
+    /** Side of the cabinet body the fronts and the screen face. */
+    readonly facing: FurnitureFacing;
     readonly heightMm: number;
-    readonly centralBayYmm: readonly [number, number];
+    /** Media bay measured along the wall: plan Y for an east/west-facing wall, plan X for a north/south-facing one. */
+    readonly centralBayMm: readonly [number, number];
+    /** Names of the two storage towers in ascending plan order along the wall. */
+    readonly towerLabels: readonly [string, string];
     readonly tv: {
       readonly diagonalIn: number;
       readonly widthMm: number;
@@ -605,10 +618,14 @@ export interface LivingDiningFitout {
   readonly sofa: {
     readonly mainRectMm: RectMm;
     readonly chaiseRectMm: RectMm;
+    /** Direction the main module faces; the chaise continues from the module end on the right when facing that way. */
+    readonly facing: FurnitureFacing;
     readonly seatHeightMm: number;
   };
   readonly dining: {
     readonly tableCenterMm: Point2Mm;
+    /** Plan axis of `tableLengthMm`; `tableDepthMm` runs across it. */
+    readonly axis: "X" | "Y";
     readonly tableLengthMm: number;
     readonly tableDepthMm: number;
     readonly tableHeightMm: number;
@@ -948,6 +965,7 @@ export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
   status: "CLIENT_DESIGN_CONCEPT",
   roomId: "ROOM-1-03",
   facing: "EAST",
+  facingAngleDeg: 0,
   centerMm: { x: 21853, y: 14475 },
   footprintMm: { x0: 21598, y0: 14220, x1: 22108, y1: 14730 },
   bodyDiameterMm: 510,
@@ -956,14 +974,14 @@ export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
     bottomElevationMm: 430,
     heightMm: 600,
     arcDegrees: 118,
-    handleSide: "GARDEN",
+    handleSide: "GARDEN" as const,
   },
   flue: {
-    id: "FLUE-LIVING-103",
+    id: "FLUE-LIVING-103" as const,
     outerDiameterMm: 150,
     startElevationMm: 1550,
     terminationElevationMm: 6160,
-    roofFace: "WING_INNER",
+    roofFace: "WING_INNER" as const,
   },
 });
 
@@ -973,21 +991,31 @@ export const FIREPLACE_STOVE: FireplaceStove = Object.freeze({
  * and a 4 750 × 600 peninsula drawn 12 544 – 13 136 with the four-zone hob
  * at x ≈ 24 090. The 24. 8. 2026 client revision removes its westernmost
  * 600 mm, exactly opposite the fridge, while preserving the appliance axis
- * and the eastern L-return. Fronts, worktop and appliances are a design finish.
+ * and the eastern L-return. On 11. 9. 2026 the client moved the peninsula
+ * 346 mm toward the living room: the carcass now stands 12 890 – 13 490 and
+ * the 310 mm worktop overhang ends at 13 800, the far reveal of the terrace
+ * door WING-WEST-01 (11 550 + 2 250). The working aisle behind it grows from
+ * 994 to 1 340 mm and the east return lengthens to keep meeting the
+ * peninsula; its quartz upstand stops before window EAST-04 (from 12 700),
+ * under whose 900 mm sill only the worktop continues. Fronts, worktop and
+ * appliances are a design finish.
  */
 export const KITCHEN_RUN: KitchenRun = Object.freeze({
   id: "KITCHEN-RUN",
   designSourceId: SOURCES.clientKitchenRevision20260823.id,
   eastReturnSourceId: SOURCES.clientKitchenLRevision20260823.id,
   clearanceRevisionSourceId: SOURCES.clientKitchenClearanceRevision20260824.id,
+  peninsulaAlignmentSourceId: SOURCES.clientKitchenDiningRevision20260911.id,
+  peninsulaAlignedOpeningId: "WING-WEST-01" as const,
   rectMm: { x0: 22791, y0: 10949, x1: 25691, y1: 11550 },
   counterHeightMm: 900,
   fridgeUnitRectMm: { x0: 22791, y0: 10949, x1: 23391, y1: 11550 },
   fridgeCabinetHeightMm: 2250,
   sinkCenterXmm: 24300,
   dishwasherXmm: [24700, 25300] as const,
-  peninsulaRectMm: { x0: 23391, y0: 12544, x1: 27541, y1: 13144 },
-  eastReturnRectMm: { x0: 26941, y0: 11550, x1: 27541, y1: 12544 },
+  peninsulaRectMm: { x0: 23391, y0: 12890, x1: 27541, y1: 13490 },
+  peninsulaOverhangMm: 310,
+  eastReturnRectMm: { x0: 26941, y0: 11550, x1: 27541, y1: 12890 },
   hobCenterXmm: 24090,
   ovenCenterXmm: 24090,
   extractorCenterXmm: 24090,
@@ -1609,6 +1637,12 @@ export const CHILDRENS_BEDROOM_FITOUTS: readonly [
  * the fixed glazing at the rear gable. The sofa faces that wall from the east,
  * while the dining table occupies the clear band between the kitchen peninsula
  * and the sofa without narrowing the east-side circulation route.
+ *
+ * 11. 9. 2026: the table grows to a 2 000 × 900 mm six-seater (three chairs
+ * per long side) parallel to the moved peninsula. Its south chairs keep
+ * 650 mm to the worktop edge (13 800), the north chairs stand with their rear
+ * legs just short of the rug (15 580, kept for the ArchViz asset) and end
+ * 240 mm before the sofa line; 1 820 mm stay free between table and TV wall.
  */
 export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
   id: "LIVING-DINING-FITOUT-2026-08-23",
@@ -1616,8 +1650,10 @@ export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
   status: "CLIENT_DESIGN_CONCEPT",
   tvWall: {
     rectMm: { x0: 21543, y0: 15380, x1: 21980, y1: 18750 },
+    facing: "EAST" as const,
     heightMm: 2600,
-    centralBayYmm: [15900, 18200] as const,
+    centralBayMm: [15900, 18200] as const,
+    towerLabels: ["pri krbe", "pri zadnom okne"] as const,
     tv: {
       diagonalIn: 98,
       widthMm: 2170,
@@ -1628,20 +1664,25 @@ export const LIVING_DINING_FITOUT: LivingDiningFitout = Object.freeze({
   sofa: {
     mainRectMm: { x0: 26020, y0: 15850, x1: 27250, y1: 18750 },
     chaiseRectMm: { x0: 24500, y0: 17650, x1: 27250, y1: 18750 },
+    facing: "WEST" as const,
     seatHeightMm: 430,
   },
   dining: {
-    tableCenterMm: { x: 24450, y: 14750 },
-    tableLengthMm: 1400,
-    tableDepthMm: 800,
+    tableCenterMm: { x: 24800, y: 15030 },
+    axis: "X" as const,
+    tableLengthMm: 2000,
+    tableDepthMm: 900,
     tableHeightMm: 760,
     chairSeatWidthMm: 470,
     chairSeatDepthMm: 460,
+    // Chair centres sit 100 mm inside the table edge (330 mm tuck) at a 650 mm pitch.
     chairs: [
-      { id: "DINING-CHAIR-SW", centerMm: { x: 24175, y: 14450 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-SE", centerMm: { x: 24725, y: 14450 }, facing: "NORTH" },
-      { id: "DINING-CHAIR-NW", centerMm: { x: 24175, y: 15050 }, facing: "SOUTH" },
-      { id: "DINING-CHAIR-NE", centerMm: { x: 24725, y: 15050 }, facing: "SOUTH" },
+      { id: "DINING-CHAIR-S1", centerMm: { x: 24150, y: 14680 }, facing: "NORTH" as const },
+      { id: "DINING-CHAIR-S2", centerMm: { x: 24800, y: 14680 }, facing: "NORTH" as const },
+      { id: "DINING-CHAIR-S3", centerMm: { x: 25450, y: 14680 }, facing: "NORTH" as const },
+      { id: "DINING-CHAIR-N1", centerMm: { x: 24150, y: 15380 }, facing: "SOUTH" as const },
+      { id: "DINING-CHAIR-N2", centerMm: { x: 24800, y: 15380 }, facing: "SOUTH" as const },
+      { id: "DINING-CHAIR-N3", centerMm: { x: 25450, y: 15380 }, facing: "SOUTH" as const },
     ],
   },
 });

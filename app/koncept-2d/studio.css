@@ -33,3 +33,5 @@
 .fp-entry-bench .fp-bench-cushion{fill:#d6d9cd;stroke:#879184;stroke-width:12}.fp-entry-bench .fp-cabinet-label{font-size:85px;fill:#455349}
 
 .fp-furniture .fp-play-rug{fill:#e5e6d6;stroke:#c9cbb7;stroke-dasharray:35 22}
+
+.fp-insulation-ground{fill:#dfe7eb}.fp-insulation-hatch{fill:none;stroke:#6f8290;stroke-width:22}.fp-insulation{fill:url(#fp-insulation);stroke:none;shape-rendering:crispEdges}.fp-legend i.insulation{background:repeating-linear-gradient(135deg,#dfe7eb 0 2px,#6f8290 2px 3px)}

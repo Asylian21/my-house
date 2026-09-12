@@ -2,7 +2,8 @@ import { NullEngine } from '@babylonjs/core/Engines/nullEngine';
 import { Scene } from '@babylonjs/core/scene';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { buildInterior } from '../../lib/babylon-interior';
+import { buildInterior, buildLivingDiningFitout, buildLivingFireplace } from '../../lib/babylon-interior';
+import { LIVING_LAYOUTS, type LivingLayoutId } from '../../lib/twin-living-layouts';
 import { SCENE_CENTER_MM } from '../../lib/twin-render-frame';
 import { TwinSceneController } from '../../lib/babylon-scene';
 import { buildGarageSuperbVehicle } from '../../lib/babylon-garage-vehicle';
@@ -11,6 +12,9 @@ import type { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.pure';
 import { HOUSE } from '../../lib/twin-active-house';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
+
+/** Interior meshes that belong to a living-room layout rather than to the shared model. */
+export const LIVING_LAYOUT_MESH=/^(LIVING-103-(TV-WALL|SOFA-L|DINING)|FIREPLACE-STOVE)/;
 
 /** Convex orthographic silhouette. Dimensions retain the unrounded world bounds. */
 export function hull(points: number[][]): number[][] {
@@ -41,8 +45,18 @@ export function extractPlanGeometry(terraceGlb?:Uint8Array) {
     shell.buildGardenFurniture();
     // The live ArchViz terrace asset replaces these fallback garden chairs.
     for(const mesh of [...scene.meshes])if(/^(Záhradné kreslo|Operadlo záhradného kresla|Noha kresla)/.test(mesh.name))mesh.dispose();
-    buildInterior({scene,anisotropy:1,wall:material,soffit:material,glassFrame:material,chimneyMetal:material,timber:material,
-      register:mesh=>mesh, realisticOnly:mesh=>mesh, castShadow:mesh=>mesh});
+    const interiorContext={scene,anisotropy:1,wall:material,soffit:material,glassFrame:material,chimneyMetal:material,timber:material,
+      register:(mesh:AbstractMesh)=>mesh, realisticOnly:(mesh:AbstractMesh)=>mesh, castShadow:(mesh:AbstractMesh)=>mesh};
+    const materials=buildInterior(interiorContext);
+    // Living-room variants: the default interior carries layout A. Variant B is
+    // built by the same builders from its own data so both can be documented;
+    // everything else in the model is shared.
+    const layoutOf=new Map<AbstractMesh,LivingLayoutId>();
+    for(const mesh of scene.meshes)if(LIVING_LAYOUT_MESH.test(mesh.name))layoutOf.set(mesh,'A');
+    const sharedMeshes=new Set(scene.meshes);
+    buildLivingFireplace(interiorContext,materials,LIVING_LAYOUTS.B.stove);
+    buildLivingDiningFitout(interiorContext,materials,LIVING_LAYOUTS.B);
+    for(const mesh of scene.meshes)if(!sharedMeshes.has(mesh))layoutOf.set(mesh,'B');
     const vehicle=buildGarageSuperbVehicle(scene,{register:identity,realisticOnly:identity,castShadow:identity});
     vehicle.root.position.set((GARAGE_VEHICLE.route.parkedMm.x-SCENE_CENTER_MM.x)/1000,-GARAGE_VEHICLE.wheelGroundOffsetM,(SCENE_CENTER_MM.y-GARAGE_VEHICLE.route.parkedMm.y)/1000);
     vehicle.root.rotation.y=Math.PI/2;
@@ -68,9 +82,13 @@ export function extractPlanGeometry(terraceGlb?:Uint8Array) {
         }
       }
     }
-    for(const flue of HOUSE.flues){
+    const stoveB=LIVING_LAYOUTS.B.stove;
+    const flues=[...HOUSE.flues.map(flue=>({id:flue.id,centerMm:flue.centerMm,outerDiameterMm:flue.outerDiameterMm,baseElevationMm:flue.baseElevationMm,terminationElevationMm:flue.terminationElevationMm,layout:flue.id===LIVING_LAYOUTS.A.stove.flue.id?'A' as const:undefined})),
+      {id:stoveB.flue.id,centerMm:stoveB.centerMm,outerDiameterMm:stoveB.flue.outerDiameterMm,baseElevationMm:stoveB.flue.startElevationMm,terminationElevationMm:stoveB.flue.terminationElevationMm,layout:'B' as const}];
+    for(const flue of flues){
       const pipe=CreateCylinder(`${flue.id} · zvislý dymovod`,{height:(flue.terminationElevationMm-flue.baseElevationMm)/1000,diameter:flue.outerDiameterMm/1000,tessellation:48},scene);
       pipe.position.set((flue.centerMm.x-SCENE_CENTER_MM.x)/1000,(flue.baseElevationMm+flue.terminationElevationMm)/2000,(SCENE_CENTER_MM.y-flue.centerMm.y)/1000);
+      if(flue.layout)layoutOf.set(pipe,flue.layout);
     }
     const meshes = scene.meshes.filter(mesh=>mesh.isVisible && mesh.visibility>0 && !mesh.metadata?.walkCollisionOnly && !mesh.metadata?.navigationGuard && mesh.getTotalVertices()>0).map((mesh,index)=>{
       const matrix = mesh.computeWorldMatrix(true);
@@ -85,9 +103,10 @@ export function extractPlanGeometry(terraceGlb?:Uint8Array) {
       }
       const round=(n:number)=>Math.round(n*100)/100||0;
       const surface=mesh.material as PBRMaterial|null;
+      const layout=layoutOf.get(mesh);
       return {id:`mesh-${index}`,name:mesh.name,source:shellNames.has(mesh)?'shell':'interior',rect:{x0:round(x0),y0:round(y0),x1:round(x1),y1:round(y1)},z0:round(z0),z1:round(z1),
-        polygon:hull(projected).map(p=>p.join(',')).join(' '),color:surface?.albedoColor?.toHexString() ?? '#c9cbd0'};
+        polygon:hull(projected).map(p=>p.join(',')).join(' '),color:surface?.albedoColor?.toHexString() ?? '#c9cbd0',...(layout?{layout}:{})};
     });
-    return {revision:1,projection:'World-space orthographic convex silhouettes; measurements in mm; at rest.',meshes};
+    return {revision:2,projection:'World-space orthographic convex silhouettes; measurements in mm; at rest. Living-room pieces carry `layout` A or B; everything else is shared.',meshes};
   } finally { scene.dispose(); engine.dispose(); }
 }

@@ -3,6 +3,8 @@ import { HOUSE, GARAGE_DEPTH_REVISION } from './twin-site';
 import { GARAGE_VEHICLE } from './twin-garage';
 
 const rect=(x0:number,y0:number,x1:number,y1:number):RectMm=>({x0,y0,x1,y1});
+/** West face of the garage spine wall (B/C concepts): the masonry of the loggia's east cheek. */
+const SPINE_WEST_XMM=10842;
 
 /** The same source-dimensioned garden loggia, gate and parking position in every 2D study. */
 export function createGarageEnvelope(gardenRecess=true) {
@@ -26,6 +28,32 @@ export function createGarageEnvelope(gardenRecess=true) {
   const shellPath=gardenRecess
     ? `M6440,-3000H28040V-20035H21040V-11200H${loggia.bounds.x1}V-${loggia.bounds.y0}H6440Z`
     : 'M6440,-3000H28040V-20035H21040V-11200H6440Z';
-  return {gardenRecess,loggia,garageBackOpening,gardenDoor,car,garageThreshold,shellPath};
+  return {gardenRecess,loggia,garageBackOpening,gardenDoor,car,garageThreshold,shellPath,insulation:insulationBands(gardenRecess,loggia)};
 }
 export type GarageEnvelope=ReturnType<typeof createGarageEnvelope>;
+
+/**
+ * Outer 200 mm of every insulated exterior wall (client, 11. 9. 2026: 300 mm
+ * masonry + 200 mm contact insulation = 500). Drawn over the solid shell, so
+ * the shell reads as masonry and these bands as insulation. The insulation
+ * wraps outer corners; the loggia corner pier and rear return are solid.
+ */
+function insulationBands(gardenRecess:boolean,loggia:{bounds:RectMm}):RectMm[] {
+  const t=HOUSE.exteriorWall.insulationMm;
+  const west=HOUSE.facades.west.faceXmm, east=HOUSE.facades.east.faceXmm, front=HOUSE.facades.front.faceYmm, garden=HOUSE.facades.garden.faceYmm, wingWest=HOUSE.facades.wingWest.faceXmm;
+  const wingEnd=20035;
+  const bands=[
+    rect(west,front,east,front+t),
+    rect(east-t,front,east,wingEnd),
+    rect(wingWest,wingEnd-t,east,wingEnd),
+    rect(wingWest,garden,wingWest+t,wingEnd),
+    // With the recess the garden facade starts east of the loggia opening; the corner pier stays solid.
+    rect(gardenRecess?loggia.bounds.x1:west,garden-t,wingWest,garden),
+    rect(west,front,west+t,gardenRecess?loggia.bounds.y0:garden),
+  ];
+  if(gardenRecess){
+    // Garage back wall towards the loggia and the room 1.10 cheek, flush with the spine wall.
+    bands.push(rect(6944,loggia.bounds.y0-t,loggia.bounds.x1,loggia.bounds.y0),rect(loggia.bounds.x1,loggia.bounds.y0,SPINE_WEST_XMM,garden));
+  }
+  return bands;
+}

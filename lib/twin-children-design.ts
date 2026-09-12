@@ -1,10 +1,15 @@
 /** Client revision: preschool rooms, garden for a boy / street for a girl. */
 export const CHILDREN_DESIGN_ID = 'C-KIDS-FULL-BEDS-2026-09-07';
 export const CHILDREN_WINDOWS: Record<string,{startXmm:number;widthMm:number;heightMm:number;sillMm:number;kind?:'fixed'|'window';frameWidthMm?:number}> = {
-  'GARDEN-03':{startXmm:16900,widthMm:2200,heightMm:2400,sillMm:0},
-  'FRONT-GIRL-BED':{startXmm:15450,widthMm:1000,heightMm:1250,sillMm:1250},
-  'FRONT-04':{startXmm:17100,widthMm:1600,heightMm:1950,sillMm:550,kind:'fixed',frameWidthMm:45},
-  'FRONT-05':{startXmm:19450,widthMm:1050,heightMm:1600,sillMm:900},
+  // Both child rooms now start at 15243; the garden glazing follows the boy's
+  // bed 100 mm east so 217 mm stays between the bed frame and the glass.
+  'GARDEN-03':{startXmm:17000,widthMm:2200,heightMm:2400,sillMm:0},
+  // The girl's room is 5 298 mm long between two 300 mm bearing walls (faces
+  // 15243 and 20541). The three windows keep their sizes; 600 mm piers remain
+  // between them and 224 mm piers stay beside both bearing walls.
+  'FRONT-GIRL-BED':{startXmm:15467,widthMm:1000,heightMm:1250,sillMm:1250},
+  'FRONT-04':{startXmm:17067,widthMm:1600,heightMm:1950,sillMm:550,kind:'fixed',frameWidthMm:45},
+  'FRONT-05':{startXmm:19267,widthMm:1050,heightMm:1600,sillMm:900},
 };
 export const GIRL_WINDOW_DESIGN:Record<string,{name:string;note:string}> = {
   'FRONT-GIRL-BED':{name:'Okno nad posteľou',note:'Parapet 1 250 mm ponecháva 200 mm nad čelom postele. Vyššie okno osvetľuje pokojovú časť a zachováva súkromie pri ulici.'},

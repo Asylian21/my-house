@@ -33,9 +33,9 @@ import {
   INTERIOR_DOORS,
   INTERIOR_ROOMS,
   INTERIOR_RENDER_WALLS,
+  INTERIOR_WALLS,
   INTERIOR_WALL_HEIGHT_MM,
   KITCHEN_RUN,
-  LIVING_DINING_FITOUT,
   OFFICE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
   WC_FITOUT,
@@ -43,12 +43,19 @@ import {
   ceilingElevationMm,
   roomBoundsMm,
   type ChildBedroomFitout,
+  type FireplaceStove,
   type FurnitureFacing,
   type HallwayBuiltInWardrobe,
   type InteriorDoor,
   type InteriorRoom,
   type RectMm,
 } from "./twin-interior";
+import {
+  DEFAULT_LIVING_LAYOUT_ID,
+  LIVING_LAYOUTS,
+  type LivingLayout,
+  type LivingLayoutId,
+} from "./twin-living-layouts";
 import { type LayerId, type Point2Mm } from "./twin-site";
 import { HOUSE } from "./twin-active-house";
 import { MM_TO_M, sceneXM as xM, sceneZM as zM } from "./twin-render-frame";
@@ -74,6 +81,8 @@ export interface InteriorBuildContext {
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
   registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
+  /** Arrangement of the living/dining zone in 1.03; the active model uses A. */
+  readonly livingLayout?: LivingLayoutId;
 }
 
 export interface InteriorMaterials {
@@ -766,14 +775,25 @@ function buildWalls(context: InteriorBuildContext, materials: InteriorMaterials)
  * handle remain non-colliding visual detail. The continuous flue itself is
  * rendered by the exterior scene from this body's top to its roof termination.
  */
-function buildLivingFireplace(context: InteriorBuildContext, materials: InteriorMaterials) {
-  const stove = FIREPLACE_STOVE;
+export function buildLivingFireplace(
+  context: InteriorBuildContext,
+  materials: InteriorMaterials,
+  stove: FireplaceStove = FIREPLACE_STOVE,
+) {
   const center = stove.centerMm;
   const diameterM = stove.bodyDiameterMm * MM_TO_M;
   const radiusMm = stove.bodyDiameterMm / 2;
   const bodyHeightM = stove.bodyHeightMm * MM_TO_M;
   const shellBottomM = 0.03;
   const shellHeightM = bodyHeightM - shellBottomM;
+  // Door direction as a plan angle; `at` places details `forward` millimetres
+  // in front of the axis and `side` millimetres to the left of the fire.
+  const facingRad = (stove.facingAngleDeg * Math.PI) / 180;
+  const cosF = Math.cos(facingRad), sinF = Math.sin(facingRad);
+  const at = (forwardMm: number, sideMm: number): Point2Mm => ({
+    x: center.x + forwardMm * cosF - sideMm * sinF,
+    y: center.y + forwardMm * sinF + sideMm * cosF,
+  });
 
   const body = CreateCylinder(
     `${stove.id} · BODY · matne čierne valcové teleso Ø${stove.bodyDiameterMm}`,
@@ -810,7 +830,7 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
   finish(context, topCap, materials.fireplace, { shadow: true });
 
   const arc = stove.window.arcDegrees / 360;
-  const arcRotationY = -Math.PI * arc;
+  const arcRotationY = -Math.PI * arc + facingRad;
   const windowBottomM = stove.window.bottomElevationMm * MM_TO_M;
   const windowHeightM = stove.window.heightMm * MM_TO_M;
   const windowCenterM = windowBottomM + windowHeightM / 2;
@@ -864,24 +884,22 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
       { height: windowHeightM + 0.025, diameter: 0.022, tessellation: 20 },
       context.scene,
     );
-    jamb.position.set(
-      xM(center.x + radiusMm * Math.cos(halfArcRad)),
-      windowCenterM,
-      zM(center.y + side * radiusMm * Math.sin(halfArcRad)),
-    );
+    const jambAt = at(radiusMm * Math.cos(halfArcRad), side * radiusMm * Math.sin(halfArcRad));
+    jamb.position.set(xM(jambAt.x), windowCenterM, zM(jambAt.y));
     finish(context, jamb, materials.fireplace, { shadow: true });
   }
 
-  const fireFrontXmm = center.x + radiusMm + 5;
+  const fireFrontMm = radiusMm + 5;
   for (const [index, offsetYmm] of [-62, 54].entries()) {
     const log = CreateCylinder(
       `${stove.id} · LOG-${index + 1} · horiace poleno`,
       { height: 0.245, diameter: 0.052, tessellation: 20 },
       context.scene,
     );
-    log.position.set(xM(fireFrontXmm), 0.5 + index * 0.035, zM(center.y + offsetYmm));
+    const logAt = at(fireFrontMm, offsetYmm);
+    log.position.set(xM(logAt.x), 0.5 + index * 0.035, zM(logAt.y));
     log.rotation.x = Math.PI / 2;
-    log.rotation.y = index === 0 ? -0.18 : 0.22;
+    log.rotation.y = (index === 0 ? -0.18 : 0.22) + facingRad;
     finish(context, log, materials.fireplaceEmber, { shadow: true });
   }
   for (const [index, flame] of [
@@ -899,15 +917,16 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
       },
       context.scene,
     );
+    const flameAt = at(fireFrontMm + 3, flame.yMm);
     flameMesh.position.set(
-      xM(fireFrontXmm + 3),
+      xM(flameAt.x),
       flame.elevationM + flame.heightM / 2,
-      zM(center.y + flame.yMm),
+      zM(flameAt.y),
     );
     finish(context, flameMesh, materials.fireplaceEmber, { shadow: true });
   }
 
-  const handleCenter = { x: center.x + 178, y: center.y + 279 };
+  const handleCenter = at(178, 279);
   const handle = CreateCylinder(
     `${stove.id} · DOOR-HANDLE · zvislá čierna rukoväť`,
     { height: 0.24, diameter: 0.026, tessellation: 24 },
@@ -919,13 +938,14 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
     const handleMount = texturedBox(
       context.scene,
       `${stove.id} · DOOR-HANDLE-MOUNT · konzola rukoväte`,
-      { x: handleCenter.x, y: center.y + 252 },
+      at(178, 252),
       24,
       58,
       0.018,
       elevationM - 0.009,
       1,
     );
+    handleMount.rotation.y = facingRad;
     finish(context, handleMount, materials.fireplace, { shadow: true });
   }
 
@@ -934,7 +954,8 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
     { diameter: 0.027, segments: 20 },
     context.scene,
   );
-  airControl.position.set(xM(center.x + radiusMm + 17), 0.322, zM(center.y));
+  const airControlAt = at(radiusMm + 17, 0);
+  airControl.position.set(xM(airControlAt.x), 0.322, zM(airControlAt.y));
   finish(context, airControl, context.chimneyMetal, { shadow: true, pickable: true });
 
   const collar = CreateCylinder(
@@ -945,9 +966,10 @@ function buildLivingFireplace(context: InteriorBuildContext, materials: Interior
   collar.position.set(xM(center.x), bodyHeightM + 0.015, zM(center.y));
   finish(context, collar, materials.fireplace, { shadow: true });
 
+  const fireLightAt = at(radiusMm + 320, 0);
   const fireLight = new PointLight(
     `${stove.id} · FIRE-LIGHT · teplé svetlo ohniska`,
-    new Vector3(xM(center.x + radiusMm + 320), windowCenterM, zM(center.y)),
+    new Vector3(xM(fireLightAt.x), windowCenterM, zM(fireLightAt.y)),
     context.scene,
   );
   fireLight.diffuse = Color3.FromHexString("#ff9d55");
@@ -1589,6 +1611,9 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   // ---- peninsula with the hob (D1.1.002 symbol) and a clear serving overhang
   const pen = k.peninsulaRectMm;
   const eastReturn = k.eastReturnRectMm;
+  // Worktop: 10 mm nosing on the kitchen side, the serving overhang toward the room.
+  const penTopDepthMm = pen.y1 - pen.y0 + 10 + k.peninsulaOverhangMm;
+  const penTopCenterYmm = pen.y0 - 10 + penTopDepthMm / 2;
   const penCarcass = texturedBox(
     context.scene,
     `${k.id} · polostrov ${pen.x1 - pen.x0} × ${pen.y1 - pen.y0}`,
@@ -1614,9 +1639,9 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   const penTop = texturedBox(
     context.scene,
     `${k.id} · pracovná doska polostrova`,
-    { x: (pen.x0 + pen.x1) / 2, y: (pen.y0 + pen.y1) / 2 + 150 },
+    { x: (pen.x0 + pen.x1) / 2, y: penTopCenterYmm },
     pen.x1 - pen.x0 + 20,
-    pen.y1 - pen.y0 + 320,
+    penTopDepthMm,
     worktopM,
     counterM - worktopM,
     1.4,
@@ -1669,12 +1694,17 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
     1.4,
   );
   finish(context, returnTop, materials.worktop, { shadow: true, pickable: true });
+  // The return now runs on under the 900 mm sill of window EAST-04, so the
+  // 180 mm quartz upstand stops 20 mm short of the window reveal.
+  const eastWindow = HOUSE.facades.east.openings.find((opening) => opening.id === "EAST-04")!;
+  const upstandY0 = eastReturn.y0 + 10;
+  const upstandY1 = Math.min(eastReturn.y1 - 10, eastWindow.startYmm - 20);
   const returnUpstand = texturedBox(
     context.scene,
     `${k.id} · L-RETURN-EAST · kremenný obklad pri stene`,
-    { x: eastReturn.x1 - 6, y: (eastReturn.y0 + eastReturn.y1) / 2 },
+    { x: eastReturn.x1 - 6, y: (upstandY0 + upstandY1) / 2 },
     12,
-    eastReturn.y1 - eastReturn.y0 - 20,
+    upstandY1 - upstandY0,
     0.18,
     counterM,
     1.4,
@@ -1732,9 +1762,9 @@ function buildKitchen(context: InteriorBuildContext, materials: InteriorMaterial
   const penNavigationGuard = texturedBox(
     context.scene,
     `${k.id} · navigačný obrys polostrova`,
-    { x: (pen.x0 + pen.x1) / 2, y: (pen.y0 + pen.y1) / 2 + 150 },
+    { x: (pen.x0 + pen.x1) / 2, y: penTopCenterYmm },
     pen.x1 - pen.x0 + 20,
-    pen.y1 - pen.y0 + 320,
+    penTopDepthMm,
     6,
     -2,
     1,
@@ -4441,13 +4471,24 @@ function buildChildWardrobe(
   const wardrobe = fitout.wardrobe;
   const rect = wardrobe.footprintMm;
   const heightM = wardrobe.heightMm * MM_TO_M;
-  const bodyRect: RectMm = { ...rect, x0: rect.x0 + 34 };
+  // The fronts sit on the face towards the room. Every part is placed by its
+  // depth behind that face and its position along it, so the same carcass
+  // works backed onto a side wall (facing WEST) or the hall wall (NORTH/SOUTH).
+  const forward = furnitureForward(wardrobe.facing);
+  const alongY = forward.x !== 0;
+  const frontPlane = alongY ? (forward.x < 0 ? rect.x0 : rect.x1) : (forward.y < 0 ? rect.y0 : rect.y1);
+  const along0 = alongY ? rect.y0 : rect.x0;
+  const along1 = alongY ? rect.y1 : rect.x1;
+  const at = (depthMm: number, alongMm: number): Point2Mm => alongY
+    ? { x: frontPlane - forward.x * depthMm, y: alongMm }
+    : { x: alongMm, y: frontPlane - forward.y * depthMm };
+  const size = (thicknessMm: number, spanMm: number): [number, number] => alongY ? [thicknessMm, spanMm] : [spanMm, thicknessMm];
+  const bodyDepthMm = (alongY ? rect.x1 - rect.x0 : rect.y1 - rect.y0) - 34;
   const body = texturedBox(
     context.scene,
     `${fitout.id} · WARDROBE · celovýšková vstavaná skriňa`,
-    rectCenter(bodyRect),
-    bodyRect.x1 - bodyRect.x0,
-    bodyRect.y1 - bodyRect.y0,
+    at(34 + bodyDepthMm / 2, (along0 + along1) / 2),
+    ...size(bodyDepthMm, along1 - along0),
     heightM,
     0,
     1.2,
@@ -4458,16 +4499,15 @@ function buildChildWardrobe(
     cameraOccluder: true,
   });
 
-  const frontSpanMm = (rect.y1 - rect.y0) / wardrobe.doorCount;
+  const frontSpanMm = (along1 - along0) / wardrobe.doorCount;
   for (let index = 0; index < wardrobe.doorCount; index += 1) {
-    const y0 = rect.y0 + index * frontSpanMm;
-    const y1 = y0 + frontSpanMm;
+    const a0 = along0 + index * frontSpanMm;
+    const a1 = a0 + frontSpanMm;
     const front = texturedBox(
       context.scene,
       `${fitout.id} · WARDROBE · bezúchytkové čelo ${index + 1}`,
-      { x: rect.x0 + 15, y: (y0 + y1) / 2 },
-      30,
-      frontSpanMm - 8,
+      at(15, (a0 + a1) / 2),
+      ...size(30, frontSpanMm - 8),
       heightM - 0.1,
       0.05,
       1,
@@ -4480,9 +4520,8 @@ function buildChildWardrobe(
       const joint = texturedBox(
         context.scene,
         `${fitout.id} · WARDROBE · tieňová škára ${index}`,
-        { x: rect.x0 + 3, y: y0 },
-        10,
-        8,
+        at(3, a0),
+        ...size(10, 8),
         heightM - 0.17,
         0.085,
         1,
@@ -4493,9 +4532,8 @@ function buildChildWardrobe(
   const plinth = texturedBox(
     context.scene,
     `${fitout.id} · WARDROBE · zapustený sokel`,
-    { x: rect.x0 + 24, y: (rect.y0 + rect.y1) / 2 },
-    42,
-    rect.y1 - rect.y0 - 50,
+    at(24, (along0 + along1) / 2),
+    ...size(42, along1 - along0 - 50),
     0.075,
     0,
     1,
@@ -4504,9 +4542,8 @@ function buildChildWardrobe(
   const verticalLight = texturedBox(
     context.scene,
     `${fitout.id} · WARDROBE · integrované ambientné svetlo`,
-    { x: rect.x0 + 4, y: rect.y0 + 16 },
-    12,
-    20,
+    at(4, along0 + 16),
+    ...size(12, 20),
     2.18,
     0.18,
     1,
@@ -4707,18 +4744,8 @@ function buildChildPlayAndStorage(context:InteriorBuildContext,materials:Interio
     const m=texturedBox(context.scene,`${fitout.id} · ${label}`,rectCenter(r),r.x1-r.x0,r.y1-r.y0,h,base,1);
     finish(context,m,mat,{shadow:true,pickable:true});return m;
   };
-  const r=fitout.toyStorageRectMm, north=fitout.storageFacing==='NORTH', front=north?r.y1:r.y0;
-  box('TOYS · nízky dubový korpus',r,.57,0,materials.kitchenFront);
-  const count=4, span=(r.x1-r.x0)/count;
-  for(let i=0;i<count;i++){
-    const x=r.x0+i*span+20;
-    const recess={x0:x,y0:north?front-14:front-1,x1:x+span-40,y1:north?front+1:front+14};
-    box(`TOYS · tieň otvoreného boxu ${i}`,recess,.43,.07,materials.fireplace);
-    const basket={...recess,x0:x+10,x1:x+span-50,y0:north?front-8:front-9,y1:north?front+9:front+8};
-    box(`TOYS · vyberateľný textilný kôš ${i}`,basket,.30,.085,i%2?theme.secondary:theme.primary);
-    box(`TOYS · úchyt koša ${i}`,{...basket,x0:x+span*.38,x1:x+span*.62,y0:north?front+9:front-13,y1:north?front+13:front-9},.025,.30,materials.kitchenFront);
-  }
-  navigationGuard(context,materials,`${fitout.id} · TOYS · navigačný obrys`,r);
+  // The low toy shelf on the hall wall gave way to the wardrobe; the bookcase stays.
+  const north=fitout.storageFacing==='NORTH';
   const b=fitout.bookcaseRectMm;
   box('BOOKS · nízka dubová knižnica',b,.065,.03,materials.kitchenFront);
   for(const x of [b.x0,b.x1-20])box('BOOKS · bočnica',{...b,x0:x,x1:x+20},.62,.03,materials.kitchenFront);
@@ -4789,7 +4816,9 @@ function buildEntryFitout(context: InteriorBuildContext, materials: InteriorMate
   box('OVERHEAD · horná úložná skriňa',{x0:r.x0,y0:r.y0,x1:r.x0+320,y1:r.y1},.48,2.02,materials.hallwayWardrobeOak);
   box('LIGHT · skryté svetlo nad lavičkou',{x0:r.x0+300,y0:r.y0+30,x1:r.x0+312,y1:r.y1-30},.012,2.008,materials.warmLight);
   // Mirror on the solid office-side wall leaves the entrance glazing unobstructed.
-  box('MIRROR · vysoké zrkadlo',{x0:23312,y0:3670,x1:23326,y1:4220},1.65,.38,materials.mirrorGlass);
+  // It hangs 13 mm off the west face of the 300 mm bearing wall of the office.
+  const officeWallFace=INTERIOR_WALLS.find(w=>w.id==='C-ENTRY-OFFICE-EAST')!.rectMm.x0;
+  box('MIRROR · vysoké zrkadlo',{x0:officeWallFace-27,y0:3670,x1:officeWallFace-13,y1:4220},1.65,.38,materials.mirrorGlass);
   navigationGuard(context,materials,`${fitout.id} · BENCH · navigačný obrys`,r);
 }
 
@@ -5375,41 +5404,129 @@ function buildOfficeFitout(context: InteriorBuildContext, materials: InteriorMat
  * plan positions live in `LIVING_DINING_FITOUT`; this builder only adds finish,
  * soft geometry, integrated lighting and navigation-safe collision envelopes.
  */
+/** Unit plan vector a piece of furniture faces. */
+function facingVector(facing: FurnitureFacing): Point2Mm {
+  switch (facing) {
+    case "NORTH":
+      return { x: 0, y: 1 };
+    case "SOUTH":
+      return { x: 0, y: -1 };
+    case "EAST":
+      return { x: 1, y: 0 };
+    default:
+      return { x: -1, y: 0 };
+  }
+}
+
+/**
+ * Local frame of a rectangular furniture module: `u` runs along the module
+ * from left to right when looking the way it faces, `v` runs from the back
+ * edge toward the front. `rect(u0,u1,v0,v1)` returns the plan rectangle and
+ * `local(rect)` the inverse, so cushion layouts can be written once for any
+ * orientation. `tilt` leans a mesh backward about the module's long axis.
+ */
+function moduleFrame(body: RectMm, facing: FurnitureFacing) {
+  const V = facingVector(facing);
+  const U = { x: V.y, y: -V.x };
+  const origin: Point2Mm = {
+    x: U.x + V.x > 0 ? body.x0 : body.x1,
+    y: U.y + V.y > 0 ? body.y0 : body.y1,
+  };
+  const point = (u: number, v: number): Point2Mm => ({
+    x: origin.x + u * U.x + v * V.x,
+    y: origin.y + u * U.y + v * V.y,
+  });
+  const rect = (u0: number, u1: number, v0: number, v1: number): RectMm => {
+    const a = point(u0, v0), b = point(u1, v1);
+    return { x0: Math.min(a.x, b.x), x1: Math.max(a.x, b.x), y0: Math.min(a.y, b.y), y1: Math.max(a.y, b.y) };
+  };
+  const local = (r: RectMm) => {
+    const corners = [
+      { x: r.x0, y: r.y0 }, { x: r.x1, y: r.y0 }, { x: r.x0, y: r.y1 }, { x: r.x1, y: r.y1 },
+    ];
+    const us = corners.map((c) => (c.x - origin.x) * U.x + (c.y - origin.y) * U.y);
+    const vs = corners.map((c) => (c.x - origin.x) * V.x + (c.y - origin.y) * V.y);
+    return { u0: Math.min(...us), u1: Math.max(...us), v0: Math.min(...vs), v1: Math.max(...vs) };
+  };
+  const tilt = (mesh: Mesh, radians: number) => {
+    if (V.x !== 0) mesh.rotation.z = radians * V.x;
+    else mesh.rotation.x = radians * V.y;
+  };
+  return { rect, local, tilt, length: local(body).u1, depth: local(body).v1 };
+}
+
+/**
+ * High-end living/dining concept requested on 23. 8. 2026, with the client's
+ * 11. 9. 2026 variant B as a switchable alternative. The source-backed plan
+ * positions live in `LIVING_LAYOUTS`; this builder only adds finish, soft
+ * geometry, integrated lighting and navigation-safe collision envelopes.
+ */
 export function buildLivingDiningFitout(
   context: InteriorBuildContext,
   materials: InteriorMaterials,
+  layout: LivingLayout = LIVING_LAYOUTS[DEFAULT_LIVING_LAYOUT_ID],
 ) {
-  const fitout = LIVING_DINING_FITOUT;
+  const fitout = layout.fitout;
 
   // ---- handleless TV wall: natural oak storage, a limestone media bay and oak
-  // floating console. It starts 329 mm after the flue pier and stops before
-  // the rear gable lining, so the fireplace and fixed glazing remain legible.
+  // floating console. In variant A it starts after the flue pier and stops
+  // before the rear gable lining; in variant B it stands on the solid part of
+  // the gable. `wallBox` places parts by their position along the wall and
+  // their distance in front of the cabinet face (negative = inside the body).
   const wall = fitout.tvWall.rectMm;
-  const [bayY0, bayY1] = fitout.tvWall.centralBayYmm;
-  const bayCenterY = (bayY0 + bayY1) / 2;
-  const towerRanges = [
-    [wall.y0, bayY0, "pri krbe"],
-    [bayY1, wall.y1, "pri zadnom okne"],
-  ] as const;
-  for (const [towerY0, towerY1, label] of towerRanges) {
-    const tower = texturedBox(
+  const facing = fitout.tvWall.facing;
+  const alongY = facing === "EAST" || facing === "WEST";
+  const wallDepth = alongY ? wall.x1 - wall.x0 : wall.y1 - wall.y0;
+  const [wallAlong0, wallAlong1] = alongY ? [wall.y0, wall.y1] : [wall.x0, wall.x1];
+  const frontFace = facing === "EAST" ? wall.x1 : facing === "WEST" ? wall.x0 : facing === "NORTH" ? wall.y1 : wall.y0;
+  const outSign = facing === "EAST" || facing === "NORTH" ? 1 : -1;
+  const wallBox = (
+    name: string,
+    alongCenter: number,
+    alongSize: number,
+    outCenter: number,
+    outSize: number,
+    heightM: number,
+    elevationM: number,
+    tileM: number,
+  ) => {
+    const depthCoordinate = frontFace + outSign * outCenter;
+    return texturedBox(
       context.scene,
+      name,
+      alongY ? { x: depthCoordinate, y: alongCenter } : { x: alongCenter, y: depthCoordinate },
+      alongY ? outSize : alongSize,
+      alongY ? alongSize : outSize,
+      heightM,
+      elevationM,
+      tileM,
+    );
+  };
+  const [bay0, bay1] = fitout.tvWall.centralBayMm;
+  const bayCenter = (bay0 + bay1) / 2;
+  const towerRanges = [
+    [wallAlong0, bay0, fitout.tvWall.towerLabels[0]],
+    [bay1, wallAlong1, fitout.tvWall.towerLabels[1]],
+  ] as const;
+  for (const [tower0, tower1, label] of towerRanges) {
+    const tower = wallBox(
       `LIVING-103-TV-WALL · vysoká bezúchytková skriňa ${label}`,
-      { x: (wall.x0 + wall.x1) / 2, y: (towerY0 + towerY1) / 2 },
-      wall.x1 - wall.x0,
-      towerY1 - towerY0,
+      (tower0 + tower1) / 2,
+      tower1 - tower0,
+      -wallDepth / 2,
+      wallDepth,
       fitout.tvWall.heightMm * MM_TO_M,
       0,
       1.2,
     );
     finish(context, tower, materials.livingCabinet, { shadow: true, pickable: true });
     for (const levelM of [0.86, 1.72]) {
-      const joint = texturedBox(
-        context.scene,
+      const joint = wallBox(
         `LIVING-103-TV-WALL · tieňová škára skrine ${label}`,
-        { x: wall.x1 + 7, y: (towerY0 + towerY1) / 2 },
+        (tower0 + tower1) / 2,
+        tower1 - tower0 - 34,
+        7,
         14,
-        towerY1 - towerY0 - 34,
         0.009,
         levelM,
         1,
@@ -5417,23 +5534,23 @@ export function buildLivingDiningFitout(
       finish(context, joint, materials.fireplace);
     }
   }
-  const mediaPanel = texturedBox(
-    context.scene,
+  const mediaPanel = wallBox(
     "LIVING-103-TV-WALL · veľkoformátový greige kamenný panel",
-    { x: wall.x1 + 12, y: bayCenterY },
+    bayCenter,
+    bay1 - bay0 - 70,
+    12,
     24,
-    bayY1 - bayY0 - 70,
     2.18,
     0.18,
     1.6,
   );
   finish(context, mediaPanel, materials.mediaPanel, { shadow: true, pickable: true });
-  const bridge = texturedBox(
-    context.scene,
+  const bridge = wallBox(
     "LIVING-103-TV-WALL · horný úložný most",
-    { x: (wall.x0 + wall.x1) / 2, y: bayCenterY },
-    wall.x1 - wall.x0,
-    bayY1 - bayY0,
+    bayCenter,
+    bay1 - bay0,
+    -wallDepth / 2,
+    wallDepth,
     0.27,
     2.33,
     1.2,
@@ -5443,23 +5560,23 @@ export function buildLivingDiningFitout(
     pickable: true,
     cameraOccluder: true,
   });
-  const console = texturedBox(
-    context.scene,
+  const console = wallBox(
     "LIVING-103-TV-WALL · plávajúca dubová mediálna skrinka",
-    { x: (wall.x0 + wall.x1) / 2 + 8, y: bayCenterY },
-    wall.x1 - wall.x0 - 16,
-    bayY1 - bayY0 - 170,
+    bayCenter,
+    bay1 - bay0 - 170,
+    -wallDepth / 2 + 8,
+    wallDepth - 16,
     0.28,
     0.17,
     1.2,
   );
   finish(context, console, materials.kitchenFront, { shadow: true, pickable: true });
-  const consoleShadow = texturedBox(
-    context.scene,
+  const consoleShadow = wallBox(
     "LIVING-103-TV-WALL · tieň pod plávajúcou skrinkou",
-    { x: wall.x1 + 13, y: bayCenterY },
+    bayCenter,
+    bay1 - bay0 - 230,
+    13,
     18,
-    bayY1 - bayY0 - 230,
     0.025,
     0.14,
     1,
@@ -5467,47 +5584,47 @@ export function buildLivingDiningFitout(
   finish(context, consoleShadow, materials.fireplace);
 
   const tv = fitout.tvWall.tv;
-  const tvFrame = texturedBox(
-    context.scene,
+  const tvFrame = wallBox(
     `LIVING-103-TV-WALL · ${tv.diagonalIn}-palcový televízor · rám`,
-    { x: wall.x1 + 42, y: bayCenterY },
-    58,
+    bayCenter,
     tv.widthMm + 28,
+    42,
+    58,
     (tv.heightMm + 28) * MM_TO_M,
     (tv.centerElevationMm - tv.heightMm / 2 - 14) * MM_TO_M,
     1,
   );
   finish(context, tvFrame, materials.fireplace, { shadow: true, pickable: true });
-  const tvScreen = texturedBox(
-    context.scene,
+  const tvScreen = wallBox(
     `LIVING-103-TV-WALL · ${tv.diagonalIn}-palcový televízor · čierne sklo`,
-    { x: wall.x1 + 73, y: bayCenterY },
-    8,
+    bayCenter,
     tv.widthMm,
+    73,
+    8,
     tv.heightMm * MM_TO_M,
     (tv.centerElevationMm - tv.heightMm / 2) * MM_TO_M,
     1,
   );
   // An off TV uses the existing non-emissive black glazing; office screens stay unchanged.
   finish(context, tvScreen, materials.blackGlass, { pickable: true });
-  const soundbar = texturedBox(
-    context.scene,
+  const soundbar = wallBox(
     "LIVING-103-TV-WALL · subtílny soundbar",
-    { x: wall.x1 + 83, y: bayCenterY },
-    48,
+    bayCenter,
     1120,
+    83,
+    48,
     0.065,
     0.49,
     1,
   );
   finish(context, soundbar, materials.fireplace, { shadow: true });
-  for (const [index, edgeY] of [bayY0 + 24, bayY1 - 24].entries()) {
-    const led = texturedBox(
-      context.scene,
+  for (const [index, edge] of [bay0 + 24, bay1 - 24].entries()) {
+    const led = wallBox(
       `LIVING-103-TV-WALL · 2700 K vertikálna LED ${index + 1}`,
-      { x: wall.x1 + 31, y: edgeY },
-      20,
+      edge,
       24,
+      31,
+      20,
       2.08,
       0.2,
       1,
@@ -5519,7 +5636,7 @@ export function buildLivingDiningFitout(
   // ---- tailored L sofa: broad flat cushions, narrow eased edges and an oak
   // plinth. Keep the plan footprints and navigation envelopes authoritative.
   const sofa = fitout.sofa;
-  const rugRect: RectMm = { x0: 22520, y0: 15580, x1: 27190, y1: 18880 };
+  const rugRect = layout.rugRectMm;
   const rug = texturedBox(
     context.scene,
     "LIVING-103-SOFA-L · ručne tkaný greige koberec",
@@ -5536,29 +5653,33 @@ export function buildLivingDiningFitout(
   const tailored = (label: string, rect: RectMm, height: number, base: number, radius: number, material = materials.upholstery) =>
     upholsteredBox(context, `LIVING-103-SOFA-L · TAILORED · ${label}`, rect, height, base, radius, material);
   const main = sofa.mainRectMm, chaise = sofa.chaiseRectMm;
+  // Cushions are laid out in the module frame: `u` along the main module from
+  // the arm toward the chaise, `v` from the backrest toward the front edge.
+  const frame = moduleFrame(main, sofa.facing);
+  const L = frame.rect, mainLength = frame.length, mainDepth = frame.depth;
+  const chaiseLocal = frame.local(chaise);
   const seatTop = sofa.seatHeightMm * MM_TO_M, seatThickness = 0.19;
   const seatBase = seatTop - seatThickness;
   for (const [rect, label] of [
-    [{ ...main, y1: chaise.y0 }, "hlavný modul"],
+    [L(0, chaiseLocal.u0, 0, mainDepth), "hlavný modul"],
     [chaise, "ležadlo"],
   ] as const) {
-    tailored(`${label} · zapustený dubový sokel`,
-      { x0: rect.x0+65, y0: rect.y0+50, x1: rect.x1-65, y1: rect.y1-50 },
-      0.1, 0.055, 0.012, materials.kitchenFront);
+    const { u0, u1, v0, v1 } = frame.local(rect);
+    tailored(`${label} · zapustený dubový sokel`, L(u0 + 50, u1 - 50, v0 + 65, v1 - 65), 0.1, 0.055, 0.012, materials.kitchenFront);
     tailored(`${label} · čalúnený rám`, rect, seatBase - 0.14, 0.14, 0.025);
   }
-  tailored("rovné čalúnené operadlo", { x0: main.x1-210, y0: main.y0+20, x1: main.x1-20, y1: main.y1-20 }, 0.56, 0.24, 0.03);
-  const seatRanges = [[16025,16820], [16835,17630], [17670,18565]] as const;
-  for (const [index, [y0,y1]] of seatRanges.entries()) {
-    tailored(`sedák ${index+1} · piesková tkanina`, { x0:main.x0+20,y0,x1:main.x1-245,y1 }, seatThickness, seatBase, 0.035);
-    const back = tailored(`chrbtový vankúš ${index+1}`, { x0:main.x1-370,y0,x1:main.x1-155,y1 }, 0.49, seatTop - 0.025, 0.045);
-    back.rotation.z = -0.085;
+  tailored("rovné čalúnené operadlo", L(20, mainLength - 20, 20, 210), 0.56, 0.24, 0.03);
+  const seatRanges = [[175, 970], [985, 1780], [1820, 2715]] as const;
+  for (const [index, [u0, u1]] of seatRanges.entries()) {
+    tailored(`sedák ${index+1} · piesková tkanina`, L(u0, u1, 245, mainDepth - 20), seatThickness, seatBase, 0.035);
+    const back = tailored(`chrbtový vankúš ${index+1}`, L(u0, u1, 155, 370), 0.49, seatTop - 0.025, 0.045);
+    frame.tilt(back, 0.085);
   }
-  tailored("sedák ležadla · piesková tkanina", { x0:chaise.x0+20,y0:chaise.y0+20,x1:main.x0+5,y1:18565 }, seatThickness, seatBase, 0.035);
-  tailored("rovná južná podrúčka", { x0:main.x0,y0:main.y0,x1:main.x1,y1:main.y0+155 }, 0.46, 0.18, 0.035);
-  tailored("rovná podrúčka ležadla", { x0:chaise.x0,y0:chaise.y1-160,x1:chaise.x1,y1:chaise.y1 }, 0.46, 0.18, 0.035);
-  const accent = tailored("ľanový vankúš · tlmená oliva", { x0:26720,y0:17200,x1:26900,y1:17600 }, 0.4, seatTop - 0.015, 0.055, materials.accentFabric);
-  accent.rotation.z = -0.15;
+  tailored("sedák ležadla · piesková tkanina", L(chaiseLocal.u0 + 20, 2715, mainDepth - 5, chaiseLocal.v1 - 20), seatThickness, seatBase, 0.035);
+  tailored("rovná podrúčka pri kraji", L(0, 155, 0, mainDepth), 0.46, 0.18, 0.035);
+  tailored("rovná podrúčka ležadla", L(mainLength - 160, mainLength, 0, chaiseLocal.v1), 0.46, 0.18, 0.035);
+  const accent = tailored("ľanový vankúš · tlmená oliva", L(1350, 1750, 350, 530), 0.4, seatTop - 0.015, 0.055, materials.accentFabric);
+  frame.tilt(accent, 0.15);
   navigationGuard(
     context,
     materials,
@@ -5573,47 +5694,44 @@ export function buildLivingDiningFitout(
   );
 
   // Limestone and natural oak tables sit inside the conversation zone.
-  for (const [index, spec] of [
-    { center: { x: 24380, y: 16680 }, diameter: 1.15, scaleX: 1.12, scaleZ: 0.7, top: 0.34 },
-    { center: { x: 25020, y: 17140 }, diameter: 0.78, scaleX: 1.05, scaleZ: 0.76, top: 0.42 },
-  ].entries()) {
+  for (const [index, spec] of layout.coffeeTables.entries()) {
     const top = CreateCylinder(
       `LIVING-103-SOFA-L · oválny konferenčný stolík ${index + 1}`,
-      { height: 0.045, diameter: spec.diameter, tessellation: 48 },
+      { height: 0.045, diameter: spec.diameterM, tessellation: 48 },
       context.scene,
     );
-    top.position.set(xM(spec.center.x), spec.top, zM(spec.center.y));
+    top.position.set(xM(spec.centerMm.x), spec.topElevationM, zM(spec.centerMm.y));
     top.scaling.set(spec.scaleX, 1, spec.scaleZ);
-    finish(context, top, index === 0 ? materials.worktop : materials.livingCabinet, {
+    finish(context, top, spec.top === "LIMESTONE" ? materials.worktop : materials.livingCabinet, {
       shadow: true,
       pickable: true,
     });
     const pedestal = CreateCylinder(
       `LIVING-103-SOFA-L · dubová podnož konferenčného stolíka ${index + 1}`,
-      { height: spec.top - 0.025, diameter: index === 0 ? 0.34 : 0.24, tessellation: 32 },
+      { height: spec.topElevationM - 0.025, diameter: spec.pedestalDiameterM, tessellation: 32 },
       context.scene,
     );
-    pedestal.position.set(xM(spec.center.x), (spec.top - 0.025) / 2, zM(spec.center.y));
+    pedestal.position.set(xM(spec.centerMm.x), (spec.topElevationM - 0.025) / 2, zM(spec.centerMm.y));
     finish(context, pedestal, materials.kitchenFront, { shadow: true });
   }
-  navigationGuard(context, materials, "LIVING-103-SOFA-L · navigačný obrys stolíkov", {
-    x0: 23700,
-    y0: 16220,
-    x1: 25480,
-    y1: 17580,
-  });
+  navigationGuard(context, materials, "LIVING-103-SOFA-L · navigačný obrys stolíkov", layout.coffeeTableGuardRectMm);
 
-  // ---- compact four-seat dining zone: a classic rectangular oak table with
-  // a proper apron, four tapered legs, framed chairs and one calm pendant.
+  // ---- six-seat dining zone: a classic rectangular oak table with a proper
+  // apron, four tapered legs, framed chairs and a pair of calm pendants.
   const dining = fitout.dining;
   const tableHeightM = dining.tableHeightMm * MM_TO_M;
   const topThicknessM = 0.052;
+  // The table's length runs along `dining.axis`; sizes below are plan X × Y.
+  const [tableSizeX, tableSizeY] =
+    dining.axis === "X"
+      ? [dining.tableLengthMm, dining.tableDepthMm]
+      : [dining.tableDepthMm, dining.tableLengthMm];
   const tableTop = texturedBox(
     context.scene,
     "LIVING-103-DINING · klasický dubový stôl · doska",
     dining.tableCenterMm,
-    dining.tableLengthMm,
-    dining.tableDepthMm,
+    tableSizeX,
+    tableSizeY,
     topThicknessM,
     tableHeightM - topThicknessM,
     1.2,
@@ -5622,32 +5740,22 @@ export function buildLivingDiningFitout(
 
   const apronHeightM = 0.13;
   const apronElevationM = tableHeightM - topThicknessM - apronHeightM;
-  for (const [index, yOffsetMm] of [-1, 1].entries()) {
+  // Long rails run along the table's length, short rails across it.
+  const rails = [
+    [-1, "pozdĺžna", true], [1, "pozdĺžna", true],
+    [-1, "priečna", false], [1, "priečna", false],
+  ] as const;
+  for (const [side, label, longitudinal] of rails) {
+    const alongX = longitudinal === (dining.axis === "X");
     const rail = texturedBox(
       context.scene,
-      `LIVING-103-DINING · dubová lubová výstuha pozdĺžna ${index + 1}`,
+      `LIVING-103-DINING · dubová lubová výstuha ${label} ${side < 0 ? 1 : 2}`,
       {
-        x: dining.tableCenterMm.x,
-        y: dining.tableCenterMm.y + yOffsetMm * (dining.tableDepthMm / 2 - 62),
+        x: dining.tableCenterMm.x + (alongX ? 0 : side * (tableSizeX / 2 - 62)),
+        y: dining.tableCenterMm.y + (alongX ? side * (tableSizeY / 2 - 62) : 0),
       },
-      dining.tableLengthMm - 160,
-      48,
-      apronHeightM,
-      apronElevationM,
-      1,
-    );
-    finish(context, rail, materials.kitchenFront, { shadow: true });
-  }
-  for (const [index, xOffsetMm] of [-1, 1].entries()) {
-    const rail = texturedBox(
-      context.scene,
-      `LIVING-103-DINING · dubová lubová výstuha priečna ${index + 1}`,
-      {
-        x: dining.tableCenterMm.x + xOffsetMm * (dining.tableLengthMm / 2 - 62),
-        y: dining.tableCenterMm.y,
-      },
-      48,
-      dining.tableDepthMm - 160,
+      alongX ? tableSizeX - 160 : 48,
+      alongX ? 48 : tableSizeY - 160,
       apronHeightM,
       apronElevationM,
       1,
@@ -5668,33 +5776,21 @@ export function buildLivingDiningFitout(
         context.scene,
       );
       leg.position.set(
-        xM(dining.tableCenterMm.x + xSide * (dining.tableLengthMm / 2 - 105)),
+        xM(dining.tableCenterMm.x + xSide * (tableSizeX / 2 - 105)),
         tableLegHeightM / 2,
-        zM(dining.tableCenterMm.y + ySide * (dining.tableDepthMm / 2 - 105)),
+        zM(dining.tableCenterMm.y + ySide * (tableSizeY / 2 - 105)),
       );
       leg.rotation.y = Math.PI / 4;
       finish(context, leg, materials.kitchenFront, { shadow: true });
     }
   }
   navigationGuard(context, materials, "LIVING-103-DINING · hladký navigačný obrys stola", {
-    x0: dining.tableCenterMm.x - dining.tableLengthMm / 2,
-    x1: dining.tableCenterMm.x + dining.tableLengthMm / 2,
-    y0: dining.tableCenterMm.y - dining.tableDepthMm / 2,
-    y1: dining.tableCenterMm.y + dining.tableDepthMm / 2,
+    x0: dining.tableCenterMm.x - tableSizeX / 2,
+    x1: dining.tableCenterMm.x + tableSizeX / 2,
+    y0: dining.tableCenterMm.y - tableSizeY / 2,
+    y1: dining.tableCenterMm.y + tableSizeY / 2,
   });
 
-  const facingVector = (facing: (typeof dining.chairs)[number]["facing"]) => {
-    switch (facing) {
-      case "NORTH":
-        return { x: 0, y: 1 };
-      case "SOUTH":
-        return { x: 0, y: -1 };
-      case "EAST":
-        return { x: 1, y: 0 };
-      default:
-        return { x: -1, y: 0 };
-    }
-  };
   for (const chair of dining.chairs) {
     const forward = facingVector(chair.facing);
     const right = { x: forward.y, y: -forward.x };
@@ -5772,48 +5868,50 @@ export function buildLivingDiningFitout(
     finish(context, topRail, materials.kitchenFront, { shadow: true });
   }
 
+  // Two pendants a quarter of the table length either side of its centre,
+  // along the table axis; one warm point light serves the whole table.
   const livingRoom = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-03")!;
   const lampElevationM = 2.08;
-  const ceilingM = ceilingElevationMm(livingRoom, dining.tableCenterMm.x) * MM_TO_M - 0.07;
-  const cordHeightM = Math.max(0.15, ceilingM - lampElevationM - 0.08);
-  const cord = CreateCylinder(
-    "LIVING-103-DINING · centrálne závesné svietidlo · kábel",
-    { height: cordHeightM, diameter: 0.012, tessellation: 12 },
-    context.scene,
-  );
-  cord.position.set(
-    xM(dining.tableCenterMm.x),
-    lampElevationM + 0.08 + cordHeightM / 2,
-    zM(dining.tableCenterMm.y),
-  );
-  finish(context, cord, materials.fireplace);
-  const shade = CreateCylinder(
-    "LIVING-103-DINING · centrálne závesné svietidlo · klasické tienidlo",
-    { height: 0.22, diameterTop: 0.18, diameterBottom: 0.48, tessellation: 48 },
-    context.scene,
-  );
-  shade.position.set(xM(dining.tableCenterMm.x), lampElevationM, zM(dining.tableCenterMm.y));
-  finish(context, shade, materials.brushedBrass, { shadow: true });
-  const diffuser = CreateSphere(
-    "LIVING-103-DINING · centrálne závesné svietidlo · 2700 K difúzor",
-    { diameter: 0.2, segments: 24 },
-    context.scene,
-  );
-  diffuser.position.set(
-    xM(dining.tableCenterMm.x),
-    lampElevationM - 0.095,
-    zM(dining.tableCenterMm.y),
-  );
-  finish(context, diffuser, materials.warmLight, { shadow: true });
+  const pendantOffsetMm = dining.tableLengthMm / 4;
+  for (const [index, offset] of [-pendantOffsetMm, pendantOffsetMm].entries()) {
+    const at = {
+      x: dining.tableCenterMm.x + (dining.axis === "X" ? offset : 0),
+      y: dining.tableCenterMm.y + (dining.axis === "Y" ? offset : 0),
+    };
+    const label = `LIVING-103-DINING · závesné svietidlo ${index + 1}`;
+    const ceilingM = ceilingElevationMm(livingRoom, at.x) * MM_TO_M - 0.07;
+    const cordHeightM = Math.max(0.15, ceilingM - lampElevationM - 0.08);
+    const cord = CreateCylinder(
+      `${label} · kábel`,
+      { height: cordHeightM, diameter: 0.012, tessellation: 12 },
+      context.scene,
+    );
+    cord.position.set(xM(at.x), lampElevationM + 0.08 + cordHeightM / 2, zM(at.y));
+    finish(context, cord, materials.fireplace);
+    const shade = CreateCylinder(
+      `${label} · klasické tienidlo`,
+      { height: 0.22, diameterTop: 0.18, diameterBottom: 0.48, tessellation: 48 },
+      context.scene,
+    );
+    shade.position.set(xM(at.x), lampElevationM, zM(at.y));
+    finish(context, shade, materials.brushedBrass, { shadow: true });
+    const diffuser = CreateSphere(
+      `${label} · 2700 K difúzor`,
+      { diameter: 0.2, segments: 24 },
+      context.scene,
+    );
+    diffuser.position.set(xM(at.x), lampElevationM - 0.095, zM(at.y));
+    finish(context, diffuser, materials.warmLight, { shadow: true });
+  }
   const light = new PointLight(
-    "LIVING-103-DINING · centrálne závesné svietidlo · svetlo",
+    "LIVING-103-DINING · závesné svietidlá nad stolom · svetlo",
     new Vector3(xM(dining.tableCenterMm.x), lampElevationM - 0.15, zM(dining.tableCenterMm.y)),
     context.scene,
   );
   light.diffuse = Color3.FromHexString("#ffd2a0");
   light.specular = Color3.FromHexString("#8f7254");
-  light.intensity = 0.25;
-  light.range = 3.2;
+  light.intensity = 0.3;
+  light.range = 3.8;
 }
 
 interface Interval {
@@ -5965,9 +6063,10 @@ function buildWallBands(context: InteriorBuildContext, spec: WallBandSpec) {
 
 export function buildInterior(context: InteriorBuildContext) {
   const materials = createInteriorMaterials(context);
+  const livingLayout = LIVING_LAYOUTS[context.livingLayout ?? DEFAULT_LIVING_LAYOUT_ID];
   buildFloorsAndCeilings(context, materials);
   buildWalls(context, materials);
-  buildLivingFireplace(context, materials);
+  buildLivingFireplace(context, materials, livingLayout.stove);
   for (const door of INTERIOR_DOORS) buildDoor(context, materials, door);
   buildKitchen(context, materials);
   buildTechnicalHeatingFitout(context, materials);
@@ -5980,7 +6079,7 @@ export function buildInterior(context: InteriorBuildContext) {
   buildBedroomFitout(context, materials);
   buildChildrensBedroomFitouts(context, materials);
   buildOfficeFitout(context, materials);
-  buildLivingDiningFitout(context, materials);
+  buildLivingDiningFitout(context, materials, livingLayout);
   buildWallBands(context, {
     label: "soklová lišta",
     heightM: 0.06,

@@ -261,11 +261,11 @@ describe("Babylon interior fit-out", () => {
           expect.stringContaining("· WARDROBE · navigačný obrys"),
           expect.stringContaining("· DESK · navigačný obrys"),
           expect.stringContaining("· CHAIR · navigačný obrys"),
-          expect.stringContaining("· TOYS · navigačný obrys"),
           expect.stringContaining("· BOOKS · navigačný obrys"),
           expect.stringContaining("· READING · navigačný obrys"),
         ]));
-        expect(guards).toHaveLength(7);
+        expect(guards).toHaveLength(6);
+        expect(roomMeshes.some((mesh) => mesh.name.includes("· TOYS ·"))).toBe(false);
         for (const guard of guards) {
           expect(guard.checkCollisions).toBe(true);
           expect(guard.isVisible).toBe(false);

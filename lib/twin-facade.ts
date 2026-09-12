@@ -78,3 +78,93 @@ export function segmentFacadeMm(
   }
   return segments;
 }
+
+export type WallLayerKind = "masonry" | "insulation" | "solid";
+
+/** One plan layer of a facade segment; `offsetMm` is measured inward from the outer face. */
+export interface WallLayerMm extends FacadeSegmentMm {
+  readonly kind: WallLayerKind;
+  readonly offsetMm: number;
+  readonly depthMm: number;
+}
+
+export interface WallLayerOptions {
+  /** Depth of the rendered wall from the outer face (includes any room-side overlap). */
+  readonly thicknessMm: number;
+  /** Contact insulation measured from the outer face. */
+  readonly insulationMm: number;
+  /** Along-facade ranges with exterior space on both sides: solid uninsulated masonry of the full thickness. */
+  readonly solidMm?: readonly (readonly [number, number])[];
+  /** Outer corners: the masonry layer ending at the key stops at the value, where the perpendicular wall's insulation wraps around. */
+  readonly masonryInsetMm?: Readonly<Record<number, number>>;
+  /** Junctions where the insulation layer ending at the key stops at the value (a perpendicular solid wall). */
+  readonly insulationInsetMm?: Readonly<Record<number, number>>;
+}
+
+const clampInset = (
+  startMm: number,
+  endMm: number,
+  inset: Readonly<Record<number, number>> | undefined,
+): readonly [number, number] => {
+  if (!inset) return [startMm, endMm];
+  const start = inset[startMm] !== undefined ? Math.max(startMm, inset[startMm]) : startMm;
+  const end = inset[endMm] !== undefined ? Math.min(endMm, inset[endMm]) : endMm;
+  return [start, end];
+};
+
+/**
+ * Splits a solid facade segment into its real build-up: masonry on the room
+ * side and contact insulation on the outer face, or one solid block where the
+ * wall stands free on a terrace. Vertical extent is inherited from the segment.
+ */
+export function exteriorWallLayers(
+  segment: FacadeSegmentMm,
+  options: WallLayerOptions,
+): readonly WallLayerMm[] {
+  const cuts = new Set<number>([segment.startMm, segment.endMm]);
+  for (const [a, b] of options.solidMm ?? []) {
+    if (a > segment.startMm && a < segment.endMm) cuts.add(a);
+    if (b > segment.startMm && b < segment.endMm) cuts.add(b);
+  }
+  const points = [...cuts].sort((left, right) => left - right);
+  const layers: WallLayerMm[] = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const startMm = points[index];
+    const endMm = points[index + 1];
+    const solid = (options.solidMm ?? []).some(([a, b]) => startMm >= a && endMm <= b);
+    if (solid) {
+      layers.push({ ...segment, startMm, endMm, kind: "solid", offsetMm: 0, depthMm: options.thicknessMm });
+      continue;
+    }
+    const [masonryStart, masonryEnd] = clampInset(startMm, endMm, options.masonryInsetMm);
+    const [insulationStart, insulationEnd] = clampInset(startMm, endMm, options.insulationInsetMm);
+    if (masonryEnd > masonryStart) {
+      layers.push({
+        ...segment,
+        startMm: masonryStart,
+        endMm: masonryEnd,
+        kind: "masonry",
+        offsetMm: options.insulationMm,
+        depthMm: options.thicknessMm - options.insulationMm,
+      });
+    }
+    if (insulationEnd > insulationStart) {
+      layers.push({
+        ...segment,
+        startMm: insulationStart,
+        endMm: insulationEnd,
+        kind: "insulation",
+        offsetMm: 0,
+        depthMm: options.insulationMm,
+      });
+    }
+  }
+  return layers;
+}
+
+/** Mesh-name suffix of a layer, shared by the 3D shell and the 2D documentation. */
+export const WALL_LAYER_LABEL: Record<WallLayerKind, string> = {
+  masonry: "murivo",
+  insulation: "izolácia",
+  solid: "plné murivo",
+};

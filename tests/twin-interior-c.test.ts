@@ -21,7 +21,7 @@ const furniture:{id:string;room:string;rect:RectMm}[]=[
   ...[GARAGE_FITOUT.utilitySink,GARAGE_FITOUT.storageRack,GARAGE_FITOUT.mower].map((f,i)=>({id:`garage-${i}`,room:'ROOM-1-12',rect:f.footprintMm})),
   ...[OFFICE_FITOUT.desk,OFFICE_FITOUT.chair,OFFICE_FITOUT.cabinet].map((f,i)=>({id:`office-${i}`,room:'ROOM-1-04',rect:f.footprintMm})),
   ...CHILDRENS_BEDROOM_FITOUTS.flatMap(f=>[f.bed,f.wardrobe,f.desk,f.chair].map((piece,i)=>({id:`${f.id}-${i}`,room:f.roomId,rect:piece.footprintMm}))),
-  ...CHILDRENS_BEDROOM_FITOUTS.flatMap(f=>[f.readingRectMm,f.toyStorageRectMm,f.bookcaseRectMm].map((r,i)=>({id:`${f.id}-play-storage-${i}`,room:f.roomId,rect:r}))),
+  ...CHILDRENS_BEDROOM_FITOUTS.flatMap(f=>[f.readingRectMm,f.bookcaseRectMm].map((r,i)=>({id:`${f.id}-play-storage-${i}`,room:f.roomId,rect:r}))),
 ];
 
 describe('active 3D house matches the approved default C plan',()=>{
@@ -50,7 +50,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     for(const key of ['footprintMm','roof','porches','lowerBar','wing'] as const) expect(HOUSE[key]).toEqual(originalHouse[key]);
     const garage=HOUSE.facades.front.openings.find(o=>o.id==='FRONT-02')!;
     const bath=HOUSE.facades.front.openings.find(o=>o.id==='FRONT-03')!;
-    expect([garage.startXmm,bath.startXmm]).toEqual([10942,13368]);
+    expect([garage.startXmm,bath.startXmm]).toEqual([10942,13338]);
     expect(garage.startXmm+garage.widthMm).toBeLessThan(ACTIVE_CONCEPT.garageBay!.x1);
     expect(bath.startXmm).toBeGreaterThan(ACTIVE_CONCEPT.bathLeft);
     expect(bath.startXmm+bath.widthMm).toBeLessThan(ACTIVE_CONCEPT.bathRight);
@@ -74,9 +74,13 @@ describe('active 3D house matches the approved default C plan',()=>{
   it('fits storage against the dressing-room wall without narrowing either end-of-hall doorway',()=>{
     const cabinet=HALLWAY_BUILT_IN_WARDROBES.find(w=>w.id==='C-HALL-END-CABINET')!;
     const wall=INTERIOR_WALLS.find(w=>w.id==='C-CLOSET-EAST')!.rectMm;
-    expect(cabinet.footprintMm).toEqual(rect(13483,5744,14003,7601));
+    expect(cabinet.footprintMm).toEqual(rect(13483,5744,13943,7651));
     expect(cabinet.footprintMm.x0).toBe(wall.x1);
-    expect(cabinet.frontClearanceRectMm).toEqual(rect(14003,5744,15003,7601));
+    expect(cabinet.frontClearanceRectMm).toEqual(rect(13943,5744,14943,7651));
+    for(const run of HALLWAY_BUILT_IN_WARDROBES.filter(w=>w.roomId==='ROOM-DRESSING')){
+      expect([run.footprintMm.y0,run.footprintMm.y1]).toEqual([5744,7651]);
+      expect(run.frontClearanceRectMm).toEqual(rect(11743,5744,12743,7651));
+    }
     expect(cabinet).toMatchObject({roomId:'ROOM-1-02',facing:'EAST',doorCount:2,heightMm:2550});
     for(const id of ['C-HALL-BATH','C-PRIVATE-BED']){
       const door=INTERIOR_DOORS.find(d=>d.id===id)!;
@@ -122,15 +126,45 @@ describe('active 3D house matches the approved default C plan',()=>{
     }
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.name).toContain('Chlapčenská');
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.name).toContain('Dievčenská');
-    expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:16900,widthMm:2200,sillMm:0});
+    expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:17000,widthMm:2200,sillMm:0});
     const windows=HOUSE.facades.front.openings.filter(o=>['FRONT-GIRL-BED','FRONT-04','FRONT-05'].includes(o.id));
     expect(windows).toHaveLength(3);
-    expect(windows.map(w=>[w.startXmm,w.widthMm,w.sillMm,w.heightMm])).toEqual([[15450,1000,1250,1250],[17100,1600,550,1950],[19450,1050,900,1600]]);
+    expect(windows.map(w=>[w.startXmm,w.widthMm,w.sillMm,w.heightMm])).toEqual([[15467,1000,1250,1250],[17067,1600,550,1950],[19267,1050,900,1600]]);
     expect(windows.every(w=>w.sillMm+w.heightMm===2500)).toBe(true);
     expect(windows.reduce((sum,w)=>sum+w.widthMm*w.heightMm/1e6,0)).toBeCloseTo(6.05,6);
     expect(windows[1]).toMatchObject({kind:'fixed',frameWidthMm:45});
-    for(let i=1;i<windows.length;i++)expect(windows[i].startXmm-windows[i-1].startXmm-windows[i-1].widthMm).toBeGreaterThanOrEqual(650);
+    for(let i=1;i<windows.length;i++)expect(windows[i].startXmm-windows[i-1].startXmm-windows[i-1].widthMm).toBeGreaterThanOrEqual(600);
+    // Every window stays inside the girl's room, with a masonry pier beside both walls.
+    const girlRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.rectsMm[0];
+    expect(windows[0].startXmm-girlRoom.x0).toBeGreaterThanOrEqual(190);
+    expect(girlRoom.x1-windows[2].startXmm-windows[2].widthMm).toBeGreaterThanOrEqual(190);
     const girl=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-08')!;
+    const boy=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-09')!;
+    const boyRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.rectsMm[0];
+    // Both rooms are 5 298 × 2 908 mm and the girl's room mirrors the boy's across
+    // the hall: wardrobes back onto the hall wall beside the centred doors (facing
+    // into the room), beds on the west wall, desks by the facade on the east wall.
+    expect(girlRoom).toEqual(rect(15243,3504,20541,6412));
+    expect(boyRoom).toEqual(rect(15243,7791,20541,10699));
+    const mirror=(r:RectMm)=>rect(r.x0,girlRoom.y0+boyRoom.y1-r.y1,r.x1,girlRoom.y0+boyRoom.y1-r.y0);
+    expect(girl.wardrobe.footprintMm).toEqual(rect(18941,5812,20541,6412));
+    expect(boy.wardrobe.footprintMm).toEqual(rect(18941,7791,20541,8391));
+    for(const [a,b] of [[girl.bed.footprintMm,boy.bed.footprintMm],[girl.wardrobe.footprintMm,boy.wardrobe.footprintMm],[girl.desk.footprintMm,boy.desk.footprintMm],[girl.chair.footprintMm,boy.chair.footprintMm],[girl.readingRectMm,boy.readingRectMm],[girl.bookcaseRectMm,boy.bookcaseRectMm],[girl.clearPlayRectMm,boy.clearPlayRectMm]]){
+      expect(a).toEqual(mirror(b));
+    }
+    expect([girl.wardrobe.facing,boy.wardrobe.facing]).toEqual(['SOUTH','NORTH']);
+    expect(girl.wardrobe.footprintMm.y1).toBe(girlRoom.y1);
+    expect(boy.wardrobe.footprintMm.y0).toBe(boyRoom.y0);
+    for(const [f,id] of [[girl,'DOOR-102-108'],[boy,'DOOR-102-109']] as const){
+      const door=INTERIOR_DOORS.find(d=>d.id===id)!;
+      expect([door.startMm,door.widthMm]).toEqual([17442,900]);
+      expect(f.wardrobe.footprintMm.x0-(door.startMm+door.widthMm)).toBe(599);
+      expect(f.bed.footprintMm.x0).toBe(girlRoom.x0);
+    }
+    expect(girl.wardrobe.footprintMm.x1).toBe(girlRoom.x1);
+    expect(girl.desk.footprintMm.x1).toBe(girlRoom.x1);
+    expect(windows[2].startXmm).toBeGreaterThanOrEqual(girl.desk.footprintMm.x0);
+    expect(windows[2].startXmm+windows[2].widthMm).toBeLessThanOrEqual(girl.desk.footprintMm.x1);
     expect(windows[0].sillMm-girl.bed.headboardTopElevationMm).toBe(200);
     expect(windows[2].sillMm-girl.desk.topElevationMm).toBe(360);
     expect(girl.pinboard.facing).toBe('WEST');

@@ -7,8 +7,32 @@ export interface ConceptSettings { expansion: number; bedWidth: number; wardrobe
 export const DEFAULT_CONCEPT: ConceptSettings = { expansion: 0, bedWidth: 1800, wardrobe: true, garageConnected: true, layout: 'private', wardrobeDepth: 2000, gardenRecess: true, garageBayWidth: 1500, nestedClosetDepth: 1700 };
 export const DEFAULT_NESTED_CONCEPT: ConceptSettings = {...DEFAULT_CONCEPT,layout:'nested',garageConnected:false};
 export const BED_LENGTH = 2200;
-// C keeps both child rooms within 16 ± 0.5 m², including every slider step.
+// C's slider adds at most 100 mm on top of the shortened child rooms, so both
+// rooms stay above 15.1 m².
 export const NESTED_MAX_EXPANSION = 100;
+/** West face of both child rooms in the source plan, A, B and D. */
+export const CHILD_ROOMS_WEST_MM = 15143;
+/** C shortens both child rooms by 100 mm (client, 11 Sep 2026): the suite wall moves east and the bedroom and bathroom gain the difference. */
+export const NESTED_CHILD_ROOMS_WEST_MM = CHILD_ROOMS_WEST_MM + 100;
+/** Faces of the central hall's two walls towards the child rooms: the street room's north face and the garden room's south face. */
+export interface HallLinesMm { streetKidTopMm: number; gardenKidBottomMm: number }
+/** Source plan, A, B and D: the hall is off-centre, so the garden room is 101 mm deeper than the street room. */
+export const SOURCE_HALL_LINES: HallLinesMm = { streetKidTopMm: 6361, gardenKidBottomMm: 7741 };
+/**
+ * C centres the hall between the facades (client, 11 Sep 2026): both child rooms
+ * are 2 908 mm deep between 3504 and 10699, both hall walls stay 140 mm and the
+ * hall is 1 099 mm wide. The closet, bedroom door and bedroom wall follow the
+ * garden line, so the whole north side of the hall is one plane.
+ */
+export const NESTED_HALL_LINES: HallLinesMm = { streetKidTopMm: 6412, gardenKidBottomMm: 7791 };
+/** Both child-room doors in C are 900 mm openings centred on the rooms' shared length, exactly opposite each other. */
+export const NESTED_CHILD_DOOR_MM = 900;
+/** A, B and D keep the 140 mm suite partition; the active C model builds it 300 mm thick. */
+export const SUITE_PARTITION_MM = 140;
+/** Load-bearing masonry in the active model: the suite wall, the street child room's east wall and the office corner. */
+export const BEARING_WALL_MM = 300;
+/** C thins the wall between the street child room / lobby and the central hall to a partition; the hall gains the difference. */
+export const HALL_PARTITION_MM = 140;
 export interface ConceptCabinet {
   id: string;
   label: string;
@@ -67,13 +91,13 @@ export function createVestibuleConcept(input: ConceptSettings, original = false)
   return { ...createGarageEnvelope(true), rooms, walls, doors, vestibule: original ? [] : vestibule, bed, wardrobeRect, sideClearance, footClearance, bedroomArea: area(rooms.find(r=>r.number===(original?'1.08':'1.10'))!.rectsMm), kidGardenArea: area(rooms.find(r=>r.number==='1.09')!.rectsMm), kidStreetArea: area(rooms.find(r=>r.number==='1.08')!.rectsMm), bathroomArea: area(rooms.find(r=>r.number==='1.11')!.rectsMm), vestibuleArea: area(vestibule), settings };
 }
 
-export function createLinearConcept(input: ConceptSettings, original = false) {
+export function createLinearConcept(input: ConceptSettings, original = false, suiteWallMm = SUITE_PARTITION_MM, childRoomsWestMm = CHILD_ROOMS_WEST_MM, hallLines: HallLinesMm = SOURCE_HALL_LINES) {
   const settings = normalizeConcept(input);
   const previous = createVestibuleConcept(settings, original);
   const originalFixtures = { bath: rect(13980,3600,14780,5300), basin: rect(15370,3550,16170,4000), toilet: rect(15945,4710,16355,5310) };
   if (original || settings.layout === 'vestibule') return {
     ...previous, isWardrobe: false, dressing: null as RectMm | null, storageRuns: [] as RectMm[], storageLength: 0,
-    dressingAisle: 0, bedroomDepth: 4000, suiteRight: 15003+settings.expansion, bathRight: 16743,
+    dressingAisle: 0, bedroomDepth: 4000, suiteRight: 15003+settings.expansion, suiteWallMm: SUITE_PARTITION_MM, bathRight: 16743,
     privateHallArea: original ? 0 : previous.vestibuleArea, fixtures: originalFixtures,
     convertedTerraceArea: 0, garageDepth: 5245, structuralChanges: [] as typeof INTERIOR_WALLS[number][],
     frontWindowStart: 14965, sharedHallArea: area(previous.rooms.find(r=>r.number==='1.02')!.rectsMm),
@@ -81,17 +105,23 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
 
   // B is a new architectural study. The old garage cross-wall is deliberately
   // replaced, not silently treated as a movable non-bearing partition.
-  const right=15003+settings.expansion, center=(11143+right)/2;
+  // The child rooms' west face is 15143 (+ expansion) except in C, which moves
+  // it 100 mm east; a thicker suite wall grows west into the parents' suite,
+  // whose fitout is placed relatively.
+  const wall=suiteWallMm, right=childRoomsWestMm-wall+settings.expansion, center=(11143+right)/2;
+  // The hall's two walls: the street room's face and the garden room's face; the
+  // garden-side wall is always a 140 mm partition.
+  const streetKidTop=hallLines.streetKidTopMm, gardenKidBottom=hallLines.gardenKidBottomMm, gardenWallTop=gardenKidBottom-HALL_PARTITION_MM;
   const bathTop=5404, dressingBottom=5544, dressingTop=dressingBottom+settings.wardrobeDepth, bedroomBottom=dressingTop+140;
   const dressing=rect(11143,dressingBottom,right,dressingTop);
   const rooms=INTERIOR_ROOMS.map(r=>({...r,rectsMm:[...r.rectsMm]}));
   const replace=(number:string,name:string,rectsMm:RectMm[])=>Object.assign(rooms.find(r=>r.number===number)!,{name,rectsMm});
   replace('1.10','Spálňa do dvora',[rect(11143,bedroomBottom,right,10699)]);
   replace('1.11','Rodičovská kúpeľňa',[rect(11143,3504,right,bathTop)]);
-  replace('1.08','Detská izba · ulica',[rect(right+140,3504,21242,6361)]);
-  replace('1.09','Detská izba · dvor',[rect(right+140,7741,20641,10699)]);
+  replace('1.08','Detská izba · ulica',[rect(right+wall,3504,21242,streetKidTop)]);
+  replace('1.09','Detská izba · dvor',[rect(right+wall,gardenKidBottom,20641,10699)]);
   replace('1.12','Garáž',[rect(6944,3504,10842,!settings.gardenRecess?10699:8749)]);
-  replace('1.02','Spoločná chodba',[rect(right+140,6560,21543,7601),...INTERIOR_ROOMS.find(r=>r.number==='1.02')!.rectsMm.slice(4)]);
+  replace('1.02','Spoločná chodba',[rect(right+wall,6560,21543,gardenWallTop),...INTERIOR_ROOMS.find(r=>r.number==='1.02')!.rectsMm.slice(4)]);
   rooms.push({...INTERIOR_ROOMS.find(r=>r.number==='1.10')!,id:'ROOM-DRESSING',number:'1.14',name:'Priechodný šatník',documentedAreaM2:area([dressing]),rectsMm:[dressing]});
 
   const removed = new Set(['IW-GARAGE-EAST','IW-GARAGE-NORTH','IW-GARAGE-LOGGIA','IW-BATH-111-TOP-W','IW-BATH-111-TOP-E','IW-BATH-111-EAST-S','IW-BATH-111-EAST-N','IW-BED-108-TOP-W','IW-ROOM-110-EAST','IW-ROOM-109-SOUTH-W','IW-ROOM-109-SOUTH-E']);
@@ -100,22 +130,22 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
   const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
   add('B-GARAGE-WALL-S',rect(10842,3504,11143,6650));
   add('B-GARAGE-WALL-N',rect(10842,settings.garageConnected?7450:6650,11143,10699));
-  add('B-SUITE-WALL-S',rect(right,3504,right+140,6650));
-  add('B-SUITE-WALL-N',rect(right,7450,right+140,10699));
+  add('B-SUITE-WALL-S',rect(right,3504,right+wall,6650));
+  add('B-SUITE-WALL-N',rect(right,7450,right+wall,10699));
   add('B-BATH-WALL-W',rect(11143,bathTop,center-400,dressingBottom));
   add('B-BATH-WALL-E',rect(center+400,bathTop,right,dressingBottom));
   add('B-BED-WALL-W',rect(11143,dressingTop,center-400,bedroomBottom));
   add('B-BED-WALL-E',rect(center+400,dressingTop,right,bedroomBottom));
-  add('B-STREET-KID-TOP',rect(right+140,6361,17141,6560));
-  add('B-GARDEN-KID-SOUTH-W',rect(right+140,7601,17350,7741));
-  add('B-GARDEN-KID-SOUTH-E',rect(18250,7601,21543,7741));
+  add('B-STREET-KID-TOP',rect(right+wall,streetKidTop,17141,6560));
+  add('B-GARDEN-KID-SOUTH-W',rect(right+wall,gardenWallTop,17350,gardenKidBottom));
+  add('B-GARDEN-KID-SOUTH-E',rect(18250,gardenWallTop,21543,gardenKidBottom));
   // Window in the former bathroom moves into the expanded street-facing child room.
   const frontWindowStart=right+440;
   const replacedDoors=new Set(['DOOR-108-111','DOOR-102-111','DOOR-102-110','DOOR-102-112','DOOR-102-109']);
   const doors=INTERIOR_DOORS.filter(d=>!replacedDoors.has(d.id)).map(d=>({...d}));
-  doors.push({...INTERIOR_DOORS.find(d=>d.id==='DOOR-102-109')!,startMm:17350,widthMm:900});
+  doors.push({...INTERIOR_DOORS.find(d=>d.id==='DOOR-102-109')!,wallSpanMm:[gardenWallTop,gardenKidBottom] as const,startMm:17350,widthMm:900});
   const door=(id:string,label:string,axis:'X'|'Y',wallSpanMm:readonly[number,number],startMm:number,swing:-1|1,fromRoomId:string,toRoomId:string,motion:'HINGED'|'POCKET_SLIDING'='HINGED'):InteriorDoor=>({id,label,axis,wallSpanMm,startMm,widthMm:800,heightMm:2100,leafWidthMm:800,swing,hinge:-1,fromRoomId,toRoomId,motion,...(motion==='POCKET_SLIDING'?{pocketDirection:1 as const,pocketTravelMm:850}:{})});
-  doors.push(door('B-HALL-DRESSING','Chodba → šatník · 800 mm','Y',[right,right+140],6650,1,'ROOM-1-02','ROOM-DRESSING'));
+  doors.push(door('B-HALL-DRESSING','Chodba → šatník · 800 mm','Y',[right,right+wall],6650,1,'ROOM-1-02','ROOM-DRESSING'));
   doors.push(door('B-DRESSING-BATH','Šatník → kúpeľňa · 800 mm','X',[bathTop,dressingBottom],center-400,-1,'ROOM-DRESSING','ROOM-1-11'));
   doors.push(door('B-DRESSING-BED','Šatník → spálňa · posuvné 800 mm','X',[dressingTop,bedroomBottom],center-400,1,'ROOM-DRESSING','ROOM-1-10','POCKET_SLIDING'));
   if(settings.garageConnected) doors.push(door('B-GARAGE-DRESSING','Garáž → šatník · 800 mm','Y',[10842,11143],6650,-1,'ROOM-1-12','ROOM-DRESSING'));
@@ -127,7 +157,7 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
     ...createGarageEnvelope(settings.gardenRecess),rooms,walls,doors,settings,isWardrobe:true,dressing,storageRuns,
     storageLength:right-11143-1000,dressingAisle:settings.wardrobeDepth-600,
     vestibule:[] as RectMm[],vestibuleArea:0,privateHallArea:0,
-    bed,wardrobeRect:storageRuns[0],sideClearance,footClearance:right-bed.x1,bedroomDepth,suiteRight:right,bathRight:right,
+    bed,wardrobeRect:storageRuns[0],sideClearance,footClearance:right-bed.x1,bedroomDepth,suiteRight:right,suiteWallMm:wall,bathRight:right,
     bedroomArea:area(rooms.find(r=>r.number==='1.10')!.rectsMm),
     kidGardenArea:area(rooms.find(r=>r.number==='1.09')!.rectsMm),
     kidStreetArea:area(rooms.find(r=>r.number==='1.08')!.rectsMm),
@@ -140,9 +170,9 @@ export function createLinearConcept(input: ConceptSettings, original = false) {
 }
 
 /** C nests the closet beside the bedroom's entrance area and restores a garage bay. */
-export function createNestedConcept(input: ConceptSettings, original = false) {
+export function createNestedConcept(input: ConceptSettings, original = false, suiteWallMm = SUITE_PARTITION_MM, childRoomsWestMm = CHILD_ROOMS_WEST_MM, hallLines: HallLinesMm = SOURCE_HALL_LINES) {
   const settings=normalizeConcept(input);
-  const base=createLinearConcept(settings,original);
+  const base=createLinearConcept(settings,original,suiteWallMm,childRoomsWestMm,hallLines);
   if(original||settings.layout!=='nested') return {
     ...base,isNested:false,garageBay:null as RectMm|null,garageShelves:[] as RectMm[],
     bathLeft:original||settings.layout==='vestibule'?13941:11143,garageWindowStart:11715,
@@ -170,7 +200,7 @@ export function createNestedConcept(input: ConceptSettings, original = false) {
   add('C-BATH-NORTH-E',rect(right-560,5604,right,5744));
   const doors=base.doors.filter(d=>!['B-HALL-DRESSING','B-DRESSING-BATH','B-DRESSING-BED','B-GARAGE-DRESSING'].includes(d.id));
   const make=(id:string,label:string,axis:'X'|'Y',span:readonly[number,number],start:number,swing:-1|1,from:string,to:string,sliding=false):InteriorDoor=>({id,label,axis,wallSpanMm:span,startMm:start,widthMm:800,heightMm:2100,leafWidthMm:800,swing,hinge:-1,fromRoomId:from,toRoomId:to,motion:sliding?'POCKET_SLIDING':'HINGED',...(sliding?{pocketDirection:1 as const,pocketTravelMm:850}:{})});
-  doors.push(make('C-HALL-BED','Chodba → spálňa · 800 mm','Y',[right,right+140],6650,1,'ROOM-1-02','ROOM-1-10'));
+  doors.push(make('C-HALL-BED','Chodba → spálňa · 800 mm','Y',[right,right+base.suiteWallMm],6650,1,'ROOM-1-02','ROOM-1-10'));
   doors.push(make('C-BED-BATH','Spálňa → kúpeľňa · 800 mm','X',[5604,5744],right-1360,-1,'ROOM-1-10','ROOM-1-11'));
   doors.push(make('C-BED-CLOSET','Spálňa → šatník · posuvné 800 mm','X',[closetTop,bedroomBottom],11793,1,'ROOM-1-10','ROOM-DRESSING',true));
   if(settings.garageConnected) doors.push(make('C-GARAGE-CLOSET','Garáž → šatník · 800 mm','Y',[10842,11143],5844,-1,'ROOM-1-12','ROOM-DRESSING'));
@@ -190,9 +220,15 @@ export function createNestedConcept(input: ConceptSettings, original = false) {
 
 /** C keeps the closet, bedroom entrance and child's corridor wall in one line. */
 function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
-  const right=base.suiteRight;
+  const right=base.suiteRight, wall=base.suiteWallMm;
+  // The garden child room's hall wall sets one plane for the closet's north wall,
+  // the bedroom door and the bedroom's south wall.
   const hallWall=base.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm;
   const top=hallWall.y0, bedroomBottom=hallWall.y1;
+  // The street child room keeps its face; its hall-side wall is a 140 mm partition
+  // (instead of the source plan's 199 mm) and the central hall takes the difference.
+  const streetKidTop=base.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm;
+  const hallSouth=streetKidTop.y0+HALL_PARTITION_MM;
   // This alignment fixes the closet's depth; old slider values cannot restore a step.
   const dressing={...base.dressing!,y1:top};
   const settings={...base.settings,nestedClosetDepth:top-dressing.y0};
@@ -202,9 +238,11 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
   const doorStart=right-1000, doorEnd=right-200;
   // The WC backs onto the street wall; the vanity sits on the east wall.
   // Reserve their approaches as well as the inward swing of the aligned door.
+  // The WC stays 900 mm off the east wall so the bath rim keeps clear of it
+  // at every garage-bay width, now that the suite wall has grown westwards.
   const fixtures={...base.fixtures,
     basin:rect(right-500,4204,right,4804),
-    toilet:rect(right-1400,3504,right-1000,4204),
+    toilet:rect(right-1300,3504,right-900,4204),
   };
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
   Object.assign(rooms.find(room=>room.number==='1.10')!,{
@@ -212,20 +250,27 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
   });
   rooms.find(room=>room.number==='1.14')!.rectsMm=[dressing];
   const hall=rooms.find(room=>room.number==='1.02')!;
-  hall.rectsMm.push(rect(13483,5744,right,top),rect(right,6560,right+140,top));
+  hall.rectsMm=hall.rectsMm.map(r=>r.x0===right+wall&&r.y0===streetKidTop.y1?{...r,y0:hallSouth}:r);
+  hall.rectsMm.push(rect(13483,5744,right,top),rect(right,hallSouth,right+wall,top));
   const walls=base.walls.filter(w=>!['B-SUITE-WALL-S','B-SUITE-WALL-N'].includes(w.id))
     .map(w=>w.id==='C-CLOSET-EAST'?{...w,rectMm:{...w.rectMm,y1:bedroomBottom}}
       :['C-CLOSET-NORTH-W','C-CLOSET-NORTH-E'].includes(w.id)?{...w,rectMm:{...w.rectMm,y0:top,y1:bedroomBottom}}
       :w.id==='C-BATH-NORTH-W'?{...w,rectMm:{...w.rectMm,x1:doorStart}}
-      :w.id==='C-BATH-NORTH-E'?{...w,rectMm:{...w.rectMm,x0:doorEnd}}:w);
+      :w.id==='C-BATH-NORTH-E'?{...w,rectMm:{...w.rectMm,x0:doorEnd}}
+      :w.id==='B-STREET-KID-TOP'?{...w,rectMm:{...w.rectMm,y1:hallSouth}}:w);
   const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
   add('C-BED-PRIVACY-W',rect(13483,top,doorStart,bedroomBottom));
   add('C-BED-PRIVACY-E',rect(doorEnd,top,right,bedroomBottom));
-  add('C-OPEN-HALL-S',rect(right,3504,right+140,6560));
-  add('C-OPEN-HALL-N',rect(right,top,right+140,10699));
+  // The wall between the suite and both child rooms carries load when built 300 mm thick.
+  const suiteWallRole=wall>=BEARING_WALL_MM?'LOAD_BEARING' as const:'PARTITION' as const;
+  walls.push(
+    {id:'C-OPEN-HALL-S',role:suiteWallRole,changed:true,rectMm:rect(right,3504,right+wall,hallSouth)},
+    {id:'C-OPEN-HALL-N',role:suiteWallRole,changed:true,rectMm:rect(right,top,right+wall,10699)},
+  );
   const doors=base.doors.filter(d=>d.id!=='C-HALL-BED').map(d=>d.id==='C-BED-BATH'
     ? {...d,id:'C-HALL-BATH',label:'Otvorený vstup z chodby → kúpeľňa · 800 mm',startMm:doorStart,hinge:1 as const,fromRoomId:'ROOM-1-02'}
-    : d.id==='C-BED-CLOSET'?{...d,wallSpanMm:[top,bedroomBottom] as const}:d);
+    : d.id==='C-BED-CLOSET'?{...d,wallSpanMm:[top,bedroomBottom] as const}
+    : d.id==='DOOR-102-108'?{...d,wallSpanMm:[streetKidTop.y0,hallSouth] as const}:d);
   doors.push({id:'C-PRIVATE-BED',label:'Spálňa za novou priečkou · dvere 800 mm',axis:'X',wallSpanMm:[top,bedroomBottom],startMm:doorStart,widthMm:800,heightMm:2100,leafWidthMm:800,swing:1,hinge:1,motion:'HINGED',fromRoomId:'ROOM-1-02',toRoomId:'ROOM-1-10'});
   return {...base,settings,rooms,walls,doors,dressing,storageRuns,fixtures,wardrobeRect:storageRuns[0],
     storageLength:storageRuns.reduce((sum,r)=>sum+r.y1-r.y0,0),bed,sideClearance,bedroomDepth,
@@ -234,7 +279,20 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
 
 /** C pairs deeper storage with a continuous, furnished entrance lobby. */
 function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
-  const streetEast=20702, gardenEast=20541, storageBack=20842, hallLine=21543;
+  // Both child rooms end on one 300 mm bearing line (20541–20842); the lobby
+  // storage keeps its back at 20842. The office corner also becomes 300 mm
+  // masonry, growing into the lobby alcove so the office faces (23542, 5400)
+  // and the office door at 5451 stay untouched.
+  const kidsEast=20541, storageBack=20842, hallLine=21543, wall=base.suiteWallMm, kidsWest=base.suiteRight+wall;
+  const officeWest=23542-BEARING_WALL_MM, returnSouth=5400-BEARING_WALL_MM;
+  // The 140 mm hall-side partition continues along the lobby up to the office spine.
+  const kidTop=base.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm, hallSouth=kidTop.y1, streetTop=kidTop.y0;
+  // The garden room, its east bearing wall and the hall cabinet niche start on the
+  // hall's north wall; a 140 mm stub closes the niche's south end.
+  const gardenBottom=base.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm.y1, nicheSouth=gardenBottom+HALL_PARTITION_MM;
+  // Both child rooms share one length, so one centred 900 mm opening puts the
+  // two doors exactly opposite each other across the hall.
+  const kidDoorStart=Math.round((kidsWest+kidsEast)/2)-NESTED_CHILD_DOOR_MM/2, kidDoorEnd=kidDoorStart+NESTED_CHILD_DOOR_MM;
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));
   const core=SERVICE_CORE_REVISION;
   const wc=rooms.find(room=>room.number==='1.06')!;
@@ -246,46 +304,53 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const bathroom=rooms.find(room=>room.number==='1.05')!;
   bathroom.rectsMm=[rect(22783,6602,core.bathroomEastMm,8772),rect(core.bathroomEastMm,6602,27541,7601)];
   const street=rooms.find(room=>room.number==='1.08')!;
-  street.rectsMm=[rect(base.suiteRight+140,3504,streetEast,6361)];
+  street.rectsMm=[rect(base.suiteRight+wall,3504,kidsEast,streetTop)];
   const garden=rooms.find(room=>room.number==='1.09')!;
-  garden.rectsMm=[rect(base.suiteRight+140,7741,gardenEast,10699)];
+  garden.rectsMm=[rect(base.suiteRight+wall,gardenBottom,kidsEast,10699)];
   // Move the office return 650 mm into the lobby, aligning it with the open door leaf.
   const office=rooms.find(room=>room.number==='1.04')!;
   office.rectsMm=[rect(23542,3504,27541,5400),...office.rectsMm.slice(1)];
   const entry=rooms.find(room=>room.number==='1.01')!;
-  entry.rectsMm=[rect(storageBack,3504,22639,6361),rect(22639,3504,23339,5201)];
+  entry.rectsMm=[rect(storageBack,3504,22639,streetTop),rect(22639,3504,officeWest,returnSouth)];
   const hall=rooms.find(room=>room.number==='1.02')!;
   // The former door approach is now inside the entrance lobby. Cabinet fronts
   // stay on the same corridor line; the extra 100 mm comes from both rooms.
   hall.rectsMm=hall.rectsMm.map(r=>r.x0===21543&&r.y0===5341
-    ?rect(r.x0,6560,r.x1,r.y1)
-    :r.x0===20942&&r.y0===7902?rect(storageBack,r.y0,r.x1,r.y1):r);
+    ?rect(r.x0,hallSouth,r.x1,r.y1)
+    :r.x0===20942&&r.y0===7902?rect(storageBack,nicheSouth,r.x1,r.y1):r);
   const removed=new Set(['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-CLOSET-SOUTH','IW-ENTRY-TOP-W','IW-ENTRY-TOP-E','IW-ENTRY-EAST','IW-ENTRY-STUDY']);
   const walls=base.walls.filter(w=>!removed.has(w.id)).map(w=>w.id==='IW-WC-EAST'?{...w,changed:true,rectMm:rect(24082+core.wcExpansionMm,8912,core.technicalWestMm,10712)}
     :w.id==='IW-BATH-105-NORTH'?{...w,changed:true,rectMm:{...w.rectMm,x1:core.boilerBayWestMm}}
     :w.id==='IW-BATH-105-SOUTH-E'?{...w,changed:true,rectMm:{...w.rectMm,x0:core.bathroomEastMm}}
+    // The retained corner block follows the thicker office return down to the alcove.
+    :w.id==='IW-ENTRY-TOP-E2'?{...w,changed:true,rectMm:{...w.rectMm,y0:returnSouth}}
+    // The hall-side walls of both child rooms end at the centred door jambs.
+    :['B-STREET-KID-TOP','B-GARDEN-KID-SOUTH-W'].includes(w.id)?{...w,rectMm:{...w.rectMm,x1:kidDoorStart}}
+    :w.id==='B-GARDEN-KID-SOUTH-E'?{...w,rectMm:{...w.rectMm,x0:kidDoorEnd}}
     :w.rectMm.x0===25399&&w.rectMm.x1===25543&&w.rectMm.y0===7741?{...w,changed:true,rectMm:rect(core.bathroomEastMm,7741,core.boilerBayWestMm,8772)}:w);
   walls.push(
-    {id:'C-KID-ENTRY-PARTITION',role:'PARTITION',changed:true,rectMm:rect(streetEast,3504,storageBack,6361)},
-    {id:'C-KID-HALL-POCKET-WALL',role:'PARTITION',changed:true,rectMm:rect(18042,6361,21640,6560)},
-    {id:'C-ENTRY-HALL-JAMB',role:'PARTITION',changed:true,rectMm:rect(22540,6361,22639,6560)},
-    {id:'C-GARDEN-KID-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(gardenEast,7741,storageBack,10699)},
-    {id:'C-GARDEN-CLOSET-SOUTH',role:'PARTITION',changed:true,rectMm:rect(storageBack,7741,hallLine,7902)},
-    {id:'C-ENTRY-OFFICE-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(23339,3504,23542,5201)},
-    {id:'C-ENTRY-OFFICE-RETURN',role:'LOAD_BEARING',changed:true,rectMm:rect(22842,5201,23542,5400)},
+    {id:'C-KID-ENTRY-WALL',role:'LOAD_BEARING',changed:true,rectMm:rect(kidsEast,3504,storageBack,streetTop)},
+    {id:'C-KID-HALL-POCKET-WALL',role:'PARTITION',changed:true,rectMm:rect(kidDoorEnd,streetTop,21640,hallSouth)},
+    {id:'C-ENTRY-HALL-JAMB',role:'PARTITION',changed:true,rectMm:rect(22540,streetTop,22639,hallSouth)},
+    {id:'C-GARDEN-KID-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(kidsEast,gardenBottom,storageBack,10699)},
+    {id:'C-GARDEN-CLOSET-SOUTH',role:'PARTITION',changed:true,rectMm:rect(storageBack,gardenBottom,hallLine,nicheSouth)},
+    {id:'C-ENTRY-OFFICE-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(officeWest,3504,23542,returnSouth)},
+    {id:'C-ENTRY-OFFICE-RETURN',role:'LOAD_BEARING',changed:true,rectMm:rect(22842,returnSouth,23542,5400)},
     // Close the change in thickness between the office jamb and corridor spine.
     {id:'C-OFFICE-NORTH-JAMB',role:'PARTITION',changed:true,rectMm:rect(22783,6352,22842,6412)},
   );
   const structuralChanges=[...base.structuralChanges,...INTERIOR_WALLS.filter(w=>removed.has(w.id)&&w.role==='LOAD_BEARING')];
   const doors=base.doors.map(d=>d.id==='DOOR-101-102'
-    ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[6361,6560] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
+    ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[streetTop,hallSouth] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
     :d.id==='DOOR-102-106'?{...d,label:'Dvere chodba → WC · otváravé 700/2100',motion:'HINGED' as const,hinge:1 as const,swing:1 as const,hingeOffsetMm:34,pocketDirection:undefined,pocketTravelMm:undefined,revisionSourceId:'C-WC-HINGED-2026-09-08'}
-    :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}:d);
-  const entryCabinet=rect(storageBack,4461,hallLine,6361);
+    :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}
+    :d.id==='DOOR-102-108'||d.id==='DOOR-102-109'?{...d,startMm:kidDoorStart,widthMm:NESTED_CHILD_DOOR_MM}:d);
+  // The 1.9 m lobby cabinet ends on the lobby's hall wall; the bench keeps the street corner.
+  const entryCabinet=rect(storageBack,streetTop-1900,hallLine,streetTop);
   const entryBench=rect(storageBack,3554,storageBack+450,4404);
   const builtInCabinets:ConceptCabinet[]=[
     {id:'C-ENTRY-CABINET',label:'Súvislá skriňa v zádverí · posuvné čelá',roomNumber:'1.01',facing:'EAST',rectMm:entryCabinet},
-    {id:'C-GARDEN-HALL-CABINET',label:'Vstavaná skriňa z chodby · dvor',roomNumber:'1.02',facing:'EAST',rectMm:rect(storageBack,7902,hallLine,10699)},
+    {id:'C-GARDEN-HALL-CABINET',label:'Vstavaná skriňa z chodby · dvor',roomNumber:'1.02',facing:'EAST',rectMm:rect(storageBack,nicheSouth,hallLine,10699)},
     // Stop at both door jambs, leaving a full metre between bedroom and bathroom.
     {id:'C-HALL-END-CABINET',label:'Vstavaná skriňa na konci chodby · posuvné dubové čelá',roomNumber:'1.02',facing:'EAST',rectMm:rect(13483,base.dressing!.y0,base.suiteRight-1000,base.dressing!.y1)},
   ];
@@ -293,7 +358,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
     kidStreetArea:area(street.rectsMm),kidGardenArea:area(garden.rectsMm),entryArea:area(entry.rectsMm),officeArea:area(office.rectsMm),
     entryClearArea:area(entry.rectsMm)-area([entryCabinet,entryBench]),
     sharedHallArea:area(hall.rectsMm),
-    streetKidDesk:rect(19400,3650,20650,4250),gardenKidBed:rect(gardenEast-900,8000,gardenEast,10000),
+    streetKidDesk:rect(kidsEast-1300,3650,kidsEast-50,4250),gardenKidBed:rect(kidsEast-900,8000,kidsEast,10000),
   };
 }
 
@@ -301,7 +366,10 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
 export function createConcept(input: ConceptSettings, original = false) {
   const settings=normalizeConcept(input);
   if(!original&&settings.layout==='nested') settings.expansion=Math.min(settings.expansion,NESTED_MAX_EXPANSION);
-  const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original);
+  // Only the active model (C) builds the suite wall as 300 mm masonry, moves it
+  // 100 mm towards the child rooms and centres the hall between the facades.
+  const active=!original&&settings.layout==='nested';
+  const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original,active?BEARING_WALL_MM:SUITE_PARTITION_MM,active?NESTED_CHILD_ROOMS_WEST_MM:CHILD_ROOMS_WEST_MM,active?NESTED_HALL_LINES:SOURCE_HALL_LINES);
   const entryArea=area(base.rooms.find(r=>r.number==='1.01')!.rectsMm);
   const entryDefaults={builtInCabinets:[] as ConceptCabinet[],entryBench:null as RectMm|null,entryArea,entryClearArea:entryArea,officeArea:area(base.rooms.find(r=>r.number==='1.04')!.rectsMm),streetKidDesk:rect(19900,3650,21150,4250),gardenKidBed:rect(19400,8000,20300,10000)};
   if(original||settings.layout!=='private') return {...entryDefaults,...(!original&&settings.layout==='nested'?balanceNestedChildRooms(encloseNestedBedroom(base)):base),isPrivate:false};
@@ -314,8 +382,8 @@ export function createConcept(input: ConceptSettings, original = false) {
   const add=(id:string,r:RectMm)=>walls.push({id,role:'PARTITION',rectMm:r,changed:true});
   add('D-BED-PRIVACY-W',rect(11143,top,right-1000,bedroomBottom));
   add('D-BED-PRIVACY-E',rect(right-200,top,right,bedroomBottom));
-  add('D-SUITE-WALL-S',rect(right,3504,right+140,6600));
-  add('D-SUITE-WALL-N',rect(right,7400,right+140,10699));
+  add('D-SUITE-WALL-S',rect(right,3504,right+base.suiteWallMm,6600));
+  add('D-SUITE-WALL-N',rect(right,7400,right+base.suiteWallMm,10699));
   const doors=base.doors.filter(d=>!['C-HALL-BED','C-BED-BATH','C-BED-CLOSET'].includes(d.id));
   doors.push({...base.doors.find(d=>d.id==='C-HALL-BED')!,id:'D-HALL-DRESSING',label:'Dom → šatníkový vstup · 800 mm',startMm:6600,toRoomId:'ROOM-DRESSING'});
   doors.push({...base.doors.find(d=>d.id==='C-BED-BATH')!,id:'D-DRESSING-BATH',label:'Šatníkový vstup → kúpeľňa · 800 mm',fromRoomId:'ROOM-DRESSING'});

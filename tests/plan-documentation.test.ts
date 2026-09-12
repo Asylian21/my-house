@@ -2,18 +2,20 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractPlanGeometry, hull } from '../scripts/plan-documentation/extract';
 import generated from '../lib/plan-geometry.generated.json';
-import { PLAN_ITEMS, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, searchPlanItems, zoomPlanAt } from '../lib/plan-documentation';
+import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, planItemsFor, planRoomNotes, searchPlanItems, zoomPlanAt } from '../lib/plan-documentation';
 import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_RENDER_WALLS, KITCHEN_RUN } from '../lib/twin-interior';
+import { LIVING_LAYOUTS, diningTableRectMm } from '../lib/twin-living-layouts';
+import { HOUSE } from '../lib/twin-site';
 
 describe('Documentation of the active 3D model',()=>{
   it('is an exact fresh projection of every eligible physical component',()=>{
     const actual=extractPlanGeometry(readFileSync(new URL('../public/assets/archviz/dom-terrace.glb',import.meta.url)));
     expect(generated).toEqual(actual);
-    const ids=PLAN_ITEMS.flatMap(item=>item.meshes.map(mesh=>mesh.id));
+    const ids=PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>mesh.id));
     expect(ids).toHaveLength(actual.meshes.length);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(new Set(PLAN_ITEMS.map(item=>item.id)).size).toBe(PLAN_ITEMS.length);
-    for(const item of PLAN_ITEMS){
+    expect(new Set(PLAN_ITEMS_ALL.map(item=>item.id)).size).toBe(PLAN_ITEMS_ALL.length);
+    for(const item of PLAN_ITEMS_ALL){
       expect([...PLAN_ROOMS.map(r=>r.id),'EXTERIOR']).toContain(item.roomId);
       for(const mesh of item.meshes){
         expect(Object.values(mesh.rect).every(Number.isFinite)).toBe(true);
@@ -24,6 +26,56 @@ describe('Documentation of the active 3D model',()=>{
       }
     }
   },30000);
+  it('documents both living-room layouts side by side and shows exactly one at a time',()=>{
+    const A=planItemsFor('A'),B=planItemsFor('B');
+    expect(PLAN_ITEMS).toEqual(A);
+    const livingA=A.filter(item=>item.layout),livingB=B.filter(item=>item.layout);
+    expect(livingA.length).toBeGreaterThanOrEqual(10);
+    expect(livingB).toHaveLength(livingA.length);
+    expect(A.length).toBe(B.length);
+    expect(A.filter(item=>!item.layout)).toEqual(B.filter(item=>!item.layout));
+    expect(livingA.every(item=>item.layout==='A'&&item.roomId==='ROOM-1-03')).toBe(true);
+    expect(livingB.every(item=>item.layout==='B'&&item.roomId==='ROOM-1-03'&&(item.id.endsWith('-B')||item.id.includes('-B-')))).toBe(true);
+    expect(livingA.some(item=>item.id.endsWith('-B'))).toBe(false);
+    expect(livingB.reduce((sum,item)=>sum+item.meshes.length,0)).toBe(livingA.reduce((sum,item)=>sum+item.meshes.length,0));
+    expect(generated.meshes.filter(m=>'layout' in m).length).toBe(livingA.concat(livingB).reduce((sum,item)=>sum+item.meshes.length,0));
+    for(const [suffix,layout] of [['','A'],['-B','B']] as const){
+      const spec=LIVING_LAYOUTS[layout];
+      expect(PLAN_ITEM_BY_ID.get(`sofa${suffix}`)?.nominal).toEqual({x0:Math.min(spec.fitout.sofa.mainRectMm.x0,spec.fitout.sofa.chaiseRectMm.x0),y0:Math.min(spec.fitout.sofa.mainRectMm.y0,spec.fitout.sofa.chaiseRectMm.y0),x1:Math.max(spec.fitout.sofa.mainRectMm.x1,spec.fitout.sofa.chaiseRectMm.x1),y1:Math.max(spec.fitout.sofa.mainRectMm.y1,spec.fitout.sofa.chaiseRectMm.y1)});
+      expect(PLAN_ITEM_BY_ID.get(`LIVING-103-TV-WALL${suffix}`)?.nominal).toEqual(spec.fitout.tvWall.rectMm);
+      expect(PLAN_ITEM_BY_ID.get(`dining-table${suffix}`)?.nominal).toEqual(diningTableRectMm(spec.fitout.dining));
+      expect(PLAN_ITEM_BY_ID.get(spec.stove.id)?.nominal).toEqual(spec.stove.footprintMm);
+      expect(PLAN_ITEM_BY_ID.get(spec.stove.id)?.layout).toBe(layout);
+      expect(PLAN_ITEM_BY_ID.get(spec.stove.flue.id)?.layout).toBe(layout);
+      // Modelled pieces stay inside their specified envelopes (plus the TV, console and handle protrusions).
+      const tv=PLAN_ITEM_BY_ID.get(`LIVING-103-TV-WALL${suffix}`)!;
+      expect(Math.max(tv.rect.x1-tv.nominal!.x1,tv.nominal!.x0-tv.rect.x0,tv.rect.y1-tv.nominal!.y1,tv.nominal!.y0-tv.rect.y0)).toBeLessThanOrEqual(120);
+      expect(planRoomNotes('ROOM-1-03',layout)).toEqual([...spec.notes]);
+      // Six numbered chairs per layout, 1–3 on the kitchen/wall side and 4–6 opposite, each on its data footprint.
+      const chairs=planItemsFor(layout).filter(item=>item.id.startsWith('DINING-CHAIR-'));
+      expect(chairs.map(item=>item.name).sort()).toEqual([1,2,3,4,5,6].map(n=>`Jedálenská stolička ${n}`));
+      for(const chair of spec.fitout.dining.chairs){
+        const item=PLAN_ITEM_BY_ID.get(`${chair.id}${suffix}`)!;
+        expect(item.layout).toBe(layout);
+        expect(Math.abs((item.rect.x0+item.rect.x1)/2-chair.centerMm.x)+Math.abs((item.rect.y0+item.rect.y1)/2-chair.centerMm.y)).toBeLessThan(120);
+      }
+      expect(PLAN_ITEM_BY_ID.get(`dining-light${suffix}`)?.meshes.filter(m=>/tienidlo/.test(m.name))).toHaveLength(2);
+    }
+    // Shared kitchen: the peninsula worktop edge is flush with the terrace-door reveal and the
+    // east return's upstand stops before window EAST-04 while its worktop continues under the sill.
+    const island=PLAN_ITEM_BY_ID.get('kitchen-island')!;
+    expect(island.nominal).toEqual(KITCHEN_RUN.peninsulaRectMm);
+    expect(island.rect.y1).toBe(HOUSE.facades.wingWest.opening.startYmm+HOUSE.facades.wingWest.opening.widthMm);
+    const eastWindow=HOUSE.facades.east.openings.find(o=>o.id==='EAST-04')!;
+    const kitchenReturn=PLAN_ITEM_BY_ID.get('kitchen-return')!;
+    expect(kitchenReturn.nominal).toEqual(KITCHEN_RUN.eastReturnRectMm);
+    expect(kitchenReturn.meshes.find(m=>/obklad pri stene/.test(m.name))?.rect.y1).toBe(eastWindow.startYmm-20);
+    expect(kitchenReturn.meshes.find(m=>/kremenná doska/.test(m.name))?.rect.y1).toBeGreaterThanOrEqual(KITCHEN_RUN.eastReturnRectMm.y1);
+    expect(searchPlanItems('sedacka','ROOM-1-03','all','B').map(i=>i.id)).toEqual(['sofa-B']);
+    expect(searchPlanItems('sedacka','ROOM-1-03','all').map(i=>i.id)).toEqual(['sofa']);
+    expect(searchPlanItems('kachle','','equipment','B').map(i=>i.id)).toEqual([LIVING_LAYOUTS.B.stove.id]);
+    expect(planRoomNotes('ROOM-1-07')).toBeDefined();
+  });
   it('keeps every current interior wall and door, without treating vaulted ceilings as openings',()=>{
     for(const wall of INTERIOR_RENDER_WALLS){
       const mesh=generated.meshes.find(m=>m.name.startsWith(`Vnútorná stena ${wall.id} · `));

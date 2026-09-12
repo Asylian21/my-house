@@ -1,12 +1,13 @@
 import { memo } from 'react';
 import { SERVICE_CORE_REVISION, TECHNICAL_HEATING_FITOUT as HEATING } from '@/lib/technical-design';
 import { INTERIOR_DOORS } from '@/lib/twin-interior';
-import { PLAN_ITEMS, PLAN_ROOMS, formatMm, numberSk, type PlanCategory, type PlanItem, type PlanViewBox } from '@/lib/plan-documentation';
+import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ROOMS, exteriorWallLayer, formatMm, numberSk, type PlanCategory, type PlanItem, type PlanViewBox } from '@/lib/plan-documentation';
+import { DEFAULT_LIVING_LAYOUT_ID, type LivingLayoutId } from '@/lib/twin-living-layouts';
 import type { RectMm } from '@/lib/twin-interior';
 import { Box, Door } from './plan-svg';
 
 export const ROOM_COLORS=['#e8eef0','#edf0f2','#eee9df','#e6eaef','#e1ecec','#e1ecec','#e7e9ec','#eee9e5','#e7edf1','#ece9e3','#e1ecec','#e8e9eb','#e8e5df'];
-const SORTED_PARTS=PLAN_ITEMS.flatMap(item=>item.meshes.map(mesh=>({mesh,item}))).sort((a,b)=>a.mesh.z0-b.mesh.z0 || a.mesh.z1-b.mesh.z1);
+const SORTED_PARTS=PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>({mesh,item}))).sort((a,b)=>a.mesh.z0-b.mesh.z0 || a.mesh.z1-b.mesh.z1);
 export function PlanDimensions({rect,unit='mm',size=130,offsetMm}:{rect:RectMm;unit?:'mm'|'cm'|'m';size?:number;offsetMm?:number}) {
   const offset=offsetMm??size*2.4, x=(rect.x0+rect.x1)/2,y=-(rect.y0+rect.y1)/2;
   return <g className="pd-dimensions" fontSize={size} pointerEvents="none" fill="#245ccd" stroke="#245ccd" strokeWidth={1}>
@@ -16,13 +17,18 @@ export function PlanDimensions({rect,unit='mm',size=130,offsetMm}:{rect:RectMm;u
   </g>;
 }
 
-export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,selectedId,componentId,roomId,labels=true,dimensions=false,unit='mm',clipRect,unitsPerPixel=17}:{layers:Record<PlanCategory,boolean>;details:boolean;overhead:boolean;selectedId:string|null;componentId:string|null;roomId:string;labels?:boolean;dimensions?:boolean;unit?:'mm'|'cm'|'m';clipRect?:RectMm;unitsPerPixel?:number}) {
+export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,selectedId,componentId,roomId,labels=true,dimensions=false,unit='mm',clipRect,unitsPerPixel=17,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:{layers:Record<PlanCategory,boolean>;details:boolean;overhead:boolean;selectedId:string|null;componentId:string|null;roomId:string;labels?:boolean;dimensions?:boolean;unit?:'mm'|'cm'|'m';clipRect?:RectMm;unitsPerPixel?:number;livingLayout?:LivingLayoutId}) {
   // Paint the model from floor upwards, while keeping high joinery selectable
   // through the inventory. Door symbols carry the architectural swing, not a
-  // misleading closed-leaf silhouette.
-  const polygons=clipRect?SORTED_PARTS.filter(({mesh:m})=>m.rect.x0<=clipRect.x1&&m.rect.x1>=clipRect.x0&&m.rect.y0<=clipRect.y1&&m.rect.y1>=clipRect.y0):SORTED_PARTS;
+  // misleading closed-leaf silhouette. Living-room pieces of the other layout
+  // stay out of the drawing entirely.
+  const visibleParts=SORTED_PARTS.filter(({item})=>!item.layout||item.layout===livingLayout);
+  const polygons=clipRect?visibleParts.filter(({mesh:m})=>m.rect.x0<=clipRect.x1&&m.rect.x1>=clipRect.x0&&m.rect.y0<=clipRect.y1&&m.rect.y1>=clipRect.y0):visibleParts;
   return <>
-    <defs><pattern id="pd-grid" width="1000" height="1000" patternUnits="userSpaceOnUse"><path d="M1000 0H0V1000" fill="none" stroke="#ced5de" strokeWidth="8" opacity=".35"/></pattern></defs>
+    <defs>
+      <pattern id="pd-grid" width="1000" height="1000" patternUnits="userSpaceOnUse"><path d="M1000 0H0V1000" fill="none" stroke="#ced5de" strokeWidth="8" opacity=".35"/></pattern>
+      <pattern id="pd-insulation" width="90" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="90" height="90" fill="#dde6eb"/><path d="M0 0V90" stroke="#6f8290" strokeWidth="14"/></pattern>
+    </defs>
     <rect x="-100000" y="-100000" width="200000" height="200000" fill="url(#pd-grid)" pointerEvents="none"/>
     <g className="pd-floors">{PLAN_ROOMS.map((room,i)=><g key={room.id} data-room={room.id} opacity={roomId&&room.id!==roomId?0.45:1}>
       {room.rectsMm.map((rect,index)=><Box key={index} r={rect} fill={roomId===room.id?'#e0eaff':ROOM_COLORS[i]} stroke="#c7cdd4" strokeWidth="8"/>)}
@@ -35,8 +41,10 @@ export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,se
       if(!selected&&!component&&(!layers[item.category]||physicalCeiling||(!overhead&&overheadMesh)||(!details&&tiny&&item.category!=='walls'&&item.category!=='openings')))return null;
       if(item.category==='openings'&&INTERIOR_DOORS.some(d=>d.label.split(' · ')[0]===item.id)&&!component)return null;
       if(item.category==='walls'&&mesh.z0>1400&&!component)return null;
-      const fill=item.category==='walls'?'#414a56':item.category==='openings'?'#adcbdc':item.category==='lighting'?'#edd8a5':mesh.color;
-      return <polygon key={mesh.id} points={mesh.polygon} data-item={item.id} data-component={mesh.id} className={`pd-part${selected?' is-selected':''}${component?' is-component':''}`} fill={component?'#3974eb':selected?'#b4cdfb':fill} stroke={component?'#1449bd':selected?'#2a65d4':item.category==='walls'?'#343e49':'#63707b'} strokeWidth={component?1.5:selected?1:.45} vectorEffect="non-scaling-stroke" opacity={roomId&&item.roomId!==roomId&&!selected?0.25:overheadMesh&&!component?0.4:1}>
+      // Exterior walls are drawn in their build-up: dark masonry, light insulation band on the outer face.
+      const insulation=item.category==='walls'&&exteriorWallLayer(mesh)==='insulation';
+      const fill=insulation?'url(#pd-insulation)':item.category==='walls'?'#414a56':item.category==='openings'?'#adcbdc':item.category==='lighting'?'#edd8a5':mesh.color;
+      return <polygon key={mesh.id} points={mesh.polygon} data-item={item.id} data-component={mesh.id} data-layer={item.category==='walls'?exteriorWallLayer(mesh):undefined} className={`pd-part${selected?' is-selected':''}${component?' is-component':''}`} fill={component?'#3974eb':selected?'#b4cdfb':fill} stroke={component?'#1449bd':selected?'#2a65d4':item.category==='walls'?'#343e49':'#63707b'} strokeWidth={component?1.5:selected?1:.45} vectorEffect="non-scaling-stroke" opacity={roomId&&item.roomId!==roomId&&!selected?0.25:overheadMesh&&!component?0.4:1}>
         <title>{`${item.name} · ${mesh.name.split(' · ').slice(-1)[0]}`}</title>
       </polygon>;
     })}</g>
@@ -97,9 +105,9 @@ export function TechnicalClearances(){
 
 export function TechnicalLegend(){return <p className="pd-clearance-legend"><span>Modrá: obsluha kotla</span><span>Zelená: nádrž a jej presun</span><span>Hnedá: prístup ku skrini</span><strong style={{color:'#aa6021',flexBasis:'100%'}}>Oranžové kóty 250 mm sú pod odstupmi 500 mm podľa výrobcu. Osadenie vyžaduje potvrdenie dodávateľom kotla.</strong><small>Prerušované plochy ponechať voľné. Rozmery v mm. Trasa platí s nádržou zvislo na 100 mm podvozku a oboma krídlami dverí otvorenými von; zásobník a prípojky sa montujú až po osadení nádrže.</small></p>;}
 
-export function StaticPlan({viewBox,roomId='',labels=true}:{viewBox:PlanViewBox;roomId?:string;labels?:boolean}) {
+export function StaticPlan({viewBox,roomId='',labels=true,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:{viewBox:PlanViewBox;roomId?:string;labels?:boolean;livingLayout?:LivingLayoutId}) {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} role="img" aria-label="Pôdorys aktuálneho 3D modelu">
-    <PlanGeometry layers={{furniture:true,equipment:true,lighting:false,walls:true,openings:true,finishes:true}} details overhead={false} selectedId={null} componentId={null} roomId={roomId} labels={labels&&roomId!=='ROOM-1-07'} dimensions unitsPerPixel={viewBox.width/600} clipRect={{x0:viewBox.x,x1:viewBox.x+viewBox.width,y0:-viewBox.y-viewBox.height,y1:-viewBox.y}}/>
+    <PlanGeometry layers={{furniture:true,equipment:true,lighting:false,walls:true,openings:true,finishes:true}} details overhead={false} selectedId={null} componentId={null} roomId={roomId} labels={labels&&roomId!=='ROOM-1-07'} dimensions unitsPerPixel={viewBox.width/600} clipRect={{x0:viewBox.x,x1:viewBox.x+viewBox.width,y0:-viewBox.y-viewBox.height,y1:-viewBox.y}} livingLayout={livingLayout}/>
     {roomId==='ROOM-1-07'&&<TechnicalClearances/>}
   </svg>;
 }

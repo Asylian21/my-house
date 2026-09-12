@@ -1,7 +1,8 @@
 import { Fragment, type ReactNode, type SVGProps } from 'react';
 import { PLAN_ROOMS, numberSk, type PlanItem, type PlanMesh } from '@/lib/plan-documentation';
 import { INTERIOR_DOORS, type RectMm } from '@/lib/twin-interior';
-import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DOOR_TEXTS, EXPORT_LEVELS, EXPORT_REVISION, FACADES, FOOTPRINT as F, GRID_X, GRID_Y, INTERIOR_WALL_MESHES, ITEM_CODE_LABEL, MATERIAL_LEGEND, OPENING_BY_DOOR, PLAN_EXTENT, POOL, ROOM_KIND_LABEL, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, SITE_LABELS, STRUCTURAL_EXTRAS, TERRACES, TERRACE_AREA_M2, clearHeightLabel, codedItems, drawnItems, facadeChains, finishCeiling, finishFloor, finishWalls, fixedSk, innerDims, roomAxes, roomKind, roomLabelPos, roomRectsByArea, wallClass, type ChainSpec, type CodedItem, type ExportLevel, type ItemCode, type PlanRoom, type RoomKind, type WallClass } from '@/lib/plan-export';
+import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, type LivingLayoutId } from '@/lib/twin-living-layouts';
+import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DOOR_TEXTS, EXPORT_LEVELS, EXPORT_REVISION, FACADES, FOOTPRINT as F, GRID_X, GRID_Y, INTERIOR_WALL_MESHES, ITEM_CODE_LABEL, MATERIAL_LEGEND, OPENING_BY_DOOR, PLAN_EXTENT, POOL, ROOM_KIND_LABEL, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, SITE_LABELS, STRUCTURAL_EXTRAS, TERRACES, TERRACE_AREA_M2, clearHeightLabel, codedItems, drawnItems, facadeChains, finishCeiling, finishFloor, finishWalls, fixedSk, innerDims, roomAxes, roomKind, roomLabelPos, roomRectsByArea, shellWallClass, wallClass, type ChainSpec, type CodedItem, type ExportLevel, type ItemCode, type PlanRoom, type RoomKind, type WallClass } from '@/lib/plan-export';
 import { Door } from './plan-svg';
 
 /** Paper: A1 landscape in millimetres, plan at 1:50 (prints 1:100 on A3). */
@@ -19,14 +20,14 @@ const TITLE={x:PLAN_BOX.x+PLAN_W+6,w:SHEET.w-SHEET.m-(PLAN_BOX.x+PLAN_W+6),h:82,
 const TABLES={x:PANEL.x,y:PANEL.y,w:PANEL.w,h:TITLE.y-PANEL.y-16};
 
 interface Palette {
-  ink:string;muted:string;rule:string;dim:string;roomNo:string;boundary:string;glass:string;hatch:string;board:string;
+  ink:string;muted:string;rule:string;dim:string;roomNo:string;boundary:string;glass:string;hatch:string;board:string;insulation:string;
   room:Record<RoomKind,string>;water:string;deck:string;pill:Record<'O'|'D'|ItemCode,string>;itemStroke:string;accent:string;tableStripe:string;
 }
 /** Colour sheet: black construction, red dimensions and room numbers, magenta parcel boundary, blue glazing (D1.1.002 convention) plus a faint room wash. */
-const COLOR:Palette={ink:'#000',muted:'#555',rule:'#b8b8b8',dim:'#e30613',roomNo:'#e30613',boundary:'#c2129b',glass:'#1d4ed8',hatch:'#000',board:'#e4e4e4',
+const COLOR:Palette={ink:'#000',muted:'#555',rule:'#b8b8b8',dim:'#e30613',roomNo:'#e30613',boundary:'#c2129b',glass:'#1d4ed8',hatch:'#000',board:'#e4e4e4',insulation:'#eef1f3',
   room:{living:'#fcf7ee',wet:'#eef5fb',tech:'#f4f0f7',garage:'#f2f3f4',circulation:'#f1f7ef'},water:'#cfe6f5',deck:'#8b7d68',
   pill:{O:'#1d4ed8',D:'#6d28d9',N:'#8a5a19',Z:'#0e7490',L:'#a16207',F:'#4b5563'},itemStroke:'#6b6b6b',accent:'#e30613',tableStripe:'#f5f5f5'};
-const MONO:Palette={ink:'#000',muted:'#444',rule:'#999',dim:'#000',roomNo:'#000',boundary:'#000',glass:'#000',hatch:'#000',board:'#e4e4e4',
+const MONO:Palette={ink:'#000',muted:'#444',rule:'#999',dim:'#000',roomNo:'#000',boundary:'#000',glass:'#000',hatch:'#000',board:'#e4e4e4',insulation:'#f2f2f2',
   room:{living:'#fff',wet:'#fff',tech:'#fff',garage:'#fff',circulation:'#fff'},water:'#fff',deck:'#777',
   pill:{O:'#000',D:'#000',N:'#000',Z:'#000',L:'#000',F:'#000'},itemStroke:'#555',accent:'#000',tableStripe:'#f0f0f0'};
 
@@ -40,6 +41,8 @@ function Defs({pal}:{pal:Palette}) {
   const hatch=(id:string,period:number,width:number)=><pattern key={id} id={id} width={T(period)} height={T(period)} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={T(period)} stroke={pal.hatch} strokeWidth={T(width)}/></pattern>;
   return <defs>
     {hatch('xs-h-exterior',1.5,.16)}{hatch('xs-h-bearing',.9,.14)}{hatch('xs-h-partition',2.4,.1)}
+    {/* Contact insulation: fine hatch in the opposite direction on a light ground, distinct from every masonry hatch. */}
+    <pattern id="xs-h-insulation" width={T(1)} height={T(1)} patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width={T(1)} height={T(1)} fill={pal.insulation}/><line x1={0} y1={0} x2={0} y2={T(1)} stroke={pal.hatch} strokeWidth={T(.08)}/></pattern>
     <pattern id="xs-deck" width={T(3)} height={T(3)} patternUnits="userSpaceOnUse"><line x1={0} y1={0} x2={T(3)} y2={0} stroke={pal.deck} strokeWidth={T(.07)}/></pattern>
     <clipPath id="xs-plan-clip"><rect x={PLAN_EXTENT.x0} y={-PLAN_EXTENT.y1} width={PLAN_EXTENT.x1-PLAN_EXTENT.x0} height={PLAN_EXTENT.y1-PLAN_EXTENT.y0}/></clipPath>
   </defs>;
@@ -76,15 +79,19 @@ function Rooms({pal}:{pal:Palette}) {
 /** Section through the walls: outline, white core, material hatch. Drawing the outlines first and the cores over them hides the seams between the modelled pieces. */
 function Walls({pal}:{pal:Palette}) {
   const solids:{key:string;points:string;cls:WallClass}[]=[
-    ...SHELL_WALL_MESHES.filter(m=>m.z0<=0).map(m=>({key:m.id,points:m.polygon,cls:'exterior' as WallClass})),
+    ...SHELL_WALL_MESHES.filter(m=>m.z0<=0).map(m=>({key:m.id,points:m.polygon,cls:shellWallClass(m)})),
     ...INTERIOR_WALL_MESHES.map(({mesh,kind})=>({key:mesh.id,points:mesh.polygon,cls:wallClass(kind,Math.min(mesh.rect.x1-mesh.rect.x0,mesh.rect.y1-mesh.rect.y0))})),
   ];
-  const outline=(cls:WallClass)=>cls==='exterior'?T(.7):cls==='bearing'?T(.5):T(.36);
+  const outline=(cls:WallClass)=>cls==='exterior'||cls==='insulation'?T(.7):cls==='bearing'?T(.5):T(.36);
   const fill=(cls:WallClass)=>cls==='board'?pal.board:`url(#xs-h-${cls})`;
+  const masonry=solids.filter(s=>s.cls!=='insulation'),insulation=solids.filter(s=>s.cls==='insulation');
+  // The insulation layer is outlined thinly and filled last on an opaque ground, so only its boundary with the masonry and the outer face remain visible.
   return <g strokeLinejoin="miter">
     <g fill="none" stroke={pal.ink}>{solids.map(s=><polygon key={s.key} points={s.points} strokeWidth={outline(s.cls)}/>)}</g>
     <g fill="#fff">{solids.map(s=><polygon key={s.key} points={s.points}/>)}</g>
-    <g>{solids.map(s=><polygon key={s.key} points={s.points} fill={fill(s.cls)}/>)}</g>
+    <g>{masonry.map(s=><polygon key={s.key} points={s.points} fill={fill(s.cls)}/>)}</g>
+    <g fill="none" stroke={pal.ink} strokeWidth={T(.2)}>{insulation.map(s=><polygon key={s.key} points={s.points}/>)}</g>
+    <g>{insulation.map(s=><polygon key={s.key} points={s.points} fill={fill(s.cls)}/>)}</g>
   </g>;
 }
 
@@ -256,8 +263,8 @@ function RoomLabels({pal,level}:{pal:Palette;level:ExportLevel}) {
     return <g key={room.id}>{lines.map((l,i)=><text key={i} x={x} y={tops[i]} fontSize={l.size} fontWeight={l.weight} fill={l.fill} letterSpacing={i===1?l.size*.06:0} strokeWidth={l.size*.3}>{l.text}</text>)}</g>;
   })}</g>;
 }
-function Items({pal,level}:{pal:Palette;level:ExportLevel}) {
-  const items=drawnItems(level);
+function Items({pal,level,livingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId}) {
+  const items=drawnItems(level,livingLayout);
   const parts=items.flatMap(item=>item.meshes.map(mesh=>({item,mesh}))).filter(({mesh})=>Math.min(mesh.rect.x1-mesh.rect.x0,mesh.rect.y1-mesh.rect.y0)>=35).sort((a,b)=>a.mesh.z0-b.mesh.z0);
   const polygon=(_item:PlanItem,mesh:PlanMesh)=>mesh.z0>=CUT_PLANE_MM
     ?<polygon key={mesh.id} points={mesh.polygon} fill="none" stroke={pal.itemStroke} strokeWidth={T(.1)} strokeDasharray={`${T(.9)} ${T(.5)}`}/>
@@ -267,11 +274,11 @@ function Items({pal,level}:{pal:Palette;level:ExportLevel}) {
     {parts.map(({item,mesh})=>polygon(item,mesh))}
   </g>;
 }
-function ItemLabels({pal,level}:{pal:Palette;level:ExportLevel}) {
+function ItemLabels({pal,level,livingLayout}:{pal:Palette;level:ExportLevel;livingLayout:LivingLayoutId}) {
   const fs=T(1.55),h=fs*1.45;
   const placed:Box[]=PLAN_ROOMS.map(room=>roomLabel(room,level,pal).box);
   const collides=(b:Box)=>placed.some(p=>b.x0<p.x1&&b.x1>p.x0&&b.y0<p.y1&&b.y1>p.y0);
-  const labels=codedItems(level).filter(c=>c.labeled).sort((a,b)=>(b.width*b.depth)-(a.width*a.depth)).map((c:CodedItem)=>{
+  const labels=codedItems(level,livingLayout).filter(c=>c.labeled).sort((a,b)=>(b.width*b.depth)-(a.width*a.depth)).map((c:CodedItem)=>{
     const w=textWidth(c.code,fs)+fs*.9,cx=(c.item.rect.x0+c.item.rect.x1)/2,cy=-(c.item.rect.y0+c.item.rect.y1)/2;
     const tries=[[0,0],[0,-h*1.15],[0,h*1.15],[w*1.05,0],[-w*1.05,0],[w*1.05,-h*1.15],[-w*1.05,h*1.15],[0,-h*2.3],[0,h*2.3]];
     let x=cx,y=cy;
@@ -412,7 +419,7 @@ function materialBlock(pal:Palette):Block {
       return <g key="materials" fontFamily={FONT}><text x={x} y={y+fs*1.6} fontSize={fs*1.6} fontWeight={700} fill={pal.ink} letterSpacing={.2}>LEGENDA MATERIÁLOV</text>{nodes}</g>;
     }};
 }
-function panelBlocks(level:ExportLevel,pal:Palette):Block[] {
+function panelBlocks(level:ExportLevel,pal:Palette,livingLayout:LivingLayoutId):Block[] {
   const blocks:Block[]=[];
   const totalArea=PLAN_ROOMS.reduce((s,r)=>s+r.area,0);
   const footprint=((F.x1-F.x0)*(F.gardenY-F.y0)+(F.x1-F.wingX)*(F.y1-F.gardenY))/1e6;
@@ -435,14 +442,14 @@ function panelBlocks(level:ExportLevel,pal:Palette):Block[] {
   if(level>=3)blocks.push(tableBlock('SVETLÉ ROZMERY MIESTNOSTÍ (mm)',[{title:'OZN.',width:8},{title:'OBDĹŽNIKY ČISTEJ PODLAHY · ŠÍRKA × HĹBKA',width:92}],
     PLAN_ROOMS.map(r=>[r.number,roomRectsByArea(r).slice(0,4).map(p=>`${mm(p.x1-p.x0)} × ${mm(p.y1-p.y0)}`).join('  +  ')+(r.rectsMm.length>4?'  + …':'')]),pal));
   if(level>=4){
-    const items=codedItems(level);
-    blocks.push(tableBlock(level>=5?`SÚPIS PRVKOV · ${items.length}`:`PEVNÉ VYBAVENIE · ${items.length}`,[{title:'KÓD',width:8},{title:'PRVOK',width:44},{title:'MIEST.',width:9},{title:'↔',width:10,align:'r'},{title:'↕',width:10,align:'r'},{title:'VÝŠKA',width:10,align:'r'},{title:'OD PODL.',width:11,align:'r'},{title:'OD Z',width:10,align:'r'},{title:'OD J',width:10,align:'r'},{title:'OSI',width:17}],
+    const items=codedItems(level,livingLayout);
+    blocks.push(tableBlock(`${level>=5?'SÚPIS PRVKOV':'PEVNÉ VYBAVENIE'} · ${items.length} · OBÝVAČKA ${livingLayout}`,[{title:'KÓD',width:8},{title:'PRVOK',width:44},{title:'MIEST.',width:9},{title:'↔',width:10,align:'r'},{title:'↕',width:10,align:'r'},{title:'VÝŠKA',width:10,align:'r'},{title:'OD PODL.',width:11,align:'r'},{title:'OD Z',width:10,align:'r'},{title:'OD J',width:10,align:'r'},{title:'OSI',width:17}],
       items.map(c=>[c.code,c.item.name,c.room?.number??'ext.',mm(c.width),mm(c.depth),mm(c.height),c.mount>0?mm(c.mount):'0',mm(c.fromWest),mm(c.fromSouth),c.cell]),pal));
   }
   return blocks;
 }
-function Panel({level,pal}:{level:ExportLevel;pal:Palette}) {
-  const blocks=panelBlocks(level,pal);
+function Panel({level,pal,livingLayout}:{level:ExportLevel;pal:Palette;livingLayout:LivingLayoutId}) {
+  const blocks=panelBlocks(level,pal,livingLayout);
   // Base metrics at scale 1, then a uniform scale so the blocks fill the panel height.
   const baseFs=1.7,basePitch=2.9,gap=3.5;
   const baseHeight=blocks.reduce((s,b)=>s+b.height(baseFs,basePitch,TABLES.w)+gap,0);
@@ -456,14 +463,16 @@ function Panel({level,pal}:{level:ExportLevel;pal:Palette}) {
       <pattern id="xs-l-exterior" width={1.5} height={1.5} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={1.5} stroke={pal.hatch} strokeWidth={.16}/></pattern>
       <pattern id="xs-l-bearing" width={.9} height={.9} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={.9} stroke={pal.hatch} strokeWidth={.14}/></pattern>
       <pattern id="xs-l-partition" width={2.4} height={2.4} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={2.4} stroke={pal.hatch} strokeWidth={.1}/></pattern>
+      <pattern id="xs-l-insulation" width={1} height={1} patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width={1} height={1} fill={pal.insulation}/><line x1={0} y1={0} x2={0} y2={1} stroke={pal.hatch} strokeWidth={.08}/></pattern>
     </defs>
     <line x1={PANEL.x-3} x2={PANEL.x-3} y1={PANEL.y} y2={PANEL.y+PANEL.h} stroke={pal.rule} strokeWidth={.3}/>
     <g transform={scale===1?undefined:`scale(${scale})`}>{blocks.map((b,i)=>b.render(TABLES.x/scale,tops[i],width,fs,pitch))}</g>
   </g>;
 }
 
-function TitleBlock({level,pal,color}:{level:ExportLevel;pal:Palette;color:boolean}) {
+function TitleBlock({level,pal,color,livingLayout}:{level:ExportLevel;pal:Palette;color:boolean;livingLayout:LivingLayoutId}) {
   const spec=EXPORT_LEVELS.find(l=>l.level===level)!;
+  const living=LIVING_LAYOUTS[livingLayout];
   const {x,y,w,h}=TITLE;
   const date=new Date().toLocaleDateString('sk-SK',{day:'2-digit',month:'2-digit',year:'numeric'});
   const label=(lx:number,ly:number,text:string)=><text x={lx} y={ly} fontSize={2.1} fill={pal.muted} fontStyle="italic">{text}</text>;
@@ -499,7 +508,7 @@ function TitleBlock({level,pal,color}:{level:ExportLevel;pal:Palette;color:boole
     {label(x,y+45.6,'OBJEKT')}{value(x,y+50,'RD BŘEZÍ U MIKULOVA · VARIANT C',3.6,600)}
     {label(x,y+54,'ČASŤ')}{value(x,y+58.4,'D1.1 ARCHITEKTONICKO-STAVEBNÉ RIEŠENIE',3.6,600)}
     {label(x,y+62.6,'VÝKRES')}{value(x,y+69.8,'PÔDORYS 1. NP',7,800)}
-    {value(x,y+74.6,`ÚROVEŇ L${level} · ${spec.title.toUpperCase()} · ${spec.summary}`,2.2,400)}
+    {value(x,y+74.6,`ÚROVEŇ L${level} · ${spec.title.toUpperCase()} · ${spec.summary} Obývačka 1.03 vo variante ${living.id}: ${living.label}.`,2.2,400)}
     <line x1={split-3} x2={split-3} y1={y+42.8} y2={y+h} stroke={pal.ink} strokeWidth={.3}/>
     {meta.map(([k,v],i)=><g key={k}>{label(split,y+46+i*3.6,k)}{value(x+w,y+46+i*3.6,v,2.4,500,'end')}</g>)}
     {label(split,y+69,'ČÍSLO PRÍLOHY')}
@@ -509,7 +518,7 @@ function TitleBlock({level,pal,color}:{level:ExportLevel;pal:Palette;color:boole
   </g>;
 }
 
-export function ExportSheet({level,color}:{level:ExportLevel;color:boolean}) {
+export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:{level:ExportLevel;color:boolean;livingLayout?:LivingLayoutId}) {
   const pal=color?COLOR:MONO;
   const chains=[...facadeChains(level),...(level>=3?SECTION_CHAINS:[]),...(level>=3?DOOR_CHAINS:[])];
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${SHEET.w} ${SHEET.h}`} width={SHEET.w*PX_PER_MM} height={SHEET.h*PX_PER_MM} fontFamily={FONT} role="img" aria-label={`Pôdorys 1. NP, úroveň ${level}`}>
@@ -523,7 +532,7 @@ export function ExportSheet({level,color}:{level:ExportLevel;color:boolean}) {
         <Outdoor pal={pal}/>
         <Rooms pal={pal}/>
         <Grid pal={pal}/>
-        <Items pal={pal} level={level}/>
+        <Items pal={pal} level={level} livingLayout={livingLayout}/>
         <Walls pal={pal}/>
         <ExteriorOpenings pal={pal}/>
         <InteriorDoors/>
@@ -532,11 +541,11 @@ export function ExportSheet({level,color}:{level:ExportLevel;color:boolean}) {
         {level>=2&&<OpeningCodes pal={pal}/>}
         {level>=2&&<DoorCodes pal={pal}/>}
         <RoomLabels pal={pal} level={level}/>
-        {level>=4&&<ItemLabels pal={pal} level={level}/>}
+        {level>=4&&<ItemLabels pal={pal} level={level} livingLayout={livingLayout}/>}
       </g>
     </g>
     <LegendStrip level={level} pal={pal} color={color}/>
-    <Panel level={level} pal={pal}/>
-    <TitleBlock level={level} pal={pal} color={color}/>
+    <Panel level={level} pal={pal} livingLayout={livingLayout}/>
+    <TitleBlock level={level} pal={pal} color={color} livingLayout={livingLayout}/>
   </svg>;
 }

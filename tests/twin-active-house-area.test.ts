@@ -8,7 +8,10 @@ describe('active export room-area authority', () => {
     const serialized = JSON.parse(JSON.stringify({house: HOUSE, layoutId: ACTIVE_LAYOUT_ID, interior: {rooms: INTERIOR_ROOMS}}));
     const expected = serialized.interior.rooms.reduce((sum: number, room: typeof INTERIOR_ROOMS[number]) => sum + room.rectsMm.reduce((roomSum, r) => roomSum + (r.x1-r.x0)*(r.y1-r.y0)/1e6, 0), 0);
     expect(serialized.house.floorAreaM2).toBeCloseTo(expected, 9);
-    expect(expected).toBeCloseTo(181.426148, 9);
+    // 1.625 m² less than before the three 300 mm bearing walls were introduced,
+    // then +0.459964 m² as the central hall gains 59 mm from its 140 mm south
+    // partition, then +0.00712 m² as the centred hall narrows to 1 099 mm.
+    expect(expected).toBeCloseTo(180.267903, 9);
     expect(serialized.house.floorAreaAuthority).toEqual({kind: 'ACTIVE_ROOM_RECTANGLE_SUM', layoutId: serialized.layoutId, source: 'lib/twin-interior.ts:INTERIOR_ROOMS', includesGarage: true});
     expect(serialized.interior.rooms.some((r: typeof INTERIOR_ROOMS[number]) => r.id === 'ROOM-1-12')).toBe(true);
   });

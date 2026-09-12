@@ -1,5 +1,6 @@
 import generated from './plan-geometry.generated.json';
-import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, HALLWAY_BUILT_IN_WARDROBES, INTERIOR_DOORS, INTERIOR_ROOMS, KITCHEN_RUN, LIVING_DINING_FITOUT, OFFICE_FITOUT, roomAreaM2, roomBoundsMm, type RectMm } from './twin-interior';
+import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, HALLWAY_BUILT_IN_WARDROBES, INTERIOR_DOORS, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_FITOUT, roomAreaM2, roomBoundsMm, type RectMm } from './twin-interior';
+import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, LIVING_LAYOUT_IDS, diningTableRectMm, type LivingLayoutId } from './twin-living-layouts';
 import { HOUSE } from './twin-active-house';
 import { GIRL_WINDOW_DESIGN } from './twin-children-design';
 import { HEATING_SOURCES, TECHNICAL_HEATING_FITOUT as heating } from './technical-design';
@@ -7,14 +8,25 @@ import { HEATING_SOURCES, TECHNICAL_HEATING_FITOUT as heating } from './technica
 export type PlanCategory = 'furniture'|'equipment'|'lighting'|'walls'|'openings'|'finishes';
 export const PLAN_CATEGORIES:Record<PlanCategory,string>={furniture:'Nábytok',equipment:'Vybavenie',lighting:'Svetlá',walls:'Steny',openings:'Okná a dvere',finishes:'Povrchy a detaily'};
 export type PlanMesh=typeof generated.meshes[number];
+/** Layer suffix of an exterior wall mesh: 300 mm masonry, 200 mm contact insulation or a solid uninsulated pier. */
+const WALL_LAYER_SUFFIX=/ · (murivo|izolácia|plné murivo)$/;
+export type ExteriorWallLayer='masonry'|'insulation'|'solid';
+/** Which layer of the exterior wall build-up a shell wall mesh is; interior walls and unlayered pieces read as masonry. */
+export const exteriorWallLayer=(mesh:Pick<PlanMesh,'name'>):ExteriorWallLayer=>/ · izolácia$/.test(mesh.name)?'insulation':/ · plné murivo$/.test(mesh.name)?'solid':'masonry';
 export interface PlanItem {
   id:string; name:string; category:PlanCategory; roomId:string; meshes:PlanMesh[];
   rect:RectMm; z0:number; z1:number; nominal?:RectMm; note?:string;
+  /** Living-room pieces exist once per layout; shared items carry no layout. */
+  layout?:LivingLayoutId;
   opening?:{width:number;height:number;sill:number;clearWidth?:number};
   product?:{label:string;dimensions:string;source:string};
 }
 export const PLAN_ROOM_NOTES:Record<string,string[]>={
-  'ROOM-1-08':['Tri okná, tri úlohy: pokojové svetlo nad posteľou, nízky panoramatický pohľad pri hre a svetlo nad stolom. Všetky majú nadpražie 2 500 mm.','Plocha stavebných otvorov 6,05 m² (predtým 3,36 m²). Ide o plochu otvorov, nie výpočet denného osvetlenia. Vonkajšie tienenie, bezpečnostné sklo a preklady dopracuje projektant.'],
+  'ROOM-1-02':['Chodba medzi detskými izbami je vystredená medzi fasádami: južná priečka 140 mm leží na 6 412–6 552 mm, severná na 7 651–7 791 mm, medzi nimi je 1 099 mm. Obe detské izby sú tak rovnako hlboké (2 908 mm). Severná stena je jedna rovina od šatníka cez dvere spálne po východnú nosnú stenu chlapčenskej izby; južná priečka pokračuje pri zádverí až k rohu pracovne.','Stena k dievčenskej izbe a zádveriu je priečka 140 mm namiesto 199 mm. Plocha chodby je 17,46 m² (predtým 16,93 m²). Puzdro posuvných dverí zo zádveria je v tejto priečke; jeho hrúbku potvrdí dodávateľ. Skriňa na konci chodby má 1 907 × 460 mm, skriňa pri dvore 2 768 × 701 mm za priečkou 140 mm.'],
+  'ROOM-1-08':['Tri okná, tri úlohy: pokojové svetlo nad posteľou, nízky panoramatický pohľad pri hre a svetlo nad stolom. Všetky majú nadpražie 2 500 mm.','Plocha stavebných otvorov 6,05 m² (predtým 3,36 m²). Ide o plochu otvorov, nie výpočet denného osvetlenia. Vonkajšie tienenie, bezpečnostné sklo a preklady dopracuje projektant.','Izba je medzi dvoma nosnými stenami 300 mm: západná (líce 15 243 mm) je o 100 mm bližšie než predtým v prospech spálne a kúpeľne, východná k zádveriu je v jednej línii so stenou chlapčenskej izby. Izba má 5 298 × 2 908 mm (15,41 m²), presne ako chlapčenská: chodba je vystredená a stena k nej leží na 6 412 mm. Okná si držia rozmery; medzi nimi zostávajú piliere 600 mm a pri oboch nosných stenách 224 mm.','Dvere 900 mm sú vystredené na dĺžku izby (17 442–18 342 mm) a ležia presne oproti dverám chlapčenskej izby. Zariadenie je zrkadlovým obrazom chlapčenskej izby: skriňa 1 600 × 600 mm stojí pri stene chodby v rohu pri zádverí, 599 mm od zárubne; regál na hračky je zrušený.'],
+  'ROOM-1-09':['Izba má 5 298 × 2 908 mm (15,41 m²), presne ako dievčenská: západná nosná stena je o 100 mm bližšie v prospech spálne a kúpeľne a stena k chodbe leží na 7 791 mm, v jednej rovine so stenou spálne a šatníka. Presklenie do dvora sa posunulo o 100 mm s posteľou, pred ktorou zostáva 217 mm k sklu.','Dvere 900 mm sú vystredené (17 442–18 342 mm) presne oproti dverám dievčenskej izby. Skriňa 1 600 × 600 mm stojí pri stene chodby v rohu pri zádverí, 599 mm od zárubne; regál na hračky je zrušený.'],
+  'ROOM-1-10':['Nosná stena k detským izbám je o 100 mm ďalej a južná stena spálne leží na rovine chodby 7 651–7 791 mm: spálňa má 3 800 × 2 908 mm (11,05 m²), po bokoch postele zostáva 554 mm a pred nohami 1 600 mm. Šatník za posuvnými dverami má 2 200 × 1 907 mm (4,20 m²).'],
+  'ROOM-1-11':['Kúpeľňa má 2 461 × 2 100 mm (5,17 m²); umývadlo aj WC sa držia východnej steny, ktorá je o 100 mm ďalej.'],
   'ROOM-1-06':['WC získalo ďalších 370 mm oproti predchádzajúcej verzii. Medzi priečkami má 1 899 × 1 800 mm a plochu 3,42 m² (predtým 2,75 m²). Po 10 mm obklade je šírka približne 1 879 mm.','Misa je vystredená na novej osi miestnosti. Umývadlo má 550 × 350 mm. Klasické dvere s krídlom 700 mm sa otvárajú dovnútra k severnej stene; vstupný otvor zostáva na mieste. Celý oblúk vrátane kľučiek je bez kolízie so sanitou.'],
   'ROOM-1-05':['Zalomený múr pri práčovni ustúpil o 300 mm, aby kotol získal servisný odstup. Zostava má 2 316 mm; práčka a sušička zostávajú plnohodnotné 600 × 600 mm. Sprcha zostáva na pôvodnom mieste.'],
   'ROOM-1-07':['Zostava podľa dohody zo 16.–17. 2. 2026: DEFRO Firewood Duo Plus 19 kW, násypka 180 kg a DBO-S 1 000 l. Pre 19 kW uvádza návod 1 000 l; objem sa neznižuje na 800 l.','Kotol: obal 1 238 × 1 298 × 1 391 mm na 50 mm podstavci. Celá zostava vrátane násypky, horáka a podstavcov je posunutá o 254,5 mm doprava a 250 mm k zadnej stene oproti predchádzajúcej verzii. Vpravo aj od zadnej roviny telesa ostáva 250 mm; vľavo 759 mm. Ide o požadovaný dispozičný návrh POD odstupmi 500 mm podľa výrobcu. Za modelovým zadným hrdlom je iba 37 mm; napojenie, čistenie a tento spôsob osadenia musí pred realizáciou potvrdiť dodávateľ kotla. Predný pás 2 000 mm sa meria od čela telesa; zahŕňa aj horák.','Nádrž: Ø1 106 × 1 913 mm s izoláciou, Ø897 mm bez nej. Je vystredená v ľavej časti miestnosti; oproti predošlej verzii sa posunula o 271,5 mm doprava a 288 mm nadol v pôdoryse. Prípojky sú natočené o 30° ku kuchynskému vstupu, aby ostal voľný prístup k násypke. Dvojkrídlové dvere s otvorom 1 700 mm majú konzervatívny čistý pás 1 352 mm a prah 20 mm. Nádrž prevážať zvislo na 100 mm podvozku podľa vyznačenej trasy, pred montážou prípojok.','Regál pri nádrži je odstránený. Hneď napravo od kuchynských dverí je plytká skriňa 720 × 261 × 1 750 mm: vľavo tri vrecia peliet vo zvislých priehradkách, vpravo tyčový vysávač na stene. Čelo sa posúva, nezasahuje do dverí ani do servisného pásu kotla. Jej požiarne oddelenie zatiaľ nie je schválené. Návod požaduje odstup od horľavých predmetov; voľné vrecia sem nepatria.','Technická má 8,67 m² namiesto 9,34 m². Zostava, nádrž aj skriňa sa obsluhujú zo spoločnej voľnej plochy; ku skrini už netreba prechádzať popri násypke. V modeli je overená súvislá trasa šírky 600 mm aj k násypke; konečné potrubia ju musia zachovať. Nad skriňou je rezerva na hydrauliku 720 × 261 × 650 mm, vo výške 1 850–2 500 mm. Presný rozmer DEFROmat, expanzia, potrubia, vetranie, komín a požiarna skladba vyžadujú dokončenie montážneho projektu. Model overuje priestor, nie povolenie na inštaláciu.'],
@@ -24,7 +36,7 @@ export const rectSize=(r:RectMm)=>[r.x1-r.x0,r.y1-r.y0] as const;
 export const numberSk=(n:number,digits=0)=>n.toLocaleString('sk-SK',{maximumFractionDigits:digits});
 export const formatMm=(n:number,unit:'mm'|'cm'|'m'='mm')=>`${numberSk(n/(unit==='m'?1000:unit==='cm'?10:1),unit==='m'?3:unit==='cm'?1:0)} ${unit}`;
 export const normalizeSearch=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const names:Record<string,string>={BED:'Posteľ',WARDROBE:'Šatníková skriňa',DESK:'Pracovný stôl',CHAIR:'Stolička',FEATURE:'Nástenný panel',ART:'Obraz',LIGHT:'Svietidlo',TOYS:'Úložný regál na hračky',BOOKS:'Knižnica',READING:'Čitateľský puf',PLAY:'Hrací koberec',DRAWING:'Kreslenie a pastelky',BENCH:'Lavička s botníkom',HOOKS:'Vešiakový panel',OVERHEAD:'Horná skriňa',MIRROR:'Zrkadlo',CABINET:'Skriňová zostava',PRINTER:'Tlačiareň','MONITOR-40-21:9':'Monitor',WHITEBOARD:'Magnetická tabuľa','UTILITY-SINK':'Pracovný drez','GARAGE-RACK':'Úložný regál','GARAGE-SHELF':'Nástenné police',PEGBOARD:'Náradie na stene','LONG-TOOL':'Záhradné náradie',MOWER:'Kosačka','GARAGE-CLUTTER':'Uložené predmety','WOOD-PELLET-BOILER':'Kotol na drevo a pelety','PELLET-HOPPER':'Zásobník peliet','PELLET-AUGER':'Podávač peliet','PELLET-BURNER':'Horák','PELLET-FEED-HOSE':'Hadica podávača','BUFFER-TANK-1000L':'Akumulačná nádrž','WALL-HUNG-WC':'Závesné WC','COMPACT-BASIN':'Umývadlo so zrkadlom','BATH-1800':'Vaňa',WC:'WC',WINDOW:'Obklad pri okne','VANITY-900':'Umývadlová skrinka so zrkadlom','WALK-IN-1250':'Sprchovací kút','BUILT-IN-2616':'Kúpeľňová zostava','LAUNDRY-TOWER':'Práčovňová skriňa','TOWEL-RADIATOR-600':'Rebríkový radiátor','BATH-105-WASHER':'Práčka','BATH-105-DRYER':'Sušička'};
+const names:Record<string,string>={BED:'Posteľ',WARDROBE:'Šatníková skriňa',DESK:'Pracovný stôl',CHAIR:'Stolička',FEATURE:'Nástenný panel',ART:'Obraz',LIGHT:'Svietidlo',BOOKS:'Knižnica',READING:'Čitateľský puf',PLAY:'Hrací koberec',DRAWING:'Kreslenie a pastelky',BENCH:'Lavička s botníkom',HOOKS:'Vešiakový panel',OVERHEAD:'Horná skriňa',MIRROR:'Zrkadlo',CABINET:'Skriňová zostava',PRINTER:'Tlačiareň','MONITOR-40-21:9':'Monitor',WHITEBOARD:'Magnetická tabuľa','UTILITY-SINK':'Pracovný drez','GARAGE-RACK':'Úložný regál','GARAGE-SHELF':'Nástenné police',PEGBOARD:'Náradie na stene','LONG-TOOL':'Záhradné náradie',MOWER:'Kosačka','GARAGE-CLUTTER':'Uložené predmety','WOOD-PELLET-BOILER':'Kotol na drevo a pelety','PELLET-HOPPER':'Zásobník peliet','PELLET-AUGER':'Podávač peliet','PELLET-BURNER':'Horák','PELLET-FEED-HOSE':'Hadica podávača','BUFFER-TANK-1000L':'Akumulačná nádrž','WALL-HUNG-WC':'Závesné WC','COMPACT-BASIN':'Umývadlo so zrkadlom','BATH-1800':'Vaňa',WC:'WC',WINDOW:'Obklad pri okne','VANITY-900':'Umývadlová skrinka so zrkadlom','WALK-IN-1250':'Sprchovací kút','BUILT-IN-2616':'Kúpeľňová zostava','LAUNDRY-TOWER':'Práčovňová skriňa','TOWEL-RADIATOR-600':'Rebríkový radiátor','BATH-105-WASHER':'Práčka','BATH-105-DRYER':'Sušička'};
 function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   const n=mesh.name, [prefix,tag='',part='']=n.split(' · ');
   if(/^(Lounge pohovka|Lounge ležadlo|Nízky stolík|Terasový stôl|Terasová stolička)/.test(prefix))return [prefix,prefix.replace(' z 3D','').replace('Lounge pohovka','Terasová pohovka').replace('Lounge ležadlo','Terasové ležadlo'),'furniture'];
@@ -41,9 +53,12 @@ function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   }
   if(mesh.source==='shell') {
     if(n.includes('Lodžia')&&n.includes('presklené dvere'))return ['LOGGIA-DOOR','Garáž → krytý zárez','openings'];
-    if(/plášť/.test(n)) return [n,`${prefix} · úsek ${n.match(/\d+$/)?.[0]}`,'walls'];
+    // Facade segments come as masonry + insulation layers (or one solid pier); both layers form one documented segment.
+    const segment=n.match(/^(.*) · (úsek \d+) · (murivo|izolácia|plné murivo)$/);
+    if(segment) return [`${segment[1]} · ${segment[2]}`,`${segment[1]} · ${segment[2]}`,'walls'];
     if(/Výplň|výplň|presklenie|garážové okno|svetlík/.test(n)) return [prefix.startsWith('Krytá')?`${prefix}-glazing`:prefix,prefix.includes('FRONT-ENTRY')?'Hlavné vstupné dvere':prefix.includes('EAST-03')?'Dvere technickej miestnosti':prefix.startsWith('Krytá')?'Pevné presklenie terasy':prefix.replace('Výplň otvoru','Okno').replace('Bočná výplň otvoru','Bočné okno'),'openings'];
-    return [n,n.replace(/modřínový/gi,'smrekovcový').replace(/modřínové/gi,'Smrekovcové'),/stena|pilier|podpor/.test(n)?'walls':'finishes'];
+    const base=n.replace(WALL_LAYER_SUFFIX,'');
+    return [base,base.replace(/modřínový/gi,'smrekovcový').replace(/modřínové/gi,'Smrekovcové'),/stena|pilier|podpor/.test(n)?'walls':'finishes'];
   }
   if(/FIREPLACE/.test(prefix))return [prefix,'Krbové kachle','equipment'];
   const wardrobe=HALLWAY_BUILT_IN_WARDROBES.find(w=>w.id===prefix);
@@ -55,7 +70,8 @@ function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   }
   if(prefix==='LIVING-103-TV-WALL')return [prefix,/TV/.test(prefix)?'TV stena':'Skrinka','furniture'];
   if(prefix==='LIVING-103-DINING') {
-    if(tag.startsWith('DINING-CHAIR')) return [tag,`Jedálenská stolička ${['SW','SE','NW','NE'].indexOf(tag.slice(-2))+1}`,'furniture'];
+    // Chairs are numbered 1–3 on the kitchen-side / wall-side row (S or W) and 4–6 on the other (N or E).
+    if(tag.startsWith('DINING-CHAIR')) return [tag,`Jedálenská stolička ${(/[SW]\d$/.test(tag)?0:3)+Number(tag.slice(-1))}`,'furniture'];
     if(n.includes('svietidlo'))return ['dining-light','Závesné svietidlo nad stolom','lighting'];
     return ['dining-table','Jedálenský stôl','furniture'];
   }
@@ -93,14 +109,25 @@ function closestRoom(r:RectMm) {
     return dist(a)-dist(b);
   })[0].id;
 }
+/** Item id suffix of a living-room layout; the default layout keeps the plain ids. */
+export const layoutSuffix=(layout:LivingLayoutId)=>layout===DEFAULT_LIVING_LAYOUT_ID?'':`-${layout}`;
+/** Variant pieces get their own item ids unless the id already names the variant (stove, flue). */
+function layoutItemId(base:string,layout:LivingLayoutId|undefined) {
+  if(!layout)return base;
+  const spec=LIVING_LAYOUTS[layout];
+  return base===spec.stove.id||base===spec.stove.flue.id?base:`${base}${layoutSuffix(layout)}`;
+}
 const grouped=new Map<string,PlanItem>();
 for(const mesh of generated.meshes) {
-  const [id,name,category]=semantic(mesh);
-  const item=grouped.get(id)??{id,name,category,roomId:'',meshes:[],rect:mesh.rect,z0:mesh.z0,z1:mesh.z1};
+  const [base,name,category]=semantic(mesh);
+  const layout=mesh.layout as LivingLayoutId|undefined;
+  const id=layoutItemId(base,layout);
+  const item=grouped.get(id)??{id,name,category,roomId:'',meshes:[],rect:mesh.rect,z0:mesh.z0,z1:mesh.z1,...(layout?{layout}:{})};
   item.meshes.push(mesh);grouped.set(id,item);
 }
 const openingSpecs=[...HOUSE.facades.front.openings,...HOUSE.facades.east.openings,HOUSE.facades.west.garageWindow];
-export const PLAN_ITEMS:PlanItem[]=[...grouped.values()].map(item=>{
+/** Every documented item of the model, including both living-room layouts. */
+export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
   item.rect=unionBounds(item.meshes.map(m=>m.rect));item.z0=Math.min(...item.meshes.map(m=>m.z0));item.z1=Math.max(...item.meshes.map(m=>m.z1));item.roomId=closestRoom(item.rect);
   const numberedRoom=item.id.match(/^1\.\d+/)?.[0];
   if(numberedRoom)item.roomId=INTERIOR_ROOMS.find(r=>r.number===numberedRoom)?.id??item.roomId;
@@ -114,7 +141,14 @@ export const PLAN_ITEMS:PlanItem[]=[...grouped.values()].map(item=>{
   }
   if(item.id===`${BEDROOM_FITOUT.id}-BED`)item.nominal=BEDROOM_FITOUT.bed.footprintMm;
   if(item.id===`${OFFICE_FITOUT.id}-DESK`)item.nominal=OFFICE_FITOUT.desk.footprintMm;
-  if(item.id==='sofa')item.nominal=unionBounds([LIVING_DINING_FITOUT.sofa.mainRectMm,LIVING_DINING_FITOUT.sofa.chaiseRectMm]);
+  for(const layoutId of LIVING_LAYOUT_IDS){
+    const spec=LIVING_LAYOUTS[layoutId],suffix=layoutSuffix(layoutId);
+    if(item.id===`sofa${suffix}`)item.nominal=unionBounds([spec.fitout.sofa.mainRectMm,spec.fitout.sofa.chaiseRectMm]);
+    if(item.id===`LIVING-103-TV-WALL${suffix}`)item.nominal=spec.fitout.tvWall.rectMm;
+    if(item.id===`dining-table${suffix}`)item.nominal=diningTableRectMm(spec.fitout.dining);
+    if(item.id===spec.stove.id)item.nominal=spec.stove.footprintMm;
+    if(item.layout===layoutId)item.roomId='ROOM-1-03';
+  }
   if(item.id==='kitchen-back')item.nominal={...KITCHEN_RUN.rectMm,x0:KITCHEN_RUN.fridgeUnitRectMm.x1};
   if(item.id==='kitchen-island')item.nominal=KITCHEN_RUN.peninsulaRectMm;
   if(item.id==='kitchen-return')item.nominal=KITCHEN_RUN.eastReturnRectMm;
@@ -144,8 +178,14 @@ export const PLAN_ITEMS:PlanItem[]=[...grouped.values()].map(item=>{
   if(item.id==='vehicle')item.note='Auto je zakreslené v zaparkovanej polohe modelu.';
   return item;
 });
-export const PLAN_ITEM_BY_ID=new Map(PLAN_ITEMS.map(item=>[item.id,item]));
-export const PLAN_MESH_BY_ID=new Map(PLAN_ITEMS.flatMap(item=>item.meshes.map(mesh=>[mesh.id,{mesh,item}] as const)));
+/** Items shown for one living-room layout: everything shared plus that layout's pieces. */
+export const planItemsFor=(layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID)=>PLAN_ITEMS_ALL.filter(item=>!item.layout||item.layout===layout);
+/** Items of the default layout; the active 3D model shows this arrangement. */
+export const PLAN_ITEMS:PlanItem[]=planItemsFor(DEFAULT_LIVING_LAYOUT_ID);
+export const PLAN_ITEM_BY_ID=new Map(PLAN_ITEMS_ALL.map(item=>[item.id,item]));
+export const PLAN_MESH_BY_ID=new Map(PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>[mesh.id,{mesh,item}] as const)));
+/** Guidance paragraphs of a room; the living room explains the selected layout. */
+export const planRoomNotes=(roomId:string,layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID):string[]|undefined=>roomId==='ROOM-1-03'?[...LIVING_LAYOUTS[layout].notes]:PLAN_ROOM_NOTES[roomId];
 export const PLAN_ROOMS=INTERIOR_ROOMS.map(room=>({...room,name:room.name.replace('Hlavný obytný priestor s kuchyňou','Obývačka a kuchyňa').replace('Zádverie, chodba, vstup','Zádverie'),area:roomAreaM2(room),bounds:roomBoundsMm(room)}));
 export const PLAN_FULL_BOUNDS:RectMm={x0:5350,y0:1550,x1:29200,y1:23300};
 
@@ -159,7 +199,7 @@ export function zoomPlanAt(view:PlanViewBox,factor:number,anchor:{x:number;y:num
   const width=Math.min(140000,Math.max(600,view.width*factor)),ratio=width/view.width;
   return {x:anchor.x+(view.x-anchor.x)*ratio,y:anchor.y+(view.y-anchor.y)*ratio,width,height:view.height*ratio};
 }
-export function searchPlanItems(query:string,roomId:string,category:PlanCategory|'all') {
+export function searchPlanItems(query:string,roomId:string,category:PlanCategory|'all',layout:LivingLayoutId=DEFAULT_LIVING_LAYOUT_ID) {
   const words=normalizeSearch(query).trim().split(/\s+/).filter(Boolean);
-  return PLAN_ITEMS.filter(item=>(!roomId||item.roomId===roomId)&&(category==='all'||item.category===category)&&words.every(word=>normalizeSearch(`${item.name} ${item.id} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.number} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.name} ${item.meshes.map(m=>m.name).join(' ')}`).includes(word)));
+  return planItemsFor(layout).filter(item=>(!roomId||item.roomId===roomId)&&(category==='all'||item.category===category)&&words.every(word=>normalizeSearch(`${item.name} ${item.id} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.number} ${PLAN_ROOMS.find(r=>r.id===item.roomId)?.name} ${item.meshes.map(m=>m.name).join(' ')}`).includes(word)));
 }
