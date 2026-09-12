@@ -669,9 +669,21 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       assert.match(main, /Dve súvislé skrine po 1,91 m/);
       assert.doesNotMatch(main, /Garáž → šatník · 800 mm/);
       // The route starts 400 mm inside the bed, which sits 554 mm off the 7791 bedroom wall.
-      assert.match(main, /M14343,-8745V-5140/);
+      assert.match(main, /M14343,-8745V-5704L14003,-5304H13863V-4904/);
       assert.match(main, /Dvere sú presne oproti spálni/);
-      assert.match(main, /WC je pri uličnej stene, umývadlová skrinka 60 × 50 cm pri pravej stene/);
+      // Client sketch: bath under the window, vanity left and WC right; a towel ladder replaces the doorway cabinet.
+      const bathText = main.replaceAll("<!-- -->", "");
+      assert.match(bathText, /pri stene šatníka je namiesto skrine rebríkový radiátor 60 × 150 cm s hĺbkou 10 cm/);
+      assert.match(bathText, /Vaňa 1,96 × 0,75 m leží pod oknom cez celú šírku kúpeľne/);
+      assert.match(bathText, /Umývadlová skrinka 0,90 × 0,50 m so zrkadlom je vľavo pri priečke ku garáži a závesné WC vpravo pri nosnej stene/);
+      assert.match(bathText, /Medzi umývadlom a WC zostáva 0,76 m voľného priestoru/);
+      assert.doesNotMatch(main, /WC je pri uličnej stene, umývadlová skrinka 60 × 50 cm pri pravej stene/);
+      assert.match(main, /Rebríkový radiátor pri dverách kúpeľne · 60 × 150 cm/);
+      assert.doesNotMatch(main, /Vysoká skrinka pri dverách kúpeľne/);
+      // Geometry, including the 500 mm transfer from bathroom to garage.
+      assert.match(main, /x="12982" y="-4254" width="1961" height="750"/);
+      assert.match(main, /x="14243" y="-5204" width="700" height="400"/);
+      assert.match(main, /x="12982" y="-5604" width="500" height="900"/);
       assert.match(main, /aria-label="Vyrovnané detské izby"/);
       assert.match(main, /data-facing="EAST"><title>Súvislá skriňa v zádverí · posuvné čelá · 1,90 × 0,70 m/);
       assert.match(main, /Vstavaná skriňa z chodby · dvor · 2,77 × 0,70 m/);
@@ -699,6 +711,12 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       // The bedroom door and the closet's pocket door share the garden room's wall line.
       assert.match(main, /x="13943" y="-7791" width="800" height="140" class="fp-door-gap"/);
       assert.match(main, /x="11793" y="-7791" width="800" height="140" class="fp-door-gap"/);
+      // The bathroom door sits in the wall moved onto the hall's south plane (6412–6552), opposite the bedroom door.
+      assert.match(main, /x="13943" y="-6552" width="800" height="140" class="fp-door-gap"/);
+      assert.doesNotMatch(main, /x="13943" y="-5744" width="800" height="140"/);
+      assert.match(main, /Vstavaná skriňa na konci chodby · posuvné dubové čelá · 1,10 × 0,46 m/);
+      assert.match(text, /kúpeľňa má tvar L s rozšírením 1,46 × 0,81 m a skriňa na konci chodby má hĺbku 1,10 m namiesto 1,91 m/);
+      assert.match(main, /Kúpeľňa: 5,30 m²/);
       assert.match(main, /6,19/);
       assert.match(main, /12,34/);
       assert.match(main, /ZÁDVERIE 2,40 m/);
@@ -706,7 +724,9 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       assert.match(main, /nosné murivo 300 mm/);
       assert.match(main, /priečka 140 mm; detská si drží plochu a chodba sa rozširuje na 1,10 m/);
       assert.match(text, /Spoločná chodba je posunutá o 5 cm k dvoru a vystredená medzi fasádami, takže obe detské izby majú hĺbku 2,91 m/);
-      assert.match(main, /17,46/);
+      // The hall end in front of the bathroom belongs to the bathroom: 16,28 m² instead of 17,46 m².
+      assert.match(main, /16,28/);
+      assert.doesNotMatch(main, /17,46/);
       assert.match(main, /Spálňa za novou priečkou · dvere 800 mm/);
       assert.match(main, /11,05/);
       assert.match(main, /4,20/);

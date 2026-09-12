@@ -10,8 +10,13 @@ describe('active export room-area authority', () => {
     expect(serialized.house.floorAreaM2).toBeCloseTo(expected, 9);
     // 1.625 m² less than before the three 300 mm bearing walls were introduced,
     // then +0.459964 m² as the central hall gains 59 mm from its 140 mm south
-    // partition, then +0.00712 m² as the centred hall narrows to 1 099 mm.
-    expect(expected).toBeCloseTo(180.267903, 9);
+    // partition, then +0.00712 m² as the centred hall narrows to 1 099 mm,
+    // then −0.46528 m² as the kitchen's back wall becomes 300 mm load-bearing
+    // masonry growing 160 mm into the 2 908 mm kitchen bay (12. 9. 2026), then
+    // −0.17902 m² as that wall runs to the east facade: the technical room's
+    // 1 680 × 699 mm protrusion (−1.17432 m²) becomes 1 850 × 538 mm of kitchen
+    // bay (+0.9953 m²), the rest is the new 860 mm wall piece and the door.
+    expect(expected).toBeCloseTo(179.623603, 9);
     expect(serialized.house.floorAreaAuthority).toEqual({kind: 'ACTIVE_ROOM_RECTANGLE_SUM', layoutId: serialized.layoutId, source: 'lib/twin-interior.ts:INTERIOR_ROOMS', includesGarage: true});
     expect(serialized.interior.rooms.some((r: typeof INTERIOR_ROOMS[number]) => r.id === 'ROOM-1-12')).toBe(true);
   });

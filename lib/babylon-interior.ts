@@ -35,6 +35,8 @@ import {
   INTERIOR_RENDER_WALLS,
   INTERIOR_WALLS,
   INTERIOR_WALL_HEIGHT_MM,
+  KITCHEN_BEARING_WALL,
+  KITCHEN_BEARING_WALL_EAST,
   KITCHEN_RUN,
   OFFICE_FITOUT,
   TECHNICAL_HEATING_FITOUT,
@@ -662,7 +664,9 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
         walkSurfaceId: `interior-room-${room.id}-${index + 1}`,
       });
 
-      const vaulted = room.ceiling === "VAULTED_TO_RIDGE" && index === 0;
+      // The whole living room, including the kitchen bay up to the load-bearing
+      // kitchen wall, lies under the wing roof and its cathedral ceiling.
+      const vaulted = room.ceiling === "VAULTED_TO_RIDGE";
       if (!vaulted) {
         const ceiling = texturedBox(
           context.scene,
@@ -681,60 +685,85 @@ function buildFloorsAndCeilings(context: InteriorBuildContext, materials: Interi
   }
 }
 
-/** Sloped SDK ceiling of 1.03 following the wing roof up to the ridge. */
+/**
+ * Sloped SDK ceiling of 1.03 following the wing roof up to the ridge. Every
+ * floor part of the room lies under the wing roof, so the kitchen bay between
+ * the corridor spine and the east facade is vaulted up to the 300 mm
+ * load-bearing kitchen wall that carries the ring beam and the steel roof
+ * frames (12. 9. 2026).
+ */
 function buildVault(context: InteriorBuildContext, materials: InteriorMaterials, room: InteriorRoom) {
-  const rect = room.rectsMm[0];
   const bounds = roomBoundsMm(room);
   const halfSpanMm = WING_RIDGE_XMM - bounds.x0;
   const wallClearMm = room.clearHeightMm;
-  const ridgeM = VAULT_RIDGE_MM * MM_TO_M;
-  const wallM = wallClearMm * MM_TO_M;
+  const elevation = (xMm: number) => vaultElevationMm(xMm, wallClearMm, halfSpanMm);
+  const label = (mm: number) => (mm / 1000).toFixed(3).replace(".", ",");
   const thicknessM = 0.04;
-  const depthMm = rect.y1 - rect.y0;
-  const centerY = (rect.y0 + rect.y1) / 2;
-  for (const side of [-1, 1] as const) {
-    const startX = side < 0 ? bounds.x0 : WING_RIDGE_XMM;
-    const endX = side < 0 ? WING_RIDGE_XMM : bounds.x1;
-    const runM = (endX - startX) * MM_TO_M;
-    const riseM = ridgeM - wallM;
-    const lengthM = Math.hypot(runM, riseM);
-    const slab = texturedBox(
-      context.scene,
-      `${room.number} · šikmý SDK podhľad ${side < 0 ? "západ" : "východ"} · +2,750 → +4,850`,
-      { x: (startX + endX) / 2, y: centerY },
-      Math.round(lengthM * 1000),
-      depthMm,
-      thicknessM,
-      (wallM + ridgeM) / 2,
-      2,
-    );
-    slab.rotation.z = side < 0 ? Math.atan2(riseM, runM) : -Math.atan2(riseM, runM);
-    finish(context, slab, materials.ceiling, { cameraOccluder: true });
+  for (const [index, rect] of room.rectsMm.entries()) {
+    for (const side of [-1, 1] as const) {
+      const startX = side < 0 ? rect.x0 : Math.max(rect.x0, WING_RIDGE_XMM);
+      const endX = side < 0 ? Math.min(rect.x1, WING_RIDGE_XMM) : rect.x1;
+      if (endX <= startX) continue;
+      const runM = (endX - startX) * MM_TO_M;
+      const riseM = (elevation(endX) - elevation(startX)) * MM_TO_M;
+      const lengthM = Math.hypot(runM, riseM);
+      const lowMm = Math.min(elevation(startX), elevation(endX));
+      const highMm = Math.max(elevation(startX), elevation(endX));
+      const slab = texturedBox(
+        context.scene,
+        `${room.number} · šikmý SDK podhľad ${side < 0 ? "západ" : "východ"}${index ? " · kuchynský záliv" : ""} · +${label(lowMm)} → +${label(highMm)}`,
+        { x: (startX + endX) / 2, y: (rect.y0 + rect.y1) / 2 },
+        Math.round(lengthM * 1000),
+        rect.y1 - rect.y0,
+        thicknessM,
+        ((elevation(startX) + elevation(endX)) / 2) * MM_TO_M,
+        2,
+      );
+      slab.rotation.z = Math.atan2(riseM, runM);
+      finish(context, slab, materials.ceiling, { cameraOccluder: true });
+    }
   }
-  // Triangular closures of the vault above the south and north walls.
+  // Closures of the vault along the room's south boundary: above the corridor
+  // mouth, above the corridor spine (which stops at the general wall height)
+  // and above the load-bearing kitchen wall, which runs in one line to the
+  // east facade; the lintel of the technical-room door reaches the wall crown,
+  // so the closure is continuous over it. The north end toward the porch is
+  // the glazed gable (HOUSE.porches.wingEnd.glazing.gable).
+  const main = room.rectsMm[0];
+  const corridor = INTERIOR_ROOMS.find((other) => other.id === "ROOM-1-02")!;
+  const spine = INTERIOR_WALLS.find((wall) => wall.id === "IW-SPINE-EAST-3")!.rectMm;
+  const bearing = KITCHEN_BEARING_WALL;
+  const closures = [
+    { name: "južný štít podhľadu · ústie chodby", x0: main.x0, x1: spine.x0, y0: main.y0 - 139, y1: main.y0, baseMm: corridor.clearHeightMm },
+    { name: "štít podhľadu · nad východnou stenou chodby", x0: spine.x0, x1: spine.x1, y0: spine.y0, y1: spine.y1, baseMm: INTERIOR_WALL_HEIGHT_MM },
+    { name: "južný štít podhľadu · nad nosnou stenou kuchyne", x0: bearing.x0, x1: KITCHEN_BEARING_WALL_EAST.x1, y0: bearing.y0, y1: bearing.y1, baseMm: INTERIOR_WALL_HEIGHT_MM },
+  ];
   const apex = { alongMm: WING_RIDGE_XMM, elevationMm: VAULT_RIDGE_MM };
-  // Only the south end is closed; the north end toward the porch is the
-  // glazed gable (HOUSE.porches.wingEnd.glazing.gable).
-  for (const [label, y0, y1] of [["južný", rect.y0 - 139, rect.y0]] as const) {
-    const closure = profileSolidY(
-      context.scene,
-      `${room.number} · ${label} štít podhľadu`,
-      [
-        { alongMm: bounds.x0, elevationMm: wallClearMm },
-        { alongMm: bounds.x1, elevationMm: wallClearMm },
-        { alongMm: bounds.x1, elevationMm: vaultElevationMm(bounds.x1, wallClearMm, halfSpanMm) },
-        apex,
-        { alongMm: bounds.x0, elevationMm: vaultElevationMm(bounds.x0, wallClearMm, halfSpanMm) },
-      ].filter(
-        (point, index, points) =>
-          index === 0 ||
-          Math.abs(point.elevationMm - points[index - 1].elevationMm) > 1 ||
-          Math.abs(point.alongMm - points[index - 1].alongMm) > 1,
-      ),
-      y0,
-      y1,
+  for (const closure of closures) {
+    // Only where the vault is above the closure's base; toward the east wall
+    // the soffit drops below the wall tops.
+    const reachMm =
+      halfSpanMm * (1 - (closure.baseMm - wallClearMm) / (VAULT_RIDGE_MM - wallClearMm));
+    const xa = Math.max(closure.x0, WING_RIDGE_XMM - reachMm);
+    const xb = Math.min(closure.x1, WING_RIDGE_XMM + reachMm);
+    if (xb - xa < 1) continue;
+    const profile = [
+      { alongMm: xa, elevationMm: closure.baseMm },
+      { alongMm: xb, elevationMm: closure.baseMm },
+      { alongMm: xb, elevationMm: elevation(xb) },
+      ...(xa < WING_RIDGE_XMM && xb > WING_RIDGE_XMM ? [apex] : []),
+      { alongMm: xa, elevationMm: elevation(xa) },
+    ].filter(
+      (point, index, points) =>
+        index === 0 ||
+        Math.abs(point.elevationMm - points[index - 1].elevationMm) > 1 ||
+        Math.abs(point.alongMm - points[index - 1].alongMm) > 1,
     );
-    finish(context, closure, materials.plaster, { collide: true });
+    const last = profile[profile.length - 1];
+    if (profile.length > 3 && Math.abs(last.alongMm - profile[0].alongMm) <= 1 && Math.abs(last.elevationMm - profile[0].elevationMm) <= 1) profile.pop();
+    if (profile.length < 3) continue;
+    const solid = profileSolidY(context.scene, `${room.number} · ${closure.name}`, profile, closure.y0, closure.y1);
+    finish(context, solid, materials.plaster, { collide: true });
   }
 }
 
@@ -3081,75 +3110,7 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
   );
   finish(context, topCornice, materials.kitchenFront, { shadow: true });
 
-  const radiator = fitout.towelRadiator;
-  const radiatorCenter = rectCenter(radiator.footprintMm);
-  const radiatorCenterElevationM =
-    (radiator.bottomElevationMm + radiator.heightMm / 2) * MM_TO_M;
-  const railInsetMm = radiator.railDiameterMm / 2;
-  for (const [index, xMm] of [
-    radiator.footprintMm.x0 + railInsetMm,
-    radiator.footprintMm.x1 - railInsetMm,
-  ].entries()) {
-    const rail = CreateCylinder(
-      `${fitout.id} · TOWEL-RADIATOR-600 · zvislý kolektor ${index + 1}`,
-      {
-        height: radiator.heightMm * MM_TO_M,
-        diameter: radiator.railDiameterMm * MM_TO_M,
-        tessellation: 24,
-      },
-      context.scene,
-    );
-    rail.position.set(
-      xM(xMm),
-      radiatorCenterElevationM,
-      zM(radiator.footprintMm.y1 - railInsetMm),
-    );
-    finish(context, rail, materials.fireplace, { shadow: true, pickable: true });
-  }
-  const rungWidthM =
-    (radiator.widthMm - radiator.railDiameterMm * 1.25) * MM_TO_M;
-  for (let index = 0; index < radiator.rungCount; index += 1) {
-    const rung = CreateCylinder(
-      `${fitout.id} · TOWEL-RADIATOR-600 · vodorovná priečka ${index + 1}`,
-      {
-        height: rungWidthM,
-        diameter: 0.022,
-        tessellation: 24,
-      },
-      context.scene,
-    );
-    rung.rotation.z = Math.PI / 2;
-    rung.position.set(
-      xM(radiatorCenter.x),
-      (radiator.bottomElevationMm +
-        55 +
-        index * ((radiator.heightMm - 110) / (radiator.rungCount - 1))) *
-        MM_TO_M,
-      zM(radiator.footprintMm.y1),
-    );
-    finish(context, rung, materials.fireplace, { shadow: true, pickable: true });
-  }
-  for (const [xMm, elevationMm] of [
-    [radiator.footprintMm.x0 + 70, radiator.bottomElevationMm + 120],
-    [radiator.footprintMm.x1 - 70, radiator.bottomElevationMm + radiator.heightMm - 120],
-  ] as const) {
-    const wallMount = CreateCylinder(
-      `${fitout.id} · TOWEL-RADIATOR-600 · nástenná konzola`,
-      {
-        height: radiator.projectionMm * MM_TO_M,
-        diameter: 0.026,
-        tessellation: 20,
-      },
-      context.scene,
-    );
-    wallMount.rotation.x = Math.PI / 2;
-    wallMount.position.set(
-      xM(xMm),
-      elevationMm * MM_TO_M,
-      zM((radiator.footprintMm.y0 + radiator.footprintMm.y1) / 2),
-    );
-    finish(context, wallMount, materials.fireplace, { shadow: true });
-  }
+  buildTowelRadiator(context, materials, fitout.id, fitout.towelRadiator);
 
   navigationGuard(
     context,
@@ -3163,12 +3124,38 @@ function buildBathroomFitout(context: InteriorBuildContext, materials: InteriorM
     `${fitout.id} · WALK-IN-1250 · navigačný obrys skla`,
     { x0: panel.x0 - 10, y0: panel.y0, x1: panel.x1 + 10, y1: panel.y1 },
   );
-  navigationGuard(
-    context,
-    materials,
-    `${fitout.id} · TOWEL-RADIATOR-600 · hladký navigačný obrys`,
-    radiator.footprintMm,
-  );
+
+}
+
+type TowelRadiator = Omit<typeof BATHROOM_FITOUT.towelRadiator,'id'|'wallId'|'facing'> & {facing:'NORTH'|'EAST'};
+function buildTowelRadiator(context:InteriorBuildContext, materials:InteriorMaterials, fitoutId:string, radiator:TowelRadiator) {
+  const r=radiator.footprintMm, alongY=radiator.facing==='EAST';
+  const point=(along:number,depth:number):Point2Mm=>alongY?{x:r.x0+depth,y:r.y0+along}:{x:r.x0+along,y:r.y0+depth};
+  const railRadius=radiator.railDiameterMm/2;
+  for(const [i,along] of [railRadius,radiator.widthMm-railRadius].entries()) {
+    const rail=CreateCylinder(`${fitoutId} · TOWEL-RADIATOR-600 · zvislý kolektor ${i+1}`,
+      {height:radiator.heightMm*MM_TO_M,diameter:radiator.railDiameterMm*MM_TO_M,tessellation:24},context.scene);
+    const p=point(along,radiator.projectionMm-railRadius);
+    rail.position.set(xM(p.x),(radiator.bottomElevationMm+radiator.heightMm/2)*MM_TO_M,zM(p.y));
+    finish(context,rail,materials.fireplace,{shadow:true,pickable:true});
+  }
+  for(let i=0;i<radiator.rungCount;i++) {
+    const rung=CreateCylinder(`${fitoutId} · TOWEL-RADIATOR-600 · vodorovná priečka ${i+1}`,
+      {height:(radiator.widthMm-radiator.railDiameterMm*1.25)*MM_TO_M,diameter:0.022,tessellation:24},context.scene);
+    if(alongY) rung.rotation.x=Math.PI/2; else rung.rotation.z=Math.PI/2;
+    const p=point(radiator.widthMm/2,radiator.projectionMm);
+    rung.position.set(xM(p.x),(radiator.bottomElevationMm+55+i*(radiator.heightMm-110)/(radiator.rungCount-1))*MM_TO_M,zM(p.y));
+    finish(context,rung,materials.fireplace,{shadow:true,pickable:true});
+  }
+  for(const [along,height] of [[70,120],[radiator.widthMm-70,radiator.heightMm-120]]) {
+    const mount=CreateCylinder(`${fitoutId} · TOWEL-RADIATOR-600 · nástenná konzola`,
+      {height:radiator.projectionMm*MM_TO_M,diameter:0.026,tessellation:20},context.scene);
+    if(alongY) mount.rotation.z=Math.PI/2; else mount.rotation.x=Math.PI/2;
+    const p=point(along,radiator.projectionMm/2);
+    mount.position.set(xM(p.x),(radiator.bottomElevationMm+height)*MM_TO_M,zM(p.y));
+    finish(context,mount,materials.fireplace,{shadow:true});
+  }
+  navigationGuard(context,materials,`${fitoutId} · TOWEL-RADIATOR-600 · hladký navigačný obrys`,r);
 }
 
 /**
@@ -3184,12 +3171,19 @@ function buildEnsuiteBathroomFitout(
   const bathtub = fitout.bathtub;
   const bathRect = bathtub.footprintMm;
   const bathCenter = rectCenter(bathRect);
+  // A bath along the street wall runs east–west with its taps at the west end;
+  // one along a side wall runs north–south with its taps at the street end.
+  // `bathWallX` is the wall the taps hang on, `bathIn` points into the room.
+  const bathAlongX = bathtub.facing === "NORTH";
+  const bathWallX = bathtub.facing === "WEST" ? bathRect.x1 : bathRect.x0;
+  const bathIn = bathtub.facing === "WEST" ? -1 : 1;
+  const bathWindow = HOUSE.facades.front.openings.find((opening) => opening.id === fitout.frontWindowId)!;
 
   const windowBacksplash = texturedBox(
     context.scene,
     `${fitout.id} · WINDOW · súvislý veľkoformátový obklad pod vysokým oknom`,
-    { x: (bathRect.x0 + fitout.vanity.footprintMm.x1) / 2, y: 3514 },
-    750,
+    { x: bathWindow.startXmm + bathWindow.widthMm / 2, y: 3514 },
+    bathWindow.widthMm,
     20,
     fitout.windowBacksplashTopElevationMm * MM_TO_M,
     0,
@@ -3199,7 +3193,7 @@ function buildEnsuiteBathroomFitout(
 
   const bathBody = texturedBox(
     context.scene,
-    `${fitout.id} · BATH-1800 · čistá biela vaňa so zaobleným vnútrom`,
+    `${fitout.id} · BATH-WALL · čistá biela vaňa so zaobleným vnútrom`,
     bathCenter,
     bathRect.x1 - bathRect.x0,
     bathRect.y1 - bathRect.y0,
@@ -3213,54 +3207,76 @@ function buildEnsuiteBathroomFitout(
     cameraOccluder: true,
   });
   const bathRim = CreateTorus(
-    `${fitout.id} · BATH-1800 · tenký oválny lem`,
+    `${fitout.id} · BATH-WALL · tenký oválny lem`,
     { diameter: 1, thickness: 0.05, tessellation: 56 },
     context.scene,
   );
   bathRim.position.set(xM(bathCenter.x), bathtub.rimElevationMm * MM_TO_M, zM(bathCenter.y));
-  bathRim.scaling.set(0.57, 0.72, 1.57);
+  bathRim.scaling.set((bathRect.x1-bathRect.x0-(bathAlongX?130:180))*MM_TO_M, 0.72, (bathRect.y1-bathRect.y0-(bathAlongX?180:130))*MM_TO_M);
   finish(context, bathRim, materials.sanitaryCeramic, { shadow: true, pickable: true });
   softEllipsoid(
     context,
-    `${fitout.id} · BATH-1800 · hladké vnútro vane`,
+    `${fitout.id} · BATH-WALL · hladké vnútro vane`,
     rectCenter(bathtub.innerBasinMm),
-    [0.5, 0.018, 1.45],
+    [(bathtub.innerBasinMm.x1-bathtub.innerBasinMm.x0-(bathAlongX?50:110))*MM_TO_M, 0.018, (bathtub.innerBasinMm.y1-bathtub.innerBasinMm.y0-(bathAlongX?110:50))*MM_TO_M],
     bathtub.rimElevationMm * MM_TO_M + 0.004,
     materials.mirrorGlass,
   );
   const bathDrain = CreateCylinder(
-    `${fitout.id} · BATH-1800 · matne čierna výpusť`,
+    `${fitout.id} · BATH-WALL · matne čierna výpusť`,
     { height: 0.008, diameter: 0.055, tessellation: 28 },
     context.scene,
   );
-  bathDrain.position.set(xM(bathCenter.x), 0.586, zM(bathtub.innerBasinMm.y1 - 120));
+  // The drain sits under the spout at the tap end.
+  bathDrain.position.set(
+    xM(bathAlongX ? bathtub.innerBasinMm.x0 + 120 : bathCenter.x),
+    0.586,
+    zM(bathAlongX ? bathCenter.y : bathtub.innerBasinMm.y0 + 120),
+  );
   finish(context, bathDrain, materials.fireplace, { pickable: true });
 
+  // The concealed mixer sits on the wall behind the bath, 280 mm from the tap end.
   const bathMixer = texturedBox(
     context.scene,
-    `${fitout.id} · BATH-1800 · podomietková čierna batéria`,
-    { x: bathRect.x0 + 12, y: bathRect.y0 + 280 },
-    24,
-    220,
+    `${fitout.id} · BATH-WALL · podomietková čierna batéria`,
+    bathAlongX ? { x: bathRect.x0 + 280, y: bathRect.y0 + 12 } : { x: bathWallX + bathIn * 12, y: bathRect.y0 + 280 },
+    bathAlongX ? 220 : 24,
+    bathAlongX ? 24 : 220,
     0.1,
     0.76,
     1,
   );
   finish(context, bathMixer, materials.fireplace, { pickable: true });
   const bathSpout = CreateCylinder(
-    `${fitout.id} · BATH-1800 · nástenný výtok`,
+    `${fitout.id} · BATH-WALL · nástenný výtok`,
     { height: 0.2, diameter: 0.026, tessellation: 24 },
     context.scene,
   );
-  bathSpout.rotation.z = Math.PI / 2;
-  bathSpout.position.set(xM(bathRect.x0 + 105), 0.81, zM(bathRect.y0 + 280));
+  if (bathAlongX) {
+    bathSpout.rotation.x = Math.PI / 2;
+    bathSpout.position.set(xM(bathRect.x0 + 280), 0.81, zM(bathRect.y0 + 105));
+  } else {
+    bathSpout.rotation.z = Math.PI / 2;
+    bathSpout.position.set(xM(bathWallX + bathIn * 105), 0.81, zM(bathRect.y0 + 280));
+  }
   finish(context, bathSpout, materials.fireplace, { shadow: true });
 
   const toilet = fitout.toilet;
   const toiletCenter = rectCenter(toilet.footprintMm);
+  // The bowl points away from its cistern wall:
+  // `along` is measured from that wall on the bowl's axis, `across` sideways.
+  const wcAlongX = toilet.facing === "EAST" || toilet.facing === "WEST";
+  const wcOut = toilet.facing === "SOUTH" || toilet.facing === "WEST" ? -1 : 1;
+  const wcWall = wcAlongX
+    ? (wcOut > 0 ? toilet.footprintMm.x0 : toilet.footprintMm.x1)
+    : (wcOut > 0 ? toilet.footprintMm.y0 : toilet.footprintMm.y1);
+  const wcPoint = (alongMm: number, acrossMm = 0): Point2Mm => wcAlongX
+    ? { x: wcWall + wcOut * alongMm, y: toiletCenter.y + acrossMm }
+    : { x: toiletCenter.x + acrossMm, y: wcWall + wcOut * alongMm };
+  const wcSize = <T>(along: T, across: T): [T, T] => wcAlongX ? [along, across] : [across, along];
   const cistern = texturedBox(
     context.scene,
-    `${fitout.id} · WC · podomietkový modul pod vysokým oknom`,
+    `${fitout.id} · WC · podomietkový modul v predstene`,
     rectCenter(toilet.concealedCisternRectMm),
     toilet.concealedCisternRectMm.x1 - toilet.concealedCisternRectMm.x0,
     toilet.concealedCisternRectMm.y1 - toilet.concealedCisternRectMm.y0,
@@ -3280,44 +3296,47 @@ function buildEnsuiteBathroomFitout(
     1,
   );
   finish(context, cisternCap, materials.sanitaryCeramic, { shadow: true });
+  const cisternDepthMm = wcAlongX
+    ? toilet.concealedCisternRectMm.x1 - toilet.concealedCisternRectMm.x0
+    : toilet.concealedCisternRectMm.y1 - toilet.concealedCisternRectMm.y0;
+  const flushPlatePoint = wcPoint(cisternDepthMm + 6);
   const flushPlate = texturedBox(
     context.scene,
     `${fitout.id} · WC · matne čierne dvojité splachovanie`,
-    { x: toiletCenter.x, y: toilet.concealedCisternRectMm.y1 + 6 },
-    190,
-    12,
+    flushPlatePoint,
+    ...wcSize(12, 190),
     0.11,
     0.84,
     1,
   );
   finish(context, flushPlate, materials.fireplace, { pickable: true });
-  for (const xOffsetMm of [-42, 42]) {
+  for (const offsetMm of [-42, 42]) {
     const button = CreateCylinder(
       `${fitout.id} · WC · splachovacie tlačidlo`,
-      { height: 0.012, diameter: xOffsetMm < 0 ? 0.052 : 0.038, tessellation: 24 },
+      { height: 0.012, diameter: offsetMm < 0 ? 0.052 : 0.038, tessellation: 24 },
       context.scene,
     );
-    button.rotation.x = Math.PI / 2;
-    button.position.set(
-      xM(toiletCenter.x + xOffsetMm),
-      0.895,
-      zM(toilet.concealedCisternRectMm.y1 + 13),
-    );
+    if (wcAlongX) button.rotation.z = Math.PI / 2;
+    else button.rotation.x = Math.PI / 2;
+    const buttonPoint = wcPoint(cisternDepthMm + 13, offsetMm);
+    button.position.set(xM(buttonPoint.x), 0.895, zM(buttonPoint.y));
     finish(context, button, materials.blackGlass);
   }
+  const [bowlX, bowlY] = wcSize(0.44, 0.34);
   softEllipsoid(
     context,
     `${fitout.id} · WC · kompaktná závesná misa`,
-    { x: toiletCenter.x, y: toilet.footprintMm.y0 + 340 },
-    [0.34, 0.28, 0.44],
+    wcPoint(340),
+    [bowlX, 0.28, bowlY],
     0.32,
     materials.sanitaryCeramic,
   );
+  const [bowlInnerX, bowlInnerY] = wcSize(0.3, 0.23);
   softEllipsoid(
     context,
     `${fitout.id} · WC · vnútro misy`,
-    { x: toiletCenter.x, y: toilet.footprintMm.y0 + 386 },
-    [0.23, 0.024, 0.3],
+    wcPoint(386),
+    [bowlInnerX, 0.024, bowlInnerY],
     0.455,
     materials.mirrorGlass,
   );
@@ -3326,19 +3345,31 @@ function buildEnsuiteBathroomFitout(
     { diameter: 0.31, thickness: 0.032, tessellation: 40 },
     context.scene,
   );
-  toiletSeat.position.set(xM(toiletCenter.x), toilet.seatElevationMm * MM_TO_M, zM(toilet.footprintMm.y0 + 344));
-  toiletSeat.scaling.set(1, 0.7, 1.32);
+  const seatPoint = wcPoint(344);
+  const [seatX, seatZ] = wcSize(1.32, 1);
+  toiletSeat.position.set(xM(seatPoint.x), toilet.seatElevationMm * MM_TO_M, zM(seatPoint.y));
+  toiletSeat.scaling.set(seatX, 0.7, seatZ);
   finish(context, toiletSeat, materials.sanitaryCeramic, { shadow: true, pickable: true });
 
   const vanity = fitout.vanity;
   const vanityRect = vanity.footprintMm;
   const vanityCenter = rectCenter(vanityRect);
+  // `vanityIn` points from either side wall (or the street wall) into the room.
+  const vanityAlongX = vanity.facing === "WEST" || vanity.facing === "EAST";
+  const vanityIn = vanity.facing === "WEST" ? -1 : 1;
+  const vanityDepthMm = vanityAlongX ? vanityRect.x1 - vanityRect.x0 : vanityRect.y1 - vanityRect.y0;
+  const vanityLengthMm = vanityAlongX ? vanityRect.y1 - vanityRect.y0 : vanityRect.x1 - vanityRect.x0;
+  const vanityWallMm = vanityAlongX ? (vanityIn > 0 ? vanityRect.x0 : vanityRect.x1) : vanityRect.y0;
+  /** A point `inMm` from the wall on the vanity's axis, `alongMm` from its centre. */
+  const vanityPoint = (inMm: number, alongMm = 0): Point2Mm => vanityAlongX
+    ? { x: vanityWallMm + vanityIn * inMm, y: vanityCenter.y + alongMm }
+    : { x: vanityCenter.x + alongMm, y: vanityWallMm + vanityIn * inMm };
+  const vanitySize = <T>(inward: T, along: T): [T, T] => vanityAlongX ? [inward, along] : [along, inward];
   const vanityShadow = texturedBox(
     context.scene,
     `${fitout.id} · VANITY-900 · tieň pod plávajúcou skrinkou`,
-    { x: vanityCenter.x + 35, y: vanityCenter.y },
-    vanityRect.x1 - vanityRect.x0 - 70,
-    vanityRect.y1 - vanityRect.y0 - 60,
+    vanityPoint(vanityDepthMm / 2 - 35),
+    ...vanitySize(vanityDepthMm - 70, vanityLengthMm - 60),
     0.07,
     0.15,
     1,
@@ -3367,19 +3398,24 @@ function buildEnsuiteBathroomFitout(
   );
   finish(context, vanityTop, materials.worktop, { shadow: true, pickable: true });
   const basinCenter = rectCenter(vanity.basinFootprintMm);
+  const [basinInX, basinInZ] = vanitySize((vanityDepthMm - 100) * MM_TO_M, 0.36);
   softEllipsoid(
     context,
     `${fitout.id} · VANITY-900 · veľké biele integrované umývadlo`,
     basinCenter,
-    [0.36, 0.14, (vanityRect.y1-vanityRect.y0-100)*MM_TO_M],
+    [basinInX, 0.14, basinInZ],
     vanity.basinRimElevationMm * MM_TO_M - 0.05,
     materials.sanitaryCeramic,
   );
+  const [innerInX, innerInZ] = vanitySize((vanityDepthMm - 210) * MM_TO_M, 0.24);
+  const basinInnerCenter = vanityAlongX
+    ? { x: basinCenter.x + vanityIn * 20, y: basinCenter.y }
+    : { x: basinCenter.x, y: basinCenter.y + 20 };
   softEllipsoid(
     context,
     `${fitout.id} · VANITY-900 · vnútorná misa`,
-    { x: basinCenter.x - 20, y: basinCenter.y },
-    [0.24, 0.024, (vanityRect.y1-vanityRect.y0-210)*MM_TO_M],
+    basinInnerCenter,
+    [innerInX, 0.024, innerInZ],
     vanity.basinRimElevationMm * MM_TO_M + 0.008,
     materials.mirrorGlass,
   );
@@ -3388,19 +3424,23 @@ function buildEnsuiteBathroomFitout(
     { height: 0.008, diameter: 0.052, tessellation: 24 },
     context.scene,
   );
+  const drainPoint = vanityAlongX
+    ? { x: basinCenter.x + vanityIn * 58, y: basinCenter.y }
+    : { x: basinCenter.x, y: basinCenter.y + 58 };
   vanityDrain.position.set(
-    xM(basinCenter.x - 58),
+    xM(drainPoint.x),
     vanity.basinRimElevationMm * MM_TO_M + 0.022,
-    zM(basinCenter.y),
+    zM(drainPoint.y),
   );
   finish(context, vanityDrain, materials.fireplace, { pickable: true });
 
+  const mirrorRect = vanity.mirrorPlanRectMm;
+  const mirrorLengthMm = vanityAlongX ? mirrorRect.y1 - mirrorRect.y0 : mirrorRect.x1 - mirrorRect.x0;
   const mirrorGlow = texturedBox(
     context.scene,
     `${fitout.id} · VANITY-900 · nepriame LED za zrkadlom`,
-    { x: vanity.mirrorPlanRectMm.x1 - 2, y: vanityCenter.y },
-    4,
-    vanity.mirrorPlanRectMm.y1 - vanity.mirrorPlanRectMm.y0 + 40,
+    vanityAlongX ? { x: vanityIn > 0 ? mirrorRect.x0 + 2 : mirrorRect.x1 - 2, y: vanityCenter.y } : { x: vanityCenter.x, y: mirrorRect.y0 + 2 },
+    ...vanitySize(4, mirrorLengthMm + 40),
     (vanity.mirrorTopElevationMm - vanity.mirrorBottomElevationMm + 40) * MM_TO_M,
     (vanity.mirrorBottomElevationMm - 20) * MM_TO_M,
     1,
@@ -3422,8 +3462,10 @@ function buildEnsuiteBathroomFitout(
     { height: 0.18, diameter: 0.028, tessellation: 24 },
     context.scene,
   );
-  wallTap.rotation.z = Math.PI / 2;
-  wallTap.position.set(xM(vanityRect.x1 - 90), 1.08, zM(vanityCenter.y));
+  if (vanityAlongX) wallTap.rotation.z = Math.PI / 2;
+  else wallTap.rotation.x = Math.PI / 2;
+  const tapPoint = vanityPoint(90);
+  wallTap.position.set(xM(tapPoint.x), 1.08, zM(tapPoint.y));
   finish(context, wallTap, materials.fireplace, { shadow: true });
 
   const ceilingLight = CreateCylinder(
@@ -3431,11 +3473,13 @@ function buildEnsuiteBathroomFitout(
     { height: 0.018, diameter: 0.28, tessellation: 40 },
     context.scene,
   );
-  ceilingLight.position.set(xM((bathRect.x1+vanityRect.x0)/2), 2.565, zM(4560));
+  // Over the free floor between the WC bowl, the bath rim and the vanity.
+  const lightCenter = rectCenter(fitout.clearFloorRectMm);
+  ceilingLight.position.set(xM(lightCenter.x), 2.565, zM(lightCenter.y));
   finish(context, ceilingLight, materials.warmLight, { shadow: true });
   const roomLight = new PointLight(
     `${fitout.id} · LIGHT · mäkké teplé svetlo`,
-    new Vector3(xM((bathRect.x1+vanityRect.x0)/2), 2.42, zM(4560)),
+    new Vector3(xM(lightCenter.x), 2.42, zM(lightCenter.y)),
     context.scene,
   );
   roomLight.diffuse = Color3.FromHexString("#ffd7ad");
@@ -3443,7 +3487,8 @@ function buildEnsuiteBathroomFitout(
   roomLight.intensity = 0.22;
   roomLight.range = 2.9;
 
-  navigationGuard(context, materials, `${fitout.id} · BATH-1800 · navigačný obrys`, bathRect);
+  buildTowelRadiator(context,materials,fitout.id,fitout.towelRadiator);
+  navigationGuard(context, materials, `${fitout.id} · BATH-WALL · navigačný obrys`, bathRect);
   navigationGuard(
     context,
     materials,
@@ -3647,7 +3692,7 @@ function buildGarageFitout(context: InteriorBuildContext, materials: InteriorMat
     finish(context, shelf, materials.steel, { shadow: true, pickable: true });
   }
 
-  // Accessories are positioned along the new 1.50 m shelf, never in the former bathroom wall.
+  // Accessories stay within the shelf even when the garage bay changes width.
   const rackCenter=rectCenter(rackRect);
   for (let i=0;i<rack.cardboardBoxCount;i++) {
     const x=rackRect.x0+260+(i%2)*850;

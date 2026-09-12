@@ -14,12 +14,15 @@
 import { SOURCES, type Point2Mm } from "./twin-site";
 import {
   FIREPLACE_STOVE,
-  KITCHEN_RUN,
+  KITCHEN_RUN as SOURCE_KITCHEN_RUN,
   LIVING_DINING_FITOUT,
   type FireplaceStove,
   type LivingDiningFitout,
   type RectMm,
 } from "./twin-interior-baseline";
+// The active model's kitchen run follows the 300 mm load-bearing kitchen wall (12. 9. 2026).
+import { INTERIOR_DOORS, INTERIOR_ROOMS, KITCHEN_BEARING_WALL, KITCHEN_BEARING_WALL_EAST, KITCHEN_RUN } from "./twin-interior";
+import { SERVICE_CORE_REVISION } from "./technical-design";
 
 export type LivingLayoutId = "A" | "B";
 
@@ -167,7 +170,11 @@ export const FIREPLACE_STOVE_B: FireplaceStove = Object.freeze({
 const mm = (value: number) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 /** Worktop edge of the peninsula on the living-room side (11. 9. 2026: flush with the terrace-door reveal). */
 export const PENINSULA_WORKTOP_EDGE_YMM = KITCHEN_RUN.peninsulaRectMm.y1 + KITCHEN_RUN.peninsulaOverhangMm;
-const KITCHEN_NOTE = `Polostrov je posunutý o 346 mm k obývačke: hrana jeho pracovnej dosky (${mm(PENINSULA_WORKTOP_EDGE_YMM)} mm) lícuje s ostením terasových dverí do dvora, pracovný priechod medzi zadnou linkou a polostrovom má ${mm(KITCHEN_RUN.peninsulaRectMm.y0 - KITCHEN_RUN.fridgeUnitRectMm.y1)} mm namiesto 994 mm a bočné rameno pri východnej stene sa predlžuje na ${mm(KITCHEN_RUN.eastReturnRectMm.y1 - KITCHEN_RUN.eastReturnRectMm.y0)} mm; pod oknom EAST-04 pokračuje len pracovná doska bez obkladu.`;
+const KITCHEN_NOTE = `Polostrov je posunutý o 346 mm k obývačke: hrana jeho pracovnej dosky (${mm(PENINSULA_WORKTOP_EDGE_YMM)} mm) lícuje s ostením terasových dverí do dvora, pracovný priechod medzi zadnou linkou a polostrovom má ${mm(KITCHEN_RUN.peninsulaRectMm.y0 - KITCHEN_RUN.fridgeUnitRectMm.y1)} mm namiesto 994 mm podľa D1.1.002 a bočné rameno pri východnej stene sa predlžuje na ${mm(KITCHEN_RUN.eastReturnRectMm.y1 - KITCHEN_RUN.eastReturnRectMm.y0)} mm; pod oknom EAST-04 pokračuje len pracovná doska bez obkladu.`;
+/** 12. 9. 2026: the kitchen's back wall carries the ring beam and the roof frames of the cathedral ceiling; both living layouts share it. */
+const TECH_DOOR = INTERIOR_DOORS.find((door) => door.id === "DOOR-103-107")!;
+const KITCHEN_BAY = INTERIOR_ROOMS.find((room) => room.id === "ROOM-1-03")!.rectsMm[1];
+const BEARING_WALL_NOTE = `Stena za zadnou linkou medzi obývačkou a WC 1.06 / technickou miestnosťou 1.07 je nosné murivo hr. ${KITCHEN_BEARING_WALL.y1 - KITCHEN_BEARING_WALL.y0} mm (${mm(KITCHEN_BEARING_WALL.y0)}–${mm(KITCHEN_BEARING_WALL.y1)} mm) namiesto priečky 140 mm: stojí nad priečnym základovým pásom podľa D1.1.001 a nesie stužujúci veniec a oceľové rámy krovu katedrálového stropu obývačky. Vedie v jednej línii od ústia chodby (${mm(KITCHEN_BEARING_WALL.x0)} mm) po východnú fasádu (${mm(KITCHEN_BEARING_WALL_EAST.x1)} mm); prerušujú ju iba dvere do technickej miestnosti ${TECH_DOOR.widthMm} mm (${mm(TECH_DOOR.startMm)}–${mm(TECH_DOOR.startMm + TECH_DOOR.widthMm)} mm) s prekladom, za ktorými pokračuje ešte ${KITCHEN_BEARING_WALL_EAST.x1 - KITCHEN_BEARING_WALL_EAST.x0} mm muriva k fasáde. Zhrubla smerom do kuchyne, takže WC a jeho dvere sa nemenia; bývalý výstupok technickej miestnosti s dverami pripadol kuchynskému zálivu, ktorý má teraz ${mm(KITCHEN_BAY.x1 - KITCHEN_BAY.x0)} × ${KITCHEN_BAY.y1 - KITCHEN_BAY.y0} mm až po východnú stenu, dvere do technickej sa otvárajú do kuchyne s pántom pri východnom ostení a vonkajšie dvere ${SERVICE_CORE_REVISION.exteriorDoor.id} majú kvôli statike fasády ${SERVICE_CORE_REVISION.exteriorDoor.widthMm} mm namiesto ${mm(SERVICE_CORE_REVISION.exteriorDoorRevision.previousWidthMm)} mm. Zadná linka s chladničkou je posunutá o ${KITCHEN_RUN.rectMm.y0 - SOURCE_KITCHEN_RUN.rectMm.y0} mm k polostrovu so zachovanou inštalačnou medzerou ${KITCHEN_RUN.rectMm.y0 - KITCHEN_BEARING_WALL.y1} mm za korpusmi a jej čelo (${mm(KITCHEN_RUN.rectMm.y1)} mm) predstupuje o ${KITCHEN_RUN.rectMm.y1 - SOURCE_KITCHEN_RUN.rectMm.y1} mm pred koniec priečky chodby pri zálive; medzi jej východným koncom (${mm(KITCHEN_RUN.rectMm.x1)} mm) a dverami technickej zostáva ${TECH_DOOR.startMm - KITCHEN_RUN.rectMm.x1} mm. Nad ústím chodby (1 096 mm) prenáša zaťaženie veniec ako preklad. Rozmery prekladov, kotvenie rámov a základ posúdi statik.`;
 
 const A: LivingLayout = {
   id: "A",
@@ -189,6 +196,7 @@ const A: LivingLayout = {
     "L-sedačka 1 230 × 2 900 mm s ležadlom 2 750 × 1 100 mm stojí pri východnej stene, 291 mm od nej. Jedálenský stôl 2 000 × 900 mm pre šesť osôb (23 800–25 800 × 14 580–15 480 mm) stojí rovnobežne s polostrovom s tromi stoličkami na každej dlhšej strane: za južnými stoličkami ostáva 650 mm k hrane pracovnej dosky, severné stoja nohami tesne pred kobercom a končia 240 mm pred líniou sedačky, k TV zostave ostáva 1 820 mm voľného nástupu; východný priechod k technickej miestnosti zostáva voľný.",
     "Krbové kachle Ø510 mm stoja 55 mm od západnej steny, 420 mm za koncom terasových dverí a 650 mm pred TV zostavou; dymovod stúpa zvislo v ich osi.",
     KITCHEN_NOTE,
+    BEARING_WALL_NOTE,
   ],
 };
 
@@ -213,6 +221,7 @@ const B: LivingLayout = {
     "Krbové kachle Ø510 mm sú v severozápadnom rohu 55 mm od západnej steny a 160 mm od piliera štítu; oheň je natočený na juhovýchod, takže ho vidno zo sedačky, od stola aj z terasy cez presklenie. Dymovod stúpa zvislo v osi kachlí (21 853; 18 620 mm), 415 mm pred rovinou štítu.",
     "Kuchynská linka, polostrov s varnou doskou aj bočné rameno pri východnej stene sú v oboch variantoch rovnaké; mení sa len obývacia a jedálenská zóna.",
     KITCHEN_NOTE,
+    BEARING_WALL_NOTE,
   ],
 };
 

@@ -5247,7 +5247,7 @@ export class TwinSceneController {
         opening.id === "EAST-03" ? "door" : "window",
         530,
         opening.id === "EAST-03"
-          ? { id: opening.id, label: "Bočné transportné dvere technickej miestnosti", layout:'DOUBLE_LEAF_OUTWARD' }
+          ? { id: opening.id, label: "Bočné dvere technickej miestnosti", layout:'SINGLE_LEAF_OUTWARD' }
           : undefined,
       );
     }

@@ -100,7 +100,7 @@ function Pill({x,y,text,color,fontSize=T(1.8),bold=true}:{x:number;y:number;text
   return <g transform={`translate(${x} ${y})`}><rect x={-w/2} y={-h/2} width={w} height={h} rx={h/2} fill="#fff" stroke={color} strokeWidth={T(.2)}/><text y={fontSize*.36} fontSize={fontSize} textAnchor="middle" fontWeight={bold?700:500} fill={color}>{text}</text></g>;
 }
 
-const GLASS=/dvojsklo|zasklenie|sklo/i,FRAME=/rám |zárubňa|stĺpik|priečnik|koľajnica|prah/i,LEAF=/dverné krídlo|transportné krídlo/;
+const GLASS=/dvojsklo|zasklenie|sklo/i,FRAME=/rám |zárubňa|stĺpik|priečnik|koľajnica|prah/i,LEAF=/dverné krídlo|transportné krídlo|plné krídlo otvárané von/;
 function swingArc(hinge:[number,number],closedEnd:[number,number],openEnd:[number,number]) {
   const cross=(closedEnd[0]-hinge[0])*(openEnd[1]-hinge[1])-(closedEnd[1]-hinge[1])*(openEnd[0]-hinge[0]);
   const r=Math.hypot(closedEnd[0]-hinge[0],closedEnd[1]-hinge[1]);

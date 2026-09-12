@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { SERVICE_CORE_REVISION, TECHNICAL_HEATING_FITOUT as HEATING } from '@/lib/technical-design';
 import { INTERIOR_DOORS } from '@/lib/twin-interior';
+import { HOUSE } from '@/lib/twin-active-house';
 import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ROOMS, exteriorWallLayer, formatMm, numberSk, type PlanCategory, type PlanItem, type PlanViewBox } from '@/lib/plan-documentation';
 import { DEFAULT_LIVING_LAYOUT_ID, type LivingLayoutId } from '@/lib/twin-living-layouts';
 import type { RectMm } from '@/lib/twin-interior';
@@ -79,19 +80,19 @@ export function ItemMiniature({item,componentId}:{item:PlanItem;componentId?:str
 
 export function TechnicalClearances(){
   const boiler=HEATING.boiler.assemblyFootprintMm,body=HEATING.boiler.body.footprintMm,rearY=body.y0-HEATING.boiler.modeledRearClearanceMm,axisX=(boiler.x0+boiler.x1)/2,sideY=(body.y0+body.y1)/2;
-  const route=HEATING.accumulator.transportRouteMm,target=route.at(-1)!,previous=route.at(-2)!;
-  const arrivalAngle=Math.atan2(previous.y-target.y,target.x-previous.x)*180/Math.PI;
-  const zones=[{rect:HEATING.boiler.serviceRectMm,color:'#256eaa',label:'Obsluha kotla · 2 000 mm',vertical:true},
-    {rect:HEATING.accumulator.serviceRectMm,color:'#187c75',label:'600',vertical:false},
+  const tank=HEATING.accumulator,door=SERVICE_CORE_REVISION.exteriorDoor;
+  const zones=[{rect:HEATING.boiler.serviceRectMm,color:'#256eaa',label:`Obsluha kotla · ${numberSk(HEATING.boiler.frontServiceClearanceMm)} mm`,vertical:true},
+    {rect:tank.serviceRectMm,color:'#187c75',label:'600',vertical:false},
     {rect:HEATING.storage.frontClearanceRectMm,color:'#93602a',label:'600',vertical:false}];
-  return <g pointerEvents="none" aria-label="Obslužné priestory a trasa nádrže" className="pd-clearances">
+  return <g pointerEvents="none" aria-label="Obslužné priestory a osadenie nádrže" className="pd-clearances">
     {zones.map(({rect:r,color,label,vertical})=><g key={color}>
       <Box r={r} fill={color} fillOpacity=".09" stroke={color} strokeWidth="1.25" strokeDasharray="6 4" vectorEffect="non-scaling-stroke"/>
       <text x={(r.x0+r.x1)/2} y={-(r.y0+r.y1)/2} transform={vertical?`rotate(-90 ${(r.x0+r.x1)/2} ${-(r.y0+r.y1)/2})`:undefined} fontSize="90" fill={color} stroke="white" strokeWidth="28" paintOrder="stroke" textAnchor="middle">{label}</text>
     </g>)}
-    <path d={route.map((p,i)=>`${i?'L':'M'}${p.x} ${-p.y}`).join(' ')} fill="none" stroke="#187c75" strokeWidth="2" strokeDasharray="5 4" vectorEffect="non-scaling-stroke"/>
-    <path d="M-95 -76L0 0L-95 76" transform={`translate(${target.x} ${-target.y}) rotate(${arrivalAngle})`} fill="none" stroke="#187c75" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-    <text x="28480" y="-10320" textAnchor="middle" fontSize="95" fill="#187c75" stroke="white" strokeWidth="28" paintOrder="stroke">Nádrž Ø 1 106</text>
+    {/* 12. 9. 2026: the 900 mm single-leaf EAST-03 no longer passes the tank; there is no transport route to draw. */}
+    <text x={tank.centerMm.x} y={-tank.centerMm.y-60} textAnchor="middle" fontSize="95" fill="#187c75" stroke="white" strokeWidth="28" paintOrder="stroke">Nádrž Ø {numberSk(tank.outerDiameterMm)}</text>
+    <text x={tank.centerMm.x} y={-tank.centerMm.y+80} textAnchor="middle" fontSize="72" fill="#187c75" stroke="white" strokeWidth="24" paintOrder="stroke">osadiť pred zastrešením</text>
+    <text x={HOUSE.facades.east.faceXmm+420} y={-(door.startYmm+door.widthMm/2)+30} textAnchor="middle" fontSize="80" fill="#45596e" stroke="white" strokeWidth="24" paintOrder="stroke">{door.id} · {door.widthMm}</text>
     <g fill="#45596e" stroke="#45596e" fontSize="72" textAnchor="middle">
       {[[SERVICE_CORE_REVISION.boilerBayWestMm+10,boiler.x0],[boiler.x1,SERVICE_CORE_REVISION.technicalFacadeInsideMm-10]].map(([x0,x1])=><g key={x0} fill={x1-x0<500?'#aa6021':'#45596e'} stroke={x1-x0<500?'#aa6021':'#45596e'}>
         <path d={`M${x0} ${-sideY}H${x1}M${x0} ${-sideY-45}v90M${x1} ${-sideY-45}v90`} fill="none" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
@@ -103,7 +104,7 @@ export function TechnicalClearances(){
   </g>;
 }
 
-export function TechnicalLegend(){return <p className="pd-clearance-legend"><span>Modrá: obsluha kotla</span><span>Zelená: nádrž a jej presun</span><span>Hnedá: prístup ku skrini</span><strong style={{color:'#aa6021',flexBasis:'100%'}}>Oranžové kóty 250 mm sú pod odstupmi 500 mm podľa výrobcu. Osadenie vyžaduje potvrdenie dodávateľom kotla.</strong><small>Prerušované plochy ponechať voľné. Rozmery v mm. Trasa platí s nádržou zvislo na 100 mm podvozku a oboma krídlami dverí otvorenými von; zásobník a prípojky sa montujú až po osadení nádrže.</small></p>;}
+export function TechnicalLegend(){return <p className="pd-clearance-legend"><span>Modrá: obsluha kotla</span><span>Zelená: prípojky nádrže</span><span>Hnedá: prístup ku skrini</span><strong style={{color:'#aa6021',flexBasis:'100%'}}>Oranžové kóty 250 mm sú pod odstupmi 500 mm podľa výrobcu. Osadenie vyžaduje potvrdenie dodávateľom kotla.</strong><small>Prerušované plochy ponechať voľné. Rozmery v mm. Jednokrídlové dvere {SERVICE_CORE_REVISION.exteriorDoor.id} ({SERVICE_CORE_REVISION.exteriorDoor.widthMm} mm, čistý pás {HEATING.accumulator.transport.clearWidthMm} mm) nádrž Ø{numberSk(HEATING.accumulator.outerDiameterMm)} mm neprepustia: osadiť pred zastrešením alebo zvoliť delený zásobník; zásobník a prípojky sa montujú až po osadení nádrže.</small></p>;}
 
 export function StaticPlan({viewBox,roomId='',labels=true,livingLayout=DEFAULT_LIVING_LAYOUT_ID}:{viewBox:PlanViewBox;roomId?:string;labels?:boolean;livingLayout?:LivingLayoutId}) {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`} role="img" aria-label="Pôdorys aktuálneho 3D modelu">

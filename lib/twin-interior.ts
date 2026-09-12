@@ -57,8 +57,11 @@ export const BEDROOM_FITOUT = {
   clearancesMm:{side:ACTIVE_CONCEPT.sideClearance,foot:ACTIVE_CONCEPT.footClearance},
 };
 
-export type HallwayBuiltInWardrobe = Omit<original.HallwayBuiltInWardrobe,'roomId'|'nicheRectIndex'> & {
+type WardrobeStyle=original.HallwayBuiltInWardrobe['style'];
+export type HallwayBuiltInWardrobe = Omit<original.HallwayBuiltInWardrobe,'roomId'|'nicheRectIndex'|'style'> & {
   roomId:string; nicheRectIndex:number; endClearanceMm?:number;
+  /** Narrow cabinetry may use hinged fronts instead of sliding panels. */
+  style:Omit<WardrobeStyle,'opening'>&{opening:WardrobeStyle['opening']|'HANDLELESS_HINGED_SOFT_CLOSE'};
 };
 const wardrobeStyle=original.HALLWAY_BUILT_IN_WARDROBES[0].style;
 export const HALLWAY_BUILT_IN_WARDROBES:readonly HallwayBuiltInWardrobe[] = [
@@ -73,6 +76,7 @@ export const HALLWAY_BUILT_IN_WARDROBES:readonly HallwayBuiltInWardrobe[] = [
     nicheRectIndex:room.rectsMm.findIndex(floor=>r.x0>=floor.x0&&r.x1<=floor.x1&&r.y0>=floor.y0&&r.y1<=floor.y1),
     footprintMm:cabinet.rectMm,facing:'EAST' as const,
     doorCount:isEntry||isHallEnd?2 as const:4 as const,
+    // The door lining projects 12 mm past the wall face at the hall-end cabinet's door-side end.
     ...(isHallEnd?{endClearanceMm:16}:{}),
     frontClearanceRectMm:rect(r.x1,r.y0,isHallEnd?r.x1+1000:22639,r.y1),
     style:{...wardrobeStyle,reededPanelIndices:isHallEnd?[]:isEntry?[1]:[1,2]},
@@ -93,31 +97,48 @@ export const ENTRY_FITOUT={
 
 const fixtures=ACTIVE_CONCEPT.fixtures;
 const bath=fixtures.bath, basin=fixtures.basin, toilet=fixtures.toilet;
-export const ENSUITE_BATHROOM_FITOUT={
+type OriginalEnsuite=typeof original.ENSUITE_BATHROOM_FITOUT;
+/** C's bathroom is L-shaped and entered from the hall only; every fixture faces differently from the source plan. */
+export type EnsuiteBathroomFitout=Omit<OriginalEnsuite,'id'|'sourceId'|'corridorDoorId'|'bedroomDoorId'|'bathtub'|'toilet'|'vanity'>&{
+  id:string;sourceId:string;corridorDoorId:string;bedroomDoorId:null;
+  /** The bath's open long side: EAST along the west wall, NORTH along the street wall, WEST along the east wall. */
+  bathtub:Omit<OriginalEnsuite['bathtub'],'facing'>&{facing:'EAST'|'NORTH'|'WEST'};
+  /** Direction the bowl points, away from its cistern wall. */
+  toilet:Omit<OriginalEnsuite['toilet'],'facing'>&{facing:'NORTH'|'EAST'|'SOUTH'|'WEST'};
+  /** Side the user stands on, away from the vanity's wall. */
+  vanity:Omit<OriginalEnsuite['vanity'],'facing'>&{facing:'WEST'|'NORTH'|'EAST'};
+  towelRadiator:Omit<typeof original.BATHROOM_FITOUT.towelRadiator,'id'|'wallId'|'facing'>&{id:string;wallId:string;facing:'EAST'};
+};
+// Shared by living layouts A/B: the client's sketch puts the bath under the
+// window, the WC on the right and the vanity on the left, after a 500 mm shift.
+export const ENSUITE_BATHROOM_FITOUT:EnsuiteBathroomFitout={
   ...original.ENSUITE_BATHROOM_FITOUT,id:'C-BATHROOM-111',sourceId:ACTIVE_LAYOUT_ID,
   corridorDoorId:'C-HALL-BATH',bedroomDoorId:null,
-  bathtub:{...original.ENSUITE_BATHROOM_FITOUT.bathtub,footprintMm:bath,
-    innerBasinMm:rect(bath.x0+80,bath.y0+100,bath.x1-60,bath.y1-100)},
-  toilet:{...original.ENSUITE_BATHROOM_FITOUT.toilet,footprintMm:toilet,
-    concealedCisternRectMm:rect(toilet.x0-50,3504,toilet.x1+50,3704)},
-  vanity:{...original.ENSUITE_BATHROOM_FITOUT.vanity,footprintMm:basin,
-    basinFootprintMm:rect(basin.x0+40,basin.y0+60,basin.x1-70,basin.y1-60),
-    mirrorPlanRectMm:rect(basin.x1-30,basin.y0+30,basin.x1-16,basin.y1-30)},
-  clearFloorRectMm:rect(bath.x1+30,4204,basin.x0,5100),
-  vanityClearanceRectMm:rect(basin.x0-750,basin.y0,basin.x0,basin.y1),
+  bathtub:{...original.ENSUITE_BATHROOM_FITOUT.bathtub,footprintMm:bath,facing:'NORTH',
+    innerBasinMm:rect(bath.x0+100,bath.y0+60,bath.x1-100,bath.y1-80)},
+  toilet:{...original.ENSUITE_BATHROOM_FITOUT.toilet,footprintMm:toilet,facing:'WEST',
+    concealedCisternRectMm:rect(toilet.x1-200,toilet.y0-50,toilet.x1,toilet.y1+50)},
+  vanity:{...original.ENSUITE_BATHROOM_FITOUT.vanity,footprintMm:basin,facing:'EAST',
+    basinFootprintMm:rect(basin.x0+70,basin.y0+60,basin.x1-40,basin.y1-60),
+    mirrorPlanRectMm:rect(basin.x0+26,basin.y0+30,basin.x0+40,basin.y1-30),mirrorTopElevationMm:2000},
+  towelRadiator:{...original.BATHROOM_FITOUT.towelRadiator,id:'C-BATHROOM-111-TOWEL-RADIATOR',wallId:'C-CLOSET-EAST',
+    footprintMm:ACTIVE_CONCEPT.bathroomRadiator!,facing:'EAST'},
+  clearFloorRectMm:rect(basin.x1,bath.y1,toilet.x0,basin.y1),
+  vanityClearanceRectMm:rect(basin.x1,basin.y0,basin.x1+750,basin.y1),
 };
 
 // Sink and shelves use the new alcove; the full parking lane and garden door stay free.
+const garageBay=ACTIVE_CONCEPT.garageBay!;
 export const GARAGE_FITOUT={
   ...original.GARAGE_FITOUT,id:'C-GARAGE-FITOUT',sourceId:ACTIVE_LAYOUT_ID,entryDoorId:null,
   utilitySink:{...original.GARAGE_FITOUT.utilitySink,
-    footprintMm:rect(11842,3704,12342,4304),innerBasinMm:rect(11897,3774,12277,4234)},
+    footprintMm:rect(garageBay.x1-500,3704,garageBay.x1,4304),innerBasinMm:rect(garageBay.x1-445,3774,garageBay.x1-65,4234)},
   storageRack:{...original.GARAGE_FITOUT.storageRack,
-    footprintMm:rect(10842,5104,12342,5604),facing:'SOUTH' as const},
+    footprintMm:ACTIVE_CONCEPT.garageShelves[0],facing:'SOUTH' as const},
   overSinkShelves:{...original.GARAGE_FITOUT.overSinkShelves,
-    footprintMm:rect(12052,3654,12342,4354)},
-  sinkServiceRectMm:rect(11042,3704,11842,4304),
-  entryApproachRectMm:rect(10842,4404,11842,5104),
+    footprintMm:rect(garageBay.x1-290,3654,garageBay.x1,4354)},
+  sinkServiceRectMm:rect(garageBay.x1-1300,3704,garageBay.x1-500,4304),
+  entryApproachRectMm:rect(garageBay.x0,4404,garageBay.x1-500,5104),
 };
 export const OFFICE_FITOUT={
   ...original.OFFICE_FITOUT,sourceId:ACTIVE_LAYOUT_ID,
@@ -179,3 +200,21 @@ const girl:ChildBedroomFitout={
   clearEntryRectMm:rect(17412,5612,18812,6412),clearPlayRectMm:mirror(boy.clearPlayRectMm),windowClearanceRectMm:mirror(boy.windowClearanceRectMm),
 };
 export const CHILDRENS_BEDROOM_FITOUTS:readonly ChildBedroomFitout[]=[boy,girl];
+
+// 12. 9. 2026: the kitchen's back wall is 300 mm load-bearing masonry (ring beam
+// and steel roof frames of the cathedral ceiling), running in one line from the
+// corridor mouth to the east facade with the technical-room door in it. The back
+// run keeps its 97 mm installation gap behind the carcasses and follows the
+// wall's north face; the peninsula, the east return and the appliances stay
+// where they are, so the working aisle narrows from 1 340 to 1 180 mm. Shared by
+// living layouts A and B.
+export const KITCHEN_BEARING_WALL:RectMm=ACTIVE_CONCEPT.kitchenBearingWall!;
+/** The 860 mm piece between the technical-room door and the east facade. */
+export const KITCHEN_BEARING_WALL_EAST:RectMm=ACTIVE_CONCEPT.kitchenBearingWallEast!;
+const kitchenGapMm=original.KITCHEN_RUN.rectMm.y0-original.INTERIOR_WALLS.find(w=>w.id==='IW-KITCHEN-BACK')!.rectMm.y1;
+const kitchenShiftMm=KITCHEN_BEARING_WALL.y1+kitchenGapMm-original.KITCHEN_RUN.rectMm.y0;
+export const KITCHEN_RUN:original.KitchenRun=Object.freeze({
+  ...original.KITCHEN_RUN,backRunRevisionSourceId:'C-KITCHEN-BEARING-WALL-2026-09-12',
+  rectMm:shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),
+  fridgeUnitRectMm:shift(original.KITCHEN_RUN.fridgeUnitRectMm,0,kitchenShiftMm),
+});

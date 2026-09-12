@@ -9,7 +9,11 @@ const shift=(r:RectMm,dx:number):RectMm=>({...r,x0:r.x0+dx,x1:r.x1+dx});
  */
 export const SERVICE_CORE_REVISION={id:'C-HEATING-WC-2026-09-07',wcExpansionMm:600,bathroomReturnShiftMm:300,
   technicalWestMm:24821,boilerBayWestMm:25243,bathroomEastMm:25099,technicalFacadeInsideMm:27510,
-  exteriorDoor:{id:'EAST-03',startYmm:9300,widthMm:1700,heightMm:2250,sillMm:0},
+  // 12. 9. 2026: a 900 mm single leaf instead of the 1 700 mm transport door, for the
+  // statics of the east facade next to the load-bearing kitchen wall (10 712–11 012).
+  // The same south jamb keeps 512 mm of masonry between the door and that wall.
+  exteriorDoor:{id:'EAST-03',startYmm:9300,widthMm:900,heightMm:2250,sillMm:0},
+  exteriorDoorRevision:{sourceId:'C-KITCHEN-BEARING-WALL-2026-09-12',previousWidthMm:1700,layout:'SINGLE_LEAF_OUTWARD',hinge:'SOUTH_JAMB'},
 } as const;
 export const HEATING_SOURCES={
   boiler:'https://defro.cz/nabidka-heat/firewood-duo/',
@@ -26,7 +30,10 @@ export const TECHNICAL_HEATING_FITOUT={...heating,id:'TECHNICAL-PLUS19-DBOS1000'
     hopper:{...heating.boiler.hopper,footprintMm:rect(26012,8001,26626,8615),
       depthBasis:'DERIVED_FROM_ORTHOGRAPHIC_DRAWING' as const},
     burner:{footprintMm:rect(26760,8657,27202,9086)},
-    serviceRectMm:rect(26712,8657,27500,10657),frontServiceClearanceMm:2000,
+    // 12. 9. 2026: the strip ends at the pellet cabinet on the load-bearing kitchen
+    // wall; 1 794 mm instead of 2 000 mm in front of the body. Sufficiency to be
+    // confirmed by the boiler supplier.
+    serviceRectMm:rect(26712,8657,27500,10451),frontServiceClearanceMm:1794,previousFrontServiceClearanceMm:2000,
     serviceMeasuredFrom:'BODY_FRONT' as const,openDoorEnvelopeWidthMm:1663,
     // Client-requested corner position. Both 250 mm gaps are below the manufacturer's 500 mm.
     modeledSideClearanceMm:250,modeledRearClearanceMm:250,rearServiceMeasuredFrom:'BODY_REAR' as const,
@@ -34,20 +41,28 @@ export const TECHNICAL_HEATING_FITOUT={...heating,id:'TECHNICAL-PLUS19-DBOS1000'
     // Measured to the finished 10 mm wall lining, including the real shell at x27510.
     sideClearancesMm:{west:759,east:250},
   },
-  accumulator:{...heating.accumulator,referenceProduct:'DEFRO DBO-S 1000',centerMm:{x:25771.5,y:9812},
-    // A planning zone, not an additional wall: centred in the left side before the boiler service strip.
-    placementZoneMm:rect(24831,8922,26712,10702),
-    transportRouteMm:[{x:29000,y:10200},{x:26250,y:10150},{x:25771.5,y:9812}],
+  // 12. 9. 2026: the kitchen door now sits in the load-bearing wall at 25 881–26 681,
+  // 700 mm closer to the tank. The tank moves 355 mm west into the corner at the
+  // WC wall, so 600 mm stay free behind the whole door width, and its connections
+  // point east into the free floor before the boiler strip instead of at the door.
+  accumulator:{...heating.accumulator,referenceProduct:'DEFRO DBO-S 1000',centerMm:{x:25416.5,y:9812},
+    // A planning zone, not an additional wall: centred between the WC wall lining and the hopper's west face.
+    placementZoneMm:rect(24831,8922,26002,10702),
     nominalVolumeL:1000,outerDiameterMm:1106,transportDiameterWithoutInsulationMm:897,heightMm:1913,
+    // The 900 mm single-leaf EAST-03 (648 mm clear) passes neither the insulated nor
+    // the bare tank: it is set before the roof closes, or a split tank is ordered.
+    transport:{openingId:'EAST-03',openingWidthMm:900,clearWidthMm:648,passesInsulated:false,passesWithoutInsulation:false,
+      method:'PLACE_BEFORE_ROOF_OR_SPLIT_TANK' as const,previousRouteMm:[{x:29000,y:10200},{x:26250,y:10150},{x:25771.5,y:9812}]},
     // Fittings and their service space are planning allowances, not manufacturer nozzle dimensions.
-    connectionProjectionMm:180,connectionAzimuthDegrees:30,serviceRectMm:rect(26560,9700,27160,10440),
+    connectionProjectionMm:180,connectionAzimuthDegrees:0,serviceRectMm:rect(26160,9442,26760,10182),
   },
-  storage:{id:'TECHNICAL-STORAGE-RESERVE',footprintMm:rect(26760,11140,27480,11401),heightMm:1750,
+  // Against the load-bearing kitchen wall east of the door, in the former protrusion's place.
+  storage:{id:'TECHNICAL-STORAGE-RESERVE',footprintMm:rect(26760,10451,27480,10712),heightMm:1750,
     pelletBagCount:3,pelletBagMassKg:15,bagSizeMm:{width:330,depth:190,height:430},
     vacuumSizeMm:{width:255,depth:140,height:1105},
-    fireSeparationApprovalRequired:true,front:'SOUTH',frontClearanceRectMm:rect(26760,10540,27480,11140),
+    fireSeparationApprovalRequired:true,front:'SOUTH',frontClearanceRectMm:rect(26760,9851,27480,10451),
   },
-  hydraulicReserve:{id:'TECHNICAL-HYDRAULIC-RESERVE',footprintMm:rect(26760,11140,27480,11401),
+  hydraulicReserve:{id:'TECHNICAL-HYDRAULIC-RESERVE',footprintMm:rect(26760,10451,27480,10712),
     bottomMm:1850,heightMm:650,loadingUnitEnvelopeMm:{width:420,height:500,depth:220},
     exactLoadingUnitDimensionsVerified:false,safetyGroupMm:{width:147,height:140,depth:70},
   },

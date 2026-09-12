@@ -18,12 +18,21 @@ describe('nested bedroom, closet and garage study C', () => {
     // The hall is centred between the facades: its north wall (7651–7791) is
     // one plane for the closet, the bedroom door and the bedroom's south wall.
     expect(m.bedroomArea).toBeCloseTo(11.0504, 6);
-    expect(m.bathroomArea).toBeCloseTo(5.1681, 6);
+    // The bathroom is L-shaped: 1 961 × 2 100 by the street plus the former hall
+    // end (1 460 × 808) up to the hall's south partition on 6412–6552.
+    expect(m.bathroomArea).toBeCloseTo(5.29778, 6);
+    expect(m.rooms.find(r => r.number === '1.11')!.rectsMm).toEqual([rect(12982,3504,14943,5604), rect(13483,5604,14943,6412)]);
     expect(area([m.dressing!])).toBeCloseTo(4.1954, 6);
     expect(m.dressing).toEqual(rect(11143,5744,13343,7651));
     expect(m.rooms.find(r => r.number === '1.10')!.rectsMm).toEqual([rect(11143,7791,14943,10699)]);
-    expect(area([m.garageBay!])).toBeCloseTo(3.15, 6);
-    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(23.59501, 6);
+    expect(area([m.garageBay!])).toBeCloseTo(4.2, 6);
+    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(24.64501, 6);
+    const previousWidth=createConcept({...DEFAULT_CONCEPT,garageBayWidth:1500});
+    expect(m.bathLeft-previousWidth.bathLeft).toBe(500);
+    expect(previousWidth.bathroomArea-m.bathroomArea).toBeCloseTo(1.05,6);
+    expect(area(m.rooms.find(r=>r.number==='1.12')!.rectsMm)-area(previousWidth.rooms.find(r=>r.number==='1.12')!.rectsMm)).toBeCloseTo(1.05,6);
+    expect([m.frontWindowStart,m.garageWindowStart]).toEqual([previousWidth.frontWindowStart,previousWidth.garageWindowStart]);
+    expect(m.doors).toEqual(previousWidth.doors);
     expect(m.dressingAisle).toBe(1000);
     expect(m.storageLength).toBe(3814);
     expect(m.settings.garageConnected).toBe(false);
@@ -88,13 +97,28 @@ describe('nested bedroom, closet and garage study C', () => {
       expect(baseline.doors.find(d=>d.id===id)!.wallSpanMm).toEqual([6412, 6552]);
     }
     expect(baseline.walls.find(w=>w.id==='C-OPEN-HALL-S')!.rectMm.y1).toBe(6552);
+    // The bathroom's hall wall and its door sit on the same 6412–6552 plane, so
+    // the hall's south side is one line from the closet's east wall to the lobby.
+    for (const id of ['C-BATH-HALL-W','C-BATH-HALL-E']) {
+      const w = baseline.walls.find(w=>w.id===id)!;
+      expect(w.role).toBe('PARTITION');
+      expect([w.rectMm.y0, w.rectMm.y1]).toEqual([6412, 6552]);
+    }
+    expect(baseline.walls.find(w=>w.id==='C-BATH-HALL-W')!.rectMm).toEqual(rect(13483,6412,13943,6552));
+    expect(baseline.walls.find(w=>w.id==='C-BATH-HALL-E')!.rectMm).toEqual(rect(14743,6412,14943,6552));
+    expect(baseline.walls.some(w=>w.id==='C-BATH-NORTH-E')).toBe(false);
+    expect(baseline.walls.find(w=>w.id==='C-BATH-NORTH-W')!.rectMm).toEqual(rect(12982,5604,13343,5744));
+    expect(baseline.walls.find(w=>w.id==='C-CLOSET-EAST')!.rectMm).toEqual(rect(13343,5604,13483,7791));
+    expect(baseline.doors.find(d=>d.id==='C-HALL-BATH')!.wallSpanMm).toEqual([6412, 6552]);
     const hall = baseline.rooms.find(r=>r.number==='1.02')!.rectsMm;
-    expect(hall.filter(r=>r.y0===6552).map(r=>[r.x0,r.x1,r.y1])).toEqual([[15243,21543,7651],[21543,22639,11550],[14943,15243,7651]]);
-    expect(hall.some(r=>r.y0===6560||r.y0===6501)).toBe(false);
+    expect(hall.filter(r=>r.y0===6552).map(r=>[r.x0,r.x1,r.y1])).toEqual([[15243,21543,7651],[21543,22639,11550],[13483,14943,7651],[14943,15243,7651]]);
+    expect(hall.some(r=>r.y0===6560||r.y0===6501||r.y0===5744)).toBe(false);
     // The lobby and its cabinet end on the same partition; the garden cabinet niche starts behind a 140 mm stub.
     expect(baseline.rooms.find(r=>r.number==='1.01')!.rectsMm[0]).toEqual(rect(20842,3504,22639,6412));
     expect(baseline.walls.find(w=>w.id==='C-GARDEN-CLOSET-SOUTH')!.rectMm).toEqual(rect(20842,7791,21543,7931));
-    expect(baseline.sharedHallArea).toBeCloseTo(17.455796, 6);
+    // The former hall end (1 460 × 808) in front of the bathroom now belongs to the bathroom.
+    expect(baseline.sharedHallArea).toBeCloseTo(16.276116, 6);
+    expect(17.455796 - baseline.sharedHallArea).toBeCloseTo(baseline.bathroomArea - 4.1181, 6);
     // Both child-room doors are 900 mm openings centred on the 5 298 mm rooms, exactly opposite each other.
     const kidDoors = ['DOOR-102-108','DOOR-102-109'].map(id => baseline.doors.find(d=>d.id===id)!);
     expect(kidDoors.map(d => [d.startMm, d.widthMm])).toEqual([[17442, 900],[17442, 900]]);
@@ -137,7 +161,11 @@ describe('nested bedroom, closet and garage study C', () => {
         expect(children.every(room => room.rectsMm.every(floor => !intersects(floor, r)))).toBe(true);
         expect(m.walls.every(wall => !intersects(wall.rectMm, r))).toBe(true);
       }
-      expect(m.builtInCabinets.map(c => [c.rectMm.x1-c.rectMm.x0, c.rectMm.y1-c.rectMm.y0])).toEqual([[701,1900],[701,2768],[460+e,1907]]);
+      // The hall-end cabinet is only as deep as the hall: from the bathroom's hall wall to the 7651 plane.
+      expect(m.builtInCabinets.map(c => [c.rectMm.x1-c.rectMm.x0, c.rectMm.y1-c.rectMm.y0])).toEqual([[701,1900],[701,2768],[460+e,1099]]);
+      expect(m.builtInCabinets.find(c => c.id === 'C-HALL-END-CABINET')!.rectMm).toEqual(rect(13483,6552,13943+e,7651));
+      expect(m.builtInCabinets.some(c=>c.roomNumber==='1.11')).toBe(false);
+      expect(m.bathroomRadiator).toEqual(rect(13483,5708,13583,6308));
     }
     for (const layout of ['private', 'wardrobe', 'vestibule'] as const) {
       const other = createConcept({ ...BASE_DEFAULT, layout, expansion: 600 });
@@ -203,7 +231,7 @@ describe('nested bedroom, closet and garage study C', () => {
   it('keeps every combination of spatial controls disjoint and doors, fixtures and windows clear', () => {
     let combinations = 0;
     for (let expansion = 0; expansion <= 600; expansion += 50)
-      for (let garageBayWidth = 1000; garageBayWidth <= 1700; garageBayWidth += 50)
+      for (let garageBayWidth = 1000; garageBayWidth <= 2000; garageBayWidth += 50)
         for (let nestedClosetDepth = 1600; nestedClosetDepth <= 1900; nestedClosetDepth += 50)
           for (const garageConnected of [false, true]) for (const gardenRecess of [false, true]) {
             const m = createConcept({ ...DEFAULT_CONCEPT, expansion, garageBayWidth, nestedClosetDepth, garageConnected, gardenRecess });
@@ -239,7 +267,7 @@ describe('nested bedroom, closet and garage study C', () => {
             check(m.bed.y1 < 10699 && m.bed.x1 - m.bed.x0 === 2200, `Bed blocks facade or changes length: ${context}`);
             combinations++;
           }
-    expect(combinations).toBe(5460);
+    expect(combinations).toBe(7644);
   }, 15000);
 
   it('keeps every bed width inside the aligned bedroom and reports tight limits', () => {
@@ -253,7 +281,8 @@ describe('nested bedroom, closet and garage study C', () => {
         expect(sleeping.y1-m.bed.y1-m.sideClearance).toBeLessThanOrEqual(1);
       }
     expect(createConcept({ ...DEFAULT_CONCEPT, nestedClosetDepth: 1900, bedWidth: 2200 }).sideClearance).toBe(354);
-    expect(createConcept({ ...DEFAULT_CONCEPT, garageBayWidth: 1000, expansion: 600 }).bathroomArea).toBeCloseTo(6.4281, 6);
+    // 3 061 × 2 100 by the street plus the 1 560 × 808 extension at the hall.
+    expect(createConcept({ ...DEFAULT_CONCEPT, garageBayWidth: 1000, expansion: 600 }).bathroomArea).toBeCloseTo(7.68858, 6);
   });
 
   it('keeps the closet, bedroom and child corridor wall aligned even with old depth settings', () => {
@@ -286,12 +315,12 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(off.storageLength - on.storageLength).toBe(1000);
     expect(off.garageDepth).toBe(5245);
     expect(off.convertedTerraceArea).toBe(0);
-    expect(area(off.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(23.59501, 6);
+    expect(area(off.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(24.64501, 6);
     expect(off.walls.some(w => contains(w.rectMm, rect(10842, 5844, 11143, 6644)))).toBe(true);
   });
 
   it('aligns the bathroom and bedroom doors while keeping fixture approaches and the garage clear', () => {
-    for (const expansion of [0,50,100]) for (let garageBayWidth=1000;garageBayWidth<=1700;garageBayWidth+=50) {
+    for (const expansion of [0,50,100]) for (let garageBayWidth=1000;garageBayWidth<=2000;garageBayWidth+=50) {
       const m=createConcept({...DEFAULT_CONCEPT,expansion,garageBayWidth});
       const bathDoor=m.doors.find(d=>d.id==='C-HALL-BATH')!;
       const bedroomDoor=m.doors.find(d=>d.id==='C-PRIVATE-BED')!;
@@ -301,36 +330,54 @@ describe('nested bedroom, closet and garage study C', () => {
       expect(bathDoor.swing).toBe(-1);
       const floor=m.rooms.find(r=>r.number==='1.11')!.rectsMm[0];
       const {bath,basin,toilet}=m.fixtures;
-      expect(basin.x1).toBe(floor.x1);
-      expect(basin.y1-basin.y0).toBe(600);
-      expect(basin.x1-basin.x0).toBe(500);
-      expect(toilet.y0).toBe(floor.y0);
-      expect(toilet.y1-toilet.y0).toBe(700);
-      expect(toilet.x1-toilet.x0).toBe(400);
-      expect((bathDoor.wallSpanMm[0]+bathDoor.wallSpanMm[1])/2-bathDoor.leafWidthMm-basin.y1).toBeGreaterThanOrEqual(70);
-      expect(bath.y1-bath.y0).toBe(1800);
+      // Client reference: bath below the window, vanity left, WC right.
+      expect(bath).toEqual(rect(floor.x0,3504,floor.x1,4254));
+      expect(toilet).toEqual(rect(floor.x1-700,4804,floor.x1,5204));
+      expect(basin).toEqual(rect(floor.x0,4704,floor.x0+500,5604));
+      expect(toilet.x0-basin.x1).toBeGreaterThanOrEqual(761);
       const approaches=[
-        rect(bath.x1,bath.y0+800,bath.x1+600,bath.y0+1400),
-        rect(basin.x0-600,basin.y0,basin.x0,basin.y1),
-        rect(toilet.x0,toilet.y1,toilet.x1,toilet.y1+600),
+        rect(Math.max(bath.x0,basin.x1),bath.y1,toilet.x0,bath.y1+600),
+        rect(basin.x1,basin.y0,basin.x1+750,basin.y1),
+        rect(toilet.x0-600,toilet.y0-100,toilet.x0,toilet.y1+100),
       ];
       for (const approach of approaches) {
         expect(contains(floor,approach)).toBe(true);
         expect(Object.values(m.fixtures).every(r=>!intersects(r,approach))).toBe(true);
+        expect(m.builtInCabinets.every(c=>!intersects(c.rectMm,approach))).toBe(true);
         expect(swingHits(bathDoor,approach)).toBe(false);
       }
+      const radiator=m.bathroomRadiator!;
+      expect(radiator).toEqual(rect(13483,5708,13583,6308));
+      expect(swingHits(bathDoor,radiator)).toBe(false);
+      expect(m.walls.every(w=>!intersects(w.rectMm,radiator))).toBe(true);
+      expect(Object.values(m.fixtures).every(r=>!intersects(r,radiator))).toBe(true);
       expect(m.garageBay!.x1-m.garageBay!.x0).toBe(garageBayWidth);
-      expect(m.bathroomArea).toBeCloseTo((m.bathRight-m.bathLeft)*2100/1e6,6);
+      // The L-shaped bathroom: the full-width street part plus the extension
+      // between the closet's east wall and the bearing wall, up to the hall plane.
+      const [street, extension]=m.rooms.find(r=>r.number==='1.11')!.rectsMm;
+      expect(street).toEqual(rect(m.bathLeft,3504,m.bathRight,5604));
+      expect(extension).toEqual(rect(13483,5604,m.bathRight,6412));
+      expect(m.bathroomArea).toBeCloseTo(((m.bathRight-m.bathLeft)*2100+(m.bathRight-13483)*808)/1e6,6);
+      // The door opens into the extension and its full sweep stays inside it.
+      expect(bathDoor.wallSpanMm).toEqual([6412,6552]);
+      expect(contains(extension,rect(bathDoor.startMm,6482-bathDoor.leafWidthMm,bathDoor.startMm+bathDoor.widthMm,6412))).toBe(true);
+      expect(m.walls.every(w=>!swingHits(bathDoor,w.rectMm))).toBe(true);
+      // The hall's south side is one plane: bathroom wall, bearing wall end and the child room's partition.
+      expect(m.walls.find(w=>w.id==='C-BATH-HALL-E')!.rectMm.y1).toBe(m.walls.find(w=>w.id==='C-OPEN-HALL-S')!.rectMm.y1);
+      expect(m.walls.find(w=>w.id==='C-BATH-HALL-E')!.rectMm.y1).toBe(m.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm.y1);
+      const cabinet=m.builtInCabinets.find(c=>c.id==='C-HALL-END-CABINET')!.rectMm;
+      expect(cabinet.y0).toBe(m.walls.find(w=>w.id==='C-BATH-HALL-W')!.rectMm.y1);
+      expect(cabinet.x1).toBe(bathDoor.startMm);
     }
   });
 
   it('routes a 440 mm disc to the bath through the new bedroom door, with the closet excluded', () => {
-    for (const expansion of [0, 600]) for (const garageBayWidth of [1000, 1700]) for (const nestedClosetDepth of [1600, 1900]) {
+    for (const expansion of [0, 600]) for (const garageBayWidth of [1000, 2000]) for (const nestedClosetDepth of [1600, 1900]) {
       const m = createConcept({ ...DEFAULT_CONCEPT, expansion, garageBayWidth, nestedClosetDepth, bedWidth: 1800 });
       const bathDoor = m.doors.find(d => d.id === 'C-HALL-BATH')!;
       const bedroomDoor = m.doors.find(d => d.id === 'C-PRIVATE-BED')!;
       const floors = [...m.rooms.filter(r => ['1.02', '1.10', '1.11'].includes(r.number)).flatMap(r => r.rectsMm), opening(bedroomDoor), opening(bathDoor)];
-      const obstacles = [m.bed, ...m.storageRuns, ...Object.values(m.fixtures), openLeaf(bathDoor), openLeaf(bedroomDoor)];
+      const obstacles = [m.bed, ...m.storageRuns, ...Object.values(m.fixtures),m.bathroomRadiator!, openLeaf(bathDoor), openLeaf(bedroomDoor)];
       const target: [number, number] = [Math.round((m.bathLeft + m.bathRight) / 100) * 50, 4550];
       expect(walkingPath(floors, obstacles, [14000, 9000], target), `Direct bath route, expansion=${expansion}, bay=${garageBayWidth}, closet=${nestedClosetDepth}`).toBe(true);
       expect(walkingPath(floors.filter(r => r !== floors[floors.length - 1]), obstacles, [14000, 9000], target), 'Closing the bath doorway must break the route').toBe(false);

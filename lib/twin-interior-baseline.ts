@@ -87,6 +87,8 @@ export interface KitchenRun {
   readonly peninsulaAlignmentSourceId: string;
   /** Exterior opening whose far reveal the peninsula worktop edge lines up with. */
   readonly peninsulaAlignedOpeningId: "WING-WEST-01";
+  /** 12. 9. 2026 (active model only): the back run follows the 300 mm load-bearing kitchen wall 160 mm north. */
+  readonly backRunRevisionSourceId?: string;
   /** Back run against the 1.06/1.07 wall: sink and dishwasher (D1.1.002). */
   readonly rectMm: RectMm;
   readonly counterHeightMm: number;

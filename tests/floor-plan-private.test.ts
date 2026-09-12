@@ -13,14 +13,21 @@ describe('private bedroom study D',()=>{
     expect(m.bedroomArea).toBeCloseTo(12.0239);
     expect(area([m.dressing!])).toBeCloseTo(6.562);
     // D keeps the 140 mm suite partition at the original child-room line; C's
-    // 300 mm bearing wall sits 100 mm further east, so its bathroom is 60 mm shorter.
+    // 300 mm bearing wall sits 100 mm further east, so its street-side bathroom
+    // part is 60 mm shorter. Only C extends the bathroom up to the hall plane.
     expect(m.suiteWallMm).toBe(140);
     expect(m.suiteRight).toBe(15003);
     expect(c.suiteRight).toBe(14943);
     expect(m.bathroomArea).toBeCloseTo(5.2941,6);
-    expect(m.bathroomArea-c.bathroomArea).toBeCloseTo(0.126,6);
+    expect(m.rooms.find(r=>r.number==='1.11')!.rectsMm).toEqual([rect(12482,3504,15003,5604)]);
+    expect(m.bathroomArea-area([c.rooms.find(r=>r.number==='1.11')!.rectsMm[0]])).toBeCloseTo(0.126,6);
+    expect(m.walls.find(w=>w.id==='C-BATH-NORTH-E')!.rectMm).toEqual(rect(14443,5604,15003,5744));
+    expect(m.walls.some(w=>w.id.startsWith('C-BATH-HALL'))).toBe(false);
     expect(m.garageBay).toEqual(c.garageBay);
+    // D keeps the source arrangement: bath on the west wall, WC under the window, vanity on the east wall; no bathroom cabinet.
     expect(m.fixtures).toEqual({bath:rect(12532,3554,13282,5354),basin:rect(14503,4554,15003,5454),toilet:rect(13853,3504,14253,4204)});
+    expect(m.builtInCabinets).toEqual([]);
+    expect(c.fixtures).toEqual({bath:rect(12482,3504,14943,4254),toilet:rect(14243,4804,14943,5204),basin:rect(12482,4704,12982,5604)});
     expect(m.sideClearance).toBe(657);
     expect(m.storageLength).toBe(2660);
     expect(m.dressingAisle).toBe(1100);
