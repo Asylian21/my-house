@@ -41,9 +41,10 @@ const OUTWARD_LAYOUTS = new Set(['DOUBLE_LEAF_OUTWARD', 'SINGLE_LEAF_OUTWARD']);
 export function resolveFacadeOpeningStyle(
   opening: FacadeOpeningStyleInput,
   doorOpeningId: string,
+  defaultKind: OpeningKind = "window",
 ): { readonly kind: OpeningKind; readonly frameWidthMm?: number } {
   return {
-    kind: opening.id === doorOpeningId ? "door" : opening.kind ?? "window",
+    kind: opening.id === doorOpeningId ? "door" : opening.kind ?? defaultKind,
     frameWidthMm: opening.frameWidthMm,
   };
 }
@@ -324,6 +325,9 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     const innerBottom = spec.sillMm + frameWidthMm;
     const innerTop = top - frameWidthMm;
     const sashes = spec.kind === "window" ? (spec.widthMm >= 1500 ? 2 : 1) : 0;
+    // A specified slim system carries its face width through the sash too.
+    // Standard windows keep their 78 mm perimeter and 62 mm sash profiles.
+    const sashProfileWidthMm = Math.min(SASH_WIDTH_MM, frameWidthMm);
     if (sashes === 0) {
       built.push(glassPane(context, spec, "pevné", innerStart, innerEnd, innerBottom, innerTop, planeAcross));
     } else {
@@ -346,21 +350,21 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         const sashStart = innerStart + index * (sashWidth + mullion);
         const sashEnd = sashStart + sashWidth;
         const sashAcross = inward(GLAZING_PLANE_DEPTH_MM + 18);
-        frameRing(context, spec, `krídlo ${index + 1}`, sashStart, sashEnd, innerBottom, innerTop, SASH_WIDTH_MM, SASH_DEPTH_MM, sashAcross, frame);
+        frameRing(context, spec, `krídlo ${index + 1}`, sashStart, sashEnd, innerBottom, innerTop, sashProfileWidthMm, SASH_DEPTH_MM, sashAcross, frame);
         built.push(
           glassPane(
             context,
             spec,
             `krídlo ${index + 1}`,
-            sashStart + SASH_WIDTH_MM,
-            sashEnd - SASH_WIDTH_MM,
-            innerBottom + SASH_WIDTH_MM,
-            innerTop - SASH_WIDTH_MM,
+            sashStart + sashProfileWidthMm,
+            sashEnd - sashProfileWidthMm,
+            innerBottom + sashProfileWidthMm,
+            innerTop - sashProfileWidthMm,
             sashAcross,
           ),
         );
         // Tilt-turn handle on the interior face, on the lock side.
-        const lockSide = index === 0 ? sashEnd - SASH_WIDTH_MM / 2 : sashStart + SASH_WIDTH_MM / 2;
+        const lockSide = index === 0 ? sashEnd - sashProfileWidthMm / 2 : sashStart + sashProfileWidthMm / 2;
         handle(
           context,
           spec,
@@ -432,30 +436,32 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
   }
 
   if (spec.kind === "sliding") {
+    const sashWidthMm = spec.frameWidthMm ?? 90;
+    const overlapMm = Math.min(50, sashWidthMm);
     // Lift-and-slide door: a fixed leaf on the outer track and a sliding leaf
-    // on the inner track, meeting with a 50 mm overlap; flush floor track.
+    // on the inner track, meeting with an overlap matching the slim profile; flush floor track.
     const outerAcross = inward(GLAZING_PLANE_DEPTH_MM - 22);
     const innerAcross = inward(GLAZING_PLANE_DEPTH_MM + 40);
     // Head and side frame.
     for (const [side, alongMm] of [
-      ["ľavý", start + FRAME_WIDTH_MM / 2],
-      ["pravý", end - FRAME_WIDTH_MM / 2],
+      ["ľavý", start + frameWidthMm / 2],
+      ["pravý", end - frameWidthMm / 2],
     ] as const) {
-      solid(context, spec, `${spec.name} · rám ${side} stĺpik`, { alongMm, acrossMm: planeAcross }, FRAME_WIDTH_MM, 150, spec.heightMm * MM_TO_M, 0, frame, { shadow: true });
+      solid(context, spec, `${spec.name} · rám ${side} stĺpik`, { alongMm, acrossMm: planeAcross }, frameWidthMm, 150, spec.heightMm * MM_TO_M, 0, frame, { shadow: true });
     }
-    solid(context, spec, `${spec.name} · rám horný priečnik`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * FRAME_WIDTH_MM, 150, FRAME_WIDTH_MM * MM_TO_M, (spec.heightMm - FRAME_WIDTH_MM) * MM_TO_M, frame, { shadow: true });
-    solid(context, spec, `${spec.name} · podlahová koľajnica`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * FRAME_WIDTH_MM, 150, 0.022, 0, context.materials.track);
-    const leafWidth = (spec.widthMm - 2 * FRAME_WIDTH_MM + 50) / 2;
+    solid(context, spec, `${spec.name} · rám horný priečnik`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * frameWidthMm, 150, frameWidthMm * MM_TO_M, (spec.heightMm - frameWidthMm) * MM_TO_M, frame, { shadow: true });
+    solid(context, spec, `${spec.name} · podlahová koľajnica`, { alongMm: spec.centerMm, acrossMm: planeAcross }, spec.widthMm - 2 * frameWidthMm, 150, 0.022, 0, context.materials.track);
+    const leafWidth = (spec.widthMm - 2 * frameWidthMm + overlapMm) / 2;
     const leaves = [
       {
         label: "pevné krídlo",
-        startAlong: start + FRAME_WIDTH_MM,
+        startAlong: start + frameWidthMm,
         across: outerAcross,
         moving: false,
       },
       {
         label: "posuvné krídlo",
-        startAlong: end - FRAME_WIDTH_MM - leafWidth,
+        startAlong: end - frameWidthMm - leafWidth,
         across: innerAcross,
         moving: true,
       },
@@ -475,8 +481,8 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         leaf.startAlong,
         leafEnd,
         22,
-        spec.heightMm - FRAME_WIDTH_MM,
-        90,
+        spec.heightMm - frameWidthMm,
+        sashWidthMm,
         70,
         leaf.across,
         frame,
@@ -485,10 +491,10 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         context,
         spec,
         leaf.label,
-        leaf.startAlong + 90,
-        leafEnd - 90,
-        22 + 90,
-        spec.heightMm - FRAME_WIDTH_MM - 90,
+        leaf.startAlong + sashWidthMm,
+        leafEnd - sashWidthMm,
+        22 + sashWidthMm,
+        spec.heightMm - frameWidthMm - sashWidthMm,
         leaf.across,
       );
       built.push(glass);
@@ -499,7 +505,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
       }
     }
     // Vertical pull handle on the sliding leaf, both faces.
-    const pullAlong = end - FRAME_WIDTH_MM - leafWidth + 45;
+    const pullAlong = end - frameWidthMm - leafWidth + sashWidthMm / 2;
     for (const offset of [-52, 52]) {
       const handles = handle(
         context,
@@ -530,8 +536,8 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
         cameraOccluder: true,
         dynamicCameraOccluder: true,
       };
-      const movingStartAlong = end - FRAME_WIDTH_MM - leafWidth;
-      const fixedStartAlong = start + FRAME_WIDTH_MM;
+      const movingStartAlong = end - frameWidthMm - leafWidth;
+      const fixedStartAlong = start + frameWidthMm;
       const travelAlongMm = fixedStartAlong - movingStartAlong;
       const closedCenterAlong = movingStartAlong + leafWidth / 2;
       const openCenterAlong = closedCenterAlong + travelAlongMm;
@@ -552,7 +558,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
           spec,
           spec.interaction.id,
           closedCenterAlong,
-          leafWidth - 2 * 90,
+          leafWidth - 2 * sashWidthMm,
           spec.faceMm - outward * (spec.wallThicknessMm / 2),
         ),
         apply: (progress) => {

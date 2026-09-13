@@ -2,6 +2,16 @@
 
 Interaktívny technický model parcely a navrhovaného rodinného domu v Březí u Mikulova. Aplikácia používa Babylon.js a drží 3D geometriu, výpočty aj inspector nad jedným typovaným modelom v celočíselných milimetroch.
 
+Aktuálny webový návrh z 12. 9. 2026 je na `/navrh-3d` (predvolene pôdorys C,
+obývačka B, technická B). Úplný odkaz je
+`/navrh-3d?variant=c&heating=b&living=b`. Otvára sa priamo v obývačke,
+ponúka prechod do všetkých 13 miestností a do záhrady a zachováva obe voľby
+pri prechode do `/koncept-2d`. Steny, výplne a fit-out vytvárajú rovnaké
+Babylon builders ako meraný 2D súpis; variant obývačky posúva aj celý dymovod
+s prestupom strechou a bezpečné miesto vstupu do prechádzky.
+Test `tests/twin-design-preview.test.ts` porovnáva geometriu každého aktuálneho
+interiérového dielu B/B s meraným pôdorysom v tolerancii 0,02 mm.
+
 Historické verzie sú dostupné na `/v1` a `/v2`. Vetva `v2` uchováva celý
 repozitár zo 7. 9. 2026 na commite `0bcbb57774fd551137c2b596a899a0432b148f28`.
 Trasa `/v2` používa samostatný zdroj v `versions/v2/` a súbory v

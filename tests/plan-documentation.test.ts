@@ -7,7 +7,7 @@ import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_REN
 import { LIVING_LAYOUTS, diningTableRectMm } from '../lib/twin-living-layouts';
 import { HEATING_LAYOUTS, HEATING_LAYOUT_IDS, normalizeHeatingLayout } from '../lib/technical-design';
 import { codedItems, drawnItems } from '../lib/plan-export';
-import { HOUSE } from '../lib/twin-site';
+import { HOUSE } from '../lib/twin-active-house';
 
 describe('Documentation of the active 3D model',()=>{
   it('keeps the empty inside of a bent tube instead of filling its convex hull',()=>{
@@ -158,10 +158,10 @@ describe('Documentation of the active 3D model',()=>{
     expect(searchPlanItems('stolicka','EXTERIOR','all')).toHaveLength(2);
     expect(searchPlanItems('zzzz','', 'all')).toHaveLength(0);
   });
-  it('documents three purposeful girl-room windows and keeps all physical window parts clear of furniture',()=>{
+  it('documents the single girl-room double window and keeps its physical parts clear of furniture',()=>{
     const ids=['FRONT-GIRL-BED','FRONT-04','FRONT-05'];
     const windows=PLAN_ITEMS.filter(item=>item.category==='openings'&&ids.some(id=>item.id.includes(id)));
-    expect(windows).toHaveLength(3);
+    expect(windows).toHaveLength(1);
     expect(windows.every(item=>item.roomId==='ROOM-1-08'&&item.note&&item.opening)).toBe(true);
     const furniture=PLAN_ITEMS.filter(item=>item.roomId==='ROOM-1-08'&&item.id.startsWith('C-GIRL-108')).flatMap(item=>item.meshes);
     for(const w of windows.flatMap(item=>item.meshes))for(const f of furniture){

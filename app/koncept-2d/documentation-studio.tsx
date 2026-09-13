@@ -13,6 +13,7 @@ import { Box } from './plan-svg';
 import { ItemMiniature, PlanDimensions, PlanGeometry, ROOM_COLORS, StaticPlan, TechnicalClearances, TechnicalLegend } from './documentation-plan';
 import { ExportSheet, PX_PER_MM, SHEET } from './export-sheet';
 import './documentation.css';
+import { designHref } from '@/lib/twin-design-selection';
 
 type Point={x:number;y:number};
 type Units='mm'|'cm'|'m';
@@ -190,9 +191,9 @@ export function DocumentationStudio({initialManual=false,initialLivingLayout=DEF
   const measureEnd=measurement[1]??hoverPoint,measureDistance=measurement[0]&&measureEnd?Math.hypot(measureEnd.x-measurement[0].x,measureEnd.y-measurement[0].y):null;
   const scaleMm=view.width>50000?5000:view.width>7000?1000:100;
   return <main className="pd-root" data-mobile-panel={mobilePanel} data-manual={manualOpen}>
-    <header className="pd-header"><div className="pd-brand"><Link href={`/?heating=${heatingLayout.toLowerCase()}`} aria-label="Späť do 3D domu"><BoxIcon size={23}/></Link><span className="pd-header-divider"/><div><span className="pd-overline">DOM / DOKUMENTÁCIA</span><h1>Pôdorys & manuál</h1></div></div>
+    <header className="pd-header"><div className="pd-brand"><Link href={designHref('/navrh-3d', {livingLayout, heatingLayout})} aria-label="Späť do 3D domu"><BoxIcon size={23}/></Link><span className="pd-header-divider"/><div><span className="pd-overline">DOM / DOKUMENTÁCIA</span><h1>Pôdorys & manuál</h1></div></div>
       <span className="pd-model-badge"><span/>Aktuálny 3D model <b>C</b></span>
-      <div className="pd-header-actions"><Link href={`/?heating=${heatingLayout.toLowerCase()}`} className="pd-text-button">Otvoriť 3D<ArrowUpRight size={16}/></Link><button className="pd-primary" onClick={()=>setManualOpen(!manualOpen)}><BookOpen size={17}/>{manualOpen?'Späť na pôdorys':'Manuál domu'}</button></div>
+      <div className="pd-header-actions"><Link href={designHref('/navrh-3d', {livingLayout, heatingLayout})} className="pd-text-button">Otvoriť 3D<ArrowUpRight size={16}/></Link><button className="pd-primary" onClick={()=>setManualOpen(!manualOpen)}><BookOpen size={17}/>{manualOpen?'Späť na pôdorys':'Manuál domu'}</button></div>
     </header>
     <div className="pd-mobile-tabs" aria-label="Panely dokumentácie">{([['rooms','Miestnosti',List],['plan','Pôdorys',Layers3],['detail','Detail',Ruler]] as const).map(([id,label,Icon])=><button key={id} aria-pressed={mobilePanel===id} onClick={()=>setMobilePanel(id)}><Icon size={16}/>{label}</button>)}</div>
     <div className="pd-workspace">
@@ -287,7 +288,7 @@ function LivingLayoutSwitch({value,onChange}:{value:LivingLayoutId;onChange:(nex
   return <div className="pd-living-switch" data-testid="pd-living-switch"><span className="pd-overline">OBÝVAČKA 1.03 · VARIANT ROZLOŽENIA</span>
     <div role="group" aria-label="Variant obývacej zóny">{LIVING_LAYOUT_IDS.map(id=><button key={id} type="button" aria-pressed={value===id} onClick={()=>onChange(id)}><b>{id}</b><span>{LIVING_LAYOUTS[id].label}</span></button>)}</div>
     <p>{layout.summary}</p>
-    {value!==DEFAULT_LIVING_LAYOUT_ID&&<small>3D model zatiaľ ukazuje variant A. Tento pôdorys, súpis, manuál aj exporty už platia pre variant {value}.</small>}
+    <small>Rovnaké rozloženie je dostupné aj v aktuálnom 3D náhľade.</small>
   </div>;
 }
 

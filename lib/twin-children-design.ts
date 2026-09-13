@@ -1,19 +1,17 @@
 /** Client revision: preschool rooms, garden for a boy / street for a girl. */
 export const CHILDREN_DESIGN_ID = 'C-KIDS-FULL-BEDS-2026-09-07';
 export const CHILDREN_WINDOWS: Record<string,{startXmm:number;widthMm:number;heightMm:number;sillMm:number;kind?:'fixed'|'window';frameWidthMm?:number}> = {
-  // Both child rooms now start at 15243; the garden glazing follows the boy's
-  // bed 100 mm east so 217 mm stays between the bed frame and the glass.
-  'GARDEN-03':{startXmm:17000,widthMm:2200,heightMm:2400,sillMm:0},
-  // The girl's room is 5 298 mm long between two 300 mm bearing walls (faces
-  // 15243 and 20541). The three windows keep their sizes; 600 mm piers remain
-  // between them and 224 mm piers stay beside both bearing walls.
-  'FRONT-GIRL-BED':{startXmm:15467,widthMm:1000,heightMm:1250,sillMm:1250},
-  'FRONT-04':{startXmm:17067,widthMm:1600,heightMm:1950,sillMm:550,kind:'fixed',frameWidthMm:45},
-  'FRONT-05':{startXmm:19267,widthMm:1050,heightMm:1600,sillMm:900},
+  // Refined client brief: a narrow vertical fixed strip retains 217 mm to the
+  // bed. The larger square window follows after a 200 mm pier; its right jamb
+  // stops before the desk (x=19241). Its single sash hinges at the strip side.
+  // Both heads follow the 2400 mm garden portal datum, with 45 mm profiles.
+  'GARDEN-03':{startXmm:17000,widthMm:800,heightMm:2400,sillMm:0,kind:'fixed',frameWidthMm:45},
+  'GARDEN-BOY-DESK':{startXmm:18000,widthMm:1200,heightMm:1200,sillMm:1200,kind:'window',frameWidthMm:45},
+  // One ordinary double window at the desk replaces all three street windows.
+  // Its east jamb leaves 200 mm of masonry before the room's bearing wall.
+  'FRONT-05':{startXmm:18741,widthMm:1600,heightMm:1350,sillMm:900,kind:'window'},
 };
 export const GIRL_WINDOW_DESIGN:Record<string,{name:string;note:string}> = {
-  'FRONT-GIRL-BED':{name:'Okno nad posteľou',note:'Parapet 1 250 mm ponecháva 200 mm nad čelom postele. Vyššie okno osvetľuje pokojovú časť a zachováva súkromie pri ulici.'},
-  'FRONT-04':{name:'Panoramatické okno pri hre',note:'Pevné presklenie so zníženým parapetom 550 mm otvára výhľad aj zo sedu a z detskej výšky. Pred oknom ostáva voľná plocha. Navrhnúť bezpečnostné zasklenie a vonkajšie tienenie.'},
-  'FRONT-05':{name:'Okno nad pracovným stolom',note:'Denné svetlo priamo pri stole. Parapet 900 mm je 360 mm nad dnešnou doskou; nástenka je na bočnej stene a okno nezakrýva.'},
+  'FRONT-05':{name:'Dvojkrídlové okno pri pracovnom stole',note:'Jediné okno dievčenskej izby: 1 600 × 1 350 mm, parapet 900 mm. Dve otváravé krídla pri stole; stredové presklenie aj okno pri posteli sú odstránené. Nástenka zostáva na bočnej stene.'},
 };
 export function withChildrenWindow<T extends {id:string}>(opening:T) { return {...opening,...CHILDREN_WINDOWS[opening.id]}; }

@@ -1,6 +1,8 @@
 "use client";
 
 import { HOUSE } from "../lib/twin-active-house";
+import { designHref, type TwinDesignSelection } from '@/lib/twin-design-selection';
+import { HEATING_LAYOUTS } from '@/lib/technical-design';
 
 import {
   Building2,
@@ -499,7 +501,7 @@ function SourceBadge({ kind }: { kind: SourceRecord["kind"] }) {
   return <span className={`source-badge ${kind.toLowerCase()}`}>{map[kind]}</span>;
 }
 
-export function TwinStudio() {
+export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {}) {
   const viewportRef = useRef<BabylonViewportHandle>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const explorerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -524,6 +526,7 @@ export function TwinStudio() {
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("parameters");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
   const [walkAvatarId, setWalkAvatarId] = useState<WalkAvatarId>("michelle");
   const [walkView, setWalkView] = useState<"first" | "third">("first");
   const [draftWidth, setDraftWidth] = useState("");
@@ -849,7 +852,29 @@ export function TwinStudio() {
       className="twin-shell"
       data-workspace={workspace}
       data-panels={overlayPanels ? "overlay" : "docked"}
+      data-preview={design ? 'current' : undefined}
     >
+      {design && <header className="design-preview-bar">
+        <a className="design-preview-brand" href={designHref('/navrh-3d', design)} aria-label="Dom · aktuálny 3D návrh">
+          <Building2 size={25} strokeWidth={1.4} aria-hidden="true"/>
+          <span><small>DOM / BABYLON</small><strong>Návrh C <span>· september 2026</span></strong></span>
+        </a>
+        <nav className="design-preview-views" aria-label="Pohľady na návrh">
+          <button type="button" disabled={!previewReady} onClick={()=>viewportRef.current?.enterWalkthrough('ROOM-1-03')}>Obývačka <b>{design.livingLayout}</b></button>
+          <button type="button" disabled={!previewReady} onClick={()=>viewportRef.current?.enterWalkthrough('ROOM-1-07')}>Technická <b>{design.heatingLayout}</b></button>
+          <button type="button" disabled={!previewReady} onClick={()=>showCameraPreset('garden')}>Dom a záhrada</button>
+        </nav>
+        <div className="design-preview-actions">
+          <details className="design-preview-details"><summary aria-label="Rozmery a obsah aktuálneho návrhu"><Info size={18}/><span>O návrhu</span></summary>
+            <div><strong>Aktuálny pôdorys C</strong><p>{fmt(totalActiveFloorAreaM2())} m² · {INTERIOR_ROOMS.length} miestností vrátane garáže</p>
+              <dl><div><dt>Obývacia zóna</dt><dd>Variant {design.livingLayout}</dd></div><div><dt>Technická miestnosť</dt><dd>{HEATING_LAYOUTS[design.heatingLayout].label}</dd></div><div><dt>Nádrž s izoláciou</dt><dd>Ø {HEATING_LAYOUTS[design.heatingLayout].accumulator.outerDiameterMm} × {HEATING_LAYOUTS[design.heatingLayout].accumulator.heightMm} mm</dd></div></dl>
+              <p>Rozloženie, steny, otvory a zariadenie zodpovedajú aktuálnemu 2D pôdorysu. Detailné rozmery nájdete v pláne.</p>
+              <p className="design-preview-note">Technológia vykurovania je priestorový návrh. Výkon, servisné odstupy a realizáciu rozvodov ešte potvrdí projektant.</p>
+            </div>
+          </details>
+          <a className="design-preview-plan" href={designHref('/koncept-2d', design)}><Map size={17}/><span>Pôdorys 2D</span></a>
+        </div>
+      </header>}
       <a className="skip-link" href="#scene-explorer">Preskočiť na prieskumník modelu</a>
 
       {chrome.appRails && (
@@ -1056,6 +1081,9 @@ export function TwinStudio() {
       >
         <BabylonViewport
           ref={viewportRef}
+          design={design}
+          initialRoomId={design ? 'ROOM-1-03' : undefined}
+          onReady={()=>setPreviewReady(true)}
           foundations={foundations}
           selectionId={selectionId}
           visibleLayers={visibleLayers}

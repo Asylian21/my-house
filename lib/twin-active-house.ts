@@ -1,8 +1,18 @@
 import { GARAGE_DEPTH_REVISION, HOUSE as baseline, SITE_SURFACES, type Point2Mm } from './twin-site';
-import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, totalActiveFloorAreaM2 } from './twin-interior';
+import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_FITOUT, totalActiveFloorAreaM2 } from './twin-interior';
 import { CHILDREN_WINDOWS, withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
 /** Same exterior/roof; C suite openings and client-approved children's glazing. */
+const office = INTERIOR_ROOMS.find(room=>room.number==='1.04')!;
+const showerBay = INTERIOR_ROOMS.find(room=>room.number==='1.05')!.rectsMm.find(r=>r.x1===27541)!;
+/** Client revision, 13 Sep 2026: axes follow the current rooms and kitchen aisle. */
+export const ACTIVE_WINDOW_POSITIONS = {
+  kitchenStartYmm:(KITCHEN_RUN.rectMm.y1+KITCHEN_RUN.peninsulaRectMm.y0)/2-500,
+  showerStartYmm:(showerBay.y0+showerBay.y1)/2-300,
+  officeSideStartYmm:Math.max(...office.rectsMm.map(r=>r.y1))-200-1000,
+  // The jamb on the desk side overlaps the desk's outer edge by exactly 50 mm.
+  officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1-50,
+};
 export const HOUSE={...baseline,
   // Current room geometry, including garage; never change the preserved D1 legend.
   floorAreaM2: totalActiveFloorAreaM2(),
@@ -19,12 +29,15 @@ export const HOUSE={...baseline,
     sourceId: GARAGE_DEPTH_REVISION.sourceId,
   } as const,
   facades:{...baseline.facades,front:{...baseline.facades.front,
-  openings:[...baseline.facades.front.openings,{id:'FRONT-GIRL-BED',...CHILDREN_WINDOWS['FRONT-GIRL-BED']}].map(opening=>({...withChildrenWindow(opening),
+  openings:baseline.facades.front.openings.filter(o=>o.id!=='FRONT-04').map(opening=>({...withChildrenWindow(opening),
     startXmm:opening.id==='FRONT-02'?ACTIVE_CONCEPT.garageWindowStart:
-      opening.id==='FRONT-03'?ACTIVE_CONCEPT.frontWindowStart:withChildrenWindow(opening).startXmm,
+      opening.id==='FRONT-03'?ACTIVE_CONCEPT.frontWindowStart:
+      opening.id==='FRONT-07'?ACTIVE_WINDOW_POSITIONS.officeFrontStartXmm:withChildrenWindow(opening).startXmm,
   })).sort((a,b)=>a.startXmm-b.startXmm),
-},garden:{...baseline.facades.garden,openings:baseline.facades.garden.openings.map(withChildrenWindow)},
-east:{...baseline.facades.east,openings:baseline.facades.east.openings.map(o=>o.id==='EAST-03'?{...o,...SERVICE_CORE_REVISION.exteriorDoor}:o)},
+},garden:{...baseline.facades.garden,openings:[...baseline.facades.garden.openings.map(withChildrenWindow),{id:'GARDEN-BOY-DESK',...CHILDREN_WINDOWS['GARDEN-BOY-DESK']}]},
+east:{...baseline.facades.east,openings:baseline.facades.east.openings.map(o=>o.id==='EAST-03'?{...o,...SERVICE_CORE_REVISION.exteriorDoor}:
+  {...o,startYmm:o.id==='EAST-01'?ACTIVE_WINDOW_POSITIONS.officeSideStartYmm:o.id==='EAST-02'?ACTIVE_WINDOW_POSITIONS.showerStartYmm:o.id==='EAST-04'?ACTIVE_WINDOW_POSITIONS.kitchenStartYmm:o.startYmm})},
+wingWest:{...baseline.facades.wingWest,opening:{...baseline.facades.wingWest.opening,frameWidthMm:35}},
 }};
 
 // Fan the existing approach toward the relocated door. The boundary gate and

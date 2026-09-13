@@ -1,8 +1,8 @@
 /**
  * Switchable arrangements of the living/dining zone in room 1.03.
  *
- * Variant A is the client concept of 23. 8. 2026 that the active 3D model
- * shows. Variant B follows the client's sketch of 11. 9. 2026: the TV wall
+ * Variant A is the client concept of 23. 8. 2026. The current 3D preview
+ * defaults to B, following the client's sketch of 11. 9. 2026: the TV wall
  * moves onto the solid part of the garden gable, the L sofa turns its back to
  * the kitchen, the dining table stands along the west wall and the cylindrical
  * stove sits in the north-west corner beside the fixed glazing. The kitchen,
@@ -11,7 +11,7 @@
  * and both variants seat six at a 2 000 × 900 mm table. All values are plan
  * millimetres in the house frame (x east, y toward the garden).
  */
-import { SOURCES, type Point2Mm } from "./twin-site";
+import { HOUSE as SOURCE_HOUSE, SOURCES, type Point2Mm } from "./twin-site";
 import {
   FIREPLACE_STOVE,
   KITCHEN_RUN as SOURCE_KITCHEN_RUN,
@@ -58,6 +58,27 @@ export const DEFAULT_LIVING_LAYOUT_ID: LivingLayoutId = "A";
 
 export function normalizeLivingLayout(value: string | null | undefined): LivingLayoutId {
   return value?.toUpperCase() === "B" ? "B" : "A";
+}
+
+/** The complete roof penetration follows the same stove as the interior. */
+export function houseFluesForLiving(layout: LivingLayoutId) {
+  const stove = LIVING_LAYOUTS[layout].stove;
+  return SOURCE_HOUSE.flues.map(flue => ({
+    ...flue,
+    id: stove.flue.id,
+    sourceId: stove.sourceId,
+    centerMm: stove.centerMm,
+  }));
+}
+
+/** A safe arrival in B's kitchen-side aisle, outside the relocated sofa. */
+export function livingWalkArrival(layout: LivingLayoutId) {
+  if (layout !== 'B') return null;
+  const {sofa, tvWall} = LIVING_LAYOUTS[layout].fitout;
+  return {
+    standing: {x: sofa.mainRectMm.x0 - 750, y: sofa.mainRectMm.y0 - 400},
+    look: {x: (tvWall.rectMm.x0 + tvWall.rectMm.x1) / 2, y: tvWall.rectMm.y0},
+  };
 }
 
 /** Plan rectangle of the dining table derived from its centre, axis and size. */

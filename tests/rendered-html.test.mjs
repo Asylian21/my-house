@@ -778,7 +778,8 @@ test("renders active C as a measured model manual while retaining the editable s
   assert.match(livingBHtml,/data-item="LIVING-103-TV-WALL-B"/);
   assert.match(livingBHtml,/data-item="FIREPLACE-STOVE-B-2026-09-11"/);
   assert.doesNotMatch(livingBHtml,/data-item="sofa"|data-item="FIREPLACE-STOVE-2026-08-24"/);
-  assert.match(livingBHtml,/3D model zatiaľ ukazuje variant A/);
+  assert.doesNotMatch(livingBHtml,/3D model zatiaľ ukazuje variant A/);
+  assert.match(livingBHtml,/href="\/navrh-3d\?variant=c&amp;heating=a&amp;living=b"/);
   assert.doesNotMatch(livingBHtml,/NaN|Infinity/);
   const manual=await render('/koncept-2d?variant=c&view=manual');
   assert.equal(manual.status,200);
@@ -818,9 +819,23 @@ test('renders either heating size independently of the living layout and carries
     assert.match(html,/data-item="[^"]+-PELLET-FEED-HOSE"[^>]*style="stroke:none"/);
     assert.doesNotMatch(html,new RegExp(`data-item="TECHNICAL-PLUS${kw===19?15:19}-DBOS`));
     assert.match(html,/data-item="sofa-B"/);
-    assert.match(html,new RegExp(`href="/\\?heating=${id}"`));
+    assert.match(html,new RegExp(`href="/navrh-3d\\?variant=c&amp;heating=${id}&amp;living=b"`));
     assert.match(html,/Izolácia je odnímateľná/);
     assert.match(html,/Primárne pelety/);
     assert.doesNotMatch(html,/osadiť pred zastrešením|NaN|Infinity/);
+  }
+});
+
+test('opens the new 3D preview as C/B/B and preserves every explicit design selection', async () => {
+  for (const [query,living,heating] of [['','B','B'],['?living=a&heating=b','A','B'],['?living=b&heating=a','B','A']]) {
+    const response=await render(`/navrh-3d${query}`);
+    assert.equal(response.status,200);
+    const html=await response.text();
+    assert.match(html,/data-preview="current"/);
+    assert.match(html,new RegExp(`<title>Dom · Návrh C / Obývačka ${living} / Technická ${heating}</title>`));
+    assert.match(html,new RegExp(`href="/koncept-2d\\?variant=c&amp;heating=${heating.toLowerCase()}&amp;living=${living.toLowerCase()}"`));
+    assert.match(html,new RegExp(`Obývačka <b>${living}</b>`));
+    assert.match(html,new RegExp(`Technická <b>${heating}</b>`));
+    assert.match(html,/class="scene-canvas"/);
   }
 });

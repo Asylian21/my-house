@@ -126,7 +126,7 @@ export const ARCHITECTURAL_DOOR_INVENTORY: readonly {
   { id: "EAST-03", kind: "HINGED" },
   { id: "LOGGIA-DOOR", kind: "HINGED" },
   { id: "GARDEN-02", kind: "SLIDING" },
-  { id: "GARDEN-03", kind: "SLIDING" },
+  // GARDEN-03 is a single fixed pane in the current C facade revision.
   { id: "WING-WEST-01", kind: "SLIDING" },
   { id: "GARAGE-DOOR", kind: "OVERHEAD" },
 ]);

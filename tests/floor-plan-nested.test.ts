@@ -31,7 +31,8 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(m.bathLeft-previousWidth.bathLeft).toBe(500);
     expect(previousWidth.bathroomArea-m.bathroomArea).toBeCloseTo(1.05,6);
     expect(area(m.rooms.find(r=>r.number==='1.12')!.rectsMm)-area(previousWidth.rooms.find(r=>r.number==='1.12')!.rectsMm)).toBeCloseTo(1.05,6);
-    expect([m.frontWindowStart,m.garageWindowStart]).toEqual([previousWidth.frontWindowStart,previousWidth.garageWindowStart]);
+    expect(m.frontWindowStart-previousWidth.frontWindowStart).toBe(250);
+    expect(m.garageWindowStart).toBe(previousWidth.garageWindowStart);
     expect(m.doors).toEqual(previousWidth.doors);
     expect(m.dressingAisle).toBe(1000);
     expect(m.storageLength).toBe(3814);

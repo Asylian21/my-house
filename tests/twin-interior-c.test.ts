@@ -141,7 +141,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     for(const key of ['footprintMm','roof','porches','lowerBar','wing'] as const) expect(HOUSE[key]).toEqual(originalHouse[key]);
     const garage=HOUSE.facades.front.openings.find(o=>o.id==='FRONT-02')!;
     const bath=HOUSE.facades.front.openings.find(o=>o.id==='FRONT-03')!;
-    expect([garage.startXmm,bath.startXmm]).toEqual([10942,13338]);
+    expect([garage.startXmm,bath.startXmm]).toEqual([10942,13588]);
     expect(garage.startXmm+garage.widthMm).toBeLessThan(ACTIVE_CONCEPT.garageBay!.x1);
     expect(bath.startXmm).toBeGreaterThan(ACTIVE_CONCEPT.bathLeft);
     expect(bath.startXmm+bath.widthMm).toBeLessThan(ACTIVE_CONCEPT.bathRight);
@@ -266,18 +266,17 @@ describe('active 3D house matches the approved default C plan',()=>{
     }
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.name).toContain('Chlapčenská');
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.name).toContain('Dievčenská');
-    expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:17000,widthMm:2200,sillMm:0});
+    expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:17000,widthMm:800,sillMm:0});
     const windows=HOUSE.facades.front.openings.filter(o=>['FRONT-GIRL-BED','FRONT-04','FRONT-05'].includes(o.id));
-    expect(windows).toHaveLength(3);
-    expect(windows.map(w=>[w.startXmm,w.widthMm,w.sillMm,w.heightMm])).toEqual([[15467,1000,1250,1250],[17067,1600,550,1950],[19267,1050,900,1600]]);
-    expect(windows.every(w=>w.sillMm+w.heightMm===2500)).toBe(true);
-    expect(windows.reduce((sum,w)=>sum+w.widthMm*w.heightMm/1e6,0)).toBeCloseTo(6.05,6);
-    expect(windows[1]).toMatchObject({kind:'fixed',frameWidthMm:45});
-    for(let i=1;i<windows.length;i++)expect(windows[i].startXmm-windows[i-1].startXmm-windows[i-1].widthMm).toBeGreaterThanOrEqual(600);
-    // Every window stays inside the girl's room, with a masonry pier beside both walls.
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({id:'FRONT-05',startXmm:18741,widthMm:1600,heightMm:1350,sillMm:900,kind:'window'});
     const girlRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.rectsMm[0];
-    expect(windows[0].startXmm-girlRoom.x0).toBeGreaterThanOrEqual(190);
-    expect(girlRoom.x1-windows[2].startXmm-windows[2].widthMm).toBeGreaterThanOrEqual(190);
+    expect(girlRoom.x1-windows[0].startXmm-windows[0].widthMm).toBe(200);
+    const portal=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')!;
+    const square=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-BOY-DESK')!;
+    expect(portal.kind).toBe('fixed');
+    expect(square).toMatchObject({widthMm:1200,heightMm:1200,kind:'window'});
+    expect(square.startXmm-portal.startXmm-portal.widthMm).toBeGreaterThanOrEqual(200);
     const girl=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-08')!;
     const boy=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-09')!;
     const boyRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.rectsMm[0];
@@ -303,10 +302,10 @@ describe('active 3D house matches the approved default C plan',()=>{
     }
     expect(girl.wardrobe.footprintMm.x1).toBe(girlRoom.x1);
     expect(girl.desk.footprintMm.x1).toBe(girlRoom.x1);
-    expect(windows[2].startXmm).toBeGreaterThanOrEqual(girl.desk.footprintMm.x0);
-    expect(windows[2].startXmm+windows[2].widthMm).toBeLessThanOrEqual(girl.desk.footprintMm.x1);
-    expect(windows[0].sillMm-girl.bed.headboardTopElevationMm).toBe(200);
-    expect(windows[2].sillMm-girl.desk.topElevationMm).toBe(360);
+    expect(windows[0].startXmm+windows[0].widthMm-girl.desk.footprintMm.x0).toBeGreaterThan(1000);
+    expect(windows[0].startXmm+windows[0].widthMm).toBeLessThanOrEqual(girl.desk.footprintMm.x1);
+    expect(windows[0].sillMm-girl.desk.topElevationMm).toBe(360);
+    expect(boy.pinboard.facing).toBe('WEST');
     expect(girl.pinboard.facing).toBe('WEST');
   });
   it('renders moved accessories, lights and collision guards in the same room, with clear 80/90cm doors',()=>{

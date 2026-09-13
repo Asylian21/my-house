@@ -109,6 +109,14 @@ export function bindSourceSolarMaterial(mesh: AbstractMesh, sourceMaterial: Mate
   return true;
 }
 
+/** Keep exported joinery and newly edited native openings in the same finish. */
+export function bindSourceFacadeFrameMaterial(mesh: AbstractMesh, sourceMaterial: Material | null) {
+  if (sourceMaterial?.name !== "real-glass-frame") return false;
+  // Borrow the scene-owned material; the imported container must not own it.
+  mesh.material = sourceMaterial;
+  return true;
+}
+
 /** Blender stores Z-up bounds in millimetres; the running scene is Y-up, metres. */
 export function sourceBounds(extras: SourceExtras) {
   const raw = typeof extras.source_bounds_mm === "string"
@@ -341,8 +349,9 @@ export class ArchvizPresentation {
           continue;
         }
         if (provenance && source) nodeSources.set(provenance.node, source);
-        const usesSourceSolar = source && bindSourceSolarMaterial(mesh, this.host.realisticMaterial(source.mesh));
-        if (!usesSourceSolar && provenance && mesh.material instanceof PBRMaterial) {
+        const sourceMaterial = source ? this.host.realisticMaterial(source.mesh) : null;
+        const usesSourceMaterial = bindSourceSolarMaterial(mesh, sourceMaterial) || bindSourceFacadeFrameMaterial(mesh, sourceMaterial);
+        if (!usesSourceMaterial && provenance && mesh.material instanceof PBRMaterial) {
           mesh.material = archvizMaterialForFaces(mesh.material, source?.cullDuplicatedFaces ?? false, this.faceMaterials);
           mesh.material = warmLivingMaterial(this.host.scene, provenance.extras.source_name ?? "", mesh.material);
         }

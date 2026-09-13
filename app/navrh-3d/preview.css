@@ -1,0 +1,40 @@
+.twin-shell[data-preview="current"] { --design-bar-height:4.875rem; padding-top:var(--design-bar-height); }
+.design-preview-bar { position:absolute; inset:0 0 auto; height:var(--design-bar-height); z-index:60; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:0 28px; background:#f7f8f6; color:#263a38; border-bottom:1px solid #d9ded9; }
+.design-preview-brand { display:flex; align-items:center; gap:12px; color:inherit; text-decoration:none; flex-shrink:0; }
+.design-preview-brand>span { display:grid; gap:4px; }
+.design-preview-brand small { font-size:.75rem; letter-spacing:.15em; font-weight:650; }
+.design-preview-brand strong { font-size:1.0625rem; letter-spacing:-.025em; font-weight:650; }
+.design-preview-brand strong span { color:#65736d; font-size:.875rem; font-weight:400; letter-spacing:0; }
+.design-preview-views { display:flex; align-items:center; gap:5px; }
+.design-preview-views button { min-height:42px; display:flex; align-items:center; gap:9px; padding:8px 13px; border:1px solid transparent; border-radius:7px; background:transparent; color:#34443e; cursor:pointer; font:inherit; font-size:.875rem; white-space:nowrap; }
+.design-preview-views button:hover { background:#e8ede8; border-color:#d9e1d9; }
+.design-preview-views button:disabled { opacity:.45; cursor:wait; }
+.design-preview-views b { display:grid; place-items:center; width:23px; height:23px; font-size:.75rem; color:#f5f8f4; background:#405e50; border-radius:4px; }
+.design-preview-actions { display:flex; align-items:center; gap:14px; }
+.design-preview-plan { display:flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:9px 15px; background:#263f35; color:white; text-decoration:none; font-size:.875rem; font-weight:550; border-radius:6px; white-space:nowrap; }
+.design-preview-plan:hover { background:#385448; }
+.design-preview-details { position:relative; }
+.design-preview-details summary { display:flex; align-items:center; justify-content:center; gap:7px; cursor:pointer; list-style:none; font-size:.875rem; min-height:42px; }
+.design-preview-details summary::-webkit-details-marker { display:none; }
+.design-preview-details>div { position:absolute; right:0; top:54px; width:min(360px,calc(100vw - 32px)); padding:23px; background:#f7f8f6; border:1px solid #d9ded9; border-radius:9px; box-shadow:0 15px 50px #14241d26; font-size:.875rem; line-height:1.65; }
+.design-preview-details strong { font-size:1.125rem; }
+.design-preview-details p { margin:9px 0; }
+.design-preview-details dl { margin:18px 0; }
+.design-preview-details dl>div { display:flex; justify-content:space-between; gap:16px; padding:7px 0; border-bottom:1px solid #e1e5df; }
+.design-preview-details dd { margin:0; font-weight:600; text-align:right; }
+.design-preview-note { color:#69736b; font-size:.8125rem; }
+.design-preview-bar :focus-visible { outline:3px solid #598177; outline-offset:4px; }
+.twin-shell[data-preview="current"] .context-pill strong { font-size:15px; }
+.twin-shell[data-preview="current"] .context-pill small { font-size:.8125rem; }
+@media(max-width:1100px) { .design-preview-bar { gap:12px; padding:0 18px; } .design-preview-brand strong span { display:none; } .design-preview-details summary span { display:none; } }
+@media(max-width:720px) {
+  .twin-shell[data-preview="current"] { --design-bar-height:7.5rem; }
+  .design-preview-bar { height:var(--design-bar-height); padding:12px 16px 8px; display:grid; grid-template-columns:1fr auto; gap:7px 10px; }
+  .design-preview-brand strong { font-size:1rem; } .design-preview-brand small { font-size:.75rem; }
+  .design-preview-views { grid-column:1/-1; grid-row:2; justify-content:center; min-width:0; overflow-x:auto; }
+  .design-preview-views button { padding:7px 10px; min-height:40px; }
+  .design-preview-actions { grid-row:1; grid-column:2; gap:12px; }
+  .design-preview-plan { padding:9px 11px; } .design-preview-plan span { font-size:.8125rem; }
+  .design-preview-details>div { right:-120px; top:52px; }
+}
+@media(prefers-reduced-motion:reduce) { .design-preview-bar * { transition:none; } }

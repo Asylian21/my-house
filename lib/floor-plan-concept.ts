@@ -181,10 +181,9 @@ export function createNestedConcept(input: ConceptSettings, original = false, su
   const closetBottom=5744, closetTop=closetBottom+settings.nestedClosetDepth, bedroomBottom=closetTop+140;
   const dressing=rect(11143,closetBottom,13343,closetTop);
   const garageBay=rect(10842,3504,bayRight,5604);
-  // Only active C retains its small windows when its bay grows past 1.50 m;
-  // the earlier studies keep their original window adjustment behaviour.
+  // C retains the garage window when its bay grows past 1.50 m; the bathroom
+  // window follows the actual room centre. Earlier studies keep their garage adjustment.
   const windowBayRight=suiteWallMm===BEARING_WALL_MM?Math.min(bayRight,12342):bayRight;
-  const windowBathLeft=windowBayRight+140;
   const rooms=base.rooms.map(r=>({...r,rectsMm:[...r.rectsMm]}));
   const replace=(number:string,name:string,rectsMm:RectMm[])=>Object.assign(rooms.find(r=>r.number===number)!,{name,rectsMm});
   replace('1.10','Spálňa do dvora',[rect(11143,bedroomBottom,right,10699),rect(13483,5744,right,bedroomBottom)]);
@@ -216,7 +215,7 @@ export function createNestedConcept(input: ConceptSettings, original = false, su
     storageLength:storageRuns.reduce((n,r)=>n+r.y1-r.y0,0),dressingAisle:1000,
     bed,wardrobeRect:storageRuns[0],sideClearance,footClearance:right-bed.x1,bedroomDepth:10699-bedroomBottom,
     bedroomArea:area(rooms.find(r=>r.number==='1.10')!.rectsMm),bathroomArea:area(rooms.find(r=>r.number==='1.11')!.rectsMm),
-    bathLeft,bathRight:right,frontWindowStart:Math.round((windowBathLeft+right)/2-375),garageWindowStart:windowBayRight-1400,
+    bathLeft,bathRight:right,frontWindowStart:Math.round((bathLeft+right)/2-375),garageWindowStart:windowBayRight-1400,
     garageBay,garageShelves:[rect(10842,5104,bayRight,5604)],
     fixtures:{bath:rect(bathLeft+50,3554,bathLeft+800,5354),basin:rect(right-500,4554,right,5454),toilet:rect(right-1150,3504,right-750,4204)},
   };

@@ -1,4 +1,10 @@
-import { DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } from './technical-design';
+import { DEFAULT_HEATING_LAYOUT_ID, HEATING_LAYOUTS, type HeatingLayoutId } from './technical-design';
+import { DEFAULT_LIVING_LAYOUT_ID, houseFluesForLiving, livingWalkArrival, type LivingLayoutId } from './twin-living-layouts';
+import type { TwinDesignSelection } from './twin-design-selection';
+
+export interface TwinSceneOptions extends Partial<TwinDesignSelection> {
+  readonly loadArchviz?: boolean;
+}
 import { HOUSE, SIDE_ENTRY_APPROACH } from "./twin-active-house";
 import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
 import { DECK_BOARD_LAYOUT, planDeckBoards } from "./deck-boards";
@@ -138,7 +144,6 @@ import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
   OFFICE_FITOUT,
-  TECHNICAL_HEATING_FITOUT,
   roomAt,
   type InteriorRoom,
 } from "./twin-interior";
@@ -903,7 +908,7 @@ function translatedPoint(point: Point2Mm, offset: Point2Mm): Point2Mm {
 }
 
 /** Frame the room's useful interior when entering from the room picker. */
-function walkLookTargetMm(room: InteriorRoom): Point2Mm {
+function walkLookTargetMm(room: InteriorRoom, heatingLayout: HeatingLayoutId): Point2Mm {
   switch (room.id) {
     case "ROOM-1-03":
       return { x: 24540, y: 21000 };
@@ -935,7 +940,7 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
     case "ROOM-1-05":
       return { x: 28500, y: room.standingPointMm.y };
     case "ROOM-1-07": {
-      const body = TECHNICAL_HEATING_FITOUT.boiler.body.footprintMm;
+      const body = HEATING_LAYOUTS[heatingLayout].boiler.body.footprintMm;
       return { x: (body.x0 + body.x1) / 2, y: (body.y0 + body.y1) / 2 };
     }
     default:
@@ -945,6 +950,7 @@ function walkLookTargetMm(room: InteriorRoom): Point2Mm {
 
 export class TwinSceneController {
   private readonly heatingLayout:HeatingLayoutId;
+  private readonly livingLayout: LivingLayoutId;
   private readonly archviz: ArchvizPresentation | null;
   private readonly engine: Engine;
   private readonly scene: Scene;
@@ -1031,9 +1037,13 @@ export class TwinSceneController {
     private readonly onRenderQualityChange: (
       profile: RenderQualityProfile,
     ) => void,
-    options: { loadArchviz?: boolean; heatingLayout?: HeatingLayoutId } = {},
+    options: TwinSceneOptions = {},
   ) {
     this.heatingLayout=options.heatingLayout??DEFAULT_HEATING_LAYOUT_ID;
+    this.livingLayout=options.livingLayout??DEFAULT_LIVING_LAYOUT_ID;
+    canvas.dataset.livingLayout=this.livingLayout;
+    canvas.dataset.heatingLayout=this.heatingLayout;
+    canvas.dataset.planVariant='C';
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
       stencil: true,
@@ -1389,8 +1399,7 @@ export class TwinSceneController {
       roof: pbrMaterial(this.scene, "real-roof", "#ffffff", 0.52, 0.18),
       roofEdge: pbrMaterial(this.scene, "real-roof-edge", "#282d31", 0.48, 0.28),
       glass: pbrMaterial(this.scene, "real-glass", "#819491", 0.045, 0, 0.34),
-      glassFrame: pbrMaterial(this.scene, "real-glass-frame", "#26292b", 0.34, 0.55),
-      glassFrameWood: pbrMaterial(this.scene, "real-glass-frame-wood", "#77522c", 0.5),
+      glassFrame: pbrMaterial(this.scene, "real-glass-frame", "#383e42", 0.34, 0.08),
       solar: pbrMaterial(this.scene, "real-solar", "#0b1824", 0.16, 0),
       solarGrid: pbrMaterial(this.scene, "real-solar-grid", "#aeb6ba", 0.26, 0.82),
       chimney: pbrMaterial(this.scene, "real-chimney", "#b8b8b3", 0.78, 0.03),
@@ -1415,6 +1424,12 @@ export class TwinSceneController {
       plantGrass: pbrMaterial(this.scene, "real-plant-grass", "#ffffff", 0.9),
       plantPerennial: pbrMaterial(this.scene, "real-plant-perennial", "#ffffff", 0.9),
     };
+    // Match the powder-coated anthracite in the architectural asset pipeline.
+    // PBR albedo is linear; bare-metal reflection made native frames blue-grey.
+    this.realisticMaterials.glassFrame.albedoColor = Color3.FromHexString("#383e42").toLinearSpace();
+    this.realisticMaterials.glassFrame.clearCoat.isEnabled = true;
+    this.realisticMaterials.glassFrame.clearCoat.intensity = 0.25;
+    this.realisticMaterials.glassFrame.clearCoat.roughness = 0.34;
     this.realisticMaterials.glass.indexOfRefraction = 1.5;
     // Preserve the dielectric Fresnel response. The old 0.06 factor almost
     // removed reflections, which made the glazing read as flat black panels.
@@ -4105,7 +4120,7 @@ export class TwinSceneController {
     this.buildInteractiveGarageDoor();
     this.buildGarageVehicle();
 
-    for (const [index, flueSpec] of HOUSE.flues.entries()) {
+    for (const [index, flueSpec] of houseFluesForLiving(this.livingLayout).entries()) {
       const center = flueSpec.centerMm;
       const roofMount = roofMountTransform(
         flueSpec.roofFace,
@@ -5217,8 +5232,9 @@ export class TwinSceneController {
     }
     for (const opening of HOUSE.facades.garden.openings) {
       if (opening.id === "GARDEN-01") continue;
+      const style = resolveFacadeOpeningStyle(opening, "", "sliding");
       this.buildWindowOnZFace(
-        `Terasové presklenie ${opening.widthMm} · D1.1.002`,
+        opening.sillMm === 0 ? `Terasové presklenie ${opening.widthMm} · D1.1.002` : `Výplň otvoru ${opening.id} · návrh C`,
         opening.startXmm + opening.widthMm / 2,
         HOUSE.facades.garden.faceYmm,
         opening.widthMm,
@@ -5226,11 +5242,11 @@ export class TwinSceneController {
         opening.sillMm,
         1,
         this.realisticMaterials.wall,
-        this.realisticMaterials.glassFrameWood,
-        "sliding",
+        this.realisticMaterials.glassFrame,
+        style.kind,
         530,
-        undefined,
-        { id: opening.id, label: `Terasové posuvné dvere ${opening.id}` },
+        style.frameWidthMm,
+        style.kind === "sliding" ? { id: opening.id, label: `Terasové posuvné dvere ${opening.id}` } : undefined,
       );
     }
     for (const opening of eastOpenings) {
@@ -5274,13 +5290,14 @@ export class TwinSceneController {
       HOUSE.facades.wingWest.opening.sillMm,
       -1,
       this.realisticMaterials.wall,
-      this.realisticMaterials.glassFrameWood,
+      this.realisticMaterials.glassFrame,
       "sliding",
       500,
       {
         id: HOUSE.facades.wingWest.opening.id,
         label: "Posuvné dvere z obývacej izby na terasu",
       },
+      HOUSE.facades.wingWest.opening.frameWidthMm,
     );
   }
 
@@ -5288,6 +5305,7 @@ export class TwinSceneController {
   private buildInteriorFitOut() {
     buildInterior({
       heatingLayout:this.heatingLayout,
+      livingLayout:this.livingLayout,
       scene: this.scene,
       anisotropy: this.renderQuality.anisotropy,
       wall: this.realisticMaterials.wall,
@@ -5415,7 +5433,7 @@ export class TwinSceneController {
       loggia.backDoor.sillMm,
       1,
       this.realisticMaterials.wall,
-      this.realisticMaterials.glassFrameWood,
+      this.realisticMaterials.glassFrame,
       "door",
       530,
       undefined,
@@ -5972,6 +5990,7 @@ export class TwinSceneController {
     kind: OpeningVisualKind = sillMm === 0 ? "sliding" : "window",
     wallThicknessMm = 530,
     interaction?: OpeningInteraction,
+    frameWidthMm?: number,
   ) {
     buildOpening(this.openingContext(), {
       name,
@@ -5984,6 +6003,7 @@ export class TwinSceneController {
       outward: outwardX,
       wallThicknessMm,
       kind,
+      frameWidthMm,
       frameMaterial: frameMaterial ?? this.realisticMaterials.glassFrame,
       entityId: interaction?.id ?? HOUSE.id,
       interaction,
@@ -7850,8 +7870,11 @@ export class TwinSceneController {
       INTERIOR_ROOMS.find((candidate) => candidate.id === roomId) ??
       INTERIOR_ROOMS.find((candidate) => candidate.id === "ROOM-1-03") ??
       INTERIOR_ROOMS[0];
-    const standing = room.standingPointMm;
-    const look = walkLookTargetMm(room);
+    const arrival = room.id === 'ROOM-1-03' ? livingWalkArrival(this.livingLayout) : null;
+    // The revised bath is viewed from its clear central aisle. The old arrival
+    // framed only the window above the newly moved tub.
+    const standing = arrival?.standing ?? (room.id === 'ROOM-1-11' ? {x:13900,y:5250} : room.standingPointMm);
+    const look = arrival?.look ?? walkLookTargetMm(room, this.heatingLayout);
     if (this.navigationMode === "orbit") {
       this.orbitFocusDistance = 6;
       this.orbitCamera.detachControl();
@@ -7875,7 +7898,8 @@ export class TwinSceneController {
       this.navigationMode,
     );
     this.walkRoomId = room.id;
-    this.applyWalkView();
+    const downwardSlope = room.id === 'ROOM-1-11' ? -.72 : room.id === 'ROOM-1-07' ? -.38 : -.20;
+    this.applyWalkView(new Vector3(Math.sin(yaw), downwardSlope, Math.cos(yaw)));
     // Once the glTF arrives, hand over to the chase camera.
     void avatar.load().then(() => {
       this.canvas.dataset.walkAvatar = avatar.avatarId;
@@ -8285,7 +8309,7 @@ export function createTwinScene(
   onSelect: (id: string) => void,
   onNavigationModeChange: (mode: NavigationMode) => void,
   onRenderQualityChange: (profile: RenderQualityProfile) => void,
-  options: { loadArchviz?: boolean; heatingLayout?: HeatingLayoutId } = {},
+  options: TwinSceneOptions = {},
 ) {
   return new TwinSceneController(
     canvas,

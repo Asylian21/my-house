@@ -181,7 +181,8 @@ const boy:ChildBedroomFitout={
   desk:{...garden.desk,footprintMm:rect(19241,10149,20541,10699),facing:'SOUTH',topElevationMm:540},
   chair:{...garden.chair,footprintMm:rect(19641,9549,20141,10049),centerMm:{x:19891,y:9799},facing:'NORTH',seatElevationMm:300,backTopElevationMm:580,wheelCount:0},
   featureWall:{...garden.featureWall,footprintMm:rect(15243,7791,15265,10699),facing:'EAST',topElevationMm:1080,motif:'OAK_RIBBON'},
-  pinboard:{...garden.pinboard,footprintMm:rect(19291,10677,20491,10699),facing:'SOUTH',bottomElevationMm:800,heightMm:650},
+  // Keep the board on the side wall; the square window is beside the desk.
+  pinboard:{...garden.pinboard,footprintMm:rect(20519,9549,20541,10649),facing:'WEST',bottomElevationMm:800,heightMm:650},
   readingRectMm:rect(15293,7881,16043,8361),bookcaseRectMm:rect(16293,7791,16943,8091),storageFacing:'NORTH',artUrl:'/assets/textures/child-woodland-albedo.png',
   // The entry zone covers the leaf's sweep: hinged east, it opens towards the west.
   clearEntryRectMm:rect(16972,7791,18372,8591),clearPlayRectMm:rect(16903,8641,19541,10049),windowClearanceRectMm:rect(17000,10099,19200,10699),
@@ -193,7 +194,7 @@ const girl:ChildBedroomFitout={
   desk:{...boy.desk,footprintMm:mirror(boy.desk.footprintMm),facing:'NORTH'},
   chair:{...boy.chair,footprintMm:mirror(boy.chair.footprintMm),centerMm:{x:boy.chair.centerMm.x,y:mirrorY(boy.chair.centerMm.y)},facing:'SOUTH'},
   featureWall:{...boy.featureWall,footprintMm:mirror(boy.featureWall.footprintMm)},
-  // The street windows sit over the bed and desk, so the pinboard moves to the east wall.
+  // The only street window sits at the desk; the pinboard stays on the east wall.
   pinboard:{...garden.pinboard,footprintMm:rect(20519,3554,20541,4654),facing:'WEST',bottomElevationMm:800,heightMm:650},
   readingRectMm:mirror(boy.readingRectMm),bookcaseRectMm:mirror(boy.bookcaseRectMm),storageFacing:'SOUTH',artUrl:'/assets/textures/child-garden-albedo.png',
   // Hinged west, the leaf opens towards the east; the zone is the boy's, mirrored about the door's centre.

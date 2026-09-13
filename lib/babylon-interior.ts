@@ -83,7 +83,7 @@ export interface InteriorBuildContext {
   realisticOnly(mesh: AbstractMesh): AbstractMesh;
   castShadow(mesh: AbstractMesh): AbstractMesh;
   registerAnimatedDoor?(door: AnimatedDoorRegistration): void;
-  /** Arrangement of the living/dining zone in 1.03; the active model uses A. */
+  /** Arrangement of the living/dining zone in 1.03, shared by 2D and 3D. */
   readonly livingLayout?: LivingLayoutId;
   readonly heatingLayout?: HeatingLayoutId;
 }
@@ -4773,7 +4773,9 @@ function buildChildFeatureWall(
   const art=CreatePlane(`${fitout.id} · ART · autorská detská ilustrácia`,{width:.64,height:.80,sideOrientation:Mesh.DOUBLESIDE},context.scene);
   art.rotation.y=-Math.PI/2;art.position.set(xM(r.x1+41),1.76,zM(artY));
   const mat=pbr(context.scene,`${fitout.id}-print-art`,"#ffffff",.98);
-  mat.albedoTexture=new Texture(fitout.artUrl,context.scene,false,false);
+  // Native Babylon planes use bottom-origin UVs; uploaded PNG artwork needs
+  // the regular Y flip (glTF's unflipped texture convention is different).
+  mat.albedoTexture=new Texture(fitout.artUrl,context.scene,false,true);
   mat.backFaceCulling=false;finish(context,art,mat);
 }
 

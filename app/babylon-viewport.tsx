@@ -1,6 +1,6 @@
 "use client";
 
-import { normalizeHeatingLayout } from '@/lib/technical-design';
+import { designFromSearch, type TwinDesignSelection } from '@/lib/twin-design-selection';
 import {
   forwardRef,
   useEffect,
@@ -75,6 +75,9 @@ export interface BabylonViewportHandle {
 }
 
 interface BabylonViewportProps {
+  readonly design?: TwinDesignSelection;
+  readonly initialRoomId?: string;
+  readonly onReady?: () => void;
   readonly foundations: readonly FoundationStrip[];
   readonly selectionId: string | null;
   readonly visibleLayers: Readonly<Record<LayerId, boolean>>;
@@ -105,6 +108,9 @@ export const BabylonViewport = forwardRef<
   BabylonViewportProps
 >(function BabylonViewport(
   {
+    design,
+    initialRoomId,
+    onReady,
     foundations,
     selectionId,
     visibleLayers,
@@ -134,6 +140,8 @@ export const BabylonViewport = forwardRef<
   const navigationModeRef = useRef(navigationMode);
   const onNavigationModeChangeRef = useRef(onNavigationModeChange);
   const onWalkAvatarChangeRef = useRef(onWalkAvatarChange);
+  const onReadyRef = useRef(onReady);
+  const initialDesignRef = useRef({design, initialRoomId});
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [archvizUnavailable, setArchvizUnavailable] = useState(false);
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
@@ -156,6 +164,18 @@ export const BabylonViewport = forwardRef<
   navigationModeRef.current = navigationMode;
   onNavigationModeChangeRef.current = onNavigationModeChange;
   onWalkAvatarChangeRef.current = onWalkAvatarChange;
+  onReadyRef.current = onReady;
+
+  const enterRoom = (roomId?: string) => {
+    const controller=controllerRef.current;
+    if (!controller || controller.isGarageCinematicActive()) return;
+    controller.enterWalkthrough(roomId);
+    const room=controller.getWalkRoom();
+    setWalkRoom(room ? `${room.number} · ${room.name}` : 'Exteriér · terasa a záhrada');
+    setWalkRoomId(room?.id ?? null);
+    setDoorInteraction(null);
+    setWalkTravel('idle');
+  };
 
   const applyWalkAvatar = async (id: WalkAvatarId) => {
     const controller = controllerRef.current;
@@ -190,7 +210,7 @@ export const BabylonViewport = forwardRef<
       controllerRef.current?.setNavigationMode(mode);
     },
     enterWalkthrough(roomId) {
-      controllerRef.current?.enterWalkthrough(roomId);
+      enterRoom(roomId);
     },
     setWalkView(view) {
       controllerRef.current?.setWalkView(view);
@@ -239,7 +259,7 @@ export const BabylonViewport = forwardRef<
           (id) => onSelectRef.current(id),
           (mode) => onNavigationModeChangeRef.current(mode),
           (profile) => setQuality(profile),
-          {heatingLayout:normalizeHeatingLayout(new URLSearchParams(window.location.search).get('heating'))},
+          initialDesignRef.current.design ?? designFromSearch(new URLSearchParams(window.location.search)),
         );
         controller = createdController;
         controllerRef.current = createdController;
@@ -273,7 +293,11 @@ export const BabylonViewport = forwardRef<
         if (!active) return;
         createdController.update(snapshotRef.current);
         setArchvizUnavailable(createdController.getArchvizStatus().status === "fallback");
+        if (initialDesignRef.current.initialRoomId) {
+          createdController.enterWalkthrough(initialDesignRef.current.initialRoomId);
+        }
         setStatus("ready");
+        onReadyRef.current?.();
       })
       .catch(() => {
         if (active) setStatus("error");
@@ -513,7 +537,7 @@ export const BabylonViewport = forwardRef<
               {navigationMode === "walk" && <label className="walk-room-picker glass">
                 <span>Miestnosť</span>
                 <select aria-label="Prejsť do miestnosti" value={walkRoomId ?? ""} disabled={sceneBusy}
-                  onChange={event=>controllerRef.current?.enterWalkthrough(event.target.value)}>
+                  onChange={event=>enterRoom(event.target.value)}>
                   <option value="" disabled>Terasa a záhrada</option>
                   {INTERIOR_ROOMS.map(room=><option key={room.id} value={room.id}>{room.name}</option>)}
                 </select>
@@ -543,7 +567,7 @@ export const BabylonViewport = forwardRef<
                     );
                   })}
                 </div>
-                <a
+                {!design && <a
                   className="hud-icon-button hud-render-link glass"
                   href="/archviz/garden-4k.jpg"
                   target="_blank"
@@ -552,7 +576,7 @@ export const BabylonViewport = forwardRef<
                   title="ArchViz 4K · vizualizácia záhrady"
                 >
                   4K
-                </a>
+                </a>}
                 <button
                   type="button"
                   className="hud-icon-button glass"

@@ -160,7 +160,10 @@ describe("export sheet site context follows D1.1.002", () => {
 describe("exterior walls are drawn in their real build-up (300 masonry + 200 insulation)", () => {
   const cut = SHELL_WALL_MESHES.filter((m) => m.z0 <= 0);
   const layers = cut.filter((m) => / · úsek \d+ · /.test(m.name));
-  const across = (m: (typeof cut)[number]) => Math.round(Math.min(m.rect.x1 - m.rect.x0, m.rect.y1 - m.rect.y0));
+  // A narrow pier can be shorter along the facade than the wall is thick.
+  const across = (m: (typeof cut)[number]) => Math.round(
+    /^(Južná fasáda|Záhradná fasáda)/.test(m.name) ? m.rect.y1 - m.rect.y0 : m.rect.x1 - m.rect.x0,
+  );
 
   it("every insulated facade segment has a 200 mm insulation layer on the outer face and masonry behind it", () => {
     const insulation = layers.filter((m) => exteriorWallLayer(m) === "insulation");

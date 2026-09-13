@@ -10,10 +10,35 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Scene } from "@babylonjs/core/scene";
 import { describe, expect, it } from "vitest";
 
-import { anchorToSource, archvizMaterialForFaces, hasDuplicatedBackFaces, matchingSource, sourceBounds, sourceRestBounds, bindSourceSolarMaterial } from "../lib/babylon-archviz";
+import { anchorToSource, archvizMaterialForFaces, hasDuplicatedBackFaces, matchingSource, sourceBounds, sourceRestBounds, bindSourceSolarMaterial, bindSourceFacadeFrameMaterial } from "../lib/babylon-archviz";
 import { deriveArchvizRenderQualityProfile } from "../lib/twin-viewport-contract";
 
 describe("Blender presentation keeps the live house authoritative", () => {
+  it("shares the live anthracite finish with exported frames without taking ownership or recoloring other surfaces", () => {
+    const engine = new NullEngine(), scene = new Scene(engine);
+    try {
+      const container = new AssetContainer(scene);
+      const visual = CreateBox("exported window frame", {}, scene);
+      const imported = new PBRMaterial("exported joinery", scene);
+      const live = new PBRMaterial("real-glass-frame", scene);
+      visual.material = imported;
+      container.meshes.push(visual);
+      container.materials.push(imported);
+      for (const name of ["real-glass", "real-interior-wood", "real-roof-edge", "real-solar-grid"]) {
+        expect(bindSourceFacadeFrameMaterial(visual, new PBRMaterial(name, scene))).toBe(false);
+        expect(visual.material).toBe(imported);
+      }
+      expect(bindSourceFacadeFrameMaterial(visual, null)).toBe(false);
+      expect(bindSourceFacadeFrameMaterial(visual, live)).toBe(true);
+      expect(visual.material).toBe(live);
+      let disposed = false;
+      live.onDisposeObservable.add(() => { disposed = true; });
+      container.dispose();
+      expect(disposed).toBe(false);
+      expect(scene.materials).toContain(live);
+    } finally { scene.dispose(); engine.dispose(); }
+  });
+
   it("uses the live cell material on all six exported PV faces without taking ownership or changing geometry", () => {
     const bytes = readFileSync(new URL("../public/assets/archviz/dom-architecture.glb", import.meta.url));
     const jsonLength = bytes.readUInt32LE(12);
