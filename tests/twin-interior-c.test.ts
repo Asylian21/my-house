@@ -33,7 +33,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(INTERIOR_DOORS.map(d=>({...d,label:undefined}))).toEqual(c.doors.map(d=>({...d,label:undefined})));
     expect(baseline.INTERIOR_ROOMS.find(r=>r.number==='1.08')!.name).toBe('Spálňa');
     expect(INTERIOR_ROOMS).toHaveLength(13);
-    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.337492,6);
+    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.572442,6);
     expect(INTERIOR_DOORS.some(d=>d.id==='DOOR-102-112'||d.id==='DOOR-108-111')).toBe(false);
     // The living room keeps its main floor; the kitchen bay gives 160 mm to the
     // load-bearing kitchen wall and runs to the east facade over the former

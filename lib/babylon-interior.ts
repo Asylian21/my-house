@@ -4925,7 +4925,7 @@ function buildEntryFitout(context: InteriorBuildContext, materials: InteriorMate
   box('OVERHEAD · horná úložná skriňa',{x0:r.x0,y0:r.y0,x1:r.x0+320,y1:r.y1},.48,2.02,materials.hallwayWardrobeOak);
   box('LIGHT · skryté svetlo nad lavičkou',{x0:r.x0+300,y0:r.y0+30,x1:r.x0+312,y1:r.y1-30},.012,2.008,materials.warmLight);
   // Mirror on the solid office-side wall leaves the entrance glazing unobstructed.
-  // It hangs 13 mm off the west face of the 300 mm bearing wall of the office.
+  // It hangs 13 mm off the west face of the 175 mm wall of the office.
   const officeWallFace=INTERIOR_WALLS.find(w=>w.id==='C-ENTRY-OFFICE-EAST')!.rectMm.x0;
   box('MIRROR · vysoké zrkadlo',{x0:officeWallFace-27,y0:3670,x1:officeWallFace-13,y1:4220},1.65,.38,materials.mirrorGlass);
   navigationGuard(context,materials,`${fitout.id} · BENCH · navigačný obrys`,r);

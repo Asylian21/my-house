@@ -31,7 +31,7 @@ describe('private bedroom study D',()=>{
     expect(m.sideClearance).toBe(657);
     expect(m.storageLength).toBe(2660);
     expect(m.dressingAisle).toBe(1100);
-    expect(m.structuralChanges).toEqual(c.structuralChanges.filter(w=>!['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-ENTRY-STUDY','IW-ENTRY-EAST'].includes(w.id)));
+    expect(m.structuralChanges).toEqual(c.structuralChanges.filter(w=>!['IW-BED-108-EAST','IW-BED-108-TOP-E','IW-ROOM-109-EAST','IW-ENTRY-STUDY','IW-ENTRY-EAST','IW-STUDY-NORTH'].includes(w.id)));
     expect(m.walls.find(w=>w.id==='IW-BED-108-EAST')!.rectMm).toEqual(INTERIOR_WALLS.find(w=>w.id==='IW-BED-108-EAST')!.rectMm);
     expect(m.doors.filter(d=>d.fromRoomId==='ROOM-1-10'||d.toRoomId==='ROOM-1-10').map(d=>d.id)).toEqual(['D-PRIVATE-BED']);
     expect(JSON.stringify({HOUSE,INTERIOR_ROOMS,INTERIOR_WALLS,INTERIOR_DOORS})).toBe(before);

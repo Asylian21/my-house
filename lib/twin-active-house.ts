@@ -3,13 +3,13 @@ import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_F
 import { CHILDREN_WINDOWS, withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
 /** Same exterior/roof; C suite openings and client-approved children's glazing. */
-const office = INTERIOR_ROOMS.find(room=>room.number==='1.04')!;
 const showerBay = INTERIOR_ROOMS.find(room=>room.number==='1.05')!.rectsMm.find(r=>r.x1===27541)!;
 /** Client revision, 13 Sep 2026: axes follow the current rooms and kitchen aisle. */
 export const ACTIVE_WINDOW_POSITIONS = {
   kitchenStartYmm:(KITCHEN_RUN.rectMm.y1+KITCHEN_RUN.peninsulaRectMm.y0)/2-500,
   showerStartYmm:(showerBay.y0+showerBay.y1)/2-300,
-  officeSideStartYmm:Math.max(...office.rectsMm.map(r=>r.y1))-200-1000,
+  // Preserve the approved facade opening when the office gains 50 mm at its north wall.
+  officeSideStartYmm:6412-200-1000,
   // The jamb on the desk side overlaps the desk's outer edge by exactly 50 mm.
   officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1-50,
 };
