@@ -266,17 +266,14 @@ describe('active 3D house matches the approved default C plan',()=>{
     }
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.name).toContain('Chlapčenská');
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.name).toContain('Dievčenská');
-    expect(HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')).toMatchObject({startXmm:17000,widthMm:800,sillMm:0});
     const windows=HOUSE.facades.front.openings.filter(o=>['FRONT-GIRL-BED','FRONT-04','FRONT-05'].includes(o.id));
     expect(windows).toHaveLength(1);
-    expect(windows[0]).toMatchObject({id:'FRONT-05',startXmm:18741,widthMm:1600,heightMm:1350,sillMm:900,kind:'window'});
+    expect(windows[0]).toMatchObject({id:'FRONT-05',startXmm:16992,widthMm:1800,heightMm:1500,sillMm:900,kind:'window',frameWidthMm:45});
+    const boyWindow=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')!;
+    expect(windows[0]).toMatchObject({...boyWindow,id:windows[0].id});
+    expect(HOUSE.facades.garden.openings.some(o=>o.id==='GARDEN-BOY-DESK')).toBe(false);
     const girlRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-08')!.rectsMm[0];
-    expect(girlRoom.x1-windows[0].startXmm-windows[0].widthMm).toBe(200);
-    const portal=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-03')!;
-    const square=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-BOY-DESK')!;
-    expect(portal.kind).toBe('fixed');
-    expect(square).toMatchObject({widthMm:1200,heightMm:1200,kind:'window'});
-    expect(square.startXmm-portal.startXmm-portal.widthMm).toBeGreaterThanOrEqual(200);
+    expect(windows[0].startXmm-girlRoom.x0).toBe(girlRoom.x1-windows[0].startXmm-windows[0].widthMm);
     const girl=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-08')!;
     const boy=CHILDRENS_BEDROOM_FITOUTS.find(f=>f.roomId==='ROOM-1-09')!;
     const boyRoom=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-09')!.rectsMm[0];
@@ -286,8 +283,8 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(girlRoom).toEqual(rect(15243,3504,20541,6412));
     expect(boyRoom).toEqual(rect(15243,7791,20541,10699));
     const mirror=(r:RectMm)=>rect(r.x0,girlRoom.y0+boyRoom.y1-r.y1,r.x1,girlRoom.y0+boyRoom.y1-r.y0);
-    expect(girl.wardrobe.footprintMm).toEqual(rect(18941,5812,20541,6412));
-    expect(boy.wardrobe.footprintMm).toEqual(rect(18941,7791,20541,8391));
+    expect(girl.wardrobe.footprintMm).toEqual(rect(18391,5812,20541,6412));
+    expect(boy.wardrobe.footprintMm).toEqual(rect(18391,7791,20541,8391));
     for(const [a,b] of [[girl.bed.footprintMm,boy.bed.footprintMm],[girl.wardrobe.footprintMm,boy.wardrobe.footprintMm],[girl.desk.footprintMm,boy.desk.footprintMm],[girl.chair.footprintMm,boy.chair.footprintMm],[girl.readingRectMm,boy.readingRectMm],[girl.bookcaseRectMm,boy.bookcaseRectMm],[girl.clearPlayRectMm,boy.clearPlayRectMm]]){
       expect(a).toEqual(mirror(b));
     }
@@ -297,12 +294,12 @@ describe('active 3D house matches the approved default C plan',()=>{
     for(const [f,id] of [[girl,'DOOR-102-108'],[boy,'DOOR-102-109']] as const){
       const door=INTERIOR_DOORS.find(d=>d.id===id)!;
       expect([door.startMm,door.widthMm]).toEqual([17442,900]);
-      expect(f.wardrobe.footprintMm.x0-(door.startMm+door.widthMm)).toBe(599);
+      expect(f.wardrobe.footprintMm.x0-(door.startMm+door.widthMm)).toBe(49);
       expect(f.bed.footprintMm.x0).toBe(girlRoom.x0);
     }
     expect(girl.wardrobe.footprintMm.x1).toBe(girlRoom.x1);
     expect(girl.desk.footprintMm.x1).toBe(girlRoom.x1);
-    expect(windows[0].startXmm+windows[0].widthMm-girl.desk.footprintMm.x0).toBeGreaterThan(1000);
+    expect(girl.desk.footprintMm.x0-windows[0].startXmm-windows[0].widthMm).toBe(449);
     expect(windows[0].startXmm+windows[0].widthMm).toBeLessThanOrEqual(girl.desk.footprintMm.x1);
     expect(windows[0].sillMm-girl.desk.topElevationMm).toBe(360);
     expect(boy.pinboard.facing).toBe('WEST');
@@ -325,6 +322,20 @@ describe('active 3D house matches the approved default C plan',()=>{
           mesh.computeWorldMatrix(true);
           expect(mesh.intersectsMesh(jamb,false),`${mesh.name} clears ${id} lining`).toBe(false);
         }
+      }
+      // The extended wardrobes clear the real leaf and handles throughout opening.
+      for(const fitout of CHILDRENS_BEDROOM_FITOUTS){
+        const registration=doors.find(d=>d.id===fitout.entryDoorId)!;
+        const moving=scene.meshes.filter(m=>m.metadata?.doorId===fitout.entryDoorId&&m.metadata?.doorMotion==='HINGED');
+        expect(moving.length).toBeGreaterThanOrEqual(3);
+        for(const progress of [0,.25,.5,.75,1]){
+          registration.apply(progress,0);
+          for(const mesh of moving){
+            mesh.computeWorldMatrix(true);
+            expect(mesh.getBoundingInfo().boundingBox.maximumWorld.x,mesh.name).toBeLessThan(sceneXM(fitout.wardrobe.footprintMm.x0)-.03);
+          }
+        }
+        registration.apply(0,0);
       }
       const groups=[BEDROOM_FITOUT,ENTRY_FITOUT,ENSUITE_BATHROOM_FITOUT,GARAGE_FITOUT,OFFICE_FITOUT,...CHILDRENS_BEDROOM_FITOUTS,...HALLWAY_BUILT_IN_WARDROBES];
       for(const group of groups){

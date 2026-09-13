@@ -1,6 +1,6 @@
-import { TwinStudio } from "./twin-studio";
+import { ProjectHome } from "./project-home";
 import "./globals.css";
 
 export default function Home() {
-  return <TwinStudio />;
+  return <ProjectHome />;
 }

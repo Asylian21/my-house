@@ -1,4 +1,5 @@
 import { createGarageEnvelope } from './floor-plan-garage';
+import { ACOUSTIC_ASSEMBLY } from './acoustic-walls';
 import { SERVICE_CORE_REVISION } from './technical-design';
 import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior-baseline';
 
@@ -29,7 +30,7 @@ export const NESTED_HALL_LINES: HallLinesMm = { streetKidTopMm: 6412, gardenKidB
 export const NESTED_CHILD_DOOR_MM = 900;
 /** A, B and D keep the 140 mm suite partition; the active C model builds it 300 mm thick. */
 export const SUITE_PARTITION_MM = 140;
-/** Load-bearing masonry in the active model: the suite and child-room walls. */
+/** Load-bearing masonry in the active model; acoustic suite partitions have their own build-up. */
 export const BEARING_WALL_MM = 300;
 /** Client revision, 13 Sep 2026: keep office-side lobby faces and bathroom-side north face fixed. */
 export const OFFICE_LOBBY_WALL_MM = 175;
@@ -282,8 +283,8 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
   add('C-BATH-HALL-E',rect(doorEnd,bathHallWall[0],right,bathHallWall[1]));
   add('C-BED-PRIVACY-W',rect(13483,top,doorStart,bedroomBottom));
   add('C-BED-PRIVACY-E',rect(doorEnd,top,right,bedroomBottom));
-  // The wall between the suite and both child rooms carries load when built 300 mm thick.
-  const suiteWallRole=wall>=BEARING_WALL_MM?'LOAD_BEARING' as const:'PARTITION' as const;
+  // Client revision: two 100 mm masonry leaves + 100 mm wool, not load-bearing masonry.
+  const suiteWallRole='PARTITION' as const;
   walls.push(
     {id:'C-OPEN-HALL-S',role:suiteWallRole,changed:true,rectMm:rect(right,3504,right+wall,hallSouth)},
     {id:'C-OPEN-HALL-N',role:suiteWallRole,changed:true,rectMm:rect(right,top,right+wall,10699)},
@@ -368,7 +369,9 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
     ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[streetTop,hallSouth] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
     :d.id==='DOOR-102-106'?{...d,label:'Dvere chodba → WC · otváravé 700/2100',motion:'HINGED' as const,hinge:1 as const,swing:1 as const,hingeOffsetMm:34,pocketDirection:undefined,pocketTravelMm:undefined,revisionSourceId:'C-WC-HINGED-2026-09-08'}
     :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}
-    :d.id==='DOOR-102-108'||d.id==='DOOR-102-109'?{...d,startMm:kidDoorStart,widthMm:NESTED_CHILD_DOOR_MM}:d);
+    // Both child rooms keep their inward swing; handles move to the left
+    // side of each opening in the plan, with hinges on the right jamb.
+    :d.id==='DOOR-102-108'||d.id==='DOOR-102-109'?{...d,startMm:kidDoorStart,widthMm:NESTED_CHILD_DOOR_MM,hinge:1 as const,...(d.id==='DOOR-102-109'?{hingeOffsetMm:0}:{})}:d);
   // The 1.9 m lobby cabinet ends on the lobby's hall wall; the bench keeps the street corner.
   const entryCabinet=rect(storageBack,streetTop-1900,hallLine,streetTop);
   const entryBench=rect(storageBack,3554,storageBack+450,4404);
@@ -446,10 +449,10 @@ function bearKitchenWall(base:ReturnType<typeof balanceNestedChildRooms>) {
 export function createConcept(input: ConceptSettings, original = false) {
   const settings=normalizeConcept(input);
   if(!original&&settings.layout==='nested') settings.expansion=Math.min(settings.expansion,NESTED_MAX_EXPANSION);
-  // Only the active model (C) builds the suite wall as 300 mm masonry, moves it
+  // Only the active model (C) builds the suite wall as a 300 mm acoustic assembly, moves it
   // 100 mm towards the child rooms and centres the hall between the facades.
   const active=!original&&settings.layout==='nested';
-  const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original,active?BEARING_WALL_MM:SUITE_PARTITION_MM,active?NESTED_CHILD_ROOMS_WEST_MM:CHILD_ROOMS_WEST_MM,active?NESTED_HALL_LINES:SOURCE_HALL_LINES);
+  const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original,active?ACOUSTIC_ASSEMBLY.totalMm:SUITE_PARTITION_MM,active?NESTED_CHILD_ROOMS_WEST_MM:CHILD_ROOMS_WEST_MM,active?NESTED_HALL_LINES:SOURCE_HALL_LINES);
   const entryArea=area(base.rooms.find(r=>r.number==='1.01')!.rectsMm);
   const entryDefaults={bathroomRadiator:null as RectMm|null,builtInCabinets:[] as ConceptCabinet[],entryBench:null as RectMm|null,kitchenBearingWall:null as RectMm|null,kitchenBearingWallEast:null as RectMm|null,entryArea,entryClearArea:entryArea,officeArea:area(base.rooms.find(r=>r.number==='1.04')!.rectsMm),streetKidDesk:rect(19900,3650,21150,4250),gardenKidBed:rect(19400,8000,20300,10000)};
   if(original||settings.layout!=='private') return {...entryDefaults,...(!original&&settings.layout==='nested'?bearKitchenWall(balanceNestedChildRooms(encloseNestedBedroom(base))):base),isPrivate:false};

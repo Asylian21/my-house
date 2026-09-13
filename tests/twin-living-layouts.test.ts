@@ -119,11 +119,11 @@ describe("switchable living-room layouts of room 1.03", () => {
     expect(bay0).toBeGreaterThan(tvWall.rectMm.x0);
     expect(bay1).toBeLessThan(tvWall.rectMm.x1);
     expect(bay1 - bay0).toBeGreaterThan(tvWall.tv.widthMm);
-    // Screen centred on the sofa axis; viewing distance from the sofa front 2.5–2.7 m
-    // (≈ 3.2 m to the eyes, a 37° angle on the 98″ screen) after the sofa moved with the peninsula.
+    // Screen centred on the sofa axis; viewing distance from the sofa front 2.7–2.9 m
+    // (≈ 3.4 m to the eyes, a 35° angle on the 98″ screen) after the 200 mm move towards the sink.
     expect(Math.abs((bay0 + bay1) / 2 - (sofa.mainRectMm.x0 + sofa.mainRectMm.x1) / 2)).toBeLessThanOrEqual(5);
-    expect(tvWall.rectMm.y0 - sofa.mainRectMm.y1).toBeGreaterThanOrEqual(2500);
-    expect(tvWall.rectMm.y0 - sofa.mainRectMm.y1).toBeLessThanOrEqual(2700);
+    expect(tvWall.rectMm.y0 - sofa.mainRectMm.y1).toBeGreaterThanOrEqual(2700);
+    expect(tvWall.rectMm.y0 - sofa.mainRectMm.y1).toBeLessThanOrEqual(2900);
     const eyeDistanceMm = tvWall.rectMm.y0 - sofa.mainRectMm.y1 + 650;
     const viewingAngleDeg = (2 * Math.atan(tvWall.tv.widthMm / 2 / eyeDistanceMm) * 180) / Math.PI;
     expect(viewingAngleDeg).toBeGreaterThanOrEqual(30);
@@ -137,11 +137,11 @@ describe("switchable living-room layouts of room 1.03", () => {
     expect(sofa.chaiseRectMm.x1).toBe(sofa.mainRectMm.x1);
     expect(sofa.chaiseRectMm.y0).toBe(sofa.mainRectMm.y0);
     expect(livingMain.x1 - sofa.chaiseRectMm.x1).toBe(200);
-    // Walkway of a full metre between the peninsula worktop edge (flush with the terrace-door reveal) and the sofa back.
+    // The requested 200 mm move leaves 800 mm between the peninsula worktop edge and the sofa back.
     const worktopFrontYmm = KITCHEN_RUN.peninsulaRectMm.y1 + KITCHEN_RUN.peninsulaOverhangMm;
     expect(worktopFrontYmm).toBe(PENINSULA_WORKTOP_EDGE_YMM);
-    expect(sofa.mainRectMm.y0 - worktopFrontYmm).toBe(1000);
-    expect(sofa.mainRectMm.y0 - KITCHEN_RUN.peninsulaRectMm.y1).toBeGreaterThanOrEqual(1200);
+    expect(sofa.mainRectMm.y0 - worktopFrontYmm).toBe(800);
+    expect(sofa.mainRectMm.y0 - KITCHEN_RUN.peninsulaRectMm.y1).toBeGreaterThanOrEqual(1100);
     // The chaise does not block the east window and stays clear of the tech-room door approach.
     expect(sofa.chaiseRectMm.y0).toBeGreaterThan(eastWindow.startYmm + eastWindow.widthMm);
     // Sofa, rug and coffee tables stay south of the TV wall with room to walk along it.
@@ -188,7 +188,7 @@ describe("switchable living-room layouts of room 1.03", () => {
     expect(B.stove.flue.terminationElevationMm).toBe(FIREPLACE_STOVE.flue.terminationElevationMm);
 
     // Kitchen is shared; the notes say so and quote the key clearances.
-    expect(B.notes.join(" ")).toMatch(/priechod 1 000 mm/);
+    expect(B.notes.join(" ")).toMatch(/priechod 800 mm/);
     expect(B.notes.join(" ")).toMatch(/957 mm/);
     expect(B.notes.join(" ")).toMatch(/1 041 mm/);
     expect(B.notes.join(" ")).toMatch(/pre šesť osôb/);

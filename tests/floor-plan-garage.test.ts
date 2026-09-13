@@ -14,8 +14,8 @@ describe('shared garden recess in all floor-plan variants',()=>{
     for(const m of variants){
       expect(m.gardenRecess).toBe(true);
       expect(m.loggia.depth).toBe(1953);
-      expect(m.loggia.pier).toEqual(rect(6440,10700,8440,11200));
-      expect(m.loggia.openingWidth).toBe(2200);
+      expect(m.loggia.pier).toEqual(rect(6440,10700,7840,11200));
+      expect(m.loggia.openingWidth).toBe(2800);
       expect(m.loggia.pierReturn.y0-m.loggia.bounds.y0).toBe(HOUSE.facades.west.loggiaOpening.widthMm);
       expect(m.loggia.bounds.x1).toBe(HOUSE.porches.gardenLoggia.eastInnerXmm);
       expect(m.garageBackOpening.y0).toBe(GARAGE_DEPTH_REVISION.revisedGarageRearInnerFaceYmm);

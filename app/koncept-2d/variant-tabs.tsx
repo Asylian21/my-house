@@ -17,7 +17,7 @@ export interface VariantNavigationProps {
   onVariantChange: (variant:PlanVariant)=>void;
 }
 export function normalizeVariant(value:string|null):PlanVariant {
-  return variants.find(variant=>variant.id===value)?.id??'d';
+  return variants.find(variant=>variant.id===value)?.id??'c';
 }
 
 export function usePlanView() {

@@ -3,7 +3,8 @@ import * as original from './twin-interior-baseline';
 import { createConcept, DEFAULT_NESTED_CONCEPT, rect } from './floor-plan-concept';
 import type { Point2Mm } from './twin-site';
 import type { InteriorRoom, RectMm } from './twin-interior-baseline';
-import { CHILDREN_DESIGN_ID } from './twin-children-design';
+import { CHILDREN_DESIGN_ID, CHILDREN_DOUBLE_WINDOW } from './twin-children-design';
+import { acousticWallLayers, acousticWallSpec } from './acoustic-walls';
 export * from './twin-interior-baseline';
 export { TECHNICAL_HEATING_FITOUT, WC_FITOUT, BATHROOM_FITOUT } from './technical-design';
 
@@ -22,6 +23,10 @@ export const INTERIOR_ROOMS: readonly InteriorRoom[] = ACTIVE_CONCEPT.rooms.map(
   standingPointMm:points[room.id] ?? room.standingPointMm,
 }));
 export const INTERIOR_WALLS: readonly original.InteriorWall[] = ACTIVE_CONCEPT.walls;
+export const ACTIVE_ACOUSTIC_WALLS = INTERIOR_WALLS.flatMap(wall => {
+  const spec = acousticWallSpec(wall);
+  return spec ? [{ ...spec, rectMm: wall.rectMm, layers: acousticWallLayers(wall) }] : [];
+});
 /** Remove repeated corner volumes before meshing, retaining the exact plan union. */
 export function nonOverlappingWalls(walls:readonly original.InteriorWall[]):original.InteriorWall[] {
   const occupied:RectMm[]=[], result:original.InteriorWall[]=[];
@@ -166,9 +171,9 @@ const garden=original.CHILDRENS_BEDROOM_FITOUTS[0];
 // to 20541, and from a facade to a hall wall (7791 in the boy's room, 6412 in
 // the girl's). The girl's room is the boy's room reflected across the hall's
 // axis: bed, panel, reading corner and bookcase on the west wall, desk and
-// chair by the facade on the east wall, and the 1.6 m wardrobe backed onto the
-// hall wall in the east corner, 599 mm from the centred door's jamb, where the
-// former toy shelf stood. Both door leaves swing away from the wardrobes.
+// chair by the facade on the east wall, and the 2.15 m wardrobe backed onto
+// the hall wall in the east corner. Its end is 49 mm beyond the door opening;
+// the east-hinged leaf and handle clear it throughout the inward 90-degree swing.
 const boyRoom=ACTIVE_CONCEPT.rooms.find(r=>r.number==='1.09')!.rectsMm[0];
 const girlRoom=ACTIVE_CONCEPT.rooms.find(r=>r.number==='1.08')!.rectsMm[0];
 const mirrorY=(y:number)=>girlRoom.y0+boyRoom.y1-y;
@@ -177,15 +182,15 @@ const mirror=(r:RectMm):RectMm=>rect(r.x0,mirrorY(r.y1),r.x1,mirrorY(r.y0));
 const boy:ChildBedroomFitout={
   ...garden,id:'C-BOY-109',sourceId:CHILDREN_DESIGN_ID,theme:'MIDNIGHT_SAND',childAgeRange:[3,7],
   bed:{...garden.bed,footprintMm:rect(15243,8519,16783,10699),mattressFootprintMm:rect(15313,8599,16713,10599),headboardRectMm:rect(15243,10599,16783,10699),facing:'SOUTH',mattressWidthMm:1400,mattressLengthMm:2000,frameHeightMm:260,mattressTopElevationMm:460,headboardTopElevationMm:1050},
-  wardrobe:{...garden.wardrobe,footprintMm:rect(18941,7791,20541,8391),facing:'NORTH',heightMm:2450,doorCount:3},
+  wardrobe:{...garden.wardrobe,footprintMm:rect(18391,7791,20541,8391),facing:'NORTH',heightMm:2450,doorCount:3},
   desk:{...garden.desk,footprintMm:rect(19241,10149,20541,10699),facing:'SOUTH',topElevationMm:540},
   chair:{...garden.chair,footprintMm:rect(19641,9549,20141,10049),centerMm:{x:19891,y:9799},facing:'NORTH',seatElevationMm:300,backTopElevationMm:580,wheelCount:0},
   featureWall:{...garden.featureWall,footprintMm:rect(15243,7791,15265,10699),facing:'EAST',topElevationMm:1080,motif:'OAK_RIBBON'},
-  // Keep the board on the side wall; the square window is beside the desk.
+  // The centred double window leaves the desk and board on the east side.
   pinboard:{...garden.pinboard,footprintMm:rect(20519,9549,20541,10649),facing:'WEST',bottomElevationMm:800,heightMm:650},
   readingRectMm:rect(15293,7881,16043,8361),bookcaseRectMm:rect(16293,7791,16943,8091),storageFacing:'NORTH',artUrl:'/assets/textures/child-woodland-albedo.png',
-  // The entry zone covers the leaf's sweep: hinged east, it opens towards the west.
-  clearEntryRectMm:rect(16972,7791,18372,8591),clearPlayRectMm:rect(16903,8641,19541,10049),windowClearanceRectMm:rect(17000,10099,19200,10699),
+  // The entry zone ends before the extended wardrobe beside the east hinge.
+  clearEntryRectMm:rect(17412,7791,18361,8591),clearPlayRectMm:rect(16903,8641,19541,10049),windowClearanceRectMm:rect(CHILDREN_DOUBLE_WINDOW.startXmm,10099,CHILDREN_DOUBLE_WINDOW.startXmm+CHILDREN_DOUBLE_WINDOW.widthMm,10699),
 };
 const girl:ChildBedroomFitout={
   ...garden,id:'C-GIRL-108',sourceId:CHILDREN_DESIGN_ID,roomId:'ROOM-1-08',entryDoorId:'DOOR-102-108',gardenWindowId:'FRONT-05',theme:'SAGE_GLOW',childAgeRange:[3,7],
@@ -194,11 +199,11 @@ const girl:ChildBedroomFitout={
   desk:{...boy.desk,footprintMm:mirror(boy.desk.footprintMm),facing:'NORTH'},
   chair:{...boy.chair,footprintMm:mirror(boy.chair.footprintMm),centerMm:{x:boy.chair.centerMm.x,y:mirrorY(boy.chair.centerMm.y)},facing:'SOUTH'},
   featureWall:{...boy.featureWall,footprintMm:mirror(boy.featureWall.footprintMm)},
-  // The only street window sits at the desk; the pinboard stays on the east wall.
+  // Matching centred street window; the pinboard stays on the east wall.
   pinboard:{...garden.pinboard,footprintMm:rect(20519,3554,20541,4654),facing:'WEST',bottomElevationMm:800,heightMm:650},
   readingRectMm:mirror(boy.readingRectMm),bookcaseRectMm:mirror(boy.bookcaseRectMm),storageFacing:'SOUTH',artUrl:'/assets/textures/child-garden-albedo.png',
-  // Hinged west, the leaf opens towards the east; the zone is the boy's, mirrored about the door's centre.
-  clearEntryRectMm:rect(17412,5612,18812,6412),clearPlayRectMm:mirror(boy.clearPlayRectMm),windowClearanceRectMm:mirror(boy.windowClearanceRectMm),
+  // The same east hinge and clear entry zone, reflected across the hall.
+  clearEntryRectMm:rect(17412,5612,18361,6412),clearPlayRectMm:mirror(boy.clearPlayRectMm),windowClearanceRectMm:mirror(boy.windowClearanceRectMm),
 };
 export const CHILDRENS_BEDROOM_FITOUTS:readonly ChildBedroomFitout[]=[boy,girl];
 

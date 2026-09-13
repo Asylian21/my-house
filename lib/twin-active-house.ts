@@ -1,6 +1,6 @@
-import { GARAGE_DEPTH_REVISION, HOUSE as baseline, SITE_SURFACES, type Point2Mm } from './twin-site';
+import { GARAGE_DEPTH_REVISION, HOUSE as baseline, SITE_SURFACES, ACTIVE_HOUSE_PLACEMENT, PARCEL_LAWN_INTERIOR_CUTOUTS_MM as siteCutouts, type Point2Mm } from './twin-active-site';
 import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_FITOUT, totalActiveFloorAreaM2 } from './twin-interior';
-import { CHILDREN_WINDOWS, withChildrenWindow } from './twin-children-design';
+import { withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
 /** Same exterior/roof; C suite openings and client-approved children's glazing. */
 const showerBay = INTERIOR_ROOMS.find(room=>room.number==='1.05')!.rectsMm.find(r=>r.x1===27541)!;
@@ -14,6 +14,11 @@ export const ACTIVE_WINDOW_POSITIONS = {
   officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1-50,
 };
 export const HOUSE={...baseline,
+  placement: ACTIVE_HOUSE_PLACEMENT,
+  detailedRevision: { ...baseline.detailedRevision,
+    placementStatus: ACTIVE_HOUSE_PLACEMENT.status,
+    alignmentNote: 'C3 + požiadavka stavebníka z 13. 9. 2026: uličný aj pravý kolmý odstup 3 000 mm. Posun celého domu, bez zmeny rozmerov.',
+  },
   // Current room geometry, including garage; never change the preserved D1 legend.
   floorAreaM2: totalActiveFloorAreaM2(),
   floorAreaAuthority: {
@@ -34,7 +39,7 @@ export const HOUSE={...baseline,
       opening.id==='FRONT-03'?ACTIVE_CONCEPT.frontWindowStart:
       opening.id==='FRONT-07'?ACTIVE_WINDOW_POSITIONS.officeFrontStartXmm:withChildrenWindow(opening).startXmm,
   })).sort((a,b)=>a.startXmm-b.startXmm),
-},garden:{...baseline.facades.garden,openings:[...baseline.facades.garden.openings.map(withChildrenWindow),{id:'GARDEN-BOY-DESK',...CHILDREN_WINDOWS['GARDEN-BOY-DESK']}]},
+},garden:{...baseline.facades.garden,openings:baseline.facades.garden.openings.map(withChildrenWindow)},
 east:{...baseline.facades.east,openings:baseline.facades.east.openings.map(o=>o.id==='EAST-03'?{...o,...SERVICE_CORE_REVISION.exteriorDoor}:
   {...o,startYmm:o.id==='EAST-01'?ACTIVE_WINDOW_POSITIONS.officeSideStartYmm:o.id==='EAST-02'?ACTIVE_WINDOW_POSITIONS.showerStartYmm:o.id==='EAST-04'?ACTIVE_WINDOW_POSITIONS.kitchenStartYmm:o.startYmm})},
 wingWest:{...baseline.facades.wingWest,opening:{...baseline.facades.wingWest.opening,frameWidthMm:35}},
@@ -56,3 +61,4 @@ export const SIDE_ENTRY_APPROACH={...SITE_SURFACES.sideEntryApproach,
   polygonMm:sidePolygon,privatePolygonMm:sidePrivatePolygon,areaM2:polygonAreaM2(sidePolygon),
   streetConnection:{...SITE_SURFACES.sideEntryApproach.streetConnection,privateAreaM2:polygonAreaM2(sidePrivatePolygon)},
 };
+export const PARCEL_LAWN_INTERIOR_CUTOUTS_MM = [SIDE_ENTRY_APPROACH.privatePolygonMm, ...siteCutouts.slice(1)];

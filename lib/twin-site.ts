@@ -1161,12 +1161,12 @@ export const HOUSE = Object.freeze({
       originalBackFaceYmm: GARAGE_DEPTH_REVISION.originalLoggiaBackFaceYmm,
       garageDepthExtensionMm: GARAGE_DEPTH_REVISION.extensionMm,
       revisionSourceId: SOURCES.clientGarageDepthRevision20260825.id,
-      openingStartXmm: 8440,
+      openingStartXmm: 7840,
       openingEndXmm: 10640,
-      // Approximate client sketch proportions: 2 m garden arm, 1 m west arm,
-      // both 500 mm thick. Coordinates describe the two legs, not a filled box.
+      // Client revision (13 Sep 2026): shorten the garden arm by 600 mm to
+      // 1.4 m from its free end; retain the 1 m west arm and 500 mm thickness.
       cornerPier: {
-        startXmm: 6440, endXmm: 8440, startYmm: 10700, endYmm: 11200,
+        startXmm: 6440, endXmm: 7840, startYmm: 10700, endYmm: 11200,
         returnEndXmm: 6940, returnStartYmm: 10200,
       },
       backLarch: { startXmm: 7236, endXmm: 9086 },

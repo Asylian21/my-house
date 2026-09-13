@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import '../globals.css';
 import { FloorPlanStudio } from './studio';
-export const metadata: Metadata = { title: 'Dom · Dispozičné štúdio 2D', description: 'Interaktívne varianty pôdorysu v spoločnom 2D štúdiu. Spálňa do dvora, šatník a variant so zalomením a krytým zárezom pri garáži.' };
-export default function ConceptPage() { return <FloorPlanStudio />; }
+import { requireActiveDesign, type DesignPageProps } from '../active-design-route';
+export const metadata: Metadata = { title: 'Dom · Hlavný návrh C/B/B · Pôdorys', description: 'Hlavný návrh domu: dispozícia C, technická miestnosť B a obývacia zóna B.' };
+export default async function ConceptPage({searchParams}: DesignPageProps) {
+  await requireActiveDesign('/koncept-2d', searchParams);
+  return <FloorPlanStudio />;
+}

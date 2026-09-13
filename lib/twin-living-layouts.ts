@@ -128,7 +128,7 @@ export function coffeeTableRectMm(table: CoffeeTableSpec): RectMm {
  * cushion layout is the variant A module turned a quarter clockwise; the
  * chaise keeps its 1 100 × 2 750 mm size and now runs north along the east
  * wall. With the peninsula worktop edge at 13 800 the sofa back stands at
- * 14 800 (a 1 000 mm walkway) and 200 mm off the east wall; the screen bay
+ * 14 600 (an 800 mm walkway) and 200 mm off the east wall; the screen bay
  * follows the sofa axis. The six-seat table stands north–south by the west wall.
  */
 export const LIVING_DINING_FITOUT_B: LivingDiningFitout = Object.freeze({
@@ -146,8 +146,8 @@ export const LIVING_DINING_FITOUT_B: LivingDiningFitout = Object.freeze({
     tv: LIVING_DINING_FITOUT.tvWall.tv,
   },
   sofa: {
-    mainRectMm: { x0: 24441, y0: 14800, x1: 27341, y1: 16030 },
-    chaiseRectMm: { x0: 26241, y0: 14800, x1: 27341, y1: 17550 },
+    mainRectMm: { x0: 24441, y0: 14600, x1: 27341, y1: 15830 },
+    chaiseRectMm: { x0: 26241, y0: 14600, x1: 27341, y1: 17350 },
     facing: "NORTH" as const,
     seatHeightMm: LIVING_DINING_FITOUT.sofa.seatHeightMm,
   },
@@ -236,8 +236,8 @@ const B: LivingLayout = {
   ],
   coffeeTableGuardRectMm: { x0: 24770, y0: 16420, x1: 26030, y1: 18210 },
   notes: [
-    "TV zostava 3 401 × 437 mm stojí na plnej časti záhradného štítu (24 140–27 541 mm), 100 mm od rámu pevného presklenia. Stred 98″ televízora leží na osi sedačky; od čela hlavného modulu je 2 568 mm, od očí sediaceho približne 3,2 m, čo dáva zorný uhol ≈ 37° (odporúčaných 30–40°).",
-    "L-sedačka 2 900 × 1 230 mm s ležadlom 1 100 × 2 750 mm je otočená chrbtom ku kuchyni a stojí 200 mm od východnej steny. Medzi operadlom (14 800 mm) a hranou pracovnej dosky polostrova (13 800 mm) zostáva priechod 1 000 mm k jeho obslužnej strane; koberec 3 150 × 3 400 mm spája sedačku s TV stenou a dva oválne stolíky sú v rohu L.",
+    "TV zostava 3 401 × 437 mm stojí na plnej časti záhradného štítu (24 140–27 541 mm), 100 mm od rámu pevného presklenia. Stred 98″ televízora leží na osi sedačky; od čela hlavného modulu je 2 768 mm, od očí sediaceho približne 3,4 m, čo dáva zorný uhol ≈ 35° (odporúčaných 30–40°).",
+    "L-sedačka 2 900 × 1 230 mm s ležadlom 1 100 × 2 750 mm je otočená chrbtom ku kuchyni a stojí 200 mm od východnej steny. Na požiadavku stavebníka z 13. 9. 2026 je posunutá o 200 mm ku kuchynskému drezu. Medzi operadlom (14 600 mm) a hranou pracovnej dosky polostrova (13 800 mm) zostáva priechod 800 mm k jeho obslužnej strane; koberec 3 150 × 3 400 mm spája sedačku s TV stenou a dva oválne stolíky sú v rohu L.",
     "Jedálenský stôl 900 × 2 000 mm pre šesť osôb stojí pozdĺž západnej steny (22 500–23 400 × 15 400–17 400 mm) s tromi stoličkami na každej dlhšej strane: pri stene ostáva 957 mm na odsunutie stoličky, na východ 1 041 mm k sedačke (911 mm za sediacim). Terasové posuvné dvere, nástup z chodby aj pás 1 838 mm pri polostrove zostávajú voľné.",
     "Krbové kachle Ø510 mm sú v severozápadnom rohu 55 mm od západnej steny a 160 mm od piliera štítu; oheň je natočený na juhovýchod, takže ho vidno zo sedačky, od stola aj z terasy cez presklenie. Dymovod stúpa zvislo v osi kachlí (21 853; 18 620 mm), 415 mm pred rovinou štítu.",
     "Kuchynská linka, polostrov s varnou doskou aj bočné rameno pri východnej stene sú v oboch variantoch rovnaké; mení sa len obývacia a jedálenská zóna.",

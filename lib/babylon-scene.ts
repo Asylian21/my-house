@@ -5,7 +5,7 @@ import type { TwinDesignSelection } from './twin-design-selection';
 export interface TwinSceneOptions extends Partial<TwinDesignSelection> {
   readonly loadArchviz?: boolean;
 }
-import { HOUSE, SIDE_ENTRY_APPROACH } from "./twin-active-house";
+import { HOUSE, SIDE_ENTRY_APPROACH, PARCEL_LAWN_INTERIOR_CUTOUTS_MM } from "./twin-active-house";
 import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
 import { DECK_BOARD_LAYOUT, planDeckBoards } from "./deck-boards";
 import { resolveWalkFloor } from "./babylon-walk-picking";
@@ -69,7 +69,6 @@ import {
   CADASTRAL_PARCELS,
   GARDEN_POOL,
   LAYERS,
-  PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
   POOL_SURROUND_DECK,
   POOL_TECHNOLOGY_SHAFT,
   RAINWATER_COORDINATION,
@@ -85,7 +84,7 @@ import {
   type LayerId,
   type Point2Mm,
   type ViewMode,
-} from "./twin-site";
+} from "./twin-active-site";
 import {
   WALL_LAYER_LABEL,
   exteriorWallLayers,
@@ -3220,7 +3219,7 @@ export class TwinSceneController {
       },
       {
         x0: frontOpenings[1].x1 + curbTransitionLengthMm,
-        x1: 28_194,
+        x1: ROAD_CONTEXT.frontParcelEdgeMm.at(-1)!.x,
       },
     ];
     this.buildThinBoxes(
@@ -3289,10 +3288,8 @@ export class TwinSceneController {
       false,
     );
 
-    const sideTransitionStart = { x: 34_270, y: 8_750 };
-    const sideGateStart = { x: 34_268, y: 9_250 };
-    const sideGateEnd = { x: 34_262, y: 11_050 };
-    const sideTransitionEnd = { x: 34_260, y: 11_550 };
+    const { transitionStart: sideTransitionStart, gateStart: sideGateStart,
+      gateEnd: sideGateEnd, transitionEnd: sideTransitionEnd } = ROAD_CONTEXT.sideCurbAccessMm;
     const innerCornerRuns = [
       [...ROAD_CONTEXT.cornerAsphaltEdgeMm.slice(0, 6), sideTransitionStart],
       [sideTransitionEnd, ROAD_CONTEXT.cornerAsphaltEdgeMm.at(-1)!],
@@ -5160,13 +5157,18 @@ export class TwinSceneController {
       {
         // Short west arm; the side opening starts flush at the garage wall.
         solidMm: [[loggia.cornerPier.returnStartYmm, loggia.cornerPier.endYmm]],
-        masonryInsetMm: { [front]: front + insulationMm },
+        masonryInsetMm: {
+          [front]: front + insulationMm,
+          [loggia.backFaceYmm]: loggia.backFaceYmm - insulationMm,
+        },
       },
     );
     this.buildRealisticXFacade(
       "Západná stena krídla",
       HOUSE.facades.wingWest.faceXmm,
-      HOUSE.facades.wingWest.wallStartYmm,
+      // Carry the vertical insulation into the horizontal garden band at
+      // the reentrant corner beside the boys' room.
+      HOUSE.facades.wingWest.wallStartYmm - insulationMm,
       porch.frontYmm,
       -1,
       heightMm,
@@ -5344,6 +5346,29 @@ export class TwinSceneController {
     const soffitM = loggia.soffitElevationMm * MM_TO_M;
     const cheekEastXmm = this.loggiaCheekEastXmm();
 
+    // Wrap the exposed north end of the garage gable. Its masonry stops
+    // behind this 200 mm cap; the back-wall insulation continues flush to
+    // the east. The cap follows the full gable height above the loggia soffit.
+    const west = HOUSE.facades.west.faceXmm;
+    const insulationMm = HOUSE.exteriorWall.insulationMm;
+    const gableCap = boxAtPlan(
+      this.scene,
+      "Lodžia · západné nárožie · izolácia",
+      {
+        x: west + (insulationMm + FACADE_SHELL_THICKNESS_MM) / 2,
+        y: loggia.backFaceYmm - insulationMm / 2,
+      },
+      FACADE_SHELL_THICKNESS_MM - insulationMm,
+      insulationMm,
+      EAVES_M,
+      0,
+    );
+    gableCap.material = this.realisticMaterials.wall;
+    gableCap.receiveShadows = true;
+    this.realisticOnly(gableCap);
+    this.castShadow(gableCap);
+    this.register(gableCap, "building", HOUSE.id);
+
     const backOpenings: readonly FacadeOpeningMm[] = [
       {
         id: loggia.backDoor.id,
@@ -5356,7 +5381,7 @@ export class TwinSceneController {
     // Back wall of the garage towards the loggia: 300 mm masonry on the garage
     // side, 200 mm insulation on the loggia side. The masonry overlaps the
     // gable shell by 30 mm like every facade; the insulation starts at the
-    // gable's inner face at the corner of the recessed garage wall.
+    // gable's inner face, flush with the insulated cap of its exposed end.
     const backWallOptions = this.facadeLayerOptions(HOUSE.exteriorWall.totalMm, {
       insulationInsetMm: { [loggia.cornerPier.startXmm + 500]: loggia.cornerPier.startXmm + FACADE_SHELL_THICKNESS_MM },
     });

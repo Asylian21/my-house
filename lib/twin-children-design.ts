@@ -1,17 +1,15 @@
-/** Client revision: preschool rooms, garden for a boy / street for a girl. */
-export const CHILDREN_DESIGN_ID = 'C-KIDS-FULL-BEDS-2026-09-07';
-export const CHILDREN_WINDOWS: Record<string,{startXmm:number;widthMm:number;heightMm:number;sillMm:number;kind?:'fixed'|'window';frameWidthMm?:number}> = {
-  // Refined client brief: a narrow vertical fixed strip retains 217 mm to the
-  // bed. The larger square window follows after a 200 mm pier; its right jamb
-  // stops before the desk (x=19241). Its single sash hinges at the strip side.
-  // Both heads follow the 2400 mm garden portal datum, with 45 mm profiles.
-  'GARDEN-03':{startXmm:17000,widthMm:800,heightMm:2400,sillMm:0,kind:'fixed',frameWidthMm:45},
-  'GARDEN-BOY-DESK':{startXmm:18000,widthMm:1200,heightMm:1200,sillMm:1200,kind:'window',frameWidthMm:45},
-  // One ordinary double window at the desk replaces all three street windows.
-  // Its east jamb leaves 200 mm of masonry before the room's bearing wall.
-  'FRONT-05':{startXmm:18741,widthMm:1600,heightMm:1350,sillMm:900,kind:'window'},
+/** Client revision: matching centred windows in both children's rooms. */
+export const CHILDREN_DESIGN_ID = 'C-KIDS-MATCHING-WINDOWS-2026-09-13';
+/** The 17 892 mm axis matches both 900 mm room doors and the room centre. */
+export const CHILDREN_DOUBLE_WINDOW = {
+  startXmm:16992,widthMm:1800,heightMm:1500,sillMm:900,kind:'window' as const,frameWidthMm:45,
 };
-export const GIRL_WINDOW_DESIGN:Record<string,{name:string;note:string}> = {
-  'FRONT-05':{name:'Dvojkrídlové okno pri pracovnom stole',note:'Jediné okno dievčenskej izby: 1 600 × 1 350 mm, parapet 900 mm. Dve otváravé krídla pri stole; stredové presklenie aj okno pri posteli sú odstránené. Nástenka zostáva na bočnej stene.'},
+export const CHILDREN_WINDOWS: Record<string,{startXmm:number;widthMm:number;heightMm:number;sillMm:number;kind?:'fixed'|'window';frameWidthMm?:number}> = {
+  'GARDEN-03':{...CHILDREN_DOUBLE_WINDOW},
+  'FRONT-05':{...CHILDREN_DOUBLE_WINDOW},
+};
+export const CHILDREN_WINDOW_DESIGN:Record<string,{name:string;note:string;roomId:string}> = {
+  'FRONT-05':{name:'Dvojkrídlové okno oproti dverám',roomId:'ROOM-1-08',note:'Jediné okno dievčenskej izby: 1 800 × 1 500 mm, parapet 900 mm. Dve rovnaké otváravé krídla, antracitové profily 45 mm. Os 17 892 mm je presne oproti dverám a v strede izby. Rovnaké okno je v chlapčenskej izbe.'},
+  'GARDEN-03':{name:'Dvojkrídlové okno oproti dverám',roomId:'ROOM-1-09',note:'Jediné okno chlapčenskej izby: 1 800 × 1 500 mm, parapet 900 mm. Dve rovnaké otváravé krídla, antracitové profily 45 mm. Os 17 892 mm je presne oproti dverám a v strede izby. Nahrádza pevný pás aj samostatné okno pri stole; rovnaké okno je v dievčenskej izbe.'},
 };
 export function withChildrenWindow<T extends {id:string}>(opening:T) { return {...opening,...CHILDREN_WINDOWS[opening.id]}; }

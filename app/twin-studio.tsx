@@ -3,6 +3,7 @@
 import { HOUSE } from "../lib/twin-active-house";
 import { designHref, type TwinDesignSelection } from '@/lib/twin-design-selection';
 import { HEATING_LAYOUTS } from '@/lib/technical-design';
+import { ProjectNav } from './project-nav';
 
 import {
   Building2,
@@ -76,7 +77,7 @@ import {
   type FoundationStrip,
   type LayerId,
   type SourceRecord,
-} from "@/lib/twin-site";
+} from "@/lib/twin-active-site";
 
 type InspectorTab = "parameters" | "sources";
 
@@ -501,7 +502,7 @@ function SourceBadge({ kind }: { kind: SourceRecord["kind"] }) {
   return <span className={`source-badge ${kind.toLowerCase()}`}>{map[kind]}</span>;
 }
 
-export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {}) {
+export function TwinStudio({design,archive=false,initialWorkspace=DEFAULT_WORKSPACE_MODE}: {readonly design?: TwinDesignSelection;readonly archive?:boolean;readonly initialWorkspace?:WorkspaceMode} = {}) {
   const viewportRef = useRef<BabylonViewportHandle>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const explorerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -514,7 +515,7 @@ export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {
   );
 
   const [workspace, setWorkspace] = useState<WorkspaceMode>(
-    DEFAULT_WORKSPACE_MODE,
+    initialWorkspace,
   );
   const [movement, setMovement] = useState<NavigationMode>("orbit");
   const [foundations, setFoundations] = useState<readonly FoundationStrip[]>(FOUNDATIONS);
@@ -534,6 +535,7 @@ export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {
   const [history, setHistory] = useState<readonly HistoryItem[]>([]);
 
   const viewMode = viewModeForWorkspace(workspace);
+  const immersivePreview = Boolean(design) && workspace === "experience";
   const chrome = chromeContract(workspace, movement);
   const overlayPanels = !chrome.dockedPanels || isCompact;
   const panelOpen = explorerOpen || inspectorOpen;
@@ -853,11 +855,13 @@ export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {
       data-workspace={workspace}
       data-panels={overlayPanels ? "overlay" : "docked"}
       data-preview={design ? 'current' : undefined}
+      data-immersive={immersivePreview || undefined}
     >
-      {design && <header className="design-preview-bar">
-        <a className="design-preview-brand" href={designHref('/navrh-3d', design)} aria-label="Dom · aktuálny 3D návrh">
+      {design && !immersivePreview && <ProjectNav archived={archive} active={archive?'archive':initialWorkspace==='documentation'?'docs':'3d'} design={design}/>}
+      {design && !immersivePreview && <header className="design-preview-bar">
+        <a className="design-preview-brand" href={designHref('/3d', design, archive)} aria-label={archive?'Dom · archívny 3D návrh':'Dom · hlavný 3D návrh'}>
           <Building2 size={25} strokeWidth={1.4} aria-hidden="true"/>
-          <span><small>DOM / BABYLON</small><strong>Návrh C <span>· september 2026</span></strong></span>
+          <span><small>{archive?'ARCHÍVNY NÁVRH':'HLAVNÝ NÁVRH'}</small><strong>Dom C / {design.heatingLayout} / {design.livingLayout}</strong></span>
         </a>
         <nav className="design-preview-views" aria-label="Pohľady na návrh">
           <button type="button" disabled={!previewReady} onClick={()=>viewportRef.current?.enterWalkthrough('ROOM-1-03')}>Obývačka <b>{design.livingLayout}</b></button>
@@ -872,7 +876,7 @@ export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {
               <p className="design-preview-note">Technológia vykurovania je priestorový návrh. Výkon, servisné odstupy a realizáciu rozvodov ešte potvrdí projektant.</p>
             </div>
           </details>
-          <a className="design-preview-plan" href={designHref('/koncept-2d', design)}><Map size={17}/><span>Pôdorys 2D</span></a>
+          <a className="design-preview-plan" href={designHref('/podorys', design, archive)}><Map size={17}/><span>Pôdorys 2D</span></a>
         </div>
       </header>}
       <a className="skip-link" href="#scene-explorer">Preskočiť na prieskumník modelu</a>
@@ -1082,7 +1086,8 @@ export function TwinStudio({design}: {readonly design?: TwinDesignSelection} = {
         <BabylonViewport
           ref={viewportRef}
           design={design}
-          initialRoomId={design ? 'ROOM-1-03' : undefined}
+          exitHref={immersivePreview && design ? designHref('/podorys', design, archive) : undefined}
+          initialRoomId={design&&initialWorkspace==='experience' ? 'ROOM-1-03' : undefined}
           onReady={()=>setPreviewReady(true)}
           foundations={foundations}
           selectionId={selectionId}

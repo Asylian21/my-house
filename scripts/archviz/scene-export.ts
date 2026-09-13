@@ -1,5 +1,5 @@
 import { ACTIVE_LAYOUT_ID, INTERIOR_ROOMS, INTERIOR_WALLS, INTERIOR_DOORS } from "../../lib/twin-interior";
-import { HOUSE as activeHouse } from "../../lib/twin-active-house";
+import { HOUSE as activeHouse, SIDE_ENTRY_APPROACH, PARCEL_LAWN_INTERIOR_CUTOUTS_MM } from "../../lib/twin-active-house";
 import { BREZI_6012_26_PARCEL, PROVENANCE_KINDS } from "../../lib/twin-domain";
 import { SERVICE_CORE_REVISION } from "../../lib/technical-design";
 import { EngineStore } from "@babylonjs/core/Engines/engineStore";
@@ -11,7 +11,7 @@ import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { MultiMaterial } from "@babylonjs/core/Materials/multiMaterial";
 import { createTwinScene } from "../../lib/babylon-scene";
-import * as site from "../../lib/twin-site";
+import * as site from "../../lib/twin-active-site";
 import { SCENE_CENTER_MM } from "../../lib/twin-render-frame";
 import { DECK_BOARD_LAYOUT } from "../../lib/deck-boards";
 import { EXTERIOR_LIGHTING } from "../../lib/twin-exterior-lighting";
@@ -158,7 +158,7 @@ function capture() {
       exteriorLighting: EXTERIOR_LIGHTING,
       interiorLighting: INTERIOR_LIGHTING,
       fence: site.SITE_FENCE,
-      surfaces: site.SITE_SURFACES,
+      surfaces: { ...site.SITE_SURFACES, sideEntryApproach: SIDE_ENTRY_APPROACH },
       terraces: site.TERRACE_ZONES_D1,
       poolDeck: site.POOL_SURROUND_DECK,
       deckBoardLayout: DECK_BOARD_LAYOUT,
@@ -166,9 +166,11 @@ function capture() {
       foundations: site.FOUNDATIONS,
       utilities: site.UTILITY_ROUTES,
       parcels: site.CADASTRAL_PARCELS,
-      lawnCutouts: site.PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
+      lawnCutouts: PARCEL_LAWN_INTERIOR_CUTOUTS_MM,
       sources: site.SOURCES,
-      originSjtskMm: site.SUBJECT_PARCEL_SJTSK_ORIGIN_MM,
+      originSjtskMm: site.ACTIVE_LOCAL_ORIGIN_SJTSK_MM,
+      cadastralDatumSjtskMm: site.SUBJECT_PARCEL_SJTSK_ORIGIN_MM,
+      housePlacement: site.ACTIVE_HOUSE_PLACEMENT,
       siteAxis: site.SITE_AXIS,
       sceneCenterMm: SCENE_CENTER_MM,
       collisionProvenance: {

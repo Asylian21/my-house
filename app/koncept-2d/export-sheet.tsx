@@ -3,9 +3,11 @@ import { Fragment, type ReactNode, type SVGProps } from 'react';
 import { PLAN_ROOMS, numberSk, type PlanItem, type PlanMesh } from '@/lib/plan-documentation';
 import { INTERIOR_DOORS, type RectMm } from '@/lib/twin-interior';
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, type LivingLayoutId } from '@/lib/twin-living-layouts';
-import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DOOR_TEXTS, EXPORT_LEVELS, EXPORT_REVISION, FACADES, FOOTPRINT as F, GRID_X, GRID_Y, INTERIOR_WALL_MESHES, ITEM_CODE_LABEL, MATERIAL_LEGEND, OPENING_BY_DOOR, PLAN_EXTENT, POOL, ROOM_KIND_LABEL, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, SITE_LABELS, STRUCTURAL_EXTRAS, TERRACES, TERRACE_AREA_M2, clearHeightLabel, codedItems, drawnItems, facadeChains, finishCeiling, finishFloor, finishWalls, fixedSk, innerDims, roomAxes, roomKind, roomLabelPos, roomRectsByArea, shellWallClass, wallClass, type ChainSpec, type CodedItem, type ExportLevel, type ItemCode, type PlanRoom, type RoomKind, type WallClass } from '@/lib/plan-export';
+import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DOOR_TEXTS, EXPORT_LEVELS, EXPORT_REVISION, FACADES, FOOTPRINT as F, GRID_X, GRID_Y, INTERIOR_WALL_MESHES, ITEM_CODE_LABEL, MATERIAL_LEGEND, OPENING_BY_DOOR, PLAN_EXTENT, POOL, ROOM_KIND_LABEL, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, SITE_LABELS, STRUCTURAL_EXTRAS, TERRACES, TERRACE_AREA_M2, clearHeightLabel, codedItems, drawnItems, facadeChains, finishCeiling, finishFloor, finishWalls, fixedSk, innerDims, roomAxes, roomKind, roomLabelPos, roomRectsByArea, shellWallClass, type ChainSpec, type CodedItem, type ExportLevel, type ItemCode, type PlanRoom, type RoomKind, type WallClass } from '@/lib/plan-export';
 import { Door } from './plan-svg';
 import { MeshSilhouette } from './documentation-plan';
+import { interiorWallClass } from '@/lib/plan-export';
+import { AcousticHatches, AcousticWallMarks } from './acoustic-wall-detail';
 
 /** Paper: A1 landscape in millimetres, plan at 1:50 (prints 1:100 on A3). */
 export const SHEET={w:841,h:594,m:8};
@@ -82,11 +84,12 @@ function Rooms({pal}:{pal:Palette}) {
 function Walls({pal}:{pal:Palette}) {
   const solids:{key:string;points:string;cls:WallClass}[]=[
     ...SHELL_WALL_MESHES.filter(m=>m.z0<=0).map(m=>({key:m.id,points:m.polygon,cls:shellWallClass(m)})),
-    ...INTERIOR_WALL_MESHES.map(({mesh,kind})=>({key:mesh.id,points:mesh.polygon,cls:wallClass(kind,Math.min(mesh.rect.x1-mesh.rect.x0,mesh.rect.y1-mesh.rect.y0))})),
+    ...INTERIOR_WALL_MESHES.map(({mesh,kind})=>({key:mesh.id,points:mesh.polygon,cls:interiorWallClass(mesh,kind)})),
   ];
   const outline=(cls:WallClass)=>cls==='exterior'||cls==='insulation'?T(.7):cls==='bearing'?T(.5):T(.36);
-  const fill=(cls:WallClass)=>cls==='board'?pal.board:`url(#xs-h-${cls})`;
-  const masonry=solids.filter(s=>s.cls!=='insulation'),insulation=solids.filter(s=>s.cls==='insulation');
+  const fill=(cls:WallClass)=>cls==='board'?pal.board:cls==='mineral-wool'?'url(#xs-ak-mineral-wool)':`url(#xs-h-${cls})`;
+  const isInsulation=(cls:WallClass)=>cls==='insulation'||cls==='mineral-wool';
+  const masonry=solids.filter(s=>!isInsulation(s.cls)),insulation=solids.filter(s=>isInsulation(s.cls));
   // The insulation layer is outlined thinly and filled last on an opaque ground, so only its boundary with the masonry and the outer face remain visible.
   return <g strokeLinejoin="miter">
     <g fill="none" stroke={pal.ink}>{solids.map(s=><polygon key={s.key} points={s.points} strokeWidth={outline(s.cls)}/>)}</g>
@@ -415,7 +418,7 @@ function materialBlock(pal:Palette):Block {
       for(const e of MATERIAL_LEGEND){
         const text=`${e.codes} · ${e.text}`,h=rowH(fs,width,text),sw=swatchW(fs),sh=fs*2.4;
         nodes.push(<g key={e.cls}>
-          <rect x={x} y={cy+fs*.2} width={sw} height={sh} fill={e.cls==='board'?pal.board:`url(#xs-l-${e.cls})`} stroke={pal.ink} strokeWidth={e.cls==='exterior'?.5:.3}/>
+          {e.cls==='acoustic'?<g>{[0,1,2].map(i=><rect key={i} x={x+i*sw/3} y={cy+fs*.2} width={sw/3} height={sh} fill={`url(#xs-l-${i===1?'mineral-wool':'partition'})`} stroke={pal.ink} strokeWidth={.2}/>)}</g>:<rect x={x} y={cy+fs*.2} width={sw} height={sh} fill={e.cls==='board'?pal.board:`url(#xs-l-${e.cls})`} stroke={pal.ink} strokeWidth={e.cls==='exterior'?.5:.3}/>}
           <Paragraph x={x+sw+fs} y={cy} width={width-sw-fs} text={text} fontSize={fs} pal={pal}/>
         </g>);
         cy+=h;
@@ -467,6 +470,7 @@ function Panel({level,pal,livingLayout,heatingLayout}:{level:ExportLevel;pal:Pal
       <pattern id="xs-l-exterior" width={1.5} height={1.5} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={1.5} stroke={pal.hatch} strokeWidth={.16}/></pattern>
       <pattern id="xs-l-bearing" width={.9} height={.9} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={.9} stroke={pal.hatch} strokeWidth={.14}/></pattern>
       <pattern id="xs-l-partition" width={2.4} height={2.4} patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1={0} y1={0} x2={0} y2={2.4} stroke={pal.hatch} strokeWidth={.1}/></pattern>
+      <pattern id="xs-l-mineral-wool" width={2} height={2.4} patternUnits="userSpaceOnUse"><rect width={2} height={2.4} fill="#fff"/><path d="M1 0C0 0 0 1.2 1 1.2S2 2.4 1 2.4" fill="none" stroke={pal.hatch} strokeWidth={.12}/></pattern>
       <pattern id="xs-l-insulation" width={1} height={1} patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width={1} height={1} fill={pal.insulation}/><line x1={0} y1={0} x2={0} y2={1} stroke={pal.hatch} strokeWidth={.08}/></pattern>
     </defs>
     <line x1={PANEL.x-3} x2={PANEL.x-3} y1={PANEL.y} y2={PANEL.y+PANEL.h} stroke={pal.rule} strokeWidth={.3}/>
@@ -531,6 +535,7 @@ export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID,h
     <rect x={SHEET.m/2} y={SHEET.m/2} width={SHEET.w-SHEET.m} height={SHEET.h-SHEET.m} fill="none" stroke={pal.ink} strokeWidth={.5}/>
     <g transform={`translate(${PLAN_BOX.x-PLAN_EXTENT.x0/S} ${PLAN_BOX.y+PLAN_EXTENT.y1/S}) scale(${1/S})`}>
       <Defs pal={pal}/>
+      <AcousticHatches prefix="xs-ak" mono/>
       <g clipPath="url(#xs-plan-clip)">
         <Site pal={pal} color={color}/>
         <Outdoor pal={pal}/>
@@ -538,6 +543,7 @@ export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID,h
         <Grid pal={pal}/>
         <Items pal={pal} level={level} livingLayout={livingLayout} heatingLayout={heatingLayout}/>
         <Walls pal={pal}/>
+        <AcousticWallMarks color={pal.ink} fontSize={T(1.9)}/>
         <ExteriorOpenings pal={pal}/>
         <InteriorDoors/>
         {chains.map((c,i)=><Chain key={i} chain={c} color={pal.dim} fontSize={c.role==='facade'?T(2.2):T(2)}/>)}

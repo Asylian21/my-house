@@ -47,14 +47,14 @@ function insulationBands(gardenRecess:boolean,loggia:{bounds:RectMm}):RectMm[] {
     rect(west,front,east,front+t),
     rect(east-t,front,east,wingEnd),
     rect(wingWest,wingEnd-t,east,wingEnd),
-    rect(wingWest,garden,wingWest+t,wingEnd),
+    rect(wingWest,garden-t,wingWest+t,wingEnd),
     // With the recess the garden facade starts east of the loggia opening; the corner pier stays solid.
     rect(gardenRecess?loggia.bounds.x1:west,garden-t,wingWest,garden),
     rect(west,front,west+t,gardenRecess?loggia.bounds.y0:garden),
   ];
   if(gardenRecess){
     // Garage back wall towards the loggia and the room 1.10 cheek, flush with the spine wall.
-    bands.push(rect(6944,loggia.bounds.y0-t,loggia.bounds.x1,loggia.bounds.y0),rect(loggia.bounds.x1,loggia.bounds.y0,SPINE_WEST_XMM,garden));
+    bands.push(rect(west+t,loggia.bounds.y0-t,loggia.bounds.x1,loggia.bounds.y0),rect(loggia.bounds.x1,loggia.bounds.y0,SPINE_WEST_XMM,garden));
   }
   return bands;
 }

@@ -331,7 +331,7 @@ export function buildOpening(context: OpeningBuildContext, spec: OpeningSpec): M
     if (sashes === 0) {
       built.push(glassPane(context, spec, "pevné", innerStart, innerEnd, innerBottom, innerTop, planeAcross));
     } else {
-      const mullion = sashes === 2 ? 70 : 0;
+      const mullion = sashes === 2 ? Math.min(70, frameWidthMm) : 0;
       const sashWidth = (innerEnd - innerStart - mullion) / sashes;
       if (mullion) {
         solid(

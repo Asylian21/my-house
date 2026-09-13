@@ -11,7 +11,7 @@ describe('nested bedroom, closet and garage study C', () => {
     const m = createConcept(DEFAULT_CONCEPT);
     expect(m.isNested).toBe(true);
     expect(m.privateHallArea).toBe(0);
-    // The 300 mm bearing wall towards the child rooms sits 100 mm east of the
+    // The 300 mm acoustic assembly towards the child rooms sits 100 mm east of the
     // original 15143 line, so both child rooms are 5 298 mm long.
     expect(m.suiteWallMm).toBe(300);
     expect(m.suiteRight).toBe(14943);
@@ -43,7 +43,7 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(m.footClearance).toBe(1600);
     for (const id of ['C-OPEN-HALL-S','C-OPEN-HALL-N']) {
       const wall = m.walls.find(w => w.id === id)!;
-      expect(wall.role).toBe('LOAD_BEARING');
+      expect(wall.role).toBe('PARTITION');
       expect([wall.rectMm.x0, wall.rectMm.x1]).toEqual([14943, 15243]);
     }
     expect(m.walls.find(w => w.id === 'C-OPEN-HALL-S')!.rectMm.y1).toBe(6552);
@@ -123,6 +123,8 @@ describe('nested bedroom, closet and garage study C', () => {
     // Both child-room doors are 900 mm openings centred on the 5 298 mm rooms, exactly opposite each other.
     const kidDoors = ['DOOR-102-108','DOOR-102-109'].map(id => baseline.doors.find(d=>d.id===id)!);
     expect(kidDoors.map(d => [d.startMm, d.widthMm])).toEqual([[17442, 900],[17442, 900]]);
+    expect(kidDoors.map(d => [d.hinge, d.swing])).toEqual([[1, -1],[1, 1]]);
+    expect(openLeaf(kidDoors[1])).toEqual(rect(18272,7791,18292,8591));
     expect(kidDoors[0].startMm + kidDoors[0].widthMm/2).toBe((15243+20541)/2);
     expect(baseline.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm.x1).toBe(17442);
     expect(baseline.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm.x1).toBe(17442);
@@ -148,6 +150,8 @@ describe('nested bedroom, closet and garage study C', () => {
       // The doors stay centred and opposite for every slider setting.
       const [street, garden] = ['DOOR-102-108','DOOR-102-109'].map(id => m.doors.find(d=>d.id===id)!);
       expect([street.startMm, street.widthMm]).toEqual([garden.startMm, garden.widthMm]);
+      expect([street.hinge, street.swing]).toEqual([1, -1]);
+      expect([garden.hinge, garden.swing]).toEqual([1, 1]);
       expect(street.startMm + street.widthMm/2).toBe(Math.round((children[0].rectsMm[0].x0 + 20541)/2));
       expect(m.kidStreetArea).toBe(area(children[0].rectsMm));
       expect(m.kidGardenArea).toBe(area(children[1].rectsMm));
@@ -173,6 +177,7 @@ describe('nested bedroom, closet and garage study C', () => {
       expect(other.settings.expansion).toBe(600);
       expect(other.rooms.find(r => r.number === '1.01')!.rectsMm).toEqual(originalEntry.rectsMm);
       expect(other.walls.find(w => w.id === 'IW-BED-108-EAST')!.changed).toBe(false);
+      expect(other.doors.find(d=>d.id==='DOOR-102-109')!.hinge).toBe(1);
     }
   });
 

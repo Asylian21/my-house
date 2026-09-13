@@ -59,6 +59,7 @@ import {
 } from "@/lib/twin-avatar";
 import { COMMAND_ICONS } from "./hud-icons";
 import { WalkControls } from "./walk-controls";
+import { PreviewToolbar } from "./preview-toolbar";
 import { INTERIOR_ROOMS } from "@/lib/twin-interior";
 import type { WalkTravelStatus } from "@/lib/twin-walk-navigation";
 
@@ -76,6 +77,7 @@ export interface BabylonViewportHandle {
 
 interface BabylonViewportProps {
   readonly design?: TwinDesignSelection;
+  readonly exitHref?: string;
   readonly initialRoomId?: string;
   readonly onReady?: () => void;
   readonly foundations: readonly FoundationStrip[];
@@ -109,6 +111,7 @@ export const BabylonViewport = forwardRef<
 >(function BabylonViewport(
   {
     design,
+    exitHref,
     initialRoomId,
     onReady,
     foundations,
@@ -500,6 +503,16 @@ export const BabylonViewport = forwardRef<
         {walkAvatarMessage}
       </span>
 
+      {exitHref && <PreviewToolbar
+        exitHref={exitHref}
+        roomId={navigationMode === "walk" ? walkRoomId : null}
+        ready={status === "ready"}
+        busy={sceneBusy}
+        onRoomChange={enterRoom}
+        onDocumentation={() => onWorkspaceChange("documentation")}
+        onHelp={onToggleHelp}
+      />}
+
       {status === "ready" && (
         <div
           ref={hudRef}
@@ -508,9 +521,10 @@ export const BabylonViewport = forwardRef<
           data-visible={chromeVisible}
           data-pad={chrome.virtualPad}
           data-walking={navigationMode === "walk"}
+          data-compact-preview={Boolean(exitHref) || undefined}
         >
           <div className="hud-row hud-row-top">
-            <div className="hud-slot hud-start">
+            {!exitHref && <div className="hud-slot hud-start">
               {experience ? (
                 <div className="context-pill glass hud-fade">
                   <span className="context-dot" aria-hidden="true" />
@@ -542,10 +556,10 @@ export const BabylonViewport = forwardRef<
                   {INTERIOR_ROOMS.map(room=><option key={room.id} value={room.id}>{room.name}</option>)}
                 </select>
               </label>}
-            </div>
-            <div className="hud-slot hud-center" />
+            </div>}
+            {!exitHref && <div className="hud-slot hud-center" />}
             <div className="hud-slot hud-end">
-              <div className="hud-controls hud-fade">
+              {!exitHref && <div className="hud-controls hud-fade">
                 <div
                   className="segmented glass"
                   role="group"
@@ -597,7 +611,7 @@ export const BabylonViewport = forwardRef<
                 >
                   <Fullscreen size={18} />
                 </button>
-              </div>
+              </div>}
               {helpOpen && (
                 <aside className="help-sheet" aria-label="Ovládanie modelu">
                   <header>

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { extractPlanGeometry, hull, triangleSilhouette } from '../scripts/plan-documentation/extract';
 import generated from '../lib/plan-geometry.generated.json';
-import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, planItemsFor, planRoomNotes, searchPlanItems, zoomPlanAt } from '../lib/plan-documentation';
+import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, planItemsFor, planRoomNotes, searchPlanItems, zoomPlanAt, unionBounds } from '../lib/plan-documentation';
 import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_RENDER_WALLS, KITCHEN_RUN } from '../lib/twin-interior';
 import { LIVING_LAYOUTS, diningTableRectMm } from '../lib/twin-living-layouts';
 import { HEATING_LAYOUTS, HEATING_LAYOUT_IDS, normalizeHeatingLayout } from '../lib/technical-design';
@@ -115,8 +115,9 @@ describe('Documentation of the active 3D model',()=>{
   });
   it('keeps every current interior wall and door, without treating vaulted ceilings as openings',()=>{
     for(const wall of INTERIOR_RENDER_WALLS){
-      const mesh=generated.meshes.find(m=>m.name.startsWith(`Vnútorná stena ${wall.id} · `));
-      expect(mesh?.rect).toEqual(wall.rectMm);
+      const meshes=generated.meshes.filter(m=>m.name.startsWith(`Vnútorná stena ${wall.id} · `));
+      expect(meshes.length).toBeGreaterThan(0);
+      expect(unionBounds(meshes.map(mesh=>mesh.rect))).toEqual(wall.rectMm);
     }
     for(const door of INTERIOR_DOORS){
       const item=PLAN_ITEM_BY_ID.get(door.label.split(' · ')[0]);

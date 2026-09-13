@@ -1836,7 +1836,7 @@ describe("documented D1 covered porches and terrace zones", () => {
   it("keeps the garden loggia recess consistent with the facade opening", () => {
     const loggia = HOUSE.porches.gardenLoggia;
     expect(loggia.faceYmm).toBe(HOUSE.facades.garden.faceYmm);
-    expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(2_200);
+    expect(loggia.openingEndXmm - loggia.openingStartXmm).toBe(2_800);
     expect(loggia.backDoor.widthMm).toBe(1_250);
     expect(loggia.backLarch.endXmm).toBe(loggia.backDoor.startXmm);
     expect(loggia.originalBackFaceYmm).toBe(

@@ -2,11 +2,23 @@
 
 Interaktívny technický model parcely a navrhovaného rodinného domu v Březí u Mikulova. Aplikácia používa Babylon.js a drží 3D geometriu, výpočty aj inspector nad jedným typovaným modelom v celočíselných milimetroch.
 
-Aktuálny webový návrh z 12. 9. 2026 je na `/navrh-3d` (predvolene pôdorys C,
-obývačka B, technická B). Úplný odkaz je
-`/navrh-3d?variant=c&heating=b&living=b`. Otvára sa priamo v obývačke,
-ponúka prechod do všetkých 13 miestností a do záhrady a zachováva obe voľby
-pri prechode do `/koncept-2d`. Steny, výplne a fit-out vytvárajú rovnaké
+## Hlavný návrh C / B / B
+
+Záväzné rozhodnutie používateľa z 13. 9. 2026: **C / B / B = dispozícia C / technická miestnosť B / obývacia zóna B**.
+Všetky hlavné vstupy, pôdorys, 3D a manuál používajú tento návrh. Ostatné varianty
+aj prepínače A/B sú dostupné cez **Archív**; hlavná navigácia aj z archívu vracia C/B/B.
+Staré hlavné odkazy s inými variantovými parametrami sa upravia na C/B/B.
+Otvorenie archívnej zostavy nemení hlavný návrh projektu.
+
+Pred ďalším vývojom si prečítať [projektové inštrukcie](AGENTS.md) a
+[záväzný návrh a pravidlá navigácie](docs/active-design.md).
+Pôdorys: `/podorys?variant=c&heating=b&living=b` alebo
+`/koncept-2d?variant=c&heating=b&living=b`.
+3D: `/3d?variant=c&heating=b&living=b` (funguje aj `/navrh-3d`).
+Manuál: `/docs/manual?variant=c&heating=b&living=b`. História: `/archiv`.
+
+3D sa otvára priamo v obývačke a ponúka prechod do všetkých 13 miestností
+a do záhrady. Steny, výplne a fit-out vytvárajú rovnaké
 Babylon builders ako meraný 2D súpis; variant obývačky posúva aj celý dymovod
 s prestupom strechou a bezpečné miesto vstupu do prechádzky.
 Test `tests/twin-design-preview.test.ts` porovnáva geometriu každého aktuálneho

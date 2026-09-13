@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CODED_ITEMS, CODED_OPENINGS, DOOR_CHAINS, DOOR_TEXTS, FACADES, FOOTPRINT, GRID_X, GRID_Y, MATERIAL_LEGEND, PLAN_EXTENT, SECTION_CHAINS, SHELL_WALL_MESHES, SITE_BOUNDARY, TERRACES, TERRACE_AREA_M2, clearRects, codedItems, facadeChains, gridCell, innerDims, roomLabelPos } from "../lib/plan-export";
 import { PLAN_ROOMS, exteriorWallLayer } from "../lib/plan-documentation";
 import { INTERIOR_DOORS, INTERIOR_WALLS } from "../lib/twin-interior";
+import generated from "../lib/plan-geometry.generated.json";
 
 const span = (points: number[]) => points[points.length - 1] - points[0];
 const monotonic = (points: number[]) => points.every((p, i) => i === 0 || p > points[i - 1]);
@@ -150,7 +151,7 @@ describe("export sheet site context follows D1.1.002", () => {
   });
 
   it("material legend covers every hatch class used by the model", () => {
-    expect(MATERIAL_LEGEND.map((e) => e.cls)).toEqual(["exterior", "insulation", "bearing", "partition", "board"]);
+    expect(MATERIAL_LEGEND.map((e) => e.cls)).toEqual(["exterior", "insulation", "bearing", "partition", "board", "acoustic"]);
     expect(MATERIAL_LEGEND[0].codes).toBe("SO30, SO50");
     expect(MATERIAL_LEGEND[1].codes).toBe("TI20");
     for (const e of MATERIAL_LEGEND) expect(e.text).toMatch(/hr\. \d/);
@@ -183,7 +184,7 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
     expect(solid).toEqual(expect.arrayContaining([
       { x0: 21040, y0: 21535, x1: 21540, y1: 22035 }, // porch corner pillar
       { x0: 27510, y0: 19535, x1: 28040, y1: 22035 }, // east wall end along the porch
-      { x0: 6440, y0: 10670, x1: 8440, y1: 11200 }, // long garden arm of the L support
+      { x0: 6440, y0: 10670, x1: 7840, y1: 11200 }, // long garden arm of the L support
       { x0: 6440, y0: 10200, x1: 6970, y1: 11200 }, // short west arm of the L support
     ]));
     // The erased rear return in the client sketch is now a clear side passage.
@@ -203,6 +204,29 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
     expect(rect(/^Západná stena krídla · úsek 3 · murivo$/).y1).toBe(19335);
     expect(rect(/^Krytá terasa · murovaný pilier pri rohu · izolácia$/)).toEqual({ x0: 21040, y0: 19335, x1: 22040, y1: 19535 });
     expect(rect(/^Krytá terasa · plná zadná stena · izolácia$/)).toEqual({ x0: 24040, y0: 19335, x1: 27840, y1: 19535 });
+  });
+
+  it.each([
+    { name: 'garage rear corner', x0: 6440, x1: 6970, y0: 9047, y1: 9247 },
+    { name: 'boys room reentrant corner', x0: 21040, x1: 21240, y0: 11000, y1: 11200 },
+  ])('keeps continuous insulation without masonry through the $name', ({ x0, x1, y0, y1 }) => {
+    const walls = generated.meshes.filter(m => m.source === 'shell' || m.name.startsWith('Vnútorná stena'));
+    for (const z of [100, 1400, 2600, 3000]) {
+      for (let x = x0 + 10; x < x1; x += 20) for (let y = y0 + 10; y < y1; y += 20) {
+        const atPoint = walls.filter(m => m.z0 <= z && m.z1 > z && m.rect.x0 < x && m.rect.x1 > x && m.rect.y0 < y && m.rect.y1 > y);
+        const names = atPoint.map(m => m.name);
+        expect(names, `wall layers at ${x}, ${y}, ${z}`).toHaveLength(1);
+        expect(exteriorWallLayer(atPoint[0]), names.join(', ')).toBe('insulation');
+        expect(SHELL_WALL_MESHES.some(m => m.id === atPoint[0].id), `insulation is drawn as a wall: ${names.join(', ')}`).toBe(true);
+      }
+    }
+  });
+
+  it('keeps facade dimension chains within their external endpoints at insulated junctions', () => {
+    for (const { def, segments } of FACADES) {
+      expect(segments[0].a, def.id).toBe(def.from);
+      expect(segments.at(-1)!.b, def.id).toBe(def.to);
+    }
   });
 
   it("the loggia's east junction is closed: masonry corner up to the spine wall and a flush insulation cheek", () => {

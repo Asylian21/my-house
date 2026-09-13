@@ -10,14 +10,19 @@ import { KITCHEN_RUN } from '../lib/twin-interior';
 import generated from '../lib/plan-geometry.generated.json';
 
 describe('current C / B / B web preview', () => {
-  it('preserves both choices in both directions and defaults the new preview to B/B', () => {
+  it('keeps main links on B/B and preserves alternative choices only within archive links', () => {
     expect(designFromSearch(new URLSearchParams(), PREVIEW_DESIGN)).toEqual(PREVIEW_DESIGN);
     for (const livingLayout of ['A','B'] as const) for (const heatingLayout of ['A','B'] as const) {
       const design={livingLayout,heatingLayout};
-      for(const path of ['/navrh-3d','/koncept-2d'] as const) {
+      for(const path of ['/navrh-3d','/koncept-2d','/3d','/podorys','/docs/manual'] as const) {
         const url=new URL(designHref(path,design),'http://localhost');
         expect(url.searchParams.get('variant')).toBe('c');
-        expect(designFromSearch(url.searchParams)).toEqual(design);
+        expect(designFromSearch(url.searchParams)).toEqual(PREVIEW_DESIGN);
+        expect(url.pathname).toBe(path);
+        const archived=new URL(designHref(path,design,true),'http://localhost');
+        expect(archived.pathname).toBe(path==='/3d'||path==='/navrh-3d'?'/archiv/3d':'/archiv/podorys');
+        expect(designFromSearch(archived.searchParams)).toEqual(design);
+        expect(archived.searchParams.get('view')).toBe(path==='/docs/manual'?'manual':null);
       }
     }
     expect(designFromSearch(new URLSearchParams('living=B&heating=B'))).toEqual(PREVIEW_DESIGN);

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render(path = "/") {
+async function render(path = "/archiv/model") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
@@ -409,7 +409,7 @@ test("keeps Babylon client-only and removes the disposable starter preview", asy
   assert.match(viewport, /preset === "parcels"\) onParcelOverviewRequest\(\)/);
   assert.match(studio, /preset === "parcels"[\s\S]{0,220}?cadastre: true/);
 
-  assert.match(page, /<TwinStudio \/>/);
+  assert.match(page, /<ProjectHome \/>/);
   assert.match(layout, /lang="sk"/);
   assert.match(layout, /Dom 6012\/26 · Digitálne dvojča/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
@@ -577,10 +577,10 @@ test("ships complete, unmodified Blender assets within the hosting limit", async
 
 
 test("renders the separate interactive floor-plan concept with dimensioned geometry", async () => {
-  const response = await render("/koncept-2d");
+  const response = await render("/archiv/podorys?variant=d&mode=study");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Dispozičné štúdio 2D/);
+  assert.match(html, /Dom · Archív pôdorysov/);
   assert.match(html, /class="fp-plan"/);
   assert.match(html, /viewBox="5550 -12350 17300 10850"/);
   assert.match(html, /id="expansion"/);
@@ -599,10 +599,10 @@ test("renders the separate interactive floor-plan concept with dimensioned geome
 });
 
 test("renders variant E in the shared studio with its private storage and covered garden recess", async () => {
-  const response = await render("/koncept-2d?variant=e");
+  const response = await render("/archiv/podorys?variant=e");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Dom · Dispozičné štúdio 2D/);
+  assert.match(html, /Dom · Archív pôdorysov/);
   assert.match(html, /E · Zalomenie a krytý zárez/);
   assert.match(html, /id="alcove-width"/);
   assert.match(html, /id="passage-depth"/);
@@ -623,7 +623,7 @@ test("renders variant E in the shared studio with its private storage and covere
 
 test("selects every floor-plan variant on one route with one accessible tab panel", async () => {
   for (const variant of ["existing", "a", "b", "c", "d", "e"]) {
-    const response = await render(`/koncept-2d?variant=${variant}&mode=study`);
+    const response = await render(`/archiv/podorys?variant=${variant}&mode=study`);
     assert.equal(response.status, 200);
     const html = await response.text();
     const main = html.match(/<main[\s\S]*?<\/main>/)?.[0];
@@ -636,7 +636,7 @@ test("selects every floor-plan variant on one route with one accessible tab pane
     assert.equal((main.match(/id="bed-width"/g) ?? []).length, 1, variant);
     assert.doesNotMatch(main, /href="\/koncept-2d-2"|NaN/);
     assert.match(main, /class="fp-shell fp-loggia-pier"/);
-    assert.match(main, /Rohová podpera do L · 2,00 × 1,00 m/);
+    assert.match(main, /Rohová podpera do L · 1,40 × 1,00 m/);
     assert.match(main, /class="fp-terrace fp-garden-recess"/);
     assert.match(main, /Garáž → záhrada · 900 mm/);
     assert.match(main, /Steny a priečky/);
@@ -738,21 +738,21 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       assert.doesNotMatch(main, /Chodba → spálňa · 800 mm/);
     }
   }
-  const fallback = await render("/koncept-2d?variant=unknown");
-  assert.match(await fallback.text(), /id="floor-plan-tab-d"[^>]*aria-selected="true"/);
+  const fallback = await render("/archiv/podorys?variant=unknown");
+  assert.match(await fallback.text(), /class="pd-plan"/);
 });
 
 test("redirects the previous experimental address to the E tab", async () => {
   const response = await render("/koncept-2d-2");
   assert.equal(response.status, 307);
-  assert.equal(response.headers.get("location"), "/koncept-2d?variant=e");
+  assert.equal(response.headers.get("location"), "/archiv/podorys?variant=e&mode=study");
 });
 
 test("renders active C as a measured model manual while retaining the editable study", async () => {
-  const response=await render('/koncept-2d?variant=c');
+  const response=await render('/archiv/podorys?variant=c&living=a&heating=a');
   assert.equal(response.status,200);
   const html=await response.text();
-  for(const label of ['Pôdorys &amp; manuál','Aktuálny 3D model','Miestnosti a súpis predmetov','Detail a rozmery vybraného prvku','Terasy pri dome','Zobraziť celý dom','Jednotky rozmerov','Hľadať prvky v zvolenej oblasti'])assert.ok(html.includes(label),label);
+  for(const label of ['Pôdorys domu','Archívna zostava','Miestnosti a súpis predmetov','Výber a informácie o návrhu','Terasy pri dome','Zobraziť celý dom','Jednotky rozmerov','Hľadať prvky v zvolenej oblasti'])assert.ok(html.includes(label),label);
   assert.match(html,/class="pd-plan"/);
   assert.match(html,/data-item="Spálňa za novou priečkou"/);
   assert.match(html,/Práčka/);
@@ -770,7 +770,7 @@ test("renders active C as a measured model manual while retaining the editable s
   assert.match(html,/aria-pressed="false"[^>]*><b>B<\/b><span>TV stena pri záhradnom štíte/);
   assert.match(html,/data-item="sofa"/);
   assert.doesNotMatch(html,/data-item="sofa-B"|data-item="FIREPLACE-STOVE-B-2026-09-11"/);
-  const livingB=await render('/koncept-2d?variant=c&living=b');
+  const livingB=await render('/archiv/podorys?variant=c&living=b&heating=a');
   assert.equal(livingB.status,200);
   const livingBHtml=await livingB.text();
   assert.match(livingBHtml,/aria-pressed="true"[^>]*><b>B<\/b>/);
@@ -779,30 +779,30 @@ test("renders active C as a measured model manual while retaining the editable s
   assert.match(livingBHtml,/data-item="FIREPLACE-STOVE-B-2026-09-11"/);
   assert.doesNotMatch(livingBHtml,/data-item="sofa"|data-item="FIREPLACE-STOVE-2026-08-24"/);
   assert.doesNotMatch(livingBHtml,/3D model zatiaľ ukazuje variant A/);
-  assert.match(livingBHtml,/href="\/navrh-3d\?variant=c&amp;heating=a&amp;living=b"/);
+  assert.match(livingBHtml,/href="\/archiv\/3d\?variant=c&amp;heating=a&amp;living=b"/);
   assert.doesNotMatch(livingBHtml,/NaN|Infinity/);
-  const manual=await render('/koncept-2d?variant=c&view=manual');
+  const manual=await render('/archiv/podorys?variant=c&view=manual&living=a&heating=a');
   assert.equal(manual.status,200);
   const manualHtml=await manual.text();
   assert.match(manualHtml,/Manuál vášho domu\./);
   assert.match(manualHtml,/class="pd-room-sheet-plan"/);
   assert.match(manualHtml,/Tlačiť \/ uložiť PDF/);
   assert.match(manualHtml,/obývačka 1\.03 vo variante A/);
-  const manualB=await render('/koncept-2d?variant=c&view=manual&living=b');
+  const manualB=await render('/archiv/podorys?variant=c&view=manual&living=b');
   const manualBHtml=await manualB.text();
   assert.match(manualBHtml,/obývačka 1\.03 vo variante B/);
   assert.match(manualBHtml,/Jedálenský stôl 900 × 2 000 mm pre šesť osôb stojí pozdĺž západnej steny/);
   assert.match(manualBHtml,/Polostrov je posunutý o 346 mm k obývačke/);
   assert.match(manualHtml,/Jedálenský stôl 2 000 × 900 mm pre šesť osôb/);
   assert.match(manualHtml,/Jedálenská stolička 6/);
-  const study=await render('/koncept-2d?variant=c&mode=study');
+  const study=await render('/archiv/podorys?variant=c&mode=study');
   assert.equal(study.status,200);
   assert.match(await study.text(),/id="expansion"/);
 });
 
 test('renders either heating size independently of the living layout and carries it into the manual and 3D link', async () => {
   for (const [id,kw,litres] of [['a',19,1000],['b',15,800]]) {
-    const response=await render(`/koncept-2d?variant=c&living=b&heating=${id}&view=manual`);
+    const response=await render(`/archiv/podorys?variant=c&living=b&heating=${id}&view=manual`);
     assert.equal(response.status,200);
     const html=await response.text();
     assert.match(html,/data-testid="pd-heating-switch"/);
@@ -819,23 +819,79 @@ test('renders either heating size independently of the living layout and carries
     assert.match(html,/data-item="[^"]+-PELLET-FEED-HOSE"[^>]*style="stroke:none"/);
     assert.doesNotMatch(html,new RegExp(`data-item="TECHNICAL-PLUS${kw===19?15:19}-DBOS`));
     assert.match(html,/data-item="sofa-B"/);
-    assert.match(html,new RegExp(`href="/navrh-3d\\?variant=c&amp;heating=${id}&amp;living=b"`));
+    assert.match(html,new RegExp(`href="/archiv/3d\\?variant=c&amp;heating=${id}&amp;living=b"`));
     assert.match(html,/Izolácia je odnímateľná/);
     assert.match(html,/Primárne pelety/);
     assert.doesNotMatch(html,/osadiť pred zastrešením|NaN|Infinity/);
   }
 });
 
-test('opens the new 3D preview as C/B/B and preserves every explicit design selection', async () => {
-  for (const [query,living,heating] of [['','B','B'],['?living=a&heating=b','A','B'],['?living=b&heating=a','B','A']]) {
-    const response=await render(`/navrh-3d${query}`);
+test('returns from immersive archived 3D to the same archived floor plan', async () => {
+  for (const [living,heating] of [['A','A'],['A','B'],['B','A']]) {
+    const query=`?variant=c&heating=${heating.toLowerCase()}&living=${living.toLowerCase()}`;
+    const response=await render(`/archiv/3d${query}`);
     assert.equal(response.status,200);
     const html=await response.text();
-    assert.match(html,/data-preview="current"/);
-    assert.match(html,new RegExp(`<title>Dom · Návrh C / Obývačka ${living} / Technická ${heating}</title>`));
-    assert.match(html,new RegExp(`href="/koncept-2d\\?variant=c&amp;heating=${heating.toLowerCase()}&amp;living=${living.toLowerCase()}"`));
-    assert.match(html,new RegExp(`Obývačka <b>${living}</b>`));
-    assert.match(html,new RegExp(`Technická <b>${heating}</b>`));
+    assert.match(html,new RegExp(`<title>Dom · Archív C / ${heating} / ${living} · 3D</title>`));
+    assert.ok(html.includes(`/archiv/podorys${query.replaceAll('&','&amp;')}`));
+    assert.match(html,/data-immersive="true"/);
+    assert.match(html,/class="preview-exit"[^>]+href="\/archiv\/podorys\?/);
+    assert.match(html,/Ukončiť 3D náhľad/);
+    assert.doesNotMatch(html,/class="project-nav"|class="design-preview-bar"/);
     assert.match(html,/class="scene-canvas"/);
+  }
+});
+
+test('separates project sections and defaults the current floor plan to C/B/B',async()=>{
+  for(const path of ['/','/docs','/archiv','/koncept-2d','/podorys','/3d','/navrh-3d','/docs/manual','/docs/model']){
+    const response=await render(path);assert.equal(response.status,200,path);
+    const html=await response.text();
+    const immersive = path==='/3d'||path==='/navrh-3d';
+    if(immersive){
+      assert.match(html,/data-immersive="true"/,path);
+      assert.match(html,/class="preview-exit"[^>]+href="\/podorys\?variant=c&amp;heating=b&amp;living=b"/,path);
+      assert.match(html,/Ukončiť 3D náhľad/,path);
+      assert.doesNotMatch(html,/aria-label="Sekcie projektu"|class="design-preview-bar"/,path);
+    }else{
+      assert.match(html,/aria-label="Sekcie projektu"/,path);
+      assert.match(html,/href="\/docs"/,path);
+    }
+    assert.match(html,/href="\/podorys\?variant=c&amp;heating=b&amp;living=b"/,path);
+    assert.doesNotMatch(html,/NaN|This page couldn’t load/,path);
+    if(path!=='/archiv'&&!immersive)assert.match(html,/HLAVNÝ NÁVRH/,path);
+    assert.doesNotMatch(html,/aria-label="Variant (technickej miestnosti|obývacej zóny)"|role="tablist" aria-label="Varianty pôdorysu"/,path);
+    if(path==='/podorys'||path==='/koncept-2d'||path==='/docs/manual'){
+      assert.match(html,/data-item="sofa-B"/);
+      assert.match(html,/data-item="TECHNICAL-PLUS15-DBOS800/);
+      assert.match(html,/Dom na parcele/);
+    }
+  }
+  const site=(await(await render('/koncept-2d?variant=c&heating=b&living=b&site=1')).text()).replaceAll(/<!--.*?-->/g,'');
+  assert.match(site,/class="parcel-geometry"/);
+  assert.equal((site.match(/>3,000 m</g)??[]).length,2);
+  assert.doesNotMatch(site,/3,078 m/);
+  assert.match(site,/2,056 m/);
+  const archive=await(await render('/archiv')).text();
+  for(const variant of ['existing','a','b','c','d','e'])assert.ok(archive.includes(`/archiv/podorys?variant=${variant}&amp;mode=study`));
+  assert.doesNotMatch(archive,/href="\/koncept-2d/);
+  assert.match(archive,/href="\/v1"/);assert.match(archive,/href="\/v2"/);
+});
+
+
+test('canonicalizes stale main-route selections to C/B/B and preserves the requested view',async()=>{
+  for(const path of ['/koncept-2d','/podorys','/3d','/navrh-3d','/docs/manual']){
+    for(const query of ['variant=a&heating=a&living=a&mode=study','variant=unknown&heating=invalid&living=invalid','variant=c&heating=a&heating=b&living=b']){
+      const response=await render(`${path}?${query}&site=1&view=manual`);
+      assert.equal(response.status,307,`${path}?${query}`);
+      const target=new URL(response.headers.get('location'),'http://localhost');
+      assert.equal(target.pathname,path==='/navrh-3d'?'/3d':path);
+      assert.equal(target.searchParams.get('variant'),'c');
+      assert.equal(target.searchParams.get('heating'),'b');
+      assert.equal(target.searchParams.getAll('heating').length,1);
+      assert.equal(target.searchParams.get('living'),'b');
+      assert.equal(target.searchParams.has('mode'),false);
+      assert.equal(target.searchParams.get('site'),'1');
+      assert.equal(target.searchParams.get('view'),'manual');
+    }
   }
 });

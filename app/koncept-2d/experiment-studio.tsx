@@ -2,6 +2,7 @@
 
 import { useRef, type Dispatch, type SetStateAction } from 'react';
 import Link from 'next/link';
+import { designHref } from '@/lib/twin-design-selection';
 import { ArrowLeft, ArrowUpRight, Check, Download, Expand, LockKeyhole, Minus, Plus, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
 import { HOUSE } from '@/lib/twin-site';
 import { area, rect } from '@/lib/floor-plan-concept';
@@ -45,7 +46,7 @@ export function ExperimentalFloorPlanStudio({rawSettings,setSettings,variant,onV
     const a=document.createElement('a');a.href=url;a.download='dom-koncept-e-zalomenie.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
   return <main className="fp-studio fp-experiment">
-    <header className="fp-header"><Link href="/" className="fp-back" aria-label="Späť na 3D dom"><ArrowLeft size={18}/></Link><div className="fp-brand">DOM<span>/</span><h1>Dispozičné štúdio</h1><span className="fp-badge">VARIANT E</span></div><button className="fp-export" onClick={exportPlan}><Download size={16}/><span>Stiahnuť plán E</span></button></header>
+    <header className="fp-header"><Link href="/archiv" className="fp-back" aria-label="Späť do archívu návrhov"><ArrowLeft size={18}/></Link><div className="fp-brand">DOM<span>/</span><h1>Dispozičné štúdio</h1><span className="fp-badge">ARCHÍV · E</span></div><button className="fp-export" onClick={exportPlan}><Download size={16}/><span>Stiahnuť plán E</span></button></header>
     <div className="fp-workspace"><section className="fp-drawing" aria-label="Alternatívny pôdorys">
       <div className="fp-toolbar"><VariantTabs variant={variant} onVariantChange={onVariantChange}/><div className="fp-view-tools"><button aria-label="Oddialiť" disabled={zoom<=1} onClick={()=>setZoom(z=>Math.max(1,z-.25))}><Minus size={16}/></button><button aria-label="Priblížiť" disabled={zoom>=2.5} onClick={()=>setZoom(z=>Math.min(2.5,z+.25))}><Plus size={16}/></button><button className={dimensions?'active':''} onClick={()=>setDimensions(v=>!v)} aria-label="Zobraziť kóty" aria-pressed={dimensions}><Ruler size={18}/></button><button onClick={()=>setFull(v=>!v)} aria-label={full?'Detail nočnej časti':'Celý dom'} aria-pressed={full}><Expand size={18}/><span>{full?'Detail':'Celý dom'}</span></button></div></div>
       <div className="fp-sheet" role="tabpanel" id="floor-plan-panel" aria-labelledby={`floor-plan-tab-${variant}`}><div className="fp-sheet-heading"><span>VARIANT E / ZALOMENIE A KRYTÝ ZÁREZ</span><p>Menej priechodu. Viac miesta v garáži.</p></div><div className="fp-plan-scroll"><div className="fp-plan-canvas" style={{width:`${zoom*100}%`,height:`${zoom*100}%`}}>
@@ -116,7 +117,7 @@ export function ExperimentalFloorPlanStudio({rawSettings,setSettings,variant,onV
       <label className="fp-route-toggle"><input type="checkbox" checked={route} onChange={e=>setRoute(e.target.checked)}/>Ukázať rodinný prechod mimo spálne</label>
       <details className="fp-reasoning" open><summary>Čo prináša zalomenie</summary><ol><li>Skrine sa presunuli za dvere spálne. Cez rodičovský šatník už neprechádza rodina do garáže.</li><li>Spoločný vstup má {sqm(model.foyerArea)} m². Pri rovnakom rozšírení domu je to o {sqm(model.passageSaving)} m² menej než základný šatníkový vstup D.</li><li>Detská do ulice má {sqm(model.kidStreetArea)} m², detská do dvora {sqm(model.kidGardenArea)} m².</li></ol><p>Plocha sa presunula k spálni so šatníkom a ku garáži. Celková zastavaná plocha sa tým nezmenšila. Zalomenie pridáva roh a vyžaduje premyslený detail skrine.</p></details>
       <div className="fp-construction-note"><strong>Rovnaký obrys, variant E</strong><p>Kúpeľňa zostáva ako v D. Garážový výklenok pokračuje do bývalého priechodu a regál je otočený k stene kúpeľne. Náhrada pôvodnej nosnej steny pri garáži, rozvody a posunuté uličné okná zostávajú témou projektu.</p><p>{settings.gardenRecess?'Krytý zárez zostáva vonkajším priestorom pod pôvodnou strechou. Parkovanie pri bráne je tesné; poloha auta závisí od konkrétnej brány a rozmerov auta.':'Garáž využíva uzavretú krytú terasu; obrys domu sa nezväčšuje, uzavretie však znamená stavebnú prácu.'}</p></div>
-      <div className="fp-source"><strong>Teoretický 2D koncept</strong><p>Rozmery a priechody sú modelované v milimetroch. Nejde o realizačný výkres ani potvrdenie statiky. Nábytok mimo rodičovskej časti je schematický.</p><Link href="/">Otvoriť existujúci 3D dom<ArrowUpRight size={14}/></Link></div>
+      <div className="fp-source"><strong>Teoretický 2D koncept</strong><p>Rozmery a priechody sú modelované v milimetroch. Nejde o realizačný výkres ani potvrdenie statiky. Nábytok mimo rodičovskej časti je schematický.</p><Link href={designHref('/3d')}>Otvoriť hlavný 3D návrh · C/B/B<ArrowUpRight size={14}/></Link></div>
     </aside></div>
   </main>;
 }

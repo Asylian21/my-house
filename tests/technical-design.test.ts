@@ -7,7 +7,7 @@ import { buildOpening, type OpeningBuildContext } from '../lib/babylon-openings'
 import { buildInterior } from '../lib/babylon-interior';
 import type { AnimatedDoorRegistration } from '../lib/babylon-doors';
 import { HOUSE, SIDE_ENTRY_APPROACH } from '../lib/twin-active-house';
-import { SITE_SURFACES } from '../lib/twin-site';
+import { SITE_SURFACES } from '../lib/twin-active-site';
 import { SCENE_CENTER_MM } from '../lib/twin-render-frame';
 import { INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, roomAreaM2 } from '../lib/twin-interior';
 import { BATHROOM_FITOUT, HEATING_LAYOUT_IDS, HEATING_LAYOUTS, SERVICE_CORE_REVISION, TECHNICAL_HEATING_FITOUT as heating, WC_FITOUT } from '../lib/technical-design';

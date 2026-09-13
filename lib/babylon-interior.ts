@@ -20,6 +20,7 @@ import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { Scene } from "@babylonjs/core/scene";
 import earcut from "earcut";
 import { warmLivingMaterial } from "./babylon-living-palette";
+import { ACOUSTIC_ASSEMBLY, acousticWallLayers, acousticWallSpec } from "./acoustic-walls";
 
 import {
   BATHROOM_FITOUT,
@@ -770,7 +771,21 @@ function buildVault(context: InteriorBuildContext, materials: InteriorMaterials,
 
 function buildWalls(context: InteriorBuildContext, materials: InteriorMaterials) {
   const heightM = INTERIOR_WALL_HEIGHT_MM * MM_TO_M;
+  const wool = pbr(context.scene, "acoustic-wall-mineral-wool", "#b8ac77", 1);
   for (const wall of INTERIOR_RENDER_WALLS) {
+    const acoustic = acousticWallSpec(wall);
+    if (acoustic) {
+      for (const layer of acousticWallLayers(wall)) {
+        const r = layer.rectMm;
+        const mesh = texturedBox(context.scene,
+          `Vnútorná stena ${wall.id} · ${ACOUSTIC_ASSEMBLY.code} · ${layer.id} · ${layer.name} ${layer.thicknessMm} mm`,
+          rectCenter(r), r.x1-r.x0, r.y1-r.y0, heightM, 0, 2.4);
+        finish(context, mesh, layer.material === 'mineral-wool' ? wool : materials.plaster,
+          { collide: layer.material === 'masonry', shadow: true, pickable: true });
+        mesh.metadata = { ...mesh.metadata, acousticAssembly: ACOUSTIC_ASSEMBLY.code, acousticWall: acoustic.mark, acousticLayer: layer.id, sourceWallId: acoustic.wallId };
+      }
+      continue;
+    }
     const rect = wall.rectMm;
     const mesh = texturedBox(
       context.scene,
@@ -784,13 +799,15 @@ function buildWalls(context: InteriorBuildContext, materials: InteriorMaterials)
     );
     finish(context, mesh, materials.plaster, { collide: true, shadow: true, pickable: true });
   }
-  // Wing corner pier between the garden facade and the wing west wall.
+  // The wing facade carries its insulation into the garden band. Keep this
+  // masonry infill behind that band so it cannot cut through the junction.
+  const cornerNorthYmm = HOUSE.facades.garden.faceYmm - HOUSE.exteriorWall.insulationMm;
   const corner = texturedBox(
     context.scene,
     "Vnútorná stena · roh krídla 21 040 – 21 543",
-    { x: (21040 + 21543) / 2, y: (10670 + 11200) / 2 },
+    { x: (21040 + 21543) / 2, y: (10670 + cornerNorthYmm) / 2 },
     503,
-    530,
+    cornerNorthYmm - 10670,
     heightM,
     0,
     2.4,
