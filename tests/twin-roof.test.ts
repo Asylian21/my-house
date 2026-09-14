@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACTIVE_JOINED_ROOF_PARAMETERS,
+  ARCHIVE_JOINED_ROOF_PARAMETERS,
   WING_PORCH_SOFFIT_FRONT_SETBACK_MM,
   deriveJoinedRoofGeometry,
   deriveJoinedRoofRenderPlan,
@@ -30,14 +31,14 @@ describe("joined roof topology", () => {
       {
         id: "WING_END_INNER_EAVE",
         xMm: 21_040,
-        yMm: 22_085,
+        yMm: 22_035,
         elevationMm: 3_125,
       },
-      { id: "WING_END_RIDGE", xMm: 24_540, yMm: 22_085, elevationMm: 5_560 },
+      { id: "WING_END_RIDGE", xMm: 24_540, yMm: 22_035, elevationMm: 5_560 },
       {
         id: "WING_END_OUTER_EAVE",
         xMm: 28_040,
-        yMm: 22_085,
+        yMm: 22_035,
         elevationMm: 3_125,
       },
     ]);
@@ -81,16 +82,27 @@ describe("joined roof topology", () => {
       minXmm: 6_440,
       maxXmm: 28_040,
       minYmm: 3_000,
-      maxYmm: 22_085,
+      maxYmm: 22_035,
       minElevationMm: 3_125,
       maxElevationMm: 5_560,
     });
   });
 
-  it("partitions the active L roof envelope including the 50 mm end overhang", () => {
-    expect(roof.projectedAreaMm2).toBe(253_315_000);
-    expect(roof.projectedAreaMm2 / 1_000_000).toBe(253.315);
-    expect(roof.surfaceAreaMm2 / 1_000_000).toBeCloseTo(300.405497595, 9);
+  it("ends the active roof at the finished facades without losing the covered porch", () => {
+    expect(roof.parameters.wingEndYmm).toBe(HOUSE.porches.wingEnd.frontYmm);
+    expect(roof.parameters.wingEndYmm-HOUSE.porches.wingEnd.glazingFaceYmm).toBe(2500);
+    expect(roof.projectedAreaMm2).toBe(252_965_000);
+    expect(roof.projectedAreaMm2 / 1_000_000).toBe(HOUSE.derivedFootprintAreaM2);
+    expect(roof.surfaceAreaMm2 / 1_000_000).toBeCloseTo(299.979126571, 9);
+  });
+
+  it("retains the historical 50 mm roof and its area for archive views", () => {
+    const archive=deriveJoinedRoofGeometry(ARCHIVE_JOINED_ROOF_PARAMETERS);
+    expect(archive.parameters.wingEndYmm-HOUSE.porches.wingEnd.frontYmm).toBe(50);
+    expect(archive.projectedAreaMm2).toBe(253_315_000);
+    expect(archive.surfaceAreaMm2 / 1_000_000).toBeCloseTo(300.405497595, 9);
+    expect(HOUSE.roof.wingEndOverhangMm).toBe(50);
+    expect(archive.projectedAreaMm2-roof.projectedAreaMm2).toBe(7000*50);
   });
 
   it("keeps every non-boundary triangle edge paired", () => {
@@ -154,12 +166,12 @@ describe("joined roof architectural edges", () => {
     expect(roof.gutters.map((gutter) => lineLengthMm(gutter, roof.vertices))).toEqual([
       21_600,
       14_600,
-      10_885,
-      19_085,
+      10_835,
+      19_035,
     ]);
   });
 
-  it("has only the west and active 22085 mm roof-end gables", () => {
+  it("has only the west and active 22035 mm roof-end gables", () => {
     expect(roof.gables).toEqual([
       {
         id: "MAIN_WEST_GABLE",
@@ -169,7 +181,7 @@ describe("joined roof architectural edges", () => {
       {
         id: "WING_END_GABLE",
         vertexIndices: [6, 7, 8],
-        plane: { axis: "Y", coordinateMm: 22_085 },
+        plane: { axis: "Y", coordinateMm: 22_035 },
       },
     ]);
     expect(
@@ -177,7 +189,7 @@ describe("joined roof architectural edges", () => {
         ({ plane }) => plane.axis === "X" && plane.coordinateMm === 28_040,
       ),
     ).toBe(false);
-    expect(ACTIVE_JOINED_ROOF_PARAMETERS.wingEndYmm).toBe(22_085);
+    expect(ACTIVE_JOINED_ROOF_PARAMETERS.wingEndYmm).toBe(22_035);
   });
 });
 
@@ -243,8 +255,8 @@ describe("covered-porch roof render partition", () => {
     ).toBe(0);
   });
 
-  it("clips only renderer surfaces while preserving the documented overhang", () => {
-    expect(roof.parameters.wingEndYmm).toBe(22_085);
+  it("keeps the roof at the porch front and its soffit behind the separate rake finish", () => {
+    expect(roof.parameters.wingEndYmm).toBe(22_035);
     expect(renderPlan.wingPorch.roofTopEndYmm).toBe(22_035);
     // The soffit front stays clear of the opaque P04 faces at 22 035 so the
     // slab edge cannot z-fight the pillar, wall end and head fronts.

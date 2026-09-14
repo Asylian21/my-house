@@ -14,6 +14,10 @@ Používateľské označenie je **HLAVNÝ NÁVRH C / B / B**. V URL sú hodnoty 
 
 Referenčný pôdorys: <http://localhost:5173/koncept-2d?variant=c&heating=b&living=b>.
 
+Konštrukčné zadanie doplnené 14. 9. 2026: povala bude slúžiť iba na odkladanie vecí, mimo otvorenej katedrály obývačky 1.03. Nosné stropy budú drevené, bez betónovej stropnej dosky a betónovej nadbetonávky. Monolitické základy a prízemná doska zostávajú predmetom predchádzajúceho zadania. Používateľ žiada aspoň jeden schod pri vstupe; výšku hotovej podlahy má určiť nový návrh podľa zameraných základov a terénu. Uličný referenčný bod R0 je oznámených 184,200 m, nejde automaticky o hotovú podlahu. Podrobnosti a stav návrhu sú vo [výkresovej dokumentácii](construction-drawings.md); tieto požiadavky sa nesmú zameniť s už overenými realizačnými prierezmi a výškami.
+
+Následné spresnenie základov: podľa stavebníka je doska vyliata **aj s lodžiou a krytou terasou**. Priestorový pohľad preto zahŕňa celý L-obrys vrátane oboch plôch; hranica uzavretého interiéru ho nesmie skrátiť. Zobrazenie má ulicu dole, garáž vľavo a dlhé krídlo vpravo. Oznámený rozsah nenahrádza zameranie skutočných líc, hrúbky alebo výstuže. Nové vnútorné trasy R4–R6 a ich stav opisuje [priestorový podklad základov](construction-foundation-axon.md).
+
 Spresnenie kuchyne 14. 9. 2026: [samostatný ostrovček](kitchen-island.md) s hotovou doskou 2 640 × 920 mm končí pravou hranou presne na úrovni pracovnej dosky linky oproti. Pravá linka pri stene zostáva v pôvodnej plnej dĺžke až po zadnú hranu ostrovčeka smerom k obývačke; medzi nimi je priechod 900 mm. Odstup 800 mm od sedačky B zostáva. Nadväzujúci architektonický návrh presúva drez s umývačkou na ostrovček a indukciu s integrovaným odsávačom do niky pri stene. Rúra so zasúvacími dvierkami je vo vysokej skrini vedľa chladničky; ostrovček má uzavreté plytké úložisko zo strany obývačky. Najnovšie spresnenie presúva umývačku do krajného východného modulu ostrovčeka smerom k malému oknu, s jednou zásuvkovou skrinkou medzi umývačkou a drezom. Čierne pracovné dosky a dubové čelá všetkých skriniek vracajú pôvodný materiálový charakter. Materiály a svetlo opisuje rovnaký detail kuchyne.
 
 Všetky ďalšie úpravy a opravy vychádzajú z C/B/B. Výber musí prechádzať z pôdorysu do 3D aj dokumentácie. Predvolené hodnoty historických geometrických generátorov sa nemenia; hlavné vstupné stránky používajú `ACTIVE_DESIGN`.
@@ -22,7 +26,8 @@ Všetky ďalšie úpravy a opravy vychádzajú z C/B/B. Výber musí prechádza�
 
 | Cesta | Záväzné správanie |
 | --- | --- |
-| `/`, `/docs` | Prehľad a dokumentácia hlavného návrhu; hlavné odkazy vedú na C/B/B. |
+| `/` | Prehľad hlavného návrhu; hlavné odkazy vedú na C/B/B. |
+| `/docs` | Knižnica novej dokumentácie C/B/B: zložky, vyhľadávanie, náhľady a sťahovanie výkresov a správ; zachováva stav koordinácie a archívu. |
 | `/podorys`, `/koncept-2d` | Pôdorys C/B/B bez prepínačov alternatív. `site=1` zobrazí parcelu, `view=manual` manuál. |
 | `/3d`, `/navrh-3d` | 3D hlavného návrhu C/B/B. |
 | `/docs/manual` | Manuál a tlač hlavného návrhu C/B/B. |
@@ -60,6 +65,8 @@ Dodatočná pravá priečka pri kuchynskej linke a dverách technickej miestnost
 
 Akustické steny AK-01 (spálňa / chlapčenská izba) a AK-02 (kúpeľňa / dievčenská izba) majú podľa zadania z 13. 9. 2026 skladbu **SA30: LeierPLAN 10 P10 100 mm + minerálna vata 100 mm + LeierPLAN 10 P10 100 mm**. Hrúbka 300 mm bez omietok a obkladov, poloha líc aj priechod chodby zostávajú. Ide o návrh nenosnej priečky s potrebou statického posúdenia pôvodne nosných úsekov. Pozri [skladbu a poznámky SA30](acoustic-walls.md).
 
+Ich nenosná rola nevylučuje vlastnú hmotnosť zo zaťaženia dosky. Doplnenie z 14. 9. 2026 vyčísľuje oba plášte pri modelovej výške 3125 mm a pridáva **kandidátnu podpornú trasu R7**, nie schválený prierez alebo zásah do už vyliatej dosky. SA30 sa nemení na podperu dreveného stropu alebo krovu. [Geometria, hmotnosť a hranice návrhu R7](construction-foundation-axon.md).
+
 **Finálne zvolené riešenie stavebníka pre AK-03 (pracovňa / kúpeľňa so sprchou) je H200:** od kúpeľne 15 mm VC omietka + 100 mm LeierPLAN 10 N+F, Devecser + 15 mm VC omietka + 45 mm dutina W623 na pružných závesoch Knauf Direktschwingabhänger s 40 mm minerálnou vlnou + 2 × 12,5 mm Silentboard na strane pracovne, spolu **200 mm**. Dutina zahŕňa profil CD 60/27 aj izoláciu. Hydroizolácia, lepidlo, obklad a prípadná finálna stierka sú dodatočné povrchy. Zvolená skladba je záväzná pre hlavný pôdorys, 3D, detail a manuál.
 
 Požiadavka H200 je **Rw ≥ 51 dB**, predbežný výpočet dáva **Rw približne 58 dB**. Ide o výpočtový údaj, nie o meranie presnej zostavy alebo hodnotu R’w dokončenej stavby. Výber skladby je uzavretý; realizačná príprava zahŕňa technické potvrdenie systému na konkrétnom dutinovom murive, stability 100 mm jadra, kotiev, napojení a prestupov. Zachovať obe 15 mm omietky aj presné pružné závesy. Pozri [finálne H200, zdroje a výpočet](office-acoustic-wall-thinner-options.md).
@@ -73,6 +80,8 @@ Ostatné varianty sa nemažú. Sú dostupné cez `/archiv`; snímky `/v1` a `/v2
 Hlavné cesty `/koncept-2d`, `/podorys`, `/3d`, `/navrh-3d` a `/docs/manual` sú pevne nastavené na C/B/B. Staré alebo neplatné parametre sa upravia na hlavný návrh, pričom pohľad na parcelu a manuál zostávajú zachované. Hlavná navigácia vždy vedie na C/B/B aj pri prezeraní archívu. Prepínače alternatív sú dostupné iba v `/archiv/podorys`; archívna zostava si zachová výber v manuáli a v `/archiv/3d`.
 
 Sekcie: `/` prehľad projektu, `/docs` dokumentácia, `/3d` dom v 3D, `/podorys` samostatný interiérový plán. Pôvodné adresy zostávajú funkčné.
+
+Rozhranie `/docs` bolo 14. 9. 2026 nahradené [knižnicou súborov](document-library.md), napojenou na celú novú výkresovú sadu vrátane R7. Aktuálnosť exportu a jeho stavebná schválenosť sú odlišné údaje; otvorené statické a konštrukčné body zostávajú uvedené pri dokumentoch.
 
 Hranica parcely 6012/26 sa odvodzuje z nezmeneného katastrálneho polygónu S-JTSK. Aktívny pôdorys aj 3D používajú spoločný `twin-active-site.ts`. Pôvodný lokálny rámec C3 a historické osadenie zostávajú v `twin-site.ts`.
 

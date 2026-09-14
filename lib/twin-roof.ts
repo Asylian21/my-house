@@ -105,9 +105,8 @@ export interface JoinedRoofGeometry {
 }
 
 /**
- * A renderer-ready quadrilateral. The authoritative roof keeps its documented
- * overhangs, while these patches partition visible finishes so two opaque
- * materials never claim the same depth-buffer pixels.
+ * A renderer-ready quadrilateral. These patches partition visible finishes
+ * so two opaque materials never claim the same depth-buffer pixels.
  */
 export interface RoofRenderFace {
   readonly id: string;
@@ -136,7 +135,8 @@ export interface JoinedRoofRenderPlan {
   };
 }
 
-export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze({
+/** Preserved pre-14 September roof for archive views, including its 50 mm end overhang. */
+export const ARCHIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze({
   minXmm: HOUSE.originMm.x,
   maxXmm: HOUSE.originMm.x + HOUSE.lowerBar.widthMm,
   frontEaveYmm: HOUSE.originMm.y,
@@ -155,6 +155,12 @@ export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze
   mainSeamSpacingMm: 760,
   wingSeamInsetMm: 300,
   wingSeamSpacingMm: 720,
+});
+
+/** Client, 14 September 2026: the active roof ends at the finished porch facade. */
+export const ACTIVE_JOINED_ROOF_PARAMETERS: JoinedRoofParameters = Object.freeze({
+  ...ARCHIVE_JOINED_ROOF_PARAMETERS,
+  wingEndYmm: HOUSE.porches.wingEnd.frontYmm,
 });
 
 export function mainFrontRoofHeightMm(
@@ -394,9 +400,9 @@ export const WING_PORCH_SOFFIT_FRONT_SETBACK_MM = 20;
 /**
  * Splits the visual roof at the covered wing porch.
  *
- * The architectural roof still ends at the documented 50 mm overhang. In the
- * rendered assembly, however, the P04 rake owns that end strip and the larch
- * soffit owns the porch ceiling. Clipping the generic metal/white surfaces at
+ * The active roof ends at the porch front; archive geometry retains its
+ * documented 50 mm end overhang. The P04 rake remains a separate finish and
+ * the larch soffit owns the porch ceiling. Clipping the metal/white surfaces at
  * those two construction joints removes coplanar and intersecting opaque
  * layers instead of relying on camera-dependent depth bias.
  */

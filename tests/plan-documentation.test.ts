@@ -52,8 +52,15 @@ describe('Documentation of the active 3D model',()=>{
       }
     }
   });
-  it('is an exact fresh projection of every eligible physical component',()=>{
+  it('projects the roof-dependent porch without a browser constructor and preserves every eligible component',()=>{
     const actual=extractPlanGeometry(readFileSync(new URL('../public/assets/archviz/dom-terrace.glb',import.meta.url)));
+    const porchHeads=actual.meshes.filter(mesh=>mesh.name.includes('hlava podpory portálu P04'));
+    expect(porchHeads).toHaveLength(2);
+    for(const head of porchHeads){
+      expect(head.rect.y1).toBe(HOUSE.porches.wingEnd.frontYmm);
+      expect(head.z0).toBe(HOUSE.eavesElevationMm);
+      expect(head.z1).toBeCloseTo(3412.86,2);
+    }
     expect(generated).toEqual(actual);
     const ids=PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>mesh.id));
     expect(ids).toHaveLength(actual.meshes.length);

@@ -40,8 +40,10 @@
     "unreal:flame-study": "node scripts/unreal/flame-study.mjs",
     "unreal:test": "node --test tests/archviz-export.test.mjs tests/unreal-export.test.mjs tests/unreal-package.test.mjs tests/unreal-walking.test.mjs tests/unreal-walking-qa.test.mjs tests/unreal-traversal-qa.test.mjs tests/unreal-presentation-qa.test.mjs tests/unreal-hidden-collision.test.mjs tests/unreal-cook.test.mjs tests/unreal-caustics.test.mjs tests/unreal-ax-initializer-qa.test.mjs tests/unreal-motion-qa.test.mjs tests/unreal-view-transition-policy.test.mjs tests/unreal-launcher.test.mjs tests/unreal-startup-entry.test.mjs tests/unreal-flame-study.test.mjs scripts/unreal/tv-oak/package-gate.test.mjs scripts/unreal/furniture-oak/package-gate.test.mjs scripts/unreal/pendant-emitter/package-gate.test.mjs && python3 -B scripts/unreal/test_oak_reimport.py && python3 -I -B -m unittest discover -s scripts/unreal/pendant-emitter -p 'test_*.py'",
     "docs:generate": "node scripts/plan-documentation/generate.mjs",
-    "predev": "npm run docs:generate",
-    "prebuild": "npm run docs:generate"
+    "predev": "npm run docs:generate && npm run docs:library",
+    "prebuild": "npm run docs:generate && npm run docs:library",
+    "docs:drawings": "npm run docs:generate && node scripts/construction-documentation/generate.mjs && node scripts/construction-documentation/verify.mjs && npm run docs:library",
+    "docs:library": "node scripts/document-library/generate.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^9.21.2",

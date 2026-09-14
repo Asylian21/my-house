@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   PARCEL_LABEL_RENDERING_GROUP_ID,
+  TwinSceneController,
   createFlatPolygonWithHoles,
+  createRoofFace,
   createTwinRenderScene,
   setSelectionHighlightForNavigation,
 } from "../lib/babylon-scene";
@@ -17,6 +19,37 @@ import {
   sjtskToLocalMm,
 } from "../lib/twin-site";
 import { sceneXM, sceneZM } from "../lib/twin-render-frame";
+import {
+  deriveJoinedRoofRenderPlan,
+  type JoinedRoofGeometry,
+} from "../lib/twin-roof";
+import { HOUSE } from "../lib/twin-active-house";
+
+describe("active and archived roof mesh bounds", () => {
+  for(const [label,archiveRoof,overhang] of [
+    ['active',false,0],
+    ['archive',true,50],
+  ] as const) {
+    it(`keeps the ${label} geometric boundary at its own facade offset`, () => {
+      const engine=new NullEngine();
+      const scene=createTwinRenderScene(engine);
+      // Exercise the actual lazy roof input used by prototype-only extractors,
+      // including the explicit archive selection used by the browser scene.
+      const shell=Object.assign(Object.create(TwinSceneController.prototype),{archiveRoof});
+      const roof=shell.roof as JoinedRoofGeometry;
+      try {
+        const meshes=roof.faces.map(face=>createRoofFace(scene,face.id,face.vertexIndices.map(i=>roof.vertices[i])));
+        meshes.forEach(mesh=>mesh.computeWorldMatrix(true));
+        const northWorldZ=Math.min(...meshes.map(mesh=>mesh.getBoundingInfo().boundingBox.minimumWorld.z));
+        expect(northWorldZ).toBeCloseTo(sceneZM(HOUSE.porches.wingEnd.frontYmm+overhang),6);
+        const visible=deriveJoinedRoofRenderPlan(roof).topFaces.map(face=>createRoofFace(scene,face.id+'-finish',face.vertices));
+        visible.forEach(mesh=>mesh.computeWorldMatrix(true));
+        expect(Math.min(...visible.map(mesh=>mesh.getBoundingInfo().boundingBox.minimumWorld.z)))
+          .toBeCloseTo(sceneZM(HOUSE.porches.wingEnd.frontYmm),6);
+      } finally {scene.dispose();engine.dispose();}
+    });
+  }
+});
 
 function pointInTriangle(
   point: readonly [number, number],

@@ -1086,6 +1086,7 @@ export function TwinStudio({design,archive=false,initialWorkspace=DEFAULT_WORKSP
         <BabylonViewport
           ref={viewportRef}
           design={design}
+          archive={archive}
           exitHref={immersivePreview && design ? designHref('/podorys', design, archive) : undefined}
           initialRoomId={design&&initialWorkspace==='experience' ? 'ROOM-1-03' : undefined}
           onReady={()=>setPreviewReady(true)}

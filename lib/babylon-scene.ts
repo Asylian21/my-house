@@ -4,6 +4,7 @@ import type { TwinDesignSelection } from './twin-design-selection';
 
 export interface TwinSceneOptions extends Partial<TwinDesignSelection> {
   readonly loadArchviz?: boolean;
+  readonly archive?: boolean;
 }
 import { HOUSE, SIDE_ENTRY_APPROACH, PARCEL_LAWN_INTERIOR_CUTOUTS_MM } from "./twin-active-house";
 import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
@@ -110,6 +111,8 @@ import {
   streetCameraForWidth,
 } from "./twin-render-frame";
 import {
+  ACTIVE_JOINED_ROOF_PARAMETERS,
+  ARCHIVE_JOINED_ROOF_PARAMETERS,
   deriveJoinedRoofGeometry,
   deriveJoinedRoofRenderPlan,
   deriveWingPorchPortalHeadProfiles,
@@ -611,7 +614,7 @@ export function createFlatPolygonWithHoles(
   return mesh;
 }
 
-function createRoofFace(
+export function createRoofFace(
   scene: Scene,
   name: string,
   vertices: readonly RoofVertexMm[],
@@ -951,6 +954,13 @@ function walkLookTargetMm(room: InteriorRoom, heatingLayout: HeatingLayoutId): P
 export class TwinSceneController {
   private readonly heatingLayout:HeatingLayoutId;
   private readonly livingLayout: LivingLayoutId;
+  private readonly archiveRoof: boolean;
+  private roofGeometry?: JoinedRoofGeometry;
+  // Plan extraction reuses the prototype builders without the browser constructor.
+  // Its absent archive flag intentionally resolves to the active roof.
+  private get roof(): JoinedRoofGeometry {
+    return this.roofGeometry??=deriveJoinedRoofGeometry(this.archiveRoof?ARCHIVE_JOINED_ROOF_PARAMETERS:ACTIVE_JOINED_ROOF_PARAMETERS);
+  }
   private readonly archviz: ArchvizPresentation | null;
   private readonly engine: Engine;
   private readonly scene: Scene;
@@ -1041,6 +1051,7 @@ export class TwinSceneController {
   ) {
     this.heatingLayout=options.heatingLayout??DEFAULT_HEATING_LAYOUT_ID;
     this.livingLayout=options.livingLayout??DEFAULT_LIVING_LAYOUT_ID;
+    this.archiveRoof=options.archive??false;
     canvas.dataset.livingLayout=this.livingLayout;
     canvas.dataset.heatingLayout=this.heatingLayout;
     canvas.dataset.planVariant='C';
@@ -4124,7 +4135,7 @@ export class TwinSceneController {
         flueSpec.roofFace,
         center.x,
         center.y,
-        deriveJoinedRoofGeometry().parameters,
+        this.roof.parameters,
       );
       const pipeDiameterM = flueSpec.outerDiameterMm * MM_TO_M;
       const flashing = CreateCylinder(
@@ -4411,7 +4422,7 @@ export class TwinSceneController {
   }
 
   private buildJoinedRoof() {
-    const roof = deriveJoinedRoofGeometry();
+    const roof = this.roof;
     const renderPlan = deriveJoinedRoofRenderPlan(roof);
 
     for (const face of renderPlan.topFaces) {
@@ -4878,7 +4889,7 @@ export class TwinSceneController {
   }
 
   private buildSolarArray() {
-    const roof = deriveJoinedRoofGeometry();
+    const roof = this.roof;
     const { parameters } = roof;
     const photovoltaics = HOUSE.photovoltaics;
     if (
@@ -5698,7 +5709,7 @@ export class TwinSceneController {
   /** Covered gable porch of the wing — glazing recessed 2.5 m (D1.1.002). */
   private buildWingPorch() {
     const porch = HOUSE.porches.wingEnd;
-    const roof = deriveJoinedRoofGeometry();
+    const roof = this.roof;
     const roofParameters = roof.parameters;
     const roofRenderPlan = deriveJoinedRoofRenderPlan(roof);
     const clearanceMm = porch.ceilingClearanceMm;

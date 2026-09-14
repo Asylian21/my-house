@@ -43,6 +43,8 @@ yarn-error.log*
 /arch-docs/
 /tmp/
 /output/
+/public/documents/
+/scripts/document-library/__pycache__/
 /.playwright-cli/
 *.tsbuildinfo
 /scripts/archviz/__pycache__/

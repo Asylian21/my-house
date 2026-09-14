@@ -77,6 +77,7 @@ export interface BabylonViewportHandle {
 
 interface BabylonViewportProps {
   readonly design?: TwinDesignSelection;
+  readonly archive?: boolean;
   readonly exitHref?: string;
   readonly initialRoomId?: string;
   readonly onReady?: () => void;
@@ -111,6 +112,7 @@ export const BabylonViewport = forwardRef<
 >(function BabylonViewport(
   {
     design,
+    archive=false,
     exitHref,
     initialRoomId,
     onReady,
@@ -144,7 +146,7 @@ export const BabylonViewport = forwardRef<
   const onNavigationModeChangeRef = useRef(onNavigationModeChange);
   const onWalkAvatarChangeRef = useRef(onWalkAvatarChange);
   const onReadyRef = useRef(onReady);
-  const initialDesignRef = useRef({design, initialRoomId});
+  const initialDesignRef = useRef({design, archive, initialRoomId});
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [archvizUnavailable, setArchvizUnavailable] = useState(false);
   const [quality, setQuality] = useState<RenderQualityProfile | null>(null);
@@ -262,7 +264,10 @@ export const BabylonViewport = forwardRef<
           (id) => onSelectRef.current(id),
           (mode) => onNavigationModeChangeRef.current(mode),
           (profile) => setQuality(profile),
-          initialDesignRef.current.design ?? designFromSearch(new URLSearchParams(window.location.search)),
+          {
+            ...(initialDesignRef.current.design ?? designFromSearch(new URLSearchParams(window.location.search))),
+            archive: initialDesignRef.current.archive,
+          },
         );
         controller = createdController;
         controllerRef.current = createdController;
