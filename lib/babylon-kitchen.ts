@@ -101,7 +101,8 @@ export function buildKitchenDesign(context:InteriorBuildContext, materials:Inter
   box('nika · tieňová škára pod kameňom',rect(back.x0+4,run.y0+4,run.x1-4,run.y1-8),860,20,shadow);
   box('nika · minerálna pracovná doska',back,880,20,stone);
   box('nika · súvislý minerálny obklad',rect(back.x0,run.y0,run.x1,run.y0+12),900,700,stone);
-  box('horné skrinky · matná nika 2026',rect(back.x0,run.y0,run.x1,run.y0+k.upperCabinets.depthMm),1600,650,oak);
+  finish(rawBox('horné skrinky · matná nika 2026',rect(back.x0,run.y0,run.x1,run.y0+k.upperCabinets.depthMm),1600,650),oak,
+    {shadow:true,pickable:true,cameraOccluder:true});
   for(const x of d.backModules.slice(1,-1))box('horné skrinky · modulová škára 2026',rect(x-2,run.y0+k.upperCabinets.depthMm-1,x+2,run.y0+k.upperCabinets.depthMm+2),1603,644,shadow);
   // The 880 mm canopy sits inside the 990 mm centre module. Recirculation
   // returns at the cabinet top, not into a sealed cupboard or the cathedral.

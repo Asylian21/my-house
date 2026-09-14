@@ -168,7 +168,7 @@ describe("Babylon interior fit-out", () => {
       expect(wcDoor.canClose?.(wcActor, 1)).toBe(true);
       wcDoor.apply(0, 0);
 
-      // C's boy-room door has a left hinge and right handle from the hall;
+      // C's boy-room door has a right hinge and left handle from the hall;
       // the same source used by 2D must drive the rendered pivot and safe sweep.
       const boyFitout = CHILDRENS_BEDROOM_FITOUTS.find(fitout=>fitout.roomId==='ROOM-1-09')!;
       const boySpec = INTERIOR_DOORS.find(door=>door.id===boyFitout.entryDoorId)!;
@@ -177,14 +177,14 @@ describe("Babylon interior fit-out", () => {
       const boyHinge = boyLeaf.parent as TransformNode;
       const boyHandles = scene.meshes.filter(mesh=>mesh.metadata?.doorId===boySpec.id && mesh.name.includes('kľučka'));
       const boyFurniture = scene.meshes.filter(mesh=>mesh.name.startsWith(boyFitout.id) && mesh.checkCollisions);
-      expect(boySpec).toMatchObject({startMm:17442,widthMm:900,hinge:-1,swing:1,hingeOffsetMm:0});
-      expect(boyHinge.position.x).toBeCloseTo(sceneXM(17502), 6);
+      expect(boySpec).toMatchObject({startMm:17442,widthMm:900,hinge:1,swing:1,hingeOffsetMm:0});
+      expect(boyHinge.position.x).toBeCloseTo(sceneXM(18282), 6);
       expect(boyHinge.position.z).toBeCloseTo(sceneZM(7791), 6);
       expect(boyHandles).toHaveLength(2);
       boyDoor.apply(0, 0);
       for (const handle of boyHandles) {
         handle.computeWorldMatrix(true);
-        expect(handle.absolutePosition.x).toBeGreaterThan(sceneXM(boySpec.startMm+boySpec.widthMm/2));
+        expect(handle.absolutePosition.x).toBeLessThan(sceneXM(boySpec.startMm+boySpec.widthMm/2));
       }
       for (let step=0;step<=12;step++) {
         boyDoor.apply(step/12, 0);
@@ -194,7 +194,7 @@ describe("Babylon interior fit-out", () => {
           expect(boyLeaf.intersectsMesh(furniture, false), `${furniture.name} clears boy door at ${step}/12`).toBe(false);
         }
       }
-      expect(boyHinge.rotation.y).toBeCloseTo(Math.PI/2, 8);
+      expect(boyHinge.rotation.y).toBeCloseTo(-Math.PI/2, 8);
       expect(boyLeaf.getBoundingInfo().boundingBox.maximumWorld.z).toBeLessThan(sceneZM(7791)+0.001);
       boyDoor.apply(0, 0);
 
@@ -424,16 +424,17 @@ describe("Babylon interior fit-out", () => {
         ),
       ).toBe(true);
 
-      const officeCableTray = officeMeshes.find((mesh) =>
-        mesh.name.includes("· DESK · skrytý káblový žľab"),
+      const officeDeskController = officeMeshes.find((mesh) =>
+        mesh.name.includes("· DESK · riadiaca jednotka pod doskou"),
       );
       const officeLight = officeMeshes.find((mesh) =>
         mesh.name.includes("· LIGHT · čierny lineárny stropný profil"),
       );
       for (const [mesh, widthM, depthM] of [
-        [officeCableTray, 0.15, 0.88],
+        [officeDeskController, 0.11, 0.26],
         [officeLight, 0.058, 1.26],
       ] as const) {
+        expect(mesh).toBeDefined();
         mesh?.computeWorldMatrix(true);
         const bounds = mesh?.getBoundingInfo().boundingBox;
         expect((bounds?.extendSizeWorld.x ?? 0) * 2).toBeCloseTo(widthM, 8);

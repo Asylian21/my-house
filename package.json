@@ -42,6 +42,7 @@
     "docs:generate": "node scripts/plan-documentation/generate.mjs",
     "predev": "npm run docs:generate && npm run docs:library",
     "prebuild": "npm run docs:generate && npm run docs:library",
+    "postbuild": "node scripts/prepare-web-build.mjs",
     "docs:drawings": "npm run docs:generate && node scripts/construction-documentation/generate.mjs && node scripts/construction-documentation/verify.mjs && npm run docs:library",
     "docs:library": "node scripts/document-library/generate.mjs"
   },

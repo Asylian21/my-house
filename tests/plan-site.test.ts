@@ -29,7 +29,11 @@ describe('canonical project and full cadastral plan',()=>{
       for(const route of ['/podorys','/3d','/docs/manual'] as const){
         const design={livingLayout,heatingLayout},url=new URL(designHref(route,design),'http://localhost');
         expect(url.searchParams.get('variant')).toBe('c');
-        expect(designFromSearch(url.searchParams,ACTIVE_DESIGN)).toEqual(design);
+        expect(designFromSearch(url.searchParams,ACTIVE_DESIGN)).toEqual(ACTIVE_DESIGN);
+        const archived=new URL(designHref(route,design,true),'http://localhost');
+        expect(archived.pathname).toBe(route==='/3d'?'/archiv/3d':'/archiv/podorys');
+        expect(designFromSearch(archived.searchParams,ACTIVE_DESIGN)).toEqual(design);
+        if(route==='/docs/manual')expect(archived.searchParams.get('view')).toBe('manual');
       }
     }
   });

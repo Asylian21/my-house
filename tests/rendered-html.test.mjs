@@ -717,10 +717,10 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       assert.match(main, /Vstavaná skriňa na konci chodby · posuvné dubové čelá · 1,10 × 0,46 m/);
       assert.match(text, /kúpeľňa má tvar L s rozšírením 1,46 × 0,81 m a skriňa na konci chodby má hĺbku 1,10 m namiesto 1,91 m/);
       assert.match(main, /Kúpeľňa: 5,30 m²/);
-      assert.match(main, /6,19/);
-      assert.match(main, /12,34/);
-      assert.match(main, /ZÁDVERIE 2,40 m/);
-      assert.match(main, /4,47/);
+      assert.match(main, /Zádverie, chodba, vstup: 6,46 m²/);
+      assert.match(main, /Pracovňa: 12,31 m²/);
+      assert.match(main, /ZÁDVERIE 2,53 m/);
+      assert.match(text, /<dt>Voľné po zariadení<\/dt><dd>4,74 m²<\/dd>/);
       assert.match(main, /nosné murivo 300 mm/);
       assert.match(main, /priečka 140 mm; detská si drží plochu a chodba sa rozširuje na 1,10 m/);
       assert.match(text, /Spoločná chodba je posunutá o 5 cm k dvoru a vystredená medzi fasádami, takže obe detské izby majú hĺbku 2,91 m/);
