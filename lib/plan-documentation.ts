@@ -1,6 +1,6 @@
 import generated from './plan-geometry.generated.json';
-import { ACOUSTIC_ASSEMBLY, ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
-import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, HALLWAY_BUILT_IN_WARDROBES, INTERIOR_DOORS, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_FITOUT, roomAreaM2, roomBoundsMm, type RectMm } from './twin-interior';
+import { ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
+import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, HALLWAY_BUILT_IN_WARDROBES, INTERIOR_DOORS, INTERIOR_ROOMS, KITCHEN_DESIGN, KITCHEN_ISLAND, KITCHEN_RUN, OFFICE_FITOUT, roomAreaM2, roomBoundsMm, type RectMm } from './twin-interior';
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUTS, LIVING_LAYOUT_IDS, diningTableRectMm, type LivingLayoutId } from './twin-living-layouts';
 import { HOUSE } from './twin-active-house';
 import { CHILDREN_WINDOW_DESIGN } from './twin-children-design';
@@ -24,7 +24,7 @@ export interface PlanItem {
   product?:{label:string;dimensions:string;source:string};
 }
 export const PLAN_ROOM_NOTES:Record<string,string[]>={
-  'ROOM-1-04':['Stena ku kúpeľni má 140 mm namiesto 190 mm. Líce kúpeľne zostáva na 6 602 mm, líce pracovne je na 6 462 mm; pracovňa získala 50 mm a má 12,57 m². Zalomená stena k zádveriu má v oboch ramenách 175 mm namiesto 300 mm. Líca pracovne na 23 542 a 5 400 mm zostávajú pevné; zádverie má 6,48 m². Otvor a pohyb dverí pracovne zostávajú zachované.'],
+  'ROOM-1-04':['AK-03 / H200 je finálne zvolená skladba: od sprchy 15 mm VC omietka + 100 mm LeierPLAN 10 + 15 mm omietka + 45 mm dutina W623 na pružných závesoch s vatou 40 mm + 2 × 12,5 mm Silentboard. Spolu 200 mm, hydroizolácia a obklad navyše. Požiadavka Rw ≥ 51 dB; predbežný výpočet ≈ 58 dB, presnú zostavu a napojenia treba potvrdiť.','Líce kúpeľne zostáva na Y 6 602 mm, líce pracovne je na Y 6 402 mm. Dvere aj vstupný roh pracovne sú posunuté o 30 mm k ulici; ostenie má 80 mm. Pracovňa má 12,31 m². Otvor kúpeľne aj zatvorené krídlo sú na osi X chodby, Y 7 101,5 mm.'],
   'ROOM-1-02':['Chodba medzi detskými izbami je vystredená medzi fasádami: južná priečka 140 mm leží na 6 412–6 552 mm, severná na 7 651–7 791 mm, medzi nimi je 1 099 mm. Obe detské izby sú tak rovnako hlboké (2 908 mm). Severná stena je jedna rovina od šatníka cez dvere spálne po východnú nosnú stenu chlapčenskej izby; južná priečka pokračuje pri zádverí až k rohu pracovne.','Stena k dievčenskej izbe a zádveriu je priečka 140 mm namiesto 199 mm. Plocha chodby je 16,28 m² (predtým 17,46 m²): stena kúpeľne s dverami z chodby leží na tej istej rovine 6 412–6 552 mm, takže bývalý koniec chodby pred kúpeľňou patrí kúpeľni. Puzdro posuvných dverí zo zádveria je v tejto priečke; jeho hrúbku potvrdí dodávateľ. Skriňa na konci chodby má 1 099 × 460 mm medzi stenou kúpeľne a rovinou 7 651 mm (predtým 1 907 mm), skriňa pri dvore 2 768 × 701 mm za priečkou 140 mm.'],
   'ROOM-1-08':['Jedno dvojkrídlové okno 1 800 × 1 500 mm s parapetom 900 mm, presne v osi dverí a v strede izby. Dve rovnaké otváravé krídla v štíhlom antracitovom ráme 45 mm; zhodné s oknom chlapčenskej izby.','Západná akustická priečka AK-02 / SA30 má 300 mm (100 mm LeierPLAN 10 P10 + 100 mm minerálnej vaty + 100 mm LeierPLAN 10 P10); východná stena je nosná 300 mm. Západná priečka (líce 15 243 mm) je o 100 mm bližšie než predtým v prospech spálne a kúpeľne, východná k zádveriu je v jednej línii so stenou chlapčenskej izby. Izba má 5 298 × 2 908 mm (15,41 m²), presne ako chlapčenská: chodba je vystredená a stena k nej leží na 6 412 mm. Okno je uprostred medzi posteľou a pracovným stolom; oba bočné pásy muriva majú 1 749 mm.','Dvere 900 mm sú vystredené na dĺžku izby (17 442–18 342 mm) a ležia presne oproti dverám chlapčenskej izby. Kľučka je na ľavej strane otvoru v pôdoryse, pánty vpravo; krídlo sa otvára dovnútra izby. Zariadenie je zrkadlovým obrazom chlapčenskej izby: skriňa 2 150 × 600 mm stojí pri stene chodby v rohu pri zádverí, 49 mm za hranou dverného otvoru, tesne vedľa krídla otvoreného na 90°; regál na hračky je zrušený.'],
   'ROOM-1-09':['Jedno dvojkrídlové okno 1 800 × 1 500 mm s parapetom 900 mm, presne v osi dverí a v strede izby. Zhodný antracitový rám 45 mm aj dve otváravé krídla ako v dievčenskej izbe. Pôvodný pevný pás aj samostatné okno sú odstránené. Nástenka zostáva na bočnej stene.','Izba má 5 298 × 2 908 mm (15,41 m²), presne ako dievčenská: západná akustická priečka AK-01 / SA30 (100 + 100 + 100 mm) je o 100 mm bližšie v prospech spálne a kúpeľne a stena k chodbe leží na 7 791 mm, v jednej rovine so stenou spálne a šatníka. Okno začína 209 mm za bočnou hranou postele a končí 449 mm pred stolom.','Dvere 900 mm sú vystredené (17 442–18 342 mm) presne oproti dverám dievčenskej izby. Kľučka je na ľavej strane otvoru v pôdoryse, pánty vpravo; krídlo sa naďalej otvára dovnútra izby. Skriňa 2 150 × 600 mm stojí pri stene chodby v rohu pri zádverí, 49 mm za hranou dverného otvoru, tesne vedľa krídla otvoreného na 90°; regál na hračky je zrušený.'],
@@ -43,7 +43,7 @@ const names:Record<string,string>={BED:'Posteľ',WARDROBE:'Šatníková skriňa'
 function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   const n=mesh.name, [prefix,tag='',part='']=n.split(' · ');
   const acoustic=acousticMeshInfo(n);
-  if(acoustic)return [acoustic.mark,`${acoustic.mark} · Akustická priečka SA30`,'walls'];
+  if(acoustic)return [acoustic.mark,`${acoustic.mark} · Akustická stena ${acoustic.assembly.code}`,'walls'];
   if(/^(Lounge pohovka|Lounge ležadlo|Nízky stolík|Terasový stôl|Terasová stolička)/.test(prefix))return [prefix,prefix.replace(' z 3D','').replace('Lounge pohovka','Terasová pohovka').replace('Lounge ležadlo','Terasové ležadlo'),'furniture'];
   if(prefix==='GARAGE-DOOR')return [prefix,'Sekčná garážová brána','openings'];
   if(prefix.startsWith('FLUE-'))return [prefix,'Zvislý dymovod','equipment'];
@@ -82,13 +82,17 @@ function semantic(mesh:PlanMesh):[string,string,PlanCategory] {
   }
   if(prefix==='KITCHEN-RUN') {
     if(tag==='FRIDGE-600')return ['kitchen-fridge','Chladnička s mrazničkou','equipment'];
-    if(tag==='OVEN-UNDER-HOB')return ['kitchen-oven','Vstavaná rúra','equipment'];
+    if(tag==='OVEN-ELEVATED')return ['kitchen-oven','Rúra vo výške · zasúvacie dvierka','equipment'];
+    if(tag==='OVEN-TOWER')return ['kitchen-oven-tower','Vysoká skriňa pre rúru','furniture'];
+    if(tag==='DISHWASHER')return ['kitchen-dishwasher','Integrovaná umývačka','equipment'];
+    if(tag==='ISLAND-LIGHT')return ['kitchen-island-light','Lineárne svetlo nad ostrovčekom','lighting'];
+    if(tag==='ostrovček')return ['kitchen-island','Kuchynský ostrovček','furniture'];
     if(/odsávač/.test(n))return ['kitchen-extractor','Odsávač pár','equipment'];
     if(/varná/.test(n))return ['kitchen-hob','Varná doska','equipment'];
     if(/drez|batéri/.test(n)&&!n.includes('úchytka'))return ['kitchen-sink','Drez a batéria','equipment'];
     if(/horn[éý]|horných|LED/.test(n))return ['kitchen-upper','Horné kuchynské skrinky','furniture'];
     if(tag==='L-RETURN-EAST')return ['kitchen-return','Bočné rameno kuchyne','furniture'];
-    if(/polostrov/.test(n))return ['kitchen-island','Kuchynský polostrov','furniture'];
+    if(/polostrov|ostrovč/.test(n))return ['kitchen-island','Kuchynský ostrovček','furniture'];
     return ['kitchen-back','Zadná kuchynská linka','furniture'];
   }
   let key=tag, label=names[tag]??tag;
@@ -138,7 +142,7 @@ const openingSpecs=[...HOUSE.facades.front.openings,...HOUSE.facades.east.openin
 export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
   item.rect=unionBounds(item.meshes.map(m=>m.rect));item.z0=Math.min(...item.meshes.map(m=>m.z0));item.z1=Math.max(...item.meshes.map(m=>m.z1));item.roomId=closestRoom(item.rect);
   const acoustic=ACOUSTIC_WALL_SPECS.find(w=>w.mark===item.id);
-  if(acoustic){item.roomId=acoustic.rooms[0];item.nominal=item.rect;item.note=`${acoustic.location}. ${ACOUSTIC_ASSEMBLY.finishNote}`;}
+  if(acoustic){item.roomId=acoustic.rooms[0];item.nominal=item.rect;item.note=`${acoustic.location}. ${acoustic.assembly.finishNote}`;}
   const numberedRoom=item.id.match(/^1\.\d+/)?.[0];
   if(numberedRoom)item.roomId=INTERIOR_ROOMS.find(r=>r.number===numberedRoom)?.id??item.roomId;
   if(/^(Lounge|Nízky stolík|Terasový stôl|Terasová stolička)/.test(item.id))item.roomId='EXTERIOR';
@@ -150,7 +154,13 @@ export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
     if(item.id===`${fit.id}-BED`)item.note=`Matrac ${formatMm(fit.bed.mattressWidthMm)} × ${formatMm(fit.bed.mattressLengthMm)}. Rám je väčší než matrac.`;
   }
   if(item.id===`${BEDROOM_FITOUT.id}-BED`)item.nominal=BEDROOM_FITOUT.bed.footprintMm;
-  if(item.id===`${OFFICE_FITOUT.id}-DESK`)item.nominal=OFFICE_FITOUT.desk.footprintMm;
+  if(item.id===`${OFFICE_FITOUT.id}-DESK`){
+    const desk=OFFICE_FITOUT.desk,p=desk.product;
+    item.nominal=desk.footprintMm;
+    item.name='Pracovný stôl · AlzaErgo ET1 NewGen';
+    item.product={label:p.label,dimensions:`${formatMm(p.widthMm)} × ${formatMm(p.depthMm)} × ${formatMm(p.topThicknessMm)} · doska`,source:p.source};
+    item.note=`Čierna laminovaná doska a čierna oceľová podnož, dva motory, trojsegmentové stĺpy. Horná plocha je v modeli ${formatMm(desk.topElevationMm)} nad podlahou; Alza uvádza rozsah nastavenia ${formatMm(p.listedHeightRangeMm[0])}–${formatMm(p.listedHeightRangeMm[1])}. Rozmery dosky sú podľa vybraného výrobku; drobné diely podnože sú modelované podľa produktovej fotografie.`;
+  }
   for(const layoutId of LIVING_LAYOUT_IDS){
     const spec=LIVING_LAYOUTS[layoutId],suffix=layoutSuffix(layoutId);
     if(item.id===`sofa${suffix}`)item.nominal=unionBounds([spec.fitout.sofa.mainRectMm,spec.fitout.sofa.chaiseRectMm]);
@@ -159,9 +169,28 @@ export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
     if(item.id===spec.stove.id)item.nominal=spec.stove.footprintMm;
     if(item.layout===layoutId)item.roomId='ROOM-1-03';
   }
-  if(item.id==='kitchen-back')item.nominal={...KITCHEN_RUN.rectMm,x0:KITCHEN_RUN.fridgeUnitRectMm.x1};
-  if(item.id==='kitchen-island')item.nominal=KITCHEN_RUN.peninsulaRectMm;
-  if(item.id==='kitchen-return')item.nominal=KITCHEN_RUN.eastReturnRectMm;
+  if(item.id==='kitchen-back'){
+    item.nominal=KITCHEN_DESIGN.backWorktopRectMm;
+    item.note='Varná nika medzi dvojicou vysokých skríň a dverami technickej miestnosti. Indukcia 800 mm, po stranách 605 a 625 mm odkladacej plochy; odsávač 880 mm je integrovaný do horných skriniek. Prírodný dub na všetkých čelách, čierna pracovná doska a súvislý čierny obklad.';
+  }
+  if(item.id==='kitchen-oven-tower')item.nominal=KITCHEN_DESIGN.ovenTowerRectMm;
+  if(item.id==='kitchen-oven')item.note='Rúra vo výške 850–1 445 mm; dvierka sa úplne zasúvajú pod dutinu. Umývačka je na opačnom konci ostrovčeka a už neleží oproti rúre; zasúvacie dvierka ponechávajú pohodlný prístup k plechom. Geometrická referencia NEFF B64CS71G0B: 596 × 595 × 548 mm; finálnu montáž a vetranie určí zvolený spotrebič.';
+  if(item.id==='kitchen-dishwasher'){
+    item.nominal=KITCHEN_DESIGN.dishwasherRectMm;
+    item.note='Integrovaná umývačka 600 mm v krajnom východnom module ostrovčeka smerom k malému oknu EAST-04. Od drezovej skrinky ju oddeľuje zásuvkový modul 600 mm. Dvierka sa otvárajú do pracovnej uličky, pri plnom otvorení zostáva po protiľahlú dosku 560 mm na obsluhu; bočný priechod 900 mm je voľný.';
+  }
+  if(item.id==='kitchen-sink')item.note='Podvesený nerezový drez 600 × 400 × 200 mm v skrinke 800 mm. Pod drezom je triedený odpad; umývačka je na konci ostrovčeka smerom k malému oknu, za jednou zásuvkovou skrinkou. Napravo zostáva 1 330 mm súvislej prípravnej plochy. Prívod vody, odpad a elektrinu viesť koordinovanou podlahovou trasou.';
+  if(item.id==='kitchen-extractor')item.note='Odsávač 880 mm je ukrytý v strednom module 990 mm, spodná hrana 1 600 mm, teda 700 mm nad indukciou. Návrh používa recirkuláciu s filtrami a vratnou mriežkou nad skrinkami; odvádzanie vlhkosti rieši vetranie miestnosti. Voľný objem katedrálového stropu zostáva bez komína.';
+  if(item.id==='kitchen-island'){
+    item.nominal=KITCHEN_ISLAND.worktopRectMm;
+    const top=item.nominal;
+    item.note=`Samostatný ostrovček s pracovnou doskou ${numberSk(top.x1-top.x0)} × ${numberSk(top.y1-top.y0)} mm, výška ${KITCHEN_RUN.counterHeightMm} mm. Pravá hotová hrana lícuje s koncom pracovnej dosky linky oproti. Drez je na ostrovčeku, umývačka v krajnom module pri malom okne a varenie pri stene. Napravo od drezu ${numberSk(KITCHEN_ISLAND.preparationWidthMm)} mm prípravnej plochy. Zo strany obývačky uzavreté úložisko hlboké 260 mm. Prírodný dub, zapustené úchopy a čierna saténová doska hrubá 20 mm; štíhle svetlo nad ostrovčekom. Plná pravá linka pri stene zostáva, priechod ${numberSk(KITCHEN_ISLAND.sidePassageMm)} mm a pracovná ulička ${numberSk(KITCHEN_ISLAND.workAisleMm)} mm medzi doskami.`;
+  }
+  if(item.id==='kitchen-return'){
+    item.nominal=KITCHEN_DESIGN.eastStorageRectMm;
+    const top=KITCHEN_ISLAND.eastReturnWorktopRectMm;
+    item.note=`Linka pri pravej stene v pôvodnej plnej dĺžke, vrátane koncového úseku bývalého polostrova. Hotová doska ${numberSk(top.y1-top.y0)} × ${numberSk(top.x1-top.x0)} mm končí na rovnakej úrovni smerom k obývačke ako ostrovček. Medzi doskami zostáva ${KITCHEN_ISLAND.sidePassageMm} mm voľný priechod.`;
+  }
   const opening=openingSpecs.find(o=>item.id.includes(o.id));
   if(opening)item.opening={width:opening.widthMm,height:opening.heightMm,sill:opening.sillMm};
   if(opening&&CHILDREN_WINDOW_DESIGN[opening.id])Object.assign(item,CHILDREN_WINDOW_DESIGN[opening.id]);

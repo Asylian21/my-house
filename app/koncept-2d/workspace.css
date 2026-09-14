@@ -32,6 +32,13 @@
 .pd-root .pd-room-selection button{display:grid;place-items:center;flex-shrink:0;width:40px;min-height:38px;border-left:1px solid #d5e0f4;border-radius:0 6px 6px 0}
 .pd-root .pd-room-selection button:hover{background:#dce8ff;color:#184dcc}
 .pd-root[data-manual=true] .pd-print{height:auto;flex:1;min-height:0}
+.pd-root .pd-export-view{display:flex;align-items:center;gap:10px;width:100%;padding:12px 10px;text-align:left;background:#edf3ff;color:#285edb}
+.pd-export-view strong,.pd-export-view small{display:block}
+.pd-export-view strong{font-size:.875rem;font-weight:600;line-height:1.4}
+.pd-export-view small{margin-top:4px;font-size:.75rem;line-height:1.45;color:#536780}
+.pd-root .pd-export-view:disabled,.pd-root .pd-downloads button:disabled{opacity:.55;cursor:progress}
+.pd-root .pd-export-error{margin:8px 0;padding:10px;border-radius:6px;background:#fff1f0;color:#a32b25;font-size:.8125rem;line-height:1.5;text-transform:none;letter-spacing:normal}
+.pd-root .pd-drawing-options .pd-menu-panel{max-height:calc(100dvh - 160px);overflow-y:auto;overscroll-behavior:contain}
 @media(min-width:1600px){.pd-root .pd-workspace{grid-template-columns:minmax(0,1fr) 330px}.pd-root[data-library-open=true] .pd-workspace{grid-template-columns:280px minmax(0,1fr) 330px}}
 @media(max-width:1280px){.pd-root .project-nav-compact .project-nav-version{display:none}.pd-root .pd-workspace{grid-template-columns:minmax(0,1fr) 280px}.pd-root[data-library-open=true] .pd-workspace{grid-template-columns:248px minmax(0,1fr) 280px}.pd-root[data-library-open=true] .pd-library-toggle span{display:none}.pd-root .pd-drawing{padding-inline:14px}.pd-root[data-library-open=true] .pd-site-switch button{padding-inline:8px}.pd-root[data-library-open=true] .pd-site-switch button span{display:none}}
 @media(max-width:1020px){.pd-root .project-nav-compact .project-logo b{display:none}.pd-root .project-nav-compact{gap:12px;padding-inline:14px}.pd-root .project-nav-compact nav a{padding-inline:9px}.pd-root .pd-drawing-options summary>span{display:none}.pd-root .pd-footer-scope{display:none}}

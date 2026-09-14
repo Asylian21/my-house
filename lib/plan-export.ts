@@ -8,7 +8,7 @@ import { HEATING_LAYOUT_IDS, DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } f
  * is laid out in paper millimetres at 1:50 (A1 landscape).
  */
 import { PLAN_ITEMS, PLAN_ITEM_BY_ID, PLAN_ROOMS, exteriorWallLayer, numberSk, planItemsFor, type PlanItem, type PlanMesh } from './plan-documentation';
-import { ACOUSTIC_ASSEMBLY, ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
+import { ACOUSTIC_ASSEMBLIES, ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
 import { ACTIVE_LAYOUT_ID, INTERIOR_DOORS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior';
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUT_IDS, type LivingLayoutId } from './twin-living-layouts';
 import { HOUSE } from './twin-active-house';
@@ -93,7 +93,7 @@ export interface WallType { code:string; kind:WallKind; nominal:number; label:st
 const EXTERIOR_WALL=HOUSE.exteriorWall;
 /** Exterior wall build-up (client, 11. 9. 2026): masonry SO30 + contact insulation TI20 = 500; free-standing terrace piers stay solid SO50. */
 const WALL_TYPE_LIST:WallType[]=[
-  {code:ACOUSTIC_ASSEMBLY.code,kind:'acoustic',nominal:ACOUSTIC_ASSEMBLY.totalMm,label:ACOUSTIC_ASSEMBLY.name},
+  ...ACOUSTIC_ASSEMBLIES.map(a=>({code:a.code,kind:'acoustic' as const,nominal:a.totalMm,label:a.name})),
   {code:`SO${EXTERIOR_WALL.masonryMm/10}`,kind:'exterior',nominal:EXTERIOR_WALL.masonryMm,label:'Obvodová stena · nosné murivo'},
   {code:`SO${EXTERIOR_WALL.totalMm/10}`,kind:'exterior',nominal:EXTERIOR_WALL.totalMm,label:'Murovaný pilier terasy a lodžie bez zateplenia'},
   {code:`TI${EXTERIOR_WALL.insulationMm/10}`,kind:'insulation',nominal:EXTERIOR_WALL.insulationMm,label:'Kontaktné zateplenie obvodovej steny'},
@@ -111,7 +111,7 @@ export function wallType(kind:WallKind,thickness:number):WallType {
   return candidates.reduce((best,t)=>Math.abs(t.nominal-thickness)<Math.abs(best.nominal-thickness)?t:best,candidates[0]);
 }
 /** Hatch class of the section: masonry envelope, contact insulation, masonry bearing walls, masonry partitions, plasterboard. */
-export type WallClass='exterior'|'insulation'|'bearing'|'partition'|'board'|'acoustic'|'mineral-wool';
+export type WallClass='exterior'|'insulation'|'bearing'|'partition'|'board'|'acoustic'|'mineral-wool'|'plaster'|'gypsum-board';
 export const wallClass=(kind:WallKind,thickness:number):WallClass=>kind==='acoustic'?'acoustic':kind==='exterior'?'exterior':kind==='insulation'?'insulation':kind==='bearing'?'bearing':thickness>120?'partition':'board';
 export interface WallSolid {
   id:string; rect:RectMm; kind:WallKind; thickness:number; type:WallType;
@@ -128,7 +128,7 @@ export const INTERIOR_WALL_MESHES:{mesh:PlanMesh;kind:WallKind}[]=wallItems.flat
 /** A 100 mm ceramic leaf is masonry, never the generic thin plasterboard class. */
 export const interiorWallClass=(mesh:PlanMesh,kind:WallKind):WallClass=>{
   const acoustic=acousticMeshInfo(mesh.name);
-  return acoustic?acoustic.material==='mineral-wool'?'mineral-wool':'partition':wallClass(kind,thicknessOf(mesh.rect));
+  return acoustic?acoustic.material==='masonry'?'partition':acoustic.material:wallClass(kind,thicknessOf(mesh.rect));
 };
 
 // ---------------------------------------------------------------- facades
@@ -211,7 +211,7 @@ export const WALL_SOLIDS:WallSolid[]=[
   {id:'porch-glazing',rect:{x0:porch.glazing.startXmm,x1:porch.glazing.startXmm+porch.glazing.widthMm,y0:porch.glazingFaceYmm-500,y1:porch.glazingFaceYmm},kind:'exterior',thickness:500,type:exteriorType,snap:false},
   ...INTERIOR_WALL_MESHES.filter(w=>w.kind!=='acoustic').map(({mesh,kind})=>{const t=thicknessOf(mesh.rect);return {id:mesh.name,rect:mesh.rect,kind,thickness:t,type:wallType(kind,t),snap:kind==='exterior',mesh};}),
   // Dimension the whole assembly; its internal material boundaries are not room faces.
-  ...wallItems.filter(item=>ACOUSTIC_WALL_SPECS.some(w=>w.mark===item.id)).map(item=>({id:item.id,rect:item.rect,kind:'acoustic' as const,thickness:ACOUSTIC_ASSEMBLY.totalMm,type:wallType('acoustic',ACOUSTIC_ASSEMBLY.totalMm),snap:false,mesh:item.meshes[0]})),
+  ...wallItems.flatMap(item=>{const a=ACOUSTIC_WALL_SPECS.find(w=>w.mark===item.id)?.assembly;return a?[{id:item.id,rect:item.rect,kind:'acoustic' as const,thickness:a.totalMm,type:wallType('acoustic',a.totalMm),snap:false,mesh:item.meshes[0]}]:[];}),
 ];
 /** Facade layers as modelled (plan cut only), for the thickness ranges of the exterior types. */
 const FACADE_LAYERS=SHELL_WALL_MESHES.filter(m=>m.z0<=0&&/ · úsek \d+ · /.test(m.name)).map(m=>({layer:exteriorWallLayer(m),thickness:Math.round(Math.min(m.rect.x1-m.rect.x0,m.rect.y1-m.rect.y0))}));
@@ -229,7 +229,7 @@ export const WALL_TYPES_USED=WALL_TYPE_LIST.map(type=>{
   if(!thicknesses.length)return null;
   return {type,range:rangeText(thicknesses)};
 }).filter((t):t is {type:WallType;range:string}=>t!==null);
-export interface MaterialLegendEntry { cls:WallClass; codes:string; text:string }
+export interface MaterialLegendEntry { cls:WallClass; codes:string; text:string; layers?:readonly {material:'masonry'|'mineral-wool'|'plaster'|'gypsum-board';thicknessMm:number}[] }
 /** Material legend in the wording of D1.1.002, restricted to the wall types the model contains. */
 export const MATERIAL_LEGEND:MaterialLegendEntry[]=(()=>{
   const used=(cls:WallClass)=>WALL_TYPES_USED.map(u=>u.type).filter(t=>wallClass(t.kind,t.nominal)===cls);
@@ -241,7 +241,8 @@ export const MATERIAL_LEGEND:MaterialLegendEntry[]=(()=>{
     {cls:'bearing',codes:codes('bearing'),text:`Nosné vnútorné murivo z keramických tvaroviek hr. ${nominal('bearing')} mm, na systémovú murovaciu maltu`},
     {cls:'partition',codes:codes('partition'),text:`Nenosné priečkové murivo z keramických tvaroviek hr. ${nominal('partition')} mm, na systémovú murovaciu maltu (vrátane puzdra posuvných dverí)`},
     {cls:'board',codes:codes('board'),text:`Sadrokartónové systémové priečky a predsteny hr. ${nominal('board')} mm, napr. Rigips W112, s výplňou z minerálnej vlny`},
-    {cls:'acoustic',codes:codes('acoustic'),text:'AK-01 spálňa / chlapčenská izba; AK-02 kúpeľňa / dievčenská izba. Nenosná dvojplášťová priečka: LeierPLAN 10 P10 100 mm + minerálna vata 100 mm + LeierPLAN 10 P10 100 mm. Celková hr. 300 mm bez omietok a obkladov. Statika, kotvenie a akustické napojenia na posúdenie; Rw zostavy nedoložené.'},
+    {cls:'acoustic',codes:'SA30',layers:ACOUSTIC_ASSEMBLIES[0].layers,text:'AK-01 spálňa / chlapčenská izba; AK-02 kúpeľňa / dievčenská izba. LeierPLAN 10 P10 100 + minerálna vata 100 + LeierPLAN 10 P10 100 mm. Celkom 300 mm bez omietok a obkladov. Statika a akustické napojenia na posúdenie; Rw zostavy nedoložené.'},
+    {cls:'acoustic',codes:'H200',layers:[...ACOUSTIC_ASSEMBLIES[1].layers].reverse(),text:'AK-03 pracovňa / sprcha. Od sprchy: VC omietka 15 + LeierPLAN 10 100 + omietka 15 + dutina W623 45 (pružné závesy, vata 40) + 2 × 12,5 Silentboard = 200 mm; finálne povrchy navyše. Požiadavka Rw ≥ 51 dB; predbežný výpočet ≈ 58 dB, presnú zostavu a napojenia potvrdiť.'},
   ];
   return out.filter(e=>e.codes.length>0);
 })();

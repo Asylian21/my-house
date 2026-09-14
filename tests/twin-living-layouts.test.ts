@@ -193,7 +193,8 @@ describe("switchable living-room layouts of room 1.03", () => {
     expect(B.notes.join(" ")).toMatch(/1 041 mm/);
     expect(B.notes.join(" ")).toMatch(/pre šesť osôb/);
     expect(B.notes.join(" ")).toMatch(/rovnaké/);
-    expect(B.notes.join(" ")).toMatch(/346 mm/);
+    expect(B.notes.join(" ")).toMatch(/2 640 × 920 mm/);
+    expect(B.notes.join(" ")).toMatch(/900 mm široký priechod/);
     expect(LIVING_LAYOUTS.A.notes.join(" ")).toMatch(/pre šesť osôb/);
     expect(LIVING_LAYOUTS.A.notes.join(" ")).toMatch(/650 mm/);
     expect(LIVING_LAYOUTS.A.notes.length).toBeGreaterThanOrEqual(3);

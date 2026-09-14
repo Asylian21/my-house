@@ -7,7 +7,7 @@ import { AXIS_OFFSET, AXIS_RADIUS, CODED_OPENINGS, CUT_PLANE_MM, DOOR_CHAINS, DO
 import { Door } from './plan-svg';
 import { MeshSilhouette } from './documentation-plan';
 import { interiorWallClass } from '@/lib/plan-export';
-import { AcousticHatches, AcousticWallMarks } from './acoustic-wall-detail';
+import { AcousticHatches, AcousticWallMarks, BathroomDoorAxis } from './acoustic-wall-detail';
 
 /** Paper: A1 landscape in millimetres, plan at 1:50 (prints 1:100 on A3). */
 export const SHEET={w:841,h:594,m:8};
@@ -87,7 +87,7 @@ function Walls({pal}:{pal:Palette}) {
     ...INTERIOR_WALL_MESHES.map(({mesh,kind})=>({key:mesh.id,points:mesh.polygon,cls:interiorWallClass(mesh,kind)})),
   ];
   const outline=(cls:WallClass)=>cls==='exterior'||cls==='insulation'?T(.7):cls==='bearing'?T(.5):T(.36);
-  const fill=(cls:WallClass)=>cls==='board'?pal.board:cls==='mineral-wool'?'url(#xs-ak-mineral-wool)':`url(#xs-h-${cls})`;
+  const fill=(cls:WallClass)=>cls==='gypsum-board'?'url(#xs-ak-gypsum-board)':cls==='plaster'?'url(#xs-ak-plaster)':cls==='board'?pal.board:cls==='mineral-wool'?'url(#xs-ak-mineral-wool)':`url(#xs-h-${cls})`;
   const isInsulation=(cls:WallClass)=>cls==='insulation'||cls==='mineral-wool';
   const masonry=solids.filter(s=>!isInsulation(s.cls)),insulation=solids.filter(s=>isInsulation(s.cls));
   // The insulation layer is outlined thinly and filled last on an opaque ground, so only its boundary with the masonry and the outer face remain visible.
@@ -358,7 +358,7 @@ function legendColumns(level:ExportLevel,pal:Palette,color:boolean,fs:number) {
   if(level>=3)c1.row('c2',chainSwatch(pal.dim,[0,.3,.36,.7,1]),'Reťazce cez miestnosti: svetlé šírky a hrúbky stien za sebou · červené čísla pri stenách = svetlé rozmery miestnosti');
   if(level>=3)c1.row('c3',chainSwatch(pal.dim,[0,.4,.6,1]),'Poloha dverí: odstupy stavebného otvoru od stien miestnosti, do ktorej sa krídlo otvára');
   c1.row('ax',(sx,sy,w,h)=><g><circle cx={sx+h/2} cy={sy+h/2} r={h/2} fill="#fff" stroke={pal.ink} strokeWidth={.25}/><text x={sx+h/2} y={sy+h*.72} fontSize={fs*.8} fontWeight={700} textAnchor="middle" fill={pal.ink}>A</text><circle cx={sx+w-h/2} cy={sy+h/2} r={h/2} fill="#fff" stroke={pal.ink} strokeWidth={.25}/><text x={sx+w-h/2} y={sy+h*.72} fontSize={fs*.8} fontWeight={700} textAnchor="middle" fill={pal.ink}>1</text></g>,'Modulové osi: písmená A–F po šírke (↔), čísla 1–6 po hĺbke (↕); „C–D / 1–2“ = pole medzi osami – jednoznačná poloha aj v čiernobielej tlači');
-  c1.para('Všetky kóty v mm po líce murovaných konštrukcií (bez omietok a obkladov) podľa 3D modelu; kóty majú prednosť pred odmeriavaním z výkresu.');
+  c1.para('Kóty v mm podľa 3D modelu, spravidla bez omietok a obkladov. AK-03 / H200: 200 mm vrátane 2 × 15 mm omietky a 2 × 12,5 mm dosky; finálne povrchy navyše. Kóty majú prednosť pred odmeriavaním.');
 
   c2.heading('OTVORY');
   c2.row('o',(sx,sy,w,h)=><PaperPill x={sx+w/2} y={sy+h/2} text="O#" color={pal.pill.O} fs={fs}/>,'okno alebo pevné presklenie · rozmery v tabuľke otvorov');
@@ -417,8 +417,8 @@ function materialBlock(pal:Palette):Block {
       const nodes:ReactNode[]=[];let cy=y+fs*2.6;
       for(const e of MATERIAL_LEGEND){
         const text=`${e.codes} · ${e.text}`,h=rowH(fs,width,text),sw=swatchW(fs),sh=fs*2.4;
-        nodes.push(<g key={e.cls}>
-          {e.cls==='acoustic'?<g>{[0,1,2].map(i=><rect key={i} x={x+i*sw/3} y={cy+fs*.2} width={sw/3} height={sh} fill={`url(#xs-l-${i===1?'mineral-wool':'partition'})`} stroke={pal.ink} strokeWidth={.2}/>)}</g>:<rect x={x} y={cy+fs*.2} width={sw} height={sh} fill={e.cls==='board'?pal.board:`url(#xs-l-${e.cls})`} stroke={pal.ink} strokeWidth={e.cls==='exterior'?.5:.3}/>}
+        nodes.push(<g key={e.codes}>
+          {e.layers?<g>{e.layers.map((layer,i)=>{const total=e.layers!.reduce((s,l)=>s+l.thicknessMm,0),before=e.layers!.slice(0,i).reduce((s,l)=>s+l.thicknessMm,0);return <rect key={i} x={x+before/total*sw} y={cy+fs*.2} width={layer.thicknessMm/total*sw} height={sh} fill={layer.material==='gypsum-board'?pal.board:layer.material==='plaster'?'#e9e9e9':`url(#xs-l-${layer.material==='masonry'?'partition':layer.material})`} stroke={pal.ink} strokeWidth={.15}/>;})}</g>:<rect x={x} y={cy+fs*.2} width={sw} height={sh} fill={e.cls==='board'?pal.board:`url(#xs-l-${e.cls})`} stroke={pal.ink} strokeWidth={e.cls==='exterior'?.5:.3}/>}
           <Paragraph x={x+sw+fs} y={cy} width={width-sw-fs} text={text} fontSize={fs} pal={pal}/>
         </g>);
         cy+=h;
@@ -544,6 +544,7 @@ export function ExportSheet({level,color,livingLayout=DEFAULT_LIVING_LAYOUT_ID,h
         <Items pal={pal} level={level} livingLayout={livingLayout} heatingLayout={heatingLayout}/>
         <Walls pal={pal}/>
         <AcousticWallMarks color={pal.ink} fontSize={T(1.9)}/>
+        {level>=3&&<BathroomDoorAxis color={pal.ink}/>}
         <ExteriorOpenings pal={pal}/>
         <InteriorDoors/>
         {chains.map((c,i)=><Chain key={i} chain={c} color={pal.dim} fontSize={c.role==='facade'?T(2.2):T(2)}/>)}

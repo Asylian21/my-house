@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { createConcept, DEFAULT_CONCEPT, rect } from '../lib/floor-plan-concept';
 import { createExperiment } from '../lib/floor-plan-experiment';
+import { createGarageEnvelope } from '../lib/floor-plan-garage';
 import { GARAGE_DEPTH_REVISION, HOUSE } from '../lib/twin-site';
 import { contains, intersects, opening, openLeaf, swingHits, walkingPath } from './floor-plan-geometry';
 
 describe('shared garden recess in all floor-plan variants',()=>{
+  it('fills the entire insulation corner between the garage back wall and bedroom cheek',()=>{
+    const {insulation}=createGarageEnvelope();
+    // Sample both arms and the formerly uninsulated 202 × 200 mm junction.
+    for(let x=10550;x<10842;x+=20)for(let y=9057;y<9400;y+=20){
+      if(x<10640&&y>=9247)continue; // Open loggia outside the L-shaped band.
+      const layers=insulation.filter(r=>r.x0<x&&r.x1>x&&r.y0<y&&r.y1>y);
+      expect(layers,`insulation at ${x}, ${y}`).toHaveLength(1);
+    }
+  });
   it('retains the source pillar, side opening and recessed wall with a usable garden door',()=>{
     const variants=[
       createConcept(DEFAULT_CONCEPT,true),

@@ -3,21 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { extractPlanGeometry, hull, triangleSilhouette } from '../scripts/plan-documentation/extract';
 import generated from '../lib/plan-geometry.generated.json';
 import { PLAN_ITEMS, PLAN_ITEMS_ALL, PLAN_ITEM_BY_ID, PLAN_ROOMS, PLAN_FULL_BOUNDS, fitPlanRect, planItemsFor, planRoomNotes, searchPlanItems, zoomPlanAt, unionBounds } from '../lib/plan-documentation';
-import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_RENDER_WALLS, KITCHEN_RUN } from '../lib/twin-interior';
+import { BEDROOM_FITOUT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_DOORS, INTERIOR_RENDER_WALLS, KITCHEN_DESIGN, KITCHEN_ISLAND, OFFICE_FITOUT } from '../lib/twin-interior';
 import { LIVING_LAYOUTS, diningTableRectMm } from '../lib/twin-living-layouts';
 import { HEATING_LAYOUTS, HEATING_LAYOUT_IDS, normalizeHeatingLayout } from '../lib/technical-design';
 import { codedItems, drawnItems } from '../lib/plan-export';
 import { HOUSE } from '../lib/twin-active-house';
 
+const silhouetteTriangles=(path:string)=>path.split('M').filter(Boolean).map(p=>p.replace('Z','').split('L').map(v=>v.split(',').map(Number)));
+const cross=(a:number[],b:number[],p:number[])=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+const silhouetteCovers=(triangles:number[][][],point:number[])=>triangles.some(([a,b,c])=>cross(a,b,point)>=0&&cross(b,c,point)>=0&&cross(c,a,point)>=0);
+
 describe('Documentation of the active 3D model',()=>{
   it('keeps the empty inside of a bent tube instead of filling its convex hull',()=>{
     const points=[[0,0],[3,0],[3,1],[1,1],[1,3],[0,3]];
     const path=triangleSilhouette(points,[0,1,2,0,3,2,0,3,5,3,4,5]);
-    const triangles=path.split('M').filter(Boolean).map(p=>p.replace('Z','').split('L').map(v=>v.split(',').map(Number)));
-    const cross=(a:number[],b:number[],p:number[])=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+    const triangles=silhouetteTriangles(path);
     expect(triangles).toHaveLength(4);
     for(const [a,b,c] of triangles)expect(cross(a,b,c)).toBeGreaterThan(0);
-    const covered=(p:number[])=>triangles.some(([a,b,c])=>cross(a,b,p)>=0&&cross(b,c,p)>=0&&cross(c,a,p)>=0);
+    const covered=(p:number[])=>silhouetteCovers(triangles,p);
     expect(covered([.5,2])).toBe(true);
     expect(covered([2,.5])).toBe(true);
     expect(covered([2,1.5])).toBe(false);
@@ -25,6 +28,28 @@ describe('Documentation of the active 3D model',()=>{
       const hose=generated.meshes.find(m=>m.heatingLayout===layout&&m.name.includes('PELLET-FEED-HOSE'))!;
       expect(hose.silhouettePath?.startsWith('M')).toBe(true);
       expect(hose.silhouettePath?.split('Z').length).toBeGreaterThan(20);
+    }
+  });
+  it('preserves the sink opening through every island surface painted above the bowl',()=>{
+    const sink=KITCHEN_DESIGN.sinkBowlRectMm;
+    const surfaces=PLAN_ITEM_BY_ID.get('kitchen-island')!.meshes.filter(mesh=>
+      /pracovná doska|korpus okolo výrezu|tieňová škára pod kameňom/.test(mesh.name));
+    expect(surfaces).toHaveLength(3);
+    for(const mesh of surfaces){
+      expect(mesh.silhouettePath,mesh.name).toBeDefined();
+      const triangles=silhouetteTriangles(mesh.silhouettePath!);
+      expect(triangles.length).toBeGreaterThan(3);
+      // SVG uses negative plan Y. Sample the centre and the four corners of the
+      // opening: the cabinet and stone must not paint over the recessed bowl.
+      for(const x of [sink.x0+5,(sink.x0+sink.x1)/2,sink.x1-5]){
+        for(const y of [sink.y0+5,(sink.y0+sink.y1)/2,sink.y1-5]){
+          expect(silhouetteCovers(triangles,[x,-y]),`${mesh.name}: ${x},${y}`).toBe(false);
+        }
+      }
+      const cx=(sink.x0+sink.x1)/2,cy=(sink.y0+sink.y1)/2;
+      for(const point of [[sink.x0-50,-cy],[sink.x1+50,-cy],[cx,-sink.y0+50],[cx,-sink.y1-50]]){
+        expect(silhouetteCovers(triangles,point),`${mesh.name}: surrounding surface`).toBe(true);
+      }
     }
   });
   it('is an exact fresh projection of every eligible physical component',()=>{
@@ -80,20 +105,41 @@ describe('Documentation of the active 3D model',()=>{
       }
       expect(PLAN_ITEM_BY_ID.get(`dining-light${suffix}`)?.meshes.filter(m=>/tienidlo/.test(m.name))).toHaveLength(2);
     }
-    // Shared kitchen: the peninsula worktop edge is flush with the terrace-door reveal and the
+    // Shared kitchen: the island worktop edge is flush with the terrace-door reveal and the
     // east return's upstand stops before window EAST-04 while its worktop continues under the sill.
     const island=PLAN_ITEM_BY_ID.get('kitchen-island')!;
-    expect(island.nominal).toEqual(KITCHEN_RUN.peninsulaRectMm);
+    expect(island.nominal).toEqual(KITCHEN_ISLAND.worktopRectMm);
     expect(island.rect.y1).toBe(HOUSE.facades.wingWest.opening.startYmm+HOUSE.facades.wingWest.opening.widthMm);
     const eastWindow=HOUSE.facades.east.openings.find(o=>o.id==='EAST-04')!;
     const kitchenReturn=PLAN_ITEM_BY_ID.get('kitchen-return')!;
-    expect(kitchenReturn.nominal).toEqual(KITCHEN_RUN.eastReturnRectMm);
+    expect(kitchenReturn.nominal).toEqual(KITCHEN_DESIGN.eastStorageRectMm);
     expect(kitchenReturn.meshes.find(m=>/obklad pri stene/.test(m.name))?.rect.y1).toBe(eastWindow.startYmm-20);
-    expect(kitchenReturn.meshes.find(m=>/kremenná doska/.test(m.name))?.rect.y1).toBeGreaterThanOrEqual(KITCHEN_RUN.eastReturnRectMm.y1);
+    expect(kitchenReturn.meshes.find(m=>/minerálna doska pri okne/.test(m.name))?.rect.y1).toBe(KITCHEN_ISLAND.worktopRectMm.y1);
     expect(searchPlanItems('sedacka','ROOM-1-03','all','B').map(i=>i.id)).toEqual(['sofa-B']);
     expect(searchPlanItems('sedacka','ROOM-1-03','all').map(i=>i.id)).toEqual(['sofa']);
     expect(searchPlanItems('kachle','','equipment','B').map(i=>i.id)).toEqual([LIVING_LAYOUTS.B.stove.id]);
     expect(planRoomNotes('ROOM-1-07')).toBeDefined();
+  });
+  it('keeps the relocated kitchen appliances separately selectable at their built positions',()=>{
+    const hob=PLAN_ITEM_BY_ID.get('kitchen-hob')!,sink=PLAN_ITEM_BY_ID.get('kitchen-sink')!;
+    expect(hob.meshes.find(m=>m.name.includes('indukcia 800'))?.rect).toEqual(KITCHEN_DESIGN.hobRectMm);
+    expect(sink.meshes.find(m=>m.name.includes('zapustené dno'))?.rect).toEqual(KITCHEN_DESIGN.sinkBowlRectMm);
+    const oven=PLAN_ITEM_BY_ID.get('kitchen-oven')!;
+    const ovenFront=oven.meshes.find(m=>m.name.includes('rúra so zasúvacím krídlom'))!;
+    expect(ovenFront.z0).toBe(850);
+    expect(ovenFront.z1).toBe(1445);
+    expect(PLAN_ITEM_BY_ID.get('kitchen-oven-tower')?.nominal).toEqual(KITCHEN_DESIGN.ovenTowerRectMm);
+    expect(PLAN_ITEM_BY_ID.get('kitchen-dishwasher')?.nominal).toEqual(KITCHEN_DESIGN.dishwasherRectMm);
+    expect(PLAN_ITEM_BY_ID.get('kitchen-island-light')?.category).toBe('lighting');
+    for(const id of ['kitchen-hob','kitchen-sink','kitchen-oven','kitchen-dishwasher','kitchen-extractor']){
+      const item=PLAN_ITEM_BY_ID.get(id)!;
+      expect(item.category).toBe('equipment');
+      expect(item.roomId).toBe('ROOM-1-03');
+      expect(item.meshes.length).toBeGreaterThan(0);
+    }
+    const island=PLAN_ITEM_BY_ID.get('kitchen-island')!;
+    expect(island.meshes.some(m=>/varná|odsávač|OVEN-/.test(m.name))).toBe(false);
+    expect(PLAN_ITEMS_ALL.flatMap(item=>item.meshes).some(m=>/KITCHEN-RUN.*(?:komín|OVEN-UNDER-HOB|servisná obálka)/.test(m.name))).toBe(false);
   });
   it('selects technical equipment independently of the living layout, including inventory and exports',()=>{
     for(const living of ['A','B'] as const)for(const heating of HEATING_LAYOUT_IDS){
@@ -141,7 +187,7 @@ describe('Documentation of the active 3D model',()=>{
     expect(PLAN_ITEMS.filter(i=>i.name==='Práčka')).toHaveLength(1);
     expect(PLAN_ITEMS.filter(i=>i.name==='Sušička')).toHaveLength(1);
     expect(PLAN_ITEMS.filter(i=>i.id.startsWith('C-BOY-109-rug-play'))).toHaveLength(1);
-    expect(PLAN_ITEM_BY_ID.get('kitchen-back')?.nominal?.x0).toBe(KITCHEN_RUN.fridgeUnitRectMm.x1);
+    expect(PLAN_ITEM_BY_ID.get('kitchen-back')?.nominal).toEqual(KITCHEN_DESIGN.backWorktopRectMm);
   });
   it('includes terrace furniture in its actual coordinate frame and correct parked car direction',()=>{
     const terrace=PLAN_ITEMS.filter(i=>i.roomId==='EXTERIOR');
@@ -154,7 +200,7 @@ describe('Documentation of the active 3D model',()=>{
     expect(car.rect.y1-car.rect.y0).toBeGreaterThan(4800);
   });
   it('finds furniture by room number and Slovak names without accents',()=>{
-    expect(searchPlanItems('1.04','', 'all').some(i=>i.name==='Pracovný stôl')).toBe(true);
+    expect(searchPlanItems('1.04','', 'all').some(i=>i.id===`${OFFICE_FITOUT.id}-DESK`)).toBe(true);
     expect(searchPlanItems('pracka','', 'all').some(i=>i.name==='Práčka')).toBe(true);
     expect(searchPlanItems('stolicka','EXTERIOR','all')).toHaveLength(2);
     expect(searchPlanItems('zzzz','', 'all')).toHaveLength(0);

@@ -25,6 +25,16 @@ const furniture:{id:string;room:string;rect:RectMm}[]=[
   ...CHILDRENS_BEDROOM_FITOUTS.flatMap(f=>[f.readingRectMm,f.bookcaseRectMm].map((r,i)=>({id:`${f.id}-play-storage-${i}`,room:f.roomId,rect:r}))),
 ];
 
+/** A fixture may span two floor rectangles of one L-shaped room. */
+function containedInRoom(floors:readonly RectMm[], fixture:RectMm) {
+  const cuts=(axis:'x'|'y')=>[...new Set([fixture[`${axis}0`],fixture[`${axis}1`],
+    ...floors.flatMap(r=>[r[`${axis}0`],r[`${axis}1`]])
+      .filter(v=>v>fixture[`${axis}0`]&&v<fixture[`${axis}1`])])].sort((a,b)=>a-b);
+  const xs=cuts('x'),ys=cuts('y');
+  return xs.slice(1).every((x1,i)=>ys.slice(1).every((y1,j)=>
+    floors.some(floor=>contains(floor,rect(xs[i],ys[j],x1,y1)))));
+}
+
 describe('active 3D house matches the approved default C plan',()=>{
   it('uses identical walls, room polygons and door openings without modifying the baseline studies',()=>{
     const c=createConcept(DEFAULT_NESTED_CONCEPT);
@@ -33,7 +43,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(INTERIOR_DOORS.map(d=>({...d,label:undefined}))).toEqual(c.doors.map(d=>({...d,label:undefined})));
     expect(baseline.INTERIOR_ROOMS.find(r=>r.number==='1.08')!.name).toBe('Spálňa');
     expect(INTERIOR_ROOMS).toHaveLength(13);
-    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.572442,6);
+    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.311502,6);
     expect(INTERIOR_DOORS.some(d=>d.id==='DOOR-102-112'||d.id==='DOOR-108-111')).toBe(false);
     // The living room keeps its main floor; the kitchen bay gives 160 mm to the
     // load-bearing kitchen wall and runs to the east facade over the former
@@ -49,14 +59,14 @@ describe('active 3D house matches the approved default C plan',()=>{
     // cross foundation strip. It grows north into the kitchen bay only, and in a
     // second step runs to the east facade: EAST-03 shrinks to a 900 mm single
     // leaf, the technical room's protrusion goes to the kitchen and its door
-    // sits in the bearing wall with 860 mm of masonry east of it.
+    // sits in the bearing wall. The 13–14 Sep 200 mm east shift leaves 660 mm of masonry.
     const wall=INTERIOR_WALLS.find(w=>w.id==='C-KITCHEN-BEARING-WALL')!;
     const east=INTERIOR_WALLS.find(w=>w.id==='C-KITCHEN-BEARING-WALL-E')!;
     expect(wall).toMatchObject({role:'LOAD_BEARING',changed:true});
     expect(east).toMatchObject({role:'LOAD_BEARING',changed:true});
-    expect(wall.rectMm).toEqual(rect(22639,10712,25881,11012));
-    expect(east.rectMm).toEqual(rect(26681,10712,27541,11012));
-    expect(east.rectMm.x1-east.rectMm.x0).toBe(860);
+    expect(wall.rectMm).toEqual(rect(22639,10712,26081,11012));
+    expect(east.rectMm).toEqual(rect(26881,10712,27541,11012));
+    expect(east.rectMm.x1-east.rectMm.x0).toBe(660);
     expect(wall.rectMm.y1-wall.rectMm.y0).toBe(300);
     expect(KITCHEN_BEARING_WALL).toEqual(wall.rectMm);
     expect(KITCHEN_BEARING_WALL_EAST).toEqual(east.rectMm);
@@ -76,10 +86,10 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(roomAreaM2(technical)-7.494857).toBeCloseTo(0.494162,6);
     expect(roomAt(technical.standingPointMm)?.id).toBe('ROOM-1-07');
     expect(INTERIOR_DOORS.find(d=>d.id==='DOOR-102-106')).toMatchObject({startMm:9866,widthMm:800});
-    // The technical-room door keeps its 800 mm opening at 25 881 but sits in the
+    // The technical-room door keeps its 800 mm opening, shifted 200 mm east in the
     // bearing wall, swinging into the kitchen with the hinge on the east jamb.
     const techDoor=INTERIOR_DOORS.find(d=>d.id==='DOOR-103-107')!;
-    expect(techDoor).toMatchObject({wallSpanMm:[10712,11012],startMm:25881,widthMm:800,leafWidthMm:700,swing:1,hinge:1,hingeOffsetMm:34,fromRoomId:'ROOM-1-03',toRoomId:'ROOM-1-07'});
+    expect(techDoor).toMatchObject({wallSpanMm:[10712,11012],startMm:26081,widthMm:800,leafWidthMm:700,swing:1,hinge:1,hingeOffsetMm:34,fromRoomId:'ROOM-1-03',toRoomId:'ROOM-1-07'});
     expect(techDoor.startMm).toBe(wall.rectMm.x1);
     expect(techDoor.startMm+techDoor.widthMm).toBe(east.rectMm.x0);
     expect(baseline.INTERIOR_DOORS.find(d=>d.id==='DOOR-103-107')).toMatchObject({wallSpanMm:[11411,11550],startMm:25881});
@@ -91,7 +101,7 @@ describe('active 3D house matches the approved default C plan',()=>{
       expect(swingHits(techDoor,piece)).toBe(false);
     }
     expect(techDoor.startMm-KITCHEN_RUN.rectMm.x1).toBe(80);
-    expect(KITCHEN_RUN.eastReturnRectMm.x0-(techDoor.startMm+techDoor.widthMm)).toBe(260);
+    expect(KITCHEN_RUN.eastReturnRectMm.x0-(techDoor.startMm+techDoor.widthMm)).toBe(60);
     // From the corridor mouth to the facade; the spine starts on the wall's north face.
     expect(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-02')!.rectsMm.some(r=>r.x1===wall.rectMm.x0&&r.y1===11550)).toBe(true);
     expect(INTERIOR_WALLS.find(w=>w.id==='IW-SPINE-EAST-3')!.rectMm).toEqual(rect(22639,11012,22783,11550));
@@ -104,14 +114,15 @@ describe('active 3D house matches the approved default C plan',()=>{
     // 5 998 × 7 983 + 4 758 × 538: 0.9953 m² more than the first step's bay, 0.53002 m² more than the source.
     expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)).toBeCloseTo(50.441838,6);
     expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)-roomAreaM2(baseline.INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-03')!)).toBeCloseTo(0.53002,6);
-    expect(KITCHEN_RUN.rectMm).toEqual(rect(22791,11109,25801,11710));
+    expect(KITCHEN_RUN.rectMm).toEqual(rect(22791,11109,26001,11710));
     expect(KITCHEN_RUN.eastReturnRectMm.y0).toBe(11109);
     expect(baseline.KITCHEN_RUN.eastReturnRectMm.y0-KITCHEN_RUN.eastReturnRectMm.y0).toBe(441);
     expect(KITCHEN_RUN.fridgeUnitRectMm).toEqual(rect(22791,11109,23391,11710));
     expect(KITCHEN_RUN.rectMm.y0-wall.rectMm.y1).toBe(baseline.KITCHEN_RUN.rectMm.y0-baseline.INTERIOR_WALLS.find(w=>w.id==='IW-KITCHEN-BACK')!.rectMm.y1);
     expect(KITCHEN_RUN.rectMm.y0-baseline.KITCHEN_RUN.rectMm.y0).toBe(160);
     expect(KITCHEN_RUN.peninsulaRectMm.y0-KITCHEN_RUN.fridgeUnitRectMm.y1).toBe(1180);
-    for(const key of ['peninsulaRectMm','sinkCenterXmm','dishwasherXmm','hobCenterXmm','upperCabinets'] as const) expect(KITCHEN_RUN[key]).toEqual(baseline.KITCHEN_RUN[key]);
+    // The island's agreed outline remains aligned, while the cooking/sink revision is checked separately.
+    expect(KITCHEN_RUN.peninsulaRectMm).toEqual({...baseline.KITCHEN_RUN.peninsulaRectMm,x1:26011});
     // The 601 mm deep run stays in the bay and stands 160 mm proud of the spine's north end, inside the main floor.
     expect(KITCHEN_RUN.rectMm.x0).toBeGreaterThanOrEqual(bay.x0);
     expect(KITCHEN_RUN.rectMm.x1).toBeLessThanOrEqual(bay.x1);
@@ -124,9 +135,9 @@ describe('active 3D house matches the approved default C plan',()=>{
     // Both living layouts document the wall, the door and the 1 180 mm aisle.
     for(const layout of Object.values(LIVING_LAYOUTS)){
       expect(layout.notes.some(n=>/nosné murivo hr\. 300 mm \(10 712–11 012 mm\)/.test(n))).toBe(true);
-      expect(layout.notes.some(n=>/po východnú fasádu \(27 541 mm\); prerušujú ju iba dvere do technickej miestnosti 800 mm \(25 881–26 681 mm\)/.test(n))).toBe(true);
-      expect(layout.notes.some(n=>/ešte 860 mm muriva/.test(n)&&/EAST-03 majú kvôli statike fasády 900 mm namiesto 1 700 mm/.test(n))).toBe(true);
-      expect(layout.notes.some(n=>/polostrovom má 1 180 mm/.test(n))).toBe(true);
+      expect(layout.notes.some(n=>/po východnú fasádu \(27 541 mm\); prerušujú ju iba dvere do technickej miestnosti 800 mm \(26 081–26 881 mm\)/.test(n))).toBe(true);
+      expect(layout.notes.some(n=>/ešte 660 mm muriva/.test(n)&&/EAST-03 majú kvôli statike fasády 900 mm namiesto 1 700 mm/.test(n))).toBe(true);
+      expect(layout.notes.some(n=>/1 150 mm medzi doskami \(1 180 mm medzi korpusmi\)/.test(n))).toBe(true);
     }
   });
   it('meshes wall corners only once while retaining every boundary',()=>{
@@ -149,7 +160,7 @@ describe('active 3D house matches the approved default C plan',()=>{
   it('keeps furniture in its actual rooms, clear of walls, door swings and other furniture',()=>{
     for(const item of furniture){
       const room=INTERIOR_ROOMS.find(r=>r.id===item.room)!;
-      expect(room.rectsMm.some(r=>contains(r,item.rect)),`${item.id} inside ${item.room}`).toBe(true);
+      expect(containedInRoom(room.rectsMm,item.rect),`${item.id} inside ${item.room}`).toBe(true);
       expect(INTERIOR_WALLS.filter(w=>intersects(w.rectMm,item.rect)).map(w=>w.id),`${item.id} walls`).toEqual([]);
       for(const d of INTERIOR_DOORS.filter(d=>d.motion!=='POCKET_SLIDING')) expect(swingHits(d,item.rect),`${item.id} door ${d.id}`).toBe(false);
     }

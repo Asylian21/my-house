@@ -48,3 +48,24 @@
 .pd-acoustic-marks{cursor:pointer}.pd-acoustic-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}.pd-acoustic-sheet-grid>div>svg{width:100%;max-height:430px}.pd-acoustic-sheet .pd-acoustic-detail{margin:0;padding:0;border:0}
 @media(max-width:680px){.pd-acoustic-sheet-grid{grid-template-columns:1fr;gap:20px}}
 @media print{.pd-acoustic-detail{break-inside:avoid}.pd-acoustic-sheet .pd-acoustic-notes{display:none}.pd-acoustic-sheet-grid{grid-template-columns:1fr 1fr;gap:20px}}
+
+.pd-acoustic-rating{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-block:1px solid #d9dfe6}.pd-acoustic-rating strong{font-size:22px;color:#244f5a}.pd-acoustic-rating span{color:#657080}.pd-acoustic-placement h4{font-size:14px;margin:20px 0 6px}.pd-acoustic-placement p{margin:6px 0}
+
+/* Keep the six-layer H200 detail and its conditions together on one A4 sheet. */
+@media print {
+  .pd-office-acoustic-sheet { break-inside: avoid; }
+  .pd-office-acoustic-sheet .pd-paper-heading { margin-bottom: 12px; }
+  .pd-root .pd-paper.pd-office-acoustic-sheet p { font-size: 9pt; line-height: 1.35; margin: 6px 0; }
+  .pd-office-acoustic-sheet .pd-acoustic-detail h3 { font-size: 10pt; margin: 6px 0; }
+  .pd-office-acoustic-sheet .pd-acoustic-detail svg { max-height: 42mm; margin: 8px 0; }
+  .pd-office-acoustic-sheet .pd-acoustic-detail ol { margin: 8px 0; }
+  .pd-office-acoustic-sheet .pd-acoustic-detail li { font-size: 8pt; line-height: 1.3; padding: 4px 0; grid-template-columns: 14px 1fr auto; gap: 6px; }
+  /* The heading and complete conditions below already state the rating. */
+  .pd-office-acoustic-sheet .pd-acoustic-rating { display: none; }
+  .pd-office-acoustic-sheet .pd-acoustic-placement h4 { font-size: 9pt; margin: 10px 0 4px; }
+  .pd-office-acoustic-sheet .pd-acoustic-junction p { display: none; }
+  .pd-office-acoustic-sheet .pd-acoustic-junction h4 { display: none; }
+  .pd-office-acoustic-sheet .pd-acoustic-junction a { font-size: 8pt; }
+  .pd-office-acoustic-sheet .pd-acoustic-sources { font-size: 8pt; gap: 6px 10px; margin-top: 8px; }
+  .pd-office-acoustic-sheet footer { margin-top: 10px; }
+}

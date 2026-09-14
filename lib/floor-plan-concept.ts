@@ -1,5 +1,5 @@
 import { createGarageEnvelope } from './floor-plan-garage';
-import { ACOUSTIC_ASSEMBLY } from './acoustic-walls';
+import { ACOUSTIC_ASSEMBLY, OFFICE_ACOUSTIC_ASSEMBLY } from './acoustic-walls';
 import { SERVICE_CORE_REVISION } from './technical-design';
 import { BEDROOM_FITOUT, INTERIOR_DOORS, INTERIOR_ROOMS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior-baseline';
 
@@ -32,11 +32,17 @@ export const NESTED_CHILD_DOOR_MM = 900;
 export const SUITE_PARTITION_MM = 140;
 /** Load-bearing masonry in the active model; acoustic suite partitions have their own build-up. */
 export const BEARING_WALL_MM = 300;
-/** Client revision, 13 Sep 2026: keep office-side lobby faces and bathroom-side north face fixed. */
+/** Office lobby masonry retained; the door and its return move south for the acoustic wall. */
 export const OFFICE_LOBBY_WALL_MM = 175;
-export const OFFICE_BATH_WALL_MM = 140;
+/** Accepted H200 base build-up; tile, waterproofing and final skim are additional finishes. */
+export const OFFICE_BATH_WALL_MM = OFFICE_ACOUSTIC_ASSEMBLY.totalMm;
+export const OFFICE_ENTRY_SHIFT_MM = 30;
+/** Preserve the shower bay dimensions, fitout and derived EAST-02 window position. */
+export const OFFICE_BATHROOM_FACE_MM = 6602;
 /** C thins the wall between the street child room / lobby and the central hall to a partition; the hall gains the difference. */
 export const HALL_PARTITION_MM = 140;
+/** Longitudinal X axis of the main hall, halfway between its two clear faces. */
+export const CENTRAL_HALL_AXIS_Y_MM = (NESTED_HALL_LINES.streetKidTopMm + HALL_PARTITION_MM + NESTED_HALL_LINES.gardenKidBottomMm - HALL_PARTITION_MM) / 2;
 export interface ConceptCabinet {
   id: string;
   label: string;
@@ -302,17 +308,22 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
 /** C pairs deeper storage with a continuous, furnished entrance lobby. */
 function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   // Both child rooms end on one 300 mm bearing line (20541–20842); the lobby
-  // storage keeps its back at 20842. The office corner is 175 mm thick;
-  // office faces (23542, 5400) and the office door at 5451 stay fixed.
-  // The bathroom face stays at 6602; the office gains the released 50 mm.
+  // storage keeps its back at 20842. The office's 175 mm return and its door
+  // move 30 mm south, leaving an 80 mm nib beside the H200 acoustic wall.
+  // Keep the bathroom face fixed to preserve the shower and EAST-02 window.
   const kidsEast=20541, storageBack=20842, hallLine=21543, wall=base.suiteWallMm, kidsWest=base.suiteRight+wall;
-  const officeWest=23542-OFFICE_LOBBY_WALL_MM, returnSouth=5400-OFFICE_LOBBY_WALL_MM;
-  const officeNorth=6602-OFFICE_BATH_WALL_MM;
+  const officeWest=23542-OFFICE_LOBBY_WALL_MM, officeReturnNorth=5400-OFFICE_ENTRY_SHIFT_MM, returnSouth=officeReturnNorth-OFFICE_LOBBY_WALL_MM;
+  const officeNorth=OFFICE_BATHROOM_FACE_MM-OFFICE_BATH_WALL_MM;
+  const officeDoor=base.doors.find(d=>d.id==='DOOR-102-104')!;
+  const officeDoorStart=officeDoor.startMm-OFFICE_ENTRY_SHIFT_MM, officeDoorEnd=officeDoorStart+officeDoor.widthMm;
   // The 140 mm hall-side partition continues along the lobby up to the office spine.
   const kidTop=base.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm, hallSouth=kidTop.y1, streetTop=kidTop.y0;
   // The garden room, its east bearing wall and the hall cabinet niche start on the
   // hall's north wall; a 140 mm stub closes the niche's south end.
   const gardenBottom=base.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm.y1, nicheSouth=gardenBottom+HALL_PARTITION_MM;
+  const hallAxisY=(hallSouth+gardenBottom-HALL_PARTITION_MM)/2;
+  const bathroomDoor=base.doors.find(d=>d.id==='DOOR-102-105')!;
+  const bathroomDoorStart=hallAxisY-bathroomDoor.widthMm/2, bathroomDoorEnd=hallAxisY+bathroomDoor.widthMm/2;
   // Both child rooms share one length, so one centred 900 mm opening puts the
   // two doors exactly opposite each other across the hall.
   const kidDoorStart=Math.round((kidsWest+kidsEast)/2)-NESTED_CHILD_DOOR_MM/2, kidDoorEnd=kidDoorStart+NESTED_CHILD_DOOR_MM;
@@ -325,7 +336,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   technical.rectsMm=[rect(core.technicalWestMm,7741,25830,10712),rect(25830,7741,core.technicalFacadeInsideMm,11411)];
   technical.standingPointMm={x:26500,y:10750};
   const bathroom=rooms.find(room=>room.number==='1.05')!;
-  bathroom.rectsMm=[rect(22783,6602,core.bathroomEastMm,8772),rect(core.bathroomEastMm,6602,27541,7601)];
+  bathroom.rectsMm=[rect(22783,OFFICE_BATHROOM_FACE_MM,core.bathroomEastMm,8772),rect(core.bathroomEastMm,OFFICE_BATHROOM_FACE_MM,27541,7601)];
   const bathExtension=rooms.find(room=>room.number==='1.11')!.rectsMm[1];
   const street=rooms.find(room=>room.number==='1.08')!;
   street.rectsMm=[rect(base.suiteRight+wall,3504,kidsEast,streetTop)];
@@ -333,7 +344,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   garden.rectsMm=[rect(base.suiteRight+wall,gardenBottom,kidsEast,10699)];
   // Move the office return 650 mm into the lobby, aligning it with the open door leaf.
   const office=rooms.find(room=>room.number==='1.04')!;
-  office.rectsMm=[rect(23542,3504,27541,5400),...office.rectsMm.slice(1).map(r=>({...r,y1:officeNorth}))];
+  office.rectsMm=[rect(23542,3504,27541,officeReturnNorth),...office.rectsMm.slice(1).map(r=>({...r,y0:officeReturnNorth,y1:officeNorth}))];
   const entry=rooms.find(room=>room.number==='1.01')!;
   entry.rectsMm=[rect(storageBack,3504,22639,streetTop),rect(22639,3504,officeWest,returnSouth)];
   const hall=rooms.find(room=>room.number==='1.02')!;
@@ -346,9 +357,11 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const walls=base.walls.filter(w=>!removed.has(w.id)).map(w=>w.id==='IW-WC-EAST'?{...w,changed:true,rectMm:rect(24082+core.wcExpansionMm,8912,core.technicalWestMm,10712)}
     :w.id==='IW-BATH-105-NORTH'?{...w,changed:true,rectMm:{...w.rectMm,x1:core.boilerBayWestMm}}
     :w.id==='IW-BATH-105-SOUTH-E'?{...w,changed:true,rectMm:{...w.rectMm,x0:core.bathroomEastMm}}
-    :w.id==='IW-STUDY-NORTH'?{...w,changed:true,rectMm:{...w.rectMm,y0:officeNorth}}
+    :w.id==='IW-STUDY-NORTH'?{...w,role:'PARTITION' as const,changed:true,rectMm:{...w.rectMm,y0:officeNorth,y1:OFFICE_BATHROOM_FACE_MM}}
+    :w.id==='IW-SPINE-EAST-1'?{...w,changed:true,rectMm:{...w.rectMm,y0:officeDoorEnd,y1:bathroomDoorStart}}
+    :w.id==='IW-SPINE-EAST-2'?{...w,changed:true,rectMm:{...w.rectMm,y0:bathroomDoorEnd}}
     // The retained corner block follows the thinner office return up to the alcove.
-    :w.id==='IW-ENTRY-TOP-E2'?{...w,changed:true,rectMm:{...w.rectMm,y0:returnSouth}}
+    :w.id==='IW-ENTRY-TOP-E2'?{...w,changed:true,rectMm:{...w.rectMm,y0:returnSouth,y1:officeDoorStart}}
     // The hall-side walls of both child rooms end at the centred door jambs.
     :['B-STREET-KID-TOP','B-GARDEN-KID-SOUTH-W'].includes(w.id)?{...w,rectMm:{...w.rectMm,x1:kidDoorStart}}
     :w.id==='B-GARDEN-KID-SOUTH-E'?{...w,rectMm:{...w.rectMm,x0:kidDoorEnd}}
@@ -360,15 +373,16 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
     {id:'C-GARDEN-KID-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(kidsEast,gardenBottom,storageBack,10699)},
     {id:'C-GARDEN-CLOSET-SOUTH',role:'PARTITION',changed:true,rectMm:rect(storageBack,gardenBottom,hallLine,nicheSouth)},
     {id:'C-ENTRY-OFFICE-EAST',role:'LOAD_BEARING',changed:true,rectMm:rect(officeWest,3504,23542,returnSouth)},
-    {id:'C-ENTRY-OFFICE-RETURN',role:'LOAD_BEARING',changed:true,rectMm:rect(22842,returnSouth,23542,5400)},
+    {id:'C-ENTRY-OFFICE-RETURN',role:'LOAD_BEARING',changed:true,rectMm:rect(22842,returnSouth,23542,officeReturnNorth)},
     // Close the change in thickness between the office jamb and corridor spine.
-    {id:'C-OFFICE-NORTH-JAMB',role:'PARTITION',changed:true,rectMm:rect(22783,6352,22842,officeNorth)},
+    {id:'C-OFFICE-NORTH-JAMB',role:'PARTITION',changed:true,rectMm:rect(22783,officeDoorEnd,22842,officeNorth)},
   );
   const structuralChanges=[...base.structuralChanges,...INTERIOR_WALLS.filter(w=>(removed.has(w.id)||w.id==='IW-STUDY-NORTH')&&w.role==='LOAD_BEARING')];
   const doors=base.doors.map(d=>d.id==='DOOR-101-102'
     ?{...d,label:'Zádverie → centrálna chodba · posuvné 900 mm',wallSpanMm:[streetTop,hallSouth] as const,startMm:21640,widthMm:900,leafWidthMm:900,motion:'POCKET_SLIDING' as const,pocketDirection:-1 as const,pocketTravelMm:950}
     :d.id==='DOOR-102-106'?{...d,label:'Dvere chodba → WC · otváravé 700/2100',motion:'HINGED' as const,hinge:1 as const,swing:1 as const,hingeOffsetMm:34,pocketDirection:undefined,pocketTravelMm:undefined,revisionSourceId:'C-WC-HINGED-2026-09-08'}
-    :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01'}
+    :d.id==='DOOR-102-104'?{...d,label:'Zádverie → pracovňa · 800 mm',fromRoomId:'ROOM-1-01',startMm:officeDoorStart}
+    :d.id==='DOOR-102-105'?{...d,startMm:bathroomDoorStart,frameInsetMm:(d.widthMm-d.leafWidthMm)/2}
     // Both child rooms keep their inward swing; handles move to the left
     // side of each opening in the plan, with hinges on the right jamb.
     :d.id==='DOOR-102-108'||d.id==='DOOR-102-109'?{...d,startMm:kidDoorStart,widthMm:NESTED_CHILD_DOOR_MM,hinge:1 as const,...(d.id==='DOOR-102-109'?{hingeOffsetMm:0}:{})}:d);
@@ -412,10 +426,13 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
  * the accumulator tank or stand before the pellet cabinet). East of the door a
  * second 860 mm piece of the wall reaches the facade; over the 1 096 mm
  * corridor opening and the door the ring beam / lintel carries the load.
+ * Client, 13 Sep 2026: move the door 150 mm east to 26 031–26 831 and
+ * extend the back kitchen run by the same amount. On 14 Sep, add another
+ * 50 mm: opening 26 081–26 881, total shift 200 mm, east wall 660 mm.
  */
 export const KITCHEN_BEARING_WALL_ID='C-KITCHEN-BEARING-WALL';
 export const KITCHEN_BEARING_WALL_EAST_ID='C-KITCHEN-BEARING-WALL-E';
-const KITCHEN_TECH_DOOR_START_MM=25881, KITCHEN_TECH_DOOR_MM=800, WING_EAST_FACE_MM=27541;
+const KITCHEN_TECH_DOOR_START_MM=26081, KITCHEN_TECH_DOOR_MM=800, WING_EAST_FACE_MM=27541;
 export const KITCHEN_BEARING_WALL_MM:RectMm=rect(22639,10712,KITCHEN_TECH_DOOR_START_MM,10712+BEARING_WALL_MM);
 export const KITCHEN_BEARING_WALL_EAST_MM:RectMm=rect(KITCHEN_TECH_DOOR_START_MM+KITCHEN_TECH_DOOR_MM,10712,WING_EAST_FACE_MM,10712+BEARING_WALL_MM);
 function bearKitchenWall(base:ReturnType<typeof balanceNestedChildRooms>) {
@@ -440,7 +457,7 @@ function bearKitchenWall(base:ReturnType<typeof balanceNestedChildRooms>) {
   );
   const doors=base.doors.map(d=>d.id==='DOOR-103-107'
     // Like the WC door: a rebated leaf closing in front of the lining, pivot 34 mm before the kitchen-side face.
-    ?{...d,label:'Dvere obytný priestor → technická miestnosť · 700/2100 · v nosnej stene',wallSpanMm:[bearing.y0,bearing.y1] as const,startMm:bearing.x1,swing:1 as const,hinge:1 as const,hingeOffsetMm:34,revisionSourceId:'C-KITCHEN-BEARING-WALL-2026-09-12'}
+    ?{...d,label:'Dvere obytný priestor → technická miestnosť · 700/2100 · v nosnej stene',wallSpanMm:[bearing.y0,bearing.y1] as const,startMm:bearing.x1,swing:1 as const,hinge:1 as const,hingeOffsetMm:34,revisionSourceId:'C-KITCHEN-DOOR-SHIFT-2026-09-14'}
     :d);
   return {...base,rooms,walls,doors,kitchenBearingWall:bearing,kitchenBearingWallEast:east};
 }

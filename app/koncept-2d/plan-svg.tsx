@@ -23,9 +23,9 @@ export function BuiltInCabinet({cabinet}:{cabinet:ConceptCabinet}) {
   </g>;
 }
 export function Door({door}:{door:InteriorDoor & {leafPlaneMm?:number}}) {
-  const d=door, horizontal=d.axis==='X', exactPivot=d.hingeOffsetMm!==undefined;
-  const plane=d.leafPlaneMm??(exactPivot?(d.swing<0?d.wallSpanMm[0]:d.wallSpanMm[1])+d.swing*d.hingeOffsetMm!:(d.wallSpanMm[0]+d.wallSpanMm[1])/2);
-  const inset=exactPivot&&d.widthMm!==d.leafWidthMm?60:0;
+  const d=door, horizontal=d.axis==='X', exactPivot=d.hingeOffsetMm!==undefined||d.frameInsetMm!==undefined;
+  const plane=d.leafPlaneMm??(exactPivot?(d.swing<0?d.wallSpanMm[0]:d.wallSpanMm[1])+d.swing*(d.hingeOffsetMm??0):(d.wallSpanMm[0]+d.wallSpanMm[1])/2);
+  const inset=d.frameInsetMm??(exactPivot&&d.widthMm!==d.leafWidthMm?60:0);
   const hinge=d.startMm+(d.hinge===1?d.widthMm-inset:inset);
   if(d.motion==='POCKET_SLIDING') {
     const storedStart=d.startMm+(d.pocketDirection??1)*(d.pocketTravelMm??d.widthMm);

@@ -1,4 +1,4 @@
-import { memo, type SVGProps } from 'react';
+import { memo, useId, type SVGProps } from 'react';
 import { SERVICE_CORE_REVISION, HEATING_LAYOUTS, DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } from '@/lib/technical-design';
 import { INTERIOR_DOORS } from '@/lib/twin-interior';
 import { HOUSE } from '@/lib/twin-active-house';
@@ -7,7 +7,7 @@ import { DEFAULT_LIVING_LAYOUT_ID, type LivingLayoutId } from '@/lib/twin-living
 import type { RectMm } from '@/lib/twin-interior';
 import { Box, Door } from './plan-svg';
 import { acousticMeshInfo } from '@/lib/acoustic-walls';
-import { AcousticHatches, AcousticWallMarks } from './acoustic-wall-detail';
+import { AcousticHatches, AcousticWallMarks, BathroomDoorAxis } from './acoustic-wall-detail';
 
 export const ROOM_COLORS=['#e8eef0','#edf0f2','#eee9df','#e6eaef','#e1ecec','#e1ecec','#e7e9ec','#eee9e5','#e7edf1','#ece9e3','#e1ecec','#e8e9eb','#e8e5df'];
 const SORTED_PARTS=PLAN_ITEMS_ALL.flatMap(item=>item.meshes.map(mesh=>({mesh,item}))).sort((a,b)=>a.mesh.z0-b.mesh.z0 || a.mesh.z1-b.mesh.z1);
@@ -29,15 +29,16 @@ export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,se
   // through the inventory. Door symbols carry the architectural swing, not a
   // misleading closed-leaf silhouette. Living-room pieces of the other layout
   // stay out of the drawing entirely.
+  const patternPrefix=`pd-pattern-${useId().replace(/[^a-z0-9_-]/gi,'')}`;
   const visibleParts=SORTED_PARTS.filter(({item})=>(!item.layout||item.layout===livingLayout)&&(!item.heatingLayout||item.heatingLayout===heatingLayout));
   const polygons=clipRect?visibleParts.filter(({mesh:m})=>m.rect.x0<=clipRect.x1&&m.rect.x1>=clipRect.x0&&m.rect.y0<=clipRect.y1&&m.rect.y1>=clipRect.y0):visibleParts;
   return <>
-    <AcousticHatches/>
+    <AcousticHatches prefix={patternPrefix}/>
     <defs>
-      <pattern id="pd-grid" width="1000" height="1000" patternUnits="userSpaceOnUse"><path d="M1000 0H0V1000" fill="none" stroke="#ced5de" strokeWidth="8" opacity=".35"/></pattern>
-      <pattern id="pd-insulation" width="90" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="90" height="90" fill="#dde6eb"/><path d="M0 0V90" stroke="#6f8290" strokeWidth="14"/></pattern>
+      <pattern id={`${patternPrefix}-grid`} width="1000" height="1000" patternUnits="userSpaceOnUse"><path d="M1000 0H0V1000" fill="none" stroke="#ced5de" strokeWidth="8" opacity=".35"/></pattern>
+      <pattern id={`${patternPrefix}-insulation`} width="90" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="90" height="90" fill="#dde6eb"/><path d="M0 0V90" stroke="#6f8290" strokeWidth="14"/></pattern>
     </defs>
-    <rect x="-100000" y="-100000" width="200000" height="200000" fill="url(#pd-grid)" pointerEvents="none"/>
+    <rect x="-100000" y="-100000" width="200000" height="200000" fill={`url(#${patternPrefix}-grid)`} pointerEvents="none"/>
     <g className="pd-floors">{PLAN_ROOMS.map((room,i)=><g key={room.id} data-room={room.id} opacity={roomId&&room.id!==roomId?0.45:1}>
       {room.rectsMm.map((rect,index)=><Box key={index} r={rect} fill={roomId===room.id?'#e0eaff':ROOM_COLORS[i]} stroke="#c7cdd4" strokeWidth="8"/>)}
     </g>)}</g>
@@ -45,14 +46,16 @@ export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,se
       const selected=item.id===selectedId, component=mesh.id===componentId;
       const physicalCeiling=/podhľad|štít podhľadu|Podkladová|· podlaha/.test(mesh.name);
       const tiny=Math.min(mesh.rect.x1-mesh.rect.x0,mesh.rect.y1-mesh.rect.y0)<35;
-      const overheadMesh=mesh.z0>2100;
+      // The wall canopy and upper cupboards sit above the kitchen cut plane;
+      // do not paint over the relocated hob in the normal working plan.
+      const overheadMesh=mesh.z0>2100||((item.id==='kitchen-upper'||item.id==='kitchen-extractor')&&mesh.z0>=1400);
       if(!selected&&!component&&(!layers[item.category]||physicalCeiling||(!overhead&&overheadMesh)||(!details&&tiny&&item.category!=='walls'&&item.category!=='openings')))return null;
       if(item.category==='openings'&&INTERIOR_DOORS.some(d=>d.label.split(' · ')[0]===item.id)&&!component)return null;
       if(item.category==='walls'&&mesh.z0>1400&&!component)return null;
       // Exterior walls are drawn in their build-up: dark masonry, light insulation band on the outer face.
       const insulation=item.category==='walls'&&exteriorWallLayer(mesh)==='insulation';
       const acoustic=acousticMeshInfo(mesh.name);
-      const fill=acoustic?`url(#ak-${acoustic.material})`:insulation?'url(#pd-insulation)':item.category==='walls'?'#414a56':item.category==='openings'?'#adcbdc':item.category==='lighting'?'#edd8a5':mesh.color;
+      const fill=acoustic?`url(#${patternPrefix}-${acoustic.material})`:insulation?`url(#${patternPrefix}-insulation)`:item.category==='walls'?'#414a56':item.category==='openings'?'#adcbdc':item.category==='lighting'?'#edd8a5':mesh.color;
       return <MeshSilhouette key={mesh.id} mesh={mesh} data-item={item.id} data-component={mesh.id} data-layer={acoustic?.material??(item.category==='walls'?exteriorWallLayer(mesh):undefined)} data-acoustic-wall={acoustic?.mark} className={`pd-part${selected?' is-selected':''}${component?' is-component':''}`} fill={component?'#3974eb':selected&&!acoustic?'#b4cdfb':fill} stroke={component?'#1449bd':selected?'#2a65d4':item.category==='walls'?'#343e49':'#63707b'} strokeWidth={component?1.5:selected?1:.45} vectorEffect="non-scaling-stroke" opacity={roomId&&item.roomId!==roomId&&!acoustic?.rooms.some(id=>id===roomId)&&!selected?0.25:overheadMesh&&!component?0.4:1}>
         <title>{`${item.name} · ${mesh.name.split(' · ').slice(-1)[0]}`}</title>
       </MeshSilhouette>;
@@ -73,18 +76,19 @@ export const PlanGeometry=memo(function PlanGeometry({layers,details,overhead,se
         <text x={x} y={y+(showName?1.6:.4)*fs} fontSize={fs*.85} textAnchor="middle" fill="#5a697a" stroke="#fafbfc" strokeWidth={fs*.22} paintOrder="stroke">{numberSk(room.area,2)} m²</text>
       </g>;
     })}</g>}
-    {layers.walls&&<AcousticWallMarks roomId={roomId} fontSize={Math.min(110,unitsPerPixel*11)}/>}
+    {layers.walls&&<><AcousticWallMarks roomId={roomId} fontSize={Math.min(110,unitsPerPixel*11)}/><BathroomDoorAxis roomId={roomId} minX={clipRect?.x0}/></>}
     {dimensions&&<>{!roomId&&<PlanDimensions rect={{x0:6440,y0:3000,x1:28040,y1:22035}} unit="m" size={150}/>}{PLAN_ROOMS.filter(r=>r.id===roomId).map(r=><PlanDimensions key={r.id} rect={r.bounds} unit={unit} offsetMm={600}/>)}</>}
     <g pointerEvents="none" fill="#7c889a" fontSize="130" letterSpacing="20" textAnchor="middle"><text x="15350" y="-11800">ZÁHRADA</text><text x="17300" y="-2100">ULICA · VSTUP</text></g>
   </>;
 });
 
 export function ItemMiniature({item,componentId}:{item:PlanItem;componentId?:string|null}) {
+  const patternPrefix=`pd-mini-${useId().replace(/[^a-z0-9_-]/gi,'')}`;
   const mesh=item.meshes.find(m=>m.id===componentId),r=mesh?.rect??item.rect;
   const pad=Math.max(r.x1-r.x0,r.y1-r.y0)*.16+50;
   return <svg viewBox={`${r.x0-pad} ${-r.y1-pad} ${r.x1-r.x0+pad*2} ${r.y1-r.y0+pad*2}`} aria-label={`Pohľad zhora: ${item.name}`} role="img">
-    <AcousticHatches prefix="ak-mini"/>
-    {[...item.meshes].sort((a,b)=>a.z0-b.z0).map(m=><MeshSilhouette key={m.id} mesh={m} fill={m.id===componentId?'#3e78e9':acousticMeshInfo(m.name)?`url(#ak-mini-${acousticMeshInfo(m.name)!.material})`:m.color} opacity={componentId&&m.id!==componentId?0.15:1} stroke="#677486" strokeWidth=".5" vectorEffect="non-scaling-stroke"/>)}
+    <AcousticHatches prefix={patternPrefix}/>
+    {[...item.meshes].sort((a,b)=>a.z0-b.z0).map(m=><MeshSilhouette key={m.id} mesh={m} fill={m.id===componentId?'#3e78e9':acousticMeshInfo(m.name)?`url(#${patternPrefix}-${acousticMeshInfo(m.name)!.material})`:m.color} opacity={componentId&&m.id!==componentId?0.15:1} stroke="#677486" strokeWidth=".5" vectorEffect="non-scaling-stroke"/>)}
   </svg>;
 }
 

@@ -5,8 +5,10 @@ import type { Point2Mm } from './twin-site';
 import type { InteriorRoom, RectMm } from './twin-interior-baseline';
 import { CHILDREN_DESIGN_ID, CHILDREN_DOUBLE_WINDOW } from './twin-children-design';
 import { acousticWallLayers, acousticWallSpec } from './acoustic-walls';
+import { BATHROOM_FITOUT as serviceBathroomFitout } from './technical-design';
+import { OFFICE_DESK_PRODUCT } from './twin-office-desk';
 export * from './twin-interior-baseline';
-export { TECHNICAL_HEATING_FITOUT, WC_FITOUT, BATHROOM_FITOUT } from './technical-design';
+export { TECHNICAL_HEATING_FITOUT, WC_FITOUT } from './technical-design';
 
 export const ACTIVE_LAYOUT_ID = 'C-2026-09-07';
 export const ACTIVE_CONCEPT = createConcept(DEFAULT_NESTED_CONCEPT);
@@ -46,6 +48,12 @@ export const INTERIOR_RENDER_WALLS=nonOverlappingWalls(INTERIOR_WALLS);
 export const INTERIOR_DOORS: readonly original.InteriorDoor[] = ACTIVE_CONCEPT.doors.map(door=>({
   ...door, label:door.id==='DOOR-102-108'?'Chodba → detská izba do ulice · 800 mm':door.label,
 }));
+const bathroomEntry=INTERIOR_DOORS.find(door=>door.id==='DOOR-102-105')!;
+export const BATHROOM_FITOUT={
+  ...serviceBathroomFitout,
+  // The clear landing begins beyond the complete centred doorway, including its frame.
+  clearFloorRectMm:{...serviceBathroomFitout.clearFloorRectMm,y0:bathroomEntry.startMm+bathroomEntry.widthMm},
+};
 export function roomAt(point:Point2Mm):InteriorRoom|null {
   return INTERIOR_ROOMS.find(room=>room.rectsMm.some(r=>point.x>=r.x0&&point.x<=r.x1&&point.y>=r.y0&&point.y<=r.y1))??null;
 }
@@ -145,12 +153,23 @@ export const GARAGE_FITOUT={
   sinkServiceRectMm:rect(garageBay.x1-1300,3704,garageBay.x1-500,4304),
   entryApproachRectMm:rect(garageBay.x0,4404,garageBay.x1-500,5104),
 };
+const officeNorthFace=INTERIOR_WALLS.find(wall=>wall.id==='IW-STUDY-NORTH')!.rectMm.y0;
+// Preserve the accepted west-facing workstation axis and its wall position.
+// Width runs along plan Y; depth runs along X, into the room.
+const officeDeskCenterY=4404;
+const officeDeskWest=original.OFFICE_FITOUT.desk.footprintMm.x0-650;
 export const OFFICE_FITOUT={
   ...original.OFFICE_FITOUT,sourceId:ACTIVE_LAYOUT_ID,
   desk:{...original.OFFICE_FITOUT.desk,wallId:'C-ENTRY-OFFICE-EAST',
-    footprintMm:shift(original.OFFICE_FITOUT.desk.footprintMm,-650),
+    product:OFFICE_DESK_PRODUCT,
+    topThicknessMm:OFFICE_DESK_PRODUCT.topThicknessMm,
+    footprintMm:rect(officeDeskWest,officeDeskCenterY-OFFICE_DESK_PRODUCT.widthMm/2,
+      officeDeskWest+OFFICE_DESK_PRODUCT.depthMm,officeDeskCenterY+OFFICE_DESK_PRODUCT.widthMm/2),
     monitor:{...original.OFFICE_FITOUT.desk.monitor,centerMm:{x:23792,y:4404}}},
   chair:{...original.OFFICE_FITOUT.chair,footprintMm:shift(original.OFFICE_FITOUT.chair.footprintMm,-650),centerMm:{x:24862,y:4404}},
+  whiteboard:{...original.OFFICE_FITOUT.whiteboard,
+    footprintMm:{...original.OFFICE_FITOUT.whiteboard.footprintMm,y0:officeNorthFace-15,y1:officeNorthFace}},
+  clearEntryRectMm:{...original.OFFICE_FITOUT.clearEntryRectMm,y1:officeNorthFace},
   cameraLookTargetMm:{x:25000,y:4350},
 };
 
@@ -213,16 +232,77 @@ export const CHILDRENS_BEDROOM_FITOUTS:readonly ChildBedroomFitout[]=[boy,girl];
 // run keeps its 97 mm installation gap behind the carcasses and follows the
 // wall's north face; the peninsula and appliances stay
 // where they are; the east return now reaches this same back wall. The rear
-// counter stops 80 mm before the door opening. The working aisle is 1 180 mm. Shared by
+// counter stops 80 mm before the door opening. The 13–14. 9. 2026 revisions move
+// the door 150 + 50 mm east; this shared edge extends the rear cabinets, worktop,
+// splashback and upper cabinets by 200 mm. The working aisle is 1 180 mm. Shared by
 // living layouts A and B.
 export const KITCHEN_BEARING_WALL:RectMm=ACTIVE_CONCEPT.kitchenBearingWall!;
-/** The 860 mm piece between the technical-room door and the east facade. */
+/** The 660 mm piece between the technical-room door and the east facade. */
 export const KITCHEN_BEARING_WALL_EAST:RectMm=ACTIVE_CONCEPT.kitchenBearingWallEast!;
 const kitchenGapMm=original.KITCHEN_RUN.rectMm.y0-original.INTERIOR_WALLS.find(w=>w.id==='IW-KITCHEN-BACK')!.rectMm.y1;
 const kitchenShiftMm=KITCHEN_BEARING_WALL.y1+kitchenGapMm-original.KITCHEN_RUN.rectMm.y0;
+// 14 Sep correction: align the island's finished east edge with the back
+// worktop, and retain the full former peninsula depth beside the east wall.
+const kitchenBackRunRectMm={...shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),x1:KITCHEN_BEARING_WALL.x1-80};
 export const KITCHEN_RUN:original.KitchenRun=Object.freeze({
-  ...original.KITCHEN_RUN,backRunRevisionSourceId:'C-KITCHEN-BEARING-WALL-2026-09-12',
-  rectMm:{...shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),x1:KITCHEN_BEARING_WALL.x1-80},
-  eastReturnRectMm:{...original.KITCHEN_RUN.eastReturnRectMm,y0:KITCHEN_BEARING_WALL.y1+kitchenGapMm},
+  ...original.KITCHEN_RUN,backRunRevisionSourceId:'C-KITCHEN-DOOR-SHIFT-2026-09-14',
+  designSourceId:'C-KITCHEN-OAK-BLACK-EAST-DW-2026-09-14',
+  rectMm:kitchenBackRunRectMm,
+  eastReturnRectMm:{...original.KITCHEN_RUN.eastReturnRectMm,y0:KITCHEN_BEARING_WALL.y1+kitchenGapMm,
+    y1:original.KITCHEN_RUN.peninsulaRectMm.y1},
   fridgeUnitRectMm:shift(original.KITCHEN_RUN.fridgeUnitRectMm,0,kitchenShiftMm),
+  sinkCenterXmm:24391,
+  dishwasherXmm:[25391,25991] as const,
+  hobCenterXmm:24996,
+  ovenCenterXmm:23691,
+  extractorCenterXmm:24996,
+  extractorWidthMm:880,
+  upperCabinets:{bottomMm:1600,topMm:2250,depthMm:500},
+  peninsulaRectMm:{...original.KITCHEN_RUN.peninsulaRectMm,
+    // Back worktop: 20 mm side nosing. Island: 10 mm side nosing.
+    x1:kitchenBackRunRectMm.x1+20-10},
+});
+/** Finished outlines shared by the native 3D model, its collision guards and documentation.
+ * The historical `peninsulaRectMm` key remains compatible with archived source geometry.
+ */
+export const KITCHEN_ISLAND=Object.freeze({
+  revisionSourceId:'C-KITCHEN-OAK-BLACK-EAST-DW-2026-09-14',
+  worktopRectMm:rect(KITCHEN_RUN.peninsulaRectMm.x0-10,KITCHEN_RUN.peninsulaRectMm.y0-10,
+    KITCHEN_RUN.peninsulaRectMm.x1+10,KITCHEN_RUN.peninsulaRectMm.y1+KITCHEN_RUN.peninsulaOverhangMm),
+  eastReturnWorktopRectMm:rect(KITCHEN_RUN.eastReturnRectMm.x0-20,KITCHEN_RUN.eastReturnRectMm.y0,
+    KITCHEN_RUN.eastReturnRectMm.x1,KITCHEN_RUN.peninsulaRectMm.y1+KITCHEN_RUN.peninsulaOverhangMm),
+  sidePassageMm:KITCHEN_RUN.eastReturnRectMm.x0-20-(KITCHEN_RUN.peninsulaRectMm.x1+10),
+  // Front-to-front clearance of the two finished stone worktops, not the carcasses.
+  workAisleMm:KITCHEN_RUN.peninsulaRectMm.y0-10-(KITCHEN_RUN.rectMm.y1+20),
+  preparationWidthMm:KITCHEN_RUN.peninsulaRectMm.x1+10-(KITCHEN_RUN.sinkCenterXmm+300),
+});
+
+/** Authored kitchen fitout. All appliance zones are explicit: an X axis alone
+ * cannot distinguish the wall run from the island. Historical source stays intact.
+ */
+export const KITCHEN_DESIGN=Object.freeze({
+  id:KITCHEN_RUN.designSourceId,
+  worktopThicknessMm:20,
+  ovenTowerRectMm:rect(23391,kitchenBackRunRectMm.y0,23991,kitchenBackRunRectMm.y1),
+  backWorktopRectMm:rect(23991,kitchenBackRunRectMm.y0,kitchenBackRunRectMm.x1+20,kitchenBackRunRectMm.y1+20),
+  oven:{bottomMm:850,heightMm:595,widthMm:596,depthMm:548,door:'fully-retracting' as const},
+  hobRectMm:rect(24596,11174,25396,11684),
+  sinkBowlRectMm:rect(24091,12990,24691,13390),
+  sinkDepthMm:200,
+  dishwasherRectMm:rect(25391,12890,25991,13490),
+  dishwasherOpenRectMm:rect(25391,12290,25991,12890),
+  // Last 600 mm module toward EAST-04. It opens into the work aisle,
+  // leaving the 900 mm side passage clear; one drawer unit separates it from the sink.
+  islandModules:[
+    {x0:23391,x1:23991,kind:'drawers'},
+    {x0:23991,x1:24791,kind:'sink-waste'},
+    {x0:24791,x1:25391,kind:'drawers'},
+    {x0:25391,x1:25991,kind:'dishwasher'},
+  ] as const,
+  backModules:[23991,24501,25491,26001] as const,
+  livingStorageRectMm:rect(23391,13510,26011,13770),
+  eastStorageRectMm:rect(26941,11109,27541,13780),
+  hood:{bottomMm:1600,bodyHeightMm:350,depthMm:293,ductDiameterMm:150,
+    ventilation:'recirculation-with-top-return' as const},
+  materials:{timber:'natural-oak',fronts:'natural-oak',stone:'black-stone-satin'} as const,
 });

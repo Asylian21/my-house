@@ -10,8 +10,9 @@ export const ACTIVE_WINDOW_POSITIONS = {
   showerStartYmm:(showerBay.y0+showerBay.y1)/2-300,
   // Preserve the approved facade opening when the office gains 50 mm at its north wall.
   officeSideStartYmm:6412-200-1000,
-  // The jamb on the desk side overlaps the desk's outer edge by exactly 50 mm.
-  officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1-50,
+  // Client revision, 13 Sep 2026: move FRONT-07 150 mm east, toward the cabinet.
+  // Its desk-side jamb now sits 100 mm beyond the desk's outer edge.
+  officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1+100,
 };
 export const HOUSE={...baseline,
   placement: ACTIVE_HOUSE_PLACEMENT,

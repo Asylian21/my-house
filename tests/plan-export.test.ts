@@ -151,10 +151,12 @@ describe("export sheet site context follows D1.1.002", () => {
   });
 
   it("material legend covers every hatch class used by the model", () => {
-    expect(MATERIAL_LEGEND.map((e) => e.cls)).toEqual(["exterior", "insulation", "bearing", "partition", "board", "acoustic"]);
+    expect([...new Set(MATERIAL_LEGEND.map((e) => e.cls))]).toEqual(["exterior", "insulation", "bearing", "partition", "board", "acoustic"]);
+    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.codes)).toEqual(['SA30','H200']);
     expect(MATERIAL_LEGEND[0].codes).toBe("SO30, SO50");
     expect(MATERIAL_LEGEND[1].codes).toBe("TI20");
-    for (const e of MATERIAL_LEGEND) expect(e.text).toMatch(/hr\. \d/);
+    for (const e of MATERIAL_LEGEND.filter(e=>e.cls!=='acoustic')) expect(e.text).toMatch(/hr\. \d/);
+    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.layers?.length)).toEqual([3,6]);
   });
 });
 
@@ -208,6 +210,7 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
 
   it.each([
     { name: 'garage rear corner', x0: 6440, x1: 6970, y0: 9047, y1: 9247 },
+    { name: 'garage to bedroom reentrant corner', x0: 10640, x1: 10842, y0: 9047, y1: 9247 },
     { name: 'boys room reentrant corner', x0: 21040, x1: 21240, y0: 11000, y1: 11200 },
   ])('keeps continuous insulation without masonry through the $name', ({ x0, x1, y0, y1 }) => {
     const walls = generated.meshes.filter(m => m.source === 'shell' || m.name.startsWith('Vnútorná stena'));
@@ -233,8 +236,8 @@ describe("exterior walls are drawn in their real build-up (300 masonry + 200 ins
     const corner = cut.find((m) => m.name === "Lodžia · zadná stena · roh pri stene spálne")!;
     const cheek = cut.find((m) => m.name === "Lodžia · východná bočná stena · izolácia")!;
     const spine = INTERIOR_WALLS.find((w) => w.id === "C-GARAGE-SPINE-N")!.rectMm;
-    expect(corner.rect).toEqual({ x0: 10640, y0: 8747, x1: spine.x0, y1: 9247 });
-    expect(cheek.rect).toEqual({ x0: 10640, y0: 9247, x1: spine.x0, y1: 11200 });
+    expect(corner.rect).toEqual({ x0: 10640, y0: 8747, x1: spine.x0, y1: 9047 });
+    expect(cheek.rect).toEqual({ x0: 10640, y0: 9047, x1: spine.x0, y1: 11200 });
     expect(cut.some((m) => m.name === "Lodžia · východná bočná stena")).toBe(false);
   });
 

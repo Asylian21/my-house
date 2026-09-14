@@ -18,7 +18,13 @@ describe('active export room-area authority', () => {
     // bay (+0.9953 m²), the rest is the new 860 mm wall piece and the door.
     // +0.005855 m² when the 144 mm laundry return aligns with the 139 mm WC wall.
     // +0.234950 m² office and +0.290500 m² lobby from thinner office walls.
-    expect(expected).toBeCloseTo(180.154908, 9);
+    // H200 takes 60 × 4 699 mm beyond the former 140 mm office partition;
+    // moving its door return 30 mm south restores 30 × 700 mm there and takes
+    // 30 × 728 mm from the lobby: total reduction 0.282780 m².
+    const acousticRevisionAreaLoss=(60*4699-30*700+30*728)/1e6;
+    expect(acousticRevisionAreaLoss).toBeCloseTo(0.282780,9);
+    expect(expected).toBeCloseTo(180.154908-acousticRevisionAreaLoss,9);
+    expect(expected).toBeCloseTo(179.872128, 9);
     expect(serialized.house.floorAreaAuthority).toEqual({kind: 'ACTIVE_ROOM_RECTANGLE_SUM', layoutId: serialized.layoutId, source: 'lib/twin-interior.ts:INTERIOR_ROOMS', includesGarage: true});
     expect(serialized.interior.rooms.some((r: typeof INTERIOR_ROOMS[number]) => r.id === 'ROOM-1-12')).toBe(true);
   });

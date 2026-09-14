@@ -56,8 +56,9 @@ describe('Service core dimensional and access contracts',()=>{
       &&(!m.name.includes('BUFFER-TANK')||/hrdlo|teplomer|ciferník/.test(m.name))
       ||m.name.startsWith(door.label)&&m.name.includes('zárubňa'))&&m.z0<1850&&m.z1>20).map(polygon);
     expect(door.wallSpanMm[0]).toBe(technical[0].y1);
-    const entry:Point=[26281,11100];
-    const approach:Point[]=[entry,[26281,10401],[26400,10402],[26720,10385],[26720,10050],[26710,10050]];
+    const entryX=door.startMm+door.widthMm/2;
+    const entry:Point=[entryX,11100];
+    const approach:Point[]=[entry,[entryX,10401],[26400,10402],[26720,10385],[26720,10050],[26710,10050]];
     const aroundHopper:Point[]=[...approach,[26720,9500],[26720,9000],[26720,8500],[26720,8195],[26500,8130]];
     const routes:Point[][]=[
       [...aroundHopper,[heating.boiler.hopper.fillingStandingPointMm.x,heating.boiler.hopper.fillingStandingPointMm.y]],

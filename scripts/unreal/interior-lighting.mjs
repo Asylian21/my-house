@@ -9,7 +9,7 @@ const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const vec = (v) => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
 const near = (a, b, tolerance = 0.1) => assert(Math.abs(a - b) <= tolerance, "Source fixture bounds disagree");
 
-/** One source-owned rectangle; no native actor/tag/photometry guessing. */
+/** Compile source-owned rectangles; source tags, geometry and photometry must agree. */
 export function buildInteriorLighting(scene, sceneSha256) {
   assert.equal(scene.units, "millimetres");
   for (const h of [sceneSha256, scene.objSha256]) assert.match(h, /^[a-f0-9]{64}$/);
@@ -20,48 +20,60 @@ export function buildInteriorLighting(scene, sceneSha256) {
   assert.equal(s.photometricConvention, "ONE_SIDED_RECT_LUMENS");
   assert.equal(s.vendorPhotometryAvailable, false);
   assert.equal(s.iesAvailable, false);
-  assert.equal(s.fixtures.length, 1);
-  const f = s.fixtures[0], g = f.geometry, l = f.light;
-  assert.equal(f.id, "INT-KITCHEN-TASK-01");
-  assert.equal(f.parentSourceId, "KITCHEN-RUN");
-  assert.equal(f.kind, "RECT_UNDERCABINET");
-  assert.equal(typeof f.designSourceId, "string");
-  assert(f.designSourceId.length > 0);
-  assert.equal(g.sourceName, "KITCHEN-RUN · LED lišta pod skrinkami");
-  for (const v of [g.bodyCenterPlanMm, g.dimensionsMm, l.positionPlanMm, l.directionPlan, l.widthAxisPlan]) assert(vec(v));
-  // This first authored candidate has one closed shape/photometry; edits need a new reviewed contract.
-  assert.deepEqual(g.dimensionsMm, [2260, 20, 12]);
-  assert.deepEqual(l.directionPlan, [0, 0, -1]);
-  assert.deepEqual(l.widthAxisPlan, [1, 0, 0]);
-  assert.equal(l.sourceWidthMm, 2260); assert.equal(l.sourceHeightMm, 20);
-  assert.equal(l.temperatureK, 3000); near(l.lumens, 678, 1e-9);
-  assert.equal(l.attenuationRadiusMm, 2500); assert.equal(l.emitterClearanceMm, 2);
-  assert.equal(l.castsShadows, true); assert.equal(l.dayMultiplier, 0); assert.equal(l.nightMultiplier, 1);
-  near(l.positionPlanMm[0], g.bodyCenterPlanMm[0], 1e-9);
-  near(l.positionPlanMm[1], g.bodyCenterPlanMm[1], 1e-9);
-  near(l.positionPlanMm[2], g.bodyCenterPlanMm[2] - g.dimensionsMm[2] / 2 - l.emitterClearanceMm, 1e-9);
+  const expected = new Map([["INT-KITCHEN-TASK-01", "RECT_UNDERCABINET"], ["INT-KITCHEN-ISLAND-01", "RECT_PENDANT"]]);
+  assert.equal(s.fixtures.length, expected.size, "Two kitchen source fixtures required");
+  assert.equal(new Set(s.fixtures.map(f => f.id)).size, expected.size, "Duplicate fixture ID");
   assert(Number.isFinite(scene.sceneCenterMm?.x) && Number.isFinite(scene.sceneCenterMm?.y));
   const point = ([x,y,z]) => [(x-scene.sceneCenterMm.x)/10, (scene.sceneCenterMm.y-y)/10, z/10];
-  const tagged = scene.objects.filter((o) => o.metadata?.interiorLightId != null);
-  assert.equal(tagged.length, 1, "Exactly one interior light source tag required");
-  const mesh = tagged[0];
-  assert.equal(mesh.metadata.interiorLightId, f.id);
-  assert.equal(mesh.name, g.sourceName); assert.match(mesh.id, /^DOM_[0-9]{5}$/);
-  assert(mesh.enabled && mesh.instances === 1 && mesh.triangles === 12);
-  const bounds = walkingBoundsToUnreal(mesh.boundsMm), center = point(g.bodyCenterPlanMm);
-  center.forEach((n,i) => {
-    near(n, (bounds.min[i]+bounds.max[i])/2);
-    near(g.dimensionsMm[i]/10, bounds.max[i]-bounds.min[i]);
-  });
-  return { schemaVersion: 1, provenance: s.provenance, coordinateSystem: "UNREAL_XY_Z_CM",
-    photometricConvention: s.photometricConvention, sceneSha256, objSha256: scene.objSha256,
-    fixtures: [{ id: f.id, sourceTag: mesh.id, sourceName: mesh.name, designSourceId: f.designSourceId,
+  const tagged = scene.objects.filter(o => o.metadata?.interiorLightId != null);
+  assert.equal(tagged.length, expected.size, "Exactly one source tag per fixture required");
+  const sourceIds = new Set();
+  const fixtures = s.fixtures.map(f => {
+    const g = f.geometry, l = f.light;
+    assert.equal(f.kind, expected.get(f.id), "Unknown source fixture");
+    assert.equal(f.parentSourceId, "KITCHEN-RUN");
+    assert.equal(typeof f.designSourceId, "string");
+    assert(f.designSourceId.length > 0);
+    assert.equal(typeof g.sourceName, "string");
+    assert(g.sourceName.startsWith("KITCHEN-RUN · "));
+    for (const v of [g.bodyCenterPlanMm, g.dimensionsMm, l.positionPlanMm, l.directionPlan, l.widthAxisPlan]) assert(vec(v), "Finite source vectors required");
+    assert(g.dimensionsMm.every(n => n > 0));
+    assert.deepEqual(l.directionPlan, [0, 0, -1]);
+    assert.deepEqual(l.widthAxisPlan, [1, 0, 0]);
+    assert(Number.isFinite(l.sourceWidthMm) && l.sourceWidthMm > 0 && l.sourceWidthMm <= g.dimensionsMm[0]);
+    assert(Number.isFinite(l.sourceHeightMm) && l.sourceHeightMm > 0 && l.sourceHeightMm <= g.dimensionsMm[1]);
+    assert(Number.isFinite(l.lumens) && l.lumens > 0, "Positive finite lumens required");
+    assert.equal(l.temperatureK, 3000);
+    assert(Number.isFinite(l.attenuationRadiusMm) && l.attenuationRadiusMm > Math.max(...g.dimensionsMm));
+    assert.equal(l.emitterClearanceMm, 2);
+    assert.equal(l.castsShadows, true); assert.equal(l.dayMultiplier, 0); assert.equal(l.nightMultiplier, 1);
+    near(l.positionPlanMm[0], g.bodyCenterPlanMm[0], 1e-9);
+    near(l.positionPlanMm[1], g.bodyCenterPlanMm[1], 1e-9);
+    near(l.positionPlanMm[2], g.bodyCenterPlanMm[2] - g.dimensionsMm[2] / 2 - l.emitterClearanceMm, 1e-9);
+    const matches = tagged.filter(o => o.metadata.interiorLightId === f.id);
+    assert.equal(matches.length, 1, "Ambiguous or missing source mesh");
+    const mesh = matches[0];
+    assert.equal(mesh.name, g.sourceName, "Source name mismatch");
+    assert.match(mesh.id, /^DOM_[0-9]{5}$/);
+    assert(!sourceIds.has(mesh.id), "Source mesh reused"); sourceIds.add(mesh.id);
+    assert(mesh.enabled && mesh.instances === 1 && mesh.triangles === 12, "Source mesh unavailable");
+    assert(vec(mesh.boundsMm?.min) && vec(mesh.boundsMm?.max), "Finite source bounds required");
+    assert(mesh.boundsMm.max.every((n,i) => n > mesh.boundsMm.min[i]), "Inverted source bounds");
+    const bounds = walkingBoundsToUnreal(mesh.boundsMm), center = point(g.bodyCenterPlanMm);
+    center.forEach((n,i) => {
+      near(n, (bounds.min[i]+bounds.max[i])/2);
+      near(g.dimensionsMm[i]/10, bounds.max[i]-bounds.min[i]);
+    });
+    return { id: f.id, sourceTag: mesh.id, sourceName: mesh.name, designSourceId: f.designSourceId,
       meshPath: `/Game/Brezi/Geometry/brezi-twin/StaticMeshes/${mesh.id}.${mesh.id}`,
-      bodyCenterCm: center, bodyDimensionsCm: g.dimensionsMm.map((n) => n/10),
+      bodyCenterCm: center, bodyDimensionsCm: g.dimensionsMm.map(n => n/10),
       positionCm: point(l.positionPlanMm), direction: [0,0,-1], widthAxis: [1,0,0],
       sourceWidthCm: l.sourceWidthMm/10, sourceHeightCm: l.sourceHeightMm/10,
       lumens: l.lumens, temperatureK: l.temperatureK, attenuationRadiusCm: l.attenuationRadiusMm/10,
-      emitterClearanceCm: l.emitterClearanceMm/10, castsShadows: true, dayMultiplier: 0, nightMultiplier: 1 }] };
+      emitterClearanceCm: l.emitterClearanceMm/10, castsShadows: true, dayMultiplier: 0, nightMultiplier: 1 };
+  });
+  return { schemaVersion: 1, provenance: s.provenance, coordinateSystem: "UNREAL_XY_Z_CM",
+    photometricConvention: s.photometricConvention, sceneSha256, objSha256: scene.objSha256, fixtures };
 }
 
 export async function exportInteriorLighting({ rootDir = ROOT,
@@ -88,5 +100,5 @@ export async function exportInteriorLighting({ rootDir = ROOT,
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const directory = resolve(ROOT, process.env.UNREAL_OUTPUT ?? "output/unreal/geometry");
   const result = await exportInteriorLighting({ scenePath: resolve(directory, "scene.json") });
-  console.log(JSON.stringify({ outputPath: result.outputPath, sha256: result.sha256, fixtureCount: 1 }));
+  console.log(JSON.stringify({ outputPath: result.outputPath, sha256: result.sha256, fixtureCount: result.contract.fixtures.length }));
 }

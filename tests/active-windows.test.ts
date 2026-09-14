@@ -21,8 +21,8 @@ describe('C facade revision at the current furniture',()=>{
     expect(Math.abs(bath.startXmm+bath.widthMm/2-(ACTIVE_CONCEPT.bathLeft+ACTIVE_CONCEPT.bathRight)/2)).toBeLessThanOrEqual(.5);
     expect(6412-east('EAST-01').startYmm-east('EAST-01').widthMm).toBe(200);
     expect(east('EAST-01').startYmm-OFFICE_FITOUT.cabinet.footprintMm.y1).toBeGreaterThan(200);
-    expect(OFFICE_FITOUT.desk.footprintMm.x1-front('FRONT-07').startXmm).toBe(50);
-    expect(front('FRONT-07')).toMatchObject({startXmm:24292,widthMm:2000,kind:'fixed',frameWidthMm:35});
+    expect(front('FRONT-07').startXmm-OFFICE_FITOUT.desk.footprintMm.x1).toBe(100);
+    expect(front('FRONT-07')).toMatchObject({startXmm:24442,widthMm:2000,kind:'fixed',frameWidthMm:35});
   });
 
   it('builds identical slim double windows in both child rooms and the complete moving terrace portal',()=>{

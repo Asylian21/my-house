@@ -7,6 +7,7 @@ export interface TwinSceneOptions extends Partial<TwinDesignSelection> {
 }
 import { HOUSE, SIDE_ENTRY_APPROACH, PARCEL_LAWN_INTERIOR_CUTOUTS_MM } from "./twin-active-house";
 import { EXTERIOR_LIGHTING, EXTERIOR_LIGHTING_SOURCE_GEOMETRY } from "./twin-exterior-lighting";
+import { setKitchenTaskLightingNightAlpha } from "./babylon-interior-lighting";
 import { DECK_BOARD_LAYOUT, planDeckBoards } from "./deck-boards";
 import { resolveWalkFloor } from "./babylon-walk-picking";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
@@ -5321,6 +5322,9 @@ export class TwinSceneController {
       registerAnimatedDoor: (door: AnimatedDoorRegistration) =>
         this.doors.register(door),
     });
+    // Kitchen work lighting is switched on in the inhabited preview. Keeping
+    // allocation here leaves the headless plan builder network-free.
+    this.setInteriorLightingNightAlpha(1);
   }
 
   /**
@@ -5410,18 +5414,19 @@ export class TwinSceneController {
         this.register(mesh, "building", HOUSE.id);
       }
     }
-    // Masonry corner between the back wall and the garage spine wall. The
-    // back wall used to stop at the loggia face while the spine starts 202 mm
-    // further east, which left an open slit from the loggia into the garage.
+    // Close the gap to the garage spine with masonry behind the insulation.
+    // The cheek wraps the last 200 mm of this junction, continuously meeting
+    // the back-wall insulation instead of touching it at a single point.
+    const cornerMasonryDepthMm = HOUSE.exteriorWall.totalMm - insulationMm;
     const corner = boxAtPlan(
       this.scene,
       "Lodžia · zadná stena · roh pri stene spálne",
       {
         x: (loggia.eastInnerXmm + cheekEastXmm) / 2,
-        y: loggia.backFaceYmm - HOUSE.exteriorWall.totalMm / 2,
+        y: loggia.backFaceYmm - insulationMm - cornerMasonryDepthMm / 2,
       },
       cheekEastXmm - loggia.eastInnerXmm,
-      HOUSE.exteriorWall.totalMm,
+      cornerMasonryDepthMm,
       soffitM,
       0,
     );
@@ -5467,13 +5472,14 @@ export class TwinSceneController {
 
     // East inner cheek of the loggia (room 1.10 west wall): the garage spine
     // wall is its masonry, this is the insulation on the loggia side, flush
-    // with the spine and reaching the garden facade line.
+    // with the spine, wrapping into the back-wall band and reaching the garden facade line.
+    const cheekStartYmm = loggia.backFaceYmm - insulationMm;
     const cheek = boxAtPlan(
       this.scene,
       "Lodžia · východná bočná stena · izolácia",
-      { x: (loggia.eastInnerXmm + cheekEastXmm) / 2, y: (loggia.backFaceYmm + loggia.faceYmm) / 2 },
+      { x: (loggia.eastInnerXmm + cheekEastXmm) / 2, y: (cheekStartYmm + loggia.faceYmm) / 2 },
       cheekEastXmm - loggia.eastInnerXmm,
-      loggia.faceYmm - loggia.backFaceYmm,
+      loggia.faceYmm - cheekStartYmm,
       EAVES_M,
       0,
     );
@@ -7679,6 +7685,11 @@ export class TwinSceneController {
     this.materials.roof.alpha = 0.34;
     this.scene.getMeshByName("Terén · DMR 5G kontext")?.setEnabled(realistic);
     this.archviz?.applyViewMode(realistic);
+  }
+
+  /** Fixture dimming for inspection; does not imply a night sky or solar model. */
+  setInteriorLightingNightAlpha(alpha: number) {
+    setKitchenTaskLightingNightAlpha(this.scene, alpha);
   }
 
   setCameraPreset(preset: CameraPreset) {

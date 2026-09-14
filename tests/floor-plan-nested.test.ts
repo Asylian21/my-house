@@ -71,15 +71,16 @@ describe('nested bedroom, closet and garage study C', () => {
     for (const id of ['C-PRIVATE-BED','C-BED-CLOSET','DOOR-102-109']) {
       expect(baseline.doors.find(d=>d.id===id)!.wallSpanMm, id).toEqual([7651, 7791]);
     }
-    expect(baseline.entryArea).toBeCloseTo(6.4785639999999995, 6);
-    expect(baseline.entryClearArea).toBeCloseTo(4.764164, 6);
+    expect(baseline.entryArea).toBeCloseTo(6.456724, 6);
+    expect(baseline.entryClearArea).toBeCloseTo(4.742324, 6);
     const originalOffice = INTERIOR_ROOMS.find(r => r.number === '1.04')!;
-    expect(baseline.officeArea).toBeCloseTo(12.572442, 6);
-    expect(baseline.officeArea-area(originalOffice.rectsMm)).toBeCloseTo(1.46735, 6);
+    expect(baseline.officeArea).toBeCloseTo(12.311502, 6);
+    expect(baseline.officeArea-area(originalOffice.rectsMm)).toBeCloseTo(1.206410, 6);
     expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[0].x0).toBe(23542);
-    expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[1]).toEqual({...originalOffice.rectsMm[1],y1:6462});
+    expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[1]).toEqual({...originalOffice.rectsMm[1],y0:5370,y1:6402});
     // Both child rooms end on one 300 mm bearing line; the office corner is 175 mm
-    // masonry that releases space into the lobby alcove, keeping the office faces fixed.
+    // masonry, shifted 30 mm south with the office door to leave room for H200
+    // acoustic wall while retaining the shower-side face at 6602.
     const kidWall = baseline.walls.find(w=>w.id==='C-KID-ENTRY-WALL')!;
     const gardenWall = baseline.walls.find(w=>w.id==='C-GARDEN-KID-EAST')!;
     expect(kidWall.role).toBe('LOAD_BEARING');
@@ -130,12 +131,12 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(baseline.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-W')!.rectMm.x1).toBe(17442);
     expect(baseline.walls.find(w=>w.id==='B-GARDEN-KID-SOUTH-E')!.rectMm.x0).toBe(18342);
     expect(baseline.walls.find(w=>w.id==='C-KID-HALL-POCKET-WALL')!.rectMm.x0).toBe(18342);
-    expect(baseline.walls.find(w=>w.id==='C-ENTRY-OFFICE-EAST')!.rectMm).toEqual(rect(23367,3504,23542,5225));
-    expect(baseline.walls.find(w=>w.id==='C-ENTRY-OFFICE-RETURN')!.rectMm).toEqual(rect(22842,5225,23542,5400));
-    expect(baseline.walls.find(w=>w.id==='IW-ENTRY-TOP-E2')!.rectMm).toEqual(rect(22639,5225,22842,5451));
-    expect(baseline.rooms.find(r=>r.number==='1.01')!.rectsMm[1]).toEqual(rect(22639,3504,23367,5225));
+    expect(baseline.walls.find(w=>w.id==='C-ENTRY-OFFICE-EAST')!.rectMm).toEqual(rect(23367,3504,23542,5195));
+    expect(baseline.walls.find(w=>w.id==='C-ENTRY-OFFICE-RETURN')!.rectMm).toEqual(rect(22842,5195,23542,5370));
+    expect(baseline.walls.find(w=>w.id==='IW-ENTRY-TOP-E2')!.rectMm).toEqual(rect(22639,5195,22842,5421));
+    expect(baseline.rooms.find(r=>r.number==='1.01')!.rectsMm[1]).toEqual(rect(22639,3504,23367,5195));
     const originalEntry = INTERIOR_ROOMS.find(r => r.number === '1.01')!;
-    expect(baseline.entryClearArea - area(originalEntry.rectsMm)).toBeCloseTo(0.613302, 6);
+    expect(baseline.entryClearArea - area(originalEntry.rectsMm)).toBeCloseTo(0.591462, 6);
     for (let expansion = 0; expansion <= 600; expansion += 50) {
       const m = createConcept({ ...DEFAULT_CONCEPT, expansion });
       expect(m.settings.expansion).toBe(Math.min(expansion, 100));
@@ -231,7 +232,7 @@ describe('nested bedroom, closet and garage study C', () => {
         const current=m.walls.find(w => w.id === source.id);
         if(source.id==='IW-STUDY-NORTH') {
           expect(replaced).toBe(true);
-          expect(current).toMatchObject({changed:true,rectMm:rect(22783,6462,27541,6602)});
+          expect(current).toMatchObject({changed:true,role:'PARTITION',rectMm:rect(22783,6402,27541,6602)});
         } else expect(current?.rectMm).toEqual(replaced ? undefined : source.rectMm);
       }
     }

@@ -14,6 +14,8 @@ Používateľské označenie je **HLAVNÝ NÁVRH C / B / B**. V URL sú hodnoty 
 
 Referenčný pôdorys: <http://localhost:5173/koncept-2d?variant=c&heating=b&living=b>.
 
+Spresnenie kuchyne 14. 9. 2026: [samostatný ostrovček](kitchen-island.md) s hotovou doskou 2 640 × 920 mm končí pravou hranou presne na úrovni pracovnej dosky linky oproti. Pravá linka pri stene zostáva v pôvodnej plnej dĺžke až po zadnú hranu ostrovčeka smerom k obývačke; medzi nimi je priechod 900 mm. Odstup 800 mm od sedačky B zostáva. Nadväzujúci architektonický návrh presúva drez s umývačkou na ostrovček a indukciu s integrovaným odsávačom do niky pri stene. Rúra so zasúvacími dvierkami je vo vysokej skrini vedľa chladničky; ostrovček má uzavreté plytké úložisko zo strany obývačky. Najnovšie spresnenie presúva umývačku do krajného východného modulu ostrovčeka smerom k malému oknu, s jednou zásuvkovou skrinkou medzi umývačkou a drezom. Čierne pracovné dosky a dubové čelá všetkých skriniek vracajú pôvodný materiálový charakter. Materiály a svetlo opisuje rovnaký detail kuchyne.
+
 Všetky ďalšie úpravy a opravy vychádzajú z C/B/B. Výber musí prechádzať z pôdorysu do 3D aj dokumentácie. Predvolené hodnoty historických geometrických generátorov sa nemenia; hlavné vstupné stránky používajú `ACTIVE_DESIGN`.
 
 ## Hlavné vstupy a archív
@@ -52,9 +54,19 @@ Po zmene navigácie overiť hlavné vstupy bez parametrov, starý hlavný odkaz 
 
 ## Zachované geometrické rozhodnutia
 
-Dodatočná pravá priečka pri kuchynskej linke a dverách technickej miestnosti bola 13. 9. 2026 na výslovnú žiadosť stavebníka zrušená kvôli vzhľadu interiéru. Pravý koniec linky zostáva otvorený, koncová skrinka a pracovná doska majú pôvodnú dĺžku. Ľavá priečka pri chodbe zostáva. Túto pravú priečku znovu nepridávať bez nového zadania.
+Veľké čelné okno pracovne **FRONT-07** je podľa zadania z 13. 9. 2026 posunuté o **150 mm doprava (na východ), od stola ku skrini**. Otvor je X **24 442–26 442 mm**; rozmery **2 000 × 1 600 mm**, parapet 900 mm a pevné zasklenie s rámom 35 mm zostávajú. Bočné okno EAST-01 nemení polohu. Spoločnú polohu pre pôdorys aj Babylon určuje `ACTIVE_WINDOW_POSITIONS` v `lib/twin-active-house.ts`.
+
+Dodatočná pravá priečka pri kuchynskej linke a dverách technickej miestnosti bola 13. 9. 2026 na výslovnú žiadosť stavebníka zrušená kvôli vzhľadu interiéru. Pravý koniec linky zostáva otvorený. Následnými zadaniami stavebníka z 13.–14. 9. 2026 sa dvere do technickej miestnosti posúvajú o **200 mm doprava (na východ)**, teda pôvodných 150 mm a ďalších 50 mm, otvor je X **26 081–26 881 mm** pri zachovaní šírky 800 mm a krídla 700 mm. Zadná linka sa na pravom konci predlžuje o **200 mm** na X **26 001 mm** vrátane spodných a horných skriniek, pracovnej dosky, obkladu a osvetlenia. Medzera korpusu pred otvorom zostáva 80 mm; táto stavebná úprava nemení obrys ostrovčeka. Následné rozmiestnenie drezu, varenia a rúry je nahradené aktuálnym návrhom v detaile kuchyne. Ľavá priečka pri chodbe zostáva. Pravú priečku znovu nepridávať bez nového zadania.
 
 Akustické steny AK-01 (spálňa / chlapčenská izba) a AK-02 (kúpeľňa / dievčenská izba) majú podľa zadania z 13. 9. 2026 skladbu **SA30: LeierPLAN 10 P10 100 mm + minerálna vata 100 mm + LeierPLAN 10 P10 100 mm**. Hrúbka 300 mm bez omietok a obkladov, poloha líc aj priechod chodby zostávajú. Ide o návrh nenosnej priečky s potrebou statického posúdenia pôvodne nosných úsekov. Pozri [skladbu a poznámky SA30](acoustic-walls.md).
+
+**Finálne zvolené riešenie stavebníka pre AK-03 (pracovňa / kúpeľňa so sprchou) je H200:** od kúpeľne 15 mm VC omietka + 100 mm LeierPLAN 10 N+F, Devecser + 15 mm VC omietka + 45 mm dutina W623 na pružných závesoch Knauf Direktschwingabhänger s 40 mm minerálnou vlnou + 2 × 12,5 mm Silentboard na strane pracovne, spolu **200 mm**. Dutina zahŕňa profil CD 60/27 aj izoláciu. Hydroizolácia, lepidlo, obklad a prípadná finálna stierka sú dodatočné povrchy. Zvolená skladba je záväzná pre hlavný pôdorys, 3D, detail a manuál.
+
+Požiadavka H200 je **Rw ≥ 51 dB**, predbežný výpočet dáva **Rw približne 58 dB**. Ide o výpočtový údaj, nie o meranie presnej zostavy alebo hodnotu R’w dokončenej stavby. Výber skladby je uzavretý; realizačná príprava zahŕňa technické potvrdenie systému na konkrétnom dutinovom murive, stability 100 mm jadra, kotiev, napojení a prestupov. Zachovať obe 15 mm omietky aj presné pružné závesy. Pozri [finálne H200, zdroje a výpočet](office-acoustic-wall-thinner-options.md).
+
+Geometria H200: kúpeľňové líce **Y 6 602 mm**, pracovňové líce **Y 6 402 mm**. Otvor kúpeľne 800 mm aj krídlo 700 mm sú presne na osi X hlavnej chodby, **Y 7 101,5 mm**; otvor Y 6 701,5–7 501,5 mm. Dvere pracovne aj jej vstupný roh sú oproti pôvodnému stavu posunuté o **30 mm k ulici**, čo oproti zálohe s posunom 100 mm znamená návrat o 70 mm. Pracovňový otvor je Y 5 421–6 322 mm a pri stene zostáva 80 mm; na kúpeľňovej strane 99,5 mm. Ide o dostupné modelové úseky pre koordináciu zárubní. Sprcha a aktívne okná zostávajú zachované.
+
+Predchádzajúca **SA25-AKU 274 mm** (12 mm omietka + 250 mm Leiertherm 25/30 AKU Mátraderecske + 12 mm omietka) je uchovaná iba ako [historická záloha](office-acoustic-wall-study.md). Jej pracovňové líce Y 6 328 mm, posun vstupu 100 mm a výrobcom doložených Rw 56 dB patria tejto zálohe; nepoužívajú sa pre aktuálne H200.
 
 Ostatné varianty sa nemažú. Sú dostupné cez `/archiv`; snímky `/v1` a `/v2` zostávajú zachované. Dispozičné štúdie a staršie kombinácie A/B sú historické pracovné alternatívy, nie hlavný návrh.
 
@@ -65,3 +77,9 @@ Sekcie: `/` prehľad projektu, `/docs` dokumentácia, `/3d` dom v 3D, `/podorys`
 Hranica parcely 6012/26 sa odvodzuje z nezmeneného katastrálneho polygónu S-JTSK. Aktívny pôdorys aj 3D používajú spoločný `twin-active-site.ts`. Pôvodný lokálny rámec C3 a historické osadenie zostávajú v `twin-site.ts`.
 
 Používateľ potvrdil platnosť C3 a následne požiadal **uličný aj pravý (východný) kolmý odstup presne 3 000 mm**. Revízia `CLIENT-PLACEMENT-20260913` v `twin-house-placement.ts` posúva celý dom o 77,913405454 mm doprava oproti pôvodnému osadeniu; Y sa nemení. Rozmery, dispozícia a vnútorné súradnice domu zostávajú zachované. Pevné prvky pozemku sa zobrazujú v posunutom rámci domu; prístupy a plot sa napájajú na tento rámec. Stav je `CLIENT_REQUESTED_SETBACK`, nie geodetické zameranie stavby. Ostatné odstupy sa naďalej odvodzujú kolmo ku katastrálnym hranám.
+
+## Odborné zdôvodnenie H200
+
+Detail pri zárubniach sa riadi [D1 — napojenie H200](office-acoustic-wall-junction.md) na `/docs/akustika-h200/napojenie`: pevné spoločné ostenie, systémové podtesnenie a dve nadväzujúce škáry J1/J2. Polohy dverí a obálka H200 zostávajú; 5 mm spoje sú dokumentované vo zväčšenom detaile.
+
+[Odborná technická správa — princíp, metodika, výpočet a literatúra](office-acoustic-wall-scientific-rationale.md) je súčasne dostupná v aplikácii na `/docs/akustika-h200`, z prehľadu dokumentácie a priamo z detailu AK-03. Obsahuje dôvody ponechania oboch Silentboard dosiek spolu a rozlíšenie výsledkov [výskumu NRC](https://nrc-publications.canada.ca/eng/view/object/?id=768bf32f-8313-435f-ab85-8680efba61b2) od predbežného výpočtu H200. Spoločný obsah je v `lib/h200-research.json`; Markdown sa obnovuje cez `node scripts/plan-documentation/generate-h200-research.mjs`.

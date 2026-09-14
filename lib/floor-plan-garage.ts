@@ -53,8 +53,9 @@ function insulationBands(gardenRecess:boolean,loggia:{bounds:RectMm}):RectMm[] {
     rect(west,front,west+t,gardenRecess?loggia.bounds.y0:garden),
   ];
   if(gardenRecess){
-    // Garage back wall towards the loggia and the room 1.10 cheek, flush with the spine wall.
-    bands.push(rect(west+t,loggia.bounds.y0-t,loggia.bounds.x1,loggia.bounds.y0),rect(loggia.bounds.x1,loggia.bounds.y0,SPINE_WEST_XMM,garden));
+    // Carry the room 1.10 cheek into the back-wall band: meeting only at
+    // one point leaves a masonry square interrupting the insulated corner.
+    bands.push(rect(west+t,loggia.bounds.y0-t,loggia.bounds.x1,loggia.bounds.y0),rect(loggia.bounds.x1,loggia.bounds.y0-t,SPINE_WEST_XMM,garden));
   }
   return bands;
 }

@@ -754,6 +754,12 @@ test("renders active C as a measured model manual while retaining the editable s
   const html=await response.text();
   for(const label of ['Pôdorys domu','Archívna zostava','Miestnosti a súpis predmetov','Výber a informácie o návrhu','Terasy pri dome','Zobraziť celý dom','Jednotky rozmerov','Hľadať prvky v zvolenej oblasti'])assert.ok(html.includes(label),label);
   assert.match(html,/class="pd-plan"/);
+  const kitchenPlanSvg=html.match(/<svg\b[^>]*class="pd-plan"[^>]*>([\s\S]*?)<\/svg>/)?.[1];
+  assert.ok(kitchenPlanSvg,'The default working plan must render an SVG.');
+  assert.match(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-hob"/);
+  assert.match(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-sink"/);
+  assert.doesNotMatch(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-(?:upper|extractor)"/,
+    'The upper cabinets and canopy must not paint over the hob at the normal plan cut.');
   assert.match(html,/data-item="Spálňa za novou priečkou"/);
   assert.match(html,/Práčka/);
   assert.match(html,/Sušička/);
@@ -792,7 +798,7 @@ test("renders active C as a measured model manual while retaining the editable s
   const manualBHtml=await manualB.text();
   assert.match(manualBHtml,/obývačka 1\.03 vo variante B/);
   assert.match(manualBHtml,/Jedálenský stôl 900 × 2 000 mm pre šesť osôb stojí pozdĺž západnej steny/);
-  assert.match(manualBHtml,/Polostrov je posunutý o 346 mm k obývačke/);
+  assert.match(manualBHtml,/Samostatný kuchynský ostrovček má pracovnú dosku 2 640 × 920 mm/);
   assert.match(manualHtml,/Jedálenský stôl 2 000 × 900 mm pre šesť osôb/);
   assert.match(manualHtml,/Jedálenská stolička 6/);
   const study=await render('/archiv/podorys?variant=c&mode=study');
@@ -893,5 +899,62 @@ test('canonicalizes stale main-route selections to C/B/B and preserves the reque
       assert.equal(target.searchParams.get('site'),'1');
       assert.equal(target.searchParams.get('view'),'manual');
     }
+  }
+});
+
+test('prints each acoustic plan with its own hatch definitions and the centred bathroom axis', async () => {
+  const response = await render('/koncept-2d?variant=c&heating=b&living=b&view=manual');
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /pd-office-acoustic-sheet/);
+  assert.match(html, /data-bathroom-door-axis="7101\.5"/);
+  assert.match(html, /H200/);
+  assert.match(html, /Rw ≈ 58 dB/);
+  assert.match(html, /predbežný odhad/);
+  assert.doesNotMatch(html, /SA25-AKU|Rw 56 dB/);
+  const ids = [...html.matchAll(/<pattern id="(pd-pattern-[^"]+)"/g)].map(m => m[1]);
+  assert.ok(ids.length > 10, 'manual contains multiple independently rendered plans');
+  assert.equal(new Set(ids).size, ids.length, 'a hidden plan must not capture another plan’s paint servers');
+  const references = [...html.matchAll(/fill="url\(#(pd-pattern-[^)]+)\)"/g)].map(m => m[1]);
+  for (const reference of references) assert.ok(ids.includes(reference), `missing hatch ${reference}`);
+  assert.ok(references.some(id => id.endsWith('-masonry')));
+  assert.ok(references.some(id => id.endsWith('-plaster')));
+  assert.ok(references.some(id => id.endsWith('-gypsum-board')));
+});
+
+test('links the H200 technical rationale and distinguishes NRC evidence from the project prediction', async () => {
+  const reportResponse = await render('/docs/akustika-h200');
+  assert.equal(reportResponse.status, 200);
+  const report = await reportResponse.text();
+  for (const id of ['abstrakt','nrc','poradie-dosiek','vypocet','neistoty','literatura','zdroj-1','zdroj-5']) assert.ok(report.includes(`id="${id}"`), id);
+  assert.ok(report.includes('768bf32f-8313-435f-ab85-8680efba61b2'));
+  assert.ok(report.includes('Nie je protokolom vlastného laboratórneho experimentu'));
+  assert.ok(report.includes('58 dB'));
+  assert.ok(report.includes('51 dB'));
+  assert.ok(report.includes('63,60 Hz'));
+  for (const path of ['/docs','/docs/manual?variant=c&heating=b&living=b']) {
+    const response=await render(path);
+    assert.equal(response.status,200);
+    assert.ok((await response.text()).includes('href="/docs/akustika-h200"'),path);
+  }
+});
+
+test('documents both H200 jamb contacts and links the enlarged junction from the manual', async () => {
+  const response = await render('/docs/akustika-h200/napojenie');
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.ok(html.includes('D-AK03-01 / R1'));
+  assert.ok(html.includes('J1: čelá oboch Silentboard'));
+  assert.ok(html.includes('J2: aj pod lícom vonkajšej dosky'));
+  assert.ok(html.includes('W623.de-B2'));
+  assert.ok(html.includes('75 mm dorovnanie + 5 mm spoj J2'));
+  assert.ok(html.includes('neurčuje výsledné Rw'));
+  assert.ok(html.includes('J1 oddeliť pásikom, J2 uzavrieť mäkko'));
+  assert.ok(html.includes('Medzi rovnobežné plochy J2 nedávať tvrdý Uniflott ani maltu'));
+  for (const id of ['zdroj-1', 'zdroj-2', 'zdroj-3', 'zdroj-4', 'zdroj-5']) assert.ok(html.includes(`id="${id}"`));
+  for (const path of ['/docs/akustika-h200','/docs/manual?variant=c&heating=b&living=b']) {
+    const linked = await render(path);
+    assert.equal(linked.status, 200);
+    assert.ok((await linked.text()).includes('href="/docs/akustika-h200/napojenie"'));
   }
 });
