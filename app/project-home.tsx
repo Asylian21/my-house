@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { ArrowUpRight, BookOpen, Box, FileText, MapPinned, PanelsTopLeft, Archive, ArrowRight } from 'lucide-react';
 import { ProjectNav } from './project-nav';
 import { SiteDrawing } from './site-drawing';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, type Dispatch, type SetStateAction } from 'react';
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { designHref } from '@/lib/twin-design-selection';
 import { ArrowLeft, ArrowUpRight, Check, Download, Expand, LockKeyhole, Minus, Plus, RotateCcw, Ruler, SlidersHorizontal } from 'lucide-react';
 import { HOUSE } from '@/lib/twin-site';

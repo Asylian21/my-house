@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { Fragment } from 'react';
 import report from '@/lib/h200-research.json';
 import { OFFICE_ACOUSTIC_ASSEMBLY } from '@/lib/acoustic-walls';

@@ -3,7 +3,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type CSSProperties } from 'react';
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { Archive, ArrowDownToLine, ArrowUpRight, BookOpen, Box, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Copy, Download, File, FileCode2, FileImage, FileText, Folder, FolderClosed, FolderOpen, LayoutGrid, List, LoaderCircle, Maximize2, Menu, PanelLeftClose, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { ProjectNav } from '../project-nav';
 import { designHref } from '@/lib/twin-design-selection';

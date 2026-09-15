@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { Archive, BookOpen, Box, House, LayoutDashboard, PanelsTopLeft } from 'lucide-react';
 import { ACTIVE_DESIGN, designHref, type TwinDesignSelection } from '@/lib/twin-design-selection';
 import './project.css';

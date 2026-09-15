@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { flushSync } from 'react-dom';
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { ArrowDownToLine, ArrowLeft, ArrowUpRight, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Contrast, FileSpreadsheet, Focus, Hand, ImageDown, Layers3, List, Maximize2, Minus, MousePointer2, Palette, PanelLeftClose, PanelLeftOpen, Plus, Printer, Ruler, Search, X } from 'lucide-react';
 import { PLAN_CATEGORIES, PLAN_FULL_BOUNDS, PLAN_ITEM_BY_ID, PLAN_MESH_BY_ID, PLAN_ROOMS, fitPlanRect, formatMm, numberSk, planItemsFor, planRoomNotes, rectSize, searchPlanItems, zoomPlanAt, type PlanCategory, type PlanItem } from '@/lib/plan-documentation';
 import { EXPORT_LEVELS, type ExportLevel } from '@/lib/plan-export';

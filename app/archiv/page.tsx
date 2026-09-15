@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import { Archive, ArrowUpRight } from 'lucide-react';
 import { ProjectNav } from '../project-nav';
 import '../globals.css';

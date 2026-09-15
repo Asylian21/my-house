@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/app/project-link';
 import junction from '@/lib/h200-junction.json';
 import { designHref } from '@/lib/twin-design-selection';
 import { ProjectNav } from '../../../project-nav';
