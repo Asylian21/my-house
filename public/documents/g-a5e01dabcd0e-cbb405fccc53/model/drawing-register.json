@@ -1,0 +1,152 @@
+[
+  {
+    "id": "D1.1.000-C",
+    "title": "Register výkresov a otvorených bodov",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "register"
+  },
+  {
+    "id": "D1.1.002-C-RE",
+    "title": "Existujúci pôdorys · stopy rezov",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-01",
+    "title": "Južná (uličná) fasáda",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-02",
+    "title": "Východná fasáda",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-03",
+    "title": "Záhradná (severná) fasáda",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-04",
+    "title": "Západný štít garáže",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-05",
+    "title": "Západná stena krídla",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-06",
+    "title": "Štít krídla · portál krytej terasy",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-07",
+    "title": "Krytá terasa · zasklená stena",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.PO-08",
+    "title": "Lodžia · zadná stena garáže",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.RE-01",
+    "title": "A-A · Pozdĺžny rez krídlom",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.RE-02",
+    "title": "B-B · Priečny rez katedrálovým stropom",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.RE-03",
+    "title": "C-C · Priečny rez hlavným traktom",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.ZA-01",
+    "title": "Základy · nosné línie a ťažké priečky",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "D1.1.ZA-02",
+    "title": "Monolitické založenie · rozmery a väzby",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 10"
+  },
+  {
+    "id": "D1.1.ZA-03",
+    "title": "Základy · priestorový pohľad na pásy a rebrá",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "axonometria"
+  },
+  {
+    "id": "D1.1.ST-01",
+    "title": "Pôdorys strechy",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "C.SI-01",
+    "title": "Situácia osadenia · ulica",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "C.SI-02",
+    "title": "Situácia osadenia · záhrada",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  },
+  {
+    "id": "C.UP-01",
+    "title": "Kontrola územného plánu",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "tabuľka"
+  },
+  {
+    "id": "D1.1.OT-01",
+    "title": "Výpis okien a vonkajších dverí",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "tabuľka"
+  },
+  {
+    "id": "D1.1.OT-02",
+    "title": "Výpis vnútorných dverí",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "tabuľka"
+  },
+  {
+    "id": "D1.1.SK-01",
+    "title": "Skladby konštrukcií · register",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "tabuľka"
+  },
+  {
+    "id": "D1.1.DT-01",
+    "title": "Akustické steny H200 / SM30",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 5"
+  },
+  {
+    "id": "D1.1.TZ-01",
+    "title": "Podlahové vykurovanie a rozsah povaly",
+    "status": "NOT_FOR_CONSTRUCTION",
+    "scale": "1 : 50"
+  }
+]

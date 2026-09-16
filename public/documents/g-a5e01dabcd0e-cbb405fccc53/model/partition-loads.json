@@ -1,0 +1,254 @@
+{
+  "status": "PRODUCT_SELECTION_REQUIRED",
+  "basis": {
+    "status": "PRODUCT_SELECTION_REQUIRED",
+    "product": "Klasická obvodová keramická tehla 300 mm · výrobok neurčený",
+    "note": "Single 300 mm ceramic masonry. The previous SA30 two-leaf mass is superseded; no current product mass or final design load is established."
+  },
+  "sources": {
+    "geometry": [
+      "lib/acoustic-walls.ts",
+      "lib/floor-plan-concept.ts",
+      "lib/plan-export.ts"
+    ],
+    "revision": "CLIENT-SM30-20260916"
+  },
+  "walls": [
+    {
+      "wallId": "C-OPEN-HALL-N",
+      "code": "AK-01",
+      "assemblyCode": "SM30",
+      "role": "PARTITION",
+      "location": "Spálňa / chlapčenská izba",
+      "rectMm": {
+        "x0": 14943,
+        "y0": 7651,
+        "x1": 15243,
+        "y1": 10699
+      },
+      "alongAxis": "y",
+      "centerlineMm": [
+        [
+          15093,
+          7651
+        ],
+        [
+          15093,
+          10699
+        ]
+      ],
+      "heightMm": 3125,
+      "lengthMm": 3048,
+      "areaM2": 9.525,
+      "areaDefinition": "One wall elevation, one continuous 300 mm masonry layer.",
+      "wallIntervalsMm": [
+        {
+          "axis": "y",
+          "fromMm": 7651,
+          "toMm": 10699,
+          "baseZmm": 0,
+          "topZmm": 3125,
+          "heightMm": 3125
+        }
+      ],
+      "leaves": [
+        {
+          "id": "MASONRY",
+          "material": "masonry",
+          "thicknessMm": 300,
+          "rectMm": {
+            "x0": 14943,
+            "y0": 7651,
+            "x1": 15243,
+            "y1": 10699
+          },
+          "centerlineMm": [
+            [
+              15093,
+              7651
+            ],
+            [
+              15093,
+              10699
+            ]
+          ],
+          "modelMeshIds": [
+            "mesh-484"
+          ],
+          "modelMeshNames": [
+            "Vnútorná stena C-OPEN-HALL-N · SM30 · MASONRY · Klasická obvodová tehla 300 mm"
+          ],
+          "baseZmm": 0,
+          "topZmm": 3125,
+          "heightMm": 3125,
+          "lengthMm": 3048,
+          "areaM2": 9.525,
+          "bricksOnly": {
+            "kgPerM2": null,
+            "kgPerM": null,
+            "kNPerM": null,
+            "totalKg": null
+          },
+          "unplastered": {
+            "kgPerM2": null,
+            "kgPerM": null,
+            "kNPerM": null,
+            "totalKg": null
+          }
+        }
+      ],
+      "bricksOnly": {
+        "kgPerM2": null,
+        "kgPerM": null,
+        "kNPerM": null,
+        "totalKg": null
+      },
+      "unplastered": {
+        "kgPerM2": null,
+        "kgPerM": null,
+        "kNPerM": null,
+        "totalKg": null
+      },
+      "missingAdditions": [
+        {
+          "id": "SELECTED_300_MM_BRICK_AND_MORTAR",
+          "totalKg": null,
+          "note": "Specify the same ordinary 300 mm brick as the exterior masonry and its declared mass."
+        },
+        {
+          "id": "PLASTER_AND_SURFACE_FINISHES",
+          "totalKg": null,
+          "note": "Room plaster and bathroom waterproofing, adhesive and tiles are additional finishes."
+        },
+        {
+          "id": "CONNECTIONS_AND_ATTACHED_EQUIPMENT",
+          "totalKg": null,
+          "note": "Include the sanitary frame, connections and equipment with the actual load path."
+        }
+      ],
+      "finalDesignLineLoad": null,
+      "finalDesignApproved": false
+    },
+    {
+      "wallId": "C-OPEN-HALL-S",
+      "code": "AK-02",
+      "assemblyCode": "SM30",
+      "role": "PARTITION",
+      "location": "Kúpeľňa / dievčenská izba",
+      "rectMm": {
+        "x0": 14943,
+        "y0": 3504,
+        "x1": 15243,
+        "y1": 6552
+      },
+      "alongAxis": "y",
+      "centerlineMm": [
+        [
+          15093,
+          3504
+        ],
+        [
+          15093,
+          6552
+        ]
+      ],
+      "heightMm": 3125,
+      "lengthMm": 3048,
+      "areaM2": 9.525,
+      "areaDefinition": "One wall elevation, one continuous 300 mm masonry layer.",
+      "wallIntervalsMm": [
+        {
+          "axis": "y",
+          "fromMm": 3504,
+          "toMm": 6552,
+          "baseZmm": 0,
+          "topZmm": 3125,
+          "heightMm": 3125
+        }
+      ],
+      "leaves": [
+        {
+          "id": "MASONRY",
+          "material": "masonry",
+          "thicknessMm": 300,
+          "rectMm": {
+            "x0": 14943,
+            "y0": 3504,
+            "x1": 15243,
+            "y1": 6552
+          },
+          "centerlineMm": [
+            [
+              15093,
+              3504
+            ],
+            [
+              15093,
+              6552
+            ]
+          ],
+          "modelMeshIds": [
+            "mesh-483"
+          ],
+          "modelMeshNames": [
+            "Vnútorná stena C-OPEN-HALL-S · SM30 · MASONRY · Klasická obvodová tehla 300 mm"
+          ],
+          "baseZmm": 0,
+          "topZmm": 3125,
+          "heightMm": 3125,
+          "lengthMm": 3048,
+          "areaM2": 9.525,
+          "bricksOnly": {
+            "kgPerM2": null,
+            "kgPerM": null,
+            "kNPerM": null,
+            "totalKg": null
+          },
+          "unplastered": {
+            "kgPerM2": null,
+            "kgPerM": null,
+            "kNPerM": null,
+            "totalKg": null
+          }
+        }
+      ],
+      "bricksOnly": {
+        "kgPerM2": null,
+        "kgPerM": null,
+        "kNPerM": null,
+        "totalKg": null
+      },
+      "unplastered": {
+        "kgPerM2": null,
+        "kgPerM": null,
+        "kNPerM": null,
+        "totalKg": null
+      },
+      "missingAdditions": [
+        {
+          "id": "SELECTED_300_MM_BRICK_AND_MORTAR",
+          "totalKg": null,
+          "note": "Specify the same ordinary 300 mm brick as the exterior masonry and its declared mass."
+        },
+        {
+          "id": "PLASTER_AND_SURFACE_FINISHES",
+          "totalKg": null,
+          "note": "Room plaster and bathroom waterproofing, adhesive and tiles are additional finishes."
+        },
+        {
+          "id": "CONNECTIONS_AND_ATTACHED_EQUIPMENT",
+          "totalKg": null,
+          "note": "Include the sanitary frame, connections and equipment with the actual load path."
+        }
+      ],
+      "finalDesignLineLoad": null,
+      "finalDesignApproved": false
+    }
+  ],
+  "totals": {
+    "bricksOnlyKg": null,
+    "unplasteredKg": null
+  },
+  "finalDesignLineLoad": null,
+  "finalDesignApproved": false
+}
