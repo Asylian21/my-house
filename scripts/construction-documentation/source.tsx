@@ -36,13 +36,7 @@ export function drawingSource() {
   ];
   // buildGables uses a vertical surface, not a specified structural wall assembly.
   const garageGable={source:'lib/babylon-scene.ts:buildGables',planeMm:HOUSE.originMm.x-8,vertices:[[HOUSE.originMm.y,HOUSE.eavesElevationMm],[HOUSE.originMm.y+HOUSE.lowerBar.depthMm/2,HOUSE.ridgeElevationMm],[HOUSE.originMm.y+HOUSE.lowerBar.depthMm,HOUSE.eavesElevationMm]]};
-  const h200Joints=Object.fromEntries(['J1','J2'].map(code=>{
-    const row=h200Junction.geometry.find(([label])=>label.startsWith(code));
-    const values=row?.[1].match(/X ([\d ]+)–([\d ]+); Y ([\d ]+)–([\d ]+) mm/);
-    if(!values)throw new Error(`Missing source geometry for ${code}`);
-    const [x0,x1,y0,y1]=values.slice(1).map(v=>Number(v.replaceAll(' ','')));
-    return [code,{x0,x1,y0,y1}];
-  }));
+  const h200Joints=h200Junction.joints;
   const entry=SITE_SURFACES.entry;
   const entryOpening=CODED_OPENINGS.find(o=>o.item.id.endsWith(` ${entry.accessOpeningId}`));
   if(!entryOpening?.facade)throw new Error('Main entry opening is missing from the canonical plan');

@@ -2,7 +2,7 @@
 
 **Stav rozhodnutia: historická záložná možnosť.** Stavebník 13. 9. 2026 odmietol hrúbku 274 mm ako príliš veľkú a požiadal toto riešenie zachovať iba pre prípadný návrat. Následne výslovne zvolil **H200 ako finálnu skladbu AK-03** so zachovanou tehlou Leier a požadovaným Rw najmenej 51 dB. Nasledujúci text uchováva technický podklad a geometriu pôvodnej 274 mm zálohy; jeho posun vstupu 100 mm, plochy miestností a Rw 56 dB nepatria aktuálnemu H200.
 
-Aktuálna dokumentácia: [finálne H200 — 200 mm hybrid, výpočet a vycentrovanie dverí](office-acoustic-wall-thinner-options.md). H200 má líca Y = 6 402 a 6 602 mm, vstup pracovne posunutý o 30 mm k ulici a 80 mm úsek pri stene. Os kúpeľňového otvoru aj krídla Y = 7 101,5 mm zostáva zachovaná. Údaj Rw približne 58 dB pre H200 je predbežný výpočet, nie meranie presnej zostavy.
+Aktuálna dokumentácia po revízii 16. 9. 2026: [H200 — 187,5 mm hybrid s jednou Silentboard, výpočet a zarovnanie líca](office-acoustic-wall-thinner-options.md). H200 má líca Y = 6 364,5 a 6 552 mm; kúpeľňové líce nadväzuje na líce chodbovej priečky. Pri pracovňovom otvore zostáva úsek 42,5 mm. Os kúpeľňového otvoru aj krídla Y = 7 101,5 mm zostáva zachovaná. Údaj Rw približne 55,77 dB (zaokrúhlene 56 dB) pre H200 je predbežný výpočet, nie meranie presnej zostavy.
 
 Záloha pre stenu **AK-03** medzi pracovňou 1.04 a kúpeľňou s práčovňou 1.05 používa akustické murivo **Leiertherm 25/30 AKU z výrobne Mátraderecske**, orientované na hrúbku 250 mm. S predpísanými omietkami má skladba **274 mm** a výrobcom doložené **Rw = 56 dB** pri dodržaní uvedeného vyhotovenia.[^1][^2]
 
@@ -14,7 +14,7 @@ Toto je geometrické riešenie záložnej skladby. Doložený akustický paramet
 
 Zadanie spája tri podmienky: zachovať tehlu Leier, dosiahnuť najmenej Rw 51 dB a umiestniť vstup do kúpeľne presne do osi centrálnej chodby. Sledovaná stena je vodorovný úsek dlhý 4 758 mm. Na kúpeľňovej strane nadväzuje sprcha a radiátor, na pracovňovej strane vstup a tabuľa. Preto nestačí porovnať iba celkové hrúbky materiálov.
 
-Rozhodujúci je súčasne priestor pre dverný otvor, obložku, napojenie priečky a vybavenie. Záložná štúdia vychádzala z hlavného návrhu C/B/B a jeho osadenia domu. Ostatné dve akustické steny AK-01 a AK-02 zostávajú samostatnou skladbou SA30. Hodnota 56 dB záložného muriva sa na ne neprenáša.
+Rozhodujúci je súčasne priestor pre dverný otvor, obložku, napojenie priečky a vybavenie. Záložná štúdia vychádzala z hlavného návrhu C/B/B a jeho osadenia domu. Pri vzniku tejto záložnej štúdie mali AK-01 a AK-02 skladbu SA30. Od 16. 9. 2026 ju nahrádza jedna 300 mm obvodová tehla SM30 so zachovaným účelom odhlučnenia; aktuálny stav je v [prehľade stien](acoustic-walls.md). Hodnota 56 dB záložného muriva sa na ne neprenáša.
 
 Vybraný výrobok patrí do akustického radu **Leiertherm AKU**. Nie je to bežná LeierPLAN 25 ani spojené priečkovky LeierPLAN 10. Zmena produktového radu je vecnou súčasťou rozhodnutia: zachováva výrobcu a pálenú tehlu, ale poskytuje doložený výsledok celého muriva s povrchmi.
 
@@ -87,7 +87,7 @@ Vlna sa v sadrokartónovej predstene ukladá medzi profily. Jej hrúbka sa nepri
 
 Rigips napríklad uvádza Habito H na R-CW 50 s predstenou 77,5 mm a zlepšenie až 19 dB na referenčnej PTH 11,5 AKU profi. Súčet s obojstranne omietnutým 100 mm jadrom vychádza geometricky 207,5 mm, ale výsledok skúšky inej tehly tým nevznikne. Pri výške modelu 3 125 mm tiež nemožno automaticky použiť rozstup profilov z variantu limitovaného na 3 000 mm.[^5]
 
-Podobne Knauf publikuje pri W626 zlepšenie ΔRw 23 dB pre dvojité opláštenie Diamant a 25 dB pre Silentboard; základom je však **pórobetón 175 mm s Rw 38 dB**. Výrobca vysvetľuje závislosť výsledku od pôvodnej steny.[^6] Výpočet „35 + 23 = 58 dB“ pre LeierPLAN 10 by bol nepodloženou deklaráciou. Následne zvolené H200 používa iný podklad: individuálny predbežný výpočet z Rw základnej Leier steny, hmotností plášťov a dutiny. Jeho približne 58 dB nevzniká pripočítaním uvedeného katalógového zlepšenia.
+Podobne Knauf publikuje pri W626 zlepšenie ΔRw 23 dB pre dvojité opláštenie Diamant a 25 dB pre Silentboard; základom je však **pórobetón 175 mm s Rw 38 dB**. Výrobca vysvetľuje závislosť výsledku od pôvodnej steny.[^6] Výpočet „35 + 23 = 58 dB“ pre LeierPLAN 10 by bol nepodloženou deklaráciou. Následne zvolené H200 používa iný podklad: individuálny predbežný výpočet z Rw základnej Leier steny, hmotností plášťov a dutiny. Aktuálnych približne 55,77 dB pri jednej doske nevzniká pripočítaním uvedeného katalógového zlepšenia.
 
 ## 7. Akustika celej miestnosti
 

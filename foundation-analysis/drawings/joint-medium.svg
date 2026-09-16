@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="527.2755905511812" height="112" preserveAspectRatio="xMinYMin meet" viewBox="0 0 527 112" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="527.2755905511812" height="112"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-112)" style="clip-path: url(#clip)">
+		<g transform="">
+			<text x="5" y="100" style="font-family: DVB; font-size: 9px;fill: rgb(65%,22%,19%); stroke:none;" transform="translate(0,200) scale(1,-1)">J / KANDIDÁT SPOJA - VÝSTUŽ NIE JE SCHVÁLENÁ NA REALIZÁCIU</text>
+			<rect x="10" y="8" width="150" height="33" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 1; fill: rgb(74%,77%,79%); fill-rule: evenodd;"/>
+			<rect x="20" y="41" width="130" height="36" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<path d="M 10,41 L 160,41 Z" style="stroke: rgb(64%,36%,12%); stroke-linecap: butt; stroke-width: 1.2; stroke-dasharray: 4, 2;"/>
+			<path d="M 45,19 L 45,68 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.6;"/>
+			<path d="M 115,19 L 115,68 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.6;"/>
+			<text x="165" y="61" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,122) scale(1,-1)">2 rady Ø10/250; zapustenie300 mm*</text>
+			<text x="165" y="46" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,92) scale(1,-1)">Oranžová: zdrsnená pracovná škára</text>
+			<text x="165" y="31" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,62) scale(1,-1)">*Len geometrický kandidát; ETA a okrajové</text>
+			<text x="165" y="18" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,36) scale(1,-1)">porušenie, šmyk, výstuž a trhliny neoverené.</text>
+		</g>
+	</g>
+</svg>

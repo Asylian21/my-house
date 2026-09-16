@@ -17,6 +17,12 @@ assert(register.every(s=>s.status==='NOT_FOR_CONSTRUCTION'));
 assert(!('foundations' in d),'Archived foundation solids must not be current design input');
 assert.equal(d.design.livingLayout,'B');
 assert.equal(d.design.heatingLayout,'B');
+assert.deepEqual(d.walls.find(w=>w.id==='C-GARAGE-PARTITION').rectMm,{x0:11003,y0:5744,x1:11143,y1:8749});
+assert.deepEqual(d.walls.find(w=>w.id==='C-GARAGE-BAY-RETURN').rectMm,{x0:11003,y0:5604,x1:12982,y1:5744});
+assert.equal(d.rooms.find(r=>r.number==='1.12').activeDesignAreaM2,25.151355);
+assert.deepEqual(d.walls.find(w=>w.id==='C-GARAGE-SPINE-N').rectMm,{x0:10842,y0:8749,x1:11143,y1:10699});
+assert.equal(d.gridX.find(a=>a.label==='B').at,10993,'Thin internal partition must not move the original grid');
+assert(d.interiorMeshes.some(({mesh})=>mesh.name.includes('C-GARAGE-PARTITION')&&Math.abs(mesh.rect.x1-mesh.rect.x0-140)<.01),'Export must contain the measured 140 mm wall');
 assert.equal(d.clientBrief.datum.elevationM,184.2);
 assert.equal(d.clientBrief.datum.finishedFloorAboveRoadMm,null,'Street datum must not silently become FFL');
 assert.equal(d.elevations.floor.absoluteM,null);
@@ -63,14 +69,14 @@ assert.equal(partitionRib.sourceKind,'OWN_WEIGHT_PARTITION_SUPPORT');
 assert.deepEqual(partitionRib.loadedIntervalsMm.slice().sort((a,b)=>a.from-b.from),[{code:'AK-02',from:3504,to:6552},{code:'AK-01',from:7651,to:10699}]);
 verifyPartitionLoads(d.partitionLoads);
 assert.deepEqual(d.partitionLoads,derivePartitionLoads(d),'Stored load values must reproduce from the exact exported model');
-assert.equal(d.partitionLoads.totals.unplasteredKg,2781.3);
-assert.equal(d.partitionLoads.totals.bricksOnlyKg,2743.2);
+assert.equal(d.partitionLoads.totals.unplasteredKg,null);
+assert.equal(d.partitionLoads.totals.bricksOnlyKg,null);
 for(const wall of d.partitionLoads.walls){
   assert.equal(wall.heightMm,3125,'Use the real masonry height, not the suspended ceiling');
   assert.equal(wall.lengthMm,3048);
-  assert.equal(wall.unplastered.kgPerM,456.25);
-  assert.equal(wall.bricksOnly.kgPerM,450);
-  assert.deepEqual(wall.leaves.map(l=>l.centerlineMm[0][0]-partitionRib.points[0][0]),[-100,100]);
+  assert.equal(wall.unplastered.kgPerM,null);
+  assert.equal(wall.bricksOnly.kgPerM,null);
+  assert.deepEqual(wall.leaves.map(l=>l.centerlineMm[0][0]-partitionRib.points[0][0]),[0]);
 }
 const streetW=foundationViewPoint([6440,3000]),streetE=foundationViewPoint([28040,3000]),gardenE=foundationViewPoint([28040,22035]);
 assert(streetE[0]>streetW[0]);assert.equal(streetE[1],streetW[1],'Street edge should be horizontal');
@@ -92,7 +98,7 @@ for(const r of ax.ribs){
     assert(r.sourceIds.every(id=>d.walls.some(w=>w.id===id&&w.role==='PARTITION')));
     assert(r.sourceIds.every(id=>d.partitionLoads.walls.some(w=>w.wallId===id)));
   }
-  if(r.sourceKind==='MODEL_LOAD_BEARING_WALL')assert(!r.sourceIds.some(id=>ax.notRoofLoadBearingWalls.includes(id)),'SA30 own-weight support must not turn it into a roof or ceiling bearing wall');
+  if(r.sourceKind==='MODEL_LOAD_BEARING_WALL')assert(!r.sourceIds.some(id=>ax.notRoofLoadBearingWalls.includes(id)),'SM30 own-weight support must not turn it into a roof or ceiling bearing wall');
 }
 assert.equal(d.foundationFloorLevelMm,null,'An unknown strip/slab/floor joint cannot determine FFL');
 assert.equal(d.entryProposal.status,'COORDINATION_PROPOSAL');
@@ -116,6 +122,13 @@ for(const o of rows){assert.equal(o.end-o.start,o.width,`${o.code}: opening widt
 assert.equal(rows.find(o=>o.code==='O4').kind,'fixed');
 assert.equal(rows.find(o=>o.code==='D8').width,901);
 assert.equal(rows.find(o=>o.code==='D9').start,6701.5);
+const gardenPortal=rows.find(o=>o.code==='D5');
+assert.equal(gardenPortal.id,'Terasové presklenie 2200');
+assert.equal(gardenPortal.width,2200);
+assert.equal(gardenPortal.height,2400);
+assert.equal(gardenPortal.sill,0);
+assert.equal(gardenPortal.start,11990);
+assert.equal(gardenPortal.end,14190);
 assert.equal(d.triangle.vertices[2][1],4469.649649649649);
 assert.equal(Math.max(...sectionRoof(d,CUTS[2]).flatMap(s=>[s.a[1],s.b[1]])),4312.804878048781);
 assert.deepEqual(sectionGarageGable(d,CUTS[2]),{at:6432,bottom:3125,top:4312.804878048781});
@@ -129,14 +142,14 @@ assert.equal(d.h200Joints.J1.x1-d.h200Joints.J1.x0,5);
 assert.equal(d.h200Joints.J2.y1-d.h200Joints.J2.y0,5);
 assert.equal(sectionPorchEnvelope(d,CUTS[0]).filter(p=>p.kind==='LARCH_GABLE').at(-1).points[2][1],5500);
 for(const c of CUTS){const points=sectionDimensionPoints(d,c);assert(points.every(Number.isFinite));assert(points.every((v,i)=>!i||v>points[i-1]));}
-const report={sheetCount:register.length,checks:['codes and opening chains','three shared cuts','active B/B','no historical foundation input','O4 fixed','O11 profile','real cut roof height','full cast L and unreflected view','R7 own-weight intervals and unchanged partition role','SA30 mass from mesh height and declared product facts'],partitionSelfWeight:{status:d.partitionLoads.status,unplasteredKg:d.partitionLoads.totals.unplasteredKg,bricksOnlyKg:d.partitionLoads.totals.bricksOnlyKg,finalDesignApproved:false},color:{},mono:{}};
+const report={sheetCount:register.length,checks:['codes and opening chains','three shared cuts','active B/B','no historical foundation input','O4 fixed','O11 profile','real cut roof height','full cast L and unreflected view','R7 own-weight intervals and unchanged partition role','SM30 single masonry layer and explicitly unknown mass pending product selection'],partitionSelfWeight:{status:d.partitionLoads.status,unplasteredKg:d.partitionLoads.totals.unplasteredKg,bricksOnlyKg:d.partitionLoads.totals.bricksOnlyKg,finalDesignApproved:false},color:{},mono:{}};
 const browser=await chromium.launch({headless:true});
 try{for(const variant of ['color','mono']){
   const page=await browser.newPage();await page.goto(new URL(`file://${resolve(out,`drawing-set-${variant}.html`)}`).href);await page.evaluate(()=>document.fonts.ready);
   const currentBrief=await page.locator('[data-sheet="D1.1.ZA-02"]').innerText();
   assert(currentBrief.includes('1 : 10')&&currentBrief.includes('200 mm = 20 mm'));
   const heavyWallsSheet=await page.locator('[data-sheet="D1.1.ZA-01"]').innerText();
-  assert(heavyWallsSheet.includes('456,25')&&heavyWallsSheet.includes('AK-01')&&heavyWallsSheet.includes('AK-02'));
+  assert(heavyWallsSheet.includes('neurčené')&&!heavyWallsSheet.includes('456,25')&&heavyWallsSheet.includes('AK-01')&&heavyWallsSheet.includes('AK-02'));
   assert((await page.locator('[data-sheet="D1.1.ZA-03"]').innerText()).includes('R7'));
   assert((await page.locator('[data-sheet="D1.1.TZ-01"]').innerText()).includes('1.07'));
   const results=await page.evaluate(()=>Array.from(document.querySelectorAll('.page')).map(el=>{

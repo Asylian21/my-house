@@ -20,12 +20,12 @@ try {
 }finally{await server.close();}
 data.partitionLoads=derivePartitionLoads(data);
 data.foundationIllustration=deriveFoundationIllustration(data);
-const modelFiles=['lib/plan-geometry.generated.json','lib/twin-active-house.ts','lib/twin-site.ts','lib/twin-roof.ts','lib/twin-interior.ts','lib/floor-plan-concept.ts','lib/plan-export.ts','lib/acoustic-walls.ts','lib/twin-house-placement.ts','lib/technical-design.ts','lib/twin-living-layouts.ts','lib/h200-junction.json'];
+const modelFiles=['lib/plan-geometry.generated.json','lib/twin-active-house.ts','lib/twin-site.ts','lib/twin-roof.ts','lib/twin-interior.ts','lib/floor-plan-concept.ts','lib/plan-export.ts','lib/acoustic-walls.ts','lib/h200-acoustic-calculation.ts','lib/twin-house-placement.ts','lib/technical-design.ts','lib/twin-living-layouts.ts','lib/h200-junction.json'];
 modelFiles.push('app/koncept-2d/acoustic-wall-detail.tsx','app/koncept-2d/documentation-plan.tsx','app/koncept-2d/export-sheet.tsx','app/koncept-2d/plan-svg.tsx','lib/deck-boards.ts','lib/floor-plan-garage.ts','lib/plan-documentation.ts','lib/twin-active-site.ts','lib/twin-children-design.ts','lib/twin-design-selection.ts','lib/twin-domain.ts','lib/twin-garage.ts','lib/twin-interior-baseline.ts','lib/twin-office-desk.ts','lib/twin-superb-combi.ts','lib/twin-viewport-contract.ts','lib/babylon-scene.ts','scripts/construction-documentation/source.tsx','scripts/construction-documentation/render.mjs','scripts/construction-documentation/generate.mjs','package.json','package-lock.json');
 modelFiles.push('scripts/construction-documentation/porch-envelope.ts');
 modelFiles.push('scripts/construction-documentation/client-brief.ts','scripts/construction-documentation/client-sheets.mjs',...data.clientBrief.foundations.photos);
 modelFiles.push('scripts/construction-documentation/foundation-axon.mjs','scripts/construction-documentation/partition-loads.mjs','lib/babylon-interior.ts');
-data.provenance={date:'2026-09-14',gitHead:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),files:{}};
+data.provenance={date:'2026-09-16',gitHead:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),files:{}};
 for(const f of modelFiles)data.provenance.files[f]=createHash('sha256').update(await readFile(resolve(root,f))).digest('hex');
 await writeFile(resolve(out,'model-snapshot.json'),JSON.stringify(data,null,2));
 const browser=await chromium.launch({headless:true});

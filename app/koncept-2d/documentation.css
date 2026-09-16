@@ -30,7 +30,7 @@
 .pd-heating-specs dt { color: #667489; font-size: 12px; }
 .pd-heating-specs dd { margin: 2px 0 0; font-weight: 600; color: #26374d; }
 
-/* SA30: shared drawing symbols and compact construction schedule. */
+/* Walls with acoustic requirements: shared drawing symbols and compact construction schedule. */
 .pd-acoustic-detail{margin:20px 0;padding:18px 0;border-block:1px solid #d9dfe6;color:#344154}
 .pd-acoustic-detail h3{font-size:16px;line-height:1.4;margin:10px 0}
 .pd-acoustic-detail svg{display:block;width:100%;height:auto;margin:14px 0}
@@ -50,6 +50,26 @@
 @media print{.pd-acoustic-detail{break-inside:avoid}.pd-acoustic-sheet .pd-acoustic-notes{display:none}.pd-acoustic-sheet-grid{grid-template-columns:1fr 1fr;gap:20px}}
 
 .pd-acoustic-rating{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-block:1px solid #d9dfe6}.pd-acoustic-rating strong{font-size:22px;color:#244f5a}.pd-acoustic-rating span{color:#657080}.pd-acoustic-placement h4{font-size:14px;margin:20px 0 6px}.pd-acoustic-placement p{margin:6px 0}
+.pd-acoustic-calculation summary:focus-visible{outline:2px solid #245ccd;outline-offset:3px}
+.pd-acoustic-calculation h4{font-size:14px;line-height:1.5;margin:18px 0 8px}
+.pd-acoustic-inputs{margin:16px 0;font-size:13px}
+.pd-acoustic-inputs>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;padding:7px 0;border-bottom:1px solid #e0e5eb}
+.pd-acoustic-inputs dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.pd-acoustic-equations{padding:10px 14px;border:1px solid #d9dfe6;background:#f5f7f9;overflow-wrap:anywhere}
+.pd-acoustic-equations p{margin:8px 0}
+
+/* SM30 detail and room schedule fit one A4 page. */
+@media print {
+  .pd-sm30-sheet { break-inside: avoid; }
+  .pd-sm30-sheet .pd-paper-heading>strong { font-size: 14pt; }
+  .pd-root .pd-paper.pd-sm30-sheet p { font-size: 9pt; line-height: 1.35; margin: 6px 0; }
+  .pd-sm30-sheet .pd-acoustic-detail h3 { font-size: 10pt; margin: 6px 0; }
+  .pd-sm30-sheet .pd-acoustic-detail svg { max-height: 42mm; margin: 8px 0; }
+  .pd-sm30-sheet .pd-acoustic-detail ol { margin: 8px 0; }
+  .pd-sm30-sheet .pd-acoustic-detail li { font-size: 8pt; line-height: 1.3; padding: 4px 0; grid-template-columns: 14px 1fr auto; gap: 6px; }
+  .pd-sm30-sheet .pd-acoustic-sources { font-size: 8pt; gap: 6px 10px; margin-top: 8px; }
+  .pd-sm30-sheet footer { margin-top: 10px; }
+}
 
 /* Keep the six-layer H200 detail and its conditions together on one A4 sheet. */
 @media print {

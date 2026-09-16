@@ -1,0 +1,5 @@
+id,model_points_XY_m,model_axis_length_m,status
+R7,"[[15.093, 3.354], [15.093, 10.849]]",7.495,MODEL AXES ONLY; endpoints require revision against newly declared perimeter centerlines; not final rib length or support design
+R1,"[[20.6915, 3.354], [20.6915, 10.849]]",7.495,MODEL AXES ONLY; endpoints require revision against newly declared perimeter centerlines; not final rib length or support design
+R2,"[[21.393, 10.862], [27.691, 10.862]]",6.298,MODEL AXES ONLY; endpoints require revision against newly declared perimeter centerlines; not final rib length or support design
+R4,"[[21.393, 19.185], [27.691, 19.185]]",6.298,MODEL AXES ONLY; endpoints require revision against newly declared perimeter centerlines; not final rib length or support design

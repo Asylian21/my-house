@@ -26,7 +26,7 @@ export function clientFoundationSheet(d,draw){
     ['Zásyp pod doskou','Stavebník požaduje zhutnenú zeminu. Vhodnosť existujúcej zeminy, vlhkosť, hutnenie po vrstvách a výsledná únosnosť nie sú overené.','Geotechnické posúdenie a merateľné podmienky prevzatia podkladu.'],
     ['Betón C16/20','Požadovaný pre pokračovanie; fotografie ani názov triedy nepotvrdzujú dodanú zmes alebo vhodnosť pre všetky prvky.','Doklad o dodávke, expozičné triedy, krytie a statická únosnosť. Sokel posúdiť samostatne.'],
     ['Škáry a monolit','Spodný pás už bol betonovaný. Nová horná časť bude mať pracovnú škáru; monolitický systém neznamená betonáž bez škáry.','Príprava a posúdenie styku, prenos šmyku, zakotvenie a postup betonáže.'],
-    ['Ťažké priečky SA30','AK-01/02 zaťažujú dosku aj ako nenosné priečky. Ich vlastná hmotnosť je vyčíslená na ZA-01; kandidátna trasa R7 na ZA-03.','Posúdiť existujúcu dosku a podopretie oboch plášťov. SA30 ani H200 neslúžia ako potvrdené podpery strechy alebo stropu.'],
+    ['Ťažké priečky SM30','AK-01/02 zaťažujú dosku aj ako nenosné priečky. Ich vlastná hmotnosť čaká na výber 300 mm tehly na ZA-01; kandidátna trasa R7 na ZA-03.','Posúdiť existujúcu dosku a podopretie jedného 300 mm muriva. SM30 ani H200 neslúžia ako potvrdené podpery strechy alebo stropu.'],
   ],18).svg;
   out+=text(12,394,'VÝŠKA PODLAHY SA NAVRHNE Z NADVÄZUJÚCICH ÚROVNÍ',3.5,'bold');
   out+=text(12,407,'Všetko v mm: ΔFFL = zE + 600 + j + p',3.4,'bold');

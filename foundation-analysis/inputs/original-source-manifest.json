@@ -1,0 +1,68 @@
+[
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D2_Statika/D.2.001-00 - TZ + SV .pdf",
+    "sha256": "f5c0497ba32189cd1b4f6ad1369bd383eb4083d87a07ba878bb5829a8d8558f5",
+    "pages": 43,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.004_Pudorys strechy.pdf",
+    "sha256": "984b1c398afc08d1e0785aafc4d59b174164a758036851c5758717f7727c2d59",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.003_Pudorys stropu a krovu.pdf",
+    "sha256": "ee9c289838d41c2915bf120b24c3c4db2c710141a9b86db7507e8eb1215a3e2f",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.006_Pohledy.pdf",
+    "sha256": "74aaac76c0f19bd859c4e72744a44f90610dd197dad17bcdae775802c98ade5f",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.001_Pudorys zakladu.pdf",
+    "sha256": "536bf386736aa34dff4c49b82742e7893d8597da1e9990b22b14ff33bfe5dca9",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.007_Skladby konstrukci.pdf",
+    "sha256": "2cdd4a702928f1bc62f06fd48c1a4c4d1e384c1bf065408d807205a125041580",
+    "pages": 5,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.005_Rez A-A.pdf",
+    "sha256": "d11b163273d42056d7a7b3fc2003a8632e90a9be03928655e89470bd7ceffc33",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.01_Technicka zprava.pdf",
+    "sha256": "f18960c27b69b5e06198e2a81bef7403978d5738da3b3e61a4c9b0c7eb959257",
+    "pages": 6,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/D_Vykresova dokumentace/D1_ASR/D1.1.002_Pudorys 1.NP.pdf",
+    "sha256": "5f887a1585477c646a0e8462a43b28dad2602e9531a91a886bf7ac2c9697cb16",
+    "pages": 1,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/E_Dokladova cast/Hydrogeologický posudek 2.etapa.pdf",
+    "sha256": "29cfbd755d11eb0bdf298b33d015bcbec2705de8ecb65610c2e63300e842fa59",
+    "pages": 18,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  },
+  {
+    "path": "arch-docs/projektova dokumentace/B_Souhrnna technicka zprava/B_Souhrnna technicka zprava.pdf",
+    "sha256": "db572d6c2dbeac9fd2fd0727980ce7e28f7d1054b0211c17f888e725dfd86b7a",
+    "pages": 17,
+    "evidence_level": "ORIGINAL_DOCUMENT_NOT_AS_BUILT_SURVEY"
+  }
+]

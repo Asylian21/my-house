@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="527.2755905511812" height="445" preserveAspectRatio="xMinYMin meet" viewBox="0 0 527 445" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="527.2755905511812" height="445"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-445)" style="clip-path: url(#clip)">
+		<g transform="">
+			<polygon points="32.704 29.92, 456.064 29.92, 456.064 403.006, 318.864 403.006, 318.864 190.64, 32.704 190.64" style="stroke: rgb(79%,81%,85%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(96%,96%,98%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="72.94200000000001" width="3.9787999999999784" height="4.4295999999999935" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="95.03120000000001" width="2.822400000000016" height="7.438200000000009" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="118.14940000000001" width="2.822400000000016" height="46.3442" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="186.95520000000002" width="2.822400000000016" height="10.54480000000001" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="353.02680000000004" y="96.59920000000001" width="93.2568" height="3.9200000000000017" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="390.2472" y="122.84360000000001" width="2.7244000000000597" height="20.207600000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="390.2472" y="120.09960000000001" width="56.036400000000015" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="353.02680000000004" y="143.05120000000002" width="39.94479999999999" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="390.2472" y="145.79520000000002" width="2.7244000000000597" height="35.27999999999997" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="205.2428" y="96.79520000000001" width="43.10040000000001" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="205.2428" y="121.07960000000001" width="43.10040000000001" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="265.9832" y="121.07960000000001" width="62.739599999999996" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="158.18320000000003" y="39.7984" width="2.7439999999999714" height="41.16000000000001" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="118.98320000000001" y="80.95840000000001" width="41.94399999999999" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="118.98320000000001" y="83.70240000000001" width="5.899600000000007" height="1.960000000000008" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="118.98320000000001" y="85.66240000000002" width="5.899600000000007" height="95.15799999999999" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="168.0028" y="80.95840000000001" width="2.7439999999999998" height="42.865200000000016" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="124.88280000000002" y="121.07960000000001" width="12.739999999999966" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="153.3028" y="121.07960000000001" width="17.444000000000017" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="160.9272" y="80.95840000000001" width="7.0756000000000085" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="170.7468" y="96.79520000000001" width="9.015999999999991" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="195.4428" y="96.79520000000001" width="3.9199999999999875" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="170.7468" y="121.07960000000001" width="9.015999999999991" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="195.4428" y="121.07960000000001" width="3.9199999999999875" height="2.744000000000014" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="199.3628" y="39.7984" width="5.880000000000024" height="59.74079999999999" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="199.3628" y="121.07960000000001" width="5.880000000000024" height="59.74079999999999" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="309.08360000000005" y="39.7984" width="5.899599999999964" height="56.99679999999999" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="265.9832" y="96.79520000000001" width="64.64080000000001" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="348.264" y="96.79520000000001" width="1.940400000000011" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="309.08360000000005" y="123.82360000000001" width="5.899599999999964" height="56.99679999999999" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="314.9832" y="123.82360000000001" width="13.739599999999996" height="2.7439999999999998" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="364.4732000000001" y="39.7984" width="3.430000000000007" height="33.143600000000006" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="354.1832" y="72.94200000000001" width="13.720000000000084" height="3.4299999999999926" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="353.02680000000004" y="95.03120000000001" width="1.1563999999999623" height="1.5679999999999978" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="181.07520000000002" width="67.46320000000003" height="5.880000000000024" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="433.34760000000006" y="181.07520000000002" width="12.935999999999979" height="5.880000000000024" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<rect x="350.2044" y="180.17360000000002" width="2.822400000000016" height="0.901600000000002" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(79%,81%,84%); fill-rule: evenodd;"/>
+			<polyline points="325.7828 347.146, 449.2236 347.146" style="stroke: rgb(79%,81%,84%); stroke-linecap: butt; stroke-width: 3; fill: None; fill-rule: evenodd;"/>
+			<polyline points="39.6424 145.5012, 121.9428 145.5012" style="stroke: rgb(79%,81%,84%); stroke-linecap: butt; stroke-width: 3; fill: None; fill-rule: evenodd;"/>
+			<polyline points="121.9428 145.5012, 121.9428 183.7604" style="stroke: rgb(79%,81%,84%); stroke-linecap: butt; stroke-width: 3; fill: None; fill-rule: evenodd;"/>
+			<polyline points="32.704 29.92, 456.064 29.92, 456.064 403.006, 318.864 403.006, 318.864 190.64, 32.704 190.64, 32.704 29.92" style="stroke: rgb(19%,36%,89%); stroke-linecap: round; stroke-width: 6; fill: None; fill-rule: evenodd;"/>
+			<polyline points="39.6424 36.8584, 449.2236 36.8584, 449.2236 396.146, 325.7828 396.146, 325.7828 183.7604, 39.6424 183.7604, 39.6424 36.8584" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 0.7; fill: None; fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+			<text x="65.24" y="100.48" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,200) scale(1,-1)">GARÁŽ</text>
+			<text x="59.36" y="163.20000000000002" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,326) scale(1,-1)">LODŽIA</text>
+			<text x="134.82" y="151.44" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,302) scale(1,-1)">SPÁLŇA</text>
+			<text x="222.04000000000005" y="151.44" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,302) scale(1,-1)">DETSKÁ IZBA</text>
+			<text x="222.04000000000005" y="69.12" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,138) scale(1,-1)">DETSKÁ IZBA</text>
+			<text x="365.12" y="65.2" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,130) scale(1,-1)">PRACOVŇA</text>
+			<text x="378.8400000000001" y="138.70000000000005" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,277) scale(1,-1)">TECHNICKÁ</text>
+			<text x="365.12" y="280.8" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,561) scale(1,-1)">OBÝVAČKA</text>
+			<text x="368.06000000000006" y="264.14" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,528) scale(1,-1)">A KUCHYŇA</text>
+			<text x="369.0400000000001" y="371.94" style="font-family: DV; font-size: 7.8px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,743) scale(1,-1)">TERASA</text>
+			<text x="42" y="370" style="font-family: DVB; font-size: 11px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,740) scale(1,-1)">STAV A DOHODA</text>
+			<text x="42" y="354" style="font-family: DV; font-size: 9px;fill: rgb(48%,51%,53%); stroke:none;" transform="translate(0,708) scale(1,-1)">16. 9. 2026 · C / B / B</text>
+			<path d="M 42,326 L 64,326 Z" style="stroke: rgb(19%,36%,89%); stroke-linecap: butt; stroke-width: 6;"/>
+			<text x="74" y="323" style="font-family: DVB; font-size: 9px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,646) scale(1,-1)">Približné osi vyliateho obvodu</text>
+			<text x="42" y="265" style="font-family: DV; font-size: 8.7px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,530) scale(1,-1)">Horné debnenie a doska ešte nie sú vyliate.</text>
+			<text x="42" y="244" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,488) scale(1,-1)">Garážový koniec: potvrdené predĺženie 800 mm.</text>
+			<text x="42" y="229" style="font-family: DV; font-size: 8.3px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,458) scale(1,-1)">Sivá prerušovaná: pôvodná os horného pásu.</text>
+			<text x="42" y="215" style="font-family: DV; font-size: 8.3px;fill: rgb(65%,22%,19%); stroke:none;" transform="translate(0,430) scale(1,-1)">Modrá a sivá os sa líšia približne o 350 mm.</text>
+			<text x="42" y="199" style="font-family: DV; font-size: 8.5px;fill: rgb(65%,22%,19%); stroke:none;" transform="translate(0,398) scale(1,-1)">Červené napojenia treba nanovo zosúladiť.</text>
+			<path d="M 32.704,18.16 L 456.064,18.16 Z" style="stroke: rgb(9%,20%,29%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<path d="M 32.704,15.16 L 32.704,21.16 Z" style="stroke: rgb(9%,20%,29%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<path d="M 456.064,15.16 L 456.064,21.16 Z" style="stroke: rgb(9%,20%,29%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="190.16525000000001" y="7.16" style="font-family: DV; font-size: 8px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,14) scale(1,-1)">21 600 mm · obrys modelu</text>
+			<path d="M 469,29.92 L 469,403.006 Z" style="stroke: rgb(9%,20%,29%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="473.00000000000006" y="216.46300000000002" style="font-family: DV; font-size: 8px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,432) scale(1,-1)">19 035</text>
+			<text x="229.88000000000002" y="42.660000000000004" style="font-family: DVB; font-size: 8px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,85) scale(1,-1)">ULICA / VSTUP</text>
+			<text x="6" y="430" style="font-family: DVB; font-size: 12px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,860) scale(1,-1)">VYLIATY OBVOD</text>
+			<text x="6" y="413" style="font-family: DV; font-size: 8.5px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,826) scale(1,-1)">Modrá = približná os spodného betónu, nie jeho vonkajšie líce.</text>
+		</g>
+	</g>
+</svg>

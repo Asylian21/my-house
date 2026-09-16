@@ -7,6 +7,22 @@ const DEFAULT_CONCEPT=DEFAULT_NESTED_CONCEPT;
 import { intersects, contains, check, opening, swingHits, openLeaf, walkingPath } from './floor-plan-geometry';
 
 describe('nested bedroom, closet and garage study C', () => {
+  it('uses a 140 mm internal garage wall while retaining the suite face and exterior loggia junction', () => {
+    const m=createConcept(DEFAULT_CONCEPT);
+    const wall=m.walls.find(w=>w.id==='C-GARAGE-PARTITION')!;
+    expect(wall).toMatchObject({role:'PARTITION',rectMm:rect(11003,5744,11143,8749)});
+    expect(m.walls.find(w=>w.id==='C-GARAGE-SPINE-N')!.rectMm).toEqual(rect(10842,8749,11143,10699));
+    const released=rect(10842,5604,11003,8749);
+    expect(m.rooms.find(r=>r.number==='1.12')!.rectsMm).toContainEqual(released);
+    expect(m.walls.some(w=>intersects(w.rectMm,released))).toBe(false);
+    expect(m.walls.find(w=>w.id==='C-GARAGE-BAY-RETURN')!.rectMm).toEqual(rect(11003,5604,12982,5744));
+    expect(m.garageShelves).toEqual([rect(11003,5104,12842,5604)]);
+    expect(m.bed.x0).toBe(11143);
+    expect(m.dressing!.x0).toBe(11143);
+    const connected=createConcept({...DEFAULT_CONCEPT,garageConnected:true});
+    expect(connected.doors.find(d=>d.id==='C-GARAGE-CLOSET')!.wallSpanMm).toEqual([11003,11143]);
+    expect(createConcept(BASE_DEFAULT).walls.find(w=>w.id==='C-GARAGE-SPINE-N')!.rectMm.x0).toBe(10842);
+  });
   it('defaults to a compact bath, separate closet and useful garage storage recess', () => {
     const m = createConcept(DEFAULT_CONCEPT);
     expect(m.isNested).toBe(true);
@@ -26,7 +42,7 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(m.dressing).toEqual(rect(11143,5744,13343,7651));
     expect(m.rooms.find(r => r.number === '1.10')!.rectsMm).toEqual([rect(11143,7791,14943,10699)]);
     expect(area([m.garageBay!])).toBeCloseTo(4.2, 6);
-    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(24.64501, 6);
+    expect(area(m.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(25.151355, 6);
     const previousWidth=createConcept({...DEFAULT_CONCEPT,garageBayWidth:1500});
     expect(m.bathLeft-previousWidth.bathLeft).toBe(500);
     expect(previousWidth.bathroomArea-m.bathroomArea).toBeCloseTo(1.05,6);
@@ -74,13 +90,13 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(baseline.entryArea).toBeCloseTo(6.456724, 6);
     expect(baseline.entryClearArea).toBeCloseTo(4.742324, 6);
     const originalOffice = INTERIOR_ROOMS.find(r => r.number === '1.04')!;
-    expect(baseline.officeArea).toBeCloseTo(12.311502, 6);
-    expect(baseline.officeArea-area(originalOffice.rectsMm)).toBeCloseTo(1.206410, 6);
+    expect(baseline.officeArea).toBeCloseTo(12.1352895, 6);
+    expect(baseline.officeArea-area(originalOffice.rectsMm)).toBeCloseTo(1.0301975, 6);
     expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[0].x0).toBe(23542);
-    expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[1]).toEqual({...originalOffice.rectsMm[1],y0:5370,y1:6402});
+    expect(baseline.rooms.find(r=>r.number==='1.04')!.rectsMm[1]).toEqual({...originalOffice.rectsMm[1],y0:5370,y1:6364.5});
     // Both child rooms end on one 300 mm bearing line; the office corner is 175 mm
     // masonry, shifted 30 mm south with the office door to leave room for H200
-    // acoustic wall while retaining the shower-side face at 6602.
+    // acoustic wall while aligning the shower-side face at 6552.
     const kidWall = baseline.walls.find(w=>w.id==='C-KID-ENTRY-WALL')!;
     const gardenWall = baseline.walls.find(w=>w.id==='C-GARDEN-KID-EAST')!;
     expect(kidWall.role).toBe('LOAD_BEARING');
@@ -232,7 +248,7 @@ describe('nested bedroom, closet and garage study C', () => {
         const current=m.walls.find(w => w.id === source.id);
         if(source.id==='IW-STUDY-NORTH') {
           expect(replaced).toBe(true);
-          expect(current).toMatchObject({changed:true,role:'PARTITION',rectMm:rect(22783,6402,27541,6602)});
+          expect(current).toMatchObject({changed:true,role:'PARTITION',rectMm:rect(22783,6364.5,27541,6552)});
         } else expect(current?.rectMm).toEqual(replaced ? undefined : source.rectMm);
       }
     }
@@ -326,8 +342,8 @@ describe('nested bedroom, closet and garage study C', () => {
     expect(off.storageLength - on.storageLength).toBe(1000);
     expect(off.garageDepth).toBe(5245);
     expect(off.convertedTerraceArea).toBe(0);
-    expect(area(off.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(24.64501, 6);
-    expect(off.walls.some(w => contains(w.rectMm, rect(10842, 5844, 11143, 6644)))).toBe(true);
+    expect(area(off.rooms.find(r => r.number === '1.12')!.rectsMm)).toBeCloseTo(25.151355, 6);
+    expect(off.walls.some(w => contains(w.rectMm, rect(11003, 5844, 11143, 6644)))).toBe(true);
   });
 
   it('aligns the bathroom and bedroom doors while keeping fixture approaches and the garage clear', () => {

@@ -5199,9 +5199,10 @@ export class TwinSceneController {
     this.buildWingPorch();
 
     // Larch cladding fields between the flush garden windows (reference look).
+    const gardenPortal=HOUSE.facades.garden.openings.find(opening=>opening.id==='GARDEN-02')!;
     for (const [index, span] of [
-      { startXmm: 10640, endXmm: 11840 },
-      { startXmm: 14340, endXmm: 15840 },
+      { startXmm: 10640, endXmm: gardenPortal.startXmm },
+      { startXmm: gardenPortal.startXmm+gardenPortal.widthMm, endXmm: 15840 },
     ].entries()) {
       const widthM = (span.endXmm - span.startXmm) * MM_TO_M;
       const field = boxAtPlan(

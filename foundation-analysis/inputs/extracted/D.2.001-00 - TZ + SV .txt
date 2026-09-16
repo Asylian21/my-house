@@ -1,0 +1,2219 @@
+
+=== PDF PAGE 1 ===
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+D.2.1. ZÁKLADNÍ STAVEBNĚ KONSTRUKČNÍ ŘEŠENÍ 
+ 
+   
+Statický výpočet 
+NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+ 
+ 
+ 
+ 
+ 
+¨ 
+¨ 
+ 
+ 
+ 
+ 
+ 
+Zodpovědný projektant:       Ing. Aleš Kika 
+ 
+Vypracoval:                     Ing. Aleš Kika 
+         
+Datum:         květen 2026 
+ 
+Souprava 
+  
+
+=== PDF PAGE 2 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 2 
+ 
+OBSAH 
+OBSAH 2 
+TECHNICKÁ ZPRÁVA ................................ ................................ ................................ .......... 3 
+a) Účel statického výpočtu ................................ ................................ ......................... 3 
+b) Konstrukční systém ................................ ................................ ...............................  3 
+c) Použité konstrukční materiály ................................ ................................ ................ 4 
+d) Zatížení ................................ ................................ ................................ ................. 5 
+e) Mechanická odolnost a stabilita ................................ ................................ ............. 5 
+f) Zvláštní a neobvyklé konstrukce ................................ ................................ ............ 6 
+g) Technologické podmínky postupu prací................................ ................................ . 6 
+h) Zásady pro provádění bouracích a podchycovacích prací ................................ ..... 6 
+i) Požadavky na kontrolu zakrývaných konstrukcí ................................ ..................... 6 
+j) Podklady ................................ ................................ ................................ ............... 6 
+k) Specifické požadavky na rozsah dalších projekčních stupňů ................................ . 7 
+l) Všeobecné požadavky na betonové konstrukce ................................ .................... 7 
+m) Bezpečnost práce ................................ ................................ ................................ .. 8 
+n) Závěr ................................ ................................ ................................ ..................... 9 
+o) Plán kontroly spolehlivosti konstrukcí ................ Chyba! Záložka není definována. 
+STATICKÝ VÝPOČET ................................ ................................ ................................ ..........10 
+a) Zatížení ................................ ................................ ................................ ................10 
+b) Krov ................................ ................................ ................................ ......................10 
+c) Věnce ................................ ................................  Chyba! Záložka není definována. 
+d) Stropní konstrukce ................................ ............ Chyba! Záložka není definována. 
+e) Svislé konstrukce ................................ .............. Chyba! Záložka není definována. 
+f) Základové konstrukce ................................ ................................ ...........................39 
+ 
+
+=== PDF PAGE 3 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 3 
+ 
+TECHNICKÁ ZPRÁVA 
+ke statickému výpočtu k projektu pro stavební povolení 
+ 
+Akce:  NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+Lokalita: Březí U Mikulova 
+Investor:  Dávid Zita, Tyršova 208/4, 691 83 Drnholec 
+Hana Ivičičová, Tyršova 208/4, 691 83 Drnholec 
+Zodpovědný projektant:  Ing. Aleš Kika, ČKAIT 1104138 
+ 
+Část:  D.2.1. ZÁKLADNÍ STAVEBNĚ KONSTRUKČNÍ ŘEŠENÍ 
+ 
+a) Účel statického výpočtu 
+Účelem vypracování statického výpočtu je návrh a posouzení nosných konstrukcí novostavby 
+rodinného domu v obci Březí U Mikulova. 
+ 
+b) Konstrukční systém 
+Jedná se o novostavbu jednopodlažního rodinného domu se sedlovou střechou a částečně s 
+pultovou střechou půdorysného tvaru do písmene „L“. s maximálními půdorysnými rozměry 19,1 x 
+21,6 m. Maximální výška objektu je 5,56 m. Objekt je založen plošně na základových pasech, svislé 
+konstrukce jsou z keramických tvárnic na maltu pro tenké spáry. Střešní konstrukce je tvořena 
+dřevěným krovem. 
+ 
+Základové konstrukce 
+Únosnost základové půdy v místě staveniště objektu se předpokládá 150 kPa. Základy nesmí být 
+provedeny v navážce ale v rostlé zemině.  Při provádění výkopových prací bude základová 
+spára v  celém rozsahu převzaná geotechnikem, který ověří únosnost základové spáry.  
+Základové konstrukce budou přizpůsobeny s  ohledem na provedené ověření např. rozšířením, 
+popř. prohloubením pasů. Je nutno založit stavbu do stejných základových zemin. Založení je 
+navrženo na průběžných centrických základových pasech se základovou spárou v  hloubce 
+min 1,20 m pod upraveným terénem.  
+Obvodové pasy jsou šířky 800 mm. Vnitřní pasy js ou šířky 600 mm. Pod pilíře budou provedeny 
+patky o rozměrech 1100 x 1600 a 1850 x 1100 mm. Patky budou vyztuženy v obou směrech výztuží 
+12/150 B500B. Minimální výška základových pasů musí být 500 mm, zbývající výšku základu lze 
+doplnit z tvarovek ztracené ho bednění tl. 300 mm, které se prolijí betonem. Tvarovky budou 
+konstrukčně vyztuženy svislou výztuží 2 x 10/250 provázanou s pasy a zakotvenou do základové 
+desky nad ní a vodorovnou výztuží 2x10/250 do každé spáry. 
+V místě velkých otvorů nad 2500 mm bude do prvního stupně pasu vložena podélná výztuž 
+4ø12B500B mm do horní i spodní zóny s krytím min 50 mm. Tuto vodorovnou výztuž budou 
+obepínat třmínky ø8/250 mm B500B. Přesah výztuže za hranu otvoru bude min. 600 mm. 
+Betonáž bude probíhat ve třech krocích – betonáž základových pasů, osazení a betonáž do 
+
+=== PDF PAGE 4 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 4 
+ 
+ztracených tvarovek a betonáž podkladní desky. 
+Nad základovými pasy bude provedena žb základová deska tl. 150 mm, vyztuženou sítí KARI 
+8/150/150 mm 50 mm od spodního líce desky. Krbová kamna a komín budou uloženy na rozšířený 
+základový pas. Nad vnitřními pasy a po obvodu bude přidaná druhá vrstva KARI sítě s  krytím 30 
+od horního líce desky a 500 mm za líc hrany tvarovek ztr. bednění. Pod deskou bude provedena 
+hutněná zeminová vrstva z nenamrzavého materiálu (štěrkodrť nebo betonový recyklát) zhutněná 
+na edef,2=40 mPa (edef,2/edef,1=2,5), tl. podsypu min. 150mm. 
+Hydroizolace základové desky je navržena ve stavební části, bude provedena shora na základové 
+desce. 
+ 
+Svislé konstrukce 
+Nosné svislé konstrukce domu budou provedeny z keramických tvárnic Porotherm 24 Profi 
+pevnosti P10 na  maltu pro tenké spáry. Nad zdivem bude v horní části zbudován ztužující 
+železobetonový věnec. Rozměr obvodového věnce je 300 x 250 mm a bude vyztužen po obou 
+stranách 3 x 12 mm výztuží B500B. Příčná výztuž bude tvořena třmínky ø8/200 výztuž B500B. Nad 
+otvory bude věnec tvořit překlad. Výška bude zvětšena na 350 mm. Podélná výztuž bude doplněna 
+při dolním líci 3x16 B500B a třmínky budou zhuštěny na rozteč 8/150mm. Zakotvení překladu bude 
+min. 300 mm na každou stranu od otvoru. Překlady nad vnitřními otvory budou tvořeny 
+systémovými překlady z  prvků Porothem.  V místě terasy bude proveden věnec, popř. ocelový 
+nosník z 2 x I180. 
+ 
+Konstrukce krovu 
+Krov se skládá z krokví o průřezu 1 20 x 200 mm. Krokve jsou uloženy v rozteči max 930 mm na 
+pozednicích a vaznicích. Pozednice jsou o průřezu 1 60x160 mm. Maximální hloubka zářezu do 
+krokve při osedlání na pozednici a vaznici bude max 1/3 výšky průřezu. Při nutnos ti hlubšího 
+osedlání je nutné provést výřez v pozednici. Ve vrcholu střechy budou krokve propojeny 
+styčníkovými plechy dle zvyklostí dodavatele. Pozednice budou kotveny do železobetonových 
+věnců na chemii pomocí závitových tyčí M14 po 1000 mm. Krokve jsou ztuženy kleštinami tvořené 
+dvojici profilů 60x160 mm.  V úrovni pozednic budou provedeny trámy, které budou uloženy na 
+železobetonové věnce.  V obývacím pokoji budou krokve uloženy na vrcholovou vaznici 
+z válcovaných nosníků 2xU240. Vaznice bude vynášená oce lovými rámy z  HEA 160 skryté 
+v rovině krokví. Další rám bude na štítové straně RD. Maximální rozteč mezi rámy je 7,7 m.  
+Spoje všech dřevěných prvků budou navrženy a provedeny dle zvyklostí dodavatele dřevěné 
+konstrukce. 
+Tuhost střešní konstrukce v  podélném směru je zajištěna v  rovině krokví záklopem opatřených 
+pérem a drážkou s prostřídanými styky kotvenými do každé krokve. Veškeré dřevěné konstrukce 
+budou ošetřeny proti dřevokazným houbám a chorobám. Materiál je tvořen konstrukčním dřevem 
+C24. 
+ 
+c) Použité konstrukční materiály 
+Beton
+ 
+  
+C25/30 XC1 
+C20/25 XC2 
+C16/20 X0 
+Věnce 
+Základové pasy, deska 
+Prostý beton 
+
+=== PDF PAGE 5 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 5 
+ 
+Výztuž B500B, KARI  
+Ocel S235 JR  
+Dřevo C24   
+Zdivo Keramické tvárnice P10 na maltu pro tenké spáry  
+ 
+Všeobecné požadavky na použité materiály a výrobky 
+ 
+Všechny použité materiály musí splňovat požadavky technických norem a příslušné legislativy 
+České republiky. Všechny výrobky musí být použity v souladu s technickými listy výrobců. 
+Ocelové konstrukce nechráněné obetonováním budou opatřeny nátěry proti korozi na stupeň 
+agresivity prostředí C2. Celá ocelová konstrukce je svařovaná, svary navrhnout na plnou únosnost 
+připojovaných prvků. Na ocelové prvky je použita ocel řady S235. Dle ČSN EN 1090 jsou ocelové 
+konstrukce zařazeny do výrobní skupiny „EXC2“. 
+Povrchová úprava ocel ových konstrukcí krovu je po otryskání na stupeň SA 2,5 navržena 
+nátěrovým systémem podle stupně korozní agresivity C2 (nízká).  
+Barevný odstín bude proveden dle stavebně – arch. řešení, či požadavků investora. 
+Ocelové konstrukce musí být provedeny dle ČSN  EN 1090-2: Provádění ocelových a hliníkových 
+konstrukcí - část 2: Technické požadavky na ocelové konstrukce. 
+Ocelové konstrukce nejsou navrženy na požární odolnost a je potřeba je dodatečně chránit. 
+Při provádění konstrukcí musí být dodrženy max. dovolené  odchylky podle ČSN 73 0205 
+Geometrická přesnost ve výstavbě. Navrhování geometrické přesnosti. 
+ 
+d) Zatížení 
+Zatížení objektu a posouzení jednotlivých prvků je provedeno podle norem EN. Kombinace 
+zatěžovacích stavů jsou provedeny dle ČSN EN.  
+ 
+Stálé zatížení 
+- Skladba střechy  1,18 kN/m2 
+ 
+Užitné zatížení 
+- Nahodilé zatížení  1,50 kN/m2 
+- Zatížení střechy sněhem 0,61 kN/m2 
+- Zatížení větrem – II větrná oblast 25,0 m/s 
+ 
+e) Mechanická odolnost a stabilita 
+Zajištění prostorové tuhosti objektů je tvořeno zděnými stěnami v kombinaci základovými 
+konstrukcemi a monolitickými ŽB věnci v úrovni pozednice. 
+ 
+
+=== PDF PAGE 6 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 6 
+ 
+Mechanická odolnost a stabilita je zajištěna používáním certifikovaných materiálů a dodržováním 
+technologických postupů při výstavbě.  
+ 
+f) Zvláštní a neobvyklé konstrukce 
+Konstrukce neobsahuje žádné zvláštní a neobvyklé prvky. 
+ 
+g) Technologické podmínky postupu prací 
+Konstrukce bude realizována dle standardních postupů při výstavbě, nepředpokládá se použití 
+zvláštních technologií. Při provádění konstrukcí musí být dodrženy max. dovolené odchylky podle 
+ČSN EN 13670. 
+ 
+h) Zásady pro provádění bouracích a podchycovacích prací 
+Bourací práce nejsou předpokládány. 
+ 
+ 
+i) Požadavky na kontrolu zakrývaných konstrukcí 
+Betonové konstrukce budou realizovány dle kontrolní třídy 2 dle ČSN EN 13670. 
+ 
+j) Podklady 
+Výkresy stavební části zpracované Ing. arch. Muzikářem    02/2026 
+ 
+Použitá literatura a normy: 
+         
+ČSN EN 1991-1-1 Eurokód 1: Zatížení konstrukcí – Část 1-1: Obecná zatížení – 
+objemové tíhy, vlastní tíha a užitná zatížení pozemních staveb 
+ČSN EN 1991-1-3 Eurokód 1: Zatížení konstrukcí – Část 1-3: Obecná zatížení – 
+Zatížení sněhem 
+ČSN EN 1991-1-4 Eurokód 1: Zatížení konstrukcí – Část 1-3: Obecná zatížení – 
+Zatížení větrem 
+ČSN EN 1992-1-1 Eurokód 2: Navrhování betonových konstrukcí – Část 1-1: Obecná 
+pravidla a pravidla pro pozemní stavby 
+ČSN EN 1993-1-1 Eurokód 3: Navrhování ocelových konstrukcí – Část 1-1: Obecná 
+pravidla a pravidla pro pozemní stavby 
+ČSN EN 1995-1-1 Eurokód 5: Navrhování dřevěných konstrukcí – Část 1-1: Obecná 
+pravidla a pravidla pro pozemní stavby 
+ČSN EN 1996-1-1 Eurokód 6: Navrhování zděných konstrukcí – Část 1-1: Obecná 
+pravidla pro vyztužené a nevyztužené zděné konstrukce 
+
+=== PDF PAGE 7 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 7 
+ 
+ČSN EN 1997-1-1 Eurokód 7: Navrhování geotechnických konstrukcí – Část 1-1: 
+Obecná pravidla 
+ 
+Použitý software: 
+ Microsoft Office Excel a Word 
+ Scia Engineer 2019, 4MCad, Geo Fine 2019 
+ 
+k) Specifické požadavky na rozsah dalších projekčních stupňů 
+Obsah předkládané dokumentace je statické posouzení v rozsahu dokumentace pro stavební 
+povolení. Dokumentace je určena výhradně pro tento účel. Nemá charakter do kumentace pro 
+výběr zhotovitele ani realizační dokumentace Pro realizaci stavby se předpokládá vypracování 
+následného stupně PD (v souladu s vyhláškou č. č. 131/2024 Sb. o dokumentaci staveb v platném 
+znění). V návaznosti bude zpracována dokumentace pro provedení stavby a výrobní dokumentace 
+výztuže železobetonových monolitických konstrukcí. 
+ 
+l) Všeobecné požadavky na betonové konstrukce 
+Bednění a odbedňování 
+Bednění musí být dostatečně tuhé tak, aby tvar konstrukce vyhovoval požadavkům na maximální 
+povolené odchylky i po provedení betonáže. 
+ 
+Odbednění je možné provést: 
+U stropních desek po čtrnácti dnech a po nabytí pevnosti alespoň C20/25. 
+ 
+Výztuž  
+Je navržena třídy B 500B, příp. sítě typu KARI. Je nutné dodržet předepsanou tloušťku krycí vrstvy. 
+Je zcela nezbytné, aby byla zachována správná tloušťka krycí vrstvy horní zóny výztuže. Nosiče 
+výztuže horní zóny musí být dostatečně tuhé, aby výztuž horní zóny nemohla být sešlápnuta. 
+ 
+Betonáž 
+Výroba betonu, doprava, ukládání, hutnění a ošetřování musí vyhovovat ČSN EN 206-1. 
+Ošetřování povrchu betonu stropních desek musí být takové, aby betonová konstrukce, povrch 
+betonu, byl držen v prostředí 100% vlhkosti po dobu alespoň 7 dní, např. zakrytím igelitovou folií 
+nebo postřikem bezprostředně po skončení povrchových úprav betonových konstrukcí. 
+ 
+Ošetřování čerstvého betonu 
+Čerstvý beton je třeba chránit proti vysychání a  následně udržovat povrch betonu viditelně vlhký 
+vhodnou vodou po dobu 3 – 5 dnů.  Vhodné je mlžení nebo smáčení povrchu betonu přes  vrstvu 
+tkaniny. A dále je vhodné pokrýt volné povrchy betonu parotěsnými plachtami či fóliemi, které jsou 
+po obvodu a v místech přesahů zabezpečeny proti odkrytí.  
+
+=== PDF PAGE 8 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 8 
+ 
+Ve vlhkém, deštivém nebo mlhavém počasí lze použít takzvané přírodní ošetřování (bez použit í 
+jakýchkoliv prostředků). Toto je dostatečné pouze tehdy, jsou -li podmínky po celou dobu 
+požadovaného ošetřovacího období takové, že rychlosti vypařování z povrchu betonu je nízká.  
+ 
+Povolené odchylky tvaru v době zabetonování: 
+- půdorysná poloha os stěn                      ±  10 mm 
+- tvar spodního líce stropní desky, výšková poloha       ±  5 mm 
+- rovinatost podhledu                                                        ±  5 mm na 2 m lati 
+- rovinatost horního líce hotové desky                               ±  5 mm na 2 m lati 
+- struktura spodního i horního líce desky: 
+- úprava musí vyhovovat dalším povrchovým úpravám a dodavatel betonové konstrukce musí 
+předem dohodnout s dodavatelem další ch úprav podmínky předání a převzetí povrchu bet. 
+konstrukce, a to písemně a dohodu předat investorovi před zahájením betonářských prací. 
+ 
+Povolené odchylky výztuže: 
+- půdorysná poloha výztuže desek                                             20 mm 
+- krytí výztuže: - větší - desek                                       + 5 mm 
+- menší - desek                                          0 mm 
+ 
+Požaduji, aby krytí výztuže hlavně u desek bylo stavebním dozorem kontrolováno před betonáží i 
+během betonáže a pokud nebude dodrženo, zejména pokud bude krytí výztuže desek větší než 
+jsou povolené odchylky, aby betonáž nebyla povolena, dokud nebude poloha výztuže zajištěna 
+tak, aby i po dokončení betonáže měla správnou polohu. 
+ 
+Při provádění konstrukcí musí být dodrženy max. dovolené odchylky podle ČSN 730225 „Funkční 
+odchylky pozemních staveb“ a ČSN 730250 „Přesnost geometrických parametrů ve výstavbě – 
+odchylky rozměření a osazení“. 
+ 
+m) Bezpečnost práce 
+Veškeré práce budou prováděny podle platných předpisů o bezpečnosti a ochraně zdraví při práci. 
+Všichni pracovníci zhotovitele budou používat pracovní pomůcky a ochranné prostředky ve smyslu 
+platných předpisů. Zhotovitel zpracuje pro uvedené práce v tomto projektu Technologický postup.  
+Základním bezpečnostním předpisem je zákon č. 309/ 2006 Sb. a vyhlášky č. 591/2006 Sb., č. 
+362/2005 Sb. Při provádění stavebních prací nesmí docházet k poškozování životního prostředí. 
+Celý prostor staveniště musí být označen a zabezpečen proti přístupu nepovolaných osob. 
+Je nutno dodržovat vymezení ploch určených pro pojezd stavebních mechanizmů. Při stavebních 
+pracích za snížené viditelnosti musí být zajištěno dostatečné osvětlení. 
+ 
+
+=== PDF PAGE 9 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 9 
+ 
+n) Závěr 
+Konstrukce objektu jsou navrženy dle norem ČSN EN viz odstavec j) této zprávy. Konstrukce 
+vyhovují z hlediska únosnosti i použitelnosti. 
+Životnost stavby je stanovena dle EN 1990, článku NA1.1, tabulky 2.1 (CZ) – kategorie návrhové 
+životnosti 4, informativní návrhová životnost 50 let. 
+Konstrukce patří s uvážením následků poruchy nebo funkční nezpůsobilosti konstrukce do třídy 
+porušení CC2 dle EN 1990, přílohy B, tabulka B.1 – střední následky s ohledem na ztráty lidských 
+životů nebo značné následky ekonomické, sociální nebo pro prostředí. 
+Z hlediska spolehlivosti patří konstrukce do třídy RC2 - stavby, kde jsou následky poruchy střední. 
+Úroveň kontroly při navrhování je klas ifikována dle EN 1990, přílohy B, tabulka B.4 jako běžná – 
+kontrola jinými osobami organizace, než jsou ty, které zpracovaly návrh, a v souladu s obvyklými 
+postupy organizace, tj. úroveň kontroly při navrhování DSL2. 
+Dle vybraných a zavedených opatření man agementu jakosti musí zhotovitel stavby zavést 
+patřičnou úroveň kontroly během provádění. Minimální úroveň kontroly během provádění IL2 dle 
+EN 1990, přílohy B, tabulka B.5 – běžná kontrola v souladu s postupy organizace. 
+V případě, že během výstavby budou zjištěny jiné skutečnosti než jsou předpoklady uvedené v 
+projektu, je nutno kontaktovat statika ke konzultaci a případně úpravě navrženého řešení. 
+ 
+ 
+květen 2026 
+           Ing. Aleš Kika 
+ 
+ 
+ 
+ 
+Příloha:  Statický výpočet 34 x A4 
+
+=== PDF PAGE 10 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 10 
+ 
+STATICKÝ VÝPOČET 
+a) Zatížení 
+střecha plech       
+h [m] ρ [kN/m3] gk [kN/m2] b [m] gk [kN/m] 
+fve - - 0,25 1,00 0,25 
+plech - - 0,05 1,00 0,05 
+folie - - 0,02 1,00 0,02 
+kontralatě - - 0,15 1,00 0,15 
+TI 0,260 0,50 0,13 1,00 0,13 
+bednění 0,050 6,50 0,33 1,00 0,33 
+podhled - - 0,25 1,00 0,25 
+      0,88 Σgk =  1,18 
+ 
+Zatížení nahodilé    
+Užitné zatížení     
+ 
+qk [kN/m2] b [m] qk [kN/m] 
+užitné zatížení  1,5 1,00 1,50 
+    qk =  1,50 
+ 
+Zatížení sněhem      
+sněhová oblast I     
+ sk [kN/m2] α [°] μ b [m] sk [kN/m] 
+tíha sněhu 1,0 37 0,61 1,0 0,61 
+        sk =  0,61 
+ 
+ 
+ 
+b) Krov 
+Krokev        
+       
+Zatížení:       
+       
+Stálé zatížení: bk hk  gk gF gd 
+ mm mm kN/m2 kN/m - kN/m 
+střecha 900 - 1,18 1,06 1,35 1,43 
+vlastní tíha profilu: - - - 0,11 1,35 0,15 
+    1,17 1,35 1,58 
+       
+Nahodilé zatížení sněhem - krátkodobé:   sk gF sd 
+    kN/m - kN/m 
+základní tíha sněhu: so 1,00 kN/m2 1,00 1,50 1,50 
+sklon střechy: a 30,00 °    
+
+=== PDF PAGE 11 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 11 
+ 
+tvarový součinitel střechy: mi 0,80 - 0,80  0,80 
+zatěžovací šířka: bs 0,90 m 0,72 1,50 1,08 
+       
+Nahodilé zatížení větrem - krátkodobé:    wk gF wSd 
+    kN/m - kN/m 
+rychlost větru: vref 25,00 m/s  1,50  
+hustota větru: ρ 1,25 kg/m3    
+referenční střední tlak větru: qref 0,39 kN/m2    
+tvarový součinitel střechy - tlak: cp,1 0,40 -    
+tvarový součinitel střechy - sání: cp,2 -0,50 -    
+součinitel topografie: ct 1,00 -    
+součinitel terénu(závisí na kategorii 
+terénu): kt 0,19 -    
+referenční výška (výška nad terénem): z 5,60 m    
+minimální výška: zmin 5,00 m    
+třecí výška: z0 0,30 m    
+součinitel drsnosti: cr 0,556 -    
+součinitel expozice: ce 1,05 -    
+zatěžovací šířka - tlak větru: bw 0,90 m 0,15 1,50 0,22 
+zatěžovací šířka - sání větru: bw 0,90 m -0,18 1,50 -0,28 
+       
+Sklon střechy: a 0,52 rad    
+       
+Kombinace zatížení:    qc,k gF qc,d 
+    kN/m - kN/m 
+Stálé:    1,02 1,35 1,37 
+Stálé + krátkodobé:    1,88 1,42 2,67 
+       
+ 
+Posouzení krokve:    
+    
+Návrhová pevnost dřeva v tlaku za ohybu:    
+charakteristická pevnost dřeva: fm,y,k 24,00 MPa 
+modifikační součinitel: kmod 0,80 - 
+součinitel bezpečnosti: gM 1,30 - 
+návrhová pevnost dřeva: fm,y,d 14,77 MPa 
+    
+Průřezové charakteristiky:    
+výška: hk 200 mm 
+šířka: bk 120 mm 
+modul pružnosti dřeva: ED 11000 MPa 
+Wy = hk*bk2/6 Wy 8,000E+05 mm3 
+Iy = hk*bk3/12 Iy 8,000E+07 mm4 
+    
+Vnitřní síly na krokvi - posouzení na I. mezní stav:    
+návrhové rozpětí: L0 4500 mm 
+provozní zatížení: qk 1,88 kN/m 
+návrhové zatížení: qSd 2,67 kN/m 
+návrhový ohybový moment: MSd 6,76 kNm 
+normálová napětí v tlaku za ohybu: sm,y,d 8,45 MPa 
+návrhová pevnost dřeva: fm,y,d 14,77 MPa 
+posudek:  0,57 - 
+
+=== PDF PAGE 12 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 12 
+ 
+  Vyhovuje  
+Deformace na krokvi - posouzení na II. mezní stav:    
+návrhové rozpětí: L0 4500 mm 
+provozní zatížení - stálé: gk 1,02 kN/m 
+provozní zatížení - nahodilé krátkodobé: sk 0,72 kN/m 
+provozní zatížení - nahodilé krátkodobé: wk 0,15 kN/m 
+součinitel modifikace modulu pružnosti - stálé: kdef,g 0,60 - 
+součinitel modifikace modulu pružnosti - střednědobé nahodilé: kdef,g 0,25 - 
+průhyb od nahodilého zatížení: u2,inst 4,69 mm 
+limitní průhyb od nahodilého zatížení - L0/300: u2,lim 15,00 mm 
+posudek:  0,31 - 
+  Vyhovuje  
+průhyb od celkového zatížení vlivem dotvarování:  unet,fin 16,21 mm 
+limitní průhyb od celkového zatížení - L0/200: unet,lim 22,50 mm 
+posudek:  0,72 - 
+  Vyhovuje  
+    
+průhyb od celkového zatížení:  unet,fin 11,42 mm 
+limitní průhyb od celkového zatížení - L0/250: unet,lim 18,00 mm 
+posudek:  0,63 - 
+  Vyhovuje  
+ 
+Výpočtový model 
+ 
+ 
+ 
+Výpočtový model 
+ 
+
+
+=== PDF PAGE 13 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 13 
+ 
+ 
+ 
+Prvky 
+ 
+Jméno Průřez Materiál Délka 
+[m] 
+Poč. uzel Konc. uzel Typ 
+B1 CS2 - OBDEL (120; 200) C24 (EN 338) 4,316 N1 N2 nosník (80) 
+B2 CS2 - OBDEL (120; 200) C24 (EN 338) 4,316 N2 N3 nosník (80) 
+B6 CS8 - OBDEL (100; 200) C24 (EN 338) 7,500 N1 N3 nosník (80) 
+B7 CS3 - 2 Obdel (60; 160; 100) C24 (EN 338) 1,685 N160 N161 nosník (80) 
+ 
+Průřezy 
+ 
+CS2 
+Typ OBDEL    
+Detailní 120; 200    
+Typ tvaru Tlustostěnný    
+Materiál C24 (EN 338)    
+Výroba dřevo    
+Barva     
+A [m2] 2,4000e-02    
+Ay [m2], Az [m2] 2,0039e-02 2,0014e-02 
+AL [m2/m], AD [m2/m] 6,4000e-01 6,4000e-01 
+cY.UCS [mm], cZ.UCS [mm] 60 100 
+α [deg] 0,00    
+Iy [m4], Iz [m4] 8,0000e-05 2,8800e-05 
+iy [mm], iz [mm] 58 35 
+Wel.y [m3], Wel.z [m3] 8,0000e-04 4,8000e-04 
+Wpl.y [m3], Wpl.z [m3] 9,8028e-04 5,8817e-04 
+Mpl.y.+ [Nm], Mpl.y.- [Nm] 2,06e+04 2,06e+04 
+Mpl.z.+ [Nm], Mpl.z.- [Nm] 1,24e+04 1,24e+04 
+dy [mm], dz [mm] 0 0 
+It [m4], Iw [m6] 7,1976e-05 2,2015e-08 
+βy [mm], βz [mm] 0 0 
+
+
+=== PDF PAGE 14 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 14 
+ 
+Obrázek 
+ 
+   
+CS3 
+Typ 2 Obdel    
+Detailní 60; 160; 100    
+Typ tvaru Tlustostěnný    
+Materiál C24 (EN 338)    
+Výroba dřevo    
+Barva     
+A [m2] 1,9200e-02    
+Ay [m2], Az [m2] 1,6045e-02 1,6006e-02 
+AL [m2/m], AD [m2/m] 8,8000e-01 8,8000e-01 
+cY.UCS [mm], cZ.UCS [mm] 110 80 
+α [deg] 0,00    
+Iy [m4], Iz [m4] 4,0960e-05 1,2864e-04 
+iy [mm], iz [mm] 46 82 
+Wel.y [m3], Wel.z [m3] 5,1200e-04 1,1695e-03 
+Wpl.y [m3], Wpl.z [m3] 6,2738e-04 1,1334e-03 
+Mpl.y.+ [Nm], Mpl.y.- [Nm] 1,32e+04 1,32e+04 
+Mpl.z.+ [Nm], Mpl.z.- [Nm] 2,38e+04 2,38e+04 
+dy [mm], dz [mm] 0 0 
+It [m4], Iw [m6] 1,7524e-05 2,6811e-07 
+βy [mm], βz [mm] 0 0 
+Obrázek 
+ 
+   
+CS8 
+Typ OBDEL    
+Detailní 100; 200    
+Typ tvaru Tlustostěnný    
+Materiál C24 (EN 338)    
+Výroba dřevo    
+Barva     
+A [m2] 2,0000e-02    
+Ay [m2], Az [m2] 1,6705e-02 1,6676e-02 
+AL [m2/m], AD [m2/m] 6,0000e-01 6,0000e-01 
+cY.UCS [mm], cZ.UCS [mm] 50 100 
+α [deg] 0,00    
+Iy [m4], Iz [m4] 6,6667e-05 1,6667e-05 
+iy [mm], iz [mm] 58 29 
+Wel.y [m3], Wel.z [m3] 6,6667e-04 3,3333e-04 
+Wpl.y [m3], Wpl.z [m3] 8,1690e-04 4,0845e-04 
+Mpl.y.+ [Nm], Mpl.y.- [Nm] 1,72e+04 1,72e+04 
+Mpl.z.+ [Nm], Mpl.z.- [Nm] 8,58e+03 8,58e+03 
+dy [mm], dz [mm] 0 0 
+It [m4], Iw [m6] 4,5653e-05 2,0066e-08 
+βy [mm], βz [mm] 0 0 
+B 120
+H 200
+z
+ y
+tha 60
+Ba 160
+a 100
+Ba 160
+tha 60
+z
+ y
+
+
+=== PDF PAGE 15 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 15 
+ 
+Obrázek 
+ 
+   
+ 
+Materiály 
+ 
+Ocel EC3 
+ 
+Jméno ρ 
+[kg/m3] 
+Emod 
+[MPa] 
+μ Dolní mez 
+[mm] 
+Horní mez 
+[mm] 
+Fy 
+[MPa] 
+Fu 
+[MPa] 
+Barva 
+      Gmod 
+[MPa] 
+α 
+[m/mK] 
+               
+S 235 7850,0 2,1000e+05 0.3 0 40 235,0 360,0  
+      8,0769e+04 0,00 40 80 215,0 360,0    
+ 
+Timber EC5 
+ 
+Jméno Typ dřeva μ Emod 
+[MPa] 
+fm.k 
+[MPa] 
+ft.0.k 
+[MPa] 
+ft.90.k 
+[MPa] 
+fc.0.k 
+[MPa] 
+fc.90.k 
+[MPa] 
+fv.k 
+[MPa] 
+Barva 
+   ρ 
+[kg/m3] 
+α 
+[m/mK] 
+Gmod 
+[MPa] 
+                     
+C22 (EN 338) Rostlé dřevo 0 1,0000e+04 22,0 13,0 0,4 20,0 2,4 3,8  
+   410,0 0,00 6,3000e+02                      
+C24 (EN 338) Rostlé dřevo 0 1,1000e+04 24,0 14,5 0,4 21,0 2,5 4,0  
+   420,0 0,00 6,9000e+02                      
+ 
+Zatěžovací stavy 
+ 
+Zatěžovací stavy - ZS1 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Směr 
+   Spec Typ zatížení       
+ZS1 Vlastní tíha Stálé SZ1 -Z 
+      Vlastní tíha       
+ 
+Hodnota pro výpočet 
+ 
+ 
+ 
+Zatěžovací stavy - ZS2 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+   Spec Typ zatížení    
+ZS2 SKLADBA Stálé SZ1 
+      Standard    
+ 
+Hodnota pro výpočet 
+ 
+B 100
+H 200
+z
+ y
+
+
+=== PDF PAGE 16 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 16 
+ 
+ 
+Zatěžovací stavy - ZS3 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS3 SNÍH1 Proměnné SZ2 Krátkodobé Žádný 
+   Standard Statické          
+Hodnota pro výpočet 
+ 
+ 
+
+
+=== PDF PAGE 17 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 17 
+ 
+Zatěžovací stavy - ZS4 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS4 SNÍHFUL Proměnné SZ2 Krátkodobé Žádný 
+   Standard Statické          
+ 
+Hodnota pro výpočet 
+ 
+ 
+ 
+Zatěžovací stavy - ZS5 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS5 VÍTR Proměnné SZ3 Krátkodobé Žádný 
+   Standard Statické          
+ 
+Hodnota pro výpočet 
+ 
+
+
+=== PDF PAGE 18 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 18 
+ 
+ 
+Zatěžovací stavy - ZS6 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS6 VÍTR Proměnné SZ3 Krátkodobé Žádný 
+   Standard Statické          
+Hodnota pro výpočet 
+ 
+ 
+
+
+=== PDF PAGE 19 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 19 
+ 
+ 
+Zatěžovací stavy - ZS7 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS7 SNÍH2 Proměnné SZ2 Krátkodobé Žádný 
+   Standard Statické          
+ 
+Hodnota pro výpočet 
+ 
+ 
+ 
+Zatěžovací stavy - ZS8 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Působení Řídicí zat. 
+stav 
+   Spec Typ zatížení          
+ZS8 užitné Proměnné SZ4 Krátkodobé Žádný 
+   Standard Statické          
+ 
+Hodnota pro výpočet 
+ 
+
+
+=== PDF PAGE 20 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 20 
+ 
+ 
+ 
+Generátor výsledkových obrázků 
+ 
+Reakce 
+ 
+Lineární výpočet 
+Kombinace: MSÚ-Sada B (auto) 
+Systém: Globální 
+Extrém: Dílec 
+Výběr: Vše 
+Uzlové reakce 
+ 
+Jméno Stav Rx 
+[kN] 
+Ry 
+[kN] 
+Rz 
+[kN] 
+Mx 
+[kNm] 
+My 
+[kNm] 
+Mz 
+[kNm] 
+ex 
+[mm] 
+ey 
+[mm] 
+Sn1/N1 MSÚ-Sada B 
+(auto)/1 
+3,42 0,00 5,69 0,00 0,00 0,00 0,0 0,0 
+Sn1/N1 MSÚ-Sada B 
+(auto)/2 
+2,42 0,00 3,37 0,00 0,00 0,00 0,0 0,0 
+Sn1/N1 MSÚ-Sada B 
+(auto)/3 
+2,56 0,00 7,59 0,00 0,00 0,00 0,0 0,0 
+Sn1/N1 MSÚ-Sada B 
+(auto)/4 
+0,98 0,00 4,22 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/2 
+-0,98 0,00 3,74 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/4 
+-2,42 0,00 2,88 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/5 
+-2,56 0,00 6,38 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/6 
+-3,42 0,00 5,13 0,00 0,00 0,00 0,0 0,0 
+Sn3/N2 MSÚ-Sada B 
+(auto)/7 
+0,00 0,00 5,23 0,00 0,00 0,00 0,0 0,0 
+Sn3/N2 MSÚ-Sada B 
+(auto)/1 
+0,00 0,00 9,60 0,00 0,00 0,00 0,0 0,0 
+Sb1/B6 MSÚ-Sada B 
+(auto)/7 
+0,00 0,00 2,79 0,00 0,00 0,00 0,0 0,0 
+Sb1/B6 MSÚ-Sada B 
+(auto)/8 
+0,00 0,00 8,59 0,00 0,00 0,00 0,0 0,0 
+ 
+
+
+=== PDF PAGE 21 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 21 
+ 
+Jméno Klíč kombinace 
+MSÚ-Sada B (auto)/1  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS6 
+MSÚ-Sada B (auto)/2  ZS1 + ZS2 + 1.50*ZS6 
+MSÚ-Sada B (auto)/3  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS5 + 1.05*ZS8 
+MSÚ-Sada B (auto)/4  ZS1 + ZS2 + 1.50*ZS5 
+MSÚ-Sada B (auto)/5  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS6 + 1.05*ZS8 
+MSÚ-Sada B (auto)/6  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS5 
+MSÚ-Sada B (auto)/7  ZS1 + ZS2 
+MSÚ-Sada B (auto)/8  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS8 
+ 
+Reakce; - R_x 
+ 
+ 
+Reakce; - R_z 
+ 
+ 
+ 
+
+
+=== PDF PAGE 22 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 22 
+ 
+Generátor výsledkových obrázků 
+ 
+1D vnitřní síly 
+ 
+Lineární výpočet 
+Kombinace: MSÚ-Sada B (auto) 
+Souřadný systém: Dílec 
+Extrém 1D: Průřez 
+Výběr: Vše 
+ 
+Jméno dx 
+[m] 
+Stav Průřez N 
+[kN] 
+Vy 
+[kN] 
+Vz 
+[kN] 
+Mx 
+[kNm] 
+My 
+[kNm] 
+Mz 
+[kNm] 
+B2 4,316 MSÚ-Sada B 
+(auto)/1 
+CS2 - OBDEL 
+(120; 200) 
+-5,20 0,00 -2,22 0,00 0,00 0,00 
+B2 0,000 MSÚ-Sada B 
+(auto)/2 
+CS2 - OBDEL 
+(120; 200) 
+11,71 0,00 -0,57 0,00 0,00 0,00 
+B1 3,346- MSÚ-Sada B 
+(auto)/1 
+CS2 - OBDEL 
+(120; 200) 
+-1,15 0,00 -4,02 0,00 -1,55 0,00 
+B2 0,970+ MSÚ-Sada B 
+(auto)/2 
+CS2 - OBDEL 
+(120; 200) 
+-1,15 0,00 4,02 0,00 -1,55 0,00 
+B1 3,346- MSÚ-Sada B 
+(auto)/3 
+CS2 - OBDEL 
+(120; 200) 
+-1,64 0,00 -3,00 0,00 -2,32 0,00 
+B1 1,443- MSÚ-Sada B 
+(auto)/4 
+CS2 - OBDEL 
+(120; 200) 
+-2,94 0,00 0,16 0,00 2,44 0,00 
+B6 4,400+ MSÚ-Sada B 
+(auto)/5 
+CS8 - OBDEL 
+(100; 200) 
+0,00 0,00 3,87 0,00 -3,39 0,00 
+B6 4,400- MSÚ-Sada B 
+(auto)/5 
+CS8 - OBDEL 
+(100; 200) 
+0,00 0,00 -4,72 0,00 -3,39 0,00 
+B6 1,760- MSÚ-Sada B 
+(auto)/5 
+CS8 - OBDEL 
+(100; 200) 
+0,00 0,00 0,02 0,00 2,81 0,00 
+B7 0,000 MSÚ-Sada B 
+(auto)/6 
+CS3 - 2 Obdel 
+(60; 160; 100) 
+-7,33 0,00 0,07 0,00 0,00 0,00 
+B7 1,685 MSÚ-Sada B 
+(auto)/7 
+CS3 - 2 Obdel 
+(60; 160; 100) 
+-9,90 0,00 -0,09 0,00 0,00 0,00 
+B7 0,000 MSÚ-Sada B 
+(auto)/7 
+CS3 - 2 Obdel 
+(60; 160; 100) 
+-9,90 0,00 0,09 0,00 0,00 0,00 
+B7 0,843- MSÚ-Sada B 
+(auto)/7 
+CS3 - 2 Obdel 
+(60; 160; 100) 
+-9,90 0,00 0,00 0,00 0,04 0,00 
+B7 0,000 MSÚ-Sada B 
+(auto)/1 
+CS3 - 2 Obdel 
+(60; 160; 100) 
+-13,57 0,00 0,08 0,00 0,00 0,00 
+ 
+Jméno Klíč kombinace 
+MSÚ-Sada B (auto)/1  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS5 
+MSÚ-Sada B (auto)/2  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS4 + 0.90*ZS6 
+MSÚ-Sada B (auto)/3  1.15*ZS1 + 1.15*ZS2 + 0.90*ZS6 + 1.50*ZS7 
+MSÚ-Sada B (auto)/4  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS3 + 0.90*ZS5 
+MSÚ-Sada B (auto)/5  1.15*ZS1 + 1.15*ZS2 + 1.50*ZS8 
+MSÚ-Sada B (auto)/6  ZS1 + ZS2 
+MSÚ-Sada B (auto)/7  1.35*ZS1 + 1.35*ZS2 
+ 
+  
+
+=== PDF PAGE 23 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 23 
+ 
+1D vnitřní síly; - N 
+ 
+ 
+ 
+1D vnitřní síly; - V_z 
+ 
+ 
+
+
+=== PDF PAGE 24 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 24 
+ 
+1D vnitřní síly; - M_y 
+ 
+ 
+3D přemístění; U_total 
+ 
+ 
+ 
+
+
+=== PDF PAGE 25 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 25 
+ 
+Posudek dřeva podle MSÚ; Jedn. posudek 
+ 
+ 
+ 
+Posudek dřeva podle MSÚ 
+ 
+Lineární výpočet, Extrém : Průřez 
+Výběr : Vše 
+Kombinace : MSÚ-Sada B (auto) 
+  
+ 
+EN 1995-1-1 posudek 
+ 
+Nosník B1  4,316 m  CS2 - OBDEL (120; 
+200)  
+C24 (EN 338)  MSÚ-Sada B (auto)  0,21 -  
+ 
+ Klíč kombinace 
+MSÚ-Sada B (auto) / 1.15*ZS1 + 1.15*ZS2 + 0.90*ZS6 + 
+1.50*ZS7  
+ 
+ Základní data 
+Dílčí součinitel spolehlivosti γM for rostlé dřevo  1,30  
+ 
+ Údaje o materiálu 
+Ohyb (fm,k)  24,0  MPa  
+Tah (ft,0,k)  14,5  MPa  
+Tah (ft,90,k)  0,4  MPa  
+Tlak (fc,0,k)  21,0  MPa  
+Tlak (fc,90,k)  2,5  MPa  
+Smyk (fv,k)  4,0  MPa  
+Typ dřeva  Celistvý    
+ 
+Kritický posudek je v místě 3,346 m. 
+ 
+ Vnitřní síly 
+NEd  9,16  kN  
+Vy,Ed  0,00  kN  
+
+
+=== PDF PAGE 26 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 26 
+ 
+ Vnitřní síly 
+Vz,Ed  3,06  kN  
+TEd  0,00  kNm  
+My,Ed  -2,32  kNm  
+Mz,Ed  0,00  kNm  
+ 
+ Součinitel modifikace 
+Třída vlhkosti  1  
+Doba trvání zatížení  Krátkodobé  
+Součinitel modifikace kmod  0,90  
+ 
+ ..:: POSUDEK ŘEZU ::..  
+  
+Tah rovnoběžně s vlákny 
+Podle EN 1995-1-1 článku 6.1.2 a rovnice (6.1) 
+ 
+σt,0,d  0,4  MPa  
+kh  1,00    
+ft,0,d  10,0  MPa  
+Jedn. posudek  0,04  -  
+ 
+Tlak kolmo na vlákna 
+Podle EN 1995-1-1 článku 6.1.5 a rovnice (6.3) 
+ 
+Fc,90,d  6,06  kN  
+l  100  mm  
+lef  160  mm  
+b  120  mm  
+Aef  19200  mm2  
+σc,90,d  0,3  MPa  
+Podporové podmínky  Diskrétní    
+h  200  mm  
+kc,90  1,50  -  
+fc,90,d  1,7  MPa  
+Jedn. posudek  0,12  -  
+ 
+Ohyb 
+Podle EN 1995-1-1 článku 6.1.6 a rovnice (6.11), (6.12) 
+ 
+σm,y,d  2,9  MPa  
+kh,y  1,00    
+fm,y,d  16,6  MPa  
+km  0,70    
+ 
+Jednotkový posudek (6.11) = 0,17 + 0,00 = 0,17 - 
+Jednotkový posudek (6.12) = 0,12 + 0,00 = 0,12 - 
+  
+Smyk 
+Podle EN 1995-1-1 článku 6.1.7 a rovnice (6.13) 
+ 
+kcr  0,67    
+τz,d  0,3  MPa  
+fv,d  2,8  MPa  
+Jednotkový posudek τz  0,10  -  
+ 
+Kombinovaný ohyb a osový tah 
+Podle EN 1995-1-1 článku 6.2.3 a rovnice (6.17), (6.18) 
+ 
+ft,0,d  10,0  MPa  
+fm,y,d  16,6  MPa  
+km  0,70    
+ 
+Jednotkový posudek (6.17) = 0,04 + 0,17 + 0,00 = 0,21 - 
+Jednotkový posudek (6.18) = 0,04 + 0,12 + 0,00 = 0,16 - 
+  
+Prvek splňuje podmínky posudku průřezu. 
+ 
+
+=== PDF PAGE 27 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 27 
+ 
+ ..:: POSUDEK STABILITY ::..  
+  
+Nosníky zatížené ohybem nebo kombinací tlaku a ohybu 
+Podle EN 1995-1-1 článku 6.3.3 a rovnice (6.33), (6.35) 
+ 
+ Parametry klopení 
+Pružný kritický moment My,krit  76,64  kNm  
+Kritické ohybové napětí σm,krit  95,8  MPa  
+Poměrná štíhlost λrel,m  0,50  -  
+redukční součinitel kkrit  1,00  -  
+ 
+Jednotkový posudek (6.33) = 0,17 - 
+  
+ 
+ My,krit Parametry 
+G0,05  462,5  MPa  
+Délka klopení L  4,316  m  
+Lef/L  0,80    
+Účinná délka Lef  3,453  m  
+Vliv pozice zatížení  bez vlivu    
+ 
+  
+Prvek splňuje podmínky stabilitního posudku. 
+ 
+EN 1995-1-1 posudek 
+ 
+Nosník B6  7,500 m  CS8 - OBDEL (100; 
+200)  
+C24 (EN 338)  MSÚ-Sada B (auto)  0,31 -  
+ 
+ Klíč kombinace 
+MSÚ-Sada B (auto) / 1.15*ZS1 + 1.15*ZS2 + 1.50*ZS8  
+ 
+ Základní data 
+Dílčí součinitel spolehlivosti γM for rostlé dřevo  1,30  
+ 
+ Údaje o materiálu 
+Ohyb (fm,k)  24,0  MPa  
+Tah (ft,0,k)  14,5  MPa  
+Tah (ft,90,k)  0,4  MPa  
+Tlak (fc,0,k)  21,0  MPa  
+Tlak (fc,90,k)  2,5  MPa  
+Smyk (fv,k)  4,0  MPa  
+Typ dřeva  Celistvý    
+ 
+Kritický posudek je v místě 4,400 m. 
+ 
+ Vnitřní síly 
+NEd  0,00  kN  
+Vy,Ed  0,00  kN  
+Vz,Ed  -4,72  kN  
+TEd  0,00  kNm  
+My,Ed  -3,39  kNm  
+Mz,Ed  0,00  kNm  
+ 
+ Součinitel modifikace 
+Třída vlhkosti  1  
+Doba trvání zatížení  Krátkodobé  
+Součinitel modifikace kmod  0,90  
+ 
+ ..:: POSUDEK ŘEZU ::..  
+  
+Tlak kolmo na vlákna 
+Podle EN 1995-1-1 článku 6.1.5 a rovnice (6.3) 
+ 
+Fc,90,d  8,59  kN  
+l  100  mm  
+lef  160  mm  
+
+=== PDF PAGE 28 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 28 
+ 
+b  100  mm  
+Aef  16000  mm2  
+σc,90,d  0,5  MPa  
+Podporové podmínky  Diskrétní    
+h  200  mm  
+kc,90  1,50  -  
+fc,90,d  1,7  MPa  
+Jedn. posudek  0,21  -  
+ 
+Ohyb 
+Podle EN 1995-1-1 článku 6.1.6 a rovnice (6.11), (6.12) 
+ 
+σm,y,d  5,1  MPa  
+kh,y  1,00    
+fm,y,d  16,6  MPa  
+km  0,70    
+ 
+Jednotkový posudek (6.11) = 0,31 + 0,00 = 0,31 - 
+Jednotkový posudek (6.12) = 0,21 + 0,00 = 0,21 - 
+  
+Smyk 
+Podle EN 1995-1-1 článku 6.1.7 a rovnice (6.13) 
+ 
+kcr  0,67    
+τz,d  0,5  MPa  
+fv,d  2,8  MPa  
+Jednotkový posudek τz  0,19  -  
+ 
+Prvek splňuje podmínky posudku průřezu. 
+ 
+ ..:: POSUDEK STABILITY ::..  
+  
+Nosníky zatížené ohybem nebo kombinací tlaku a ohybu 
+Podle EN 1995-1-1 článku 6.3.3 a rovnice (6.33), (6.35) 
+ 
+ Parametry klopení 
+Pružný kritický moment My,krit  40,48  kNm  
+Kritické ohybové napětí σm,krit  60,7  MPa  
+Poměrná štíhlost λrel,m  0,63  -  
+redukční součinitel kkrit  1,00  -  
+ 
+Jednotkový posudek (6.33) = 0,31 - 
+  
+ 
+ My,krit Parametry 
+G0,05  462,5  MPa  
+Délka klopení L  4,400  m  
+Lef/L  0,90    
+Účinná délka Lef  3,960  m  
+Vliv pozice zatížení  bez vlivu    
+ 
+  
+Prvek splňuje podmínky stabilitního posudku. 
+ 
+EN 1995-1-1 posudek 
+ 
+Nosník B7  1,685 m  CS3 - 2 Obdel (60; 
+160; 100)  
+C24 (EN 338)  MSÚ-Sada B (auto)  0,07 -  
+ 
+ Klíč kombinace 
+MSÚ-Sada B (auto) / 1.35*ZS1 + 1.35*ZS2  
+ 
+ Základní data 
+Dílčí součinitel spolehlivosti γM for rostlé dřevo  1,30  
+ 
+
+=== PDF PAGE 29 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 29 
+ 
+ Údaje o materiálu 
+Ohyb (fm,k)  24,0  MPa  
+Tah (ft,0,k)  14,5  MPa  
+Tah (ft,90,k)  0,4  MPa  
+Tlak (fc,0,k)  21,0  MPa  
+Tlak (fc,90,k)  2,5  MPa  
+Smyk (fv,k)  4,0  MPa  
+Typ dřeva  Celistvý    
+ 
+Kritický posudek je v místě 0,843 m. 
+ 
+ Vnitřní síly 
+NEd  -9,90  kN  
+Vy,Ed  0,00  kN  
+Vz,Ed  0,00  kN  
+TEd  0,00  kNm  
+My,Ed  0,00  kNm  
+Mz,Ed  0,04  kNm  
+ 
+Poznámka: Definice osy: 
+- Hlavní osa y v tomto posudku se vztahuje k hlavní ose z programu SCIA Engineer. 
+- Hlavní osa z v tomto posudku se vztahuje k hlavní ose y programu SCIA Engineer. 
+ 
+ Součinitel modifikace 
+Třída vlhkosti  1  
+Doba trvání zatížení  Stálé  
+Součinitel modifikace kmod  0,60  
+ 
+ ..:: POSUDEK ŘEZU ::..  
+  
+Tlak rovnoběžně s vlákny 
+Podle EN 1995-1-1 článku 6.1.4 a rovnice (6.2) 
+ 
+σc,0,d  0,5  MPa  
+fc,0,d  9,7  MPa  
+Jedn. posudek  0,05  -  
+ 
+Ohyb 
+Podle EN 1995-1-1 článku 6.1.6 a rovnice (6.11), (6.12) 
+ 
+σm,z,d  0,1  MPa  
+kh,z  1,00    
+fm,z,d  11,1  MPa  
+km  1,00    
+ 
+Jednotkový posudek (6.11) = 0,00 + 0,01 = 0,01 - 
+Jednotkový posudek (6.12) = 0,00 + 0,01 = 0,01 - 
+  
+Kombinovaný ohyb a osový tlak 
+Podle EN 1995-1-1 článku 6.2.4 a rovnice (6.19), (6.20) 
+ 
+fc,0,d  9,7  MPa  
+fm,z,d  11,1  MPa  
+km  1,00    
+ 
+Jednotkový posudek (6.19) = 0,00 + 0,00 + 0,01 = 0,01 - 
+Jednotkový posudek (6.20) = 0,00 + 0,00 + 0,01 = 0,01 - 
+  
+Prvek splňuje podmínky posudku průřezu. 
+ 
+ ..:: POSUDEK STABILITY ::..  
+  
+Sloupy zatížené tlakem nebo kombinací tlaku a ohybu 
+Podle EN 1995-1-1 článku 6.3.2 a rovnice (6.23), (6.24) 
+ 
+Parametry vzpěru  yy  zz    
+Typ posuvných styčníků  neposuvné  posuvné    
+
+=== PDF PAGE 30 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 30 
+ 
+Systémová délka L  1,685  1,685  m  
+Součinitel vzpěru k  1,00  1,00    
+Vzpěrná délka Lcr  1,685  1,685  m  
+Štíhlost λ  20,59  36,49  -  
+Poměrná štíhlost λ  0,35  0,62  -  
+Mezní štíhlost  0,30  0,30  -  
+Imperfekce βc  0,20  0,20  -  
+redukční součinitel kc  0,99  0,91  -  
+ 
+Jednotkový posudek (6.23) = 0,05 + 0,00 + 0,01 = 0,06 - 
+Jednotkový posudek (6.24) = 0,06 + 0,00 + 0,01 = 0,07 - 
+  
+Prvek splňuje podmínky stabilitního posudku. 
+ 
+Posudek dřeva podle MSP 
+ 
+Lineární výpočet, Extrém : Průřez 
+Výběr : Vše 
+Kombinace : MSP-Char (auto) 
+  
+ 
+Dílec Průřez dx 
+[m] 
+Zatěžovací 
+stav 
+Jedn. 
+posudek 
+[-] 
+uy inst 
+[mm] 
+Rel uy 
+inst 
+[1/xx] 
+Posudek 
+uy inst 
+[-] 
+uy fin 
+[mm] 
+Rel uy fin 
+[1/xx] 
+Posudek 
+uy fin 
+[-] 
+   Materiál    kdef 
+[-] 
+   uz inst 
+[mm] 
+Rel uz 
+inst 
+[1/xx] 
+Posudek 
+uz inst 
+[-] 
+uz fin 
+[mm] 
+Rel uz fin 
+[1/xx] 
+Posudek 
+uz fin 
+[-] 
+B2 CS2 - OBDEL 2,552 MSP-Char 
+(auto)/1 
+0,23 0,0 0 0,00 0,0 0 0,00 
+   C24 (EN 338)    0,60    -3,0 1/1452 0,23 -3,7 1/1160 0,21 
+B6 CS8 - OBDEL 2,200 MSP-Char 
+(auto)/2 
+0,37 0,0 0 0,00 0,0 0 0,00 
+   C24 (EN 338)    0,60    -5,0 1/881 0,37 -6,8 1/646 0,37 
+B7 CS3 - 2 Obdel 0,843 MSP-Char 
+(auto)/3 
+0,00 0,0 0 0,00 0,0 0 0,00 
+   C24 (EN 338)    0,60    0,0 1/10000 0,00 0,0 1/10000 0,00 
+ 
+ 
+Ocelový nosník       
+       
+Zatížení       
+       
+       
+liniové   q2 (kN/m1) provozní   výpočtové 
+       
+vl. tíha nosníku    0,66 1,35 0,90 
+reakce krov    6,70 1,37 9,18 
+       
+zatěžovací šířka trámu  Bt = 1,000  m  
+délka trámu   L = 7,700  m  
+       
+       
+vnitřní síly:   Md = 1/8.((q1d+v1d).Bt+q2d).(1,05.L)2 
+    82,33  kNm  
+   Vd = 1/2.((q1d+v1d).Bt+q2d).1,05.L 
+    40,73  kN  
+       
+ s břemenem Md = 
+1/8.(q1d.Bt+q2d).(1,05.L)2+1/4.P1d.1,05.
+L 
+    82,33  kNm  
+
+=== PDF PAGE 31 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 31 
+ 
+   Vd = 1/2.(q1d.Bt+q2d).1,05.L+1/2.P1d 
+    40,73  kN  
+       
+Posouzení       
+       
+gM = 1,00      
+ocel: S235      
+fy,m = 235,00  MPa     
+       
+E = 210000,00  MPa     
+       
+profil U 240 počet ks: 2       
+       
+ Wy =  6,000E-04 m3   
+ Iy =  7,200E-05 m4   
+ hw =  2,140E-01 m   
+ tw =  1,900E-02 m   
+       
+1.MS:       
+       
+OHYB: sd = Md,max/W = 137,21  MPa   
+       
+sm,d = 137,21  MPa < fm,d = 235,00  MPa 
+      VYHOVUJE       
+ 
+ 
+       
+SMYK:  = 551,66 kN   
+       
+VSd = 40,73 kN < Vpl,Rd / 2 = 275,83 kN 
+      VYHOVUJE       
+       
+2.MS: uinst,stálé = 5/384.(q1n.Bt+q2).L4/(E.I) =  22,3  mm 
+ uinst,nah = 5/384.v1n.Bt.L4/(E.I) =  0,0  mm 
+ uinst,nah,bř = 1/48.P1n.L3/(Eg.I) =  0,0  mm 
+       
+       
+ ucelk = ufin,stálé+uinst,nah =  22,3  mm  
+  ufin,stálé+uinst,nah,bř = 22,3  mm  
+       
+ucelk,max = 22,3  mm < L/300 = 25,7  mm 
+uinst,nah,max = 0,0  mm < L/350 = 22,0  mm 
+      VYHOVUJE       
+       
+Navržen nosník:           
+         
+  průřez:  U 240 počet profilů: 2   
+  ocel:   S235       
+ 
+
+
+=== PDF PAGE 32 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 32 
+ 
+Výpočtový model 
+ 
+ 
+ 
+Prvky 
+ 
+Jméno Průřez Materiál Délka 
+[m] 
+Poč. uzel Konc. uzel Typ 
+B1 CS8 - HEA160 S 235 4,316 N1 N2 nosník (80) 
+B2 CS8 - HEA160 S 235 4,316 N2 N3 nosník (80) 
+ 
+Průřezy 
+ 
+CS8 
+Typ HEA160    
+Kód tvaru 1 - I průřez    
+Typ tvaru Tenkostěnný    
+Materiál S 235    
+Výroba válcovaný    
+Barva     
+Posudek rovinného vzpěru 
+y-y, Posudek rovinného 
+vzpěru z-z 
+b c 
+A [m2] 3,8800e-03    
+Ay [m2], Az [m2] 2,8071e-03 9,8390e-04 
+AL [m2/m], AD [m2/m] 9,0600e-01 9,0613e-01 
+cY.UCS [mm], cZ.UCS [mm] 80 76 
+α [deg] 0,00    
+Iy [m4], Iz [m4] 1,6700e-05 6,1600e-06 
+iy [mm], iz [mm] 66 40 
+Wel.y [m3], Wel.z [m3] 2,2000e-04 7,7000e-05 
+Wpl.y [m3], Wpl.z [m3] 2,4500e-04 1,1750e-04 
+Mpl.y.+ [Nm], Mpl.y.- [Nm] 5,77e+04 5,77e+04 
+Mpl.z.+ [Nm], Mpl.z.- [Nm] 2,77e+04 2,77e+04 
+dy [mm], dz [mm] 0 0 
+It [m4], Iw [m6] 1,2200e-07 3,1410e-08 
+βy [mm], βz [mm] 0 0 
+
+
+=== PDF PAGE 33 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 33 
+ 
+Obrázek 
+ 
+   
+ 
+Materiály 
+ 
+Ocel EC3 
+ 
+Jméno ρ 
+[kg/m3] 
+Emod 
+[MPa] 
+μ Dolní mez 
+[mm] 
+Horní mez 
+[mm] 
+Fy 
+[MPa] 
+Fu 
+[MPa] 
+Barva 
+      Gmod 
+[MPa] 
+α 
+[m/mK] 
+               
+S 235 7850,0 2,1000e+05 0.3 0 40 235,0 360,0  
+      8,0769e+04 0,00 40 80 215,0 360,0    
+ 
+Timber EC5 
+ 
+Jméno Typ dřeva μ Emod 
+[MPa] 
+fm.k 
+[MPa] 
+ft.0.k 
+[MPa] 
+ft.90.k 
+[MPa] 
+fc.0.k 
+[MPa] 
+fc.90.k 
+[MPa] 
+fv.k 
+[MPa] 
+Barva 
+   ρ 
+[kg/m3] 
+α 
+[m/mK] 
+Gmod 
+[MPa] 
+                     
+C22 (EN 338) Rostlé dřevo 0 1,0000e+04 22,0 13,0 0,4 20,0 2,4 3,8  
+   410,0 0,00 6,3000e+02                      
+C24 (EN 338) Rostlé dřevo 0 1,1000e+04 24,0 14,5 0,4 21,0 2,5 4,0  
+   420,0 0,00 6,9000e+02                      
+ 
+Zatěžovací stavy 
+ 
+Zatěžovací stavy - ZS1 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+Směr 
+   Spec Typ zatížení       
+ZS1 Vlastní tíha Stálé SZ1 -Z 
+      Vlastní tíha       
+ 
+Hodnota pro výpočet 
+ 
+ 
+ 
+Zatěžovací stavy - ZS2 
+ 
+Jméno Popis Typ působení Skupina 
+zatížení 
+   Spec Typ zatížení    
+ZS2 SKLADBA Stálé SZ1 
+      Standard    
+ 
+Hodnota pro výpočet 
+ 
+z
+ y
+
+
+=== PDF PAGE 34 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 34 
+ 
+ 
+ 
+reakce 
+ 
+Reakce 
+ 
+Lineární výpočet 
+Kombinace: MSÚ-Sada B (auto) 
+Systém: Globální 
+Extrém: Dílec 
+Výběr: Vše 
+Uzlové reakce 
+ 
+Jméno Stav Rx 
+[kN] 
+Ry 
+[kN] 
+Rz 
+[kN] 
+Mx 
+[kNm] 
+My 
+[kNm] 
+Mz 
+[kNm] 
+ex 
+[mm] 
+ey 
+[mm] 
+Sn1/N1 MSÚ-Sada B 
+(auto)/1 
+40,90 0,00 24,02 0,00 0,00 0,00 0,0 0,0 
+Sn1/N1 MSÚ-Sada B 
+(auto)/2 
+30,30 0,00 17,79 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/2 
+-30,30 0,00 17,79 0,00 0,00 0,00 0,0 0,0 
+Sn2/N3 MSÚ-Sada B 
+(auto)/1 
+-40,90 0,00 24,02 0,00 0,00 0,00 0,0 0,0 
+Sn3/N2 MSÚ-Sada B 
+(auto)/1 
+0,00 0,00 0,00 0,00 0,00 0,00 - - 
+ 
+Jméno Klíč kombinace 
+MSÚ-Sada B (auto)/1  1.35*ZS1 + 1.35*ZS2 
+MSÚ-Sada B (auto)/2  ZS1 + ZS2 
+ 
+Reakce - R_x 
+ 
+
+
+=== PDF PAGE 35 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 35 
+ 
+ 
+ 
+Reakce - R_z 
+ 
+ 
+ 
+
+
+=== PDF PAGE 36 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 36 
+ 
+vnitřní síly 
+ 
+1D vnitřní síly 
+ 
+Lineární výpočet 
+Kombinace: MSÚ-Sada B (auto) 
+Souřadný systém: Dílec 
+Extrém 1D: Průřez 
+Výběr: Vše 
+ 
+Jméno dx 
+[m] 
+Stav Průřez N 
+[kN] 
+Vy 
+[kN] 
+Vz 
+[kN] 
+Mx 
+[kNm] 
+My 
+[kNm] 
+Mz 
+[kNm] 
+B1 4,316 MSÚ-Sada B 
+(auto)/1 
+CS8 - 
+HEA160 
+-34,49 0,00 -0,66 0,00 -0,42 0,00 
+B2 0,000 MSÚ-Sada B 
+(auto)/2 
+CS8 - 
+HEA160 
+-46,56 0,00 0,89 0,00 -0,57 0,00 
+B1 4,316 MSÚ-Sada B 
+(auto)/2 
+CS8 - 
+HEA160 
+-46,56 0,00 -0,89 0,00 -0,57 0,00 
+B1 1,765- MSÚ-Sada B 
+(auto)/2 
+CS8 - 
+HEA160 
+-47,07 0,00 0,01 0,00 0,56 0,00 
+B1 0,000 MSÚ-Sada B 
+(auto)/2 
+CS8 - 
+HEA160 
+-47,42 0,00 0,63 0,00 0,00 0,00 
+ 
+Jméno Klíč kombinace 
+MSÚ-Sada B (auto)/1  ZS1 + ZS2 
+MSÚ-Sada B (auto)/2  1.35*ZS1 + 1.35*ZS2 
+ 
+1D vnitřní síly - N 
+ 
+ 
+ 
+  
+
+
+=== PDF PAGE 37 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 37 
+ 
+1D vnitřní síly - V_z 
+ 
+ 
+ 
+1D vnitřní síly - M_y 
+ 
+ 
+
+
+=== PDF PAGE 38 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 38 
+ 
+3D přemístění; U_total 
+ 
+ 
+ 
+ 
+3D přemístění 
+ 
+Lineární výpočet 
+Kombinace: MSP-Char (auto) 
+Výběr: Vše 
+Poloha: V uzlech s průměrováním na makro. Systém: LSS prvku sítě 
+Výsledky na 1D dílci: 
+Extrém 1D: Globální 
+ 
+Jméno dx 
+[m] 
+Vlákno Stav ux 
+[mm] 
+uy 
+[mm] 
+uz 
+[mm] 
+φx 
+[mrad] 
+φy 
+[mrad] 
+φz 
+[mrad] 
+Utotal 
+[mm] 
+B1 0,000 8 MSP-Char 
+(auto)/1 
+0,0 0,0 0,0 0,0 0,2 0,0 0,0 
+B1 2,893- 13 MSP-Char 
+(auto)/1 
+-0,1 0,0 -0,4 0,0 0,0 0,0 0,4 
+ 
+Jméno Klíč kombinace 
+MSP-Char (auto)/1  ZS1 + ZS2 
+ 
+Posudek ocelových prvků na MSÚ EC-EN 1993 
+ 
+Lineární výpočet 
+Kombinace: MSÚ-Sada B (auto) 
+Souřadný systém: Hlavní 
+Extrém 1D: Průřez 
+Výběr: Vše 
+Celkový posudek 
+ 
+Jméno dx 
+[m] 
+Stav Průřez Materiál UCCelkový 
+[-] 
+UCPrůřez 
+[-] 
+UCStabilita 
+[-] 
+B1 0,000 MSÚ-Sada B 
+(auto)/1 
+CS8 - HEA160 S 235 0,15 0,05 0,15 
+ 
+
+
+=== PDF PAGE 39 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 39 
+ 
+Jméno Klíč kombinace 
+MSÚ-Sada B (auto)/1  1.35*ZS1 + 1.35*ZS2 
+ 
+EC-EN 1993 Posudek oceli MSP 
+ 
+Lineární výpočet 
+Kombinace: MSP-Char (auto) 
+Souřadný systém: Hlavní 
+Extrém 1D: Průřez 
+Výběr: Vše 
+Celkový posudek 
+ 
+Jméno dx 
+[m] 
+Stav Průřez uy,max 
+[mm] 
+uz,max 
+[mm] 
+uy,var 
+[mm] 
+uz,var 
+[mm] 
+Lim. 
+uy,max 
+[mm] 
+Lim. 
+uz,max 
+[mm] 
+Lim. uy,var 
+[mm] 
+Lim. uz,var 
+[mm] 
+Posudek 
+uy,max 
+[-] 
+Posudek 
+uz,max 
+[-] 
+Posudek 
+uy,var 
+[-] 
+Posudek 
+uz,var 
+[-] 
+Posudek Celkový 
+[-] 
+B1 1,926- MSP-Char 
+(auto)/1 
+CS8 - 
+HEA160 
+0,0 
+-0,2 
+- 
+- 
+21,6 
+21,6 
+12,0 
+12,0 
+0,00 
+0,01 
+- 
+- 
+0,01 
+ 
+Jméno Klíč kombinace 
+MSP-Char (auto)/1  ZS1 + ZS2 
+ 
+ 
+c) Základové konstrukce 
+Základ         
+         
+zatížení liniové   gk b gk - gdl 
+      kNm-2 m kNm-1 - kNm-1 
+  střecha  3,93 4 15,72 1,35 21,22 
+  strop   0,5 4 2 1,35 2,70 
+  podlaha  0,9 4 3,6 1,35 4,86 
+  sníh + vítr 0,8 4 3,2 1,5 4,80 
+  užitné  1,5 4 6 1,5 9,00 
+          
+    gk h tl. kce - gdl 
+      kNm-2 m m - kNm-1 
+  zdivo  6,5 3 - 1,35 26,33 
+         
+  celkem           68,91 
+ 
+Posouzení plošného základu 
+Vstupní data 
+Nastavení 
+Standardní - EN 1997 - DA2 
+Materiály a normy  
+Betonové konstrukce : EN 1992-1-1 (EC2) 
+Součinitele EN 1992-1-1 : standardní  
+
+=== PDF PAGE 40 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 40 
+ 
+Sedání  
+Metoda výpočtu : ČSN 73 1001 (Výpočet pomocí edometrického modulu) 
+Omezení deformační zóny : procentem Sigma,Or 
+Koef. omezení deformační zóny : 10,0 [%]  
+Patky  
+Posouzení tažené patky : standardní postup 
+Dovolená excentricita : 0,333 
+Metodika posouzení : výpočet podle EN 1997 
+Návrhový přístup : 2 - redukce zatížení a odporu  
+Součinitele redukce zatížení (F) 
+Trvalá návrhová situace 
+  Nepříznivé Příznivé 
+Stálé zatížení : G = 1,35 [–] 1,00 [–] 
+ 
+Součinitele redukce odporu (R) 
+Trvalá návrhová situace 
+Součinitel redukce svislé únosnosti : Rvs = 1,40 [–] 
+Součinitel redukce vodorovné únosnosti : Rhs = 1,10 [–] 
+ 
+Základní parametry zemin   
+Číslo Název Vzorek ef cef  su  
+[°] [kPa] [kN/m3] [kN/m3] [°] 
+1 Třída F5, konzistence tuhá 
+ 
+21,00 12,00 20,00 10,00  
+ 
+Pro výpočet tlaku v klidu jsou všechny zeminy zadány jako nesoudržné.  
+  
+Parametry zemin  
+Třída F5, konzistence tuhá 
+Objemová tíha :  = 20,00 kN/m3  
+Úhel vnitřního tření : ef = 21,00 °  
+Soudržnost zeminy : cef = 12,00 kPa  
+Edometrický modul : Eoed = 8,50 MPa  
+Obj.tíha sat.zeminy : sat = 20,00 kN/m3  
+  
+Založení 
+Typ základu: základový pas 
+Hloubka od původního terénu hz = 1,20 m 
+Hloubka základové spáry d = 1,20 m 
+Tloušťka základu t = 0,50 m 
+Sklon upraveného terénu s1 = 0,00 ° 
+Sklon základové spáry s2 = 0,00 °  
+Nadloží 
+Typ: zadat objemovou tíhu 
+Objemová tíha zeminy nad základem = 20,00 kN/m3 
+  
+Geometrie konstrukce 
+Typ základu: základový pas 
+Celková délka pasu  = 2,00 m 
+Šířka pasu (x)  = 0,80 m 
+Šířka sloupu ve směru x  = 0,30 m  
+Zadané zatížení je uvažováno na 1bm délky pasu. 
+  
+Objem pasu  = 0,35 m3/m 
+
+
+=== PDF PAGE 41 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 41 
+ 
+Objem výkopu  = 0,84 m3/m 
+Objem zásypu  = 0,28 m3/m  
+Materiál konstrukce 
+Objemová tíha  = 23,00 kN/m3 
+Výpočet betonových konstrukcí proveden podle normy EN 1992-1-1 (EC2). 
+ 
+Beton : C 20/25 
+Válcová pevnost v tlaku fck = 20,00 MPa 
+Pevnost v tahu fctm = 2,20 MPa 
+Modul pružnosti Ecm = 30000,00 MPa  
+Ocel podélná : B500 
+Mez kluzu fyk = 500,00 MPa  
+Ocel příčná: B500 
+Mez kluzu fyk = 500,00 MPa  
+Geologický profil a přiřazení zemin  
+Číslo Mocnost vrstvy Hloubka Přiřazená zemina Vzorek t [m] z [m] 
+1 - 0,00 ..  Třída F5, konzistence tuhá 
+  
+Zatížení  
+Číslo Zatížení Název Typ N My Hx 
+nové změna [kN/m] [kNm/m] [kN/m] 
+1 Ano  Zatížení č. 1 Návrhové 68,00 0,00 0,00 
+2 Ano  Zatížení č. 1 - provozní Užitné 48,57 0,00 0,00  
+Celkové nastavení výpočtu 
+Typ výpočtu : zadat únosnost základové půdy Rd 
+  
+Nastavení výpočtu fáze 
+Návrhová situace : trvalá 
+  
+Posouzení čís. 1  
+Posouzení zatěžovacích stavů  
+Název Vl. tíha ex ey  Rd Využití Vyhovuje příznivě [m] [m] [kPa] [kPa] [%] 
+Zatížení č. 1 Ano 0,00 0,00 116,64 150,00 77,76 Ano 
+Zatížení č. 1 Ne 0,00 0,00 123,47 150,00 82,31 Ano  
+Výpočet proveden s automatickým výběrem nejnepříznivějších zatěžovacích stavů.  
+  
+Spočtená vlastní tíha pasu G = 10,87 kN/m 
+Spočtená tíha nadloží Z = 7,56 kN/m  
+Posouzení svislé únosnosti 
+Tvar kontaktního napětí : obdélník 
+Nejnepříznivější zatěžovací stav číslo 1. (Zatížení č. 1) 
+Únosnost základové půdy Rd = 210,00 kPa 
+ 
+Parametry smykové plochy pod základem: 
+Hloubka smykové plochy zsp = 0,84 m 
+Dosah smykové plochy lsp = 2,21 m  
+  
+Výpočtová únosnost zákl. půdy Rd = 150,00 kPa 
+
+
+=== PDF PAGE 42 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 42 
+ 
+Extrémní kontaktní napětí  = 123,47 kPa  
+Svislá únosnost VYHOVUJE 
+  
+Posouzení excentricity zatížení  
+Max. excentricita ve směru délky patky ex = 0,000<0,333 
+Max. excentricita ve směru šířky patky ey = 0,000<0,333 
+Max. prostorová excentricita et = 0,000<0,333  
+Excentricita zatížení základu VYHOVUJE 
+  
+Posouzení vodorovné únosnosti 
+ 
+Nejnepříznivější zatěžovací stav číslo 1. (Zatížení č. 1) 
+Zemní odpor: klidový 
+Výpočtová velikost zemního odporu Spd = 4,27 kN  
+Horizontální únosnost základu Rdh = 40,01 kN 
+Extrémní horizontální síla H = 0,00 kN  
+Vodorovná únosnost VYHOVUJE 
+ 
+Únosnost základu VYHOVUJE 
+  
+Posouzení čís. 1  
+Sednutí a natočení základu - vstupní data 
+Výpočet proveden s automatickým výběrem nejnepříznivějších zatěžovacích stavů.  
+Výpočet proveden s uvažováním koeficientu 1 (vliv hloubky založení). 
+Napětí v základové spáře uvažováno od upraveného terénu. 
+  
+Spočtená vlastní tíha pasu G = 8,05 kN/m 
+Spočtená tíha nadloží Z = 5,60 kN/m  
+Sednutí středu délkové hrany = 2,5 mm  
+Sednutí středu šířkové hrany 1 = 3,4 mm  
+Sednutí středu šířkové hrany 2 = 3,4 mm   
+(1-hrana max.tlačená; 2-hrana min.tlačená) 
+  
+Sednutí a natočení základu - výsledky 
+ 
+Tuhost základu: 
+Spočtený vážený průměrný modul přetvárnosti Edef = 3,97 MPa 
+Základ je ve směru délky tuhý (k=2756,20) 
+Základ je ve směru šířky tuhý (k=945,38) 
+  
+Posouzení excentricity zatížení  
+Max. excentricita ve směru délky patky ex = 0,000<0,333 
+Max. excentricita ve směru šířky patky ey = 0,000<0,333 
+Max. prostorová excentricita et = 0,000<0,333  
+Excentricita zatížení základu VYHOVUJE 
+ 
+Celkové sednutí a natočení základu: 
+Sednutí základu = 3,4 mm 
+Hloubka deformační zóny = 1,68 m  
+Natočení ve směru šířky = 0,000 (tan*1000); (7,3E-17 °) 
+ 
+  
+
+=== PDF PAGE 43 ===
+Statický výpočet          NOVOSTAVBA RD BŘEZÍ U MIKULOVA 
+ 
+D.1.2.001-00 - TZ + SV strana 43 
+ 
+Dimenzace čís. 1  
+Výpočet proveden s automatickým výběrem nejnepříznivějších zatěžovacích stavů.  
+  
+Posouzení podélné výztuže základu ve směru x 
+0,20 m  0,25 m 
+Maximální vyložení patky je menší než 0,50 * tloušťka patky, výztuž není nutná. 
+  
+Posouzení základu na protlačení 
+Normálová síla v sloupu = 68,00 kN 
+  
+Maximální únosnost na obvodu sloupu  
+Síla přenesená roznášením do zákl. půdy  = 29,14 kN 
+Síla přenášená smykovou pevností patky   = 38,86 kN 
+Uvažovaný obvod sloupu u0 = 2,00 m 
+Smykové napětí na obvodu sloupu vEd,max = 0,04 MPa 
+Únosnost na obvodu sloupu vRd,max = 2,94 MPa  
+ 
+Základ na protlačení VYHOVUJE 
+  
+ 
+ 
+Ing. Aleš Kika 
+ 
+ 

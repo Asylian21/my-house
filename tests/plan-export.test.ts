@@ -152,11 +152,11 @@ describe("export sheet site context follows D1.1.002", () => {
 
   it("material legend covers every hatch class used by the model", () => {
     expect([...new Set(MATERIAL_LEGEND.map((e) => e.cls))]).toEqual(["exterior", "insulation", "bearing", "partition", "board", "acoustic"]);
-    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.codes)).toEqual(['SA30','H200']);
+    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.codes)).toEqual(['SM30','H200']);
     expect(MATERIAL_LEGEND[0].codes).toBe("SO30, SO50");
     expect(MATERIAL_LEGEND[1].codes).toBe("TI20");
     for (const e of MATERIAL_LEGEND.filter(e=>e.cls!=='acoustic')) expect(e.text).toMatch(/hr\. \d/);
-    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.layers?.length)).toEqual([3,6]);
+    expect(MATERIAL_LEGEND.filter(e=>e.cls==='acoustic').map(e=>e.layers?.length)).toEqual([1,5]);
   });
 });
 

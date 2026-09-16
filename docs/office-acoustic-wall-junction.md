@@ -1,10 +1,10 @@
 # H200 pri dverách do chodby
 
-D-AK03-01 / R1 · 14. 9. 2026 · hlavný návrh C/B/B
+D-AK03-01 / R2 · 16. 9. 2026 · hlavný návrh C/B/B
 
 > Generované z lib/h200-junction.json. Webový výkres: /docs/akustika-h200/napojenie.
 
-Pevné ostenie pre dvere, utesnené ukončenie predsteny a súvislá oddeľovacia škára v tvare L. H200 zostáva 200 mm a dvere kúpeľne zostávajú na osi chodby.
+Pevné ostenie pre dvere, utesnené ukončenie predsteny a súvislá oddeľovacia škára v tvare L. H200 má po odobratí jednej dosky 187,5 mm; kúpeľňové líce nadväzuje na líce priečky do chodby a dvere kúpeľne zostávajú na osi chodby.
 
 ## Rozhodnutie
 
@@ -14,7 +14,7 @@ Spoločný murovaný pilierik zostáva. Predstena sa ukončí podľa princípu K
 
 ### 1. Pevné ostenie
 
-Zárubne majú spoločný pevný podklad. Krátke dorovnanie na strane pracovne sa previaže s pilierikom; pôdorysný obdĺžnik 59 × 80 mm neznamená samostatný voľne nalepený odrezok tehly. Druh doplnenia a kotvy sa zvolia podľa skutočného muriva a montážneho systému dverí.
+Zárubne majú spoločný pevný podklad. Krátke dorovnanie na strane pracovne sa previaže s pilierikom; pôdorysný obdĺžnik 59 × 42,5 mm neznamená samostatný voľne nalepený odrezok tehly. Druh doplnenia a kotvy sa zvolia podľa skutočného muriva a montážneho systému dverí.
 
 ### 2. Utesnený obvodový profil
 
@@ -22,15 +22,15 @@ Pri masívnom ostení použiť systémový UD 28/27 s podtesnením Trennwandkitt
 
 ### 3. Dva kontakty, jedna súvislá škára
 
-J1: čelá oboch Silentboard dosiek ukončiť 5 mm pred omietnutým pilierikom. J2: aj pod lícom vonkajšej dosky ponechať 5 mm k hornému koncu dorovnania ostenia. V pôdoryse na seba nadväzujú do L; oba styky viesť po celej výške predsteny. Nominálnych 80 mm pri dverách tvorí 75 mm pevného dorovnania a 5 mm pripojenia. Na odlišný tvar J2 sa tu prenáša princíp oddeleného obvodového styku; nejde o samostatne skúšaný katalógový detail.
+J1: čelo jedinej Silentboard dosky ukončiť 5 mm pred omietnutým pilierikom. J2: aj pod lícom vonkajšej dosky ponechať 5 mm k hornému koncu dorovnania ostenia. V pôdoryse na seba nadväzujú do L; oba styky viesť po celej výške predsteny. Nominálnych 42,5 mm pri dverách tvorí 37,5 mm pevného dorovnania a 5 mm pripojenia. Na odlišný tvar J2 sa tu prenáša princíp oddeleného obvodového styku; nejde o samostatne skúšaný katalógový detail.
 
 ### 4. J1 oddeliť pásikom, J2 uzavrieť mäkko
 
-J1 pri čelách dosiek: Trenn-Fix a Uniflott podľa montážneho postupu Knauf; 5 mm škára nezostane otvorená. J2 pri ploche vonkajšej dosky: zachovať 5 mm mäkké oddelenie a odkrytý okraj súvislo uzavrieť nízkomodulovým, trvalo pružným tmelom určeným na akustické pripojovacie škáry, na vhodnom podkladovom povrazci alebo oddeľovacej vrstve. Rozmery škáry, hĺbku tmelu a priľnavosť k povrchom zosúladiť s jeho výrobcom. Medzi rovnobežné plochy J2 nedávať tvrdý Uniflott ani maltu: ani oddeľovací papier nevylúči tlakový kontakt s kmitajúcim lícom dosky. Oddelenie neprekryť tuhým rohovníkom, stierkou alebo lepidlom. Trenn-Fix nie je pružný záves ani náhrada tesnenia pod profilom.[^2][^5]
+J1 pri čele dosky: Trenn-Fix a Uniflott podľa montážneho postupu Knauf; 5 mm škára nezostane otvorená. J2 pri ploche vonkajšej dosky: zachovať 5 mm mäkké oddelenie a odkrytý okraj súvislo uzavrieť nízkomodulovým, trvalo pružným tmelom určeným na akustické pripojovacie škáry, na vhodnom podkladovom povrazci alebo oddeľovacej vrstve. Rozmery škáry, hĺbku tmelu a priľnavosť k povrchom zosúladiť s jeho výrobcom. Medzi rovnobežné plochy J2 nedávať tvrdý Uniflott ani maltu: ani oddeľovací papier nevylúči tlakový kontakt s kmitajúcim lícom dosky. Oddelenie neprekryť tuhým rohovníkom, stierkou alebo lepidlom. Trenn-Fix nie je pružný záves ani náhrada tesnenia pod profilom.[^2][^5]
 
 ### 5. Zárubňa zaťažuje ostenie
 
-Dvere sa osadia a upevnia do pripraveného ostenia podľa ich výrobcu. Kotvenie nesmie závisieť od tenkých profilov akustickej predsteny. Obložka, skrutky ani lepidlo nesmú dodatočne zviazať doskový plášť s murivom cez škáru. Montážnu výplň zárubne určí dverný systém; bežná PUR pena sama osebe nie je dôkazom akustickej tesnosti. Niektoré akustické dverné systémy predpisujú vlastnú akustickú PUR penu.[^4]
+Dvere sa osadia a upevnia do pripraveného ostenia podľa ich výrobcu. Kotvenie nesmie závisieť od tenkých profilov akustickej predsteny. Obložka, skrutky ani lepidlo nesmú dodatočne zviazať doskový plášť s murivom cez škáru. Montážnu výplň zárubne určí dverný systém; bežná PUR pena sama osebe nie je dôkazom akustickej tesnosti. Niektoré akustické dverné systémy predpisujú vlastnú akustickú PUR penu. Pri pracovňovom otvore zostáva iba 42,5 mm k lícu H200; obložku a montážny systém vybrať podľa tejto rezervy, bez premostenia J2.[^4]
 
 ### 6. Kontrola pred zakrytím
 
@@ -40,12 +40,13 @@ Skontrolovať podtesnenie profilu, vatu, obe línie J1/J2 a neporušenie oddelen
 
 | Miesto | Rozmer |
 | --- | --- |
-| H200 | 200 mm vrátane základných omietok a dosiek |
-| Pracovňa: otvor → líce H200 | 80 mm = 75 mm dorovnanie + 5 mm spoj J2 |
-| Sprcha: líce H200 → otvor | 99,5 mm; k modelovanej obložke zostáva 89,5 mm |
+| H200 | 187,5 mm vrátane základných omietok a jednej dosky |
+| Zarovnanie kúpeľňa / chodba | Spoločné líce Y 6 552 mm; líce pracovne Y 6 364,5 mm |
+| Pracovňa: otvor → líce H200 | 42,5 mm = 37,5 mm dorovnanie + 5 mm spoj J2 |
+| Sprcha: líce H200 → otvor | 149,5 mm; k modelovanej obložke zostáva 139,5 mm |
 | Kúpeľňové dvere | Otvor 800 mm, os Y = 7 101,5 mm bez posunu |
-| J1 · čelá oboch dosiek | X 22 783–22 788; Y 6 402–6 427 mm |
-| J2 · dorovnanie pod vonkajšou doskou | X 22 783–22 842; Y 6 397–6 402 mm |
+| J1 · čelo jedinej dosky | X 22 783–22 788; Y 6 364,5–6 377 mm |
+| J2 · dorovnanie pod vonkajšou doskou | X 22 783–22 842; Y 6 359,5–6 364,5 mm |
 
 Súradnice predstavujú návrhovú rezervu v nominálnom pôdoryse; realizačná škára sa meria od hotového kontaktného povrchu. Veľký pôdorys a 3D zachovávajú obálku konštrukcie. Ich plná výplň v mierke domu nepredpisuje zaliatie škár J1/J2. Záväzný princíp ich vyhotovenia je v tomto zväčšenom detaile.
 

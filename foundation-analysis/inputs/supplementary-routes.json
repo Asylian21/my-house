@@ -1,0 +1,1010 @@
+{
+  "schema": "foundation-analysis.supplementary-routes.v1",
+  "status": "CONDITIONAL_GEOMETRIC_SUPPORT_PROPOSAL_NOT_FOR_CONSTRUCTION",
+  "units": "m",
+  "geometry_sha256": "d362aaf4ce1b5f2294d1291a8a53917a368a628dc8f88b44c5448b7d91f0b7c7",
+  "preserved_ids": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7"
+  ],
+  "routes": [
+    {
+      "id": "R8",
+      "points": [
+        [
+          22.711,
+          5.1075
+        ],
+        [
+          22.711,
+          11.55
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "IW-ENTRY-TOP-E2",
+        "IW-SPINE-EAST-1",
+        "IW-SPINE-EAST-2",
+        "IW-SPINE-EAST-3",
+        "C-OFFICE-NORTH-JAMB",
+        "C-WC-DOOR-JAMB",
+        "C-ENTRY-HALL-JAMB"
+      ],
+      "length_m": 6.442500000000001,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "One east corridor support below existing office, bathroom and WC door gaps. Axis shift of widest upper jamb is 29.5 mm; width350 mm contains all modeled jamb faces. Top extends87.5mm beyond wall end to lower face ofR3 for full-height connection geometry; bottom remains a soil-supported end.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R9",
+      "points": [
+        [
+          13.413,
+          6.492
+        ],
+        [
+          27.691,
+          6.492
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-BATH-HALL-W",
+        "C-BATH-HALL-E",
+        "B-STREET-KID-TOP",
+        "C-KID-HALL-POCKET-WALL",
+        "C-ENTRY-HALL-JAMB",
+        "IW-STUDY-NORTH"
+      ],
+      "length_m": 14.277999999999999,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Merge centerlinesY6.482/Y6.502, difference20 mm, into proposedY6.492. Width350 contains 140mm partitions and200mmH200. Continuity only under existing doorways and intersecting wall nodes. H200 remains nonbearing for roof/attic.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R10",
+      "points": [
+        [
+          24.7515,
+          7.671
+        ],
+        [
+          24.7515,
+          10.862
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-EAST",
+        "IW-WC-EAST"
+      ],
+      "length_m": 3.191,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Continuous collinear service-core partition support; joins R11/R12 and R2 below floor.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R11",
+      "points": [
+        [
+          24.682,
+          7.671
+        ],
+        [
+          27.691,
+          7.671
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-SOUTH-E"
+      ],
+      "length_m": 3.0090000000000003,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Extend ends within wall-node widths to R10 and east perimeter cap.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R12",
+      "points": [
+        [
+          22.711,
+          8.842
+        ],
+        [
+          24.7515,
+          8.842
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-NORTH"
+      ],
+      "length_m": 2.0405000000000015,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Connect west end to R8 and east end to R10; wall end overhangs are contained by crossing strips.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R13",
+      "points": [
+        [
+          10.993,
+          7.721
+        ],
+        [
+          20.6915,
+          7.721
+        ],
+        [
+          20.6915,
+          7.791
+        ],
+        [
+          21.543,
+          7.791
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-CLOSET-NORTH-W",
+        "C-CLOSET-NORTH-E",
+        "C-BED-PRIVACY-W",
+        "C-BED-PRIVACY-E",
+        "B-GARDEN-KID-SOUTH-W",
+        "B-GARDEN-KID-SOUTH-E",
+        "C-GARDEN-CLOSET-SOUTH"
+      ],
+      "length_m": 10.62,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "One north hall support below three existing doorways. At R1, last851.5mm moves70mm to center the adjoining140+140mm wall rectangles within350mm. This terminal widened junction is an explicit local support design, not a claim these two wall axes are collinear within50mm; longitudinal bars should run through union envelope with engineered detail, not copy a70mm abrupt bar kink.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R14",
+      "points": [
+        [
+          12.912,
+          3.354
+        ],
+        [
+          12.912,
+          5.674
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-BAY-EAST"
+      ],
+      "length_m": 2.3200000000000003,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Join south perimeter to transverse R15; existing partition unchanged.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R15",
+      "points": [
+        [
+          10.842,
+          5.674
+        ],
+        [
+          13.413,
+          5.674
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-BAY-RETURN",
+        "C-BATH-NORTH-W"
+      ],
+      "length_m": 2.5709999999999997,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Merge exactly collinear return and bathroom wall. Intersects R14,R16,R17. Initial151mm past R16 is only cover of actual wall extent.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R16",
+      "points": [
+        [
+          10.993,
+          5.604
+        ],
+        [
+          10.993,
+          8.897
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-SPINE-S",
+        "C-GARAGE-SPINE-N"
+      ],
+      "length_m": 3.293,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Complete garage spine from R15 to existing R5/R6 node. Centerline rounding0.5mm from wall center. Ends atR5 so does not duplicate existingR6 length.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R17",
+      "points": [
+        [
+          13.413,
+          5.604
+        ],
+        [
+          13.413,
+          7.721
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "C-CLOSET-EAST"
+      ],
+      "length_m": 2.117,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Connect closet east partition to R15,R9,R13;70mm initial length contains wall corner above crossing centerline.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    }
+  ],
+  "wall_coverage": [
+    {
+      "wall": "IW-ENTRY-TOP-E2",
+      "area_m2": 0.04587799999999986,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-SPINE-EAST-1",
+      "area_m2": 0.054648000000000745,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-SPINE-EAST-2",
+      "area_m2": 0.34048800000000445,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8",
+        "R12"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-SPINE-EAST-3",
+      "area_m2": 0.07747200000000107,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R2",
+        "R8"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-STUDY-NORTH",
+      "area_m2": 0.9516000000000007,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R8",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-BATH-105-EAST",
+      "area_m2": 0.14330900000000307,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R10",
+        "R11",
+        "R12"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-BATH-105-SOUTH-E",
+      "area_m2": 0.40025999999999934,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R10",
+        "R11"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-BATH-105-NORTH",
+      "area_m2": 0.2853200000000012,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8",
+        "R10",
+        "R12"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "IW-WC-EAST",
+      "area_m2": 0.2502000000000051,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R2",
+        "R10",
+        "R12"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "B-STREET-KID-TOP",
+      "area_m2": 0.3078599999999993,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R7",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-W",
+      "area_m2": 0.30786000000000124,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R7",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-E",
+      "area_m2": 0.44814000000000187,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R1",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARAGE-BAY-EAST",
+      "area_m2": 0.2939999999999975,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R14",
+        "R15"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARAGE-BAY-RETURN",
+      "area_m2": 0.29959999999999914,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R14",
+        "R15",
+        "R16"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARAGE-SPINE-S",
+      "area_m2": 0.030100000000000175,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R15",
+        "R16"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARAGE-SPINE-N",
+      "area_m2": 1.4613550000000006,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R5",
+        "R6",
+        "R13",
+        "R15",
+        "R16"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-CLOSET-EAST",
+      "area_m2": 0.3061800000000013,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R9",
+        "R13",
+        "R15",
+        "R17"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-CLOSET-NORTH-W",
+      "area_m2": 0.09100000000000016,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R13",
+        "R16"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-CLOSET-NORTH-E",
+      "area_m2": 0.12460000000000059,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R13",
+        "R17"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-BATH-NORTH-W",
+      "area_m2": 0.050539999999999974,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R14",
+        "R15",
+        "R17"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-BATH-HALL-W",
+      "area_m2": 0.06439999999999972,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R9",
+        "R17"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-BATH-HALL-E",
+      "area_m2": 0.027999999999999838,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R7",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-BED-PRIVACY-W",
+      "area_m2": 0.06440000000000014,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R13",
+        "R17"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-BED-PRIVACY-E",
+      "area_m2": 0.028000000000000014,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R7",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-OPEN-HALL-S",
+      "area_m2": 0.9144000000000021,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R7",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-OPEN-HALL-N",
+      "area_m2": 0.9144000000000022,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R7",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-KID-ENTRY-WALL",
+      "area_m2": 0.8753079999999953,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R1",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-KID-HALL-POCKET-WALL",
+      "area_m2": 0.4617199999999992,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R1",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-ENTRY-HALL-JAMB",
+      "area_m2": 0.013859999999999996,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARDEN-KID-EAST",
+      "area_m2": 0.8753079999999951,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R1",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-GARDEN-CLOSET-SOUTH",
+      "area_m2": 0.09813999999999985,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R1",
+        "R13"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-EAST",
+      "area_m2": 0.29592500000000127,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R3"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-RETURN",
+      "area_m2": 0.12250000000000037,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R3",
+        "R8"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-OFFICE-NORTH-JAMB",
+      "area_m2": 0.004719999999999804,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R8",
+        "R9"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL",
+      "area_m2": 1.0326000000000024,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R2",
+        "R8",
+        "R10"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL-E",
+      "area_m2": 0.1980000000000005,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "OB",
+        "R2"
+      ],
+      "all_model_faces_covered": true
+    },
+    {
+      "wall": "C-WC-DOOR-JAMB",
+      "area_m2": 0.006623999999999998,
+      "uncovered_area_m2": 0.0,
+      "route_ids": [
+        "R2",
+        "R8"
+      ],
+      "all_model_faces_covered": true
+    }
+  ],
+  "geometric_junctions": [
+    {
+      "members": [
+        "OB",
+        "R1"
+      ],
+      "overlap_area_m2": 0.12250000000000069,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R2"
+      ],
+      "overlap_area_m2": 0.122500000000001,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R3"
+      ],
+      "overlap_area_m2": 0.061250000000000186,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R4"
+      ],
+      "overlap_area_m2": 0.122500000000001,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R5"
+      ],
+      "overlap_area_m2": 0.061250000000000186,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R6"
+      ],
+      "overlap_area_m2": 0.0612500000000005,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R7"
+      ],
+      "overlap_area_m2": 0.12250000000000069,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R9"
+      ],
+      "overlap_area_m2": 0.061250000000000186,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R11"
+      ],
+      "overlap_area_m2": 0.05250000000000034,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "OB",
+        "R14"
+      ],
+      "overlap_area_m2": 0.052500000000000074,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R1",
+        "R9"
+      ],
+      "overlap_area_m2": 0.12250000000000037,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R1",
+        "R13"
+      ],
+      "overlap_area_m2": 0.14700000000000057,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R2",
+        "R8"
+      ],
+      "overlap_area_m2": 0.122500000000001,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R2",
+        "R10"
+      ],
+      "overlap_area_m2": 0.052499999999999714,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R3",
+        "R8"
+      ],
+      "overlap_area_m2": 0.015400000000000153,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R5",
+        "R6"
+      ],
+      "overlap_area_m2": 0.03062500000000025,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R5",
+        "R16"
+      ],
+      "overlap_area_m2": 0.03062500000000025,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R6",
+        "R16"
+      ],
+      "overlap_area_m2": 0.0,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R7",
+        "R9"
+      ],
+      "overlap_area_m2": 0.12250000000000037,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R7",
+        "R13"
+      ],
+      "overlap_area_m2": 0.12250000000000037,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R8",
+        "R9"
+      ],
+      "overlap_area_m2": 0.12250000000000037,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R8",
+        "R12"
+      ],
+      "overlap_area_m2": 0.05250000000000034,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R9",
+        "R17"
+      ],
+      "overlap_area_m2": 0.052500000000000074,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R10",
+        "R11"
+      ],
+      "overlap_area_m2": 0.03292500000000008,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R10",
+        "R12"
+      ],
+      "overlap_area_m2": 0.04499999999999968,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R13",
+        "R16"
+      ],
+      "overlap_area_m2": 0.061250000000000186,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R13",
+        "R17"
+      ],
+      "overlap_area_m2": 0.052500000000000074,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R14",
+        "R15"
+      ],
+      "overlap_area_m2": 0.052500000000000074,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R15",
+        "R16"
+      ],
+      "overlap_area_m2": 0.07987000000000016,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    },
+    {
+      "members": [
+        "R15",
+        "R17"
+      ],
+      "overlap_area_m2": 0.0367500000000001,
+      "status": "GEOMETRIC_INTERSECTION_ONLY",
+      "required_anchorage_m": 1.0,
+      "detail_note": "Develop each relevant bar for at least1.0m in actual receiving concrete along feasible L/U/continuous bar arrangement, while satisfying calculated lbd and bend/cover limits. No artificial1m leg outside concrete. Short terminal stubs require return/continuation into longer crossing run; otherwise connection remains unverified."
+    }
+  ],
+  "geometric_connectivity": {
+    "connected_to_perimeter": [
+      "OB",
+      "R1",
+      "R10",
+      "R11",
+      "R12",
+      "R13",
+      "R14",
+      "R15",
+      "R16",
+      "R17",
+      "R2",
+      "R3",
+      "R4",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R9"
+    ],
+    "all_connected": true
+  },
+  "comparison": {
+    "old_total_route_count": 35,
+    "new_total_route_count": 17,
+    "old_internal_centerline_length_m": 78.958,
+    "new_internal_centerline_length_m": 86.16,
+    "length_change_m": 7.201999999999998,
+    "old_internal_union_area_m2": 24.275534000000054,
+    "new_internal_union_area_m2": 28.167680000000026,
+    "union_area_change_m2": 3.892145999999972
+  },
+  "construction_constraints": [
+    "No wall position, role or opening is changed.",
+    "All support concrete remains below floor; no sill or wall is inserted through a doorway.",
+    "New footings bear continuously on verified natural bearing stratum. Geometric connection never proves end-supported beam behavior.",
+    "No credit for masonry arches or old/new concrete monolithicity.",
+    "Existing R1-R7 coordinates and IDs remain exactly unchanged.",
+    "Min1m actual bar development/continuity at nodes is a detailing requirement, not verified by polygon overlap. Calculated lbd, barshape, cover and room for anchorage govern if more demanding.",
+    "Terminal70mm jog at R1/R13 is a local widened junction; do not fabricate an abrupt70mm kink in main bars.",
+    "Quantities must be recalculated from unions of all actual width layers; centerline count reduction does not itself prove cost reduction."
+  ]
+}

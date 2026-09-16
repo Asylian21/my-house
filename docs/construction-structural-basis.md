@@ -1,5 +1,8 @@
 # C/B/B — podklad pre nový návrh nosnej sústavy
 
+
+
+Doplnenie **16. 9. 2026**: [označený vnútorný úsek medzi garážou a spálňou/šatníkom](construction-garage-partition.md) je murovaná nenosná priečka **SP14, 140 mm**, X 11 003–11 143 mm, Y 5 744–8 749 mm. Nepridáva sa ako podpera dreveného stropu ani krovu. Vonkajšie pokračovanie pri lodžii `C-GARAGE-SPINE-N` zostáva 301 mm a trasa R6 sa neposúva.
 **14. 9. 2026 · NOT_FOR_CONSTRUCTION · technický audit a kandidátna schéma, nie realizačná statika.** Pôdorys, osi, otvory a akustické skladby zostávajú podľa aktuálneho C/B/B. Pôvodná statika je archívny orientačný podklad; jej výstuž, základové šírky ani oceľové profily sa týmto nepreberajú. Rozmery označené ako modelové dokladajú geometriu, nie únosnosť.
 
 ## Zadané a zatiaľ neoverené
@@ -71,7 +74,7 @@ Všetko v mm v pôvodnom lokálnom rámci domu. Označenia **K-01 až K-09 sú i
 | Zóna | Presná modelová poloha | Podmienka prenosu zaťaženia |
 | --- | --- | --- |
 | K-01 · južný obvod S | X 6440–28040; vonkajšie líce Y 3000, vnútorné Y 3504 | Uloženie do jadra; D1 X 6940–10240 a ostatné otvory vyžadujú overený prenos nadpražím. |
-| K-02 · severný obvod N | X 6440–21040; vnútorné líce Y 10699, vonkajšie Y 11200 | Otvorená lodžia X 7840–10640 a D5 X 11840–14340 prerušujú podporu. |
+| K-02 · severný obvod N | X 6440–21040; vnútorné líce Y 10699, vonkajšie Y 11200 | Otvorená lodžia X 7840–10640 a D5 X 11990–14190 (šírka 2200 mm) prerušujú podporu. |
 | K-03 · západný obvod krídla WW | Y 11200–22035; vonkajšie líce X 21040, vnútorné X 21543 | D4 Y 11550–13800, ďalej otvorená strana terasy; nejde o súvislú podpernú čiaru. |
 | K-04 · východný obvod E | Y 3000–22035; vnútorné líce X 27541, vonkajšie X 28040 | Reakcie koordinovať s bočnými otvormi a s odlišnou obálkou terasovej podpory K-06. |
 | K-05 · ustúpená stena NN2 | Y 19035–19535; západný pilier X 21540–22040, plná stena X 24040–27540 | Medzi nimi O8 šírky 2000; rám okna nenesie strechu. Modelovaný horný pás X 21540–27540, Z 2750–3050 je obálka 6000 × 500 × 300, nie potvrdený ŽB nosník. |
@@ -80,46 +83,33 @@ Všetko v mm v pôvodnom lokálnom rámci domu. Označenia **K-01 až K-09 sú i
 | K-08 · dvojica nosných stien pri izbách | X 20541–20842; Y 3504–6412 a Y 7791–10699 | `C-KID-ENTRY-WALL`, `C-GARDEN-KID-EAST`; oddelené úseky, nespojiť imaginárnou stenou cez chodbu. |
 | K-09 · existujúce úseky pri vstupe/pracovni | X 23367–23542 / Y 3504–5195 a X 22842–23542 / Y 5195–5370 | `C-ENTRY-OFFICE-EAST`, `…-RETURN`; model ich označuje nosné, hrúbka je iba 175 mm. Použitie vyžaduje nový výpočet. |
 
-**Vylúčené ako podpory strechy a dreveného stropu:** SA30 AK-01/AK-02, `C-OPEN-HALL-N/S`, X 14943–15243; H200 AK-03, `IW-STUDY-NORTH`, Y 6402–6602. Ich súčasné skladby zostávajú nenosné `PARTITION`. Toto vylúčenie sa **netýka ich vlastnej hmotnosti ani potreby podopretia**. Pre SA30 sa preto dopĺňa kandidátna trasa R7 nižšie. Hmotnosť H200 a ostatných priečok takisto patrí do návrhu dosky a základov. Ani modelové garážové priečky sa nesmú bez nového rozhodnutia premenovať na nosné steny len podľa hrúbky.
+**Vylúčené ako podpory strechy a dreveného stropu:** SM30 AK-01/AK-02, `C-OPEN-HALL-N/S`, X 14943–15243; H200 AK-03, `IW-STUDY-NORTH`, Y 6402–6602. Ich modelové roly zostávajú nenosné `PARTITION`. Toto vylúčenie sa **netýka ich vlastnej hmotnosti ani potreby podopretia**. Pre SM30 sa preto dopĺňa kandidátna trasa R7 nižšie. Hmotnosť H200 a ostatných priečok takisto patrí do návrhu dosky a základov. Ani modelové garážové priečky sa nesmú bez nového rozhodnutia premenovať na nosné steny len podľa hrúbky.
 
 Geometria bola overená živým exportom `drawingSource()` z [source.tsx](../scripts/construction-documentation/source.tsx); autoritatívne polohy sú v [plan-export.ts](../lib/plan-export.ts), [floor-plan-concept.ts](../lib/floor-plan-concept.ts), [twin-active-house.ts](../lib/twin-active-house.ts), [twin-interior.ts](../lib/twin-interior.ts) a [twin-roof.ts](../lib/twin-roof.ts). Nenosnú klasifikáciu akustických priečok dokladajú [active-design.md](active-design.md) a [acoustic-walls.ts](../lib/acoustic-walls.ts).
 
-## SA30 — vlastná hmotnosť a kandidátne podopretie R7
+## SM30 — vlastná hmotnosť a kandidátne podopretie R7
 
-Pripomienka stavebníka zo 14. 9. 2026 správne odlišuje nenosnú funkciu priečky od jej zaťaženia vlastnou hmotnosťou. **R7 sa dopĺňa ako kandidátny spojitý podporný pás na výpočet**, nie ako potvrdené existujúce rebro. Strecha ani drevený strop sa na SA30 neukladajú a rola `PARTITION` sa nemení.
+Revízia 16. 9. 2026 nahrádza dvojplášťovú SA30 jedným 300 mm murivom z bežnej obvodovej tehly. Dôvod odhlučnenia zostáva. **R7 je kandidátny spojitý podporný pás na výpočet**, nie potvrdené existujúce rebro. Rola `PARTITION` zostáva; strecha a drevený strop vyžadujú samostatné posúdenie nosnej sústavy.
 
-| Prvok | Presná modelová geometria v mm |
+| Prvok | Modelová geometria v mm |
 | --- | --- |
 | AK-02 / `C-OPEN-HALL-S` | X14943–15243, Y3504–6552; dĺžka 3048 |
 | AK-01 / `C-OPEN-HALL-N` | X14943–15243, Y7651–10699; dĺžka 3048 |
-| Západný murovaný plášť, oba úseky | X14943–15043, hrúbka 100; os X14993 |
-| Minerálna vata, oba úseky | X15043–15143, hrúbka 100 |
-| Východný murovaný plášť, oba úseky | X15143–15243, hrúbka 100; os X15193 |
-| Výška všetkých šiestich komponentov | Z0–3125, výška 3125 podľa skutočných modelových objektov |
-| Kandidátna os R7 medzi obvodmi | (15093;3354) → (15093;10849), dĺžka 7495 |
-| Voľná chodba medzi priečkami | Y6552–7651, šírka 1099; bez novej steny alebo stĺpa |
+| Jedna murovaná vrstva na každý úsek | X14943–15243, hrúbka 300; os X15093 |
+| Výška oboch modelových stien | Z0–3125 |
+| Kandidátna os R7 | (15093;3354) → (15093;10849), dĺžka 7495 |
+| Voľná chodba medzi stenami | Y6552–7651, šírka 1099 |
 
-Skutočné zaťažené dĺžky sa v axonometrii vyznačia v dvoch oddelených úsekoch Y3504–6552 a Y7651–10699. Prípadné spojenie cez chodbu je **iba pod podlahou**. Obidve murované línie majú voči osi R7 excentricitu ±100 mm; samotná strednica nie je dôkazom, že prenos síl z oboch plášťov vyhovuje. Modelová výška 3125 mm sa nezamieňa so svetlou výškou 2750 mm. Modelové Z0 zatiaľ neurčuje skutočnú realizačnú pätu muriva voči podlahovým vrstvám a doske.
+Priame zaťaženie sa vyznačuje iba v dvoch úsekoch dlhých 3048 mm; prípadné spojenie R7 cez chodbu je pod podlahou. Os jednej 300 mm murovanej vrstvy je zhodná s kandidátnou osou R7. Modelové Z0 nepredpisuje realizačnú pätu muriva voči podlahovým vrstvám a nosnej doske.
 
-[Technický list výrobcu LeierPLAN 10 N+F, strana 1](https://www.leier.sk/wp-content/uploads/2025/07/Technicky-list-LP10-NF.pdf), uvádza hmotnosť jedného 100 mm plášťa muriva bez omietky **73 kg/m²**. Pre zachovanú modelovú geometriu vychádza nasledujúci hmotnostný podklad:
+**Hmotnosť muriva a úplné návrhové zaťaženie sú neurčené do výberu konkrétnej 300 mm tehly a malty.** Údaje pôvodných dvoch 100 mm plášťov nie sú vstupom aktuálneho návrhu. Doplniť treba bežné omietky, kúpeľňové povrchy, kotvenie a vybavenie.
 
-| Veličina | Výpočet | Hmotnosť |
-| --- | --- | --- |
-| Dva murované plášte | 2 × 73 | 146 kg/m² priečky |
-| Jeden meter priečky pri výške 3,125 m | 146 × 3,125 | 456,25 kg/m |
-| Jeden úsek dlhý 3,048 m | 456,25 × 3,048 | 1390,65 kg |
-| Oba úseky SA30 | 2 × 1390,65 | **2781,30 kg** |
-
-Tieto hodnoty sú odvodenou hmotnosťou muriva bez omietok, nie konečným zaťažením `q`, únosnosťou ani zameranou hmotnosťou konštrukcie. Doplniť treba vatu, omietky, obklady, kotvené vybavenie, skutočné výškové založenie a overenie konkrétneho dodaného výrobku a spôsobu murovania. Vatu nemožno počítať ako tretí murovaný plášť; SA30 nie je plná 300 mm murovaná stena.
-
-Prierez a výstuž R7 sa neurčujú. Výpočet musí vyriešiť podopretie oboch plášťov cez podlahu/dosku, miestne účinky dvoch excentrických línií, prípadné rozdielne zaťaženie plášťov a cestu síl do overeného existujúceho základu alebo navrhnutého podkladu. Nemožno predpokladať nosník s voľným rozpätím 7495 mm ani celoplošné uloženie na overenej zemine; obe tieto schémy zatiaľ chýbajú. Zároveň sa musí zachovať akustické oddelenie plášťov a navrhnúť päta a napojenia bez neoverených tuhých mostov.
-
-Geometria a hmotnostný prepočet sú overené; **exportná a vizuálna QA novej R7 zostáva otvorená**. Predchádzajúce kontroly celého L-obrysu sa týkajú iba R1–R6. Stav novej ilustrácie sa eviduje v [podklade axonometrie](/Users/davidzita/www/dom/docs/construction-foundation-axon.md).
+Prierez, výstuž a uloženie R7 sa neurčujú. Posúdenie musí vyriešiť prenos cez existujúcu dosku do overeného základu alebo podkladu; strednica nie je dôkazom únosnosti. [Aktuálny podklad axonometrie](construction-foundation-axon.md).
 
 ## Otvorené rozhodnutia pred realizačnou statikou
 
 1. Navrhnúť ΔFFL podľa zameraného horného líca existujúceho pásu, styku novej dosky, skladby podlahy a miestnej vstupnej podesty; zahrnúť aspoň jeden schod bez predpokladu +150 mm nad R0. Potvrdiť výškový systém a referenčný bod. Uzavrieť posúdenie trhliny a použiteľnosti existujúceho betónu.
-2. Doplniť geotechnický návrh, podmienky mrazu/vody a špecifikáciu zásypu s preberacími skúškami; rozhodnúť, či doska leží na zásype alebo staticky pôsobí medzi podporami. Zahrnúť vlastnú hmotnosť SA30 cez kandidátnu trasu R7 aj hmotnosť H200 a ostatných priečok; určiť skutočnú cestu ich zaťaženia do základov.
+2. Doplniť geotechnický návrh, podmienky mrazu/vody a špecifikáciu zásypu s preberacími skúškami; rozhodnúť, či doska leží na zásype alebo staticky pôsobí medzi podporami. Zahrnúť vlastnú hmotnosť SM30 cez kandidátnu trasu R7 aj hmotnosť H200 a ostatných priečok; určiť skutočnú cestu ich zaťaženia do základov.
 3. Účel povaly **iba na odkladanie vecí** a **drevené nosné stropy bez betónovej dosky/nadbetonávky** sú potvrdené. Doplniť množstvo a rozmiestnenie vecí, prístup a priechodné zóny; určiť skladovacie a bodové zaťaženia. Následne spočítať drevenú strechu/strop, reakcie, murivo, preklady, ŽB vence, betónové základy a pracovné škáry ako jednu sústavu.
 4. Aktívna strešná rovina už končí na `wingEndYmm = 22035`, zhodne s čelom terasy Y 22035: architektonický presah je **0 mm**. Pôvodných 50 mm zostáva iba v `ARCHIVE_JOINED_ROOF_PARAMETERS`. Finálny odkvapový/štítový detail, lišty, odvodnenie a skladba zostávajú otvorené; samostatná modelová obálka čela portálu zatiaľ siaha po Y 22105 a nie je schváleným klampiarskym detailom. Dopracovaný detail musí zosúladiť tieto vrstvy s požiadavkou nulového architektonického presahu.
 

@@ -8,7 +8,7 @@ import { HEATING_LAYOUT_IDS, DEFAULT_HEATING_LAYOUT_ID, type HeatingLayoutId } f
  * is laid out in paper millimetres at 1:50 (A1 landscape).
  */
 import { PLAN_ITEMS, PLAN_ITEM_BY_ID, PLAN_ROOMS, exteriorWallLayer, numberSk, planItemsFor, type PlanItem, type PlanMesh } from './plan-documentation';
-import { ACOUSTIC_ASSEMBLIES, ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
+import { ACOUSTIC_ASSEMBLIES, ACOUSTIC_ASSEMBLY, ACOUSTIC_WALL_SPECS, acousticMeshInfo } from './acoustic-walls';
 import { ACTIVE_LAYOUT_ID, INTERIOR_DOORS, INTERIOR_WALLS, type InteriorDoor, type RectMm } from './twin-interior';
 import { DEFAULT_LIVING_LAYOUT_ID, LIVING_LAYOUT_IDS, type LivingLayoutId } from './twin-living-layouts';
 import { HOUSE } from './twin-active-house';
@@ -99,7 +99,7 @@ const WALL_TYPE_LIST:WallType[]=[
   {code:`TI${EXTERIOR_WALL.insulationMm/10}`,kind:'insulation',nominal:EXTERIOR_WALL.insulationMm,label:'Kontaktné zateplenie obvodovej steny'},
   {code:'SN30',kind:'bearing',nominal:300,label:'Nosná vnútorná stena'},
   {code:'SN20',kind:'bearing',nominal:200,label:'Nosná vnútorná stena'},
-  {code:'SP30',kind:'partition',nominal:300,label:'Deliaca stena garáže'},
+  {code:'SP30',kind:'partition',nominal:300,label:'Stena pri lodžii'},
   {code:'SP20',kind:'partition',nominal:200,label:'Priečka (vrátane puzdra posuvných dverí)'},
   {code:'SP16',kind:'partition',nominal:160,label:'Priečka'},
   {code:'SP14',kind:'partition',nominal:140,label:'Priečka'},
@@ -225,7 +225,7 @@ export const WALL_TYPES_USED=WALL_TYPE_LIST.map(type=>{
   }
   if(type.kind==='exterior')return {type,range:`${EXTERIOR_WALL.totalMm} · piliere terás a lodžie bez zateplenia`};
   if(type.kind==='insulation')return {type,range:`${EXTERIOR_WALL.insulationMm} · v modeli ${rangeText(FACADE_LAYERS.filter(l=>l.layer==='insulation').map(l=>l.thickness))}`};
-  const thicknesses=WALL_SOLIDS.filter(s=>s.type===type&&s.mesh&&s.kind!=='exterior').map(s=>Math.round(s.thickness));
+  const thicknesses=WALL_SOLIDS.filter(s=>s.type===type&&s.mesh&&s.kind!=='exterior').map(s=>s.kind==='acoustic'?s.thickness:Math.round(s.thickness));
   if(!thicknesses.length)return null;
   return {type,range:rangeText(thicknesses)};
 }).filter((t):t is {type:WallType;range:string}=>t!==null);
@@ -241,8 +241,8 @@ export const MATERIAL_LEGEND:MaterialLegendEntry[]=(()=>{
     {cls:'bearing',codes:codes('bearing'),text:`Nosné vnútorné murivo z keramických tvaroviek hr. ${nominal('bearing')} mm, na systémovú murovaciu maltu`},
     {cls:'partition',codes:codes('partition'),text:`Nenosné priečkové murivo z keramických tvaroviek hr. ${nominal('partition')} mm, na systémovú murovaciu maltu (vrátane puzdra posuvných dverí)`},
     {cls:'board',codes:codes('board'),text:`Sadrokartónové systémové priečky a predsteny hr. ${nominal('board')} mm, napr. Rigips W112, s výplňou z minerálnej vlny`},
-    {cls:'acoustic',codes:'SA30',layers:ACOUSTIC_ASSEMBLIES[0].layers,text:'AK-01 spálňa / chlapčenská izba; AK-02 kúpeľňa / dievčenská izba. LeierPLAN 10 P10 100 + minerálna vata 100 + LeierPLAN 10 P10 100 mm. Celkom 300 mm bez omietok a obkladov. Statika a akustické napojenia na posúdenie; Rw zostavy nedoložené.'},
-    {cls:'acoustic',codes:'H200',layers:[...ACOUSTIC_ASSEMBLIES[1].layers].reverse(),text:'AK-03 pracovňa / sprcha. Od sprchy: VC omietka 15 + LeierPLAN 10 100 + omietka 15 + dutina W623 45 (pružné závesy, vata 40) + 2 × 12,5 Silentboard = 200 mm; finálne povrchy navyše. Požiadavka Rw ≥ 51 dB; predbežný výpočet ≈ 58 dB, presnú zostavu a napojenia potvrdiť.'},
+    {cls:'acoustic',codes:ACOUSTIC_ASSEMBLY.code,layers:ACOUSTIC_ASSEMBLY.layers,text:`AK-01 spálňa / chlapčenská izba; AK-02 kúpeľňa / dievčenská izba. ${ACOUSTIC_ASSEMBLY.finishNote} ${ACOUSTIC_ASSEMBLY.acousticNote}`},
+    {cls:'acoustic',codes:'H200',layers:[...ACOUSTIC_ASSEMBLIES[1].layers].reverse(),text:'AK-03 pracovňa / sprcha. Od sprchy: VC omietka 15 + LeierPLAN 10 100 + omietka 15 + dutina W623 45 (pružné závesy, vata 40) + 1 × 12,5 Silentboard = 187,5 mm; finálne povrchy navyše. Požiadavka Rw ≥ 51 dB; predbežný výpočet ≈ 56 dB, presnú zostavu a napojenia potvrdiť.'},
   ];
   return out.filter(e=>e.codes.length>0);
 })();

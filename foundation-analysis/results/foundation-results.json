@@ -1,0 +1,3036 @@
+{
+  "status": "CONDITIONAL_STUDY_NOT_FOR_CONSTRUCTION",
+  "concrete": "C16/20",
+  "input_sha256": "d362aaf4ce1b5f2294d1291a8a53917a368a628dc8f88b44c5448b7d91f0b7c7",
+  "slab_structural_area_m2": 238.72044299999996,
+  "architectural_area_m2": 252.965,
+  "garage_area_m2": 24.64501000000001,
+  "external_terraces_structural_area_m2": 22.601917,
+  "perimeter_length_m": 78.456,
+  "internal_routes_length_m": 86.16,
+  "routes": [
+    {
+      "id": "R1",
+      "points": [
+        [
+          20.6915,
+          3.354
+        ],
+        [
+          20.6915,
+          10.849
+        ]
+      ],
+      "b": 0.35,
+      "major": true,
+      "source_ids": [
+        "C-KID-ENTRY-WALL",
+        "C-GARDEN-KID-EAST"
+      ],
+      "length_m": 7.495
+    },
+    {
+      "id": "R2",
+      "points": [
+        [
+          21.393,
+          10.862
+        ],
+        [
+          27.691,
+          10.862
+        ]
+      ],
+      "b": 0.35,
+      "major": true,
+      "source_ids": [
+        "C-KITCHEN-BEARING-WALL",
+        "C-KITCHEN-BEARING-WALL-E"
+      ],
+      "length_m": 6.297999999999998
+    },
+    {
+      "id": "R3",
+      "points": [
+        [
+          23.4545,
+          3.354
+        ],
+        [
+          23.4545,
+          5.2825
+        ],
+        [
+          22.842,
+          5.2825
+        ]
+      ],
+      "b": 0.35,
+      "major": true,
+      "source_ids": [
+        "C-ENTRY-OFFICE-EAST",
+        "C-ENTRY-OFFICE-RETURN"
+      ],
+      "length_m": 2.5410000000000004
+    },
+    {
+      "id": "R4",
+      "points": [
+        [
+          21.393,
+          19.185
+        ],
+        [
+          27.691,
+          19.185
+        ]
+      ],
+      "b": 0.35,
+      "major": true,
+      "source_ids": [
+        "NN2"
+      ],
+      "length_m": 6.297999999999998
+    },
+    {
+      "id": "R5",
+      "points": [
+        [
+          6.794,
+          8.897
+        ],
+        [
+          10.993,
+          8.897
+        ]
+      ],
+      "b": 0.35,
+      "major": true,
+      "source_ids": [
+        "L"
+      ],
+      "length_m": 4.199000000000001
+    },
+    {
+      "id": "R6",
+      "points": [
+        [
+          10.993,
+          8.897
+        ],
+        [
+          10.993,
+          10.849
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-SPINE-N"
+      ],
+      "length_m": 1.952
+    },
+    {
+      "id": "R7",
+      "points": [
+        [
+          15.093,
+          3.354
+        ],
+        [
+          15.093,
+          10.849
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-OPEN-HALL-N",
+        "C-OPEN-HALL-S"
+      ],
+      "length_m": 7.495
+    },
+    {
+      "id": "R8",
+      "points": [
+        [
+          22.711,
+          5.1075
+        ],
+        [
+          22.711,
+          11.55
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "IW-ENTRY-TOP-E2",
+        "IW-SPINE-EAST-1",
+        "IW-SPINE-EAST-2",
+        "IW-SPINE-EAST-3",
+        "C-OFFICE-NORTH-JAMB",
+        "C-WC-DOOR-JAMB",
+        "C-ENTRY-HALL-JAMB"
+      ],
+      "length_m": 6.442500000000001,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "One east corridor support below existing office, bathroom and WC door gaps. Axis shift of widest upper jamb is 29.5 mm; width350 mm contains all modeled jamb faces. Top extends87.5mm beyond wall end to lower face ofR3 for full-height connection geometry; bottom remains a soil-supported end.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R9",
+      "points": [
+        [
+          13.413,
+          6.492
+        ],
+        [
+          27.691,
+          6.492
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-BATH-HALL-W",
+        "C-BATH-HALL-E",
+        "B-STREET-KID-TOP",
+        "C-KID-HALL-POCKET-WALL",
+        "C-ENTRY-HALL-JAMB",
+        "IW-STUDY-NORTH"
+      ],
+      "length_m": 14.277999999999999,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Merge centerlinesY6.482/Y6.502, difference20 mm, into proposedY6.492. Width350 contains 140mm partitions and200mmH200. Continuity only under existing doorways and intersecting wall nodes. H200 remains nonbearing for roof/attic.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R10",
+      "points": [
+        [
+          24.7515,
+          7.671
+        ],
+        [
+          24.7515,
+          10.862
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-EAST",
+        "IW-WC-EAST"
+      ],
+      "length_m": 3.191,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Continuous collinear service-core partition support; joins R11/R12 and R2 below floor.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R11",
+      "points": [
+        [
+          24.682,
+          7.671
+        ],
+        [
+          27.691,
+          7.671
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-SOUTH-E"
+      ],
+      "length_m": 3.0090000000000003,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Extend ends within wall-node widths to R10 and east perimeter cap.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R12",
+      "points": [
+        [
+          22.711,
+          8.842
+        ],
+        [
+          24.7515,
+          8.842
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "IW-BATH-105-NORTH"
+      ],
+      "length_m": 2.0405000000000015,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Connect west end to R8 and east end to R10; wall end overhangs are contained by crossing strips.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R13",
+      "points": [
+        [
+          10.993,
+          7.721
+        ],
+        [
+          20.6915,
+          7.721
+        ],
+        [
+          20.6915,
+          7.791
+        ],
+        [
+          21.543,
+          7.791
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-CLOSET-NORTH-W",
+        "C-CLOSET-NORTH-E",
+        "C-BED-PRIVACY-W",
+        "C-BED-PRIVACY-E",
+        "B-GARDEN-KID-SOUTH-W",
+        "B-GARDEN-KID-SOUTH-E",
+        "C-GARDEN-CLOSET-SOUTH"
+      ],
+      "length_m": 10.62,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "One north hall support below three existing doorways. At R1, last851.5mm moves70mm to center the adjoining140+140mm wall rectangles within350mm. This terminal widened junction is an explicit local support design, not a claim these two wall axes are collinear within50mm; longitudinal bars should run through union envelope with engineered detail, not copy a70mm abrupt bar kink.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R14",
+      "points": [
+        [
+          12.912,
+          3.354
+        ],
+        [
+          12.912,
+          5.674
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-BAY-EAST"
+      ],
+      "length_m": 2.3200000000000003,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Join south perimeter to transverse R15; existing partition unchanged.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R15",
+      "points": [
+        [
+          10.842,
+          5.674
+        ],
+        [
+          13.413,
+          5.674
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-BAY-RETURN",
+        "C-BATH-NORTH-W"
+      ],
+      "length_m": 2.5709999999999997,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Merge exactly collinear return and bathroom wall. Intersects R14,R16,R17. Initial151mm past R16 is only cover of actual wall extent.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R16",
+      "points": [
+        [
+          10.993,
+          5.604
+        ],
+        [
+          10.993,
+          8.897
+        ]
+      ],
+      "b": 0.35,
+      "major": false,
+      "source_ids": [
+        "C-GARAGE-SPINE-S",
+        "C-GARAGE-SPINE-N"
+      ],
+      "length_m": 3.293,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Complete garage spine from R15 to existing R5/R6 node. Centerline rounding0.5mm from wall center. Ends atR5 so does not duplicate existingR6 length.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    },
+    {
+      "id": "R17",
+      "points": [
+        [
+          13.413,
+          5.604
+        ],
+        [
+          13.413,
+          7.721
+        ]
+      ],
+      "b": 0.3,
+      "major": false,
+      "source_ids": [
+        "C-CLOSET-EAST"
+      ],
+      "length_m": 2.117,
+      "status": "PREDPOKLAD_SOIL_FOUNDED_ROUTE",
+      "note": "Connect closet east partition to R15,R9,R13;70mm initial length contains wall corner above crossing centerline.",
+      "support": "New continuous footing on verified natural bearing stratum; no suspended span between route ends implied",
+      "node_anchorage_min_m": 1.0
+    }
+  ],
+  "wall_loads": [
+    {
+      "wall": "IW-ENTRY-TOP-E2",
+      "routes": [
+        "R3",
+        "R8"
+      ],
+      "length_m": 0.22599999999999998,
+      "gk_kN_m": 9.3,
+      "Gk_kN": 2.1018,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-SPINE-EAST-1",
+      "routes": [
+        "R8",
+        "R9"
+      ],
+      "length_m": 0.37950000000000017,
+      "gk_kN_m": 7.0874999999999995,
+      "Gk_kN": 2.689706250000001,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-SPINE-EAST-2",
+      "routes": [
+        "R8",
+        "R12"
+      ],
+      "length_m": 2.3644999999999996,
+      "gk_kN_m": 7.0874999999999995,
+      "Gk_kN": 16.758393749999996,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-SPINE-EAST-3",
+      "routes": [
+        "R2",
+        "R8"
+      ],
+      "length_m": 0.5380000000000003,
+      "gk_kN_m": 7.0874999999999995,
+      "Gk_kN": 3.8130750000000013,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-STUDY-NORTH",
+      "routes": [
+        "R8",
+        "R9"
+      ],
+      "length_m": 4.757999999999999,
+      "gk_kN_m": 5.2115625,
+      "Gk_kN": 24.796614374999997,
+      "assembly": "H200",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-BATH-105-EAST",
+      "routes": [
+        "R10",
+        "R11",
+        "R12"
+      ],
+      "length_m": 1.0310000000000006,
+      "gk_kN_m": 6.9,
+      "Gk_kN": 7.1139000000000046,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-BATH-105-SOUTH-E",
+      "routes": [
+        "R10",
+        "R11"
+      ],
+      "length_m": 2.8590000000000018,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 19.834312500000014,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-BATH-105-NORTH",
+      "routes": [
+        "R8",
+        "R10",
+        "R12"
+      ],
+      "length_m": 2.0380000000000003,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 14.138625000000003,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "IW-WC-EAST",
+      "routes": [
+        "R2",
+        "R10",
+        "R12"
+      ],
+      "length_m": 1.799999999999999,
+      "gk_kN_m": 6.9,
+      "Gk_kN": 12.419999999999993,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "B-STREET-KID-TOP",
+      "routes": [
+        "R7",
+        "R9"
+      ],
+      "length_m": 2.199,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 15.255562500000002,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-W",
+      "routes": [
+        "R7",
+        "R13"
+      ],
+      "length_m": 2.199,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 15.255562500000002,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-E",
+      "routes": [
+        "R1",
+        "R13"
+      ],
+      "length_m": 3.2010000000000005,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 22.206937500000006,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARAGE-BAY-EAST",
+      "routes": [
+        "R14",
+        "R15"
+      ],
+      "length_m": 2.1,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 14.568750000000003,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARAGE-BAY-RETURN",
+      "routes": [
+        "R14",
+        "R15",
+        "R16"
+      ],
+      "length_m": 2.139999999999999,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 14.846249999999994,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARAGE-SPINE-S",
+      "routes": [
+        "R15",
+        "R16"
+      ],
+      "length_m": 0.30100000000000016,
+      "gk_kN_m": 5.437500000000001,
+      "Gk_kN": 1.6366875000000012,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARAGE-SPINE-N",
+      "routes": [
+        "R5",
+        "R6",
+        "R13",
+        "R15",
+        "R16"
+      ],
+      "length_m": 4.8549999999999995,
+      "gk_kN_m": 12.975,
+      "Gk_kN": 62.993624999999994,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-CLOSET-EAST",
+      "routes": [
+        "R9",
+        "R13",
+        "R15",
+        "R17"
+      ],
+      "length_m": 2.1870000000000003,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 15.172312500000004,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-CLOSET-NORTH-W",
+      "routes": [
+        "R13",
+        "R16"
+      ],
+      "length_m": 0.6499999999999986,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 4.509374999999991,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-CLOSET-NORTH-E",
+      "routes": [
+        "R13",
+        "R17"
+      ],
+      "length_m": 0.8900000000000006,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 6.174375000000005,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-BATH-NORTH-W",
+      "routes": [
+        "R14",
+        "R15",
+        "R17"
+      ],
+      "length_m": 0.36100000000000065,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 2.5044375000000048,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-BATH-HALL-W",
+      "routes": [
+        "R9",
+        "R17"
+      ],
+      "length_m": 0.4599999999999991,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 3.191249999999994,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-BATH-HALL-E",
+      "routes": [
+        "R7",
+        "R9"
+      ],
+      "length_m": 0.1999999999999993,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 1.3874999999999953,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-BED-PRIVACY-W",
+      "routes": [
+        "R13",
+        "R17"
+      ],
+      "length_m": 0.4599999999999991,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 3.191249999999994,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-BED-PRIVACY-E",
+      "routes": [
+        "R7",
+        "R13"
+      ],
+      "length_m": 0.1999999999999993,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 1.3874999999999953,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-OPEN-HALL-S",
+      "routes": [
+        "R7",
+        "R9"
+      ],
+      "length_m": 3.0479999999999996,
+      "gk_kN_m": 6.253875,
+      "Gk_kN": 19.061811,
+      "assembly": "SA30",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-OPEN-HALL-N",
+      "routes": [
+        "R7",
+        "R13"
+      ],
+      "length_m": 3.048,
+      "gk_kN_m": 6.253875,
+      "Gk_kN": 19.061811,
+      "assembly": "SA30",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-KID-ENTRY-WALL",
+      "routes": [
+        "R1",
+        "R9"
+      ],
+      "length_m": 2.908,
+      "gk_kN_m": 12.975,
+      "Gk_kN": 37.7313,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-KID-HALL-POCKET-WALL",
+      "routes": [
+        "R1",
+        "R9"
+      ],
+      "length_m": 3.298000000000002,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 22.879875000000016,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-ENTRY-HALL-JAMB",
+      "routes": [
+        "R8",
+        "R9"
+      ],
+      "length_m": 0.13999999999999968,
+      "gk_kN_m": 5.4,
+      "Gk_kN": 0.7559999999999983,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARDEN-KID-EAST",
+      "routes": [
+        "R1",
+        "R13"
+      ],
+      "length_m": 2.9079999999999995,
+      "gk_kN_m": 12.975,
+      "Gk_kN": 37.73129999999999,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-GARDEN-CLOSET-SOUTH",
+      "routes": [
+        "R1",
+        "R13"
+      ],
+      "length_m": 0.7010000000000005,
+      "gk_kN_m": 6.937500000000001,
+      "Gk_kN": 4.863187500000004,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-EAST",
+      "routes": [
+        "R3"
+      ],
+      "length_m": 1.6910000000000003,
+      "gk_kN_m": 8.249999999999998,
+      "Gk_kN": 13.95075,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-RETURN",
+      "routes": [
+        "R3",
+        "R8"
+      ],
+      "length_m": 0.7000000000000028,
+      "gk_kN_m": 8.249999999999998,
+      "Gk_kN": 5.775000000000023,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-OFFICE-NORTH-JAMB",
+      "routes": [
+        "R8",
+        "R9"
+      ],
+      "length_m": 0.08000000000000007,
+      "gk_kN_m": 3.9,
+      "Gk_kN": 0.3120000000000003,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL",
+      "routes": [
+        "R2",
+        "R8",
+        "R10"
+      ],
+      "length_m": 3.442,
+      "gk_kN_m": 12.937499999999998,
+      "Gk_kN": 44.530874999999995,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL-E",
+      "routes": [
+        "R2"
+      ],
+      "length_m": 0.6600000000000001,
+      "gk_kN_m": 12.937499999999998,
+      "Gk_kN": 8.53875,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    },
+    {
+      "wall": "C-WC-DOOR-JAMB",
+      "routes": [
+        "R2",
+        "R8"
+      ],
+      "length_m": 0.1440000000000019,
+      "gk_kN_m": 3.4125,
+      "Gk_kN": 0.4914000000000065,
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "status": "PREDPOKLAD_PRODUCT_AND_FINISH; MODEL_LENGTH"
+    }
+  ],
+  "pads": [
+    {
+      "id": "P1",
+      "center": [
+        25.41,
+        10.123
+      ],
+      "size": [
+        1.2,
+        1.2
+      ],
+      "Pk": 20,
+      "kind": "AKU800",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.01,
+              9.523
+            ],
+            [
+              26.01,
+              10.722999999999999
+            ],
+            [
+              24.81,
+              10.722999999999999
+            ],
+            [
+              24.81,
+              9.523
+            ],
+            [
+              26.01,
+              9.523
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "P2",
+      "center": [
+        25.76,
+        8.445
+      ],
+      "size": [
+        1.6,
+        1.4
+      ],
+      "Pk": 20,
+      "kind": "BOILER15",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              26.560000000000002,
+              7.745
+            ],
+            [
+              26.560000000000002,
+              9.145
+            ],
+            [
+              24.96,
+              9.145
+            ],
+            [
+              24.96,
+              7.745
+            ],
+            [
+              26.560000000000002,
+              7.745
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "P3",
+      "center": [
+        21.853,
+        18.62
+      ],
+      "size": [
+        1.0,
+        1.0
+      ],
+      "Pk": 10,
+      "kind": "STOVE_B",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              22.353,
+              18.12
+            ],
+            [
+              22.353,
+              19.12
+            ],
+            [
+              21.353,
+              19.12
+            ],
+            [
+              21.353,
+              18.12
+            ],
+            [
+              22.353,
+              18.12
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "P4",
+      "center": [
+        21.29,
+        21.785
+      ],
+      "size": [
+        1.2,
+        1.2
+      ],
+      "Pk": 60,
+      "kind": "TERRACE_W",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              21.89,
+              21.185
+            ],
+            [
+              21.89,
+              22.385
+            ],
+            [
+              20.689999999999998,
+              22.385
+            ],
+            [
+              20.689999999999998,
+              21.185
+            ],
+            [
+              21.89,
+              21.185
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "P5",
+      "center": [
+        27.79,
+        20.785
+      ],
+      "size": [
+        0.9,
+        2.9
+      ],
+      "Pk": 60,
+      "kind": "TERRACE_E_LONG_PIER_REACTION_UNVERIFIED",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              28.24,
+              19.335
+            ],
+            [
+              28.24,
+              22.235
+            ],
+            [
+              27.34,
+              22.235
+            ],
+            [
+              27.34,
+              19.335
+            ],
+            [
+              28.24,
+              19.335
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "P6",
+      "center": [
+        7.14,
+        10.7
+      ],
+      "size": [
+        1.8,
+        1.4
+      ],
+      "Pk": 60,
+      "kind": "LOGGIA_L_PIER_TRANSFER_UNVERIFIED",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.04,
+              10.0
+            ],
+            [
+              8.04,
+              11.399999999999999
+            ],
+            [
+              6.239999999999999,
+              11.399999999999999
+            ],
+            [
+              6.239999999999999,
+              10.0
+            ],
+            [
+              8.04,
+              10.0
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "variants": [
+    {
+      "id": "MIN",
+      "slab_m": 0.15,
+      "garage_slab_m": 0.18,
+      "major_foot_width_m": 0.6,
+      "minor_foot_width_m": 0.4,
+      "foot_height_m": 0.3,
+      "upper_height_including_slab_m": 0.6,
+      "upper_longitudinal": "3d12 top + 3d12 bottom",
+      "stirrups": "d8/200; d8/100 within 600 mm of junctions (extra quantity allowance)",
+      "concrete_m3": 89.59231401000005,
+      "slab_m3": 36.54741674999999,
+      "upper_below_slab_m3": 29.019926610000052,
+      "new_lower_m3": 24.024970650000007,
+      "steel_kg_estimate": 6541.306912504644,
+      "steel_components_kg": {
+        "slab_including_15pct_laps": 3149.5966253935326,
+        "longitudinal_including_15pct_laps": 1009.6447999999998,
+        "stirrups_base": 539.7778962962963,
+        "footing_mesh": 604.7320352592593,
+        "stem_dowels": 717.9999999999999,
+        "local_and_dense_stirrups_allowance": 519.5555555555554
+      },
+      "formwork_m2": 217.6992,
+      "trench_excavation_m3": 43.51590329999997,
+      "fill_geometric_m3": 79.66481003999995,
+      "stripping_allowance_m3": 47.7440886,
+      "note": "z levels/fill/excavation assumed; reuse external formwork; strip organic layer 0.20 m scenario not survey; disposal loose volume factor not assumed"
+    },
+    {
+      "id": "MEDIUM",
+      "slab_m": 0.18,
+      "garage_slab_m": 0.18,
+      "major_foot_width_m": 0.65,
+      "minor_foot_width_m": 0.4,
+      "foot_height_m": 0.3,
+      "upper_height_including_slab_m": 0.6,
+      "upper_longitudinal": "3d14 top + 3d14 bottom",
+      "stirrups": "d8/200; d8/100 within 600 mm of junctions (extra quantity allowance)",
+      "concrete_m3": 94.57799100000003,
+      "slab_m3": 42.96967973999999,
+      "upper_below_slab_m3": 27.24168936000005,
+      "new_lower_m3": 24.36662189999998,
+      "steel_kg_estimate": 7061.2128848510965,
+      "steel_components_kg": {
+        "slab_including_15pct_laps": 3289.3867088510974,
+        "longitudinal_including_15pct_laps": 1374.2387555555554,
+        "stirrups_base": 539.7778962962963,
+        "footing_mesh": 620.2539685925916,
+        "stem_dowels": 717.9999999999999,
+        "local_and_dense_stirrups_allowance": 519.5555555555554
+      },
+      "formwork_m2": 217.6992,
+      "trench_excavation_m3": 44.190205799999916,
+      "fill_geometric_m3": 75.02078429999996,
+      "stripping_allowance_m3": 47.7440886,
+      "note": "z levels/fill/excavation assumed; reuse external formwork; strip organic layer 0.20 m scenario not survey; disposal loose volume factor not assumed"
+    },
+    {
+      "id": "MAX",
+      "slab_m": 0.2,
+      "garage_slab_m": 0.2,
+      "major_foot_width_m": 0.7,
+      "minor_foot_width_m": 0.4,
+      "foot_height_m": 0.3,
+      "upper_height_including_slab_m": 0.6,
+      "upper_longitudinal": "3d16 top + 3d16 bottom",
+      "stirrups": "d8/200; d8/100 within 600 mm of junctions (extra quantity allowance)",
+      "concrete_m3": 98.49206055000006,
+      "slab_m3": 47.7440886,
+      "upper_below_slab_m3": 26.039698800000046,
+      "new_lower_m3": 24.708273150000007,
+      "steel_kg_estimate": 8926.582548830593,
+      "steel_components_kg": {
+        "slab_including_15pct_laps": 4718.549106163926,
+        "longitudinal_including_15pct_laps": 1794.9240888888885,
+        "stirrups_base": 539.7778962962963,
+        "footing_mesh": 635.7759019259261,
+        "stem_dowels": 717.9999999999999,
+        "local_and_dense_stirrups_allowance": 519.5555555555554
+      },
+      "formwork_m2": 217.6992,
+      "trench_excavation_m3": 44.864508299999954,
+      "fill_geometric_m3": 71.44836599999996,
+      "stripping_allowance_m3": 47.7440886,
+      "note": "z levels/fill/excavation assumed; reuse external formwork; strip organic layer 0.20 m scenario not survey; disposal loose volume factor not assumed"
+    }
+  ],
+  "perimeter_load_envelopes": [
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.38,
+      "e_m": 0,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.38,
+      "qEd_kPa": 168.15690789473683,
+      "qSLS_max_kPa": 121.20394736842107,
+      "B_required_at_150kPa_m": 0.42599750000000003,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.38,
+      "e_m": 0.025,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.33,
+      "qEd_kPa": 193.63522727272726,
+      "qSLS_max_kPa": 169.04761080332415,
+      "B_required_at_150kPa_m": 0.4759975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.38,
+      "e_m": 0.05,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.28,
+      "qEd_kPa": 228.2129464285714,
+      "qSLS_max_kPa": 216.8912742382272,
+      "B_required_at_150kPa_m": 0.5259975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.4,
+      "e_m": 0,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.4,
+      "qEd_kPa": 159.74906249999998,
+      "qSLS_max_kPa": 115.14375000000001,
+      "B_required_at_150kPa_m": 0.42599750000000003,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.4,
+      "e_m": 0.025,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.35000000000000003,
+      "qEd_kPa": 182.57035714285712,
+      "qSLS_max_kPa": 158.32265625000002,
+      "B_required_at_150kPa_m": 0.4759975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "B_m": 0.4,
+      "e_m": 0.05,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 8.2,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 63.899625,
+      "NSLS_kN_m": 46.057500000000005,
+      "effective_width_m": 0.30000000000000004,
+      "qEd_kPa": 212.99874999999997,
+      "qSLS_max_kPa": 201.50156250000003,
+      "B_required_at_150kPa_m": 0.5259975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.38,
+      "e_m": 0,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.38,
+      "qEd_kPa": 257.17006578947365,
+      "qSLS_max_kPa": 180.54605263157896,
+      "B_required_at_150kPa_m": 0.6514975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.38,
+      "e_m": 0.025,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.33,
+      "qEd_kPa": 296.1352272727272,
+      "qSLS_max_kPa": 251.8142313019391,
+      "B_required_at_150kPa_m": 0.7014975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.38,
+      "e_m": 0.05,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.28,
+      "qEd_kPa": 349.0165178571428,
+      "qSLS_max_kPa": 323.0824099722992,
+      "B_required_at_150kPa_m": 0.7514974999999999,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.4,
+      "e_m": 0,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.4,
+      "qEd_kPa": 244.31156249999995,
+      "qSLS_max_kPa": 171.51874999999998,
+      "B_required_at_150kPa_m": 0.6514975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.4,
+      "e_m": 0.025,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.35000000000000003,
+      "qEd_kPa": 279.21321428571423,
+      "qSLS_max_kPa": 235.83828124999997,
+      "B_required_at_150kPa_m": 0.7014975,
+      "status_at_reference_150kPa": "FAIL"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "B_m": 0.4,
+      "e_m": 0.05,
+      "Gk_kN_m": 34.5775,
+      "Qk_kN_m": 30.749999999999996,
+      "snow_kN_m": 3.28,
+      "NEd_kN_m": 97.72462499999999,
+      "NSLS_kN_m": 68.6075,
+      "effective_width_m": 0.30000000000000004,
+      "qEd_kPa": 325.7487499999999,
+      "qSLS_max_kPa": 300.1578125,
+      "B_required_at_150kPa_m": 0.7514974999999999,
+      "status_at_reference_150kPa": "FAIL"
+    }
+  ],
+  "new_route_checks": [
+    {
+      "variant": "MIN",
+      "route": "R1",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 32.875,
+      "NEd_kN_m": 87.95625000000001,
+      "B_m": 0.6,
+      "qEd_kPa": 146.59375000000003,
+      "qRd_reference_kPa": 150,
+      "util": 0.9772916666666669,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R2",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 32.8375,
+      "NEd_kN_m": 87.905625,
+      "B_m": 0.6,
+      "qEd_kPa": 146.509375,
+      "qRd_reference_kPa": 150,
+      "util": 0.9767291666666668,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R3",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 9.3,
+      "Gk_kN_m": 29.2,
+      "NEd_kN_m": 82.995,
+      "B_m": 0.6,
+      "qEd_kPa": 138.32500000000002,
+      "qRd_reference_kPa": 150,
+      "util": 0.9221666666666668,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R4",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.94,
+      "Gk_kN_m": 32.84,
+      "NEd_kN_m": 87.90900000000002,
+      "B_m": 0.6,
+      "qEd_kPa": 146.51500000000004,
+      "qRd_reference_kPa": 150,
+      "util": 0.976766666666667,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R5",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 32.875,
+      "NEd_kN_m": 87.95625000000001,
+      "B_m": 0.6,
+      "qEd_kPa": 146.59375000000003,
+      "qRd_reference_kPa": 150,
+      "util": 0.9772916666666669,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R6",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R7",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 17.8125,
+      "NEd_kN_m": 24.046875,
+      "B_m": 0.4,
+      "qEd_kPa": 60.1171875,
+      "qRd_reference_kPa": 150,
+      "util": 0.40078125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R8",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 23.8125,
+      "NEd_kN_m": 32.146875,
+      "B_m": 0.4,
+      "qEd_kPa": 80.3671875,
+      "qRd_reference_kPa": 150,
+      "util": 0.53578125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R9",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R10",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 22.6875,
+      "NEd_kN_m": 30.628125,
+      "B_m": 0.4,
+      "qEd_kPa": 76.5703125,
+      "qRd_reference_kPa": 150,
+      "util": 0.51046875,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R11",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R12",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 7.0874999999999995,
+      "Gk_kN_m": 16.8375,
+      "NEd_kN_m": 22.730625,
+      "B_m": 0.4,
+      "qEd_kPa": 56.826562499999994,
+      "qRd_reference_kPa": 150,
+      "util": 0.37884375,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R13",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R14",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R15",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R16",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MIN",
+      "route": "R17",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R1",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 33.25,
+      "NEd_kN_m": 88.4625,
+      "B_m": 0.65,
+      "qEd_kPa": 136.09615384615384,
+      "qRd_reference_kPa": 150,
+      "util": 0.9073076923076923,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R2",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 33.2125,
+      "NEd_kN_m": 88.41187500000001,
+      "B_m": 0.65,
+      "qEd_kPa": 136.01826923076925,
+      "qRd_reference_kPa": 150,
+      "util": 0.9067884615384617,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R3",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 9.3,
+      "Gk_kN_m": 29.575,
+      "NEd_kN_m": 83.50125,
+      "B_m": 0.65,
+      "qEd_kPa": 128.46346153846153,
+      "qRd_reference_kPa": 150,
+      "util": 0.8564230769230768,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R4",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.94,
+      "Gk_kN_m": 33.215,
+      "NEd_kN_m": 88.41525000000001,
+      "B_m": 0.65,
+      "qEd_kPa": 136.02346153846156,
+      "qRd_reference_kPa": 150,
+      "util": 0.9068230769230771,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R5",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 33.25,
+      "NEd_kN_m": 88.4625,
+      "B_m": 0.65,
+      "qEd_kPa": 136.09615384615384,
+      "qRd_reference_kPa": 150,
+      "util": 0.9073076923076923,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R6",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R7",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 17.8125,
+      "NEd_kN_m": 24.046875,
+      "B_m": 0.4,
+      "qEd_kPa": 60.1171875,
+      "qRd_reference_kPa": 150,
+      "util": 0.40078125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R8",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 23.8125,
+      "NEd_kN_m": 32.146875,
+      "B_m": 0.4,
+      "qEd_kPa": 80.3671875,
+      "qRd_reference_kPa": 150,
+      "util": 0.53578125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R9",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R10",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 22.6875,
+      "NEd_kN_m": 30.628125,
+      "B_m": 0.4,
+      "qEd_kPa": 76.5703125,
+      "qRd_reference_kPa": 150,
+      "util": 0.51046875,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R11",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R12",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 7.0874999999999995,
+      "Gk_kN_m": 16.8375,
+      "NEd_kN_m": 22.730625,
+      "B_m": 0.4,
+      "qEd_kPa": 56.826562499999994,
+      "qRd_reference_kPa": 150,
+      "util": 0.37884375,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R13",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R14",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R15",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R16",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MEDIUM",
+      "route": "R17",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R1",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 33.625,
+      "NEd_kN_m": 88.96875,
+      "B_m": 0.7,
+      "qEd_kPa": 127.09821428571429,
+      "qRd_reference_kPa": 150,
+      "util": 0.8473214285714286,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R2",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 33.5875,
+      "NEd_kN_m": 88.918125,
+      "B_m": 0.7,
+      "qEd_kPa": 127.02589285714286,
+      "qRd_reference_kPa": 150,
+      "util": 0.8468392857142858,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R3",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 9.3,
+      "Gk_kN_m": 29.95,
+      "NEd_kN_m": 84.00750000000001,
+      "B_m": 0.7,
+      "qEd_kPa": 120.0107142857143,
+      "qRd_reference_kPa": 150,
+      "util": 0.8000714285714287,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R4",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.94,
+      "Gk_kN_m": 33.59,
+      "NEd_kN_m": 88.92150000000001,
+      "B_m": 0.7,
+      "qEd_kPa": 127.03071428571431,
+      "qRd_reference_kPa": 150,
+      "util": 0.8468714285714287,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R5",
+      "tributary_width_m_assumed": 3.5,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 33.625,
+      "NEd_kN_m": 88.96875,
+      "B_m": 0.7,
+      "qEd_kPa": 127.09821428571429,
+      "qRd_reference_kPa": 150,
+      "util": 0.8473214285714286,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R6",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R7",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 17.8125,
+      "NEd_kN_m": 24.046875,
+      "B_m": 0.4,
+      "qEd_kPa": 60.1171875,
+      "qRd_reference_kPa": 150,
+      "util": 0.40078125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R8",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 23.8125,
+      "NEd_kN_m": 32.146875,
+      "B_m": 0.4,
+      "qEd_kPa": 80.3671875,
+      "qRd_reference_kPa": 150,
+      "util": 0.53578125,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R9",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R10",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.937499999999998,
+      "Gk_kN_m": 22.6875,
+      "NEd_kN_m": 30.628125,
+      "B_m": 0.4,
+      "qEd_kPa": 76.5703125,
+      "qRd_reference_kPa": 150,
+      "util": 0.51046875,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R11",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R12",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 7.0874999999999995,
+      "Gk_kN_m": 16.8375,
+      "NEd_kN_m": 22.730625,
+      "B_m": 0.4,
+      "qEd_kPa": 56.826562499999994,
+      "qRd_reference_kPa": 150,
+      "util": 0.37884375,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R13",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R14",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R15",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R16",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 12.975,
+      "Gk_kN_m": 23.85,
+      "NEd_kN_m": 32.197500000000005,
+      "B_m": 0.4,
+      "qEd_kPa": 80.49375,
+      "qRd_reference_kPa": 150,
+      "util": 0.536625,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    },
+    {
+      "variant": "MAX",
+      "route": "R17",
+      "tributary_width_m_assumed": 0,
+      "gwall_kN_m_envelope": 6.937500000000001,
+      "Gk_kN_m": 16.6875,
+      "NEd_kN_m": 22.528125000000003,
+      "B_m": 0.4,
+      "qEd_kPa": 56.32031250000001,
+      "qRd_reference_kPa": 150,
+      "util": 0.3754687500000001,
+      "note": "centered load envelope only; actual roof support reactions absent"
+    }
+  ],
+  "settlement_sensitivity": [
+    {
+      "attic_q_kPa": 2.0,
+      "Eoed_kPa": 3000,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 28.16699400034198,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 8.0,
+      "total_with_surcharge_bound_mm": 36.16699400034198,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 28.16699400034198,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "Eoed_kPa": 8500,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 9.941292000120699,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 2.823529411764706,
+      "total_with_surcharge_bound_mm": 12.764821411885405,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 9.941292000120699,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    },
+    {
+      "attic_q_kPa": 2.0,
+      "Eoed_kPa": 15000,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 5.633398800068396,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 1.6,
+      "total_with_surcharge_bound_mm": 7.233398800068397,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 5.633398800068396,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "Eoed_kPa": 3000,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 41.95770593016256,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 8.0,
+      "total_with_surcharge_bound_mm": 49.95770593016256,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 41.95770593016256,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "Eoed_kPa": 8500,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 14.808602092998552,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 2.823529411764706,
+      "total_with_surcharge_bound_mm": 17.632131504763258,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 14.808602092998552,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    },
+    {
+      "attic_q_kPa": 7.5,
+      "Eoed_kPa": 15000,
+      "compressible_depth_m": 2.0,
+      "settlement_mm": 8.391541186032512,
+      "additional_broad_fill_0p6m_surcharge_bound_mm": 1.6,
+      "total_with_surcharge_bound_mm": 9.991541186032512,
+      "absolute_limit_mm_assumed": 25,
+      "differential_half_modulus_mm": 8.391541186032512,
+      "differential_limit_over_4m_mm_assumed": 8,
+      "status": "PARAMETRIC_ONLY_NO_SITE_PASS"
+    }
+  ],
+  "cap_robustness": [
+    {
+      "variant": "MIN",
+      "span_m": 1.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 12.215578124999999,
+      "MRd_kNm": 75.64095982322455,
+      "M_util": 0.16149422420799805,
+      "VEd_kN": 48.862312499999994,
+      "VRdc_kN": 53.69605730983253,
+      "VRds_kN_cot1": 105.42638581507593,
+      "VRdmax_kN": 429.85313279999997,
+      "deflection_fully_cracked_phi2_5_mm": 0.06739870915452732,
+      "deflection_limit_mm": 4.0,
+      "wk_characteristic_mm": 0.08069391704198339,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    },
+    {
+      "variant": "MIN",
+      "span_m": 2.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 48.862312499999994,
+      "MRd_kNm": 75.64095982322455,
+      "M_util": 0.6459768968319922,
+      "VEd_kN": 97.72462499999999,
+      "VRdc_kN": 53.69605730983253,
+      "VRds_kN_cot1": 105.42638581507593,
+      "VRdmax_kN": 429.85313279999997,
+      "deflection_fully_cracked_phi2_5_mm": 1.0783793464724372,
+      "deflection_limit_mm": 8.0,
+      "wk_characteristic_mm": 0.32277566816793357,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    },
+    {
+      "variant": "MEDIUM",
+      "span_m": 1.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 12.215578124999999,
+      "MRd_kNm": 101.06965007344385,
+      "M_util": 0.12086297039836742,
+      "VEd_kN": 48.862312499999994,
+      "VRdc_kN": 57.21804670306902,
+      "VRds_kN_cot1": 105.22969479676422,
+      "VRdmax_kN": 429.051168,
+      "deflection_fully_cracked_phi2_5_mm": 0.05290258507105633,
+      "deflection_limit_mm": 4.0,
+      "wk_characteristic_mm": 0.05352447051176635,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    },
+    {
+      "variant": "MEDIUM",
+      "span_m": 2.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 48.862312499999994,
+      "MRd_kNm": 101.06965007344385,
+      "M_util": 0.4834518815934697,
+      "VEd_kN": 97.72462499999999,
+      "VRdc_kN": 57.21804670306902,
+      "VRds_kN_cot1": 105.22969479676422,
+      "VRdmax_kN": 429.051168,
+      "deflection_fully_cracked_phi2_5_mm": 0.8464413611369013,
+      "deflection_limit_mm": 8.0,
+      "wk_characteristic_mm": 0.2140978820470654,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    },
+    {
+      "variant": "MAX",
+      "span_m": 1.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 12.215578124999999,
+      "MRd_kNm": 129.2072104484417,
+      "M_util": 0.09454254203463706,
+      "VEd_kN": 48.862312499999994,
+      "VRdc_kN": 62.489469078771464,
+      "VRds_kN_cot1": 105.03300377845251,
+      "VRdmax_kN": 428.24920319999995,
+      "deflection_fully_cracked_phi2_5_mm": 0.043246286180953865,
+      "deflection_limit_mm": 4.0,
+      "wk_characteristic_mm": 0.037748664735890614,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    },
+    {
+      "variant": "MAX",
+      "span_m": 2.0,
+      "qEd_kN_m": 97.72462499999999,
+      "MEd_kNm": 48.862312499999994,
+      "MRd_kNm": 129.2072104484417,
+      "M_util": 0.37817016813854826,
+      "VEd_kN": 97.72462499999999,
+      "VRdc_kN": 62.489469078771464,
+      "VRds_kN_cot1": 105.03300377845251,
+      "VRdmax_kN": 428.24920319999995,
+      "deflection_fully_cracked_phi2_5_mm": 0.6919405788952618,
+      "deflection_limit_mm": 8.0,
+      "wk_characteristic_mm": 0.15099465894356245,
+      "wk_limit_mm": 0.3,
+      "note": "SLS conservative whole characteristic load long-term; transient void robustness, not full-span R1; single tension layer stiffness ignores compression steel conservatively"
+    }
+  ],
+  "footing_checks": [
+    {
+      "variant": "MIN",
+      "a_m": 0.125,
+      "qEd_assumed_kPa": 200,
+      "MEd_kNm_m": 1.5625,
+      "MRd_kNm_m": 74.06130873896485,
+      "VEd_kN_m": 0,
+      "As_mm2_m": 753.9822368615504,
+      "As_min_mm2_m": 317.2
+    },
+    {
+      "variant": "MEDIUM",
+      "a_m": 0.15000000000000002,
+      "qEd_assumed_kPa": 200,
+      "MEd_kNm_m": 2.2500000000000004,
+      "MRd_kNm_m": 74.06130873896485,
+      "VEd_kN_m": 0,
+      "As_mm2_m": 753.9822368615504,
+      "As_min_mm2_m": 317.2
+    },
+    {
+      "variant": "MAX",
+      "a_m": 0.175,
+      "qEd_assumed_kPa": 200,
+      "MEd_kNm_m": 3.0625,
+      "MRd_kNm_m": 74.06130873896485,
+      "VEd_kN_m": 0,
+      "As_mm2_m": 753.9822368615504,
+      "As_min_mm2_m": 317.2
+    }
+  ],
+  "pad_checks": [
+    {
+      "id": "P1",
+      "design_load_envelope_kN": 20,
+      "NEd_including_block_kN": 88.32,
+      "qEd_kPa": 61.33333333333333,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.13050091304887185,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    },
+    {
+      "id": "P2",
+      "design_load_envelope_kN": 20,
+      "NEd_including_block_kN": 120.71999999999998,
+      "qEd_kPa": 53.89285714285714,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.1783748893032134,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    },
+    {
+      "id": "P3",
+      "design_load_envelope_kN": 10,
+      "NEd_including_block_kN": 55.5,
+      "qEd_kPa": 55.5,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.08200634821345548,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    },
+    {
+      "id": "P4",
+      "design_load_envelope_kN": 60,
+      "NEd_including_block_kN": 148.32,
+      "qEd_kPa": 103.0,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.21915642463098586,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    },
+    {
+      "id": "P5",
+      "design_load_envelope_kN": 60,
+      "NEd_including_block_kN": 195.70499999999998,
+      "qEd_kPa": 74.98275862068965,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.2891721149029604,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    },
+    {
+      "id": "P6",
+      "design_load_envelope_kN": 60,
+      "NEd_including_block_kN": 192.06,
+      "qEd_kPa": 76.21428571428571,
+      "base_zone_height_m": 0.35,
+      "screening_perimeter_at_d_m": 2.6472564803107983,
+      "vEd_MPa": 0.283786292574347,
+      "vRdc_MPa": 0.3505670806891151,
+      "screen_pass": true,
+      "status": "SCREEN_ONLY_NOT_PUNCHING_APPROVAL",
+      "note": "350mm base zone within solid1200mm block; closed control line d from200mm assumed load patch, beta1.15 assumed, soil relief ignored; complete footing punching incl eccentricity pending; old/new pad overlap not proven composite"
+    }
+  ],
+  "construction_interface": [
+    {
+      "fill_height_m": 0.45,
+      "Hk_kN_m": 3.2625,
+      "HEd_kN_m": 4.893750000000001,
+      "friction_design_only_selfweight_kN_m": 2.3625000000000003,
+      "required_tie_kN_m_before_floors": 2.5312500000000004,
+      "note": "at rest K0=.5, construction surcharge10kPa; formwork/temporary bracing must resist; no passive soil credited"
+    },
+    {
+      "fill_height_m": 0.6,
+      "Hk_kN_m": 4.8,
+      "HEd_kN_m": 7.199999999999999,
+      "friction_design_only_selfweight_kN_m": 2.3625000000000003,
+      "required_tie_kN_m_before_floors": 4.837499999999999,
+      "note": "at rest K0=.5, construction surcharge10kPa; formwork/temporary bracing must resist; no passive soil credited"
+    }
+  ],
+  "geometry": {
+    "slab": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            6.619,
+            3.1790000000000003
+          ],
+          [
+            6.619,
+            11.024000000000001
+          ],
+          [
+            21.218,
+            11.024000000000001
+          ],
+          [
+            21.218,
+            21.86
+          ],
+          [
+            27.866,
+            21.86
+          ],
+          [
+            27.866,
+            3.1790000000000003
+          ],
+          [
+            6.619,
+            3.1790000000000003
+          ]
+        ]
+      ]
+    },
+    "old": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            6.603999999999999,
+            3.164
+          ],
+          [
+            6.603999999999999,
+            11.039
+          ],
+          [
+            21.203,
+            11.039
+          ],
+          [
+            21.203,
+            21.875
+          ],
+          [
+            27.881,
+            21.875
+          ],
+          [
+            27.881,
+            3.164
+          ],
+          [
+            6.603999999999999,
+            3.164
+          ]
+        ],
+        [
+          [
+            6.984,
+            3.544
+          ],
+          [
+            27.500999999999998,
+            3.544
+          ],
+          [
+            27.500999999999998,
+            21.494999999999997
+          ],
+          [
+            21.583000000000002,
+            21.494999999999997
+          ],
+          [
+            21.583000000000002,
+            10.659
+          ],
+          [
+            6.984,
+            10.659
+          ],
+          [
+            6.984,
+            3.544
+          ]
+        ]
+      ]
+    },
+    "cap": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            6.619,
+            3.1790000000000003
+          ],
+          [
+            6.619,
+            11.024000000000001
+          ],
+          [
+            21.218,
+            11.024000000000001
+          ],
+          [
+            21.218,
+            21.86
+          ],
+          [
+            27.866,
+            21.86
+          ],
+          [
+            27.866,
+            3.1790000000000003
+          ],
+          [
+            6.619,
+            3.1790000000000003
+          ]
+        ],
+        [
+          [
+            6.968999999999999,
+            3.529
+          ],
+          [
+            27.516,
+            3.529
+          ],
+          [
+            27.516,
+            21.509999999999998
+          ],
+          [
+            21.568,
+            21.509999999999998
+          ],
+          [
+            21.568,
+            10.674
+          ],
+          [
+            6.968999999999999,
+            10.674
+          ],
+          [
+            6.968999999999999,
+            3.529
+          ]
+        ]
+      ]
+    },
+    "internal": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [
+          [
+            [
+              10.842,
+              5.4990000000000006
+            ],
+            [
+              10.842,
+              5.604
+            ],
+            [
+              10.818,
+              5.604
+            ],
+            [
+              10.818,
+              8.722
+            ],
+            [
+              6.794,
+              8.722
+            ],
+            [
+              6.794,
+              9.072000000000001
+            ],
+            [
+              10.818,
+              9.072000000000001
+            ],
+            [
+              10.818,
+              10.849
+            ],
+            [
+              11.168000000000001,
+              10.849
+            ],
+            [
+              11.168000000000001,
+              8.897
+            ],
+            [
+              11.168000000000001,
+              7.896
+            ],
+            [
+              14.918,
+              7.896
+            ],
+            [
+              14.918,
+              10.849
+            ],
+            [
+              15.268,
+              10.849
+            ],
+            [
+              15.268,
+              7.896
+            ],
+            [
+              20.5165,
+              7.896
+            ],
+            [
+              20.5165,
+              7.966
+            ],
+            [
+              20.5165,
+              10.849
+            ],
+            [
+              20.866500000000002,
+              10.849
+            ],
+            [
+              20.866500000000002,
+              7.966
+            ],
+            [
+              21.543,
+              7.966
+            ],
+            [
+              21.543,
+              7.6160000000000005
+            ],
+            [
+              20.866500000000002,
+              7.6160000000000005
+            ],
+            [
+              20.866500000000002,
+              7.546
+            ],
+            [
+              20.866500000000002,
+              6.667
+            ],
+            [
+              22.535999999999998,
+              6.667
+            ],
+            [
+              22.535999999999998,
+              10.687
+            ],
+            [
+              21.393,
+              10.687
+            ],
+            [
+              21.393,
+              11.037
+            ],
+            [
+              22.535999999999998,
+              11.037
+            ],
+            [
+              22.535999999999998,
+              11.55
+            ],
+            [
+              22.886,
+              11.55
+            ],
+            [
+              22.886,
+              11.037
+            ],
+            [
+              27.691,
+              11.037
+            ],
+            [
+              27.691,
+              10.687
+            ],
+            [
+              24.9015,
+              10.687
+            ],
+            [
+              24.9015,
+              7.821000000000001
+            ],
+            [
+              27.691,
+              7.821000000000001
+            ],
+            [
+              27.691,
+              7.521
+            ],
+            [
+              24.682,
+              7.521
+            ],
+            [
+              24.682,
+              7.671
+            ],
+            [
+              24.6015,
+              7.671
+            ],
+            [
+              24.6015,
+              8.692
+            ],
+            [
+              22.886,
+              8.692
+            ],
+            [
+              22.886,
+              6.667
+            ],
+            [
+              27.691,
+              6.667
+            ],
+            [
+              27.691,
+              6.317
+            ],
+            [
+              22.886,
+              6.317
+            ],
+            [
+              22.886,
+              5.4575
+            ],
+            [
+              23.6295,
+              5.4575
+            ],
+            [
+              23.6295,
+              3.354
+            ],
+            [
+              23.2795,
+              3.354
+            ],
+            [
+              23.2795,
+              5.1075
+            ],
+            [
+              22.886,
+              5.1075
+            ],
+            [
+              22.842,
+              5.1075
+            ],
+            [
+              22.535999999999998,
+              5.1075
+            ],
+            [
+              22.535999999999998,
+              6.317
+            ],
+            [
+              20.866500000000002,
+              6.317
+            ],
+            [
+              20.866500000000002,
+              3.354
+            ],
+            [
+              20.5165,
+              3.354
+            ],
+            [
+              20.5165,
+              6.317
+            ],
+            [
+              15.268,
+              6.317
+            ],
+            [
+              15.268,
+              3.354
+            ],
+            [
+              14.918,
+              3.354
+            ],
+            [
+              14.918,
+              6.317
+            ],
+            [
+              13.563,
+              6.317
+            ],
+            [
+              13.563,
+              5.604
+            ],
+            [
+              13.413,
+              5.604
+            ],
+            [
+              13.413,
+              5.4990000000000006
+            ],
+            [
+              13.062000000000001,
+              5.4990000000000006
+            ],
+            [
+              13.062000000000001,
+              3.354
+            ],
+            [
+              12.762,
+              3.354
+            ],
+            [
+              12.762,
+              5.4990000000000006
+            ],
+            [
+              10.842,
+              5.4990000000000006
+            ]
+          ],
+          [
+            [
+              15.268,
+              7.546
+            ],
+            [
+              15.268,
+              6.667
+            ],
+            [
+              20.5165,
+              6.667
+            ],
+            [
+              20.5165,
+              7.546
+            ],
+            [
+              15.268,
+              7.546
+            ]
+          ],
+          [
+            [
+              13.263,
+              7.546
+            ],
+            [
+              11.168000000000001,
+              7.546
+            ],
+            [
+              11.168000000000001,
+              5.849
+            ],
+            [
+              13.263,
+              5.849
+            ],
+            [
+              13.263,
+              7.546
+            ]
+          ],
+          [
+            [
+              14.918,
+              6.667
+            ],
+            [
+              14.918,
+              7.546
+            ],
+            [
+              13.563,
+              7.546
+            ],
+            [
+              13.563,
+              6.667
+            ],
+            [
+              14.918,
+              6.667
+            ]
+          ],
+          [
+            [
+              24.6015,
+              10.687
+            ],
+            [
+              22.886,
+              10.687
+            ],
+            [
+              22.886,
+              8.992
+            ],
+            [
+              24.6015,
+              8.992
+            ],
+            [
+              24.6015,
+              10.687
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              27.691,
+              19.009999999999998
+            ],
+            [
+              21.393,
+              19.009999999999998
+            ],
+            [
+              21.393,
+              19.36
+            ],
+            [
+              27.691,
+              19.36
+            ],
+            [
+              27.691,
+              19.009999999999998
+            ]
+          ]
+        ]
+      ]
+    },
+    "garage": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            12.842,
+            3.504
+          ],
+          [
+            10.842,
+            3.504
+          ],
+          [
+            6.944,
+            3.504
+          ],
+          [
+            6.944,
+            8.749
+          ],
+          [
+            10.842,
+            8.749
+          ],
+          [
+            10.842,
+            5.604
+          ],
+          [
+            12.842,
+            5.604
+          ],
+          [
+            12.842,
+            3.504
+          ]
+        ]
+      ]
+    },
+    "terraces": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [
+          [
+            [
+              10.64,
+              9.247
+            ],
+            [
+              6.619,
+              9.247
+            ],
+            [
+              6.619,
+              11.024000000000001
+            ],
+            [
+              10.64,
+              11.024000000000001
+            ],
+            [
+              10.64,
+              9.247
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              21.218,
+              19.535
+            ],
+            [
+              21.218,
+              21.86
+            ],
+            [
+              27.866,
+              21.86
+            ],
+            [
+              27.866,
+              19.535
+            ],
+            [
+              21.218,
+              19.535
+            ]
+          ]
+        ]
+      ]
+    }
+  },
+  "limits": {
+    "soil_Rd_reference_kPa": 150,
+    "settlement_limit_mm_project_assumption": 25,
+    "relative_rotation_limit_project_assumption": "1/500",
+    "wk_mm": 0.3,
+    "final_design_release": false
+  }
+}

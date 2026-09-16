@@ -718,7 +718,7 @@ test("selects every floor-plan variant on one route with one accessible tab pane
       assert.match(text, /kúpeľňa má tvar L s rozšírením 1,46 × 0,81 m a skriňa na konci chodby má hĺbku 1,10 m namiesto 1,91 m/);
       assert.match(main, /Kúpeľňa: 5,30 m²/);
       assert.match(main, /Zádverie, chodba, vstup: 6,46 m²/);
-      assert.match(main, /Pracovňa: 12,31 m²/);
+      assert.match(main, /Pracovňa: 12,14 m²/);
       assert.match(main, /ZÁDVERIE 2,53 m/);
       assert.match(text, /<dt>Voľné po zariadení<\/dt><dd>4,74 m²<\/dd>/);
       assert.match(main, /nosné murivo 300 mm/);
@@ -909,7 +909,7 @@ test('prints each acoustic plan with its own hatch definitions and the centred b
   assert.match(html, /pd-office-acoustic-sheet/);
   assert.match(html, /data-bathroom-door-axis="7101\.5"/);
   assert.match(html, /H200/);
-  assert.match(html, /Rw ≈ 58 dB/);
+  assert.match(html, /Rw ≈ 56 dB/);
   assert.match(html, /predbežný odhad/);
   assert.doesNotMatch(html, /SA25-AKU|Rw 56 dB/);
   const ids = [...html.matchAll(/<pattern id="(pd-pattern-[^"]+)"/g)].map(m => m[1]);
@@ -926,12 +926,12 @@ test('links the H200 technical rationale and distinguishes NRC evidence from the
   const reportResponse = await render('/docs/akustika-h200');
   assert.equal(reportResponse.status, 200);
   const report = await reportResponse.text();
-  for (const id of ['abstrakt','nrc','poradie-dosiek','vypocet','neistoty','literatura','zdroj-1','zdroj-5']) assert.ok(report.includes(`id="${id}"`), id);
+  for (const id of ['abstrakt','skladba','princip','vypocet','neistoty','literatura','zdroj-1','zdroj-5']) assert.ok(report.includes(`id="${id}"`), id);
   assert.ok(report.includes('768bf32f-8313-435f-ab85-8680efba61b2'));
-  assert.ok(report.includes('Nie je protokolom vlastného laboratórneho experimentu'));
-  assert.ok(report.includes('58 dB'));
+  assert.ok(report.includes('nie je skúškou presnej zostavy'));
+  assert.ok(report.includes('56 dB'));
   assert.ok(report.includes('51 dB'));
-  assert.ok(report.includes('63,60 Hz'));
+  assert.ok(report.includes('64,07 Hz'));
   for (const path of ['/docs','/docs/manual?variant=c&heating=b&living=b']) {
     const response=await render(path);
     assert.equal(response.status,200);
@@ -943,11 +943,11 @@ test('documents both H200 jamb contacts and links the enlarged junction from the
   const response = await render('/docs/akustika-h200/napojenie');
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.ok(html.includes('D-AK03-01 / R1'));
-  assert.ok(html.includes('J1: čelá oboch Silentboard'));
+  assert.ok(html.includes('D-AK03-01 / R2'));
+  assert.ok(html.includes('J1: čelo jedinej Silentboard'));
   assert.ok(html.includes('J2: aj pod lícom vonkajšej dosky'));
   assert.ok(html.includes('W623.de-B2'));
-  assert.ok(html.includes('75 mm dorovnanie + 5 mm spoj J2'));
+  assert.ok(html.includes('37,5 mm dorovnanie + 5 mm spoj J2'));
   assert.ok(html.includes('neurčuje výsledné Rw'));
   assert.ok(html.includes('J1 oddeliť pásikom, J2 uzavrieť mäkko'));
   assert.ok(html.includes('Medzi rovnobežné plochy J2 nedávať tvrdý Uniflott ani maltu'));

@@ -1,0 +1,9 @@
+{
+  "source_path": "/Users/davidzita/screenshots/Snímek obrazovky 2026-09-16 v 9.26.58.png",
+  "copy_path": "inputs/client-line-offset-request-20260916.png",
+  "sha256": "d7d299960608844e59a3b341e4449a712b7c00be5553e20940fce4190b07e754",
+  "interpretation": "Requested perpendicular distances from blue perimeter reference line to gray dashed original upper-strip axis; coordinates are model references, not surveyed concrete faces.",
+  "output_sheet": "ZK-03",
+  "unit": "mm",
+  "independent_arithmetic_review": "PASS: source_geometry confirmed all six offsets."
+}

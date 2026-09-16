@@ -1,0 +1,22 @@
+{
+  "page_count": 5,
+  "page_size": "A4",
+  "minimum_content_y_points": 183.08976377952774,
+  "pdf_sha256": "1f5b567bd2b5a13adc7c1d505ca4c32a502a407f718b7ff36214e8c40795fdd2",
+  "visual_review": "PASS: all five rendered A4 pages inspected, no overlaps or clipped content",
+  "whole_building_approval": false,
+  "main_model": "continuous compacted-fill support; void/free-span results are supplementary only",
+  "cross_check": {
+    "independent_vs_main_strip_max_relative_difference": 1.2771119939358755e-08,
+    "comparison_count": 24,
+    "pdf_pages": 5,
+    "pdf_A4": true
+  },
+  "rendered_pages": {
+    "page-1.png": "4288ad400c4575a55d158e641aef2d11a7a6905164ce966eaf031eecd4e8079c",
+    "page-2.png": "a77ca8291529628a39983961a862d48bb08686b6e3383c7ab9b1a9e2fe25cc8b",
+    "page-3.png": "d4781c29981bda65b979f10c5c8a86f135499210297280b4a77f6b99c9080a6a",
+    "page-4.png": "5f432c6e5fb7ddd24fbd0aa60fcadbd391003f68e58d2ce3dd45edabd6c5aa18",
+    "page-5.png": "2a1f5372dd84b22e9c3ded09f8b55421e7edcbd8b788265fac5e254ec73d09ac"
+  }
+}

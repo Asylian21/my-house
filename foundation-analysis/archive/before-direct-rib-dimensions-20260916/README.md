@@ -1,0 +1,1 @@
+Pred spresnením používateľa 16. 9. 2026 o 9:41. List ZK-03 riešil nesprávne pochopenú požiadavku na odstupy modrá-sivá. Aktuálny ZK-03 kótuje obvod k lícam červených rebier a svetlé vzdialenosti medzi nimi. Geometria rebier sa nemenila.

@@ -1,0 +1,130 @@
+{
+  "status": "SENSITIVITY_NOT_SITE_ACTION_DEFINITION",
+  "wind": [
+    {
+      "net_pressure_kPa_assumed": 0.8,
+      "horizontal_force_kN": 96.0768,
+      "overturning_kNm_about_base_assuming_uniform_height": 267.093504,
+      "roof_net_design_uplift_kN_1p5W_minus0p9G": -15.177899999999957
+    },
+    {
+      "net_pressure_kPa_assumed": 1.5,
+      "horizontal_force_kN": 180.144,
+      "overturning_kNm_about_base_assuming_uniform_height": 500.80032,
+      "roof_net_design_uplift_kN_1p5W_minus0p9G": 250.43535
+    }
+  ],
+  "snow_drift_sensitivity": {
+    "roof_snow_kPa": 1.6,
+    "extra_perimeter_NE_d_kN_m": 4.92,
+    "note": "Illustrative doubled snow, not normative drift envelope; roof geometry-specific drift missing"
+  },
+  "pv": {
+    "module_count": 6,
+    "localized_dead_load_kN_assumed": 3.0,
+    "NEd_kN": 4.05,
+    "note": "separate localized load on WING_INNER; actual assembly mass and wind fixing absent"
+  },
+  "groundwater": [
+    {
+      "head_above_slab_underside_m": 0,
+      "uplift_kPa": 0.0,
+      "design_uplift_kPa_1p5": 0.0,
+      "MED_restraining_dead_kPa_0p9": 5.8500000000000005,
+      "note": "hydrostatic sensitivity, not measured water level; draining is not credited"
+    },
+    {
+      "head_above_slab_underside_m": 0.3,
+      "uplift_kPa": 2.943,
+      "design_uplift_kPa_1p5": 4.414499999999999,
+      "MED_restraining_dead_kPa_0p9": 5.8500000000000005,
+      "note": "hydrostatic sensitivity, not measured water level; draining is not credited"
+    },
+    {
+      "head_above_slab_underside_m": 0.6,
+      "uplift_kPa": 5.886,
+      "design_uplift_kPa_1p5": 8.828999999999999,
+      "MED_restraining_dead_kPa_0p9": 5.8500000000000005,
+      "note": "hydrostatic sensitivity, not measured water level; draining is not credited"
+    }
+  ],
+  "point_reaction_on_old_strip": [
+    {
+      "point_NE_d_kN": 30,
+      "assumed_spread_length_m": 0.5,
+      "additional_contact_kPa_at_Beff0p33m": 181.8181818181818,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 30,
+      "assumed_spread_length_m": 1.0,
+      "additional_contact_kPa_at_Beff0p33m": 90.9090909090909,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 30,
+      "assumed_spread_length_m": 2.0,
+      "additional_contact_kPa_at_Beff0p33m": 45.45454545454545,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 60,
+      "assumed_spread_length_m": 0.5,
+      "additional_contact_kPa_at_Beff0p33m": 363.6363636363636,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 60,
+      "assumed_spread_length_m": 1.0,
+      "additional_contact_kPa_at_Beff0p33m": 181.8181818181818,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 60,
+      "assumed_spread_length_m": 2.0,
+      "additional_contact_kPa_at_Beff0p33m": 90.9090909090909,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 100,
+      "assumed_spread_length_m": 0.5,
+      "additional_contact_kPa_at_Beff0p33m": 606.060606060606,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 100,
+      "assumed_spread_length_m": 1.0,
+      "additional_contact_kPa_at_Beff0p33m": 303.030303030303,
+      "note": "additional to line-load background; transfer length not verified"
+    },
+    {
+      "point_NE_d_kN": 100,
+      "assumed_spread_length_m": 2.0,
+      "additional_contact_kPa_at_Beff0p33m": 151.5151515151515,
+      "note": "additional to line-load background; transfer length not verified"
+    }
+  ],
+  "fill_settlement": [
+    {
+      "fill_thickness_m": 0.42,
+      "Eoed_fill_MPa_assumed": 10,
+      "load_kPa": 8.5,
+      "settlement_mm": 0.357,
+      "note": "1D homogeneous layer sensitivity only, not Proctor or Ev2 conversion"
+    },
+    {
+      "fill_thickness_m": 0.42,
+      "Eoed_fill_MPa_assumed": 20,
+      "load_kPa": 8.5,
+      "settlement_mm": 0.1785,
+      "note": "1D homogeneous layer sensitivity only, not Proctor or Ev2 conversion"
+    },
+    {
+      "fill_thickness_m": 0.42,
+      "Eoed_fill_MPa_assumed": 50,
+      "load_kPa": 8.5,
+      "settlement_mm": 0.0714,
+      "note": "1D homogeneous layer sensitivity only, not Proctor or Ev2 conversion"
+    }
+  ]
+}

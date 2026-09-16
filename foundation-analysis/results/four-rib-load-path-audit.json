@@ -1,0 +1,813 @@
+{
+  "status": "GEOMETRY_AND_ORIGINAL_LOAD_SCREEN_ONLY_NOT_STRUCTURAL_APPROVAL",
+  "source_sha256": {
+    "inputs/geometry.json": "d362aaf4ce1b5f2294d1291a8a53917a368a628dc8f88b44c5448b7d91f0b7c7",
+    "inputs/client-agreed-layout.json": "900c9a0ab8fdc452b90a49b9fd1df330f103cc59cec52f42fc9c0737569d80a0",
+    "results/wall-loads.csv": "3a34d785eef35cf6165b9f83218a5a15e587e963e4d8fc854089c4f127cf9d75"
+  },
+  "working_rib_width_m": 0.35,
+  "method": "Shapely exact polygon intersections without added tolerance; flat rib ends, mitred perimeter corners. Full wall includes the stored wall rectangle, not later additional finish layers. Only 37 internal wall segments are counted; facade L/NN2 and piers discussed separately.",
+  "summary": {
+    "four_ribs": {
+      "counts": {
+        "FULL_PLAN_COVERAGE": 6,
+        "PARTIAL_PLAN_COVERAGE": 10,
+        "NO_PLAN_COVERAGE": 21
+      },
+      "total_wall_axis_length_m": 61.165000000000006,
+      "axis_length_inside_candidate_footprints_m": 17.03250000000001,
+      "axis_length_outside_candidate_footprints_m": 44.13249999999999,
+      "full_walls_assumed_Gk_kN": 166.655847,
+      "not_fully_covered_walls_assumed_Gk_kN": 336.97601437500003,
+      "note": "Candidate footprint only; crossing a transverse rib does not support an entire wall. Gk totals are full wall weights from old study assumptions, not transferred reactions."
+    },
+    "four_ribs_plus_old_upper_ring": {
+      "counts": {
+        "FULL_PLAN_COVERAGE": 6,
+        "PARTIAL_PLAN_COVERAGE": 15,
+        "NO_PLAN_COVERAGE": 16
+      },
+      "total_wall_axis_length_m": 61.165000000000006,
+      "axis_length_inside_candidate_footprints_m": 17.157500000000013,
+      "axis_length_outside_candidate_footprints_m": 44.007499999999986,
+      "full_walls_assumed_Gk_kN": 166.655847,
+      "not_fully_covered_walls_assumed_Gk_kN": 336.97601437500003,
+      "note": "Candidate footprint only; crossing a transverse rib does not support an entire wall. Gk totals are full wall weights from old study assumptions, not transferred reactions."
+    }
+  },
+  "walls": [
+    {
+      "wall": "IW-ENTRY-TOP-E2",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.22599999999999998,
+      "width_m": 0.203,
+      "prior_study_assumed_gk_kN_m": 9.3,
+      "prior_study_assumed_Gk_kN": 2.1018,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-SPINE-EAST-1",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.37950000000000017,
+      "width_m": 0.144,
+      "prior_study_assumed_gk_kN_m": 7.0874999999999995,
+      "prior_study_assumed_Gk_kN": 2.689706250000001,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-SPINE-EAST-2",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.3644999999999996,
+      "width_m": 0.144,
+      "prior_study_assumed_gk_kN_m": 7.0874999999999995,
+      "prior_study_assumed_Gk_kN": 16.758393749999996,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-SPINE-EAST-3",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.5380000000000003,
+      "width_m": 0.144,
+      "prior_study_assumed_gk_kN_m": 7.0874999999999995,
+      "prior_study_assumed_Gk_kN": 3.8130750000000013,
+      "rib_ids_intersecting_wall_footprint": [
+        "R2"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.0464684014869895,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0464684014869895,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-STUDY-NORTH",
+      "model_role": "PARTITION",
+      "assembly": "H200",
+      "length_m": 4.757999999999999,
+      "width_m": 0.2,
+      "prior_study_assumed_gk_kN_m": 5.2115625,
+      "prior_study_assumed_Gk_kN": 24.796614374999997,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.02500000000000213,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.005254308532997576,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-BATH-105-EAST",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 1.0310000000000006,
+      "width_m": 0.139,
+      "prior_study_assumed_gk_kN_m": 6.9,
+      "prior_study_assumed_Gk_kN": 7.1139000000000046,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-BATH-105-SOUTH-E",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.8590000000000018,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 19.834312500000014,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.02500000000000213,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.008744316194474355,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-BATH-105-NORTH",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.0380000000000003,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 14.138625000000003,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "IW-WC-EAST",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 1.799999999999999,
+      "width_m": 0.139,
+      "prior_study_assumed_gk_kN_m": 6.9,
+      "prior_study_assumed_Gk_kN": 12.419999999999993,
+      "rib_ids_intersecting_wall_footprint": [
+        "R2"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.013888888888889173,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.013888888888889173,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "B-STREET-KID-TOP",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.199,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 15.255562500000002,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.011368804001819277,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.011368804001819277,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-W",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.199,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 15.255562500000002,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.011368804001819166,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.011368804001819166,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "B-GARDEN-KID-SOUTH-E",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 3.2010000000000005,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 22.206937500000006,
+      "rib_ids_intersecting_wall_footprint": [
+        "R1"
+      ],
+      "four_ribs_axis_covered_m": 0.3500000000000014,
+      "four_ribs_footprint_covered_fraction": 0.10934083099031588,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.3500000000000014,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.10934083099031588,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARAGE-BAY-EAST",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.1,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 14.568750000000003,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.02499999999999991,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.011904761904761862,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARAGE-BAY-RETURN",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.139999999999999,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 14.846249999999994,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARAGE-SPINE-S",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.30100000000000016,
+      "width_m": 0.1,
+      "prior_study_assumed_gk_kN_m": 5.437500000000001,
+      "prior_study_assumed_Gk_kN": 1.6366875000000012,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARAGE-SPINE-N",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 4.8549999999999995,
+      "width_m": 0.301,
+      "prior_study_assumed_gk_kN_m": 12.975,
+      "prior_study_assumed_Gk_kN": 62.993624999999994,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.005149330587023826,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-CLOSET-EAST",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.1870000000000003,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 15.172312500000004,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-CLOSET-NORTH-W",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.6499999999999986,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 4.509374999999991,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-CLOSET-NORTH-E",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.8900000000000006,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 6.174375000000005,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-BATH-NORTH-W",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.36100000000000065,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 2.5044375000000048,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-BATH-HALL-W",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.4599999999999991,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 3.191249999999994,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-BATH-HALL-E",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.1999999999999993,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 1.3874999999999953,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.12500000000000222,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.12500000000000222,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-BED-PRIVACY-W",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.4599999999999991,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 3.191249999999994,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-BED-PRIVACY-E",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.1999999999999993,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 1.3874999999999953,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 0.025000000000000355,
+      "four_ribs_footprint_covered_fraction": 0.12500000000000233,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.025000000000000355,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.12500000000000233,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-OPEN-HALL-S",
+      "model_role": "PARTITION",
+      "assembly": "SA30",
+      "length_m": 3.0479999999999996,
+      "width_m": 0.3,
+      "prior_study_assumed_gk_kN_m": 6.253875,
+      "prior_study_assumed_Gk_kN": 19.061811,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 3.0479999999999996,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 3.0479999999999996,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-OPEN-HALL-N",
+      "model_role": "PARTITION",
+      "assembly": "SA30",
+      "length_m": 3.048,
+      "width_m": 0.3,
+      "prior_study_assumed_gk_kN_m": 6.253875,
+      "prior_study_assumed_Gk_kN": 19.061811,
+      "rib_ids_intersecting_wall_footprint": [
+        "R7"
+      ],
+      "four_ribs_axis_covered_m": 3.048,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 3.048,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-KID-ENTRY-WALL",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.908,
+      "width_m": 0.301,
+      "prior_study_assumed_gk_kN_m": 12.975,
+      "prior_study_assumed_Gk_kN": 37.7313,
+      "rib_ids_intersecting_wall_footprint": [
+        "R1"
+      ],
+      "four_ribs_axis_covered_m": 2.908,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 2.908,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-KID-HALL-POCKET-WALL",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 3.298000000000002,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 22.879875000000016,
+      "rib_ids_intersecting_wall_footprint": [
+        "R1"
+      ],
+      "four_ribs_axis_covered_m": 0.3500000000000014,
+      "four_ribs_footprint_covered_fraction": 0.106124924196483,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.3500000000000014,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.106124924196483,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-ENTRY-HALL-JAMB",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.13999999999999968,
+      "width_m": 0.099,
+      "prior_study_assumed_gk_kN_m": 5.4,
+      "prior_study_assumed_Gk_kN": 0.7559999999999983,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARDEN-KID-EAST",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 2.9079999999999995,
+      "width_m": 0.301,
+      "prior_study_assumed_gk_kN_m": 12.975,
+      "prior_study_assumed_Gk_kN": 37.73129999999999,
+      "rib_ids_intersecting_wall_footprint": [
+        "R1"
+      ],
+      "four_ribs_axis_covered_m": 2.9079999999999995,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 2.9079999999999995,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-GARDEN-CLOSET-SOUTH",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.7010000000000005,
+      "width_m": 0.14,
+      "prior_study_assumed_gk_kN_m": 6.937500000000001,
+      "prior_study_assumed_Gk_kN": 4.863187500000004,
+      "rib_ids_intersecting_wall_footprint": [
+        "R1"
+      ],
+      "four_ribs_axis_covered_m": 0.024500000000003297,
+      "four_ribs_footprint_covered_fraction": 0.03495007132668093,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.024500000000003297,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.03495007132668093,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-EAST",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 1.6910000000000003,
+      "width_m": 0.175,
+      "prior_study_assumed_gk_kN_m": 8.249999999999998,
+      "prior_study_assumed_Gk_kN": 13.95075,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.02499999999999991,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.014784151389710232,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-ENTRY-OFFICE-RETURN",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.7000000000000028,
+      "width_m": 0.175,
+      "prior_study_assumed_gk_kN_m": 8.249999999999998,
+      "prior_study_assumed_Gk_kN": 5.775000000000023,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-OFFICE-NORTH-JAMB",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.08000000000000007,
+      "width_m": 0.059,
+      "prior_study_assumed_gk_kN_m": 3.9,
+      "prior_study_assumed_Gk_kN": 0.3120000000000003,
+      "rib_ids_intersecting_wall_footprint": [],
+      "four_ribs_axis_covered_m": 0.0,
+      "four_ribs_footprint_covered_fraction": 0.0,
+      "four_ribs_status": "NO_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.0,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.0,
+      "four_ribs_plus_old_upper_ring_status": "NO_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 3.442,
+      "width_m": 0.3,
+      "prior_study_assumed_gk_kN_m": 12.937499999999998,
+      "prior_study_assumed_Gk_kN": 44.530874999999995,
+      "rib_ids_intersecting_wall_footprint": [
+        "R2"
+      ],
+      "four_ribs_axis_covered_m": 3.442,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 3.442,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-KITCHEN-BEARING-WALL-E",
+      "model_role": "LOAD_BEARING",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.6600000000000001,
+      "width_m": 0.3,
+      "prior_study_assumed_gk_kN_m": 12.937499999999998,
+      "prior_study_assumed_Gk_kN": 8.53875,
+      "rib_ids_intersecting_wall_footprint": [
+        "R2"
+      ],
+      "four_ribs_axis_covered_m": 0.6600000000000001,
+      "four_ribs_footprint_covered_fraction": 1.0,
+      "four_ribs_status": "FULL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.6600000000000001,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 1.0,
+      "four_ribs_plus_old_upper_ring_status": "FULL_PLAN_COVERAGE"
+    },
+    {
+      "wall": "C-WC-DOOR-JAMB",
+      "model_role": "PARTITION",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "length_m": 0.1440000000000019,
+      "width_m": 0.046,
+      "prior_study_assumed_gk_kN_m": 3.4125,
+      "prior_study_assumed_Gk_kN": 0.4914000000000065,
+      "rib_ids_intersecting_wall_footprint": [
+        "R2"
+      ],
+      "four_ribs_axis_covered_m": 0.1440000000000019,
+      "four_ribs_footprint_covered_fraction": 0.5434782608695803,
+      "four_ribs_status": "PARTIAL_PLAN_COVERAGE",
+      "four_ribs_plus_old_upper_ring_axis_covered_m": 0.1440000000000019,
+      "four_ribs_plus_old_upper_ring_footprint_covered_fraction": 0.5434782608695803,
+      "four_ribs_plus_old_upper_ring_status": "PARTIAL_PLAN_COVERAGE"
+    }
+  ],
+  "perimeter_cross_section_offsets": [
+    {
+      "side": "left",
+      "old_upper_axis_minus_declared_lower_axis_mm": 354.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 21.0,
+      "straight_strip_overlap_lower380_mm": 11.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    },
+    {
+      "side": "street",
+      "old_upper_axis_minus_declared_lower_axis_mm": 354.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 21.0,
+      "straight_strip_overlap_lower380_mm": 11.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    },
+    {
+      "side": "right",
+      "old_upper_axis_minus_declared_lower_axis_mm": -349.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 26.0,
+      "straight_strip_overlap_lower380_mm": 16.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    },
+    {
+      "side": "back",
+      "old_upper_axis_minus_declared_lower_axis_mm": -350.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 25.0,
+      "straight_strip_overlap_lower380_mm": 15.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    },
+    {
+      "side": "courtyard_return",
+      "old_upper_axis_minus_declared_lower_axis_mm": -351.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 24.0,
+      "straight_strip_overlap_lower380_mm": 14.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    },
+    {
+      "side": "inner_wing_side",
+      "old_upper_axis_minus_declared_lower_axis_mm": 353.0,
+      "upper_width_mm": 350,
+      "straight_strip_overlap_lower400_mm": 22.0,
+      "straight_strip_overlap_lower380_mm": 12.0,
+      "note": "Cross-section interval overlap only. Uniform rectangular widths, common elevation, exact coordinate alignment assumed. No capacity or bearing-pressure model."
+    }
+  ],
+  "heavy_item_envelopes": [
+    {
+      "id": "AKU800",
+      "distance_footprint_to_four_ribs_m": 0.08500000000000085,
+      "distance_footprint_to_four_ribs_plus_old_upper_ring_m": 0.08500000000000085,
+      "intersects_four_ribs": false,
+      "note": "Envelope geometry, not actual feet/contact patches or proof that a separate footing is mandatory."
+    },
+    {
+      "id": "BOILER15",
+      "distance_footprint_to_four_ribs_m": 1.6479999999999997,
+      "distance_footprint_to_four_ribs_plus_old_upper_ring_m": 1.107999999999997,
+      "intersects_four_ribs": false,
+      "note": "Envelope geometry, not actual feet/contact patches or proof that a separate footing is mandatory."
+    },
+    {
+      "id": "STOVE_B",
+      "distance_footprint_to_four_ribs_m": 0.134999999999998,
+      "distance_footprint_to_four_ribs_plus_old_upper_ring_m": 0.029999999999997588,
+      "intersects_four_ribs": false,
+      "note": "Envelope geometry, not actual feet/contact patches or proof that a separate footing is mandatory."
+    },
+    {
+      "id": "PELLET_BAGS",
+      "distance_footprint_to_four_ribs_m": 2.2159999999999997,
+      "distance_footprint_to_four_ribs_plus_old_upper_ring_m": 0.015999999999998238,
+      "intersects_four_ribs": false,
+      "note": "Envelope geometry, not actual feet/contact patches or proof that a separate footing is mandatory."
+    },
+    {
+      "id": "KITCHEN_ISLAND",
+      "distance_footprint_to_four_ribs_m": 1.843,
+      "distance_footprint_to_four_ribs_plus_old_upper_ring_m": 1.4949999999999974,
+      "intersects_four_ribs": false,
+      "note": "Envelope geometry, not actual feet/contact patches or proof that a separate footing is mandatory."
+    }
+  ],
+  "ribs_plan_contact_with_declared_lower400": [
+    {
+      "rib": "R7",
+      "intersection_area_m2": 0.0,
+      "minimum_plan_gap_m": 0.15099999999999977
+    },
+    {
+      "rib": "R1",
+      "intersection_area_m2": 0.0,
+      "minimum_plan_gap_m": 0.15099999999999977
+    },
+    {
+      "rib": "R2",
+      "intersection_area_m2": 0.0,
+      "minimum_plan_gap_m": 0.1490000000000009
+    },
+    {
+      "rib": "R4",
+      "intersection_area_m2": 0.0,
+      "minimum_plan_gap_m": 0.1490000000000009
+    }
+  ],
+  "original_project_centered_load_screen": [
+    {
+      "B_m": 0.8,
+      "old_Nser_kN_m": 48.57,
+      "old_NEd_kN_m": 68.0,
+      "Nser_over_B_kPa": 60.7125,
+      "NEd_over_B_kPa": 85.0,
+      "reference_Rd_kPa": 150.0,
+      "NEd_over_B_over_reference_Rd": 0.5666666666666667,
+      "note": "Original project load only; centered uniform strip screen; excludes footing/overburden weights and new model loads. Not current soil or current eccentric interface verification."
+    },
+    {
+      "B_m": 0.4,
+      "old_Nser_kN_m": 48.57,
+      "old_NEd_kN_m": 68.0,
+      "Nser_over_B_kPa": 121.425,
+      "NEd_over_B_kPa": 170.0,
+      "reference_Rd_kPa": 150.0,
+      "NEd_over_B_over_reference_Rd": 1.1333333333333333,
+      "note": "Original project load only; centered uniform strip screen; excludes footing/overburden weights and new model loads. Not current soil or current eccentric interface verification."
+    },
+    {
+      "B_m": 0.38,
+      "old_Nser_kN_m": 48.57,
+      "old_NEd_kN_m": 68.0,
+      "Nser_over_B_kPa": 127.8157894736842,
+      "NEd_over_B_kPa": 178.94736842105263,
+      "reference_Rd_kPa": 150.0,
+      "NEd_over_B_over_reference_Rd": 1.1929824561403508,
+      "note": "Original project load only; centered uniform strip screen; excludes footing/overburden weights and new model loads. Not current soil or current eccentric interface verification."
+    }
+  ],
+  "no_current_approval": [
+    "No actual wall/roof/attic reactions",
+    "No confirmed new rib ground support",
+    "No surveyed concrete registration",
+    "No verified soil properties or compaction",
+    "No actual 100mm slab reinforcement/cover/support model",
+    "No proof of old/new concrete joint or load transfer across offset perimeter"
+  ]
+}

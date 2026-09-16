@@ -62,6 +62,7 @@ export function AcousticWallDetail({mark}:{mark?:string}) {
   const spec=ACOUSTIC_WALL_SPECS.find(w=>w.mark===mark);
   const assembly=spec?.assembly??ACOUSTIC_ASSEMBLY, office=spec?.mark==='AK-03';
   const layers=office?[...assembly.layers].reverse():assembly.layers;
+  const detailTotalMm=assembly.totalMm;
   // Dimensioned schematic: thin finish and board bands are widened for legible numbering.
   const weights=layers.map(l=>Math.max(l.thicknessMm,60));
   const weightSum=weights.reduce((sum,n)=>sum+n,0);
@@ -71,9 +72,10 @@ export function AcousticWallDetail({mark}:{mark?:string}) {
     <span className="pd-overline">{spec?.mark??'AK-01 / AK-02'} · SKLADBA {assembly.code}</span>
     <h3>{assembly.name}</h3>
     {spec&&<p className="pd-acoustic-location">{spec.location}</p>}
-    {office&&<p className="pd-acoustic-rating"><strong>Rw ≈ 58 dB · výpočet</strong><span>Požiadavka ≥ 51 dB · predbežný odhad, presnú zostavu potvrdiť</span></p>}
+    {office&&<p className="pd-acoustic-rating"><strong>Rw ≈ 56 dB · výpočet</strong><span>Požiadavka ≥ 51 dB · predbežný odhad, presnú zostavu potvrdiť</span></p>}
+    {!office&&<p className="pd-acoustic-rating"><strong>Účel: odhlučnenie miestností</strong><span>Jednovrstvové murivo 300 mm · nepriezvučnosť zatiaľ nedoložená</span></p>}
     {office&&<p className="pd-acoustic-location">Finálne zvolená H200 · od sprchy do pracovne</p>}
-    <svg viewBox="0 0 360 202" role="img" aria-label={`${layers.map(l=>`${l.name} ${l.thicknessMm.toLocaleString('sk-SK')} mm`).join(', ')}. Celkom ${assembly.totalMm} mm.`}>
+    <svg viewBox="0 0 360 202" role="img" aria-label={`${layers.map(l=>`${l.name} ${l.thicknessMm.toLocaleString('sk-SK')} mm`).join(', ')}. Celkom ${detailTotalMm.toLocaleString('sk-SK')} mm.`}>
       <AcousticHatches prefix={prefix}/>
       <g transform="translate(30 45)">
         {layers.map((layer,i)=><g key={layer.id}>
@@ -86,15 +88,15 @@ export function AcousticWallDetail({mark}:{mark?:string}) {
           <path d="M0 -18H300M0 88V135M300 88V135M0 128H300M-4 132l8 -8M296 132l8 -8"/>
         </g>
         {layers.map((l,i)=><text key={l.id} x={positions[i].x+positions[i].width/2} y="-26" textAnchor="middle" fontSize="14" fill="#303e50">{l.thicknessMm.toLocaleString('sk-SK')}</text>)}
-        <text x="150" y="118" fontSize="16" fontWeight="700" textAnchor="middle" fill="#303e50">{assembly.totalMm} mm</text>
+        <text x="150" y="118" fontSize="16" fontWeight="700" textAnchor="middle" fill="#303e50">{detailTotalMm.toLocaleString('sk-SK')} mm</text>
       </g>
-      <text x="180" y="198" textAnchor="middle" fontSize="12" fill="#657080">{office?'Vrátane omietok · bez obkladu · schéma':'Bez omietok a obkladov · schematický rez'}</text>
+      <text x="180" y="198" textAnchor="middle" fontSize="12" fill="#657080">{office?'Vrátane omietok · bez obkladu · schéma':'Murivo 300 mm · povrchy navyše · schéma'}</text>
     </svg>
     <ol>{layers.map(layer=><li key={layer.id}><span>{layer.name}</span><strong>{layer.thicknessMm.toLocaleString('sk-SK')} mm</strong></li>)}</ol>
     <p>{assembly.finishNote}</p>
-    {office&&<div className="pd-acoustic-placement"><h4>Dvere na osi chodby</h4><p>Os X: Y = 7 101,5 mm. Otvor 800 mm, krídlo 700 mm. Dvere kúpeľne posunuté o 48,5 mm; dvere a vstupný roh pracovne o 30 mm smerom k ulici.</p><p>Ostenie pri pracovni 80 mm, pri kúpeľni 99,5 mm. Konečnú zárubňu a obklad zosúladiť s týmito rozmermi.</p></div>}
+    {office&&<div className="pd-acoustic-placement"><h4>Dvere na osi chodby</h4><p>Os X: Y = 7 101,5 mm. Otvor 800 mm, krídlo 700 mm. Dvere kúpeľne posunuté o 48,5 mm; dvere a vstupný roh pracovne o 30 mm smerom k ulici.</p><p>Líce kúpeľne aj chodby Y = 6 552 mm; líce pracovne Y = 6 364,5 mm. Ostenie pri pracovni 42,5 mm, pri kúpeľni 149,5 mm. Konečnú zárubňu a obklad zosúladiť s týmito rozmermi.</p></div>}
     {office&&'junctionDetailUrl' in assembly&&<div className="pd-acoustic-placement pd-acoustic-junction"><h4>D1 · Napojenie pri zárubniach</h4><p>Pevné ostenie zostáva podkladom dverí. Predstena: podtesnený obvodový profil a súvislé oddelenie J1/J2 aj pri krátkom dorovnaní ostenia. Veľký pôdorys zobrazuje obálku; škáry sa vyhotovia podľa detailu.</p><a href={assembly.junctionDetailUrl}>Zväčšený detail D1 a montážny postup ↗</a></div>}
     <details className="pd-acoustic-notes"><summary>Konštrukčné a akustické podmienky</summary><p>{assembly.structuralNote}</p><p>{assembly.acousticNote}</p>{(!spec||spec.mark!=='AK-01')&&<p>{assembly.bathroomNote}</p>}</details>
-    <div className="pd-acoustic-sources"><a href={assembly.productUrl} target="_blank" rel="noreferrer">Vybraný výrobok ↗</a><a href={assembly.technicalSheetUrl} target="_blank" rel="noreferrer">Technický list ↗</a>{'liningSystemUrl' in assembly&&<a href={assembly.liningSystemUrl} target="_blank" rel="noreferrer">Systém predsteny W623 ↗</a>}{'calculationSourceUrl' in assembly&&<a href={assembly.calculationSourceUrl} target="_blank" rel="noreferrer">Metodika výpočtu ↗</a>}{'scientificReportUrl' in assembly&&<a href={assembly.scientificReportUrl}>Odborné zdôvodnenie H200 ↗</a>}{'panelOrderSourceUrl' in assembly&&<a href={assembly.panelOrderSourceUrl} target="_blank" rel="noreferrer">Výskum NRC · poradie dosiek ↗</a>}</div>
+    <div className="pd-acoustic-sources">{'productUrl' in assembly&&<a href={assembly.productUrl} target="_blank" rel="noreferrer">Vybraný výrobok ↗</a>}{'technicalSheetUrl' in assembly&&<a href={assembly.technicalSheetUrl} target="_blank" rel="noreferrer">Technický list ↗</a>}{'liningSystemUrl' in assembly&&<a href={assembly.liningSystemUrl} target="_blank" rel="noreferrer">Systém predsteny W623 ↗</a>}{'calculationSourceUrl' in assembly&&<a href={assembly.calculationSourceUrl} target="_blank" rel="noreferrer">Metodika výpočtu ↗</a>}{'scientificReportUrl' in assembly&&<a href={assembly.scientificReportUrl}>Odborné zdôvodnenie H200 ↗</a>}{'panelOrderSourceUrl' in assembly&&<a href={assembly.panelOrderSourceUrl} target="_blank" rel="noreferrer">Výskum NRC · poradie dosiek ↗</a>}</div>
   </section>;
 }

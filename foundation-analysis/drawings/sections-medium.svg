@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="527.2755905511812" height="248" preserveAspectRatio="xMinYMin meet" viewBox="0 0 527 248" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="527.2755905511812" height="248"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-248)" style="clip-path: url(#clip)">
+		<g transform="">
+			<text x="22" y="232" style="font-family: DVB; font-size: 10px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,464) scale(1,-1)">A / OBVOD - MEDIUM</text>
+			<rect x="22" y="23" width="235" height="3" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(72%,67%,58%); fill-rule: evenodd;"/>
+			<rect x="91.2" y="25" width="45.60000000000001" height="36.0" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 1; fill: rgb(74%,77%,79%); fill-rule: evenodd;"/>
+			<rect x="91.2" y="61.0" width="45.60000000000001" height="36.0" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 1; fill: rgb(74%,77%,79%); fill-rule: evenodd;"/>
+			<rect x="93.0" y="97.0" width="42.0" height="72.0" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="135.0" y="147.4" width="95.0" height="21.599999999999994" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="135.0" y="97.0" width="95.0" height="50.400000000000006" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(89%,84%,74%); fill-rule: evenodd;"/>
+			<circle cx="100.8" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="114" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="127.2" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="100.8" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="114" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="127.2" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<path d="M 135.6,153.4 L 222,153.4 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<path d="M 135.6,164.2 L 222,164.2 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<rect x="99.0" y="103.0" width="30.0" height="60.0" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 0.65; fill: none; fill-rule: evenodd;"/>
+			<path d="M 78,97 L 150,97 Z" style="stroke: rgb(64%,36%,12%); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 2;"/>
+			<text x="22" y="10" style="font-family: DV; font-size: 8.5px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,20) scale(1,-1)">380-400 existujúci</text>
+			<text x="22" y="205" style="font-family: DV; font-size: 8.0px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,410) scale(1,-1)">350 × 600 vrátane dosky; 3Ø14 hore aj dole</text>
+			<text x="22" y="192" style="font-family: DV; font-size: 8.4px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,384) scale(1,-1)">Doska 180; časť pod doskou 420</text>
+			<text x="22" y="179" style="font-family: DV; font-size: 8.1px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,358) scale(1,-1)">Zásyp 420 iba pre referenčné z = 0</text>
+			<text x="285" y="232" style="font-family: DVB; font-size: 10px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,464) scale(1,-1)">B / NOSNÉ REBRO - MEDIUM</text>
+			<rect x="285" y="23" width="235" height="3" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(72%,67%,58%); fill-rule: evenodd;"/>
+			<rect x="338.0" y="25" width="78.0" height="36.0" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="356.0" y="61.0" width="42.0" height="36.0" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="356.0" y="97.0" width="42.0" height="72.0" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="398.0" y="147.4" width="95.0" height="21.599999999999994" style="stroke: rgb(15%,45%,60%); stroke-linecap: butt; stroke-width: 1; fill: rgb(73%,84%,90%); fill-rule: evenodd;"/>
+			<rect x="398.0" y="97.0" width="95.0" height="50.400000000000006" style="stroke: rgb(48%,51%,53%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(89%,84%,74%); fill-rule: evenodd;"/>
+			<circle cx="363.8" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="377" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="390.2" cy="103.0" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="363.8" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="377" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<circle cx="390.2" cy="160.6" r="2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(65%,22%,19%); fill-rule: evenodd;"/>
+			<path d="M 398.6,153.4 L 485,153.4 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<path d="M 398.6,164.2 L 485,164.2 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1.4;"/>
+			<rect x="362.0" y="103.0" width="30.0" height="60.0" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 0.65; fill: none; fill-rule: evenodd;"/>
+			<path d="M 344,31 L 410,31 Z" style="stroke: rgb(65%,22%,19%); stroke-linecap: butt; stroke-width: 1;"/>
+			<path d="M 341,97 L 413,97 Z" style="stroke: rgb(64%,36%,12%); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 2;"/>
+			<text x="285" y="10" style="font-family: DV; font-size: 8.5px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,20) scale(1,-1)">650 × 300 nový základ</text>
+			<text x="285" y="205" style="font-family: DV; font-size: 8.0px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,410) scale(1,-1)">350 × 600 vrátane dosky; 3Ø14 hore aj dole</text>
+			<text x="285" y="192" style="font-family: DV; font-size: 8.4px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,384) scale(1,-1)">Doska 180; časť pod doskou 420</text>
+			<text x="285" y="179" style="font-family: DV; font-size: 8.1px;fill: rgb(9%,20%,29%); stroke:none;" transform="translate(0,358) scale(1,-1)">Zásyp 420 iba pre referenčné z = 0</text>
+			<text x="10" y="1" style="font-family: DV; font-size: 8.2px;fill: rgb(65%,22%,19%); stroke:none;" transform="translate(0,2) scale(1,-1)">z = 0 je horné líce starého pásu; nové horné líce +600. Absolútne výšky CHÝBAJÚ.</text>
+		</g>
+	</g>
+</svg>

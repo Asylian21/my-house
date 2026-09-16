@@ -14,7 +14,7 @@ export const GAPS=[
   {id:'R04',title:'Drevený strop a skladovacia povala',need:'Povala iba na odkladanie, mimo obývačky. Drevené stropy bez betónovej dosky/nadbetonávky. Určiť skladovacie a bodové zaťaženia, prierezy a spoje; krov s falcovaným plechom bez presahov.',sheets:'ST, RE, DT'},
   {id:'R05',title:'Spoločná nula a vstup',need:'R0 = 184,200 m pri ulici. Podlahu navrhne projekt podľa nivelácie hotového pásu a terénu; aspoň jeden vstupný stupeň. Návrh podesty pri D2 na SI-01. Potvrdiť Bpv a bod XY.',sheets:'SI, PO, RE'},
   {id:'R06',title:'Sokel, ETICS, otvory',need:'Nové detaily hydroizolácie a sokla, založenia ETICS, parapetov, prahov, nadpraží a napojenia tesniacich vrstiev. Výpis otvorov nie je výrobný rozmer rámu.',sheets:'PO, OT, DT'},
-  {id:'R07',title:'Akustické priečky',need:'Vlastná hmotnosť AK-01/02/03 a jej prenos do základov, stabilita plášťov, kotvy a obvodové spoje. SA30 zaťažuje dosku aj ako nenosná priečka. Strecha a strop potrebujú samostatné nosné riešenie.',sheets:'ZA, RE, SK, DT'},
+  {id:'R07',title:'Akustické priečky',need:'Vlastná hmotnosť AK-01/02/03 a jej prenos do základov, stabilita muriva a predsteny, kotvy a obvodové spoje. SM30 zaťažuje dosku aj ako nenosná priečka. Strecha a strop potrebujú samostatné nosné riešenie.',sheets:'ZA, RE, SK, DT'},
   {id:'R08',title:'Dymovody a odvodnenie',need:'Systémový návrh a odstupy dymovodu obývačky; kotolňa B končí v modeli rezervou pod stropom, vonkajšia trasa nie je určená. Návrh žľabov, zvodov a dažďovej kanalizácie.',sheets:'ST, PO, RE'},
   {id:'R09',title:'Dodávateľský výpis otvorov',need:'Profily, zasklenie, bezpečnostné/tepelné/akustické vlastnosti, montážne škáry, kovanie a prahy. Trojuholníkový svetlík doplnený O11 bez prečíslovania O1-O10/D1-D16.',sheets:'OT'},
 ];
@@ -84,7 +84,7 @@ function sheet(d,id,title,body,notes='',scale='1 : 50'){
     <pattern id="insulation" width="1" height="1" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="1" height="1" fill="#fafafa"/><path d="M0 0V1" stroke="black" stroke-width=".08"/></pattern>
     <pattern id="concrete" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="white"/><path d="M.4 .4L1 .3L.8 1Z M2 2L2.6 2.2L2.5 2.7Z" fill="none" stroke="black" stroke-width=".1"/></pattern>
     <pattern id="timber" width="2.4" height="5" patternUnits="userSpaceOnUse"><rect width="2.4" height="5" fill="white"/><path d="M0 0V5" stroke="black" stroke-width=".1"/></pattern>
-  </defs><rect width="841" height="594" fill="white"/>${rect(5,5,831,584,'thin')}${text(12,19,id,3.6,'bold')}${text(12,30,title,6,'bold')}${text(829,19,'C / B / B · 14. 09. 2026',3,'','end')}${line(12,36,829,36,'thin')}${body}${calibration(scale)}${titleBlock(d,id,title,notes,scale)}</svg>`};
+  </defs><rect width="841" height="594" fill="white"/>${rect(5,5,831,584,'thin')}${text(12,19,id,3.6,'bold')}${text(12,30,title,6,'bold')}${text(829,19,`C / B / B · ${d.provenance.date.split('-').reverse().join('. ')} `,3,'','end')}${line(12,36,829,36,'thin')}${body}${calibration(scale)}${titleBlock(d,id,title,notes,scale)}</svg>`};
 }
 export function sectionRoof(d,cut){
   const segments=[];
@@ -367,15 +367,15 @@ function foundationSheet(d){
     out+=text(u(r.x0)-4,v((r.y0+r.y1)/2),w.code,3,'bold halo','end');
   }
   out+=table(540,55,275,[['Línia',.22],['Súradnica [mm]',.33],['Význam',.45]],[...d.gridX.map(a=>[a.label,mm(a.at),'X / pôvodná os']),...d.gridY.map(a=>[a.label,mm(a.at),'Y / pôvodná os'])]).svg;
-  out+=text(540,222,'SA30 · VLASTNÁ HMOTNOSŤ ZAŤAŽUJÚCA DOSKU',3.4,'bold');
-  out+=table(540,231,275,[['Stena',.15],['L [mm]',.17],['H [mm]',.18],['kg/m',.23],['kg spolu',.27]],d.partitionLoads.walls.map(w=>[w.code,mm(w.lengthMm),mm(w.heightMm),mm(w.unplastered.kgPerM),mm(w.unplastered.totalKg)]),12).svg;
+  out+=text(540,222,'SM30 · VLASTNÁ HMOTNOSŤ ZAŤAŽUJÚCA DOSKU',3.4,'bold');
+  out+=table(540,231,275,[['Stena',.15],['L [mm]',.17],['H [mm]',.18],['kg/m',.23],['kg spolu',.27]],d.partitionLoads.walls.map(w=>[w.code,mm(w.lengthMm),mm(w.heightMm),'neurčené','neurčené']),12).svg;
   const load=d.partitionLoads;
-  out+=paragraph(540,280,`Oba plášte: 2 × 73 kg/m² muriva bez omietky. Spolu ${mm(load.totals.unplasteredKg)} kg. Vata, povrchy, obklady, zakladacia vrstva a vybavenie navyše; úplné návrhové zaťaženie neurčené.`,275,3).svg;
-  out+=`<a href="https://www.leier.sk/wp-content/uploads/2025/07/Technicky-list-LP10-NF.pdf">${text(540,313,'Zdroj: LeierPLAN 10 N+F, Devecser · technický list Leier 07/2025',2.8)}</a>`;
-  out+=paragraph(540,329,`R7: kandidátna os X ${mm(a[0])}; Y ${mm(a[1])}–${mm(b[1])}. Dva zaťažené úseky po ${mm(load.walls[0].lengthMm)} mm, voľná chodba 1 099 mm. Osi tehlových plášťov sú ±100 mm od R7. Prípadný spojitý pás prechádza iba pod podlahou.`,275,3.1,'bold').svg;
-  out+=paragraph(540,374,'SA30 ostáva nenosná pre strechu a strop. Návrh musí overiť prenos jej hmotnosti cez existujúcu dosku, uloženie pásu a podložie. R7 nemá určený prierez ani výstuž a nie je pokynom na zásah do vyliatej dosky.',275,3.1).svg;
+  out+=paragraph(540,280,'Jedna vrstva obvodovej tehly 300 mm. Konkrétny výrobok a hmotnosť neurčené; doplniť maltu, omietky, obklady a vybavenie. Starý prepočet dvojplášťovej steny neplatí.',275,3).svg;
+  out+=text(540,313,'SM30 · výber tehly a nový prepočet vlastnej tiaže zostávajú otvorené',2.8);
+  out+=paragraph(540,329,`R7: kandidátna os X ${mm(a[0])}; Y ${mm(a[1])}–${mm(b[1])}. Dva zaťažené úseky po ${mm(load.walls[0].lengthMm)} mm, voľná chodba 1 099 mm. Os jedného 300 mm muriva leží na R7. Prípadný spojitý pás prechádza iba pod podlahou.`,275,3.1,'bold').svg;
+  out+=paragraph(540,374,'SM30 ostáva nenosná pre strechu a strop. Návrh musí overiť prenos jej hmotnosti cez existujúcu dosku, uloženie pásu a podložie. R7 nemá určený prierez ani výstuž a nie je pokynom na zásah do vyliatej dosky.',275,3.1).svg;
   out+=paragraph(540,424,'Horný monolit 350 × 600 mm a doska 150–200 mm sú požiadavky stavebníka, nie výsledok výpočtu. Rozmery a väzby: ZA-02; priestorový pohľad: ZA-03.',275,3).svg;
-  return sheet(d,'D1.1.ZA-01','Základy · nosné línie a ťažké priečky',out,'NEHOTOVÝ LIST. Výpočet hmotnosti SA30 z deklarovaných údajov a geometrie nie je posúdením únosnosti. Základy, existujúca doska, podložie a konečné zaťaženia vyžadujú nový statický návrh.');
+  return sheet(d,'D1.1.ZA-01','Základy · nosné línie a ťažké priečky',out,'NEHOTOVÝ LIST. Hmotnosť SM30 čaká na výber výrobku. Základy, existujúca doska, podložie a konečné zaťaženia vyžadujú nový statický návrh.');
 }
 function siteSheets(d){
   const points=d.siteBoundary,minX=Math.min(...points.map(p=>p.x)),maxY=Math.max(...points.map(p=>p.y));
@@ -469,13 +469,13 @@ function assemblySheet(d){
   out+=table(12,60,817,[['Kód',.10],['Aktuálna geometria / skladba',.56],['Stav pre realizáciu',.34]],[
     ['SO30 + TI20','Nosné murivo 300 + vonkajšie kontaktné zateplenie 200 = 500 mm nominálne. Pôdorysné líca miestností zostávajú; lokálne odstupy líc modelu 499–504 mm sa neprepisujú.','Určiť výrobok, omietky a finálne líca, statiku a systémové napojenia.'],
     ['SO50','Voľné piliere / steny krytých terás: plné murivo 500 mm bez ETICS.','Overiť únosnosť, stabilitu, založenie, povrchy.'],
-    ...d.materials.filter(m=>['bearing','partition','board'].includes(m.cls)).map(m=>[m.codes,m.text.replace(', napr. Rigips W112',''),'Kódy a nominálne hrúbky z hotového pôdorysu. Nový výrobok, úplné vrstvy, kotvenie a nosnú funkciu uzavrieť v R01/R04/R07.']),
+    ...d.materials.filter(m=>['bearing','partition','board'].includes(m.cls)).map(m=>[m.codes,m.text.replace(', napr. Rigips W112','')+(m.codes.includes('SP14')?' Garáž / spálňa a šatník: SP14, 140 mm; vonkajší úsek pri lodžii zostáva SP30.':''),'Kódy a nominálne hrúbky z hotového pôdorysu. Nový výrobok, úplné vrstvy, kotvenie a nosnú funkciu uzavrieť v R01/R04/R07.']),
     ...d.acousticAssemblies.map(a=>[a.code,a.layers.map(l=>`${l.name} ${mm(l.thicknessMm)} mm`).join(' + ')+` = ${a.totalMm} mm. ${a.finishNote}`,a.structuralNote]),
     ['PODLAHY','M0 = pôvodná podlaha, ΔFFL k ulici R0 neznáme. Voda a odpad nad doskou; kúrenie mimo garáže, technickej a sprchy; TZ-01.','Určiť hrúbky, spády, izolácie, vykurovací poter a povrchy. Bez vrtov do dosky.'],
     ['STRECHA / POVALA','Falcovaný plech, bez architektonických presahov. Roviny M+3,125 / M+5,560; povala iba na odkladanie mimo katedrály 1.03.','Drevený nosný strop a záklop; bez betónovej stropnej dosky/nadbetonávky. Určiť skladovacie a bodové zaťaženia, prierezy, spoje, vrstvy a parotesnosť.'],
     ['ZÁKLADY / DOSKA','Monolitický horný pás 350 × 600 mm; vnútorné rebrá; požadovaná doska 150–200 mm. Podľa zadania, nie zamerania. ZA-02.','Overiť zeminu, už realizovaný pás, C16/20 a jeho expozíciu; navrhnúť rozmery, výstuž a škáry.'],
   ],15).svg;
-  out+=paragraph(12,433,'H200: požiadavka Rw ≥ 51 dB. Predbežný výpočet z podkladov nie je meranie ani potvrdenie konkrétnej realizácie. SA30: Rw celej zostavy nedoložené. Akustika aj kotvenie sa musia posúdiť pre nové nosné riešenie.',805,3.2).svg;
+  out+=paragraph(12,433,'H200: požiadavka Rw ≥ 51 dB. Predbežný výpočet z podkladov nie je meranie ani potvrdenie konkrétnej realizácie. SM30: 300 mm obvodová tehla, dôvod odhlučnenia zostáva; Rw nedoložené. Akustika aj kotvenie sa musia posúdiť pre nové nosné riešenie.',805,3.2).svg;
   return sheet(d,'D1.1.SK-01','Skladby konštrukcií · register',out,'Zachované sú rozhodnuté materiály a líca. Chýbajúce nové konštrukcie sú explicitne otvorené; staré rozporné skladby a statika sa nepoužívajú.','tabuľka');
 }
 export function acousticJunction(d){
@@ -502,7 +502,7 @@ export function acousticJunction(d){
   out+=dimV(v(j2.y0),v(j2.y1),u(j2.x1)+15,u(j2.x1),`J2 · ${mm(j2.y1-j2.y0)}`);
   out+=text(u(nib.x0)+2,v(nib.y0)-4,`${mm(j2.y0-nib.y0)} + ${mm(j2.y1-j2.y0)}`,2.5,'halo');
   out+=table(205,346,620,[['Spoj / súradnice [mm]',.37],['Predpis existujúceho detailu',.63]],[
-    ['J1 · X '+mm(j1.x0)+'–'+mm(j1.x1)+' / Y '+mm(j1.y0)+'–'+mm(j1.y1),'Čelá oboch dosiek: 5 mm, Trenn-Fix + Uniflott podľa princípu W623-B2.'],
+    ['J1 · X '+mm(j1.x0)+'–'+mm(j1.x1)+' / Y '+mm(j1.y0)+'–'+mm(j1.y1),'Čelo jedinej dosky: 5 mm, Trenn-Fix + Uniflott podľa princípu W623-B2.'],
     ['J2 · X '+mm(j2.x0)+'–'+mm(j2.x1)+' / Y '+mm(j2.y0)+'–'+mm(j2.y1),'5 mm mäkké oddelenie pri líci vonkajšej dosky. Pružný akustický tmel na vhodnej podkladovej vrstve; bez sadry alebo malty.'],
   ],13).svg;
   out+=paragraph(205,399,d.h200Junction.modelNote,616,2.7).svg;
@@ -518,10 +518,11 @@ function acousticSheet(d){
     if(gypsumTotal)out+=dimH(25,25+gypsumTotal/5,y+75,y+64,mm(gypsumTotal));
     out+=dimH(25,x,y+87,y+64,mm(a.totalMm));
     out+=table(150,y+4,675,[['Vrstva',.78],['Hrúbka [mm]',.22]],a.layers.map(l=>[l.name,mm(l.thicknessMm)]),9).svg;
+    if(a.code==='SM30')out+=paragraph(150,y+32,'AK-01 / AK-02: dôvod odhlučnenia zostáva. Jedna 300 mm obvodová tehla, bez vaty a predsteny; bežné povrchy navyše. Výrobok, hmotnosť a nepriezvučnosť treba doplniť.',650,3.2).svg;
     y+=130;
   }
   out+=acousticJunction(d);
-  return sheet(d,'D1.1.DT-01','Akustické steny H200 / SA30',out,'Vrstvy z lib/acoustic-walls.ts. J1/J2 z lib/h200-junction.json. Detail vrstiev 1:5; realizačné kotvenie a nosné napojenia vyžadujú nový návrh.','1 : 5');
+  return sheet(d,'D1.1.DT-01','Akustické steny H200 / SM30',out,'Vrstvy z lib/acoustic-walls.ts. J1/J2 z lib/h200-junction.json. Detail vrstiev 1:5; realizačné kotvenie a nosné napojenia vyžadujú nový návrh.','1 : 5');
 }
 function indexSheet(d,register){
   let out=text(12,50,'VÝKRESOVÁ SADA · REGISTER VYDANIA',4.4,'bold');

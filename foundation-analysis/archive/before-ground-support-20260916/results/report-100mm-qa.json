@@ -1,0 +1,21 @@
+{
+  "page_count": 5,
+  "page_size": "A4",
+  "minimum_content_y_points": 83.18976377952774,
+  "pdf_sha256": "24baa73cb3e5dc03d9e320223783b16677dd30ce4ff7a48911b43f1648afe712",
+  "visual_review": "PASS: all five final A4 pages reviewed; revised pages 2/3/4 re-rendered and inspected; no text collisions.",
+  "whole_building_approval": false,
+  "scope": "100mm slab / four400mm ribs: bounded conditional checks and open load paths",
+  "independent_six_section_comparison": "PASS",
+  "beam_capacity_independent_comparison": "PASS",
+  "pdf_page_size_and_key_values": "PASS",
+  "python_compile": "PASS",
+  "navier_independent_review": "PASS: 401-harmonic separate review difference below0.000067percent.",
+  "source_files_sha256": {
+    "inputs/geometry.json": "d362aaf4ce1b5f2294d1291a8a53917a368a628dc8f88b44c5448b7d91f0b7c7",
+    "inputs/client-agreed-layout.json": "900c9a0ab8fdc452b90a49b9fd1df330f103cc59cec52f42fc9c0737569d80a0",
+    "results/slab-100-four-ribs.json": "07e6e14f86bfd62bc2c1cca3634ce40ff711f005cda46ad091fb73b2f2630905",
+    "results/four-rib-free-beam-screen.json": "850a910cb1ccbfbf6b813956bbd75786d6f9453b58283615df6329a2f0f1b704",
+    "results/check-100mm-independent.json": "175e8cc6710083a56e086bf97eac6a461bcd9af2b7378761e3a45b4b8e86fee8"
+  }
+}

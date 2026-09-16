@@ -1,0 +1,833 @@
+
+=== PDF PAGE 1 ===
+DATUMZAK. ČÍSLOSTUPEŇČÍSLO PŘÍLOHYČÁST
+VYPRACOVAL
+NÁZEV A MÍSTO STAVBY
+ING. ARCH. VLADIMÍR MUZIKÁŘ
+PARC. Č. 6012/26, K.Ú. BŘEZÍ U MIKULOVA, 691 81 BŘEZÍ U MIKULOVA202508
+ZODPOVĚDNÝ PROJEKTANT
+DPSZ
+STAVEBNÍK:Dávid Zita, Tyršova 208/4, 691 83 DrnholecHana Ivičičová, Tyršova 208/4, 691 83 DrnholecNOVOSTAVBA RD BŘEZÍ U MIKULOVA
+0,000 = PODLAHA  1.NPING. ARCH. JIŘÍ BRADÁČ
+DOKUMENTACE PRO POVOLENÍ STAVEBNÍHO ZÁMĚRU
+SOUHRNNÁ TECHNICKÁ ZPRÁVAB
+28. 04. 2026
+
+=== PDF PAGE 2 ===
+B SOUHRNNÁ TECHNICKÁ ZPRÁVA 
+B.1 Celkový popis území a stavby 
+a) Základní popis stavby, u změny stavby údaje o jejím současném stavu, závěry 
+stavebně technického, případně stavebně historického průzkumu a výsledky statického 
+posouzení nosných konstrukcí: 
+Předmětem dokumentace je novostavba rodinného domu, vč. zpevněných ploch, oplocení, dešťové kanalizace, 
+splaškové kanalizace včetně revizní šachty, přípojky vodovodu, domovního vodovodu včetně vodoměrné 
+šachty, elektroměru v místě stávající přípojkové skříně na hranici pozemku stavebníka a sjezdu z místní obecní 
+komunikace. 
+b) Charakteristika území a stavebního pozemku, dosavadní využití a zastavěnost 
+území, poloha vzhledem k záplavovému území, poddolovanému území apod.: 
+Dotčené pozemky parc. č. 6012/26 a 6012/1 v kat. území Březí u Mikulova je součástí obce Březí, navazující na 
+zástavbu samostatně stojících rodinných domů a řadových rodinných domů obce Březí v nové lokalitě. Na tuto 
+lokalitu byla zpracována územní studie. Územní studie na tuto rozvojovou lokalitu byla zpracována 10/2021 
+panem Ing. arch. Davidem Zadražilem. Jedná se o rovinný pozemek s přímou návazností na stávající místní 
+komunikaci obce Březí. 
+Dotčený pozemek je mírně svažitý, úroveň terénu ve stejné výškové úrovni s přiléhající místní komunikací. 
+V katastru nemovitostí je pozemek veden jako orná půda. 
+Navržený objekt rodinného domu vč. zpevněných ploch a oplocení tvarově i umístěním dodržují uliční čáru 
+a urbanisticky zapadají do koncepce území, která je stanovena územní studií. 
+ 
+ 
+		 
+1
+
+
+=== PDF PAGE 3 ===
+c) Údaje o souladu s územně plánovací dokumentací a územními opatřeními nebo s cíli 
+a úkoly územního plánování, a s  požadavky na ochranu kulturně historických, 
+architektonických, archeologických a urbanistických hodnot v území:  
+Navržený objekt rodinného domu se dle platného územního plánu obce Březí nachází v ploše SO - plochy 
+smíšené obytné. 
+Na návrhovou plochu - území vyznačené v graﬁcké podobě územního plánu byla vydána územní studie. 
+ 
+ 
+		 
+2
+
+=== PDF PAGE 4 ===
+Regulační podmínky pro výstavbu v lokalitě Z7 a Z22:  
+Podle platného Územního plánu obce Březí je lokalita součástí funkčních ploch:  
+Z7/ SO – plochy smíšené obytné  
+Z22/ UZ - plochy veřejné ( parkové ) zeleně   
+Přípustné stavby – domy s občanskou vybaveností, samostatně stojící rodinné domy, řadové rodinné domy. 
+Typ zástavby je závazný dle výkresu situace, číslo výkresu 01C, který je nedílnou součástí této studie.   
+Rodinné domy na okrajích sídla musí být umístěny tak, aby nezastavěná část jejich pozemku směřovala 
+do krajiny.   
+S přihlédnutím k orientaci RD ke světovým stranám, poloze vůči přilehlým obslužným komunikacím 
+a  konﬁguraci terénu budou jednotlivé objekty RD osazeny tak, aby každý RD měl vytvořen dobré podmínky 
+pro  oslunění obytných místností, venkovní pobytové plochy a přirozené výškové osazení do terénu. Obecně 
+musí být dodrženy vzájemné odstupové vzdálenosti jednotlivých domů dle platných vyhlášek, zákonů a norem 
+a to min. 7,0 m v případě obytných místností. Vzdálenost RD od společných hranic pozemků nebude menší než 
+2m. 
+Všechny RD budou svou hlavní hmotou rovnoběžné s uliční komunikací, viz. výkres situace. Hlavní část 
+hřebene střechy také rovnoběžně s uliční komunikací.  
+Všechny RD budou mít uliční čáru 3 m od uliční majetkové hranice.  
+Hmota domu nesmí ve všech svých podlažích přesahovat uliční čáru, s vyjímkou předsunutého schodiště, 
+přičemž musí být na uliční čáře umístěna minimálně v rozsahu 50%.   
+V případě podsklepení objektu, s ohledem na vysokou hladinu spodní vody, se doporučuje zpracování 
+hydrogeologického průzkumu. 
+Stavby budou výškově osazeny tak, aby před budovami nebyla umístěna předsunutá schodiště o více než 
+3 stupních, delší schodiště jsou podmínečně přípustná jen po stranách objektů. 
+Max. výška zástavby u samostatně stojících rodinných domů nebo řadových rodinných domů je stanovena 
+max. výškou římsy 4,5m nad úrovní +-0,000 – úroveň podlahy v 1.NP . Úroveň podlahy 1.NP max. 0,5 m nad 
+upraveným terénem stavební parcely. 
+Upravený terén stavební parcely bude v rovině s obrubníkem nejbližší uliční komunikace. 
+Stavby pro bydlení budou opatřeny sedlovou nebo valbovou střechou o sklonu střešních rovin bude 25° - 45°, 
+na dvorních křídlech a vedlejších stavbách ve dvoře je přípustná střecha sedlová, valbová, pultová nebo plochá. 
+Delší strana hřebene na uliční hmotě domu rovnoběžně s ulicí. 
+Střešní krytina pálená nebo betonová v odstínech červené, hnědé, šedé nebo barva černá, dále plechová, 
+ve stejných barvách, jako pálená nebo betonová. Plechová v imitaci skládané střešní krytiny nebo falcovaná.   
+Budovy ani oplocení nebudou obsahovat nadměrně zdobné prvky ( balustrády, nadměrně zdobné kovové ploty, 
+zdobné plotové tvarovky, apod. ). 
+Oplocení pozemků v uliční čáře nesmí být vyšší než 1,5 m, stejně tak do hloubky parcely 3 m. Ostatní oplocení 
+pozemku do maximální výšky 2 m. Nepřípustné jsou skládané prefabrikované betonové ploty. 
+V nezastavěných částech stavebních pozemků směřujících do krajiny jsou nepřípustná plná neprůhledná 
+oplocení. Oplocení směřující do volné krajiny musí být průhledné, max. výšky 2m, bez podezdívky nebo 
+s podezdívkou max. v. 500mm od terénu. Případné zneprůhlednění je přípustné vegetací. 
+Uliční oplocení bez podezdívky nebo na podezdívce o výšce max. 0,50 m, pro bránu, branku a výplňové pole je 
+možné vytvořit nosné pilíře ( platí i pro ostatní vstupy, které jsou součástí oplocení pozemku ). Odpady – řešení 
+umístění nádob na odpad může být součástí uličního oplocení. 
+Zastavěnost budovami max. 50% plochy stavebního pozemku. Do zastavěnosti se nepočítají zpevněné plochy.  
+Minimální plocha zeleně celkem 30% stavebního pozemku. 
+Parkování zajistit v rámci stavby nebo stavebního pozemku dané stavby; počet parkovacích míst – minimálně 
+dvě parkovací stání pro jeden RD. 
+Výšková hladina vedlejších jednoduchých staveb – max. výška hřebene 5 m od úrovně 1.NP = 0,000, 
+vztaženému k úrovni 1.NP rodinného domu. Počet podlaží = 1. 
+Zhodnocení splnění požadavků regulačních podmínek pro výstavbu: 
+Navržený objekt je jednopodlažní, zastřešený šikmou sedlovou střechou s hřebeny v rovnoběžném směru 
+s hranicemi pozemku. 
+Vzhledem k poměrně jasné koncepci návrhu a požadavkům územní studie je navržený rodinný dům umístěn 
+a navržen tak, aby splňoval tyto požadavky. Navržený rodinný dům je umístěn 3,0m od veřejného prostranství - 
+hranice pozemku dle katastru nemovitostí a dle územní studie na dotčenou lokalitu. Oplocení pozemku 
+je navrženo jako průhledné - standardní pletivové. 
+		 
+3
+
+=== PDF PAGE 5 ===
+Výměra řešeného pozemku ve vlastnictví stavebníků je 753 m2. Navržený rodinný dům má plochu 246,4 m2. 
+Koeﬁcient zastavěnosti pozemku je tedy 32,72%. Vzhledem k tomu je  splněn požadavek maximální 
+zastavěné plochy pozemku - 50%. Minimální plocha zeleně o poměru 30% stavebního pozemku je s přehledem 
+taktéž splněna. 
+Z výše uvedeného vyplývá, že navržený objekt rodinného domu splňuje požadavky aktuálně platného 
+územního plánu a územní studie. 
+Navržený rodinný dům svými rozměry, tvarem a umístěním splňuje požadavky územní studie na dotčenou 
+lokalitu návrhové plochy. 
+d) Výčet a závěry průzkumů: 
+Budou ověřeny veškeré předpoklady zanesené v  této dokumentaci. Jedná se především o stávající okolní 
+stavby, inženýrsko-geologické předpoklady, výškopis a polohopis místa stavby. 
+V rámci předprojektové přípravy byl proveden inženýrsko geologický a hydrogeologický průzkum. Bylo 
+provedeno výškopisné a polohopisné zaměření již realizované komunikace a inženýrských sítí. Díky rozsahu 
+(jednoduchosti) navrženého objektu a  díky účelu stavby nebyly v  rámci předprojektové přípravy provedeny 
+žádné další průzkumy. 
+e) Informace o nutnosti povolení výjimky z požadavků na výstavbu: 
+Projektantovi nejsou známy informace o vydaných rozhodnutích a o povolení výjimky z obecných požadavků 
+na využívání území. 
+Územní studie je v souladu s platným ÚP Březí. Územní studie je dále k nahlédnutí na obci, příslušném 
+stavebním úřadu a u pořizovatele. 
+Navržený rodinný dům svými rozměry, tvarem a umístěním splňuje požadavky této územní studie. 
+f) Stávající ochrana území a stavby podle jiných právních předpisů, včetně rozsahu 
+omezení a podmínek pro ochranu:  
+Území dotčené stavbou není památkově chráněno, ani se nenachází v památkové rezervaci. Projektantovi není 
+známa skutečnost, podle které by dotčené území bylo chráněno dle jiných právních předpisů. 
+g) Vliv stavby na okolní stavby a pozemky, ochrana okolí, vliv stavby na odtokové 
+poměry v území, požadavky na asanace, demolice a kácení dřevin: 
+Vzhledem k tvaru, orientaci pozemku a stávajícím návaznostem dopravní a technické infrastruktury je navržený 
+objekt rodinného domu navržen s dostatečným odstupem od hranice parcel se sousedními pozemky parc. č. 
+6012/1, 6012/27 a 6014. V případě výstavby na sousední parcele č. 6012/27 se počítá s podobným tvarem 
+objektu a dodržením odstupových vzdáleností, resp. s identickým řešením. Vliv stavby na stávající okolní 
+stavby bude minimální díky své poloze a umístění dotčených pozemků. Navržený rodinný dům přirozeným 
+způsobem doplňuje zástavbu rodinných domů v rozvojové ploše části obce Březí. 
+Při návrhu objektu bylo v každém případě postupováno s vyhláškou č. 501/2006 Sb. o obecných požadavcích 
+na využití území. 
+Na stávající odtokové poměry nebude mít stavba žádný zásadní vliv z důvodů výše popsaných. 
+h) Požadavky na maximální dočasné a trvalé zábory zemědělského půdního fondu nebo 
+pozemků určených k plnění funkce lesa: 
+Pozemek parc. č. 6012/26 spadá pod ochranu zemědělského půdního fondu a z tohoto bude nutné vyjmout 
+348 m2. 
+i) Navrhovaná a vznikající ochranná a bezpečnostní pásma, rozsah omezená a 
+podmínky ochrany podle jiných právních předpisů, včetně seznamu pozemků podle 
+katastru nemovitostí, na kterých ochranné nebo bezpečnostní pásmo vznikne, 
+bezpečnostní vzdálenost muničního skladiště s  rizikem střepinového účinku určená 
+podle jiného právního předpisu: 
+V  rámci projektu nevznikne ochranné ani bezpečnostní pásmo vyjma standardních ochranných pásem 
+navržených vedení technické infrastruktury. 
+		 
+4
+
+=== PDF PAGE 6 ===
+j) Navrhované parametry stavby – zastavěné plocha, obestavěný prostor, užitná plocha, 
+počet funkčních jednotek a jejich velikosti apod.: 
+• Obestavěný prostor:     1110 m3 
+• Zastavěná plocha:     246,4 m2 
+• Celkem užitná plocha:     175,15 m2 
+• Počet bytových jednotek:    1 byt – rodinný dům pro 4 člennou 
+rodinu 
+• Počet podzemních podlaží:    1 
+• Způsob využití:      rodinný dům 
+V rámci navrženého objektu rodinného domu není navržena výrobní technologie, tudíž toto není řešeno. 
+k) Limitní bilance stavby – potřeby a spotřeby médií a hmot, hospodaření se srážkovou 
+vodou, celkové produkované množství a druhy odpadů a emisí apod.: 
+• předpokládaný odběr el. energie:    26,5 kW 
+• maximální množství splaškových vod:   150l/den 
+• maximální množství potřebné pitné vody:  40 m3/rok 
+• třída energetické nár.:     - 
+Hospodaření s dešťovou vodou 
+Dešťové vody ze střechy a zpevněných ploch nového RD, budou svedeny   do akumulační a  retenční nádrže 
+AN+RN dešťových vod na pozemku investora umístěnou v nezpevněných plochách zahrady. 
+Vody budou akumulovány v nádrži, intenzivně využívány k zálivce a případné přebytky budou regulovaně  - 
+bezpečnostním přepadem - odváděny do navržené vsakovací galerie na pozemku stavebníka. 
+Maximální produkovaná množství a druhy odpadů budou typické pro rodinný dům tohoto charakteru, budou 
+spočívat především v typickém směsném odpadu. 
+l) Požadavky na kapacity veřejných sítí komunikačních vedení a elektronického 
+komunikačního zařízení veřejné komunikační sítě: 
+předpokládaný odběr el. energie:   26,5 kW 
+Předpokládané požadavky na kapacity veřejných sítí komunikačních vedení a elektronického komunikačního 
+zařízení veřejné komunikační sítě budou odpovídat rodinného domu. 
+m) Základní předpoklady výstavby – časové údaje o realizaci stavby, členění na etapy, 
+věcné a časové vazby stavby, podmiňující, vyvolané, související investice 
+Předpokládané datum zahájení výstavby:  po nabytí právní moci společného povolení 
+Předpokládané datum ukončení výstavby :  9/2027 
+Navržené stavební práce budou probíhat v jednom časovém úseku bez přerušení, jednotlivé činnosti budou 
+prováděny v tomto postupu: 
+- vytýčení stavby, výkopové práce, základové konstrukce 
+- podlahová, obvodová a stropní nosná konstrukce  
+- střešní konstrukce 
+- vnitřní příčky, vnitřní instalace 
+- vnitřní omítky, podlahy, obklady 
+- dokončovací práce 
+- zpevněné plochy a terénní úpravy 
+Plán kontrolních prohlídek stavby: 
+v průběhu realizace navržených konstrukcí: 
+1) prohlídka po dokončení hrubé stavby 
+2) po dokončení technických instalací ZTI, Elektro, VZT,… 
+3) po dokončení prací na nenosných částech stavby (okna, dveře, příčky, omítky) 
+4) Závěrečná kontrolní prohlídka stavby konaná ve lhůtě do 15 dnů ode dne doručení oznámení stavebníka 
+stavebnímu úřadu o užívání stavby (dle §120 zákona), případně po doručení žádosti stavebníka o kolaudační 
+souhlas stavebnímu úřadu (dle §122 zákona). 
+Konkrétní termíny kontrolních prohlídek nemohou být prozatím známy z  důvodu prozatím probíhajícího 
+výběrového tenderu na prováděcí ﬁrmu. Po výběru prováděcí ﬁrmy bude vypracován kompletní plán výstavby, 
+který stavební úřad obdrží společně s konkrétními návrhy termínů a detailnějším popisem kontrolovaných částí 
+výstavby.  
+		 
+5
+
+=== PDF PAGE 7 ===
+n) Základní požadavky na předčasné užívání staveb a zkušební provoz staveb, doba 
+jejich trvání ve vztahu k dokončení a užívání stavby: 
+Není uvažováno s předčasným užíváním stavby nebo se zkušebním provozem stavby. 
+o) Seznam výsledků zeměměřičských činností podle jiného právního předpisu, pokud 
+mají podle projektu výsledků zeměměřičských činností vzniknout s povolením stavby: 
+V rámci novostavby rodinného domu je pouze uvažováno s vytyčením základových konstrukcí a zaměření míst 
+připojení na technickou infrastrukturu. 
+B.2 Urbanistické a základní architektonické řešení 
+Urbanismus – územní regulace, kompozice prostorového řešení: 
+Navržený rodinný dům vytváří zástavbu samostatně stojících rodinných domů v navržené lokalitě obce Březí - 
+při návrhu byl kladen důraz na moderní styl pojetí rodinného bydlení se  zakomponováním moderních tvarů 
+a prvků architektury. 
+Návrh řeší hlavně umístění místností vůči světovým stranám tak, aby bylo zajištěno dostatečné proslunění 
+především v zimních měsících. V letních měsících bude stínění zajištěno žaluziemi a částí střešní konstrukce 
+nad terasou. Orientace obytných místností směřuje především směrem do zahrady. 
+Architektonické řešení – kompozice tvarového, materiálového a barevného řešení 
+Navržený objekt rodinného domu svou uliční fasádou navazuje na stanovenou uliční čáru, kdežto svou fasádou 
+zahradní navazuje na tvar pozemku tak, aby otevřel v maximální možné míře výhled do navazující zahrady. 
+Objekt je jednopodlažní. Zastřešení objektu je  typické pro moderní zástavbu tzn. šikmá sedlová střecha 
+s plechovou falcovanou střešní krytinou. 
+Fasádu objektu tvoří kombinace zateplovacího systému (bílá omítka), dřevěných obkladů lokálně použitých na 
+členění fasády a prosklených ploch. Výplně fasádních otvorů jsou navrženy z plastových proﬁlů. 
+B.3 Základní stavebně technické a technologické řešení 
+B.3.1. Celková koncepce stavebně technického a technologického řešení 
+Provozní řešení, stejně tak technologie výroby není v projektové dokumentaci díky charakteru stavby řešena, 
+resp. toto není součástí navrženého rodinného domu. 
+B.3.2. Celkové řešení podmínek přístupnosti 
+a) Celkové řešení přístupnosti se speci ﬁkací jednotlivých částí, které podléhají 
+požadavkům na přístupnost, včetně dopadů předčasného užívání a zkušebního provozu 
+a vlivu na okolí 
+Jedná se o neveřejnou stavbu, proto není objekt nutné navrhovat k  bezbariérovému užívání. 
+b) Popis navržených opatření – zejména přístup ke stavbě, prostory stavby a systémy 
+určené pro užívání veřejností 
+Jedná se o neveřejnou stavbu, proto není objekt nutné navrhovat k  bezbariérovému užívání. 
+c) Popis dopadů na přístupnost z hlediska uplatnění závažných územně technických 
+nebo stavebně technických důvodů nebo jiných veřejných zájmů 
+Vzhledem k charakteru stavby není řešeno. 
+B.3.3. Zásady bezpečnosti při užívání stavby 
+V oblasti bezpečnosti a ochrany zdraví při provozu se vychází z platných norem a předpisů, které budou 
+při  užívání objektu dodržovány. Objekt bude využíván k účelu bydlení, parkování a dalších provozů s  tím 
+spojených. 
+U objektu budou v průběhu užívání stavby pravidelně prováděny běžné údržbové práce a opravy, zejména 
+nátěry a čištění. Stavba nevyžaduje zvláštní údržby. Řádným užíváním stavby bude zajištěna i bezpečnost 
+uživatelů. 
+Stavba je navržena v souladu vyhlášky č. 283/2021 Sb., o technických požadavcích na stavby. 
+		 
+6
+
+=== PDF PAGE 8 ===
+B.3.4. Základní technický popis stavby 
+a) Popis stávajícího stavu 
+Vzhledem ke stavebnímu záměru - novostavba - není řešeno. 
+b) Popis navrženého stavebně – technického a konstrukčního řešení 
+Základy – betonové pasy, včetně nadezdívky z tzv. ztraceného bednění a základové desky. 
+Zdivo a příčky – keramické tvárnice různých tlouštěk. Doplněno lokálně SDK konstrukcemi. 
+Stropní konstrukce – dřevěné nosné trámy, součástí konstrukce krovu, lokálně doplněno sloupky, uloženo 
+na železobetonových věncích keramického nosného zdiva. 
+Střešní konstrukce – dřevěný krov se středovými vaznicemi, uložený na pozednicích a nosném zdivu. 
+Výplně stavebních otvorů – plastová okna a dveře, trojsklo, odstín dle výběru investora a architekta. 
+Povrchové úpravy – fasáda – bílá fasádní omítka v  kombinaci s  dřevěným obkladem. Omítky - 
+vápenocementové na keramické zdivo s hladkou povrchovou štukovou omítkou. Předpokládá se bílá barva, dle 
+výběru architekta a stavebníka.  
+V rodinném domě je ve všech prostorech uvažováno s podhledovými SDK konstrukcemi. 
+B.3.5. Technologické řešení – základní popis technických a 
+technologických zařízení 
+a) Popis stávajícího stavu 
+Vzhledem k charakteru novostavby - není řešeno. 
+b) Popis navrženého řešení 
+b.1) Vnitřní rozvody ZTI 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.2) Vnitřní rozvody splaškové kanalizace 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.3) Vnitřní rozvody dešťové kanalizace 
+Dešťové vody ze střechy a zpevněných ploch nového RD, budou svedeny   do akumulační a  retenční nádrže 
+AN+RN dešťových vod na pozemku investora umístěnou v nezpevněných plochách zahrady. 
+Vody budou akumulovány v nádrži, intenzivně využívány k zálivce a případné přebytky budou regulovaně  - 
+bezpečnostním přepadem - odváděny do navržené vsakovací galerie na pozemku stavebníka. 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.4) Vnitřní rozvody elektrické energie NN 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.5) Vnitřní rozvody slaboproud – sdělovací kabel 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.6) Vnitřní rozvody slaboproud – elektronický zabezpečovací systém (EPS) 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.7) Vnitřní rozvody slaboproud – kamerový systém 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.8) Vnitřní rozvody slaboproud – přístupový systém 
+V novostavbě RD není uvažováno. 
+b.9) Zemnící soustava a bleskosvod 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.10) Vzduchotechnika 
+V novostavbě RD není uvažováno. 
+b.11) .Vytápění objektu 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.12) Příprava TUV 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+b.13) Přípojka el. energie NN 
+Je řešena samostatným stavebním řešením. 
+b.14) Přípojka vodovodu 
+Bude využito navržené vodovodní přípojky, která bude ukončena v navržené vodoměrné šachtě na pozemku 
+stavebníka. Domovní vedení vodovodu bude řešeno podrobněji v navazujícím stupni PD. 
+		 
+7
+
+=== PDF PAGE 9 ===
+b.15) Přípojka kanalizace 
+Přípojka kanalizace je stávající. Je navržena revizní šachta a domovní napojení splaškové kanalizace. Domovní 
+vedení splaškové kanalizace bude řešeno podrobněji v navazujícím stupni PD. 
+b.16) Přípojka sdělovacího kabelu 
+Není řešeno. 
+b.17) Přípojka teplovodu 
+Vzhledem k neexistenci teplovodní sítě není řešeno. 
+c) Energetické výpočty 
+c.1) Zdroje 
+Bude podrobně řešeno v navazujícícm stupni PD. 
+c.2) Spotřeba 
+Spotřeba bude odpovídat rozměrům a charakteru rodinného domu. Toto bude podrobně řešeno v navazujícícm 
+stupni PD. 
+B.3.6. Zásady požární bezpečnosti 
+Podrobně řešeno v samostatné části projektové dokumentace D1.3 Požárně bezpečnostní řešení. 
+a) charakteristiky a kritéria pro stanovení kategorie stavby podle požadavků jiného 
+právního předpisu- výška stavby, zastavěná plocha, počet podlaží, počet osob, pro který 
+je stavba určena, nebo jiný parametr stavby, zejména světlá výška podlaží nebo délka 
+tunelu apod., 
+Kategorie stavby:    rodinný dům 
+Počet uživatelů:     rodina – uvažováno se čtyřmi osobami - 2 dospělí, 2 děti 
+Obestavěný prostor:    1110 m3 
+Zastavěná plocha:    246,4 m2 
+Celkem užitná plocha:    175,15 m2 
+Počet bytových jednotek:   1 byt – rodinný dům pro 4 člennou rodinu 
+Počet podzemních podlaží:   1 
+b) kritéria - třída využití, přítomnost nebezpečných látek nebo jiných rizikových faktorů, 
+prohlášení stavby za kulturní památku. 
+b.1) Třída využití 
+Vzhledem k charakteru stavby není řešeno. 
+b.2) Přítomnost nebezpečných látek nebo jiných rizikových faktorů 
+Vzhledem k charakteru novostavby rodinného domu není uvažováno s přítomností nebezpečných látek. Žádné 
+rizikové faktory nejsou projektantovy známy. 
+Vzhledem k charakteru stavby není řešeno – není uvažováno o prohlášení stavby za kulturní památku. 
+B.3.7. Úspora energie a tepelná ochrana budov 
+Stavba je navržena v souladu s předpisy a normami pro úsporu energií a ochrany tepla. Splňuje požadavky 
+normy ČSN 73 0540 a požadavky §7a zákona č. 318/2012 Sb., kterým se mění zákon č. 406/2000 Sb. o 
+hospodaření s  energiemi. Dokumentace je dále zpracována v souladu s vyhláškou 78/2013 Sb. Skladby 
+obvodových konstrukcí budou splňovat požadavky normy ČSN 73 0540-2 na doporučený součinitel prostupu 
+tepla Un.dop. 
+Podrobněji viz projekt PENB. 
+B.3.8. Hygienické požadavky na stavbu, požadavky na pracovní a komunální 
+prostředí 
+Stavba je navržena v souladu s předpisy a normami pro úsporu energií a ochrany tepla. Splňuje požadavky 
+normy ČSN 73 0540 a požadavky §7a zákona č. 318/2012 Sb., kterým se mění zákon č. 406/2000 Sb. o 
+hospodaření s  energiemi. Dokumentace je dále zpracována v souladu s vyhláškou 78/2013 Sb. Skladby 
+obvodových konstrukcí budou splňovat požadavky normy ČSN 73 0540-2 na doporučený součinitel prostupu 
+tepla Un.dop. 
+Podrobněji viz projekt PENB. 
+Větrání: 
+Je navrženo jednak přirozené větrání objektu okny s doplňkovým zařízením VZT pro prostory, které nemohou 
+nebo nesmí být větrány pouze přirozeně. Jedná se především o kuchyně, hygienické zařízení a  další... Vše 
+		 
+8
+
+=== PDF PAGE 10 ===
+v souladu s ČSN 73 0540-2 Tepelná ochrana budov. Část 2: Požadavky. Aby bylo zajištěno vhodné prostředí, 
+musí být dodržena minimální intenzita větrání. Dodatečné odvětrání místností, které nejsou odvětrány okny 
+je navrženo odsáváním. Je nutno dodržovat minimální frekvenci větrání těchto prostor. 
+Vytápění: 
+Vytápění je navrženo teplovodní podlahové s doplňkovými teplovodními radiátory tam kde není možné využít 
+podlahové topení, nebo kde je plocha podlahového topení nedostatečná. 
+Zdrojem tepla bude kombinovaný kotel na dřevo a pelety - FireWood Duo Plus o výkonu 19kW. Doplňkovým 
+zdrojem vytápění je krbové těleso v hlavním obytném prostoru. Zdrojem energie pro ohřev TUV budou taktéž 
+FVE panely - je navrženo 6 ks fotovoltaických panelů, které budou umístěny na jižní straně střechy vzhledem 
+k vhodnému sklonu a orientaci. Tyto nebudou nijak negativně ovlivňovat vzhled objektu. Přesný typ FVE panelů 
+bude vybrán v koordinaci s dodavatelskou ﬁrmou. Neuvažuje se zapojením do  distribuční sítě. Přebytečná 
+energie bude ukládána do uvažovaných baterií v technické místnosti řešeného rodinného domu. Je uvažováno 
+s výkonem 1 ks panelu 405Wp. Celkový výkon navržených 6 ks FVE panelů při ideálních podmínkách tedy bude 
+cca 2,5 kW. 
+Osvětlení: 
+Všechny obytné místnosti jsou vybaveny denním a umělým osvětlením. Místnosti koupelen, WC, šaten 
+a zádveří jsou dostatečně osvětleny pomocí umělého osvětlení. Rozměry, pozice, typ a množství světel bude 
+podrobně řešeno v  navazujícím stupni projektové dokumentace. Každopádně budou splněny požadavky 
+na denní osvětlení budov dle ČSN 73 0580 Denní osvětlení budov. 
+Oslunění: 
+Vzhledem k  natočení obytných místností na jiho-západ a neexistujícím blízkým překážkám bude s  rezervou 
+vyhověno požadavkům na oslunění obytných místností. 
+Zásobování vodou: 
+Bude prováděno z vodovodního řádu pomocí navržené vodovodní přípojky. Budou muset být zjištěny tlakové 
+poměry na vodovodní přípojce a následovně stanovit další kroky. V případě nedostatečného tlaku bude nutné 
+zvážit další kroky, jako např.: jednaní se správcem vodovodu ohledně možného navýšeni tlaku, úprava stávající 
+přípojky, návrh další nové samostatné přípojky, návrh posilovací stanice tlaku vody,… 
+Nakládání s odpady: 
+Komunální odpady, spojené s provozem, jejich likvidace musí splňovat požadavky a ustanovení příslušné 
+obecní vyhlášky o komunálních odpadech. Odvoz komunálního odpadu bude zajištěn stejnou ﬁrmou, která 
+zajišťuje odvoz odpadu v této lokalitě. 
+Vliv stavby na okolí (vibrace, prašnost, hluk): 
+Stavba nemá žádný negativní vliv na okolní prostředí. 
+Mikroklima – vzhledem k charakteru stavby projekt neřeší. 
+Zásady ochrany před šířením hluku a vibrací – není znám případný zdroj hluku. 
+Stavba je navržena v souladu vyhlášky č. 20/2012 Sb., o technických požadavcích na stavby. 
+B.3.9. Zásady ochrany stavby před negativními účinky vnějšího prostředí 
+a) Ochrana stavby před pronikáním radonu z podloží: 
+Dle radonové mapy ČR je v lokalitě stavby radonový index pozemku nízký. Prostor mezi konstrukcí podlahy a 
+rostlým terénem je opatřen větranou vrstvou z drobného kameniva, kdy tato je komínovým systémem 
+odvětrána nad střešní rovinu a tvoří tak dokonalý způsob ochrany před pronikáním radonu z podloží. V každém 
+případě tento systém je ještě doplněn o vrstvu izolace proti vodě a radonu, která svým provedením navržené 
+opatření supluje - doplňuje. 
+b) Ochrana před bludnými proudy: 
+Díky charakteru stavby a provozu není s bludnými proudy uvažováno. 
+Analýza rizik bude podrobně řešena v navazujícím stupni PD. 
+c) Ochrana před technickou seismicitou: 
+Ochrana před technickou seizmicitou není v  projektu uvažována z  důvodu umístění stavby. Stavba se 
+nenachází v oblasti, kde by hrozilo riziko seizmické aktivity. 
+d) Ochrana před hlukem: 
+Z dostupných mapových podkladů a místních znalostí projektant nenašel v blízkosti stavby zdroje nadměrného 
+hluku. Objekt je situován ve nové lokalitě obce Březí. Od hlavní komunikace - je navržený objekt vzdálen 
+		 
+9
+
+=== PDF PAGE 11 ===
+a  zároveň se mezi navrženým objektem a zdroji hluku nachází stávající zástavba rodinných domů a zelení 
+v navazujících zahradách vnitrobloků. Přilehlé ulice nejsou potencionálním zdrojem nadměrného hluku. 
+Stavební konstrukce jsou navrženy v souladu s požadavky ČSN 730532/2000 Z 1-05/2005 Akustika – Ochrana 
+proti hluku v budovách a související akustické vlastnosti stavebních výrobků tak, aby hladina hluku vyhověla 
+nař. vlády č. 502/2000 Sb. o ochraně zdraví před nepříznivými účinky hluku a vibrací ve znění nař. vlády č. 
+88/2004 Sb. Hlučnost větracích zařízení bude maximálně omezena umístěním ventilátorů na málo 
+frekventovaných místech. Hlučnost zařízení odpovídá podmínkám nařízení vlády č. 148/2006, o ochraně zdraví, 
+před nepříznivými účinky hluku a vibrací. 
+e) Protipovodňová opatření: 
+Navržený objekt se nenachází v záplavovém území. 
+Ochrana proti přívalovým dešťům je zajištěna tvarem přilehlého terénu a odvodňovacími prvky jako jsou liniové 
+vpusti a zvýšené obrubníkové hrany min. o 2 cm nad terénem. Všechny stupy do 1. NP jsou převýšené min. 
+o 2 cm nad přilehlým terénem. 
+f) Ostatní účinky (vliv poddolování, výskyt metanu, apod.): 
+Vzhledem k umístění stavby není řešeno – pozemek se nenachází v poddolovaném území. 
+g) Ochrana před agresivní a tlakovou podzemní vodou 
+Na základové desce je navržena hydroizolace a protiradonová izolace z asfaltových pásů ve dvou vrstvách. 
+B.4. Připojení na technickou infrastrukturu 
+a) Napojovací místa technické infrastruktury, přeložky: 
+Navržený objekt rodinného domu bude k technické infrastruktuře připojen navrženou přípojkou vodovodu, 
+stávajícími přípojkami kanalizace a el. energie NN. 
+b) Připojovací rozměry, výkonové kapacity a délky: 
+Navržený objekt rodinného domu bude k technické infrastruktuře připojen navrženou přípojkou vodovodu, 
+stávajícími přípojkami kanalizace a el. energie NN. 
+c) Přehled vlastníků technické infrastruktury 
+Přehled vlastníků technické infrastruktury, na které bude záměr RD napojen 
+d) Přeložky 
+Vzhledem k charakteru a umístění stavby není řešeno. 
+e) Křížení se stavbami technické a dopravní infrastruktury a souběhy s nimi v případě, 
+kdy je stavba umístěna v ochranném pásmu stavby technické nebo dopravní 
+infrastruktury, nebo je-li ohrožena bezpečnost 
+Křížení a souběh se řídí pravidly dle ČSN 73 6005 a požadavky uvedených ve vyjádření k záměru a existenci sítí 
+jejich správců. 
+Záměr je umístěn na pozemek, na kterém se nenachází záplavové ani poddolované území. Stavba se 
+nenachází v chráněném ložiskovém území ani v dobývacím prostoru ani v  jiné ochranném nebo 
+bezpečnostním pásmu. Vzhledem k tomu, že stávající pozemek je napojen na technickou infrastrukturu, tak se 
+na pozemku nacházejí pouze ochranná pásma technické infrastruktury. 
+Záměr tedy nenarušuje ochranná pásma na pozemku stavebníka a pravidla pro odstupy na veřejných plochách 
+dodržuje. 
+STÁVAJÍCÍ INŽENÝRSKÉ SÍTĚ - PŘIPOJENÉ VLASTNÍK
+ENERGETICKÉ VEDENÍ ELEKTRO EG.D, A.S.
+VODOVOD VAS
+KANALIZACE VAS
+		 
+10
+
+=== PDF PAGE 12 ===
+B.5 Dopravní řešení 
+a) Popis dopravního řešení 
+Navržený rodinný dům bude k místní obecní komunikaci připojen navrženým sjezdem v jižní části pozemku 
+parc. č. 6012/26 v rozsahu navrženého sníženého obrubníku. 
+Stavba díky svému charakteru neřeší bezbariérové opatření pro přístupnost a užívání stavby osobami 
+se sníženou schopností orientace a pohybu. 
+b) Napojení území na stávající dopravní infrastrukturu 
+Dopravní napojení je umožněno sjezdem na pozemek stavebníka. 
+c) Doprava v klidu:  
+Parkování je navrženo výhradně na pozemku investora stavby. Na pozemku stavebníka je možno parkovat až 3 
+osobní automobily. 
+V navrženém objektu RD je uvažováno s jednou bytovou jednotkou o celkové ploše nad 100 m2, pro kterou jsou 
+určena 2 parkovací místa na zpevněné ploše umístěné na pozemku stavebníka, další parkovací místo 
+je  navrženo v garáži. Parkovaní pro návštěvy je  uvažováno na  zpevněné ploše před garáží na pozemku 
+stavebníka. 
+Výpočet počtu parkovacích míst: 
+OO = 2 
+PO = 0 
+ka = 1 
+kp = 1 
+N = OO x ka + PO x ka x kp = 2 x 1,0 + 0 x 1,0 x 1,0 = 2,0 + 0 = 2 PM 
+Z výše uvedeného výpočtu a skutečnosti vytvoření celkem 3 parkovacích stání na pozemku 
+stavebníka vyplývá, že navržený počet vyhovuje požadavku ČSN 7361 10. 
+d) pěší a cyklistické stezky  
+V rámci navrženého objektu rodinného domu nedochází k ovlivnění či omezení přilehlých turistických tras či 
+cyklostezek. 
+B.6. Řešení vegetace a souvisejících terénních úprav 
+a) Terénní úpravy: 
+Ornice bude po dobu stavby uskladněna na pozemku, po dokončení stavby bude použita na  terénní úpravy 
+a ozelenění pozemku. 
+Okolní terén bude upraven tak, aby byl zajištěn pohodlný přístup do objektu a zároveň došlo k co nejmenším 
+zásahům do přirozeného svahu. 
+b) Použité vegetační prvky: 
+Popis vegetačních úprav a prvků bude podrobně řešen v  dalším stupni projektové dokumentace, která bude 
+zhotovena zahradním architektem. Obecně se předpokládá s  výsadbou keřů a ovocných stromů. Dále dojde 
+k zatravnění všech částí pozemku mimo zpevněné plochy. 
+c) Biotechnická opatření: 
+V rámci projektu je to řešeno pomocí zatravněných ploch. S biotechnickým opatřením není v rámci stavebních 
+úprav objektu uvažováno. 
+B.7 Popis vlivů stavby na životní prostředí a jeho ochrana 
+a) Vliv na životní prostředí – ovzduší, hluk, voda, odpady a půda: 
+Stavba nebude mít žádný významný negativní dopad na životní prostředí. 
+Stavba svým užíváním a provozem nebude mít negativní vliv na životní prostředí. Stavba při svém provozu 
+nebude produkovat žádný nebezpečný odpad.  
+Během výstavby budou vznikat odpady běžné ze stavební výroby – přebytečná výkopová zemina, různá 
+stavební suť, zbytky stavebních materiálů, obalový materiál stavebních hmot (papír, lepenka, plastové folie), 
+		 
+11
+
+=== PDF PAGE 13 ===
+odpadní stavební a obalové dřevo. Mohou se vyskytnout také v  malém množství zbytky nejrůznějších 
+izolačních hmot – izolace proti zemní vlhkosti, tepelná a zvuková izolace apod. Při provádění elektroinstalace, 
+vodovodního a kanalizačního potrubí se mohou jako odpady vyskytnout také zbytky kabelů, prostupů, lepicích 
+pásek, zbytků plastových nebo kovových trubek apod. Při natírání konstrukcí, lepení např. podlahových krytin, 
+dále při úklidu apod. se jako odpad vyskytnou nádoby z  kovů i z plastů s obsahem znečištění a  znečištěné 
+textilní materiály.  
+Třídění odpadů bude probíhat přímo na staveništi. Odpady budou přednostně odevzdány oprávněné osobě k 
+opětovnému použití. Odpady, které již nemají další jiné využití, budou předány oprávněné osobě k jejich 
+ekologické likvidaci. Výkopové zeminy bez příměsí budou použity na terénní úpravy a  na  srovnání terénních 
+nerovností stávajícího pozemku. 
+Při likvidaci odpadů je nutno postupovat dle zákona č. 541/2020 Sb. Zejména je třeba odpady likvidovat pouze 
+v zařízeních, která jsou k tomu určena, dle uvedeného zákona. 
+Komunální odpad z  trvalého provozu bude umísťován do popelnicových nádob (kontejnerů) a  vyvážen 
+specializovanou ﬁrmou na skládku TKO.  
+b) Vliv na přírodu a krajinu – ochrana dřevin, ochrana památných stromů, ochrana 
+rostlin a živočichů apod, zachování ekologických funkcí a vazeb v krajině apod.: 
+Na dotčeném pozemku ani v  bližším okolí plánované výstavby navrženého rodinného domu nejsou žádná 
+ochranná pásma z hlediska ochrany přírodních zdrojů a krajiny. Veškeré stavební práce a objekty jsou však 
+navrženy v dostatečné vzdálenosti. 
+Na dotčeném pozemku se nevyskytují chráněné dřeviny, stromy, rostliny ani živočichové.  
+Realizací záměru nedojde k dotčení žádného významného krajinného prvku ve smyslu ust. § 3 odst. 1 písm. B) 
+zákona o ochraně přírody a krajiny 
+c) Vliv na soustavu chráněných území Natura 2000: 
+Projektovaná stavba nebude mít žádný vliv na soustavu chráněných území Natura 2000.  
+d) Způsob zohlednění podmínek závazného stanoviska posouzení vlivu záměru na 
+životní prostředí: 
+Nejsou. Snahou stavby bude minimalizovat účinky na životní prostředí dodržováním veškerých platných 
+pravidel a vyhlášek. 
+e) V případě záměrů spadajících do režimu zákona o integrované prevenci základní 
+parametry způsobu naplnění závěrů o nejlepších dostupných technikách nebo 
+integrované povolení: 
+Projekt neřeší. 
+f) Navrhovaná ochranná a bezpečnostní pásma, rozsah omezení a podmínky ochrany 
+podle jiných právních předpisů: 
+Projekt v této fázi neřeší. 
+B.8 Celkové vodohospodářské řešení 
+Celkové vodohospodářské řešení je stručně deﬁnované takto - v navrženém objektu bude využíváno pitné vody 
+z veřejného řadu. Jako sekundární zdroj vody (pro zálivku zahrady) je  uvažováno s navrženou akumulační 
+nádrží pro dešťové vody. Naakumulované vody z této nádrže budou sloužit k závlaze zelených ploch. 
+Přípojka kanalizace je stávající. Je navržena revizní šachta a domovní napojení splaškové kanalizace. Domovní 
+vedení splaškové kanalizace bude řešeno podrobněji v navazujícím stupni PD. 
+Likvidace dešťových vod – přípojka dešťové kanalizace – DKANP 
+Dešťové vody ze střechy a zpevněných ploch nového RD, budou svedeny  do akumulační a  retenční nádrže 
+AN+RN dešťových vod na pozemku investora umístěnou v nezpevněných plochách zahrady. 
+Vody budou akumulovány v nádrži, intenzivně využívány k zálivce a případné přebytky budou regulovaně - 
+bezpečnostním přepadem odváděny do navržené vsakovací galerie na pozemku stavebníka. 
+		 
+12
+
+=== PDF PAGE 14 ===
+B.9 Ochrana obyvatelstva 
+Splnění základních požadavků z hlediska plnění úkolů ochrany obyvatelstva: 
+Ochranou obyvatelstva se rozumí plnění úkolů civilní ochrany, zejména varování, evakuace, ukrytí a nouzové 
+přežití obyvatelstva a další opatření k zabezpečení ochrany jeho života, zdraví a majetku dle ústavního zákona 
+č. 110/1998 Sb., o bezpečnosti České republiky, ve znění pozdějších předpisů. 
+Z hlediska ochrany obyvatelstva není nutno pro uvedený druh stavby řešit žádné zvláštní požadavky. Stavba 
+není určena k využití pro ochranu obyvatelstva a její technické řešení neumožňuje její využití pro potřeby civilní 
+ochrany. 
+a) Způsob zajištění varování a informování obyvatelstva před hrozící nebo nastalou mimořádnou událostí 
+Vzhledem k charakteru stavby není řešeno. 
+b) Způsob zajištění ukrytí obyvatelstva 
+Není relevantní. 
+c) Způsob zajištění ochrany před nebezpečnými účinky nebezpečných látek u staveb v zónách havarijního 
+plánování 
+Není relevantní. 
+d) Způsob zajištění ochrany před povodněmi 
+Není relevantní. 
+e) Způsob zajištění soběstačnosti stavby pro případ výpadku elektrické energie u staveb občanského vybavení 
+Není relevantní. 
+f) Způsob zajištění ochrany stávajících staveb civilní ochrany v území dotčeném stavbou nebo staveništěm, 
+jejich výčet, umístění a popis možného dotčení jejich funkce a provozuschopnosti 
+Není relevantní. 
+B.10 Zásady organizace výstavby 
+a) Napojení staveniště na stávající dopravní a technickou infrastrukturu: 
+Jako staveniště bude využit výhradně pozemek investora. Hlavním napojením na dopravní komunikaci 
+je příjezdová komunikace s vjezdem z místní komunikace.  
+Stavba bude využívat staveništní přípojky vody a elektřiny. 
+b) Ochrana okolí staveniště a požadavky na související asanace, demolice, kácení 
+dřevin: 
+Nepředpokládá se nutnost zvláštní ochrany okolí staveniště v průběhu prací. Jen bude nutno dodržet zvýšenou 
+opatrnost v pohybu kolem staveniště. Staveniště bude kompletně oploceno a bude tedy zabráněno vstupu 
+třetích osob. 
+Není požadavek na asanace, demolice či kácení dřevin. Vzhledem ke konstrukčnímu řešení a způsobu 
+realizace podzemní části - základů stavby nedojde k dotčení sousedních pozemků a staveb. 
+V rámci navrženého objektu dojde na pozemku pouze k výkopovým pracem za účelem realizace základových 
+konstrukcí rodinného domu. Rozsah a hloubka podzemní části je patrná z výkresové dokumentace. 
+V rámci úpravy pozemku dojde k vyčištění pozemku od drobných náletových křovin. Není uvažováno s kácením 
+vzrostlé zeleně – na pozemku se nenachází. 
+c) Vstup a vjezd na stavbu, přístup na stavbu po dobu výstavby, popřípadě přístupové a 
+obchozí trasy, včetně požadavku na obchozí trasy pro osoby s omezenou schopností 
+pohybu nebo orientace a způsob zajištění bezpečnosti provozu: 
+Hlavním napojením na dopravní komunikaci je příjezdová komunikace s vjezdem z místní silniční komunikace. 
+Není vznesen požadavek na obchozí trasy. Stávající komunikace nebudou dotčeny. 
+Obchozí ani bezbariérové trasy nejsou nutné. Pohyb osob s omezenou schopností pohybu a orientace bude 
+z prostoru staveniště vyloučen. 
+Při provádění stavby bude prostor staveniště oplocen a opatřen cedulkami se zákazem vstupu nepovolaným 
+osobám. Bude tedy zabráněno vstupu třetích osob. 
+d) Maximální dočasné a trvalé zábory pro staveniště: 
+Vzhledem k  umístění stavby i staveniště na pozemku investora budou nutné trvalé zábory zemědělského 
+půdního fondu– parc. č. 6012/26. 
+		 
+13
+
+=== PDF PAGE 15 ===
+e) Požadavky na ochranu životního prostředí při výstavbě: 
+Za dodržování opatření vedoucím k ochraně životního prostředí v době provádění stavby plně odpovídá 
+zhotovitel. Z pohledu legislativy, vztahujících se k ochraně životního prostředí, se bude zhotovitel řídit 
+především těmito zákony a nařízeními: 
+Zákon č. 17/1992 Sb., o životním prostředí, ve znění pozdějších předpisů 
+Zákon č. 541/2020 Sb., o odpadech, ve znění pozdějších předpisů 
+Opatření k minimalizaci dopadů při provádění stavby na životní prostředí 
+Při stavebních pracích bude zamezováno zbytečné prašnosti a bude dbáno na dodržování zásad k jejímu 
+omezování, jako jsou např.: převoz jemnozrnného prašného materiálu na „zaplachtovaných“ korbách 
+nákladních automobilů apod. Prováděcí ﬁrmou musí být minimalizován rozsah jízdy vozidel po nezpevněném 
+terénu. 
+Nákladní automobily a stavební stroje, které budou při výstavbě používány, musí být před výjezdem ze 
+staveniště očištěny. Za tímto účelem bude na výjezdu umístěna čistící zóna pro automobily (mechanické 
+čištění – na výjezdu ze stavby bude provedena zpevněná plocha – oklepová komunikace, sloužící pro očištění 
+vozidel vyjíždějících ze stavby, popř. bude umístěna mobilní mycí souprava). Komunikace mimo obvod 
+staveniště budou udržovány v čistotě dle silničního zákona. Čištění vozovek, případně znečistěných stavbou, 
+bude prováděno průběžně, bez použití vody. 
+Bude zamezeno znečištění ovzduší zákazem spalování jakýchkoliv látek na staveništi. 
+Budou dodržovány obecné zásady ochrany vodních zdrojů povrchových a podpovrchových vod a ochrana 
+zamezující devastaci půdy a kontaminaci horninového prostředí v okolí staveniště. 
+Zemina a sypké materiály budou ukládány tak, aby nedocházelo k jejich splavování. 
+Popis přítomnosti nebezpečných látek při výstavbě 
+Nebezpečné odpady budou podle jednotlivých druhů ukládány do vhodných shromažďovacích prostředků, 
+řádně označeny a místa nakládání s nebezpečným odpadem budou vybavena řádně vyplněným identiﬁkačním 
+listem nebezpečného odpadu (§ 71 zákona č. 541/2020 Sb., o odpadech).  
+Přeprava nebezpečných odpadů bude zajištěna v souladu s ADR a ohlášena v souladu s ustanoveními § 46, § 
+78 a § 79 zákona č. 541/2020 Sb., o odpadech. 
+Předcházení vzniku odpadů 
+Za předcházení vzniku odpadů na staveništi ruší zhotovitel. Ten má povinnost vhodným stavebně technickým 
+postupem minimalizovat produkci, druhy odpadů a emisí při výstavbě a zajistit jejich adekvátní likvidaci. 
+Odpady, které při stavbě vzniknou se kategorizují dle zákona č. 541/2020 Sb., o odpadech a vyhlášky č. 8/2021 
+Sb., o Katalogu odpadů a posuzování vlastností odpadů (Katalog odpadů). 
+Třídění materiálů pro recyklaci za účelem materiálového využití, včetně popisu opatření proti kontaminaci 
+materiálů, stavby a jejího okolí 
+Třídění materiálu pro recyklaci a dalšího využití se řídí základním evropským právním předpisem pro nakládání 
+se stavebními a demoličními odpady je směrnice Evropského parlamentu a Rady (ES) č. 2008/98/ES 
+o  odpadech, na kterou navazuje český právní řád, zejména zákon č. 185/2001 Sb., o odpadech a o změně 
+některých dalších zákonů, ve znění pozdějších předpisů. 
+Před samotným zahájením stavby je podle zákona č. 283/2021 Sb., stavební zákon zakázáno stavět bez 
+předchozí skrývky ornice. Ornici je třeba odstranit nejen pod samotným domem, ale rovněž pod ostatními 
+objekty, jako je bazén, oplocení, cesty, zpevněné plochy, chodníky a příjezdové komunikace. 
+Zhotovitel na staveniště umístí kontejnery určení pro recyklační odpad. O jejich využití poučí své zaměstnance 
+a smluvní partnery. K likvidaci odpadu uzavře smlouvu s recyklačním centrem. 
+Opatření při nakládání s azbestem 
+Způsob nakládání s odpadem obsahující azbest upravuje § 85 zákona č. 541/2020 Sb., o odpadech. 
+Zhotovitel musí zajistit, aby při nakládání s odpadem obsahujícím azbest nebyla z odpadu do ovzduší 
+uvolňována azbestová vlákna nebo azbestový prach a aby nedošlo k rozlití kapalin obsahujících azbestová 
+vlákna. Při nakládání s odpadem obsahujícím azbest je nutné splnit technické požadavky stanovené vyhláškou 
+ministerstva a požadavky jiných právních předpisů. 
+Záměr nové výstavby neuvažuje s výrobky obsahující azbest. 
+Opatření na snížení hluku ze stavební činnosti a opatření proti prašnosti 
+Po dobu provádění stavby nesmí být okolní zástavba ovlivňována nadměrným hlukem, vibracemi a otřesy nad 
+stanovenou mez. Ta je dána zejména ustanoveními vyhlášky č. 258/2000Sb., zákon o ochraně veřejného zdraví 
+a o změně některých souvisejících zákonů a nařízení vlády, kterým se mění nařízení vlády č. 272/2011 Sb., 
+o  ochraně zdraví před nepříznivými účinky hluku a vibrací, ve znění nařízení vlády č. 241/2018 Sb., kterým 
+se mění nařízení vlády č. 272/2011 Sb., o ochraně zdraví před nepříznivými účinky hluku a vibrací dle §11 a 
+§12. 
+Limity hluku jsou: 
+7-21 hod 60 dB (A) 
+21-7 hod 50 dB(A) 
+		 
+14
+
+=== PDF PAGE 16 ===
+f) Zásady bezpečnosti a ochrany zdraví při práci na staveništi 
+Bezpečnost a ochrana zdraví při práci se řídí zásadami zákona č. 88/2016 Sb., kterým se mění zákon 
+č. 309/2006 Sb., kterým se upravují další požadavky bezpečnosti a ochrany zdraví při práci v pracovněprávních 
+vztazích a o zajištění bezpečnosti a ochrany zdraví při činnosti nebo poskytování služeb mimo pracovněprávní 
+vztahy (zákon o zajištění dalších podmínek bezpečnosti a ochrany zdraví při práci), ve znění pozdějších 
+předpisů, zákon č. 251/2005 Sb., o inspekci práce, ve znění pozdějších předpisů, zákon č. 455/1991 Sb., 
+o  živnostenském podnikání (živnostenský zákon), ve znění pozdějších předpisů, a zákon č. 435/2004 Sb., 
+o zaměstnanosti, ve znění pozdějších předpisů 
+Z hlediska PO na pracovišti je nutné dodržovat zákon č.133/1985 Sb., České národní rady o požární ochraně 
+ve znění pozdějších předpisů a vyhlášku 246/2001 Sb., o stanovení podmínek požární bezpečnosti a výkonu 
+státního požárního dozoru (vyhláška o požární prevenci). 
+Před zahájením stavebních prací musí být všichni zúčastnění pracovníci prokazatelně seznámeni 
+s technologickým postupem a jednotlivými postupy vykonávaných prací.  
+Dodavatel stavebních prací musí v rámci své dodavatelské dokumentace vytvořit podmínky k zajištění 
+bezpečnosti práce. Součástí dodavatelské dokumentace je i technologický nebo pracovní postup, který musí 
+být na stavbě po dobu prací k dispozici. V pracovním postupu musí být stanoveny požadavky na provádění 
+stavebních prací při dodržení zásad bezpečnosti práce. 
+Dodavatel stavebních prací je povinen seznámit ostatní možné subdodavatele s požadavky bezpečnosti práce, 
+obsaženými v projektu stavby a v dodavatelské dokumentaci. 
+Při staveních pracích musí být zabezpečen stálý dozor odpovědného pracovníka. V případě ohrožení musí 
+odpovědný pracovník, který přímo řídí stavební práce, dát dohodnutým znamením pokyn k okamžitému 
+opuštění pracoviště. 
+Používat lze jen stroje a strojní zařízení, které svou konstrukcí, provedením a technickým stavem odpovídají 
+předpisům k zajištění BOZP na technických zařízeních. Stroje lze používat pouze k účelům, pro které jsou 
+technicky způsobilé v souladu s podmínkami stanovenými výrobcem a technickými normami. 
+Během stavebních prací budou dodržovány požadavky platné legislativy České republiky, ČSN a EN včetně 
+souvisejících vyhlášek a nařízení. 
+I. Základní předpisy 
+Zákon č. 262/2006 Sb., zákoník práce, ve znění zákona 285/2020 Sb. 
+Zákon č. 88/2016 Sb., kterým se mění zákon č. 309/2006 Sb., kterým se upravují další požadavky bezpečnosti a ochrany zdraví při práci 
+v pracovněprávních vztazích a o zajištění bezpečnosti a ochrany zdraví při činnosti nebo poskytování služeb mimo pracovněprávní vztahy 
+(zákon o zajištění dalších podmínek bezpečnosti a ochrany zdraví při práci), ve znění pozdějších předpisů. 
+II. Dozor nad bezpečností a ochranou zdraví při práci 
+Zákon č. 396/1992 Sb., o státním odborném dozoru nad bezpečností práce (úplné znění s působností pro Českou republiku, jak vyplývá 
+z pozdějších změn a doplnění) 
+Zákon č. 205/2021 Sb., o bezpečnosti práce v souvislosti s provozem vyhrazených technických zařízení a o změně souvisejících zákonů 
+Zákon č. 204/2015 Sb., kterým se mění zákon č. 200/1990 Sb., o přestupcích, ve znění pozdějších předpisů 
+Zákon č. 251/2005 Sb., o inspekci práce v aktuálním znění 
+III. Ochrana zdraví, hygiena práce, pracovní prostředí 
+Vyhláška č. 181/2015 Sb. kterou se mění vyhláška č. 432/2003 Sb., kterou se stanoví podmínky pro zařazování prací do kategorií, limitní 
+hodnoty ukazatelů biologických expozičních testů, podmínky odběru biologického materiálu pro provádění biologických expozičních testů 
+a náležitosti hlášení prací s azbestem a biologickými činiteli, ve znění vyhlášky č. 107/2013 Sb. 
+Nařízení vlády č. 101/2005 Sb., o podrobnějších požadavcích na pracoviště a pracovní prostředí 
+IV. Pracovní úrazy, nemoci z povolání, odškodňování, úrazové pojištění, závodní preventivní péče 
+Vyhláška č. 125/1993 Sb., kterou se stanoví podmínky a sazby zákonného pojištění odpovědnosti organizace za škodu při pracovním 
+úrazu nebo nemoci z povolání. 
+V. Osobní ochranné pracovní prostředky, nápoje a mycí, čistící a desinfekční prostředky 
+Nařízení vlády č. 361/2007 Sb., kterým se stanoví podmínky ochrany zdraví při práci, v aktuálním znění 
+Nařízení vlády č. 390/2021 Sb., o bližších podmínkách poskytování osobních ochranných pracovních prostředků, mycích, čisticích 
+a dezinfekčních prostředků 
+VI. Bezpečnostní značky a signály 
+Nařízení vlády č. 375/2017 Sb., o vzhledu, umístění a provedení bezpečnostních značek a značení a zavedení signálů. 
+VII. Výrobky, stroje a zařízení – obecné 
+Nařízení vlády č. 378/2001 Sb., které stanoví bližší požadavky na bezpečný provoz a používání strojů, technických zařízení, přístrojů a 
+nářadí 
+VIII. Technická zařízení 
+Zákon č. 250/2021 Sb., o bezpečnosti práce v souvislosti s provozem vyhrazených technických zařízení a o změně souvisejících zákonů 
+IX. Vyhrazená technická zařízení 
+Zákon č. 250/2021 Sb., o bezpečnosti práce v souvislosti s provozem vyhrazených technických zařízení a o změně souvisejících zákonů 
+X. Stavebnictví, stavby, stavební práce 
+Vyhláška č. 77/1965 Sb., o výcviku, způsobilosti a registraci obsluh stavebních strojů. 
+Nařízení vlády č. 362/2005 Sb., o bližších požadavcích na BOZP při práci a na pracovištích s nebezpečím pádu z výšky nebo do hloubky 
+Nařízení vlády č. 591/2006 Sb., o bližších minimálních požadavcích na bezpečnost a ochranu zdraví při práci na staveništích 
+Vyhláška č. 394/2006 Sb., kterou se stanoví práce s ojedinělou a krátkodobou expozicí azbestu a postup při určení ojedinělé a krátkodobé 
+expozice těchto prací 
+		 
+15
+
+=== PDF PAGE 17 ===
+XI. Doprava 
+Zákon 361/2000 Sb., o silničním provozu, v aktuálním znění. 
+Nařízení vlády č. 168/2002 Sb., kterým se stanoví způsob organizace práce a pracovních postupů, které je zaměstnavatel povinen zajistit 
+při provozování dopravy. 
+XII. Požární ochrana 
+Zákon č. 133/1985 Sb., o požární ochraně, aktuální znění 
+Vyhláška č. 246/2001 Sb., o stanovení podmínek požární bezpečnosti a výkonu státního požárního dozoru (vyhláška o požární prevenci). 
+Vyhláška č. 87/2000 Sb., kterou se stanoví podmínky požární bezpečnosti při svařování a nahřívání živic v tavných nádobách 
+Vyhláška č. 23/2008 Sb., o technických podmínkách požární ochrany staveb 
+XIII. Hluk, vibrace, kategorizace prací 
+Nařízení vlády č. 272/2011 Sb., o ochraně zdraví před nepříznivými účinky hluku a vibrací 
+Vyhláška č. 432/2003 Sb., kterou se stanoví podmínky pro zařazování prací do kategorií, limitní hodnoty ukazatelů biologických 
+expozičních testů, podmínky odběru biologického materiálu pro provádění biologických expozičních testů a náležitosti hlášení prací s 
+azbestem a biologickými činiteli. 
+IX. Další předpisy 
+Zákon č. 283/2021 Sb., stavební zákon, v aktuálním znění 
+Vyhláška č.131/2024 Sb., o dokumentaci staveb, v aktuálním znění 
+Vyhláška č.146/2024 Sb., o technických požadavcích na stavby, v aktuálním znění 
+Zákon č.89/2012 Sb., občanský zákoník, v aktuálním znění 
+Zákon č.500/2004 Sb., správní řád, v aktuálním znění 
+g) Bilance zemních prací, požadavky na přísun nebo deponie zemin: 
+Případná skrývka zeminy bude uložena na staveništi pro srovnání terénu okolo stavby po provedení stavby. 
+h) Limity pro využití výškové mechanizace: 
+Vzhledem k charakteru novostavby rodinného domu není řešeno. 
+i) Požadavky na postupné uvádění stavby do provozu (užívání), požadavky na průběh a 
+způsob přípravy a realizace výstavby a další speciﬁcké požadavky 
+Hlučnost během výstavby nesmí překročit limity stanovené nařízením č. 272/2011 Sb., o ochraně zdraví před 
+nepříznivými účinky hluku. 
+Pokud se vyhodnocením změřených hodnot prokáže, že přes uplatněná opatření k odstranění nebo 
+minimalizaci hluku překračují ekvivalentní hladiny hluku A stanovené pro osmihodinovou směnu přípustný 
+expoziční limit 80 dB, musí zaměstnavatel poskytnout zaměstnancům osobní ochranné pracovní prostředky k 
+ochraně sluchu účinné v oblasti kmitočtů daného hluku. 
+Jestliže je překročen přípustný expoziční limit 85 dB, musí zaměstnavatel zajistit, aby osobní ochranné 
+pracovní prostředky zaměstnanci používali. 
+Max. přípustná hodnota L: 
+7-21 hod 65 dB (A) 
+21-7 hod 45 dB(A) 
+j) Návrh fází výstavby za účelem provedení kontrolních prohlídek 
+Zahájení stavby není známé a je podmíněné průběhem povolení stavby a výběrovému řízení na dodavatele. 
+Rozhodující dílčí termíny budou předmětem harmonogramu dodavatele, který se stane součástí smlouvy 
+o dodávce stavby. Předpokládaná doba realizace stavebních prací jsou 3 roky. 
+Předpokládané datum zahájení výstavby:  po nabytí právní moci společného povolení 
+Předpokládané datum ukončení výstavby :  9/2028 
+Plán kontrolních prohlídek stavby: 
+v průběhu realizace nových konstrukcí: 
+1) prohlídka po dokončení hrubé stavby 
+2) po dokončení technických instalací ZTI, Elektro,… 
+3) po dokončení prací na nenosných částech stavby (okna, dveře, příčky, omítky) 
+4) Závěrečná kontrolní prohlídka stavby konaná ve lhůtě do 15 dnů ode dne doručení oznámení stavebníka 
+stavebnímu úřadu o užívání stavby (dle §120 zákona), případně po doručení žádosti stavebníka o kolaudační 
+souhlas stavebnímu úřadu (dle §122 zákona). 
+Konkrétní termíny kontrolních prohlídek nemohou být prozatím známi z  důvodu prozatím probíhajícího 
+výběrového tenderu na prováděcí ﬁrmu. Po výběru prováděcí ﬁrmy bude vypracován kompletní plán výstavby, 
+který stavební úřad obdrží společně s konkrétními návrhy termínů a detailnějším popisem kontrolovaných částí 
+výstavby.  
+k) Dočasné objekty 
+Vzhledem k charakteru novostavby rodinného domu není řešeno. 
+V Brně dne 20. 02. 2026 vypracoval     Ing. arch. Vladimír Muzikář
+		 
+16

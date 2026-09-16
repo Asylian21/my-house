@@ -1,0 +1,28 @@
+{
+  "status": "ARITHMETIC_AND_LAYOUT_NOT_STRUCTURAL_APPROVAL",
+  "page_count": 3,
+  "page_size": "A3 landscape",
+  "scale": "1:100 at actual size",
+  "exact_four_routes": [
+    "R7",
+    "R1",
+    "R2",
+    "R4"
+  ],
+  "width_mm": 350,
+  "width_is_approved": false,
+  "references_surveyed": false,
+  "chains_and_350_widths": "PASS",
+  "six_perimeter_line_offsets": "PASS",
+  "eight_direct_face_dimensions": "PASS",
+  "visual_review": "PASS: final three-page PDF rendered and visually inspected; direct face dimensions and labels are legible without collisions.",
+  "pdf_sha256": "ec0affa3973640f14ac914ce17bd3fce75d928c725d593bfa2595828d5174758",
+  "independent_arithmetic_review": "PASS: source_geometry independently verified all eight direct face dimensions and three dimensional chains.",
+  "unchanged_rib_geometry": "PASS: route records exactly match prior revision.",
+  "pdf_text_dimensions": "PASS: all eight face dimensions present on ZK-03.",
+  "rendered_pages": [
+    "drawings/technical/sheet-1.png",
+    "drawings/technical/sheet-2.png",
+    "drawings/technical/sheet-3.png"
+  ]
+}

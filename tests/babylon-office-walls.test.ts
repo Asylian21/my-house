@@ -19,7 +19,7 @@ it('renders revised office walls and the lobby mirror at their shared plan faces
     for(const id of ['IW-STUDY-NORTH','C-ENTRY-OFFICE-EAST','C-ENTRY-OFFICE-RETURN']) {
       const r=INTERIOR_WALLS.find(w=>w.id===id)!.rectMm;
       const meshes=scene.meshes.filter(m=>m.name.startsWith(`Vnútorná stena ${id} ·`));
-      expect(meshes,id).toHaveLength(id==='IW-STUDY-NORTH'?6:1);
+      expect(meshes,id).toHaveLength(id==='IW-STUDY-NORTH'?5:1);
       const boxes=meshes.map(mesh=>{
         mesh.computeWorldMatrix(true);
         expect(mesh.checkCollisions).toBe(mesh.metadata?.acousticMaterial!=='mineral-wool');
@@ -33,10 +33,10 @@ it('renders revised office walls and the lobby mirror at their shared plan faces
       expect(boxes.at(-1)!.maximumWorld.z).toBeCloseTo(sceneZM(r.y0),5);
       if(id==='IW-STUDY-NORTH'){
         // From shower to office: plaster, Leier, plaster, resilient lining cavity,
-        // then two separate Silentboards. No additional full-wall collision solid.
-        boxes.forEach((box,i)=>expect(box.maximumWorld.z-box.minimumWorld.z).toBeCloseTo([0.015,0.100,0.015,0.045,0.0125,0.0125][i],5));
+        // then one Silentboard. No additional full-wall collision solid.
+        boxes.forEach((box,i)=>expect(box.maximumWorld.z-box.minimumWorld.z).toBeCloseTo([0.015,0.100,0.015,0.045,0.0125][i],5));
         boxes.slice(1).forEach((box,i)=>expect(box.minimumWorld.z).toBeCloseTo(boxes[i].maximumWorld.z,5));
-        expect(meshes.filter(mesh=>mesh.metadata?.acousticMaterial==='gypsum-board')).toHaveLength(2);
+        expect(meshes.filter(mesh=>mesh.metadata?.acousticMaterial==='gypsum-board')).toHaveLength(1);
         const cavity=meshes.find(mesh=>mesh.metadata?.acousticMaterial==='mineral-wool')!;
         expect(cavity.metadata).toMatchObject({acousticAssembly:'H200',acousticWall:'AK-03',acousticThicknessMm:45});
         expect(cavity.checkCollisions).toBe(false);

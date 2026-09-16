@@ -1,5 +1,8 @@
 # Priestorový pohľad na základy C/B/B
 
+
+
+Revízia **16. 9. 2026** zužuje iba [vnútornú priečku garáže na SP14, 140 mm](construction-garage-partition.md). R6 aj os B sa ďalej odvodzujú od zachovaného vonkajšieho úseku `C-GARAGE-SPINE-N`, teraz samostatne od Y 8 749 mm. Poloha ani význam navrhovaných základových trás sa nemenia.
 Na požiadavku stavebníka z 14.09.2026 je doplnená axonometria podobná dodanej obrazovej ukážke: odkrytý obvod, vnútorné rebrá a zväčšené napojenie. Je to geometricky generovaný vektorový obrázok z aktuálneho pôdorysu, nie obrázok upravený generatívnou AI. Priložená ukážka určuje spôsob zobrazenia, nie konštrukčné rozmery alebo výstuž tohto domu.
 
 Stavebník následne spresnil, že **doska je už vyliata aj pod lodžiou a krytou terasou**. Aktuálna ilustrácia preto zahŕňa celý L-obrys modelu vrátane oboch plôch. Ide o oznámený rozsah (`CLIENT_REPORTED`), nie geodeticky zameranú dosku. Obrázok má **ulicu dole, garáž vľavo a krídlo s obývačkou vpravo**, bez zrkadlenia. Toto spresnenie nemení geometriu domu ani hotový pôdorys C/B/B.
@@ -46,30 +49,21 @@ Prerušovaný sivý pás pod modrou časťou je **grafický náznak pokračovani
 | R4 | (21393;19185) → (27691;19185) | Pod zadnou stenou obývačky `NN2`, na hranici domu a zahrnutej krytej terasy. Súvislá návrhová trasa zahŕňa aj úsek pod O8; nepotvrdzuje existujúci pás. |
 | R5 | (6794;8897) → (10993;8897) | Pod zadnou stenou garáže `L` pri zahrnutej lodžii, vrátane úseku pod D6. Napojenie na R6 je návrhový uzol. |
 | R6 | (10993;8897) → (10993;10849) | Bočný styk lodžie podľa `C-GARAGE-SPINE-N`. Zdroj má rolu `PARTITION`; ide o koordináciu trasy pod stenou, nie potvrdenie jej nosnej funkcie. |
-| R7 | (15093;3354) → (15093;10849) | **Kandidátny spojitý podporný pás na výpočet vlastnej hmotnosti SA30 AK-01/AK-02.** Dve zaťažené časti sú Y3504–6552 a Y7651–10699. Nad úsekom Y6552–7651 zostáva voľná chodba; prípadná kontinuita pásu je iba pod podlahou. |
+| R7 | (15093;3354) → (15093;10849) | **Kandidátny spojitý podporný pás na výpočet vlastnej hmotnosti SM30 AK-01/AK-02.** Dve zaťažené časti sú Y3504–6552 a Y7651–10699. Nad úsekom Y6552–7651 zostáva voľná chodba; prípadná kontinuita pásu je iba pod podlahou. |
 
 Výška 600 mm pochádza z požiadavky stavebníka. **Zelená šírka 300 mm je výlučne grafická šírka pre čitateľný objem** (`graphicWidthIsDesign: false`); požadovaná ani staticky navrhnutá šírka rebra nie je týmto vybraná. Každá trasa má `designWidthMm`, `designReinforcement` a `foundationSupport` nastavené na `null`. Žiadna z nich nie je vydaná ako realizovateľný nosník uložený iba v zásype. Návrhové trasy sa musia uzavrieť spolu so sústavou strechy a drevených stropov, reakciami a geotechnickým návrhom.
 
-SA30 je pri R7 zahrnutá svojou vlastnou hmotnosťou a naďalej zostáva nenosnou priečkou `PARTITION`. Strecha ani drevený strop sa na ňu neukladajú. H200 a garážové priečky sa tiež nepremenúvajú na nosné steny; ich vlastná hmotnosť sa musí zahrnúť do návrhu dosky a podopretia. Obrázok nie je výpočet podopretia každej priečky.
+SM30 je pri R7 zahrnutá svojou vlastnou hmotnosťou a naďalej zostáva nenosnou priečkou `PARTITION`. Strecha ani drevený strop sa na ňu neukladajú. H200 a garážové priečky sa tiež nepremenúvajú na nosné steny; ich vlastná hmotnosť sa musí zahrnúť do návrhu dosky a podopretia. Obrázok nie je výpočet podopretia každej priečky.
 
-## R7 a zaťaženie od SA30
+## R7 a zaťaženie od SM30
 
-Pripomienka stavebníka dopĺňa chýbajúcu trasu podopretia ťažkých akustických priečok. `AK-02 / C-OPEN-HALL-S` má Y3504–6552 a `AK-01 / C-OPEN-HALL-N` Y7651–10699. Každá je dlhá **3048 mm**; obidve majú X14943–15243. Skladba v [acoustic-walls.ts](/Users/davidzita/www/dom/lib/acoustic-walls.ts:11) je západný murovaný plášť X14943–15043, vata X15043–15143 a východný murovaný plášť X15143–15243. Nie je to plná murovaná stena hrúbky 300 mm.
+Od 16. 9. 2026 majú AK-01 a AK-02 každá **jednu 300 mm vrstvu klasickej obvodovej tehly**. Účel odhlučnenia zostáva. Obe zaberajú X14943–15243 mm; AK-02 má Y3504–6552 a AK-01 Y7651–10699 mm. Každý úsek je dlhý 3048 mm, modelová výška oboch murovaných telies je Z0–3125 mm.
 
-Všetkých šesť skutočných modelových komponentov má **Z0–3125 mm**, zhodne s [generátorom stien](/Users/davidzita/www/dom/lib/babylon-interior.ts:777). Svetlá výška miestností sa tu nepoužíva namiesto výšky muriva. Osi murovaných plášťov X14993 a X15193 ležia **±100 mm od kandidátnej osi R7 X15093**. Pás medzi obvodovými osami má návrhovú dĺžku 7495 mm, ale priame zaťaženie priečkami sa vyznačí iba v dvoch skutočných úsekoch, spolu 6096 mm. **Chodba medzi nimi ostáva voľná v celých 1099 mm.** Do chodby sa nepridáva stena, stĺp ani zvýšený betónový prah.
+Os muriva X15093 je zhodná s kandidátnou osou R7. Dva priamo zaťažené úseky majú spolu 6096 mm; návrhová trasa R7 medzi obvodovými osami má 7495 mm. **Chodba Y6552–7651 ostáva voľná v celých 1099 mm.** Prípadná kontinuita pásu cez ňu je iba pod podlahou.
 
-Hmotnostný podklad je [technický list výrobcu LeierPLAN 10 N+F, strana 1](https://www.leier.sk/wp-content/uploads/2025/07/Technicky-list-LP10-NF.pdf). Uvádza pre jeden 100 mm plášť murivo bez omietky 73 kg/m². Pri modelovej výške 3,125 m sa pre dva plášte počíta:
+**Hmotnosť novej steny zatiaľ nie je určená.** Konkrétny výrobok obvodovej tehly a malty treba zvoliť a doplniť jeho deklarované údaje. Pôvodný prepočet dvojplášťovej SA30 je neaktuálny a nepoužíva sa v ZA-01, ZA-03 ani strojovom výkaze zaťaženia. Bežné omietky, kúpeľňové povrchy a vybavenie sa doplnia osobitne.
 
-| Hmotnostná veličina | Prepočet | Výsledok |
-| --- | --- | --- |
-| Dva plášte muriva bez omietky | 2 × 73 | 146 kg/m² steny |
-| Hmotnosť na meter priečky | 146 × 3,125 | 456,25 kg/m |
-| Jeden úsek AK-01 alebo AK-02 | 456,25 × 3,048 | 1390,65 kg |
-| Oba úseky spolu | 2 × 1390,65 | **2781,30 kg** |
-
-Ide o vypočítanú hmotnosť muriva bez omietok podľa technického údaja, nie zameranú hmotnosť stavby ani konečné návrhové zaťaženie `q`. Doplniť treba vatu, omietky, obklady, kotvené vybavenie a skutočné výškové založenie plášťov; modelové Z0 samo neurčuje realizačnú pätu muriva voči nosnej doske. Pri výpočte sa overí konkrétny dodaný výrobok a spôsob murovania.
-
-Obidva plášte treba posúdiť ako dve zaťažovacie línie. Rozdielne povrchy alebo vybavenie môžu zmeniť ich pomer; výslednica sa nesmie bez preverenia umiestniť do stredu R7. Šírka, výstuž, spôsob uloženia pásu, prenos cez dosku a nadväznosť na existujúce základy zostávajú otvorené. Spoločná kandidátna trasa sama nepotvrdzuje vyhovujúci akustický detail ani neoprávňuje vytvoriť neoverené tuhé mosty medzi plášťami.
+R7 nepotvrdzuje únosnosť dosky, nosnú funkciu stien, prierez, výstuž ani uloženie pásu. Preveriť treba skutočnú pätu muriva, prenos cez existujúcu dosku a cestu síl do základov; modelové Z0 nie je realizačné výškové založenie.
 
 ## Terasy a detail J
 
@@ -81,24 +75,6 @@ Doska a zásyp sú v hlavnom pohľade odokryté pre čitateľnosť; nejde o tvrd
 
 Tento list dopĺňa požadovaný spôsob zobrazenia. Nenahrádza pôdorys výkopov, zameranie rozostavaných základov alebo výkres výstuže.
 
-## Aktuálna revízia R7 — overenie exportu
+## Aktuálna revízia R7
 
-Finálne PDF z 14.09.2026 o **21:42:36 / 21:42:56 CEST** majú po 25 listov. Geometria SA30, kandidátna os R7, dva zaťažené úseky a prepočet hmotnosti sú overené proti exportovanému modelu. Nový modul `partition-loads.mjs` číta výšku priamo zo štyroch murovaných modelových plášťov; oddelene uchováva čisté tehly a výrobcom deklarované murivo bez omietky. Súčet aj prepočet na meter sú reprodukovateľné. Chýbajúce doplnkové hmotnosti, konečné návrhové zaťaženie, prierez, výstuž a podopretie zostávajú neurčené.
-
-Prešli odtlačky zdrojov, geometrické a výpočtové invarianty, kontrola neprepisovania roly `PARTITION`, orientácia celého L-obrysu a kontrola pretečenia všetkých 25 strán. Fyzické formáty A1 a 20 mm kalibračné úsečky sú overené na oboch PDF. Cielený ESLint a `git diff --check` prešli.
-
-ZA-01, ZA-02 a ZA-03 boli nanovo vykreslené z oboch PDF a vizuálne skontrolované v celku aj detaile. Tabuľka uvádza 456,25 kg/m, 1390,65 kg na stenu a 2781,3 kg spolu. Popis R7 je posunutý mimo chodby s odkazovou čiarou; oba skutočné zaťažené úseky sú oddelené a medzera je viditeľná. Pravá legenda a spodné texty sú bez kolízií. Samostatné PNG majú 3280 × 2060 px; v každom pixeli mono verzie platí R = G = B. Pôdorys ani aplikačný 3D model sa týmto doplnením nemenili; build aplikácie sa neopakoval. Tieto kontroly **nie sú statickým posúdením ani potvrdením dostatočnosti R1–R7**.
-
-## Predchádzajúce overenie celého L-obrysu s R1–R6
-
-Revízia `CLIENT-CONSTRUCTION-20260914-FULL-CAST-FOOTPRINT`, PDF z 14.09.2026 o 20:45:57 a 20:46:15 CEST: oba súbory majú 25 listov. Prešli odtlačky zdrojov, geometrické kontroly celého obrysu a trás R1–R6, orientácia ulice a ochrana neznámych údajov. R6 zostáva koordináciou pod modelovou priečkou, nie premenovaním priečky na nosnú stenu. Automatická kontrola nenašla pretečenie obsahu; fyzické A1 rozmery a 20 mm kontrolné úsečky sú overené na všetkých listoch. Cielený ESLint a `git diff --check` prešli.
-
-Vtedajší ZA-03 bol nanovo vykreslený z oboch PDF a vizuálne prezretý v celku aj detaile. LODŽIA bola plne čitateľná; R5 a R6 ju neprekrývali. Orientácia, celý obvod, všetkých šesť trás a detail J boli bez kolízií a orezu. Overené boli aj oba PNG 3280 × 2060 px a upravené popisy registra/ZA-02. V každom pixeli samostatného mono PNG platilo R = G = B. Pôdorys ani aplikačný 3D model sa nemenili; build aplikácie sa pri tejto úprave dokumentácie neopakoval. Kontroly nie sú statickým posúdením a nepokrývajú neskoršie doplnenie R7.
-
-## Predchádzajúce overenie exportu
-
-Nasledujúci záznam sa týka **predchádzajúcej verzie s ustúpeným obvodom a trasami R1–R3**. Jeho výsledky nepokrývajú následný celý L-obrys, opravenú orientáciu ani trasy R4–R7.
-
-Predchádzajúce PDF z 14.09.2026 o 20:07:15 a 20:07:32 CEST mali po 25 listov. Generovanie, odtlačky vstupov, geometrické kontroly a ochrana neznámych hodnôt prešli; automatická kontrola nezistila pretečenie obsahu. Overené boli fyzické formáty A1 a 20 mm kontrolné úsečky na všetkých listoch. Cielený ESLint a `git diff --check` prešli.
-
-Vtedajší list ZA-03 bol z farebného aj čiernobieleho PDF nanovo vykreslený a vizuálne prezretý. Skontrolované boli aj samostatné PNG 3280 × 2060 px, register a upravený popis ZA-02. Bez kolízií alebo orezania; detail J a popisy kót boli čitateľné. Každý pixel samostatného mono PNG mal R = G = B. Žiadne z týchto overení nie je statickým výpočtom. Aplikačný model sa touto ilustráciou nemenil a jeho build sa neopakoval.
+Zdrojový modul `partition-loads.mjs` číta dve súvislé 300 mm murované telesá a ich skutočnú modelovú výšku. Hmotnosti sú explicitne `null`, so stavom `PRODUCT_SELECTION_REQUIRED`; nie sú nulovým zaťažením. Exportný overovač kontroluje jednu vrstvu na stenu, zachovanú geometriu, kandidátnu os R7 a rolu `PARTITION`. Staré exportné hodnoty SA30 sa nesmú považovať za výsledok pre SM30.

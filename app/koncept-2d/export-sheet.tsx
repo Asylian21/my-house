@@ -358,7 +358,7 @@ function legendColumns(level:ExportLevel,pal:Palette,color:boolean,fs:number) {
   if(level>=3)c1.row('c2',chainSwatch(pal.dim,[0,.3,.36,.7,1]),'Reťazce cez miestnosti: svetlé šírky a hrúbky stien za sebou · červené čísla pri stenách = svetlé rozmery miestnosti');
   if(level>=3)c1.row('c3',chainSwatch(pal.dim,[0,.4,.6,1]),'Poloha dverí: odstupy stavebného otvoru od stien miestnosti, do ktorej sa krídlo otvára');
   c1.row('ax',(sx,sy,w,h)=><g><circle cx={sx+h/2} cy={sy+h/2} r={h/2} fill="#fff" stroke={pal.ink} strokeWidth={.25}/><text x={sx+h/2} y={sy+h*.72} fontSize={fs*.8} fontWeight={700} textAnchor="middle" fill={pal.ink}>A</text><circle cx={sx+w-h/2} cy={sy+h/2} r={h/2} fill="#fff" stroke={pal.ink} strokeWidth={.25}/><text x={sx+w-h/2} y={sy+h*.72} fontSize={fs*.8} fontWeight={700} textAnchor="middle" fill={pal.ink}>1</text></g>,'Modulové osi: písmená A–F po šírke (↔), čísla 1–6 po hĺbke (↕); „C–D / 1–2“ = pole medzi osami – jednoznačná poloha aj v čiernobielej tlači');
-  c1.para('Kóty v mm podľa 3D modelu, spravidla bez omietok a obkladov. AK-03 / H200: 200 mm vrátane 2 × 15 mm omietky a 2 × 12,5 mm dosky; finálne povrchy navyše. Kóty majú prednosť pred odmeriavaním.');
+  c1.para('Kóty v mm podľa 3D modelu, spravidla bez omietok a obkladov. AK-03 / H200: 187,5 mm vrátane 2 × 15 mm omietky a 1 × 12,5 mm dosky; finálne povrchy navyše. Kóty majú prednosť pred odmeriavaním.');
 
   c2.heading('OTVORY');
   c2.row('o',(sx,sy,w,h)=><PaperPill x={sx+w/2} y={sy+h/2} text="O#" color={pal.pill.O} fs={fs}/>,'okno alebo pevné presklenie · rozmery v tabuľke otvorov');

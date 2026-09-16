@@ -30,10 +30,10 @@ export function deriveFoundationIllustration(d){
   ];
   const kid=wall('C-KID-ENTRY-WALL').rectMm,kitchen=wall('C-KITCHEN-BEARING-WALL').rectMm;
   const entry=wall('C-ENTRY-OFFICE-EAST').rectMm,ret=wall('C-ENTRY-OFFICE-RETURN').rectMm;
-  const partitionWalls=d.acousticWalls.filter(s=>s.assembly.code==='SA30').map(s=>({code:s.mark,wallId:s.wallId,rectMm:wall(s.wallId).rectMm}));
-  if(partitionWalls.length!==2)throw new Error('Review SA30 support routes after assembly change');
+  const partitionWalls=d.acousticWalls.filter(s=>s.assembly.code==='SM30').map(s=>({code:s.mark,wallId:s.wallId,rectMm:wall(s.wallId).rectMm}));
+  if(partitionWalls.length!==2)throw new Error('Review SM30 support routes after assembly change');
   const partitionAxis=mid(partitionWalls[0].rectMm.x0,partitionWalls[0].rectMm.x1);
-  if(partitionWalls.some(w=>mid(w.rectMm.x0,w.rectMm.x1)!==partitionAxis))throw new Error('SA30 walls no longer share a support axis');
+  if(partitionWalls.some(w=>mid(w.rectMm.x0,w.rectMm.x1)!==partitionAxis))throw new Error('SM30 walls no longer share a support axis');
   const ribs=[
     {id:'R1',points:[[mid(kid.x0,kid.x1),axis('S')],[mid(kid.x0,kid.x1),axis('N')]],sourceKind:'MODEL_LOAD_BEARING_WALL',sourceIds:['C-KID-ENTRY-WALL','C-GARDEN-KID-EAST'],note:'Pod dvojicou nosných úsekov pri izbách; spojenie pod chodbou je návrh.'},
     {id:'R2',points:[[axis('WW'),mid(kitchen.y0,kitchen.y1)],[axis('E'),mid(kitchen.y0,kitchen.y1)]],sourceKind:'MODEL_LOAD_BEARING_WALL',sourceIds:['C-KITCHEN-BEARING-WALL','C-KITCHEN-BEARING-WALL-E'],note:'Pod kuchynskou nosnou líniou; západný prenos a podopretie sa musia vypočítať.'},
@@ -41,7 +41,7 @@ export function deriveFoundationIllustration(d){
     {id:'R4',points:[[axis('WW'),axis('NN2')],[axis('E'),axis('NN2')]],sourceKind:'FACADE_BOUNDARY',sourceIds:['NN2'],note:'Vnútorná trasa pod zadnou stenou obývačky medzi domom a zahrnutou krytou terasou, vrátane úseku pod O8.'},
     {id:'R5',points:[[axis('W'),axis('L')],[loggiaAxis,axis('L')]],sourceKind:'FACADE_BOUNDARY',sourceIds:['L'],note:'Vnútorná trasa pod zadnou stenou garáže pri zahrnutej lodžii, vrátane úseku pod D6.'},
     {id:'R6',points:[[loggiaAxis,axis('L')],[loggiaAxis,axis('N')]],sourceKind:'PARTITION_BOUNDARY_COORDINATION',sourceIds:['C-GARAGE-SPINE-N'],note:'Bočný styk lodžie; zdrojová stena je PARTITION, jej nosná funkcia nie je týmto potvrdená.'},
-    {id:'R7',points:[[partitionAxis,axis('S')],[partitionAxis,axis('N')]],sourceKind:'OWN_WEIGHT_PARTITION_SUPPORT',sourceIds:partitionWalls.map(w=>w.wallId),loadedIntervalsMm:partitionWalls.map(w=>({code:w.code,from:w.rectMm.y0,to:w.rectMm.y1})),note:'Kandidátny spojitý pás na výpočet pod vlastnou hmotnosťou dvoch SA30. Chodba ostáva voľná; spojenie prechádza iba pod podlahou. Nie je to schválenie zásahu do existujúcej dosky.'},
+    {id:'R7',points:[[partitionAxis,axis('S')],[partitionAxis,axis('N')]],sourceKind:'OWN_WEIGHT_PARTITION_SUPPORT',sourceIds:partitionWalls.map(w=>w.wallId),loadedIntervalsMm:partitionWalls.map(w=>({code:w.code,from:w.rectMm.y0,to:w.rectMm.y1})),note:'Kandidátny spojitý pás na výpočet pod vlastnou hmotnosťou dvoch SM30. Chodba ostáva voľná; spojenie prechádza iba pod podlahou. Nie je to schválenie zásahu do existujúcej dosky.'},
   ].map(r=>({...r,status:'COORDINATION_ROUTE_PROPOSAL',designWidthMm:null,designReinforcement:null,foundationSupport:null,heightRequestedMm:d.clientBrief.foundations.requestedRibs.heightMm}));
   return {
     status:'COORDINATION_ILLUSTRATION_NOT_FOR_CONSTRUCTION',closedOutline,castOutline,perimeterAxis,
@@ -196,16 +196,15 @@ export function foundationAxonSvg(d,color=true){
   out+=dim([...a.castOutline[0],0],[...a.castOutline[1],0],[0,48],`${number(d.house.lowerBar.widthMm)} · ULICA / VSTUP`,p,c.red);
   const right0=a.castOutline[1],right1=a.castOutline[2];
   out+=dim([...right0,0],[...right1,0],[43,0],`${number(right1[1]-right0[1])} · vrátane krytej terasy`,p,c.red);
-  const load=d.partitionLoads;
-  out+=txt(40,822,'R7 · PODOPRETIE VLASTNEJ HMOTNOSTI SA30 NA VÝPOČET',19,700,c.greenLine);
-  out+=wrap(40,851,`AK-01 + AK-02: ${number(load.walls[0].unplastered.kgPerM)} kg/m muriva bez omietky, spolu ${number(load.totals.unplasteredKg)} kg. Povrchy a ďalšie vrstvy navyše. Čiarkovane sú označené iba zaťažené úseky; chodba ostáva voľná.`,1010,17).svg;
+  out+=txt(40,822,'R7 · PODOPRETIE VLASTNEJ HMOTNOSTI SM30 NA VÝPOČET',19,700,c.greenLine);
+  out+=wrap(40,851,'AK-01 + AK-02: jedna 300 mm obvodová tehla. Hmotnosť čaká na výber výrobku; povrchy navyše. Čiarkovane sú označené iba dva zaťažené úseky, chodba ostáva voľná.',1010,17).svg;
   out+=wrap(40,923,'Doska vrátane terás je podľa stavebníka vyliata; tu je odkrytá. R7 je návrh na posúdenie existujúcej dosky, nie pokyn na jej rezanie alebo betonáž.',1010,17,'#713e37',700).svg;
 
   const rx=1152,rw=445;
   out+=txt(rx,181,'ČO V OBRÁZKU VIDÍŠ',18,700);
   const items=[
     ['Z1',c.blueLine,'Obvod vrátane oboch terás','350 × 600 mm podľa zadania. Líca a skutočné rozmery treba zamerať.'],
-    ['R',c.greenLine,'R1 až R7 · návrhové trasy','R1–R6 podľa stien a terás. R7 pod vlastnou hmotnosťou SA30. Výška 600 mm; šírka, uloženie a výstuž na výpočet.'],
+    ['R',c.greenLine,'R1 až R7 · návrhové trasy','R1–R6 podľa stien a terás. R7 pod vlastnou hmotnosťou SM30. Výška 600 mm; šírka, uloženie a výstuž na výpočet.'],
     ['J',c.red,'Napojenie rebra na obvod','Označené miesto na návrh spojenia. Obrázok nepredpisuje priemery, počty ani kotvenie prútov.'],
   ];
   let iy=221;
@@ -232,6 +231,6 @@ export function foundationAxonSvg(d,color=true){
 export function foundationAxonSheet(d,draw,color){
   const figure=foundationAxonSvg(d,color).replace('width="1640" height="1030"','x="12" y="42" width="817" height="440" preserveAspectRatio="xMidYMid meet"');
   return draw.sheet(d,'D1.1.ZA-03','Základy · priestorový pohľad na pásy a rebrá',figure,
-    'Celý L-obrys vrátane lodžie a krytej terasy. R7 dopĺňa kandidátny pás pod vlastnou hmotnosťou SA30; priečky zostávajú nenosné pre strechu a strop. R1–R7 nemajú potvrdené prierezy, uloženie ani výstuž. Podklad a zdroj hmotnosti: ZA-01.',
+    'Celý L-obrys vrátane lodžie a krytej terasy. R7 dopĺňa kandidátny pás pod vlastnou hmotnosťou SM30; priečky zostávajú nenosné pre strechu a strop. R1–R7 nemajú potvrdené prierezy, uloženie ani výstuž. Podklad a zdroj hmotnosti: ZA-01.',
     'axonometria');
 }

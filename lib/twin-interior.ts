@@ -51,6 +51,10 @@ export const INTERIOR_DOORS: readonly original.InteriorDoor[] = ACTIVE_CONCEPT.d
 const bathroomEntry=INTERIOR_DOORS.find(door=>door.id==='DOOR-102-105')!;
 export const BATHROOM_FITOUT={
   ...serviceBathroomFitout,
+  // Wall-mounted radiator follows the new bathroom face; shower and glazing stay put.
+  towelRadiator:{...serviceBathroomFitout.towelRadiator,footprintMm:{...serviceBathroomFitout.towelRadiator.footprintMm,
+    y0:INTERIOR_WALLS.find(w=>w.id==='IW-STUDY-NORTH')!.rectMm.y1,
+    y1:INTERIOR_WALLS.find(w=>w.id==='IW-STUDY-NORTH')!.rectMm.y1 + serviceBathroomFitout.towelRadiator.footprintMm.y1-serviceBathroomFitout.towelRadiator.footprintMm.y0}},
   // The clear landing begins beyond the complete centred doorway, including its frame.
   clearFloorRectMm:{...serviceBathroomFitout.clearFloorRectMm,y0:bathroomEntry.startMm+bathroomEntry.widthMm},
 };
@@ -142,12 +146,16 @@ export const ENSUITE_BATHROOM_FITOUT:EnsuiteBathroomFitout={
 
 // Sink and shelves use the new alcove; the full parking lane and garden door stay free.
 const garageBay=ACTIVE_CONCEPT.garageBay!;
+const garagePartition=INTERIOR_WALLS.find(wall=>wall.id==='C-GARAGE-PARTITION')!.rectMm;
+const originalMower=original.GARAGE_FITOUT.mower;
 export const GARAGE_FITOUT={
   ...original.GARAGE_FITOUT,id:'C-GARAGE-FITOUT',sourceId:ACTIVE_LAYOUT_ID,entryDoorId:null,
   utilitySink:{...original.GARAGE_FITOUT.utilitySink,
     footprintMm:rect(garageBay.x1-500,3704,garageBay.x1,4304),innerBasinMm:rect(garageBay.x1-445,3774,garageBay.x1-65,4234)},
   storageRack:{...original.GARAGE_FITOUT.storageRack,
     footprintMm:ACTIVE_CONCEPT.garageShelves[0],facing:'SOUTH' as const},
+  mower:{...originalMower,
+    footprintMm:shift(originalMower.footprintMm,garagePartition.x0-20-originalMower.footprintMm.x1)},
   overSinkShelves:{...original.GARAGE_FITOUT.overSinkShelves,
     footprintMm:rect(garageBay.x1-290,3654,garageBay.x1,4354)},
   sinkServiceRectMm:rect(garageBay.x1-1300,3704,garageBay.x1-500,4304),

@@ -10,7 +10,7 @@ import { INTERIOR_WALL_MESHES, WALL_SOLIDS, WALL_TYPES_USED, interiorWallClass }
 import { buildInterior } from '../lib/babylon-interior';
 import { sceneXM, sceneZM } from '../lib/twin-render-frame';
 
-describe('SA30 and H200 acoustic walls in C/B/B', () => {
+describe('SM30 and H200 acoustic walls in C/B/B', () => {
   it('keeps the two approved footprints and the 1099 mm hallway opening', () => {
     expect(ACTIVE_ACOUSTIC_WALLS).toHaveLength(3);
     const south=ACTIVE_ACOUSTIC_WALLS.find(w=>w.mark==='AK-02')!;
@@ -18,56 +18,56 @@ describe('SA30 and H200 acoustic walls in C/B/B', () => {
     expect(south.rectMm).toEqual({x0:14943,x1:15243,y0:3504,y1:6552});
     expect(north.rectMm).toEqual({x0:14943,x1:15243,y0:7651,y1:10699});
     expect(north.rectMm.y0-south.rectMm.y1).toBe(1099);
-    for(const wall of ACTIVE_ACOUSTIC_WALLS.filter(w=>w.assembly.code==='SA30')){
-      expect(wall.layers.map(l=>l.rectMm.x1-l.rectMm.x0)).toEqual([100,100,100]);
-      expect(wall.layers.map(l=>l.rectMm.x0)).toEqual([14943,15043,15143]);
+    for(const wall of ACTIVE_ACOUSTIC_WALLS.filter(w=>w.assembly.code==='SM30')){
+      expect(wall.layers.map(l=>l.rectMm.x1-l.rectMm.x0)).toEqual([300]);
+      expect(wall.layers.map(l=>l.rectMm.x0)).toEqual([14943]);
       expect(unionBounds(wall.layers.map(l=>l.rectMm))).toEqual(wall.rectMm);
     }
     const historical=createConcept({...DEFAULT_CONCEPT,layout:'private'});
     expect(historical.walls.flatMap(acousticWallLayers)).toEqual([]);
   });
 
-  it('exports whole 300 mm assemblies while hatching their 100 mm ceramic leaves as masonry', () => {
-    for(const wall of ACTIVE_ACOUSTIC_WALLS.filter(w=>w.assembly.code==='SA30')){
+  it('exports whole 300 mm assemblies while hatching their single ceramic layer as masonry', () => {
+    for(const wall of ACTIVE_ACOUSTIC_WALLS.filter(w=>w.assembly.code==='SM30')){
       const item=PLAN_ITEM_BY_ID.get(wall.mark)!;
-      expect(item.meshes).toHaveLength(3);
+      expect(item.meshes).toHaveLength(1);
       expect(item.rect).toEqual(wall.rectMm);
       const solids=WALL_SOLIDS.filter(s=>s.id===wall.mark);
       expect(solids).toHaveLength(1);
       expect(solids[0].thickness).toBe(300);
-      expect(solids[0].type.code).toBe('SA30');
+      expect(solids[0].type.code).toBe('SM30');
     }
-    const layers=INTERIOR_WALL_MESHES.filter(w=>acousticMeshInfo(w.mesh.name));
-    expect(layers).toHaveLength(12);
-    expect(layers.filter(w=>interiorWallClass(w.mesh,w.kind)==='partition')).toHaveLength(5);
-    expect(layers.filter(w=>interiorWallClass(w.mesh,w.kind)==='mineral-wool')).toHaveLength(3);
-    expect(WALL_TYPES_USED.find(w=>w.type.code==='SA30')?.range).toBe('300');
+    const layers=INTERIOR_WALL_MESHES.filter(w=>acousticMeshInfo(w.mesh.name)?.assembly.code==='SM30');
+    expect(layers).toHaveLength(2);
+    expect(layers.filter(w=>interiorWallClass(w.mesh,w.kind)==='partition')).toHaveLength(2);
+    expect(layers.filter(w=>interiorWallClass(w.mesh,w.kind)==='mineral-wool')).toHaveLength(0);
+    expect(WALL_TYPES_USED.find(w=>w.type.code==='SM30')?.range).toBe('300');
   });
 
-  it('exports the H200 leaves on the correct room sides inside one 200 mm dimension', () => {
+  it('exports the H200 leaves on the correct room sides inside one 187.5 mm dimension', () => {
     const wall=ACTIVE_ACOUSTIC_WALLS.find(w=>w.mark==='AK-03')!;
     expect(wall.assembly).toBe(OFFICE_ACOUSTIC_ASSEMBLY);
-    expect(wall.layers.map(l=>l.rectMm.y1-l.rectMm.y0)).toEqual([12.5,12.5,45,15,100,15]);
-    expect(wall.layers.map(l=>l.rectMm.y0)).toEqual([6402,6414.5,6427,6472,6487,6587]);
+    expect(wall.layers.map(l=>l.rectMm.y1-l.rectMm.y0)).toEqual([12.5,45,15,100,15]);
+    expect(wall.layers.map(l=>l.rectMm.y0)).toEqual([6364.5,6377,6422,6437,6537]);
     expect(unionBounds(wall.layers.map(l=>l.rectMm))).toEqual(wall.rectMm);
     const item=PLAN_ITEM_BY_ID.get('AK-03')!;
-    expect(item.meshes).toHaveLength(6);
-    expect(wall.layers.slice(0,2).map(l=>l.material)).toEqual(['gypsum-board','gypsum-board']);
+    expect(item.meshes).toHaveLength(5);
+    expect(wall.layers.filter(l=>l.material==='gypsum-board').map(l=>l.id)).toEqual(['SILENTBOARD-INNER']);
     expect(OFFICE_ACOUSTIC_ASSEMBLY.requiredRwDb).toBe(51);
     expect(OFFICE_ACOUSTIC_ASSEMBLY).not.toHaveProperty('declaredRwDb');
     expect(item.rect).toEqual(wall.rectMm);
     expect(item.name).toContain('H200');
-    expect(WALL_SOLIDS.filter(w=>w.id==='AK-03')).toMatchObject([{thickness:200,type:{code:'H200'}}]);
-    expect(WALL_TYPES_USED.find(w=>w.type.code==='H200')?.range).toBe('200');
+    expect(WALL_SOLIDS.filter(w=>w.id==='AK-03')).toMatchObject([{thickness:187.5,type:{code:'H200'}}]);
+    expect(WALL_TYPES_USED.find(w=>w.type.code==='H200')?.range).toBe('187.5');
     expect(INTERIOR_WALL_MESHES.filter(w=>interiorWallClass(w.mesh,w.kind)==='plaster')).toHaveLength(2);
   });
 
-  it('builds twelve real layers at the selected faces with solid leaves and noncollidable cavities', () => {
+  it('builds seven real layers at the selected faces with solid leaves and noncollidable cavities', () => {
     const engine=new NullEngine(),scene=new Scene(engine),material=new PBRMaterial('test',scene);
     try {
       buildInterior({scene,livingLayout:'B',heatingLayout:'B',anisotropy:1,wall:material,soffit:material,glassFrame:material,chimneyMetal:material,timber:material,register:m=>m,realisticOnly:m=>m,castShadow:m=>m});
       const meshes=scene.meshes.filter(m=>m.metadata?.acousticAssembly);
-      expect(meshes).toHaveLength(12);
+      expect(meshes).toHaveLength(7);
       for(const wall of INTERIOR_RENDER_WALLS)for(const layer of acousticWallLayers(wall)){
         const mesh=meshes.find(m=>m.metadata.sourceWallId===wall.id&&m.metadata.acousticLayer===layer.id)!;
         expect(mesh).toBeDefined();

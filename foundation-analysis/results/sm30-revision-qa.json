@@ -1,0 +1,16 @@
+{
+  "report.pdf": {
+    "pages": 10,
+    "priorContentRetained": true,
+    "everyPageHasRevisionNotice": true,
+    "visualReview": "PASS_HEADER_NO_OVERLAP",
+    "sha256": "16746801049b72f4823f9c02fbb72c18a63b680c9e86c83e45178eb77aacc9f1"
+  },
+  "report-100mm.pdf": {
+    "pages": 5,
+    "priorContentRetained": true,
+    "everyPageHasRevisionNotice": true,
+    "visualReview": "PASS_HEADER_NO_OVERLAP",
+    "sha256": "55b2debc9dce40b3d987b5bd9d5b07bb444809ddfbd94621cae32369586b7e24"
+  }
+}

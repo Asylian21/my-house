@@ -4,6 +4,10 @@
 
 ## Zdroj rozmerov
 
+Revízia 16. 9. 2026: [vnútorná priečka garáže](../../docs/construction-garage-partition.md) je **SP14, 140 mm**, X 11 003–11 143 mm, Y 5 744–8 749 mm. Garáž má **25,151355 m²** (+0,506345 m² vrátane zarovnania zuba pri regáli); líce pri spálni/šatníku, vonkajší úsek pri lodžii aj os B/R6 zostávajú. Nová revízia nahrádza nižšie uvedenú historickú výmeru garáže 24,64501 m².
+
+Revízia 15. 9. 2026: používateľom označený HS portál **GARDEN-02 / D5** (pôvodný názov „Terasové presklenie 2500“, spálňa 1.10) má **2 200 × 2 400 mm**, parapet 0 mm. Nový názov „Terasové presklenie 2200“ aj rozmer otvoru sa odvodzujú z aktívneho modelu. Os X 13 090 mm zostáva, nové ostenia sú X 11 990–14 190 mm. Podrobnosti a výstupy sú v [revízii otvorov](../../docs/construction-openings.md).
+
 `npm run docs:generate` spúšťa skutočné modelovacie funkcie interiéru, obvodového plášťa, výplní a terasového nábytku v Babylon NullEngine. Auto je v zaparkovanej polohe. Tri doplnkové kusy sedenia sa čítajú priamo z aktuálneho `dom-terrace.glb`. Zdrojový model sa nemení. Generátor sa automaticky spúšťa aj pred `npm run dev` a `npm run build`.
 
 Výsledný `lib/plan-geometry.generated.json` obsahuje fyzické komponenty s transformovanými súradnicami. Hodnoty sa uchovávajú na 0,01 mm, UI ich zaokrúhľuje na 1 mm. Pôdorys používa konvexné priemety jednotlivých dielov: vnútorné dutiny ani výrobný profil nemožno odvodzovať z obalového rozmeru. Výška dielu a jeho horná hrana od podlahy sú rozdielne veličiny. Návrhové rozmery rámov, skríň a liniek pochádzajú z aktívnych dát `twin-interior.ts` a sú označené oddelene od rozsahu celej zostavy.
@@ -175,3 +179,7 @@ Na výslovné želanie používateľa je celá zostava kotla vrátane násypky, 
 `tests/technical-design.test.ts` overuje 361 polôh jedného 900 mm krídla EAST-03 aj dverí kuchyňa → technická v nosnej stene, zaznamenanie, že nádrž Ø1 106 × 1 913 mm (Ø897 bez izolácie) 900 mm dverami neprejde, novú polohu nádrže a skrine peliet, skutočné sanitárne obálky, neprekrývanie podláh a spojitý priechod Ø600 mm ku skrini, nádrži, kotlu aj násypke. Zahŕňa hotové obklady, skutočné otočené obrysy hrdiel a podstavce. Kontroluje tiež nové znížené odstupy a ich povinné označenie, vystredenie nádrže, uloženie vriec na policiach a kolízie obsahu s korpusom. Rozmery konkrétnych prípojok, balení peliet a držiaka vysávača treba potvrdiť pred realizáciou.
 
 Manuál v technickej miestnosti rozlišuje fyzické prvky, obslužné plochy a trasu transportu. Rezerva pre tri modelové 15 kg vrecia a vysávač nemá schválené požiarne oddelenie. Presné osadenie DEFROmat, expanzia, rozvody, vetranie, komín, požiarne riešenie, statika prekladov a denné osvetlenie zostávajú na profesijné dopracovanie. Geometrická kontrola modelu nie je montážne ani realizačné schválenie.
+
+## AK-01 a AK-02: klasická obvodová tehla 300 mm · 16. 9. 2026
+
+Aktuálna skladba je SM30: jedna 300 mm vrstva muriva, bez vaty, dutiny a akustickej predsteny. Dôvod odhlučnenia zostáva. Líca X14943–15243 a chodba 1099 mm sa nemenia; bežné povrchy sú navyše. Spoločné údaje v `lib/acoustic-walls.ts` riadia pôdorys, Babylon, detail, manuál a výkresy. Predchádzajúca SA30 a výpočet sú archivované; jej hmotnosť a približne 58 dB neplatia pre SM30. R7 ostáva kandidátnou podporou vlastnej hmotnosti; konkrétna tehla a nový hmotnostný podklad ešte nie sú určené. [Aktuálna dokumentácia](../../docs/acoustic-walls.md).

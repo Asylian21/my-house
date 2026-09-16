@@ -28,15 +28,18 @@ describe('office / shower acoustic wall and centred corridor doorway',()=>{
   });
 
   it('reserves the H200 base build-up and maintains usable nibs beside both doors',()=>{
-    expect(OFFICE_BATH_WALL_MM).toBe(15+100+15+45+12.5+12.5);
+    expect(OFFICE_BATH_WALL_MM).toBe(15+100+15+45+12.5);
     expect(acousticWall.role).toBe('PARTITION');
-    expect(acousticWall.rectMm).toEqual(rect(22783,6402,27541,OFFICE_BATHROOM_FACE_MM));
+    for(const id of ['B-STREET-KID-TOP','C-KID-HALL-POCKET-WALL','C-ENTRY-HALL-JAMB']) {
+      expect(acousticWall.rectMm.y1).toBe(INTERIOR_WALLS.find(w=>w.id===id)!.rectMm.y1);
+    }
+    expect(acousticWall.rectMm).toEqual(rect(22783,6364.5,27541,OFFICE_BATHROOM_FACE_MM));
     expect(OFFICE_ENTRY_SHIFT_MM).toBe(30);
     expect(officeDoor.startMm).toBe(5421);
     expect(officeDoor.startMm+officeDoor.widthMm).toBe(6322);
-    expect(acousticWall.rectMm.y0-officeDoor.startMm-officeDoor.widthMm).toBe(80);
-    expect(bathroomDoor.startMm-acousticWall.rectMm.y1).toBe(99.5);
-    expect(INTERIOR_WALLS.find(w=>w.id==='C-OFFICE-NORTH-JAMB')!.rectMm).toEqual(rect(22783,6322,22842,6402));
+    expect(acousticWall.rectMm.y0-officeDoor.startMm-officeDoor.widthMm).toBe(42.5);
+    expect(bathroomDoor.startMm-acousticWall.rectMm.y1).toBe(149.5);
+    expect(INTERIOR_WALLS.find(w=>w.id==='C-OFFICE-NORTH-JAMB')!.rectMm).toEqual(rect(22783,6322,22842,6364.5));
     expect(INTERIOR_WALLS.find(w=>w.id==='C-ENTRY-OFFICE-RETURN')!.rectMm).toEqual(rect(22842,5195,23542,5370));
     expect(officeDoor.startMm-5370).toBe(51);
     for(const door of [officeDoor,bathroomDoor]){
@@ -49,18 +52,18 @@ describe('office / shower acoustic wall and centred corridor doorway',()=>{
   it('preserves the shower, facade windows and office furniture while moving the wall-mounted board',()=>{
     const showerWindow=HOUSE.facades.east.openings.find(o=>o.id==='EAST-02')!;
     const officeWindow=HOUSE.facades.east.openings.find(o=>o.id==='EAST-01')!;
-    expect(acousticWall.rectMm.y1).toBe(6602);
+    expect(acousticWall.rectMm.y1).toBe(6552);
     // These are the approved active facade openings, not the older D1 baseline.
     expect([showerWindow.startYmm,showerWindow.widthMm]).toEqual([6801.5,600]);
     expect([officeWindow.startYmm,officeWindow.widthMm]).toEqual([5212,1000]);
-    expect(showerWindow.startYmm-acousticWall.rectMm.y1).toBe(199.5);
+    expect(showerWindow.startYmm-acousticWall.rectMm.y1).toBe(249.5);
     expect(BATHROOM_FITOUT.shower.footprintMm).toEqual(rect(26291,6652,27541,7552));
     expect(BATHROOM_FITOUT.shower.clearEntryWidthMm).toBe(600);
     expect(BATHROOM_FITOUT.towelRadiator.footprintMm.y0).toBe(acousticWall.rectMm.y1);
     expect(BATHROOM_FITOUT.clearFloorRectMm.y0).toBe(bathroomDoor.startMm+bathroomDoor.widthMm);
-    expect(OFFICE_FITOUT.whiteboard.footprintMm).toEqual(rect(25240,6387,26940,6402));
-    expect(OFFICE_FITOUT.whiteboard.footprintMm.y0-officeWindow.startYmm-officeWindow.widthMm).toBe(175);
-    expect(OFFICE_FITOUT.clearEntryRectMm).toEqual(rect(23682,5400,25220,6402));
+    expect(OFFICE_FITOUT.whiteboard.footprintMm).toEqual(rect(25240,6349.5,26940,6364.5));
+    expect(OFFICE_FITOUT.whiteboard.footprintMm.y0-officeWindow.startYmm-officeWindow.widthMm).toBe(137.5);
+    expect(OFFICE_FITOUT.clearEntryRectMm).toEqual(rect(23682,5400,25220,6364.5));
     const furnishings=[OFFICE_FITOUT.desk,OFFICE_FITOUT.chair,OFFICE_FITOUT.cabinet,OFFICE_FITOUT.printer,OFFICE_FITOUT.whiteboard];
     for(const fixture of furnishings){
       expect(INTERIOR_WALLS.filter(w=>intersects(w.rectMm,fixture.footprintMm))).toEqual([]);
@@ -69,8 +72,8 @@ describe('office / shower acoustic wall and centred corridor doorway',()=>{
     for(const fixture of [BATHROOM_FITOUT.builtIn,BATHROOM_FITOUT.towelRadiator]){
       expect(swingHits(physicalSwing(bathroomDoor),fixture.footprintMm)).toBe(false);
     }
-    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.311502,6);
-    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.05')!)).toBeCloseTo(6.976971,6);
+    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.1352895,6);
+    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.05')!)).toBeCloseTo(7.214871,6);
   });
 
   it('keeps the furnished entry, office and bathroom connected through the centred door',()=>{

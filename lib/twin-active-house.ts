@@ -1,18 +1,25 @@
 import { GARAGE_DEPTH_REVISION, HOUSE as baseline, SITE_SURFACES, ACTIVE_HOUSE_PLACEMENT, PARCEL_LAWN_INTERIOR_CUTOUTS_MM as siteCutouts, type Point2Mm } from './twin-active-site';
-import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, INTERIOR_ROOMS, KITCHEN_RUN, OFFICE_FITOUT, totalActiveFloorAreaM2 } from './twin-interior';
+import { ACTIVE_CONCEPT, ACTIVE_LAYOUT_ID, KITCHEN_RUN, OFFICE_FITOUT, totalActiveFloorAreaM2 } from './twin-interior';
 import { withChildrenWindow } from './twin-children-design';
 import { SERVICE_CORE_REVISION } from './technical-design';
 /** Same exterior/roof; C suite openings and client-approved children's glazing. */
-const showerBay = INTERIOR_ROOMS.find(room=>room.number==='1.05')!.rectsMm.find(r=>r.x1===27541)!;
 /** Client revision, 13 Sep 2026: axes follow the current rooms and kitchen aisle. */
 export const ACTIVE_WINDOW_POSITIONS = {
   kitchenStartYmm:(KITCHEN_RUN.rectMm.y1+KITCHEN_RUN.peninsulaRectMm.y0)/2-500,
-  showerStartYmm:(showerBay.y0+showerBay.y1)/2-300,
+  // Preserve the approved opening when H200 moves 50 mm toward the office.
+  showerStartYmm:6801.5,
   // Preserve the approved facade opening when the office gains 50 mm at its north wall.
   officeSideStartYmm:6412-200-1000,
   // Client revision, 13 Sep 2026: move FRONT-07 150 mm east, toward the cabinet.
   // Its desk-side jamb now sits 100 mm beyond the desk's outer edge.
   officeFrontStartXmm:OFFICE_FITOUT.desk.footprintMm.x1+100,
+};
+const originalGardenPortal=baseline.facades.garden.openings.find(opening=>opening.id==='GARDEN-02')!;
+/** Client screenshot, 15 Sep 2026: narrow the selected 2,500 mm portal symmetrically. */
+export const ACTIVE_GARDEN_PORTAL={
+  ...originalGardenPortal,
+  startXmm:originalGardenPortal.startXmm+(originalGardenPortal.widthMm-2200)/2,
+  widthMm:2200,
 };
 export const HOUSE={...baseline,
   placement: ACTIVE_HOUSE_PLACEMENT,
@@ -40,7 +47,7 @@ export const HOUSE={...baseline,
       opening.id==='FRONT-03'?ACTIVE_CONCEPT.frontWindowStart:
       opening.id==='FRONT-07'?ACTIVE_WINDOW_POSITIONS.officeFrontStartXmm:withChildrenWindow(opening).startXmm,
   })).sort((a,b)=>a.startXmm-b.startXmm),
-},garden:{...baseline.facades.garden,openings:baseline.facades.garden.openings.map(withChildrenWindow)},
+},garden:{...baseline.facades.garden,openings:baseline.facades.garden.openings.map(opening=>withChildrenWindow(opening.id==='GARDEN-02'?ACTIVE_GARDEN_PORTAL:opening))},
 east:{...baseline.facades.east,openings:baseline.facades.east.openings.map(o=>o.id==='EAST-03'?{...o,...SERVICE_CORE_REVISION.exteriorDoor}:
   {...o,startYmm:o.id==='EAST-01'?ACTIVE_WINDOW_POSITIONS.officeSideStartYmm:o.id==='EAST-02'?ACTIVE_WINDOW_POSITIONS.showerStartYmm:o.id==='EAST-04'?ACTIVE_WINDOW_POSITIONS.kitchenStartYmm:o.startYmm})},
 wingWest:{...baseline.facades.wingWest,opening:{...baseline.facades.wingWest.opening,frameWidthMm:35}},

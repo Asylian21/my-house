@@ -1,0 +1,158 @@
+{
+  "units": "mm",
+  "design": "C/B/B",
+  "scale": "A3 landscape 1:100 at 100 percent",
+  "status": "MODEL_COORDINATION_ONLY_NOT_FOR_CONSTRUCTION",
+  "reference_faces": {
+    "A": 6619,
+    "B": 3179,
+    "C": 27866,
+    "D": 21860
+  },
+  "reference_definition": "Outer faces of hypothetical 350 mm upper perimeter centred on model axes; not surveyed existing concrete faces.",
+  "rib_width_mm": 350,
+  "rib_width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+  "rib_half_width_mm": 175,
+  "routes": [
+    {
+      "id": "R7",
+      "points_mm": [
+        [
+          15093.0,
+          3354.0
+        ],
+        [
+          15093.0,
+          10849.0
+        ]
+      ],
+      "vertical": true,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "A",
+      "axis_distance_from_reference_mm": 8474.0,
+      "near_face_distance_mm": 8299.0,
+      "far_face_distance_mm": 8649.0,
+      "axis_coordinate_mm": 15093.0,
+      "face_coordinates_mm": [
+        14918.0,
+        15268.0
+      ],
+      "axis_length_mm": 7495.0,
+      "clear_length_between_proposed_350_perimeter_faces_mm": 7145.0,
+      "existing_400_outer_face_to_axis_if_concentric_mm": 8499.0,
+      "existing_400_outer_face_to_near_rib_face_if_concentric_mm": 8324.0,
+      "existing_380_outer_face_to_axis_if_concentric_mm": 8489.0,
+      "existing_380_outer_face_to_near_rib_face_if_concentric_mm": 8314.0
+    },
+    {
+      "id": "R1",
+      "points_mm": [
+        [
+          20691.5,
+          3354.0
+        ],
+        [
+          20691.5,
+          10849.0
+        ]
+      ],
+      "vertical": true,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "C",
+      "axis_distance_from_reference_mm": 7174.5,
+      "near_face_distance_mm": 6999.5,
+      "far_face_distance_mm": 7349.5,
+      "axis_coordinate_mm": 20691.5,
+      "face_coordinates_mm": [
+        20516.5,
+        20866.5
+      ],
+      "axis_length_mm": 7495.0,
+      "clear_length_between_proposed_350_perimeter_faces_mm": 7145.0,
+      "existing_400_outer_face_to_axis_if_concentric_mm": 7199.5,
+      "existing_400_outer_face_to_near_rib_face_if_concentric_mm": 7024.5,
+      "existing_380_outer_face_to_axis_if_concentric_mm": 7189.5,
+      "existing_380_outer_face_to_near_rib_face_if_concentric_mm": 7014.5
+    },
+    {
+      "id": "R2",
+      "points_mm": [
+        [
+          21393.0,
+          10862.0
+        ],
+        [
+          27691.0,
+          10862.0
+        ]
+      ],
+      "vertical": false,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "B",
+      "axis_distance_from_reference_mm": 7683.0,
+      "near_face_distance_mm": 7508.0,
+      "far_face_distance_mm": 7858.0,
+      "axis_coordinate_mm": 10862.0,
+      "face_coordinates_mm": [
+        10687.0,
+        11037.0
+      ],
+      "axis_length_mm": 6298.0,
+      "clear_length_between_proposed_350_perimeter_faces_mm": 5948.0,
+      "existing_400_outer_face_to_axis_if_concentric_mm": 7708.0,
+      "existing_400_outer_face_to_near_rib_face_if_concentric_mm": 7533.0,
+      "existing_380_outer_face_to_axis_if_concentric_mm": 7698.0,
+      "existing_380_outer_face_to_near_rib_face_if_concentric_mm": 7523.0
+    },
+    {
+      "id": "R4",
+      "points_mm": [
+        [
+          21393.0,
+          19185.0
+        ],
+        [
+          27691.0,
+          19185.0
+        ]
+      ],
+      "vertical": false,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "D",
+      "axis_distance_from_reference_mm": 2675.0,
+      "near_face_distance_mm": 2500.0,
+      "far_face_distance_mm": 2850.0,
+      "axis_coordinate_mm": 19185.0,
+      "face_coordinates_mm": [
+        19010.0,
+        19360.0
+      ],
+      "axis_length_mm": 6298.0,
+      "clear_length_between_proposed_350_perimeter_faces_mm": 5948.0,
+      "existing_400_outer_face_to_axis_if_concentric_mm": 2700.0,
+      "existing_400_outer_face_to_near_rib_face_if_concentric_mm": 2525.0,
+      "existing_380_outer_face_to_axis_if_concentric_mm": 2690.0,
+      "existing_380_outer_face_to_near_rib_face_if_concentric_mm": 2515.0
+    }
+  ],
+  "X_chain_mm": [
+    8474,
+    5598.5,
+    7174.5
+  ],
+  "Y_chain_mm": [
+    7683,
+    8323,
+    2675
+  ],
+  "outer_upper_perimeter_dimensions_mm": [
+    21247,
+    18681
+  ],
+  "field_survey": null,
+  "engineering_check_for_four_ribs": false
+}

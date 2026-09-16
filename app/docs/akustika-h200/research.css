@@ -7,3 +7,4 @@
 @media screen and (max-width:700px){.h200-junction-figure svg{min-width:800px}.h200-junction-figure figcaption::before{content:'Výkres môžete posúvať do strán. ';font-weight:600}}
 @media print{.h200-junction-figure{break-inside:avoid}.h200-junction-steps h3{break-after:avoid;font-size:12pt}.h200-junction-steps section{break-inside:avoid}.h200-junction-report table{break-inside:avoid}}
 @media print{html:has(.h200-page),body:has(.h200-page){height:auto!important;overflow:visible!important;background:#fff!important}.project-app.h200-page{height:auto;overflow:visible;background:#fff!important}.h200-report p{orphans:3;widows:3}.h200-table-wrap{break-inside:avoid}}
+@media print{.h200-report:not(.h200-junction-report){font-size:9.5pt;line-height:1.45}.h200-references li{padding:7px 0;font-size:8.5pt;line-height:1.4}.h200-references li p{margin:5px 0;font-size:8pt}}

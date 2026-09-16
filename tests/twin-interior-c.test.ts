@@ -43,7 +43,7 @@ describe('active 3D house matches the approved default C plan',()=>{
     expect(INTERIOR_DOORS.map(d=>({...d,label:undefined}))).toEqual(c.doors.map(d=>({...d,label:undefined})));
     expect(baseline.INTERIOR_ROOMS.find(r=>r.number==='1.08')!.name).toBe('Spálňa');
     expect(INTERIOR_ROOMS).toHaveLength(13);
-    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.311502,6);
+    expect(roomAreaM2(INTERIOR_ROOMS.find(r=>r.number==='1.04')!)).toBeCloseTo(12.1352895,6);
     expect(INTERIOR_DOORS.some(d=>d.id==='DOOR-102-112'||d.id==='DOOR-108-111')).toBe(false);
     // The living room keeps its main floor; the kitchen bay gives 160 mm to the
     // load-bearing kitchen wall and runs to the east facade over the former
@@ -238,7 +238,9 @@ describe('active 3D house matches the approved default C plan',()=>{
     for(const goal of [[13800,5000],[13950,5000],[13850,4550]] as [number,number][])
       expect(walkingPath([street,extension,opening(door)],obstacles,[14350,6300],goal),goal.join()).toBe(true);
     expect(GARAGE_FITOUT.utilitySink.footprintMm.x1).toBe(ACTIVE_CONCEPT.garageBay!.x1);
-    expect(GARAGE_FITOUT.storageRack.footprintMm.x1-GARAGE_FITOUT.storageRack.footprintMm.x0).toBe(2000);
+    expect(GARAGE_FITOUT.storageRack.footprintMm).toEqual(rect(11003,5104,12842,5604));
+    expect(GARAGE_FITOUT.mower.footprintMm).toEqual(rect(10503,6660,10983,7360));
+    expect(INTERIOR_WALLS.find(w=>w.id==='C-GARAGE-PARTITION')!.rectMm.x0-GARAGE_FITOUT.mower.footprintMm.x1).toBe(20);
   });
   it('provides 440mm walking paths between entrance, office, bath, bedroom and closet',()=>{
     const floors=INTERIOR_ROOMS.flatMap(r=>[...r.rectsMm]);
@@ -322,6 +324,12 @@ describe('active 3D house matches the approved default C plan',()=>{
     const mat=(n:string)=>new PBRMaterial(n,scene);
     try {
       buildInterior({scene,anisotropy:1,wall:mat('wall'),soffit:mat('soffit'),glassFrame:mat('frame'),chimneyMetal:mat('metal'),timber:mat('timber'),register:()=>{},realisticOnly:()=>{},castShadow:()=>{},registerAnimatedDoor:d=>doors.push(d)});
+      const garagePartition=scene.meshes.find(m=>m.name==='Vnútorná stena C-GARAGE-PARTITION · priečka 140 mm')!;
+      garagePartition.computeWorldMatrix(true);
+      const garageBounds=garagePartition.getBoundingInfo().boundingBox;
+      expect(garageBounds.minimumWorld.x).toBeCloseTo(sceneXM(11003),6);
+      expect(garageBounds.maximumWorld.x).toBeCloseTo(sceneXM(11143),6);
+      expect(garagePartition.checkCollisions).toBe(true);
       // The door linings project 12 mm into the alcove. Include their actual
       // meshes, since floor-plan door swings alone cannot catch this overlap.
       const endCabinet=scene.meshes.filter(m=>m.name.startsWith('C-HALL-END-CABINET')&&!m.metadata?.walkCollisionOnly);

@@ -1,29 +1,26 @@
 import type { InteriorWall, RectMm } from './twin-interior-baseline';
+import { H200_ACOUSTIC_CALCULATION } from './h200-acoustic-calculation';
 
-/** Client's two highlighted suite walls, 13 Sep 2026. Dimensions exclude finishes. */
+/** AK-01/02: ordinary 300 mm exterior-type brick, client revision 16 Sep 2026. */
 export const ACOUSTIC_ASSEMBLY = {
-  code: 'SA30',
-  name: 'Dvojplášťová akustická priečka',
+  code: 'SM30',
+  name: 'Murovaná stena z obvodovej tehly 300 mm',
   totalMm: 300,
-  product: 'Leier LeierPLAN 10 P10',
-  productUrl: 'https://www.vastap.cz/leier-leierplan-10-p10-P/',
-  technicalSheetUrl: 'https://www.vastap.cz/files/download/ZSMA4AgCN2EdFPpyhLgdnfRSjO6pOTHy',
+  product: 'Klasická obvodová keramická tehla 300 mm · výrobok neurčený',
   layers: [
-    { id: 'LEAF-W', material: 'masonry', name: 'Leier LeierPLAN 10 P10', thicknessMm: 100 },
-    { id: 'WOOL', material: 'mineral-wool', name: 'Minerálna vata', thicknessMm: 100 },
-    { id: 'LEAF-E', material: 'masonry', name: 'Leier LeierPLAN 10 P10', thicknessMm: 100 },
+    { id: 'MASONRY', material: 'masonry', name: 'Klasická obvodová tehla', thicknessMm: 300 },
   ],
-  finishNote: '300 mm = 100 + 100 + 100 mm bez omietok a obkladov. Líca v pôdoryse zostávajú zachované; povrchové úpravy sa určia samostatne.',
-  structuralNote: 'Návrh nenosnej priečky. Pôvodné označenie týchto úsekov bolo nosné; zmenu nosného systému a podopretie nadväzujúcich konštrukcií musí overiť statik.',
-  acousticNote: 'Nepriezvučnosť Rw celej skladby nie je doložená. Typ minerálnej vaty, kotvenie, obvodové napojenia a prestupy určí akustický detail; medzi plášťami nevytvárať neoverené tuhé mosty.',
-  bathroomNote: 'Pri AK-02 vyriešiť kotvenie závesného WC a rozvody v samostatnom detaile; nezasahovať nimi do izolačnej vrstvy bez posúdenia.',
+  finishNote: 'Jedna vrstva klasickej obvodovej tehly 300 mm, bez minerálnej vaty, dutiny a akustickej predsteny. Bežné omietky a kúpeľňové povrchy sú navyše; model kótuje samotné murivo. Poloha líc a rozmery miestností zostávajú.',
+  structuralNote: 'Modelová rola PARTITION zostáva; samotná zámena za 300 mm obvodovú tehlu nepotvrdzuje nosnú funkciu. Statik overí vlastnú hmotnosť podľa vybraného výrobku, podopretie, stabilitu a nadväzujúcu nosnú sústavu.',
+  acousticNote: 'Dôvod odhlučnenia medzi susednými miestnosťami zostáva. Nepriezvučnosť novej steny zatiaľ nie je doložená; závisí od konkrétnej tehly, omietok, napojení a prestupov. Výpočet pôvodnej dvojplášťovej SA30 sa na SM30 nevzťahuje.',
+  bathroomNote: 'Pri AK-02 vyriešiť kotvenie závesného WC a rozvody pre vybranú 300 mm tehlu. Drážky, prestupy a kotvenie nesmú bez posúdenia oslabiť murivo a odhlučnenie; kúpeľňové povrchy sú navyše.',
 } as const;
 
 /** Client-selected H200. The whole-wall Rw is a design prediction, not a test declaration. */
 export const OFFICE_ACOUSTIC_ASSEMBLY = {
   code: 'H200',
   name: 'LeierPLAN 10 + akustická predstena Silentboard',
-  totalMm: 200,
+  totalMm: 187.5,
   product: 'LeierPLAN 10 N+F · Devecser + Knauf W623',
   productUrl: 'https://www.vastap.cz/leier-leierplan-10-p10-P/',
   technicalSheetUrl: 'https://www.leier.sk/wp-content/uploads/2025/07/Technicky-list-LP10-NF.pdf',
@@ -33,20 +30,19 @@ export const OFFICE_ACOUSTIC_ASSEMBLY = {
   junctionDetailUrl: '/docs/akustika-h200/napojenie',
   panelOrderSourceUrl: 'https://nrc-publications.canada.ca/eng/view/object/?id=768bf32f-8313-435f-ab85-8680efba61b2',
   requiredRwDb: 51,
-  estimatedRwDb: 58,
+  estimatedRwDb: Math.round(H200_ACOUSTIC_CALCULATION.estimatedRwDb),
   layerDirection: 'Od pracovne smerom ku sprche',
   // Model coordinates increase from the office face (south) to the shower (north).
   layers: [
-    { id: 'SILENTBOARD-OUTER', material: 'gypsum-board', name: 'Knauf Silentboard · vonkajšia doska pracovne', thicknessMm: 12.5 },
-    { id: 'SILENTBOARD-INNER', material: 'gypsum-board', name: 'Knauf Silentboard · vnútorná doska', thicknessMm: 12.5 },
+    { id: 'SILENTBOARD-INNER', material: 'gypsum-board', name: 'Knauf Silentboard · jediná doska pracovne', thicknessMm: 12.5 },
     { id: 'LINING-CAVITY', material: 'mineral-wool', name: 'Dutina W623 · pružné závesy, CD 60/27 a vata 40 mm', thicknessMm: 45 },
     { id: 'PLASTER-CAVITY', material: 'plaster', name: 'Súvislá vápenno-cementová omietka · dutina', thicknessMm: 15 },
     { id: 'LEIERPLAN-MASONRY', material: 'masonry', name: 'LeierPLAN 10 N+F · murivo', thicknessMm: 100 },
     { id: 'PLASTER-BATH', material: 'plaster', name: 'Vápenno-cementová omietka · kúpeľňa', thicknessMm: 15 },
   ],
-  finishNote: '200 mm = 15 + 100 + 15 + 45 + 25 mm od sprchy, vrátane oboch omietok a dosiek. Vata 40 mm aj rošt sú v 45 mm dutine. Hydroizolácia, lepidlo, obklad a prípadná celoplošná stierka sú navyše.',
+  finishNote: '187,5 mm = 15 + 100 + 15 + 45 + 12,5 mm od sprchy. Jedna doska Silentboard; revízia 16. 9. 2026 ponecháva identifikátor H200. Vata 40 mm aj rošt sú v 45 mm dutine. Hydroizolácia, lepidlo, obklad a prípadná celoplošná stierka sú navyše.',
   structuralNote: 'Nenosná priečka H200. Statik overí stabilitu LeierPLAN 10 pri výške 3 125 mm, založenie, napojenie a náhradu pôvodnej nosnej funkcie. Kotvy a rozstup pružných závesov zvoliť pre konkrétne dutinové murivo a hmotnosť opláštenia.',
-  acousticNote: 'Požiadavka Rw ≥ 51 dB; predbežný výpočet celej skladby Rw ≈ 58 dB, nie nameraná ani výrobcom deklarovaná hodnota tejto kombinácie. Potvrdiť použiteľnosť výpočtu a systému na LeierPLAN 10. W623: systémové pružné Direktschwingabhänger, dutina 45 mm s vatou 40 mm (odpor proti prúdeniu 5–50 kPa·s/m²), obe Silentboard dosky spolu na strane pracovne, preložené a vytmelené škáry. Bez pevných mostov. Napojenia, prestupy a vedľajšie cesty zvuku posúdiť samostatne; R′w na stavbe nie je totožné s Rw.',
+  acousticNote: 'Požiadavka Rw ≥ 51 dB; predbežný výpočet s jednou doskou Rw ≈ 55,77 dB (zaokrúhlene 56 dB), pokles 2,15 dB oproti pôvodnému dvojitému oplášteniu. Nie je to nameraná ani výrobcom deklarovaná hodnota tejto kombinácie. W623: pružné Direktschwingabhänger, dutina 45 mm s vatou 40 mm (odpor proti prúdeniu 5–50 kPa·s/m²), jedna Silentboard 12,5 mm na strane pracovne a systémovo utesnené škáry. Potvrdiť jedno opláštenie, rozstupy a kotvy na LeierPLAN 10. Bez pevných mostov. Napojenia, prestupy a vedľajšie cesty zvuku posúdiť samostatne; R′w na stavbe nie je totožné s Rw.',
   bathroomNote: 'Sprcha zostáva na pôvodnom mieste. Súvislá 15 mm omietka zostáva na oboch stranách tehly, aj v dutine. Hydroizoláciu a obklad pridať na kúpeľňovú stranu; inštalácie, kotvenie sprchy a radiátora nesmú premostiť dutinu alebo oslabiť murivo bez detailu.',
 } as const;
 

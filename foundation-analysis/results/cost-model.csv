@@ -1,0 +1,17 @@
+item,unit,MIN_quantity,MEDIUM_quantity,MAX_quantity,unit_price_CZK_blank,scope_note
+New C16/20 concrete,m3,89.592,94.578,98.492,,"Conditional geometric estimate, not supplier quote"
+Reinforcement estimated,kg,6541.307,7061.213,8926.583,,"Conditional geometric estimate, not supplier quote"
+Formwork estimated,m2,217.699,217.699,217.699,,"Conditional geometric estimate, not supplier quote"
+Trench excavation assumption,m3,43.516,44.19,44.865,,"Conditional geometric estimate, not supplier quote"
+Fill above old top only,m3,79.665,75.021,71.448,,"Conditional geometric estimate, not supplier quote"
+Organic soil stripping 0.2m scenario,m3,47.744,47.744,47.744,,"Conditional geometric estimate, not supplier quote"
+Fill replacement below old top after stripping,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Spoil disposal loose volume,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Geotechnical investigation and lift tests,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Concrete testing and crack survey,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Post-installed connection design and installation,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Old perimeter underpinning if required,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Waterproofing radon frost protection and thermal separation,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Joint load transfer and sealing,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Temporary bracing and trench support,to be measured,,,,,Not zero: scope/quantity/rate unresolved
+Labour placing vibrating curing,to be measured,,,,,Not zero: scope/quantity/rate unresolved

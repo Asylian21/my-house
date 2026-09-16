@@ -26,6 +26,6 @@ Sťahované súbory majú iba explicitne vygenerované verejné cesty; aplikáci
 
 ## Kontroly
 
-`npx vitest run tests/document-library.test.ts --config vitest.config.ts` kontroluje scenáre vyhľadávania a filtrov, všetky listy, stav SA30/R7 a archívu, odkazy a skutočné veľkosti stiahnuteľných súborov.
+`npx vitest run tests/document-library.test.ts --config vitest.config.ts` kontroluje scenáre vyhľadávania a filtrov, všetky listy, stav SM30/R7 a archívu, odkazy a skutočné veľkosti stiahnuteľných súborov.
 
 Pri vizuálnej QA treba kontrolovať desktop aj mobil, náhľad výkresu a dlhej správy, listovanie sady, priblíženie, sťahovanie, priamy odkaz, Späť/Vpred, nulový výsledok a opakovanie po chybe načítania. Lokálna QA neznamená publikovanie alebo statické overenie dokumentácie.

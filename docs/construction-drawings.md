@@ -1,5 +1,8 @@
 # Výkresová dokumentácia C/B/B
 
+
+
+Revízia **16. 9. 2026**: [vnútorná priečka garáže SP14](construction-garage-partition.md) má 140 mm namiesto 301 mm; plocha garáže po zarovnaní zuba pri regáli je 25,151355 m². Regál má 1 839 × 500 mm a kosačka je o 161 mm bližšie k stene, s medzerou 20 mm. Všetky aktuálne listy, farebné aj čiernobiele exporty, výkazy, model a knižnica sa obnovujú z tejto geometrie. Vonkajší úsek pri lodžii a osi základov zostávajú.
 Zadanie zo 14.09.2026: pôdorys sa nemení. Nové pohľady, rezy, základové a strešné výkresy, situácia, výpisy a detaily majú vychádzať z aktuálneho modelu. Pôvodná dokumentácia projektanta a statika je podľa následného výslovného zadania stavebníka iba orientačný archív; nový nosný návrh ani skladby sa z nej nepreberajú.
 
 **Stav: rozpracované, nevydané na realizáciu.** Geometrický export nepreukazuje nový statický návrh. Chýbajúcu výstuž, prierezy, založenie, kotvenie, vrstvy a výšky nemožno nahradiť odhadom. Cieľ kompletnej realizačnej dokumentácie nie je splnený.
@@ -28,14 +31,14 @@ Modelované stupne majú X 23 340–25 740 mm, dva úseky hĺbky 380 mm od Y 22 
 
 ### Priestorový pohľad na základy
 
-Následná obrazová požiadavka stavebníka dopĺňa **D1.1.ZA-03: priestorový pohľad na pásy a rebrá**; sada má 25 listov. Farebný a čiernobiely obrázok sa ukladajú aj samostatne ako `foundation-axon-color/mono.svg` a `.png`. Stavebník spresnil, že doska je už vyliata aj pod lodžiou a krytou terasou: ilustrácia preto zahŕňa **celý modelový L-obrys 21 600 × 19 035 mm**. Ide o oznámený rozsah (`CLIENT_REPORTED`), nie zameraný stav; skutočné rozmery, hrúbka dosky a existujúce rebrá zostávajú neurčené. Hĺbka uzavretého domu 16 535 mm neznamená odstrihnutie základov pred terasou. **Ulica je dole, garáž vľavo a krídlo vpravo**, bez zrkadlenia; nové oznámenie nemení geometriu domu ani hotový pôdorys. Modrý horný monolit má zadaných 350 × 600 mm; jeho strednica vrátane zadnej trasy Y21685 je nový návrh. Zelené R1–R3 sledujú nosné úseky izieb, kuchyne a vstupu, R4 zadnú stenu obývačky pri terase, R5 zadnú stenu garáže pri lodžii a R6 jej bočný styk. R6 nepotvrdzuje nosnú funkciu modelovej priečky. R7 dopĺňa kandidátny pás pod vlastnou hmotnosťou SA30 AK-01/02; označené sú iba ich dva skutočné úseky, chodba zostáva voľná. ZA-01 obsahuje prepočet podľa výrobcu a modelovej výšky 3125 mm: 456,25 kg/m muriva bez omietky, 1390,65 kg na úsek, spolu 2781,30 kg. Nezahŕňa povrchy ani ďalšie vrstvy a nepotvrdzuje únosnosť existujúcej dosky. Šírky rebier, výstuž, podopretie a skutočný výkop zostávajú neurčené. [Podklad axonometrie a presné súradnice](construction-foundation-axon.md).
+Následná obrazová požiadavka stavebníka dopĺňa **D1.1.ZA-03: priestorový pohľad na pásy a rebrá**; sada má 25 listov. Farebný a čiernobiely obrázok sa ukladajú aj samostatne ako `foundation-axon-color/mono.svg` a `.png`. Stavebník spresnil, že doska je už vyliata aj pod lodžiou a krytou terasou: ilustrácia preto zahŕňa **celý modelový L-obrys 21 600 × 19 035 mm**. Ide o oznámený rozsah (`CLIENT_REPORTED`), nie zameraný stav; skutočné rozmery, hrúbka dosky a existujúce rebrá zostávajú neurčené. Hĺbka uzavretého domu 16 535 mm neznamená odstrihnutie základov pred terasou. **Ulica je dole, garáž vľavo a krídlo vpravo**, bez zrkadlenia; nové oznámenie nemení geometriu domu ani hotový pôdorys. Modrý horný monolit má zadaných 350 × 600 mm; jeho strednica vrátane zadnej trasy Y21685 je nový návrh. Zelené R1–R3 sledujú nosné úseky izieb, kuchyne a vstupu, R4 zadnú stenu obývačky pri terase, R5 zadnú stenu garáže pri lodžii a R6 jej bočný styk. R6 nepotvrdzuje nosnú funkciu modelovej priečky. R7 dopĺňa kandidátny pás pod vlastnou hmotnosťou SM30 AK-01/02; označené sú iba ich dva skutočné úseky, chodba zostáva voľná. ZA-01 uvádza jednu 300 mm obvodovú tehlu a modelovú výšku 3125 mm; hmotnosť čaká na výber konkrétneho výrobku. Dôvod odhlučnenia zostáva. Pôvodný dvojplášťový prepočet neplatí a únosnosť existujúcej dosky nie je potvrdená. Šírky rebier, výstuž, podopretie a skutočný výkop zostávajú neurčené. [Podklad axonometrie a presné súradnice](construction-foundation-axon.md).
 
 ## Záväzné nové požiadavky
 
 - Zachovať obrys, osi, materiálové rozhodnutia a hotový pôdorys C/B/B.
 - Voda a odpad sa vedú **nad nosnou doskou** v novej podlahovej skladbe. Žiadne dodatočné vrty do dosky. Nový návrh musí určiť priemery, trasy, spády, križovania, celkovú hrúbku vrstiev a presné vývody cez obvod.
 - Nové základy, doska, vence, preklady, krov, oceľové rámy a spoje vyžadujú koordinovaný statický výpočet aktuálneho domu. Geotechnické parametre založenia domu ani nový statický výpočet nie sú doložené.
-- H200 a SA30 zostávajú vo zvolenej geometrii. Ich pôvodnú nosnú funkciu, stabilitu, kotvenie a napojenia treba vyriešiť v novom návrhu.
+- H200 a SM30 zostávajú vo zvolenej geometrii. Ich pôvodnú nosnú funkciu, stabilitu, kotvenie a napojenia treba vyriešiť v novom návrhu.
 - Kotolňa B má v modeli iba rezervu napojenia dymovodu pod stropom; neexistuje hotový návrh vonkajšej trasy komína.
 
 ### Doplnenie stavebníka 14.09.2026: výšky, kúrenie, povala a rozostavané základy
@@ -52,7 +55,7 @@ Strojovo čitateľný záznam je v [client-brief.ts](../scripts/construction-doc
 
 Priložené fotografie sú byte-for-byte zachované v `output/research/construction-site-20260914/`, ich SHA-256 sú súčasťou exportu. Na detailnej fotografii vidno trhlinu a nerovnomerný povrch. Fotografia neurčuje príčinu, hĺbku ani závažnosť; dotknutý úsek má pred ďalším zakrytím posúdiť statik na mieste.
 
-[Podklad pre nosnú sústavu](construction-structural-basis.md) obsahuje aktuálne podporové zóny K-01 až K-09 a variant na výpočet a ocenenie: pôdne väzníky nad plochými stropmi a samostatnú katedrálovú sústavu. Uzol L nemá súvislú zadnú podporu, takže bežný priečny väzník sa tam nedá iba opakovať. Vnútorné rebrá potrebujú prenos zaťaženia do overeného podkladu alebo podpor; ich samotná výška 600 mm nestačí. H200 a SA30 sa nezaťažujú ako nosné steny. Prierezy a výstuž zostávajú otvorené do výpočtu sústavy.
+[Podklad pre nosnú sústavu](construction-structural-basis.md) obsahuje aktuálne podporové zóny K-01 až K-09 a variant na výpočet a ocenenie: pôdne väzníky nad plochými stropmi a samostatnú katedrálovú sústavu. Uzol L nemá súvislú zadnú podporu, takže bežný priečny väzník sa tam nedá iba opakovať. Vnútorné rebrá potrebujú prenos zaťaženia do overeného podkladu alebo podpor; ich samotná výška 600 mm nestačí. H200 a SM30 sa nezaťažujú ako nosné steny. Prierezy a výstuž zostávajú otvorené do výpočtu sústavy.
 
 ### Drevené stropy a aspoň jeden vstupný schod
 
@@ -90,7 +93,7 @@ R01 nový nosný systém; R02 geotechnika a založenie; R03 nová podlaha a rozv
 | Pôdorys strechy | ST-01 zo spoločných vrcholov, rovín a hrán strechy | Geometria existuje; krov, kotvenie, skladby a odvodnenie sú otvorené |
 | Situácia a odstupy 3 000 mm | SI-01/SI-02 z aktívnej transformácie, UP-01 z oficiálnych podkladov | Modelové odstupy overené; zameranie a výškové osadenie chýbajú |
 | Okna a dvere použiteľné pre výrobu | OT-01/OT-02 s kódmi, polohami, otvormi a pohybom krídel | Výpis otvorov existuje; profily, vlastnosti, montážne škáry a výrobná špecifikácia chýbajú |
-| Úplné skladby a podstatné detaily | SK-01/DT-01, aktuálne H200/SA30 a J1/J2 | Čiastočné: nové podlahy/strecha, sokel, prahy, nadpražia, nosné a tesniace spoje nie sú uzavreté |
+| Úplné skladby a podstatné detaily | SK-01/DT-01, aktuálne H200/SM30 a J1/J2 | Čiastočné: nové podlahy/strecha, sokel, prahy, nadpražia, nosné a tesniace spoje nie sú uzavreté |
 | A1, 1:50, červené kóty, materiálové šrafy, razítko, mono | Dve vektorové PDF, revízia na 25 listov; výsledky aktuálnych kontrol v overovacích JSON | Lokálne detaily 1:5 / 1:10; ZA-03 axonometria bez odmeriavania; stav nevydané na realizáciu |
 | Murár, tesár a oknár môžu vymerať a postaviť bez dopytovania | Chýbajúce R01–R09 a neuzavretý nesúlad metadát sú priamo uvedené v sade/zázname | **Nesplnené.** Realizačné vydanie vyžaduje nový koordinovaný odborný návrh, geotechnické parametre a geodetický výškopis |
 

@@ -1,0 +1,9 @@
+label,axis,from_mm,to_mm,distance_mm
+A po ľavú hranu R7,X,6440,14918.0,8478.0
+Svetlá medzera R7 - R1,X,15268.0,20516.5,5248.5
+Ľavá hrana R7 po modrý L-bok,X,14918.0,21040,6122.0
+Pravá hrana R1 po premietnutý L-bok,X,20866.5,21040,173.5
+Pravá hrana R1 po C,X,20866.5,28040,7173.5
+B po dolnú hranu R2,Y,3000,10687.0,7687.0
+Svetlá medzera R2 - R4,Y,11037.0,19010.0,7973.0
+Horná hrana R4 po D,Y,19360.0,22035,2675.0

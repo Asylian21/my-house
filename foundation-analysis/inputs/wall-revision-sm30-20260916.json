@@ -1,0 +1,14 @@
+{
+  "revision": "CLIENT-SM30-20260916",
+  "status": "CURRENT_LOAD_RECALCULATION_PENDING_PRODUCT",
+  "walls": [
+    "AK-01",
+    "AK-02"
+  ],
+  "assembly": "SM30",
+  "masonryThicknessMm": 300,
+  "acousticPurposeRetained": true,
+  "currentMassKgM2": null,
+  "supersededAssembly": "SA30",
+  "frozenResults": "historical scenario only"
+}

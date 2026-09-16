@@ -1,0 +1,301 @@
+{
+  "status": "CONDITIONAL_COMPARISON_NOT_AS_BUILT_OR_WHOLE_BUILDING_APPROVAL",
+  "user_declared": {
+    "slab_mm": 100,
+    "concrete": "C16/20",
+    "rib_height_including_slab_mm_interpreted_from_question": 400,
+    "rib_below_slab_mm": 300,
+    "slab_and_ribs_cast_together": true,
+    "fill": "Site soil described as clay and sand, compacted; grading, moisture, stiffness and layer acceptance unknown.",
+    "notch_or_seat_depth_mm": 150,
+    "upper_perimeter_dimension_mm": 300,
+    "notch_orientation_and_seat_length": "NOT_CONFIRMED",
+    "reinforcement": "NOT_SPECIFIED"
+  },
+  "assumptions": {
+    "cover_mm": 35,
+    "steel": "B500 (trial only)",
+    "gamma_c": 1.5,
+    "gamma_s": 1.15,
+    "alpha_cc": 0.85,
+    "additional_finishes_Gk_kPa": 2,
+    "residential_Qk_kPa": 2,
+    "qEd_kPa": 9.075,
+    "design_void_extent": "Not agreed;1/1.5/2m are sensitivity cases, not surveyed defects."
+  },
+  "two_way_comparisons": [
+    {
+      "id": "P1_R7_R1",
+      "a_m": 5.2485,
+      "b_m": 7.1450000000000005,
+      "geometry_note": "Clear width R7-R1; clear length between original gray upper perimeter faces (assumed350mm). These old supports are NOT verified aligned with cast perimeter.",
+      "qEd_kPa": 9.075,
+      "qSLS_characteristic_kPa": 6.5,
+      "ULS": {
+        "odd_mode_max": 161,
+        "Mx_kNm_m": 17.528636596073703,
+        "My_kNm_m": 10.97789307965662,
+        "w_uncracked_mm": 18.926443373260835,
+        "integrated_Fourier_load_kN": 338.61670102511874,
+        "exact_load_kN": 340.3173324375,
+        "load_integral_relative_error": 0.004997193061548166
+      },
+      "SLS_uncracked_only": {
+        "odd_mode_max": 161,
+        "Mx_kNm_m": 12.55494632225667,
+        "My_kNm_m": 7.8629537209661455,
+        "w_uncracked_mm": 13.556130239801176,
+        "integrated_Fourier_load_kN": 242.5353781447147,
+        "exact_load_kN": 243.75346125000004,
+        "load_integral_relative_error": 0.0049971930615419335
+      },
+      "convergence": [
+        {
+          "odd_mode_max": 21,
+          "Mx_kNm_m": 17.53070224600908,
+          "My_kNm_m": 10.980970561529373,
+          "w_uncracked_mm": 18.926458551585952,
+          "integrated_Fourier_load_kN": 327.9026039181035,
+          "exact_load_kN": 340.3173324375,
+          "load_integral_relative_error": 0.036479859637112276
+        },
+        {
+          "odd_mode_max": 41,
+          "Mx_kNm_m": 17.52893023790611,
+          "My_kNm_m": 10.978331686320912,
+          "w_uncracked_mm": 18.926443983374472,
+          "integrated_Fourier_load_kN": 333.78237226700526,
+          "exact_load_kN": 340.3173324375,
+          "load_integral_relative_error": 0.019202548761441354
+        },
+        {
+          "odd_mode_max": 81,
+          "Mx_kNm_m": 17.528671547186995,
+          "My_kNm_m": 10.977945354540052,
+          "w_uncracked_mm": 18.92644339419201,
+          "integrated_Fourier_load_kN": 336.9617770834403,
+          "exact_load_kN": 340.3173324375,
+          "load_integral_relative_error": 0.009860077739872181
+        },
+        {
+          "odd_mode_max": 161,
+          "Mx_kNm_m": 17.528636596073703,
+          "My_kNm_m": 10.97789307965662,
+          "w_uncracked_mm": 18.926443373260835,
+          "integrated_Fourier_load_kN": 338.61670102511874,
+          "exact_load_kN": 340.3173324375,
+          "load_integral_relative_error": 0.004997193061548166
+        }
+      ]
+    },
+    {
+      "id": "P2_wing",
+      "a_m": 6.65,
+      "b_m": 7.973,
+      "geometry_note": "Hypothetical centered350mm caps on blue7m width: clear6.65m; clearR2-R4=7.973m. Ideal four-edge support is assumed, not verified.",
+      "qEd_kPa": 9.075,
+      "qSLS_characteristic_kPa": 6.5,
+      "ULS": {
+        "odd_mode_max": 161,
+        "Mx_kNm_m": 23.745940480089047,
+        "My_kNm_m": 17.99781316429407,
+        "w_uncracked_mm": 40.33578082933222,
+        "integrated_Fourier_load_kN": 478.7561314193975,
+        "exact_load_kN": 481.16058374999994,
+        "load_integral_relative_error": 0.0049971930615408675
+      },
+      "SLS_uncracked_only": {
+        "odd_mode_max": 161,
+        "Mx_kNm_m": 17.00811163863138,
+        "My_kNm_m": 12.89099565486618,
+        "w_uncracked_mm": 28.890641916326512,
+        "integrated_Fourier_load_kN": 342.91072773841574,
+        "exact_load_kN": 344.632925,
+        "load_integral_relative_error": 0.004997193061528454
+      },
+      "convergence": [
+        {
+          "odd_mode_max": 21,
+          "Mx_kNm_m": 23.749052421138945,
+          "My_kNm_m": 18.00175758322944,
+          "w_uncracked_mm": 40.33580789214417,
+          "integrated_Fourier_load_kN": 463.6079131918884,
+          "exact_load_kN": 481.16058374999994,
+          "load_integral_relative_error": 0.036479859637113456
+        },
+        {
+          "odd_mode_max": 41,
+          "Mx_kNm_m": 23.74638305676684,
+          "My_kNm_m": 17.998375034218206,
+          "w_uncracked_mm": 40.33578191688052,
+          "integrated_Fourier_load_kN": 471.92107417845614,
+          "exact_load_kN": 481.16058374999994,
+          "load_integral_relative_error": 0.019202548761443113
+        },
+        {
+          "odd_mode_max": 81,
+          "Mx_kNm_m": 23.745993170623667,
+          "My_kNm_m": 17.997880112216052,
+          "w_uncracked_mm": 40.33578086663801,
+          "integrated_Fourier_load_kN": 476.416302988862,
+          "exact_load_kN": 481.16058374999994,
+          "load_integral_relative_error": 0.009860077739873534
+        },
+        {
+          "odd_mode_max": 161,
+          "Mx_kNm_m": 23.745940480089047,
+          "My_kNm_m": 17.99781316429407,
+          "w_uncracked_mm": 40.33578082933222,
+          "integrated_Fourier_load_kN": 478.7561314193975,
+          "exact_load_kN": 481.16058374999994,
+          "load_integral_relative_error": 0.0049971930615408675
+        }
+      ]
+    }
+  ],
+  "one_way_limit_check": {
+    "odd_mode_max": 161,
+    "Mx_kNm_m": 1.134375321263211,
+    "My_kNm_m": 0.22689093937433844,
+    "w_uncracked_mm": 0.04759602848027486,
+    "integrated_Fourier_load_kN": 90.29650472966532,
+    "exact_load_kN": 90.75,
+    "load_integral_relative_error": 0.004997193061539225
+  },
+  "independent_section_capacities": [
+    {
+      "trial_mesh": "d6/150",
+      "direction": "outer_direction",
+      "d_mm": 62.0,
+      "As_mm2_m": 188.4955592153876,
+      "MRd_yield_block_kNm_m": 4.7107863871485165,
+      "x_over_d": 0.18224010680268324,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": true
+    },
+    {
+      "trial_mesh": "d6/150",
+      "direction": "inner_direction",
+      "d_mm": 56.0,
+      "As_mm2_m": 188.4955592153876,
+      "MRd_yield_block_kNm_m": 4.219058841369244,
+      "x_over_d": 0.20176583253154215,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": true
+    },
+    {
+      "trial_mesh": "d8/150",
+      "direction": "outer_direction",
+      "d_mm": 61.0,
+      "As_mm2_m": 335.1032163829112,
+      "MRd_yield_block_kNm_m": 7.716878695836707,
+      "x_over_d": 0.3292935991771616,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": true
+    },
+    {
+      "trial_mesh": "d8/150",
+      "direction": "inner_direction",
+      "d_mm": 53.0,
+      "As_mm2_m": 335.1032163829112,
+      "MRd_yield_block_kNm_m": 6.551302291026581,
+      "x_over_d": 0.37899829339258223,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": true
+    },
+    {
+      "trial_mesh": "d8/100",
+      "direction": "outer_direction",
+      "d_mm": 61.0,
+      "As_mm2_m": 502.65482457436684,
+      "MRd_yield_block_kNm_m": 10.697337000624685,
+      "x_over_d": 0.4939403987657425,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": false
+    },
+    {
+      "trial_mesh": "d8/100",
+      "direction": "inner_direction",
+      "d_mm": 53.0,
+      "As_mm2_m": 502.65482457436684,
+      "MRd_yield_block_kNm_m": 8.948972393409495,
+      "x_over_d": 0.5684974400888735,
+      "steel_reaches_fyd_at_ecu3p5permille": true,
+      "x_d_le_045_optional_rotation_screen": false
+    }
+  ],
+  "basic_straight_bar_anchorage": [
+    {
+      "bar_mm": 8,
+      "sigma_sd_assumed_MPa": 434.7826086956522,
+      "fbd_assumed_MPa": 1.9500000000000002,
+      "basic_required_mm": 445.9308807134894,
+      "stress_equivalent_for150mm_all_alpha1_MPa": 146.25,
+      "note": "Straight tension bar, good bond and all modifiers unity; not final lbd, lap, hook or joint design."
+    },
+    {
+      "bar_mm": 10,
+      "sigma_sd_assumed_MPa": 434.7826086956522,
+      "fbd_assumed_MPa": 1.9500000000000002,
+      "basic_required_mm": 557.4136008918617,
+      "stress_equivalent_for150mm_all_alpha1_MPa": 117.0,
+      "note": "Straight tension bar, good bond and all modifiers unity; not final lbd, lap, hook or joint design."
+    },
+    {
+      "bar_mm": 12,
+      "sigma_sd_assumed_MPa": 434.7826086956522,
+      "fbd_assumed_MPa": 1.9500000000000002,
+      "basic_required_mm": 668.8963210702341,
+      "stress_equivalent_for150mm_all_alpha1_MPa": 97.5,
+      "note": "Straight tension bar, good bond and all modifiers unity; not final lbd, lap, hook or joint design."
+    },
+    {
+      "bar_mm": 14,
+      "sigma_sd_assumed_MPa": 434.7826086956522,
+      "fbd_assumed_MPa": 1.9500000000000002,
+      "basic_required_mm": 780.3790412486064,
+      "stress_equivalent_for150mm_all_alpha1_MPa": 83.57142857142857,
+      "note": "Straight tension bar, good bond and all modifiers unity; not final lbd, lap, hook or joint design."
+    },
+    {
+      "bar_mm": 16,
+      "sigma_sd_assumed_MPa": 434.7826086956522,
+      "fbd_assumed_MPa": 1.9500000000000002,
+      "basic_required_mm": 891.8617614269788,
+      "stress_equivalent_for150mm_all_alpha1_MPa": 73.125,
+      "note": "Straight tension bar, good bond and all modifiers unity; not final lbd, lap, hook or joint design."
+    }
+  ],
+  "conditional_150mm_seat_pressure": [
+    {
+      "reaction_kN_assumed": 20,
+      "horizontal_seat_length_mm_ASSUMED": 150,
+      "width_mm_ASSUMED": 350,
+      "average_contact_MPa": 0.38095238095238093
+    },
+    {
+      "reaction_kN_assumed": 40,
+      "horizontal_seat_length_mm_ASSUMED": 150,
+      "width_mm_ASSUMED": 350,
+      "average_contact_MPa": 0.7619047619047619
+    },
+    {
+      "reaction_kN_assumed": 60,
+      "horizontal_seat_length_mm_ASSUMED": 150,
+      "width_mm_ASSUMED": 350,
+      "average_contact_MPa": 1.1428571428571428
+    },
+    {
+      "reaction_kN_assumed": 80,
+      "horizontal_seat_length_mm_ASSUMED": 150,
+      "width_mm_ASSUMED": 350,
+      "average_contact_MPa": 1.5238095238095237
+    }
+  ],
+  "seat_note": "User150mm is not established as horizontal bearing or bar development length; these identities are illustrative only. Notch, shear, splitting, local compression, reinforcement continuity and construction interface are NOT verified.",
+  "sources": [
+    "https://eurocodes.jrc.ec.europa.eu/sites/default/files/2022-06/EN1992_1_Walraven.pdf",
+    "inputs/geometry.json",
+    "results/agreed-ribs-dimensions.json"
+  ]
+}

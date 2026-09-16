@@ -37,10 +37,12 @@ export const OFFICE_LOBBY_WALL_MM = 175;
 /** Accepted H200 base build-up; tile, waterproofing and final skim are additional finishes. */
 export const OFFICE_BATH_WALL_MM = OFFICE_ACOUSTIC_ASSEMBLY.totalMm;
 export const OFFICE_ENTRY_SHIFT_MM = 30;
-/** Preserve the shower bay dimensions, fitout and derived EAST-02 window position. */
-export const OFFICE_BATHROOM_FACE_MM = 6602;
 /** C thins the wall between the street child room / lobby and the central hall to a partition; the hall gains the difference. */
 export const HALL_PARTITION_MM = 140;
+/** Client, 16 Sep 2026: bathroom face flush with the corridor-facing hall partition. */
+export const OFFICE_BATHROOM_FACE_MM = NESTED_HALL_LINES.streetKidTopMm + HALL_PARTITION_MM;
+/** Client, 16 Sep 2026: the internal garage/suite wall matches the room partitions. */
+export const GARAGE_PARTITION_MM = HALL_PARTITION_MM;
 /** Longitudinal X axis of the main hall, halfway between its two clear faces. */
 export const CENTRAL_HALL_AXIS_Y_MM = (NESTED_HALL_LINES.streetKidTopMm + HALL_PARTITION_MM + NESTED_HALL_LINES.gardenKidBottomMm - HALL_PARTITION_MM) / 2;
 export interface ConceptCabinet {
@@ -309,11 +311,12 @@ function encloseNestedBedroom(base:ReturnType<typeof createNestedConcept>) {
 function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   // Both child rooms end on one 300 mm bearing line (20541–20842); the lobby
   // storage keeps its back at 20842. The office's 175 mm return and its door
-  // move 30 mm south, leaving an 80 mm nib beside the H200 acoustic wall.
+  // move 30 mm south; the revised flush H200 leaves a 42.5 mm office nib.
   // Keep the bathroom face fixed to preserve the shower and EAST-02 window.
   const kidsEast=20541, storageBack=20842, hallLine=21543, wall=base.suiteWallMm, kidsWest=base.suiteRight+wall;
   const officeWest=23542-OFFICE_LOBBY_WALL_MM, officeReturnNorth=5400-OFFICE_ENTRY_SHIFT_MM, returnSouth=officeReturnNorth-OFFICE_LOBBY_WALL_MM;
-  const officeNorth=OFFICE_BATHROOM_FACE_MM-OFFICE_BATH_WALL_MM;
+  const officeBathroomFace=base.walls.find(w=>w.id==='B-STREET-KID-TOP')!.rectMm.y1;
+  const officeNorth=officeBathroomFace-OFFICE_BATH_WALL_MM;
   const officeDoor=base.doors.find(d=>d.id==='DOOR-102-104')!;
   const officeDoorStart=officeDoor.startMm-OFFICE_ENTRY_SHIFT_MM, officeDoorEnd=officeDoorStart+officeDoor.widthMm;
   // The 140 mm hall-side partition continues along the lobby up to the office spine.
@@ -336,7 +339,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   technical.rectsMm=[rect(core.technicalWestMm,7741,25830,10712),rect(25830,7741,core.technicalFacadeInsideMm,11411)];
   technical.standingPointMm={x:26500,y:10750};
   const bathroom=rooms.find(room=>room.number==='1.05')!;
-  bathroom.rectsMm=[rect(22783,OFFICE_BATHROOM_FACE_MM,core.bathroomEastMm,8772),rect(core.bathroomEastMm,OFFICE_BATHROOM_FACE_MM,27541,7601)];
+  bathroom.rectsMm=[rect(22783,officeBathroomFace,core.bathroomEastMm,8772),rect(core.bathroomEastMm,officeBathroomFace,27541,7601)];
   const bathExtension=rooms.find(room=>room.number==='1.11')!.rectsMm[1];
   const street=rooms.find(room=>room.number==='1.08')!;
   street.rectsMm=[rect(base.suiteRight+wall,3504,kidsEast,streetTop)];
@@ -357,7 +360,7 @@ function balanceNestedChildRooms(base:ReturnType<typeof encloseNestedBedroom>) {
   const walls=base.walls.filter(w=>!removed.has(w.id)).map(w=>w.id==='IW-WC-EAST'?{...w,changed:true,rectMm:rect(24082+core.wcExpansionMm,8912,core.technicalWestMm,10712)}
     :w.id==='IW-BATH-105-NORTH'?{...w,changed:true,rectMm:{...w.rectMm,x1:core.boilerBayWestMm}}
     :w.id==='IW-BATH-105-SOUTH-E'?{...w,changed:true,rectMm:{...w.rectMm,x0:core.bathroomEastMm}}
-    :w.id==='IW-STUDY-NORTH'?{...w,role:'PARTITION' as const,changed:true,rectMm:{...w.rectMm,y0:officeNorth,y1:OFFICE_BATHROOM_FACE_MM}}
+    :w.id==='IW-STUDY-NORTH'?{...w,role:'PARTITION' as const,changed:true,rectMm:{...w.rectMm,y0:officeNorth,y1:officeBathroomFace}}
     :w.id==='IW-SPINE-EAST-1'?{...w,changed:true,rectMm:{...w.rectMm,y0:officeDoorEnd,y1:bathroomDoorStart}}
     :w.id==='IW-SPINE-EAST-2'?{...w,changed:true,rectMm:{...w.rectMm,y0:bathroomDoorEnd}}
     // The retained corner block follows the thinner office return up to the alcove.
@@ -462,6 +465,30 @@ function bearKitchenWall(base:ReturnType<typeof balanceNestedChildRooms>) {
   return {...base,rooms,walls,doors,kitchenBearingWall:bearing,kitchenBearingWallEast:east};
 }
 
+/** Keep the suite face and the exterior loggia cheek; give the released strip to the garage. */
+function narrowGaragePartition(base:ReturnType<typeof createNestedConcept>) {
+  const oldSouth=base.walls.find(w=>w.id==='C-GARAGE-SPINE-S')!;
+  const oldNorth=base.walls.find(w=>w.id==='C-GARAGE-SPINE-N')!;
+  const suiteFace=oldNorth.rectMm.x1, garageFace=suiteFace-GARAGE_PARTITION_MM;
+  const from=oldSouth.rectMm.y0, to=base.garageBackOpening.y0;
+  const bayReturn=base.walls.find(w=>w.id==='C-GARAGE-BAY-RETURN')!;
+  const walls=base.walls.filter(w=>w!==oldSouth&&w!==oldNorth).map(w=>w===bayReturn
+    ?{...w,rectMm:{...w.rectMm,x0:garageFace}}:w);
+  const add=(id:string,y0:number,y1:number)=>walls.push({...oldNorth,id,rectMm:rect(garageFace,y0,suiteFace,y1)});
+  if(base.settings.garageConnected){
+    add('C-GARAGE-PARTITION-S',from,oldSouth.rectMm.y1);
+    add('C-GARAGE-PARTITION-N',oldNorth.rectMm.y0,to);
+  }else add('C-GARAGE-PARTITION',from,to);
+  // Retain this ID for the original grid B and foundation coordination route R6.
+  if(to<oldNorth.rectMm.y1) walls.push({...oldNorth,rectMm:{...oldNorth.rectMm,y0:to}});
+  const rooms=base.rooms.map(room=>room.number==='1.12'
+    ?{...room,rectsMm:[...room.rectsMm,rect(oldNorth.rectMm.x0,bayReturn.rectMm.y0,garageFace,to)]}:room);
+  const doors=base.doors.map(door=>door.id==='C-GARAGE-CLOSET'
+    ?{...door,wallSpanMm:[garageFace,suiteFace] as const}:door);
+  const garageShelves=base.garageShelves.map(shelf=>({...shelf,x0:garageFace}));
+  return {...base,walls,rooms,doors,garageShelves};
+}
+
 /** D separates sleeping from the shared routes, within C's existing suite. */
 export function createConcept(input: ConceptSettings, original = false) {
   const settings=normalizeConcept(input);
@@ -472,7 +499,7 @@ export function createConcept(input: ConceptSettings, original = false) {
   const base=createNestedConcept(settings.layout==='private'?{...settings,layout:'nested'}:settings,original,active?ACOUSTIC_ASSEMBLY.totalMm:SUITE_PARTITION_MM,active?NESTED_CHILD_ROOMS_WEST_MM:CHILD_ROOMS_WEST_MM,active?NESTED_HALL_LINES:SOURCE_HALL_LINES);
   const entryArea=area(base.rooms.find(r=>r.number==='1.01')!.rectsMm);
   const entryDefaults={bathroomRadiator:null as RectMm|null,builtInCabinets:[] as ConceptCabinet[],entryBench:null as RectMm|null,kitchenBearingWall:null as RectMm|null,kitchenBearingWallEast:null as RectMm|null,entryArea,entryClearArea:entryArea,officeArea:area(base.rooms.find(r=>r.number==='1.04')!.rectsMm),streetKidDesk:rect(19900,3650,21150,4250),gardenKidBed:rect(19400,8000,20300,10000)};
-  if(original||settings.layout!=='private') return {...entryDefaults,...(!original&&settings.layout==='nested'?bearKitchenWall(balanceNestedChildRooms(encloseNestedBedroom(base))):base),isPrivate:false};
+  if(original||settings.layout!=='private') return {...entryDefaults,...(active?bearKitchenWall(balanceNestedChildRooms(encloseNestedBedroom(narrowGaragePartition(base)))):base),isPrivate:false};
   const right=base.suiteRight, top=base.dressing!.y1, bedroomBottom=top+140;
   const dressing=rect(11143,5744,right,top);
   const rooms=base.rooms.map(room=>({...room,rectsMm:[...room.rectsMm]}));

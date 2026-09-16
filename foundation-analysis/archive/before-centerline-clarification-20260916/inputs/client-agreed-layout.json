@@ -1,0 +1,144 @@
+{
+  "schema": "foundation-analysis.client-agreed-layout.v1",
+  "date": "2026-09-16",
+  "design": "C/B/B",
+  "source_image": "client-foundation-markup-20260916.png",
+  "source_original": "/Users/davidzita/screenshots/Snímek obrazovky 2026-09-16 v 8.37.58.png",
+  "source_sha256": "a6ce9b747f49699ce96b58c7a670438414c578bf5c59420a53c62555cb3c9a12",
+  "instruction": "Modrá je obvod už vyliaty v zemi. Červená sú štyri dohodnuté budúce rebrá.",
+  "existing_perimeter": {
+    "status": "DEKLAROVANE_CAST_BY_CLIENT",
+    "color": "#315de5",
+    "points_m": [
+      [
+        6.794,
+        3.354
+      ],
+      [
+        27.691,
+        3.354
+      ],
+      [
+        27.691,
+        21.685
+      ],
+      [
+        21.393,
+        21.685
+      ],
+      [
+        21.393,
+        10.849
+      ],
+      [
+        6.794,
+        10.849
+      ]
+    ],
+    "closed": true
+  },
+  "agreed_ribs": [
+    {
+      "id": "R7",
+      "points_m": [
+        [
+          15.093,
+          3.354
+        ],
+        [
+          15.093,
+          10.849
+        ]
+      ],
+      "length_m": 7.495,
+      "source_ids": [
+        "C-OPEN-HALL-N",
+        "C-OPEN-HALL-S"
+      ],
+      "status": "CLIENT_AGREED_LAYOUT_ONLY"
+    },
+    {
+      "id": "R1",
+      "points_m": [
+        [
+          20.6915,
+          3.354
+        ],
+        [
+          20.6915,
+          10.849
+        ]
+      ],
+      "length_m": 7.495,
+      "source_ids": [
+        "C-KID-ENTRY-WALL",
+        "C-GARDEN-KID-EAST"
+      ],
+      "status": "CLIENT_AGREED_LAYOUT_ONLY"
+    },
+    {
+      "id": "R2",
+      "points_m": [
+        [
+          21.393,
+          10.862
+        ],
+        [
+          27.691,
+          10.862
+        ]
+      ],
+      "length_m": 6.298,
+      "source_ids": [
+        "C-KITCHEN-BEARING-WALL",
+        "C-KITCHEN-BEARING-WALL-E"
+      ],
+      "status": "CLIENT_AGREED_LAYOUT_ONLY"
+    },
+    {
+      "id": "R4",
+      "points_m": [
+        [
+          21.393,
+          19.185
+        ],
+        [
+          27.691,
+          19.185
+        ]
+      ],
+      "length_m": 6.298,
+      "source_ids": [
+        "NN2"
+      ],
+      "status": "CLIENT_AGREED_LAYOUT_ONLY"
+    }
+  ],
+  "rib_color": "#d84763",
+  "upper_concrete_cast": false,
+  "slab_cast": false,
+  "coordinate_status": "Model coordinates matched to client markup; not a field survey. Stroke width is symbolic, not a designed section.",
+  "calculation_scope": "Previous foundation-results.json describes 17 routes and must not be used as the quantities or structural verification for this four-rib layout.",
+  "rib_section_or_support_agreed": null,
+  "excluded_from_agreed_layout": [
+    "R3",
+    "R5",
+    "R6",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15",
+    "R16",
+    "R17"
+  ],
+  "technical_drawing": {
+    "path": "../drawings/technical/agreed-ribs-technical.pdf",
+    "working_width_mm": 350,
+    "width_source": "Prior17-route study, not approved for4-rib layout",
+    "reference_faces": "Proposed350mm upper perimeter outer model faces; not surveyed existing concrete"
+  }
+}

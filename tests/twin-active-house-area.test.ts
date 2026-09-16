@@ -23,8 +23,9 @@ describe('active export room-area authority', () => {
     // 30 × 728 mm from the lobby: total reduction 0.282780 m².
     const acousticRevisionAreaLoss=(60*4699-30*700+30*728)/1e6;
     expect(acousticRevisionAreaLoss).toBeCloseTo(0.282780,9);
-    expect(expected).toBeCloseTo(180.154908-acousticRevisionAreaLoss,9);
-    expect(expected).toBeCloseTo(179.872128, 9);
+    const garagePartitionAreaGain=161*(8749-5604)/1e6;
+    expect(expected).toBeCloseTo(180.154908-acousticRevisionAreaLoss+garagePartitionAreaGain+(50*4758-37.5*4699)/1e6,9);
+    expect(expected).toBeCloseTo(180.4401605, 9);
     expect(serialized.house.floorAreaAuthority).toEqual({kind: 'ACTIVE_ROOM_RECTANGLE_SUM', layoutId: serialized.layoutId, source: 'lib/twin-interior.ts:INTERIOR_ROOMS', includesGarage: true});
     expect(serialized.interior.rooms.some((r: typeof INTERIOR_ROOMS[number]) => r.id === 'ROOM-1-12')).toBe(true);
   });

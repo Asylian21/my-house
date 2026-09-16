@@ -1,0 +1,32 @@
+{
+  "status": "CALCULATION_AND_ARTIFACT_CHECKS_ONLY_NOT_DESIGN_APPROVAL",
+  "checks": {
+    "17_unique_routes_cover_all_37_wall_rectangles": "PASS (geometry only)",
+    "structural_slab_area_independent_shoelace_offset": "PASS",
+    "volume_and_steel_component_sums": "PASS",
+    "load_combination_and_effective_width_units": "PASS",
+    "selected_local_cases_and_expected_failures": "PASS (conditional local checks only)",
+    "PDF_10_A4_pages_no_empty_pages_and_current_quantities": "PASS",
+    "required_vector_figures": "PASS",
+    "original_sources_hashes_unchanged": "PASS (11 originals)",
+    "new_centerline_coordinates_and_800mm_extension": "PASS declaration preserved; 8653/7348.5/7862/2850mm model axis offsets independently verified",
+    "source_image_hash": "PASS latest8:56image",
+    "old_face_offsets_superseded": "PASS old PDFs and dimensions archived, current sheets state references are approximate centers"
+  },
+  "pdf_sha256": "88bcbd4ebf8843cc5dafda1d18551224fa70a0ca0f0b32e1a0a9600a92cb8f98",
+  "visual_review": "PASS final technical sheets and report1-10 reviewed",
+  "engineering_unresolved": [
+    "as-built survey",
+    "site bearing/settlement/frost/groundwater",
+    "actual roof/attic/point/wind reactions",
+    "old/new interfaces and anchorage",
+    "shrinkage/joints/free slab edges",
+    "100-year durability/exposure",
+    "effective pad area at old/new overlap",
+    "final bar bending schedule and complete cost",
+    "approximate declared perimeter centerlines versus old upper strip axes349-354mm",
+    "R2 left support at L-corner338mm offset",
+    "final rib endpoints and lengths after perimeter reinterpretation",
+    "source dimension closure50mmX/10mmY"
+  ]
+}

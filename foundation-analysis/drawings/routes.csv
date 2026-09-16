@@ -1,0 +1,18 @@
+id,points_XY_m,upper_width_m,total_upper_height_m,support,source_wall_ids
+R1,"[[20.6915, 3.354], [20.6915, 10.849]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-KID-ENTRY-WALL,C-GARDEN-KID-EAST"
+R2,"[[21.393, 10.862], [27.691, 10.862]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-KITCHEN-BEARING-WALL,C-KITCHEN-BEARING-WALL-E"
+R3,"[[23.4545, 3.354], [23.4545, 5.2825], [22.842, 5.2825]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-ENTRY-OFFICE-EAST,C-ENTRY-OFFICE-RETURN"
+R4,"[[21.393, 19.185], [27.691, 19.185]]",0.35,0.6,continuous new footing on natural soil; not span beam,NN2
+R5,"[[6.794, 8.897], [10.993, 8.897]]",0.35,0.6,continuous new footing on natural soil; not span beam,L
+R6,"[[10.993, 8.897], [10.993, 10.849]]",0.35,0.6,continuous new footing on natural soil; not span beam,C-GARAGE-SPINE-N
+R7,"[[15.093, 3.354], [15.093, 10.849]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-OPEN-HALL-N,C-OPEN-HALL-S"
+R8,"[[22.711, 5.1075], [22.711, 11.55]]",0.35,0.6,continuous new footing on natural soil; not span beam,"IW-ENTRY-TOP-E2,IW-SPINE-EAST-1,IW-SPINE-EAST-2,IW-SPINE-EAST-3,C-OFFICE-NORTH-JAMB,C-WC-DOOR-JAMB,C-ENTRY-HALL-JAMB"
+R9,"[[13.413, 6.492], [27.691, 6.492]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-BATH-HALL-W,C-BATH-HALL-E,B-STREET-KID-TOP,C-KID-HALL-POCKET-WALL,C-ENTRY-HALL-JAMB,IW-STUDY-NORTH"
+R10,"[[24.7515, 7.671], [24.7515, 10.862]]",0.3,0.6,continuous new footing on natural soil; not span beam,"IW-BATH-105-EAST,IW-WC-EAST"
+R11,"[[24.682, 7.671], [27.691, 7.671]]",0.3,0.6,continuous new footing on natural soil; not span beam,IW-BATH-105-SOUTH-E
+R12,"[[22.711, 8.842], [24.7515, 8.842]]",0.3,0.6,continuous new footing on natural soil; not span beam,IW-BATH-105-NORTH
+R13,"[[10.993, 7.721], [20.6915, 7.721], [20.6915, 7.791], [21.543, 7.791]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-CLOSET-NORTH-W,C-CLOSET-NORTH-E,C-BED-PRIVACY-W,C-BED-PRIVACY-E,B-GARDEN-KID-SOUTH-W,B-GARDEN-KID-SOUTH-E,C-GARDEN-CLOSET-SOUTH"
+R14,"[[12.912, 3.354], [12.912, 5.674]]",0.3,0.6,continuous new footing on natural soil; not span beam,C-GARAGE-BAY-EAST
+R15,"[[10.842, 5.674], [13.413, 5.674]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-GARAGE-BAY-RETURN,C-BATH-NORTH-W"
+R16,"[[10.993, 5.604], [10.993, 8.897]]",0.35,0.6,continuous new footing on natural soil; not span beam,"C-GARAGE-SPINE-S,C-GARAGE-SPINE-N"
+R17,"[[13.413, 5.604], [13.413, 7.721]]",0.3,0.6,continuous new footing on natural soil; not span beam,C-CLOSET-EAST

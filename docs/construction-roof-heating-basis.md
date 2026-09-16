@@ -100,13 +100,15 @@ Potvrdeným účelom povaly je **odkladanie vecí s pochôdznym prístupom, bez 
 
 Miestnosti 1.01, 1.02, 1.04 až 1.12 a 1.14 majú plochý podhľad v Z 2 600 mm. Miestnosť **1.03 zahŕňa obývačku aj kuchyňu**, má katedrálový podhľad od 2 750 do 4 850 mm; výnimku pre povalu preto treba viazať na jej celú aktuálnu pôdorysnú plochu, nie iba na priestor sedačky. Zdroj: [INTERIOR_ROOMS](../lib/twin-interior.ts#L22), [ceilingElevationMm](../lib/twin-interior-baseline.ts#L1883).
 
-Rozsah skladovacej povaly nad miestnosťami mimo 1.03 zostáva zachovaný a zahŕňa aj garáž 1.12 a technickú 1.07; zadanie ich z povaly nevylučuje. Súčet metadátových obdĺžnikov týchto miestností pred koordinačným orezaním stenami je **129,430290 m²**. Nie je to čistá použiteľná ani nosná plocha povaly: nepozná skutočné obsadenie stenami, úroveň jej podlahy, skladbu, podpery, prístup, prestupy ani pásy s nedostatočnou výškou. Rozsah nad krytými exteriérovými terasami nemožno automaticky pridať k vnútornej pochôdznej povale; zmenil by ich otvorený podhľad.
+Rozsah skladovacej povaly nad miestnosťami mimo 1.03 zostáva zachovaný a zahŕňa aj garáž 1.12 a technickú 1.07; zadanie ich z povaly nevylučuje. Súčet metadátových obdĺžnikov týchto miestností pred koordinačným orezaním stenami je **129,936635 m²**. Nie je to čistá použiteľná ani nosná plocha povaly: nepozná skutočné obsadenie stenami, úroveň jej podlahy, skladbu, podpery, prístup, prestupy ani pásy s nedostatočnou výškou. Rozsah nad krytými exteriérovými terasami nemožno automaticky pridať k vnútornej pochôdznej povale; zmenil by ich otvorený podhľad.
 
 V aktuálnom modeli nie je navrhnutá nosná podlaha povaly, dimenzovaná drevená stropná sústava, jej únosnosť, prístupový otvor ani schodisko/rebrík. Rozdiel medzi plochým podhľadom Z 2 600 a strešným obalom je pri odkvape 525 mm a pri hrebeni 2 960 mm, ešte pred odpočítaním všetkých skladieb. Nad katedrálou je pri hrebeni rozdiel 710 mm medzi Z 4 850 a Z 5 560. Tieto rezervy nie sú svetlé výšky povaly ani dôkaz, že sa do nich zmestí konkrétny krov alebo drevený strop.
 
 **Návrhové plošné aj sústredené zaťaženie skladovaním zostáva neurčené.** Samotné označenie „odkladanie“ nedáva oprávnenie dosadiť číselnú únosnosť; treba určiť prípustný spôsob a rozsah skladovania. Následný statický a stavebno-fyzikálny návrh musí stanoviť drevenú nosnú sústavu, prierezy a rozstupy, uloženie a kotvenie, pochôdzny záklop a jeho spoje, stabilitu a priehyb, nadväznosť na katedrálu, prístup, požiarne riešenie a vedenie rozvodov. Nosná skladba sa má vyriešiť v potvrdenom drevenom systéme bez betónovej dosky alebo nadbetonávky; chýbajúce dimenzie ani únosnosť táto správa nenahrádza.
 
 ## Podlahové kúrenie podľa nového rozsahu
+
+Plochy zahŕňajú revíziu [priečky garáže SP14 zo 16. 9. 2026](construction-garage-partition.md): garáž +0,506345 m² vrátane zarovnania zuba pri regáli. Rozsah podlahového kúrenia zostáva rovnaký, pretože garáž je vylúčená.
 
 Tabuľka používa aritmetický súčet aktuálnych metadátových obdĺžnikov izieb pred koordinačným orezaním stenami. Nejde o čisté použiteľné plochy ani o výkaz vykurovanej podlahy. Známy nesúlad v 1.03: obdĺžnik miestnosti siaha po Y 19 533, ale plná zadná stena začína už na Y 19 035. Časť obdĺžnika sa teda prekrýva s konštrukciou. Hodnotu 50,441838 m² ani súčty z nej nemožno označiť za čistú plochu. Pri grafickom vyznačení rozsahu majú presné steny prekryť plošné šrafy; samotné šrafovanie neopravuje metadátový výkaz.
 
@@ -115,20 +117,20 @@ Tabuľka používa aritmetický súčet aktuálnych metadátových obdĺžnikov 
 | 1.01 Zádverie, chodba, vstup | 6,456724 | 6,456724 | zahrnúť |
 | 1.02 Spoločná chodba | 16,276116 | 16,276116 | zahrnúť |
 | 1.03 Obytný priestor s kuchyňou | 50,441838 | 50,441838 | zahrnúť |
-| 1.04 Pracovňa | 12,311502 | 12,311502 | zahrnúť |
-| 1.05 Kúpeľňa a práčovňa | 6,976971 | 5,851971 | zahrnúť okrem sprchy 1,125000 m² |
+| 1.04 Pracovňa | 12,135290 | 12,135290 | zahrnúť |
+| 1.05 Kúpeľňa a práčovňa | 7,214871 | 6,089871 | zahrnúť okrem sprchy 1,125000 m² |
 | 1.06 WC | 3,418200 | 3,418200 | zahrnúť |
 | 1.07 Technická miestnosť | 7,989019 | 0 | vylúčená |
 | 1.08 Dievčenská izba | 15,406584 | 15,406584 | zahrnúť |
 | 1.09 Chlapčenská izba | 15,406584 | 15,406584 | zahrnúť |
 | 1.10 Spálňa | 11,050400 | 11,050400 | zahrnúť |
 | 1.11 Kúpeľňa | 5,297780 | 5,297780 | zahrnúť; obsahuje vaňu, nie ďalšiu modelovanú sprchu |
-| 1.12 Garáž | 24,645010 | 0 | vylúčená |
+| 1.12 Garáž | 25,151355 | 0 | vylúčená |
 | 1.14 Šatník | 4,195400 | 4,195400 | zahrnúť |
-| **Spolu** | **179,872128** | **146,113099** | metadátové obaly pred orezaním stenami a ďalšími prekážkami |
+| **Spolu** | **180,440161** | **146,174787** | metadátové obaly pred orezaním stenami a ďalšími prekážkami |
 
 Sprcha v 1.05 sa preberá z `BATHROOM_FITOUT.shower.footprintMm`: **X 26 291 až 27 541; Y 6 652 až 7 552**, rozmery **1 250 × 900 mm**, plocha **1,125000 m²**. Je celá v aktuálnom východnom výklenku 1.05. Vylúčiť celý sprchový obdĺžnik, nielen žľab alebo sklenenú zástenu. Lineárny odtok je X 27 391 až 27 471, Y 6 752 až 7 452; jeho 80 × 700 mm pôdorys nenahrádza rozsah sprchy. Zdroj: [sprchový fitout](../lib/twin-interior-baseline.ts#L1120), zachovaný cez [technical-design](../lib/technical-design.ts#L140) a [aktívny fitout](../lib/twin-interior.ts#L50), [skutočný render sprchovej plochy](../lib/babylon-interior.ts#L2350).
 
 Starý text [HEATING_OPERATION_NOTES](../lib/technical-design.ts#L111) vymenúva iba časť izieb s podlahovkou a hovorí o samotných rebríkoch v kúpeľniach. **Nový pokyn ho v rozsahu podlahového kúrenia nahrádza:** zahŕňa obe kúpeľne mimo sprchy, chodby, zádverie a šatník. Pôvodné rebríky nie sú týmto auditom odstránené. Samostatné teleso v garáži a vykurovanie technickej miestnosti sa týmto zoznamom podlahových okruhov neurčujú.
 
-Hodnota 146,113099 m² je iba súčet metadátových obalov po odčítaní technickej miestnosti, garáže a sprchy, pred koordinačným orezaním stenami. Nie je čistou použiteľnou alebo aktívnou vykurovacou plochou ani výpočtom potrebného výkonu. Návrh musí najprv odrátať konštrukcie a potom vyriešiť pevné skrine, kuchynský ostrov a linku, vaňu, ďalšie zariadenia, odstupy rúrok, dilatácie a tepelné straty po miestnostiach. Chýbajú rozstupy a dĺžky okruhov, rozdeľovače, regulácia, prietoky, tlakové straty, teplotný režim a úplná skladba podlahy. Záväzná požiadavka vedenia vody a odpadu nad nosnou doskou zostáva.
+Hodnota 146,174787 m² je iba súčet metadátových obalov po odčítaní technickej miestnosti, garáže a sprchy, pred koordinačným orezaním stenami. Nie je čistou použiteľnou alebo aktívnou vykurovacou plochou ani výpočtom potrebného výkonu. Návrh musí najprv odrátať konštrukcie a potom vyriešiť pevné skrine, kuchynský ostrov a linku, vaňu, ďalšie zariadenia, odstupy rúrok, dilatácie a tepelné straty po miestnostiach. Chýbajú rozstupy a dĺžky okruhov, rozdeľovače, regulácia, prietoky, tlakové straty, teplotný režim a úplná skladba podlahy. Záväzná požiadavka vedenia vody a odpadu nad nosnou doskou zostáva.

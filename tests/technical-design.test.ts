@@ -90,7 +90,7 @@ describe('Service core dimensional and access contracts',()=>{
     expect(tech.rectsMm).toEqual([{x0:24821,y0:7741,x1:27510,y1:10712}]);
     expect(roomAreaM2(tech)).toBeCloseTo(7.989019,6);
     const bath=INTERIOR_ROOMS.find(r=>r.id==='ROOM-1-05')!;
-    expect(roomAreaM2(bath)).toBeCloseTo(6.976971,6);
+    expect(roomAreaM2(bath)).toBeCloseTo(7.214871,6);
     const partition=INTERIOR_WALLS.find(w=>w.rectMm.y0===7741&&w.rectMm.x0===SERVICE_CORE_REVISION.bathroomEastMm)!;
     const wcWall=INTERIOR_WALLS.find(w=>w.id==='IW-WC-EAST')!;
     expect([partition.rectMm.x0,partition.rectMm.x1]).toEqual([wcWall.rectMm.x0,wcWall.rectMm.x1]);

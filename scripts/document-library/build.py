@@ -41,11 +41,11 @@ FOLDERS = [
     ('roof', 'Strecha', 'drawings', 'Pôdorys strechy.'),
     ('site', 'Osadenie', 'drawings', 'Situácia a územný plán.'),
     ('openings', 'Okná a dvere', 'drawings', 'Výpisy otvorov a ich pôvodné kódy.'),
-    ('assemblies', 'Skladby a detaily', 'drawings', 'Konštrukčné skladby, H200 a SA30.'),
+    ('assemblies', 'Skladby a detaily', 'drawings', 'Konštrukčné skladby, H200 a SM30.'),
     ('services', 'Technické zariadenia', 'drawings', 'Vykurovanie a rozsah povaly.'),
     ('reports', 'Správy a rozhodnutia', None, 'Aktuálne textové podklady projektu.'),
     ('construction-reports', 'Konštrukčné podklady', 'reports', 'Otvorené stavebné, výškové a statické súvislosti.'),
-    ('acoustics', 'Akustika', 'reports', 'Aktívne SA30 a H200 vrátane napojení.'),
+    ('acoustics', 'Akustika', 'reports', 'Aktívne SM30 a H200 vrátane napojení.'),
     ('decisions', 'Rozhodnutia C/B/B', 'reports', 'Aktívny návrh, kuchyňa a pracovňa.'),
     ('images', 'Obrázky', None, 'Samostatná farebná a čiernobiela axonometria.'),
     ('model', 'Model a registre', None, 'Strojovo čitateľné údaje, zadanie a výpočtové podklady.'),
@@ -53,12 +53,13 @@ FOLDERS = [
 ]
 REPORTS = {
     'active-design.md': ('Hlavný návrh C/B/B', 'decisions', 'reference', '/docs'),
-    'acoustic-walls.md': ('Akustické steny SA30 a H200', 'acoustics', 'reference', None),
+    'acoustic-walls.md': ('Steny SM30 a H200 · odhlučnenie', 'acoustics', 'reference', None),
     'office-acoustic-wall-thinner-options.md': ('H200 · aktuálna skladba a podklady', 'acoustics', 'reference', '/docs/akustika-h200'),
     'office-acoustic-wall-junction.md': ('H200 · napojenie pri dverách D1 / J1 / J2', 'acoustics', 'reference', '/docs/akustika-h200/napojenie'),
     'office-acoustic-wall-scientific-rationale.md': ('H200 · odborné zdôvodnenie', 'acoustics', 'reference', '/docs/akustika-h200'),
     'kitchen-island.md': ('Kuchyňa · ostrovček a zostava', 'decisions', 'reference', None),
     'office-desk.md': ('Pracovňa · pracovný stôl', 'decisions', 'reference', None),
+    'sa30-acoustic-wall-study.md': ('Archív · nahradená dvojplášťová SA30', 'archive', 'archive', None),
     'office-acoustic-wall-study.md': ('Archív · akustická stena 274 mm', 'archive', 'archive', None),
 }
 
@@ -248,10 +249,7 @@ def build(construction, reuse=None):
     source_updated = max(pdf_times)
     number = lambda value: f'{value:.2f}'.replace('.', ',')
     grouped = lambda value: f'{value:,.2f}'.replace(',', ' ').replace('.', ',')
-    mass = loads['totals']
-    load_search = 'R7 SA30 AK-01 AK-02 H200 vlastná tiaž nenosná priečka ' + ' '.join(
-        f'{number(wall[base]["kgPerM"])} kg/m' for wall in loads['walls'] for base in ['bricksOnly', 'unplastered']
-    ) + ' ' + ' '.join(f'{formatter(mass[key])} kg' for key in ['bricksOnlyKg', 'unplasteredKg'] for formatter in [number, grouped])
+    load_search = 'R7 SM30 AK-01 AK-02 H200 vlastná tiaž nenosná priečka 300 mm tehla hmotnosť neurčená výber výrobku odhlučnenie'
     vector_checks = {} if reuse is None else reuse['state']['vectorOptimization']
     if reuse is not None:
         print('Reusing verified drawing/image assets; refreshing reports and source metadata.', flush=True)
@@ -370,7 +368,7 @@ def build(construction, reuse=None):
         shutil.copyfile(source, target)
         extra = {'webUrl': web_url} if web_url else {}
         documents.append(record(target, ident=f'report-{source.stem}', title=title,
-            description=('Historická záloha nahradená H200.' if status == 'archive' else 'Úplný text aktuálneho projektového podkladu.'),
+            description=('Historická skladba nahradená aktuálnym riešením; nepoužiť pre realizáciu.' if status == 'archive' else 'Úplný text aktuálneho projektového podkladu.'),
             folder=folder, fmt='MD', status=status, updated=iso_mtime(source), searchText=text,
             previewUrl=URL_PREFIX + '/' + str(target.relative_to(PUBLIC)), **extra))
     h200_source = ROOT / 'output/pdf/h200-odborne-zdovodnenie.pdf'
@@ -404,7 +402,7 @@ def build(construction, reuse=None):
     technical = [
         ('model-snapshot', 'Model C/B/B · zdrojové údaje', snapshot, 'coordination', 'C/B/B model súradnice rozmery otvory skladby osi ' + load_search),
         ('drawing-register', 'Register 25 výkresov', register, 'coordination', ' '.join(row['id'] + ' ' + row['title'] for row in register)),
-        ('partition-loads', 'SA30 · overený prepočet vlastnej tiaže', loads, 'coordination', json.dumps(loads, ensure_ascii=False) + ' ' + load_search),
+        ('partition-loads', 'SM30 · geometria a podklady zaťaženia', loads, 'coordination', json.dumps(loads, ensure_ascii=False) + ' ' + load_search),
         ('client-brief', 'Zadanie stavebníka · aktuálne požiadavky', snapshot['clientBrief'], 'reference', json.dumps(snapshot['clientBrief'], ensure_ascii=False)),
     ]
     for stem, title, payload, status, search in technical:
@@ -415,7 +413,7 @@ def build(construction, reuse=None):
             folder='model', fmt='JSON', status=status, updated=iso_mtime(SOURCE / ('drawing-register.json' if stem == 'drawing-register' else 'model-snapshot.json')),
             previewUrl=URL_PREFIX + '/' + str(target.relative_to(PUBLIC)), searchText=search))
     manifest = dict(version=VERSION, generatedAt=datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
-                    design='C / B / B', revision=snapshot['clientBrief']['revision'] + ' · R7 / SA30', sourceUpdatedAt=source_updated,
+                    design='C / B / B', revision=snapshot['clientBrief']['revision'] + ' · R7 / SM30', sourceUpdatedAt=source_updated,
                     folders=[dict(id=ident, title=title, parentId=parent, description=description) for ident, title, parent, description in FOLDERS],
                     documents=documents, featuredIds=['bundle-color', 'sheet-d1-1-za-03-color', 'sheet-d1-1-po-01-color', 'sheet-d1-1-re-02-color'],
                     bundleIds={'color': 'bundle-color', 'mono': 'bundle-mono'})

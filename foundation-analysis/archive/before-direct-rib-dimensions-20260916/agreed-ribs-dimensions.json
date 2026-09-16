@@ -1,0 +1,226 @@
+{
+  "units": "mm",
+  "design": "C/B/B",
+  "scale": "A3 landscape 1:100 at 100 percent",
+  "status": "APPROX_PERIMETER_CENTERLINES_MODEL_COORDINATION_NOT_FOR_SETTING_OUT",
+  "reference_lines": {
+    "A": 6440,
+    "B": 3000,
+    "C": 28040,
+    "D": 22035
+  },
+  "reference_definition": "CBB perimeter lines used as approximate centers of existing concrete per client; garage extension800mm confirmed. These are not concrete edges or surveyed exact axes.",
+  "rib_width_mm": 350,
+  "rib_width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+  "rib_half_width_mm": 175,
+  "routes": [
+    {
+      "id": "R7",
+      "points_mm": [
+        [
+          15093.0,
+          3354.0
+        ],
+        [
+          15093.0,
+          10849.0
+        ]
+      ],
+      "vertical": true,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "A",
+      "axis_distance_from_reference_mm": 8653.0,
+      "near_face_distance_mm": 8478.0,
+      "far_face_distance_mm": 8828.0,
+      "axis_coordinate_mm": 15093.0,
+      "face_coordinates_mm": [
+        14918.0,
+        15268.0
+      ],
+      "prior_drawn_route_length_mm": 7495.0,
+      "final_rib_length_mm": null,
+      "support_detail_status": "UNRESOLVED_AFTER_PERIMETER_CENTERLINE_CLARIFICATION"
+    },
+    {
+      "id": "R1",
+      "points_mm": [
+        [
+          20691.5,
+          3354.0
+        ],
+        [
+          20691.5,
+          10849.0
+        ]
+      ],
+      "vertical": true,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "C",
+      "axis_distance_from_reference_mm": 7348.5,
+      "near_face_distance_mm": 7173.5,
+      "far_face_distance_mm": 7523.5,
+      "axis_coordinate_mm": 20691.5,
+      "face_coordinates_mm": [
+        20516.5,
+        20866.5
+      ],
+      "prior_drawn_route_length_mm": 7495.0,
+      "final_rib_length_mm": null,
+      "support_detail_status": "UNRESOLVED_AFTER_PERIMETER_CENTERLINE_CLARIFICATION"
+    },
+    {
+      "id": "R2",
+      "points_mm": [
+        [
+          21393.0,
+          10862.0
+        ],
+        [
+          27691.0,
+          10862.0
+        ]
+      ],
+      "vertical": false,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "B",
+      "axis_distance_from_reference_mm": 7862.0,
+      "near_face_distance_mm": 7687.0,
+      "far_face_distance_mm": 8037.0,
+      "axis_coordinate_mm": 10862.0,
+      "face_coordinates_mm": [
+        10687.0,
+        11037.0
+      ],
+      "prior_drawn_route_length_mm": 6298.0,
+      "final_rib_length_mm": null,
+      "support_detail_status": "UNRESOLVED_AFTER_PERIMETER_CENTERLINE_CLARIFICATION"
+    },
+    {
+      "id": "R4",
+      "points_mm": [
+        [
+          21393.0,
+          19185.0
+        ],
+        [
+          27691.0,
+          19185.0
+        ]
+      ],
+      "vertical": false,
+      "width_mm": 350,
+      "width_status": "PRELIMINARY_FROM_17_ROUTE_STUDY_NOT_VALIDATED_FOR_FOUR_RIBS",
+      "reference": "D",
+      "axis_distance_from_reference_mm": 2850.0,
+      "near_face_distance_mm": 2675.0,
+      "far_face_distance_mm": 3025.0,
+      "axis_coordinate_mm": 19185.0,
+      "face_coordinates_mm": [
+        19010.0,
+        19360.0
+      ],
+      "prior_drawn_route_length_mm": 6298.0,
+      "final_rib_length_mm": null,
+      "support_detail_status": "UNRESOLVED_AFTER_PERIMETER_CENTERLINE_CLARIFICATION"
+    }
+  ],
+  "X_chain_mm": [
+    8653,
+    5598.5,
+    7348.5
+  ],
+  "Y_chain_mm": [
+    7862,
+    8323,
+    2850
+  ],
+  "perimeter_line_dimensions_mm": [
+    21600,
+    19035
+  ],
+  "field_survey": null,
+  "engineering_check_for_four_ribs": false,
+  "old_face_offsets_status": "SUPERSEDED_DO_NOT_USE",
+  "source_clarification": {
+    "concrete_approximately_centered_on_perimeter_lines": true,
+    "garage_end_extended_800mm": true,
+    "garage_extension_source": "Explicit client reply2026-09-16",
+    "actual_face_survey": null,
+    "screenshot_dimensions_mm": {
+      "front_width": 20800,
+      "right_depth": 19050,
+      "wing_width": 7000,
+      "inner_wing_length": 10840,
+      "courtyard_return": 13750,
+      "garage_side_depth": 8200
+    },
+    "after_extension_declared_front_width_mm": 21600,
+    "after_extension_source_courtyard_return_mm": 14550,
+    "source_orthogonal_closure_mismatch_mm": {
+      "X": 50,
+      "Y": 10
+    },
+    "model_minus_extended_source_mm": {
+      "front_width": 0,
+      "right_depth": -15,
+      "wing_width": 0,
+      "inner_wing_length": -5,
+      "courtyard_return": 50,
+      "garage_side_depth": 0
+    },
+    "model_registration": "Approximate centerline interpretation uses CBB local outline. No claim of surveyed absolute coordinates or exact centering."
+  },
+  "blue_to_gray_line_offsets": [
+    {
+      "side": "Zľava - garážový bok",
+      "blue_coordinate_mm": 6440,
+      "gray_coordinate_mm": 6794,
+      "coordinate_axis": "X",
+      "offset_mm": 354,
+      "direction_from_blue_to_gray": "doprava"
+    },
+    {
+      "side": "Zdola - uličná strana",
+      "blue_coordinate_mm": 3000,
+      "gray_coordinate_mm": 3354,
+      "coordinate_axis": "Y",
+      "offset_mm": 354,
+      "direction_from_blue_to_gray": "nahor / do záhrady"
+    },
+    {
+      "side": "Sprava - dlhá vonkajšia strana",
+      "blue_coordinate_mm": 28040,
+      "gray_coordinate_mm": 27691,
+      "coordinate_axis": "X",
+      "offset_mm": 349,
+      "direction_from_blue_to_gray": "doľava"
+    },
+    {
+      "side": "Zhora - zadná strana terasy",
+      "blue_coordinate_mm": 22035,
+      "gray_coordinate_mm": 21685,
+      "coordinate_axis": "Y",
+      "offset_mm": 350,
+      "direction_from_blue_to_gray": "nadol / k ulici"
+    },
+    {
+      "side": "Zhora pri dvore - vodorovný úsek na fotke",
+      "blue_coordinate_mm": 11200,
+      "gray_coordinate_mm": 10849,
+      "coordinate_axis": "Y",
+      "offset_mm": 351,
+      "direction_from_blue_to_gray": "nadol / k ulici"
+    },
+    {
+      "side": "Zľava pri dvore - vnútorná zvislá krídla",
+      "blue_coordinate_mm": 21040,
+      "gray_coordinate_mm": 21393,
+      "coordinate_axis": "X",
+      "offset_mm": 353,
+      "direction_from_blue_to_gray": "doprava"
+    }
+  ]
+}

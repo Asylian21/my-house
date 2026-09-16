@@ -1,0 +1,108 @@
+
+=== PDF PAGE 1 ===
+DATUMZAK. ČÍSLOSTUPEŇMĚŘÍTKOČÍSLO PŘÍLOHYČÁST
+VYPRACOVAL
+FORMÁT
+NÁZEV A MÍSTO STAVBY
+OBJEKT
+ING. ARCH. VLADIMÍR MUZIKÁŘ
+ČÁSTPARC. Č. 6012/26, K.Ú. BŘEZÍ U MIKULOVA, 691 81 BŘEZÍ U MIKULOVA
+202508
+ZODPOVĚDNÝ PROJEKTANT
+DPSZ
+STAVEBNÍK:Dávid Zita, Tyršova 208/4, 691 83 DrnholecHana Ivičičová, Tyršova 208/4, 691 83 DrnholecNOVOSTAVBA RD BŘEZÍ U MIKULOVA
+0,000 = PODLAHA  1.NPING. ARCH. JIŘÍ BRADÁČ
+DOKUMENTACE PRO POVOLENÍ STAVEBNÍHO ZÁMĚRU
+SKLADBY KONSTRUKCÍD1.1.007D1.1. ARCHITEKTONICKO STAVEBNÍ ŘEŠENÍ1:1002xA4RD BŘEZÍ U MIKULOVA28. 04. 2026
+
+=== PDF PAGE 2 ===
+Skladby podlah 
+F10 Typická podlaha na terénu v 1.NP 
+1) nášlapná vrstva podlahy (keramická dlažba, dřevěná podlaha, vinyl, atp.)  vč. podkladní vrstvy   15mm 
+2) vhodná penetrace podkladní vrstvy 
+3) samonivelační cementový litý potěr např. Cemﬂow       50mm 
+4) systémová deska pro uložení teplovodního podlahového vytápění     25mm 
+5) separační vrstva - vícevrstvá fólie z pěnového polyetylenu laminovaná pohliníkovanou fólií 
+6) tepelněizolační vrstva - desky z pěnového polystyrenu např. ISOVER EPS Grey 100 se zaručeným  
+ součinitelem tepelné vodivosti  λD = 0,031 (W.m-1.K-1)      160mm 
+7) podkladní betonová deska - beton tř. C25/30, XC2, přetažená přes základové konstrukce 
+ hlazená hladítkem, ve střední části deky vyztužená sítí KARI 150/150/mm    150mm 
+8) izolace proti zemní vlhkosti a radonu z SBS modiﬁkovaného asfaltového pásu 
+ např. ELASTEK 40 SPECIAL MINERAL        5mm 
+9) izolace proti zemní vlhkosti a radonu z SBS modiﬁkovaného asfaltového pásu 
+ např. GLASTEK 40 SPECIAL MINERAL         5mm 
+10) penetrace podkladu - penetrační asfalt. emulze např. DEKPRIMER 
+11) podkladní betonová deska - beton tř. C25/30, XC2, přetažená přes základové konstrukce 
+ hlazená hladítkem, ve střední části deky vyztužená sítí KARI 150/150/mm    100mm 
+12) protiradonové opatření - pod obytnými místnostmi vrstva kameniva fr. 16/32mm 
+ vč. perforovaného drenážního potrubí DN100 pro odvětrání prostoru pod podkladní deskou   150mm 
+13) stávající rostlý terén 
+          celkem cca.: 510mm 
+F20 Typická skladba stropu nad 1.NP (půda) 
+1) celoplošné prkenné bednění - OSB desky        22mm 
+2) nosné dřevěné stropní trámy - součást dřevěného nosného rámu konstrukce střechy    
+ rozměr 120/200, podrobněji viz D1.2 stavebně konstrukční řešení     200mm 
+3) parotěsná fólie s Al vrstvou, např. DEKFOL N AL 170 SPECIAL 
+4) systémový SDK podhled včetně instalační mezery, např. RIGIPS     100mm 
+ v místnostech s vlhkým prostředím použity impregnované SDK desky odolné proti vlhkosti 
+ požadavek na požární odolnost SDK podhledu REI 15 
+          celkem cca.: 570mm 
+ z 14
+
+=== PDF PAGE 3 ===
+F12 Typická podlaha na terénu terasy 1.NP  
+1) systémové terasové proﬁly, např. Thermowood, kotveny pomocí T-klipů, dekor na základě výběru investora 26mm 
+2) podkladní dřevěný rošt, dřevěné proﬁly 100x100mm, osová vzdálenost max. 450mm   100mm 
+3) lože z kamenné drti frakce 4/8mm        40mm 
+4) štěrkové lože frakce 8/16mm         150mm 
+5) hutněná vytěžená zemina 
+6)  rostlý terén 
+          celkem cca.: 240mm 
+F01 zpevněná plocha - vjezd na pozemek a parkovací místa 
+1) betonová dlažba (např. zámková)        80mm 
+2) lože z kamenné drti fr. 4/8mm         40mm 
+3) drcené kamenivo fr. 8/16mm         100mm 
+4) drcené kamenivo fr. 16/32mm         200mm 
+5) rostlý terén 
+          celkem min.: 420mm 
+ z 24
+
+=== PDF PAGE 4 ===
+Skladby střech 
+R01 Typická skladba střechy nad 2.NP 
+1) střešní plechová krytina 
+2) dřevěné latě 60x40mm         40mm 
+3) dřevěné kontralatě 60x40mm - provětrávaná mezera      40mm 
+4) difúzně otevřená fólie lehkého typu, pojistná hydroizolační vrstva 
+5) celoplošné bednění z dřevovláknitých desek, např. EGGER HDF     15mm 
+6) dřevěné krokve 120/180 á cca 900mm, podrobněji viz D1.2 stavebně konstrukční řešení, vyplněno minerální vlnou, 
+ např. ISOVER UNIROL PROFI tl. 160mm, s deklarovaným součinitelem tepelné vodivosti λD = 0,033 (W.m-1.K-1) 180mm 
+7) tepelněizolační vrstva - polyisokyanurátové desky z tuhé pěny umístěné pod krokvemi, 
+ s deklarovaným součinitelem tepelné vodivosti λD = 0,022 (W.m-1.K-1)     120mm 
+8) parotěsná fólie s Al vrstvou 
+9) dřevěné proﬁly přitlačující spoje parotěsnící a vzduchotěsnící vrstvy, latě 60x40mm    40mm 
+10) SDK podhled zavěšený vč. systémového nosného roštu, ﬁnální úpravy a malby    min. 50mm 
+ v místnostech s vlhkým prostředím použity impregnované SDK desky odolné proti vlhkosti 
+          celkem cca.: 750mm 
+ z 34
+
+=== PDF PAGE 5 ===
+Skladby stěn 
+W10 Typická skladba stěny vč. zateplovacího systému ETICS s vnitřní omítkou 
+1) vápenocementová omítka         25mm 
+2) obvodová stěna - keramické zdivo např. POROTHERM 50 T PROFI  DF na systémové zdící lepidlo  500mm 
+3) sklovláknitá výztužná tkanina např. StoGlasfasergewebe F zatlačená do vrstvy stěrkové 
+ hmoty např. StoLevell Uni         5mm 
+4) penetrace podkladu - probarvený plněný mezinátěr např. StoPrep Miral 
+5) povrchová úprava - 1. vrstva - organická tenkovrstvá omítka např. Stolit K    1,5mm 
+6) povrchová úprava - 2. vrstva - modelační omítka Stolit MP , brousitelná     1mm 
+          celkem cca.: 530mm 
+W12 Typická skladba stěny vč. fasádního dřevěného obkladu s vnitřní omítkou 
+1) vápenocementová omítka         25mm 
+2) obvodová stěna - keramické zdivo např. POROTHERM 50 T PROFI  DF na systémové zdící lepidlo  500mm 
+3) sklovláknitá výztužná tkanina např. StoGlasfasergewebe F zatlačená do vrstvy stěrkové 
+ hmoty např. StoLevell Uni         5mm 
+4) fasádní dřevěný obklad vynesený na dřevěném roštu kotveném do obvodových konstrukcí, 
+ typ dřeva dle výběru investora a architekta, odstín přírodní      50mm 
+          celkem cca.: 580mm
+ z 44

@@ -1,0 +1,13 @@
+{
+  "pages": 10,
+  "page_size": "A4",
+  "body_font_pt": 9.1,
+  "table_font_pt": 8.2,
+  "automatic_overflow_check": "passed",
+  "visual_review": "PASS final revision OSI: technical2pages and report1-2 viewed by root; independent technical numeric/visual review and report3-10 footer review completed.",
+  "pdf_sha256": "88bcbd4ebf8843cc5dafda1d18551224fa70a0ca0f0b32e1a0a9600a92cb8f98",
+  "revision": "CLIENT_APPROX_CENTERLINES_AND_CONFIRMED_800_GARAGE_EXTENSION",
+  "review_date": "2026-09-16",
+  "engineering_recalculation": false,
+  "as_built_survey": false
+}

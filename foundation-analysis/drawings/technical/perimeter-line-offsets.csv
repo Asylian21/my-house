@@ -1,0 +1,7 @@
+side,axis,blue_line_mm,gray_axis_mm,offset_mm,direction
+Zľava - garážový bok,X,6440,6794,354,doprava
+Zdola - uličná strana,Y,3000,3354,354,nahor / do záhrady
+Sprava - dlhá vonkajšia strana,X,28040,27691,349,doľava
+Zhora - zadná strana terasy,Y,22035,21685,350,nadol / k ulici
+Zhora pri dvore - vodorovný úsek na fotke,Y,11200,10849,351,nadol / k ulici
+Zľava pri dvore - vnútorná zvislá krídla,X,21040,21393,353,doprava

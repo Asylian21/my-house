@@ -1,0 +1,406 @@
+{
+  "status": "CONDITIONAL_FREE_SPAN_SELFWEIGHT_SCREEN_NOT_FINAL_DESIGN",
+  "input_sha256": {
+    "inputs/geometry.json": "d362aaf4ce1b5f2294d1291a8a53917a368a628dc8f88b44c5448b7d91f0b7c7",
+    "inputs/client-agreed-layout.json": "900c9a0ab8fdc452b90a49b9fd1df330f103cc59cec52f42fc9c0737569d80a0",
+    "results/wall-loads.csv": "3a34d785eef35cf6165b9f83218a5a15e587e963e4d8fc854089c4f127cf9d75"
+  },
+  "parameters": {
+    "b_mm_working": 350.0,
+    "h_mm_total_user_declared": 400.0,
+    "slab_mm_included_in_h": 100,
+    "cover_to_stirrup_mm_assumed": 35.0,
+    "stirrup_phi_mm_assumed": 8.0,
+    "fck_MPa": 16.0,
+    "alpha_cc_assumed": 0.85,
+    "gamma_c_assumed": 1.5,
+    "gamma_s_assumed": 1.15,
+    "fyk_MPa_assumed": 500.0,
+    "fcd_MPa": 9.066666666666666,
+    "fyd_MPa": 434.7826086956522,
+    "gamma_g_assumed": 1.35,
+    "beam_total_selfweight_kN_m": 3.5000000000000004,
+    "downstand300_selfweight_kN_m": 2.625,
+    "included_slab_strip100_selfweight_kN_m": 0.8749999999999999
+  },
+  "source_method": {
+    "url": "https://eurocodes.jrc.ec.europa.eu/doc/1110_WS_EC2/report/1110_WS_EC2.pdf",
+    "title": "JRC 2014, Eurocode 2: Background & Applications — Design of Concrete Buildings, Worked examples",
+    "sections": "3.2.1.2 bending, 3.2.1.4 shear, 3.3 serviceability, 4.1 anchorage",
+    "limit": "Background equations only. Adopted material/factor values are stated screening assumptions, not confirmation of the current Czech NA or a complete standards check."
+  },
+  "capacities": [
+    {
+      "tension_reinforcement": "3phi16",
+      "As_mm2": 603.1857894892403,
+      "d_mm": 349.0,
+      "x_mm": 103.30410625614958,
+      "x_over_d": 0.2960003044588813,
+      "z_mm": 307.67835749754016,
+      "MRd_kNm": 80.6900925982202,
+      "VRdc_kN": 51.295008875427,
+      "As_min_mm2": 158.795,
+      "stirrup_scenarios": [
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 100.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 134.48348766370037,
+          "VRdmax_kN": 274.1635693720481,
+          "minimum_of_VRds_VRdmax_kN": 134.48348766370037
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 100.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 336.2087191592509,
+          "VRdmax_kN": 189.07832370486076,
+          "minimum_of_VRds_VRdmax_kN": 189.07832370486076
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 150.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 89.65565844246689,
+          "VRdmax_kN": 274.1635693720481,
+          "minimum_of_VRds_VRdmax_kN": 89.65565844246689
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 150.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 224.1391461061672,
+          "VRdmax_kN": 189.07832370486076,
+          "minimum_of_VRds_VRdmax_kN": 189.07832370486076
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 200.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 67.24174383185019,
+          "VRdmax_kN": 274.1635693720481,
+          "minimum_of_VRds_VRdmax_kN": 67.24174383185019
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 200.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 307.67835749754016,
+          "VRds_kN": 168.10435957962545,
+          "VRdmax_kN": 189.07832370486076,
+          "minimum_of_VRds_VRdmax_kN": 168.10435957962545
+        }
+      ]
+    },
+    {
+      "tension_reinforcement": "4phi16",
+      "As_mm2": 804.247719318987,
+      "d_mm": 349.0,
+      "x_mm": 137.73880834153277,
+      "x_over_d": 0.39466707261184175,
+      "z_mm": 293.9044766633869,
+      "MRd_kNm": 102.77043698007364,
+      "VRdc_kN": 56.457462512688046,
+      "As_min_mm2": 158.795,
+      "stirrup_scenarios": [
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 100.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 128.46304622509206,
+          "VRdmax_kN": 261.89004982939747,
+          "minimum_of_VRds_VRdmax_kN": 128.46304622509206
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 100.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 321.1576155627302,
+          "VRdmax_kN": 180.61382746854997,
+          "minimum_of_VRds_VRdmax_kN": 180.61382746854997
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 150.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 85.64203081672802,
+          "VRdmax_kN": 261.89004982939747,
+          "minimum_of_VRds_VRdmax_kN": 85.64203081672802
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 150.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 214.10507704182007,
+          "VRdmax_kN": 180.61382746854997,
+          "minimum_of_VRds_VRdmax_kN": 180.61382746854997
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 200.0,
+          "cot_theta_assumed": 1.0,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 64.23152311254603,
+          "VRdmax_kN": 261.89004982939747,
+          "minimum_of_VRds_VRdmax_kN": 64.23152311254603
+        },
+        {
+          "two_leg_phi_mm": 8,
+          "spacing_mm_assumed": 200.0,
+          "cot_theta_assumed": 2.5,
+          "z_mm": 293.9044766633869,
+          "VRds_kN": 160.5788077813651,
+          "VRdmax_kN": 180.61382746854997,
+          "minimum_of_VRds_VRdmax_kN": 160.5788077813651
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "rib": "R7",
+      "old_model_axis_length_m_assumed_span": 7.495,
+      "patch_loads": [
+        {
+          "source": "full_350x400_selfweight",
+          "a_m": 0.0,
+          "b_m": 7.495,
+          "qk_kN_m": 3.5000000000000004
+        },
+        {
+          "source": "C-OPEN-HALL-N",
+          "a_m": 4.297,
+          "b_m": 7.345,
+          "qk_kN_m": 6.253875
+        },
+        {
+          "source": "C-OPEN-HALL-S",
+          "a_m": 0.1499999999999999,
+          "b_m": 3.1979999999999995,
+          "qk_kN_m": 6.253875
+        }
+      ],
+      "demand": {
+        "Gk_total_kN": 64.356122,
+        "RA_kN": 32.178061,
+        "RB_kN": 32.178061,
+        "x_Mmax_m": 3.7475000000000005,
+        "M_gk_max_kNm": 56.486045051499985,
+        "MEd_kNm": 76.25616081952498,
+        "VEd_at_left_kN": 43.44038235,
+        "VEd_at_right_kN": 43.44038235,
+        "VEd_max_unreduced_kN": 43.44038235
+      },
+      "capacity_comparisons": [
+        {
+          "reinforcement": "3phi16",
+          "MEd_over_MRd": 0.945049861316022,
+          "VEd_over_VRdc": 0.8468734737037977,
+          "uniform_total_qEd_flexural_limit_kN_m": 11.491240827854755,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 8.512030242855374,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 5.012030242855374,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        },
+        {
+          "reinforcement": "4phi16",
+          "MEd_over_MRd": 0.7420048319373249,
+          "VEd_over_VRdc": 0.7694356142952292,
+          "uniform_total_qEd_flexural_limit_kN_m": 14.635747751613623,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 10.841294630824907,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 7.3412946308249065,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        }
+      ]
+    },
+    {
+      "rib": "R1",
+      "old_model_axis_length_m_assumed_span": 7.495,
+      "patch_loads": [
+        {
+          "source": "full_350x400_selfweight",
+          "a_m": 0.0,
+          "b_m": 7.495,
+          "qk_kN_m": 3.5000000000000004
+        },
+        {
+          "source": "C-KID-ENTRY-WALL",
+          "a_m": 0.1499999999999999,
+          "b_m": 3.058,
+          "qk_kN_m": 12.975
+        },
+        {
+          "source": "C-GARDEN-KID-EAST",
+          "a_m": 4.437,
+          "b_m": 7.345,
+          "qk_kN_m": 12.975
+        }
+      ],
+      "demand": {
+        "Gk_total_kN": 101.6951,
+        "RA_kN": 50.847550000000005,
+        "RB_kN": 50.84754999999999,
+        "x_Mmax_m": 3.7475000000000014,
+        "M_gk_max_kNm": 85.0975786375,
+        "MEd_kNm": 114.88173116062502,
+        "VEd_at_left_kN": 68.64419250000002,
+        "VEd_at_right_kN": 68.64419249999999,
+        "VEd_max_unreduced_kN": 68.64419250000002
+      },
+      "capacity_comparisons": [
+        {
+          "reinforcement": "3phi16",
+          "MEd_over_MRd": 1.4237402320586627,
+          "VEd_over_VRdc": 1.338223620678311,
+          "uniform_total_qEd_flexural_limit_kN_m": 11.491240827854755,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 8.512030242855374,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 5.012030242855374,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        },
+        {
+          "reinforcement": "4phi16",
+          "MEd_over_MRd": 1.1178480362295207,
+          "VEd_over_VRdc": 1.2158568494744724,
+          "uniform_total_qEd_flexural_limit_kN_m": 14.635747751613623,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 10.841294630824907,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 7.3412946308249065,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        }
+      ]
+    },
+    {
+      "rib": "R2",
+      "old_model_axis_length_m_assumed_span": 6.297999999999998,
+      "patch_loads": [
+        {
+          "source": "full_350x400_selfweight",
+          "a_m": 0.0,
+          "b_m": 6.297999999999998,
+          "qk_kN_m": 3.5000000000000004
+        },
+        {
+          "source": "C-KITCHEN-BEARING-WALL",
+          "a_m": 1.2459999999999987,
+          "b_m": 4.687999999999999,
+          "qk_kN_m": 12.937499999999998
+        },
+        {
+          "source": "C-KITCHEN-BEARING-WALL-E",
+          "a_m": 5.4879999999999995,
+          "b_m": 6.148,
+          "qk_kN_m": 12.937499999999998
+        }
+      ],
+      "demand": {
+        "Gk_total_kN": 75.11262499999998,
+        "RA_kN": 35.22457155049221,
+        "RB_kN": 39.88805344950777,
+        "x_Mmax_m": 3.1236317293075095,
+        "M_gk_max_kNm": 70.14812376339164,
+        "MEd_kNm": 94.69996708057872,
+        "VEd_at_left_kN": 47.553171593164485,
+        "VEd_at_right_kN": 53.8488721568355,
+        "VEd_max_unreduced_kN": 53.8488721568355
+      },
+      "capacity_comparisons": [
+        {
+          "reinforcement": "3phi16",
+          "MEd_over_MRd": 1.173625708327264,
+          "VEd_over_VRdc": 1.0497877539627825,
+          "uniform_total_qEd_flexural_limit_kN_m": 16.274396333478972,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 12.055108395169608,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 8.555108395169608,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        },
+        {
+          "reinforcement": "4phi16",
+          "MEd_over_MRd": 0.9214709002253272,
+          "VEd_over_VRdc": 0.9537954729143857,
+          "uniform_total_qEd_flexural_limit_kN_m": 20.72778415445062,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 15.35391418848194,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 11.85391418848194,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        }
+      ]
+    },
+    {
+      "rib": "R4",
+      "old_model_axis_length_m_assumed_span": 6.297999999999998,
+      "patch_loads": [
+        {
+          "source": "full_350x400_selfweight",
+          "a_m": 0.0,
+          "b_m": 6.297999999999998,
+          "qk_kN_m": 3.5000000000000004
+        },
+        {
+          "source": "NN2_wall_21.54",
+          "a_m": 0.14699999999999847,
+          "b_m": 0.6469999999999985,
+          "qk_kN_m": 12.937499999999998
+        },
+        {
+          "source": "NN2_opening_22.04",
+          "a_m": 0.6469999999999985,
+          "b_m": 2.6469999999999985,
+          "qk_kN_m": 1.5524999999999998
+        },
+        {
+          "source": "NN2_wall_24.04",
+          "a_m": 2.6469999999999985,
+          "b_m": 6.1469999999999985,
+          "qk_kN_m": 12.937499999999998
+        }
+      ],
+      "demand": {
+        "Gk_total_kN": 76.898,
+        "RA_kN": 33.043269609399815,
+        "RB_kN": 43.85473039060018,
+        "x_Mmax_m": 3.5111837024729913,
+        "M_gk_max_kNm": 63.68215462595758,
+        "MEd_kNm": 85.97090874504273,
+        "VEd_at_left_kN": 44.60841397268975,
+        "VEd_at_right_kN": 59.20388602731025,
+        "VEd_max_unreduced_kN": 59.20388602731025
+      },
+      "capacity_comparisons": [
+        {
+          "reinforcement": "3phi16",
+          "MEd_over_MRd": 1.0654456572892694,
+          "VEd_over_VRdc": 1.15418414628001,
+          "uniform_total_qEd_flexural_limit_kN_m": 16.274396333478972,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 12.055108395169608,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 8.555108395169608,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        },
+        {
+          "reinforcement": "4phi16",
+          "MEd_over_MRd": 0.8365334552553455,
+          "VEd_over_VRdc": 1.0486458900628943,
+          "uniform_total_qEd_flexural_limit_kN_m": 20.72778415445062,
+          "uniform_total_Gk_only_flexural_limit_kN_m": 15.35391418848194,
+          "uniform_extra_Gk_above_full_beam_selfweight_flexural_limit_kN_m": 11.85391418848194,
+          "note": "Uniform q limits are bending-only for this simply-supported rectangle; cannot be equated to localized loads or a certified allowable wall load."
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "No intermediate ground support: hypothetical simply supported full-span beam only.",
+    "Nominal old model lengths are optimistic placeholders; actual supports and effective spans are unresolved after new perimeter interpretation.",
+    "Direct wall self-weight only. No roof/attic/snow/wind/occupied floor/live storage/vehicle/equipment/transverse-wall/lintel support loads.",
+    "A 350mm by100mm slab strip is already inside the full400mm beam selfweight. No wider slab load is assigned.",
+    "Rectangular section, fully developed single tension layer assumed; no T-flange, compression-steel, arching, frame/fixity or composite old-concrete resistance credited.",
+    "Shear force at supports unreduced; 100/150/200mm link spacings and cot(theta) are scenarios, not reinforcement instructions.",
+    "SLS crack width, deflection/creep, torsion, lap/anchorage/node bearing, soil/settlement and interface capacity not checked.",
+    "Passing a listed M/V comparison does not approve the beam, slab, support joint or house."
+  ]
+}

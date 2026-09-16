@@ -7,16 +7,43 @@ import { ARCHITECTURAL_DOOR_INVENTORY, type AnimatedDoorRegistration } from '../
 import { HOUSE } from '../lib/twin-active-house';
 import { ACTIVE_CONCEPT, CHILDRENS_BEDROOM_FITOUTS, INTERIOR_ROOMS, INTERIOR_DOORS, KITCHEN_RUN, OFFICE_FITOUT } from '../lib/twin-interior';
 import { PLAN_ITEMS } from '../lib/plan-documentation';
+import { CODED_OPENINGS, FACADES, facadeChains } from '../lib/plan-export';
+import { HOUSE as historicalHouse } from '../lib/twin-site';
 
 describe('C facade revision at the current furniture',()=>{
-  it('centres kitchen and bathroom openings and moves both office windows toward the requested walls',()=>{
+  it('narrows the screenshot-selected GARDEN-02 to 220 cm in the plan, D5 schedule and dimension chain',()=>{
+    const portal=HOUSE.facades.garden.openings.find(o=>o.id==='GARDEN-02')!;
+    const original=historicalHouse.facades.garden.openings.find(o=>o.id==='GARDEN-02')!;
+    expect(portal).toMatchObject({startXmm:11990,widthMm:2200,heightMm:2400,sillMm:0});
+    expect(portal.startXmm+portal.widthMm/2).toBe(original.startXmm+original.widthMm/2);
+    expect(original.widthMm).toBe(2500);
+    expect(HOUSE.facades.wingWest.opening).toMatchObject({startYmm:11550,widthMm:2250,heightMm:2400});
+    expect(PLAN_ITEMS.some(item=>item.id==='Terasové presklenie 2500')).toBe(false);
+    const item=PLAN_ITEMS.find(item=>item.id==='Terasové presklenie 2200')!;
+    expect(item.roomId).toBe('ROOM-1-10');
+    expect(item.opening).toEqual({width:2200,height:2400,sill:0});
+    expect(item.rect.x0).toBe(11990);
+    expect(item.rect.x1).toBe(14190);
+    expect(CODED_OPENINGS.find(o=>o.item.id===item.id)?.code).toBe('D5');
+    const facade=FACADES.find(f=>f.def.id==='N')!;
+    expect(facade.segments.find(s=>s.item?.id===item.id)).toMatchObject({a:11990,b:14190,kind:'opening'});
+    const row=facadeChains(2).find(c=>c.axis==='x'&&c.at===facade.def.outer+700)!;
+    const index=row.points.indexOf(11990);
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(row.points[index+1]-row.points[index]).toBe(2200);
+    expect(row.sub![index].replaceAll('\u00a0',' ')).toBe('2 400 (0)');
+  });
+
+  it('centres kitchen and bath openings, preserves the shower opening across H200 revisions and positions office glazing',()=>{
     const east=(id:string)=>HOUSE.facades.east.openings.find(o=>o.id===id)!;
     const front=(id:string)=>HOUSE.facades.front.openings.find(o=>o.id===id)!;
     const kitchen=east('EAST-04');
     expect(kitchen.startYmm-KITCHEN_RUN.rectMm.y1).toBe(KITCHEN_RUN.peninsulaRectMm.y0-kitchen.startYmm-kitchen.widthMm);
     const showerBay=INTERIOR_ROOMS.find(r=>r.number==='1.05')!.rectsMm.find(r=>r.x1===27541)!;
     const shower=east('EAST-02');
-    expect(shower.startYmm-showerBay.y0).toBe(showerBay.y1-shower.startYmm-shower.widthMm);
+    expect(shower.startYmm).toBe(6801.5);
+    expect(shower.startYmm-showerBay.y0).toBe(249.5);
+    expect(showerBay.y1-shower.startYmm-shower.widthMm).toBe(199.5);
     const bath=front('FRONT-03');
     expect(Math.abs(bath.startXmm+bath.widthMm/2-(ACTIVE_CONCEPT.bathLeft+ACTIVE_CONCEPT.bathRight)/2)).toBeLessThanOrEqual(.5);
     expect(6412-east('EAST-01').startYmm-east('EAST-01').widthMm).toBe(200);
@@ -84,6 +111,25 @@ describe('C facade revision at the current furniture',()=>{
       slider.apply(0,0); moving.computeWorldMatrix(true);
       expect(moving.getAbsolutePosition().subtract(closed).length()).toBeLessThan(.00001);
       expect(moving.checkCollisions).toBe(true);
+      const gardenParts=scene.meshes.filter(m=>m.name.startsWith('Terasové presklenie 2200'));
+      expect(gardenParts.length).toBeGreaterThan(10);
+      const frameParts=gardenParts.filter(m=>m.name.includes(' · rám '));
+      const bounds=frameParts.map(m=>{m.computeWorldMatrix(true);return m.getBoundingInfo().boundingBox;});
+      expect(Math.max(...bounds.map(b=>b.maximumWorld.x))-Math.min(...bounds.map(b=>b.minimumWorld.x))).toBeCloseTo(2.2,6);
+      expect(Math.max(...bounds.map(b=>b.maximumWorld.y))).toBeCloseTo(2.4,6);
+      for(const [index,width] of [[1,1.35],[2,1.65]]){
+        const field=scene.meshes.find(m=>m.name===`Modřínové pole záhradnej fasády ${index}`)!;
+        expect(field.getBoundingInfo().boundingBox.extendSize.x*2).toBeCloseTo(width,6);
+      }
+      const gardenSlider=doors.find(d=>d.id==='GARDEN-02')!;
+      const gardenLeaf=gardenParts.find(m=>m.metadata?.dynamicCameraOccluder)!;
+      gardenLeaf.computeWorldMatrix(true);
+      const gardenClosed=gardenLeaf.getAbsolutePosition().clone();
+      gardenSlider.apply(1,1);gardenLeaf.computeWorldMatrix(true);
+      expect(Math.abs(gardenLeaf.getAbsolutePosition().x-gardenClosed.x)).toBeCloseTo(.997,6);
+      gardenSlider.apply(0,0);gardenLeaf.computeWorldMatrix(true);
+      expect(gardenLeaf.getAbsolutePosition().subtract(gardenClosed).length()).toBeLessThan(.00001);
+      expect(gardenLeaf.checkCollisions).toBe(true);
     }finally{scene.dispose();engine.dispose();}
   });
 

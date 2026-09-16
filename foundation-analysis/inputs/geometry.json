@@ -1,0 +1,2190 @@
+{
+  "schema": "foundation-analysis.geometry.v1",
+  "units": "m, kN unless named otherwise",
+  "status": "OVERENE_MODEL_NOT_AS_BUILT",
+  "design": "C/B/B",
+  "coordinate_frame": "Repository local X east, Y garden; street at minimum Y. NOT surveyed axes. Drawing origin may subtract [6.440,3.000].",
+  "source": "output/pdf/construction-cbb/model-snapshot.json",
+  "source_sha256": "f19d6b6a4e4a15203c0c8c27941d51e012a8653ad26351db58c2b289bc944d81",
+  "source_date": "2026-09-15",
+  "field_survey": null,
+  "existing_state": {
+    "status": "DEKLAROVANE",
+    "source": "Current investor task and follow-up 2026-09-15",
+    "bottom_perimeter_strips_cast": true,
+    "upper_formwork_cast": false,
+    "slab_cast": false,
+    "concrete": "C16/20",
+    "bottom_strip_width_m": [
+      0.38,
+      0.4
+    ],
+    "cast_height_m": 0.6,
+    "founding_depth_below_finished_ground_m": null,
+    "as_built_outline": null,
+    "existing_reinforcement": null,
+    "upper_formwork_35cm_meaning": null
+  },
+  "superseded_statement": "Prior foundation illustration said slab cast including terraces. Current investor clarification explicitly replaces that state; outline remains model only.",
+  "outline_m": [
+    [
+      6.44,
+      3.0
+    ],
+    [
+      28.04,
+      3.0
+    ],
+    [
+      28.04,
+      22.035
+    ],
+    [
+      21.04,
+      22.035
+    ],
+    [
+      21.04,
+      11.2
+    ],
+    [
+      6.44,
+      11.2
+    ]
+  ],
+  "closed_envelope_m": [
+    [
+      6.44,
+      3.0
+    ],
+    [
+      28.04,
+      3.0
+    ],
+    [
+      28.04,
+      19.535
+    ],
+    [
+      21.04,
+      19.535
+    ],
+    [
+      21.04,
+      11.2
+    ],
+    [
+      10.64,
+      11.2
+    ],
+    [
+      10.64,
+      9.247
+    ],
+    [
+      6.44,
+      9.247
+    ]
+  ],
+  "perimeter_axis_m": [
+    [
+      6.794,
+      3.354
+    ],
+    [
+      27.691,
+      3.354
+    ],
+    [
+      27.691,
+      21.685
+    ],
+    [
+      21.393,
+      21.685
+    ],
+    [
+      21.393,
+      10.849
+    ],
+    [
+      6.794,
+      10.849
+    ]
+  ],
+  "proposed_axis_warning": "Prior coordination proposal from nominal 300mm wall cores. Must be tied to actual strip centerlines by survey; terrace ends are proposal, not facade loading.",
+  "area_m2": 252.965,
+  "upper_wall_nominal_height_m": 3.125,
+  "ribs_prior_candidates": [
+    {
+      "id": "R1",
+      "points_m": [
+        [
+          20.6915,
+          3.354
+        ],
+        [
+          20.6915,
+          10.849
+        ]
+      ],
+      "length_m": 7.495,
+      "source_ids": [
+        "C-KID-ENTRY-WALL",
+        "C-GARDEN-KID-EAST"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Pod dvojicou nosných úsekov pri izbách; spojenie pod chodbou je návrh."
+    },
+    {
+      "id": "R2",
+      "points_m": [
+        [
+          21.393,
+          10.862
+        ],
+        [
+          27.691,
+          10.862
+        ]
+      ],
+      "length_m": 6.298,
+      "source_ids": [
+        "C-KITCHEN-BEARING-WALL",
+        "C-KITCHEN-BEARING-WALL-E"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Pod kuchynskou nosnou líniou; západný prenos a podopretie sa musia vypočítať."
+    },
+    {
+      "id": "R3",
+      "points_m": [
+        [
+          23.4545,
+          3.354
+        ],
+        [
+          23.4545,
+          5.2825
+        ],
+        [
+          22.842,
+          5.2825
+        ]
+      ],
+      "length_m": 2.5410000000000004,
+      "source_ids": [
+        "C-ENTRY-OFFICE-EAST",
+        "C-ENTRY-OFFICE-RETURN"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Vetva pod vstupným nosným úsekom a jeho návratom; voľný koniec nie je overené uloženie."
+    },
+    {
+      "id": "R4",
+      "points_m": [
+        [
+          21.393,
+          19.185
+        ],
+        [
+          27.691,
+          19.185
+        ]
+      ],
+      "length_m": 6.298,
+      "source_ids": [
+        "NN2"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Vnútorná trasa pod zadnou stenou obývačky medzi domom a zahrnutou krytou terasou, vrátane úseku pod O8."
+    },
+    {
+      "id": "R5",
+      "points_m": [
+        [
+          6.794,
+          8.897
+        ],
+        [
+          10.993,
+          8.897
+        ]
+      ],
+      "length_m": 4.199,
+      "source_ids": [
+        "L"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Vnútorná trasa pod zadnou stenou garáže pri zahrnutej lodžii, vrátane úseku pod D6."
+    },
+    {
+      "id": "R6",
+      "points_m": [
+        [
+          10.993,
+          8.897
+        ],
+        [
+          10.993,
+          10.849
+        ]
+      ],
+      "length_m": 1.952,
+      "source_ids": [
+        "C-GARAGE-SPINE-N"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Bočný styk lodžie; zdrojová stena je PARTITION, jej nosná funkcia nie je týmto potvrdená."
+    },
+    {
+      "id": "R7",
+      "points_m": [
+        [
+          15.093,
+          3.354
+        ],
+        [
+          15.093,
+          10.849
+        ]
+      ],
+      "length_m": 7.495,
+      "source_ids": [
+        "C-OPEN-HALL-N",
+        "C-OPEN-HALL-S"
+      ],
+      "status": "PREDPOKLAD_ROUTE_NOT_DESIGNED",
+      "note": "Kandidátny spojitý pás na výpočet pod vlastnou hmotnosťou dvoch SA30. Chodba ostáva voľná; spojenie prechádza iba pod podlahou. Nie je to schválenie zásahu do existujúcej dosky.",
+      "loaded_intervals_m": [
+        {
+          "code": "AK-01",
+          "from": 7.651,
+          "to": 10.699
+        },
+        {
+          "code": "AK-02",
+          "from": 3.504,
+          "to": 6.552
+        }
+      ]
+    }
+  ],
+  "walls": [
+    {
+      "id": "IW-ENTRY-TOP-E2",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 5.195,
+        "x1": 22.842,
+        "y1": 5.421
+      },
+      "line_m": [
+        [
+          22.7405,
+          5.195
+        ],
+        [
+          22.7405,
+          5.421
+        ]
+      ],
+      "length_m": 0.22599999999999998,
+      "width_m": 0.203,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-SPINE-EAST-1",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 6.322,
+        "x1": 22.783,
+        "y1": 6.7015
+      },
+      "line_m": [
+        [
+          22.711,
+          6.322
+        ],
+        [
+          22.711,
+          6.7015
+        ]
+      ],
+      "length_m": 0.37950000000000017,
+      "width_m": 0.144,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-SPINE-EAST-2",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 7.5015,
+        "x1": 22.783,
+        "y1": 9.866
+      },
+      "line_m": [
+        [
+          22.711,
+          7.5015
+        ],
+        [
+          22.711,
+          9.866
+        ]
+      ],
+      "length_m": 2.3644999999999996,
+      "width_m": 0.144,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-SPINE-EAST-3",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 11.012,
+        "x1": 22.783,
+        "y1": 11.55
+      },
+      "line_m": [
+        [
+          22.711,
+          11.012
+        ],
+        [
+          22.711,
+          11.55
+        ]
+      ],
+      "length_m": 0.5380000000000003,
+      "width_m": 0.144,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-STUDY-NORTH",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.783,
+        "y0": 6.402,
+        "x1": 27.541,
+        "y1": 6.602
+      },
+      "line_m": [
+        [
+          22.783,
+          6.502
+        ],
+        [
+          27.541,
+          6.502
+        ]
+      ],
+      "length_m": 4.757999999999999,
+      "width_m": 0.2,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "H200",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES",
+      "masonry_kg_m2": 73,
+      "finish_layers": [
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        },
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        }
+      ],
+      "silentboard_kg_m2": 35,
+      "silentboard_status": "PREDPOKLAD_TWO_LAYERS_17.5_EACH_VERIFY_DELIVERY",
+      "lining_misc_kg_m2": null
+    },
+    {
+      "id": "IW-BATH-105-EAST",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 24.682,
+        "y0": 7.741,
+        "x1": 24.821,
+        "y1": 8.772
+      },
+      "line_m": [
+        [
+          24.7515,
+          7.741
+        ],
+        [
+          24.7515,
+          8.772
+        ]
+      ],
+      "length_m": 1.0310000000000006,
+      "width_m": 0.139,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-BATH-105-SOUTH-E",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 24.682,
+        "y0": 7.601,
+        "x1": 27.541,
+        "y1": 7.741
+      },
+      "line_m": [
+        [
+          24.682,
+          7.671
+        ],
+        [
+          27.541,
+          7.671
+        ]
+      ],
+      "length_m": 2.8590000000000018,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-BATH-105-NORTH",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.783,
+        "y0": 8.772,
+        "x1": 24.821,
+        "y1": 8.912
+      },
+      "line_m": [
+        [
+          22.783,
+          8.842
+        ],
+        [
+          24.821,
+          8.842
+        ]
+      ],
+      "length_m": 2.0380000000000003,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "IW-WC-EAST",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 24.682,
+        "y0": 8.912,
+        "x1": 24.821,
+        "y1": 10.712
+      },
+      "line_m": [
+        [
+          24.7515,
+          8.912
+        ],
+        [
+          24.7515,
+          10.712
+        ]
+      ],
+      "length_m": 1.799999999999999,
+      "width_m": 0.139,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "B-STREET-KID-TOP",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 15.243,
+        "y0": 6.412,
+        "x1": 17.442,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          15.243,
+          6.482
+        ],
+        [
+          17.442,
+          6.482
+        ]
+      ],
+      "length_m": 2.199,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "B-GARDEN-KID-SOUTH-W",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 15.243,
+        "y0": 7.651,
+        "x1": 17.442,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          15.243,
+          7.721
+        ],
+        [
+          17.442,
+          7.721
+        ]
+      ],
+      "length_m": 2.199,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "B-GARDEN-KID-SOUTH-E",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 18.342,
+        "y0": 7.651,
+        "x1": 21.543,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          18.342,
+          7.721
+        ],
+        [
+          21.543,
+          7.721
+        ]
+      ],
+      "length_m": 3.2010000000000005,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARAGE-BAY-EAST",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 12.842,
+        "y0": 3.504,
+        "x1": 12.982,
+        "y1": 5.604
+      },
+      "line_m": [
+        [
+          12.912,
+          3.504
+        ],
+        [
+          12.912,
+          5.604
+        ]
+      ],
+      "length_m": 2.1,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARAGE-BAY-RETURN",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 10.842,
+        "y0": 5.604,
+        "x1": 12.982,
+        "y1": 5.744
+      },
+      "line_m": [
+        [
+          10.842,
+          5.674
+        ],
+        [
+          12.982,
+          5.674
+        ]
+      ],
+      "length_m": 2.139999999999999,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARAGE-SPINE-S",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 10.842,
+        "y0": 5.744,
+        "x1": 11.143,
+        "y1": 5.844
+      },
+      "line_m": [
+        [
+          10.842,
+          5.794
+        ],
+        [
+          11.143,
+          5.794
+        ]
+      ],
+      "length_m": 0.30100000000000016,
+      "width_m": 0.1,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARAGE-SPINE-N",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 10.842,
+        "y0": 5.844,
+        "x1": 11.143,
+        "y1": 10.699
+      },
+      "line_m": [
+        [
+          10.9925,
+          5.844
+        ],
+        [
+          10.9925,
+          10.699
+        ]
+      ],
+      "length_m": 4.8549999999999995,
+      "width_m": 0.301,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-CLOSET-EAST",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 13.343,
+        "y0": 5.604,
+        "x1": 13.483,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          13.413,
+          5.604
+        ],
+        [
+          13.413,
+          7.791
+        ]
+      ],
+      "length_m": 2.1870000000000003,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-CLOSET-NORTH-W",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 11.143,
+        "y0": 7.651,
+        "x1": 11.793,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          11.143,
+          7.721
+        ],
+        [
+          11.793,
+          7.721
+        ]
+      ],
+      "length_m": 0.6499999999999986,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-CLOSET-NORTH-E",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 12.593,
+        "y0": 7.651,
+        "x1": 13.483,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          12.593,
+          7.721
+        ],
+        [
+          13.483,
+          7.721
+        ]
+      ],
+      "length_m": 0.8900000000000006,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-BATH-NORTH-W",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 12.982,
+        "y0": 5.604,
+        "x1": 13.343,
+        "y1": 5.744
+      },
+      "line_m": [
+        [
+          12.982,
+          5.674
+        ],
+        [
+          13.343,
+          5.674
+        ]
+      ],
+      "length_m": 0.36100000000000065,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-BATH-HALL-W",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 13.483,
+        "y0": 6.412,
+        "x1": 13.943,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          13.483,
+          6.482
+        ],
+        [
+          13.943,
+          6.482
+        ]
+      ],
+      "length_m": 0.4599999999999991,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-BATH-HALL-E",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 14.743,
+        "y0": 6.412,
+        "x1": 14.943,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          14.743,
+          6.482
+        ],
+        [
+          14.943,
+          6.482
+        ]
+      ],
+      "length_m": 0.1999999999999993,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-BED-PRIVACY-W",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 13.483,
+        "y0": 7.651,
+        "x1": 13.943,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          13.483,
+          7.721
+        ],
+        [
+          13.943,
+          7.721
+        ]
+      ],
+      "length_m": 0.4599999999999991,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-BED-PRIVACY-E",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 14.743,
+        "y0": 7.651,
+        "x1": 14.943,
+        "y1": 7.791
+      },
+      "line_m": [
+        [
+          14.743,
+          7.721
+        ],
+        [
+          14.943,
+          7.721
+        ]
+      ],
+      "length_m": 0.1999999999999993,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-OPEN-HALL-S",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 14.943,
+        "y0": 3.504,
+        "x1": 15.243,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          15.093,
+          3.504
+        ],
+        [
+          15.093,
+          6.552
+        ]
+      ],
+      "length_m": 3.0479999999999996,
+      "width_m": 0.3,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "SA30",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES",
+      "masonry_kg_m2": 146,
+      "finish_layers": [
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        },
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        }
+      ],
+      "wool_thickness_m": 0.1,
+      "wool_density_kg_m3": null,
+      "leaf_axes_x_m": [
+        14.993,
+        15.193
+      ],
+      "finish_source": "docs/active-design.md updated 2026-09-15: 15mm VC plaster each room face; snapshot missing finishes superseded"
+    },
+    {
+      "id": "C-OPEN-HALL-N",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 14.943,
+        "y0": 7.651,
+        "x1": 15.243,
+        "y1": 10.699
+      },
+      "line_m": [
+        [
+          15.093,
+          7.651
+        ],
+        [
+          15.093,
+          10.699
+        ]
+      ],
+      "length_m": 3.048,
+      "width_m": 0.3,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "SA30",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES",
+      "masonry_kg_m2": 146,
+      "finish_layers": [
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        },
+        {
+          "thickness_m": 0.015,
+          "density_kg_m3": 1800,
+          "status": "PREDPOKLAD"
+        }
+      ],
+      "wool_thickness_m": 0.1,
+      "wool_density_kg_m3": null,
+      "leaf_axes_x_m": [
+        14.993,
+        15.193
+      ],
+      "finish_source": "docs/active-design.md updated 2026-09-15: 15mm VC plaster each room face; snapshot missing finishes superseded"
+    },
+    {
+      "id": "C-KID-ENTRY-WALL",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 20.541,
+        "y0": 3.504,
+        "x1": 20.842,
+        "y1": 6.412
+      },
+      "line_m": [
+        [
+          20.6915,
+          3.504
+        ],
+        [
+          20.6915,
+          6.412
+        ]
+      ],
+      "length_m": 2.908,
+      "width_m": 0.301,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-KID-HALL-POCKET-WALL",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 18.342,
+        "y0": 6.412,
+        "x1": 21.64,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          18.342,
+          6.482
+        ],
+        [
+          21.64,
+          6.482
+        ]
+      ],
+      "length_m": 3.298000000000002,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-ENTRY-HALL-JAMB",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.54,
+        "y0": 6.412,
+        "x1": 22.639,
+        "y1": 6.552
+      },
+      "line_m": [
+        [
+          22.5895,
+          6.412
+        ],
+        [
+          22.5895,
+          6.552
+        ]
+      ],
+      "length_m": 0.13999999999999968,
+      "width_m": 0.099,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARDEN-KID-EAST",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 20.541,
+        "y0": 7.791,
+        "x1": 20.842,
+        "y1": 10.699
+      },
+      "line_m": [
+        [
+          20.6915,
+          7.791
+        ],
+        [
+          20.6915,
+          10.699
+        ]
+      ],
+      "length_m": 2.9079999999999995,
+      "width_m": 0.301,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-GARDEN-CLOSET-SOUTH",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 20.842,
+        "y0": 7.791,
+        "x1": 21.543,
+        "y1": 7.931
+      },
+      "line_m": [
+        [
+          20.842,
+          7.861
+        ],
+        [
+          21.543,
+          7.861
+        ]
+      ],
+      "length_m": 0.7010000000000005,
+      "width_m": 0.14,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-ENTRY-OFFICE-EAST",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 23.367,
+        "y0": 3.504,
+        "x1": 23.542,
+        "y1": 5.195
+      },
+      "line_m": [
+        [
+          23.4545,
+          3.504
+        ],
+        [
+          23.4545,
+          5.195
+        ]
+      ],
+      "length_m": 1.6910000000000003,
+      "width_m": 0.175,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-ENTRY-OFFICE-RETURN",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 22.842,
+        "y0": 5.195,
+        "x1": 23.542,
+        "y1": 5.37
+      },
+      "line_m": [
+        [
+          22.842,
+          5.2825
+        ],
+        [
+          23.542,
+          5.2825
+        ]
+      ],
+      "length_m": 0.7000000000000028,
+      "width_m": 0.175,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-OFFICE-NORTH-JAMB",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.783,
+        "y0": 6.322,
+        "x1": 22.842,
+        "y1": 6.402
+      },
+      "line_m": [
+        [
+          22.8125,
+          6.322
+        ],
+        [
+          22.8125,
+          6.402
+        ]
+      ],
+      "length_m": 0.08000000000000007,
+      "width_m": 0.059,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-KITCHEN-BEARING-WALL",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 10.712,
+        "x1": 26.081,
+        "y1": 11.012
+      },
+      "line_m": [
+        [
+          22.639,
+          10.862
+        ],
+        [
+          26.081,
+          10.862
+        ]
+      ],
+      "length_m": 3.442,
+      "width_m": 0.3,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-KITCHEN-BEARING-WALL-E",
+      "model_role": "LOAD_BEARING",
+      "rect_m": {
+        "x0": 26.881,
+        "y0": 10.712,
+        "x1": 27.541,
+        "y1": 11.012
+      },
+      "line_m": [
+        [
+          26.881,
+          10.862
+        ],
+        [
+          27.541,
+          10.862
+        ]
+      ],
+      "length_m": 0.6600000000000001,
+      "width_m": 0.3,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    },
+    {
+      "id": "C-WC-DOOR-JAMB",
+      "model_role": "PARTITION",
+      "rect_m": {
+        "x0": 22.639,
+        "y0": 10.666,
+        "x1": 22.783,
+        "y1": 10.712
+      },
+      "line_m": [
+        [
+          22.639,
+          10.689
+        ],
+        [
+          22.783,
+          10.689
+        ]
+      ],
+      "length_m": 0.1440000000000019,
+      "width_m": 0.046,
+      "height_m": 3.125,
+      "height_status": "PREDPOKLAD_NOMINAL_MODEL_ENVELOPE",
+      "assembly": "MASONRY_PRODUCT_UNCONFIRMED",
+      "source": "lib/floor-plan-concept.ts + snapshot walls",
+      "weight_status": "CHYBA_FINAL_PRODUCT_AND_SURFACES"
+    }
+  ],
+  "facades": [
+    {
+      "id": "S",
+      "name": "Južná (uličná) fasáda",
+      "axis": "x",
+      "outer_m": 3.0,
+      "inner_m": 3.504,
+      "from_m": 6.44,
+      "to_m": 28.04,
+      "outward": -1,
+      "segments": [
+        {
+          "from_m": 6.44,
+          "to_m": 6.94,
+          "kind": "wall"
+        },
+        {
+          "from_m": 6.94,
+          "to_m": 10.24,
+          "kind": "opening",
+          "opening_id": "GARAGE-DOOR",
+          "opening": {
+            "width": 3300,
+            "height": 2400,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 10.24,
+          "to_m": 10.942,
+          "kind": "wall"
+        },
+        {
+          "from_m": 10.942,
+          "to_m": 12.192,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru FRONT-02",
+          "opening": {
+            "width": 1250,
+            "height": 750,
+            "sill": 1750
+          }
+        },
+        {
+          "from_m": 12.192,
+          "to_m": 13.588,
+          "kind": "wall"
+        },
+        {
+          "from_m": 13.588,
+          "to_m": 14.338,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru FRONT-03",
+          "opening": {
+            "width": 750,
+            "height": 750,
+            "sill": 1750
+          }
+        },
+        {
+          "from_m": 14.338,
+          "to_m": 16.992,
+          "kind": "wall"
+        },
+        {
+          "from_m": 16.992,
+          "to_m": 18.792,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru FRONT-05",
+          "opening": {
+            "width": 1800,
+            "height": 1500,
+            "sill": 900
+          }
+        },
+        {
+          "from_m": 18.792,
+          "to_m": 21.54,
+          "kind": "wall"
+        },
+        {
+          "from_m": 21.54,
+          "to_m": 22.79,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru FRONT-ENTRY",
+          "opening": {
+            "width": 1250,
+            "height": 2250,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 22.79,
+          "to_m": 24.442,
+          "kind": "wall"
+        },
+        {
+          "from_m": 24.442,
+          "to_m": 26.442,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru FRONT-07",
+          "opening": {
+            "width": 2000,
+            "height": 1600,
+            "sill": 900
+          }
+        },
+        {
+          "from_m": 26.442,
+          "to_m": 28.04,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "name": "Východná fasáda",
+      "axis": "y",
+      "outer_m": 28.04,
+      "inner_m": 27.541,
+      "from_m": 3.0,
+      "to_m": 22.035,
+      "outward": 1,
+      "segments": [
+        {
+          "from_m": 3.0,
+          "to_m": 5.212,
+          "kind": "wall"
+        },
+        {
+          "from_m": 5.212,
+          "to_m": 6.212,
+          "kind": "opening",
+          "opening_id": "Bočná výplň otvoru EAST-01",
+          "opening": {
+            "width": 1000,
+            "height": 1600,
+            "sill": 900
+          }
+        },
+        {
+          "from_m": 6.212,
+          "to_m": 6.8015,
+          "kind": "wall"
+        },
+        {
+          "from_m": 6.8015,
+          "to_m": 7.4015,
+          "kind": "opening",
+          "opening_id": "Bočná výplň otvoru EAST-02",
+          "opening": {
+            "width": 600,
+            "height": 750,
+            "sill": 1750
+          }
+        },
+        {
+          "from_m": 7.4015,
+          "to_m": 9.0,
+          "kind": "wall"
+        },
+        {
+          "from_m": 9.0,
+          "to_m": 9.9,
+          "kind": "opening",
+          "opening_id": "Bočná výplň otvoru EAST-03",
+          "opening": {
+            "width": 900,
+            "height": 2250,
+            "sill": 0,
+            "clearWidth": 648
+          }
+        },
+        {
+          "from_m": 9.9,
+          "to_m": 11.8,
+          "kind": "wall"
+        },
+        {
+          "from_m": 11.8,
+          "to_m": 12.8,
+          "kind": "opening",
+          "opening_id": "Bočná výplň otvoru EAST-04",
+          "opening": {
+            "width": 1000,
+            "height": 1600,
+            "sill": 900
+          }
+        },
+        {
+          "from_m": 12.8,
+          "to_m": 19.535,
+          "kind": "wall"
+        },
+        {
+          "from_m": 19.535,
+          "to_m": 22.035,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "N",
+      "name": "Záhradná (severná) fasáda",
+      "axis": "x",
+      "outer_m": 11.2,
+      "inner_m": 10.699,
+      "from_m": 6.44,
+      "to_m": 21.04,
+      "outward": 1,
+      "segments": [
+        {
+          "from_m": 6.44,
+          "to_m": 7.84,
+          "kind": "wall"
+        },
+        {
+          "from_m": 7.84,
+          "to_m": 10.64,
+          "kind": "open"
+        },
+        {
+          "from_m": 10.64,
+          "to_m": 11.99,
+          "kind": "wall"
+        },
+        {
+          "from_m": 11.99,
+          "to_m": 14.19,
+          "kind": "opening",
+          "opening_id": "Terasové presklenie 2200",
+          "opening": {
+            "width": 2200,
+            "height": 2400,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 14.19,
+          "to_m": 16.992,
+          "kind": "wall"
+        },
+        {
+          "from_m": 16.992,
+          "to_m": 18.792,
+          "kind": "opening",
+          "opening_id": "Výplň otvoru GARDEN-03",
+          "opening": {
+            "width": 1800,
+            "height": 1500,
+            "sill": 900
+          }
+        },
+        {
+          "from_m": 18.792,
+          "to_m": 21.04,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "W",
+      "name": "Západný štít garáže",
+      "axis": "y",
+      "outer_m": 6.44,
+      "inner_m": 6.944,
+      "from_m": 3.0,
+      "to_m": 11.2,
+      "outward": -1,
+      "segments": [
+        {
+          "from_m": 3.0,
+          "to_m": 4.358,
+          "kind": "wall"
+        },
+        {
+          "from_m": 4.358,
+          "to_m": 5.608,
+          "kind": "opening",
+          "opening_id": "Bočné garážové okno WEST-GARAGE-01",
+          "opening": {
+            "width": 1250,
+            "height": 750,
+            "sill": 1750
+          }
+        },
+        {
+          "from_m": 5.608,
+          "to_m": 9.247,
+          "kind": "wall"
+        },
+        {
+          "from_m": 9.247,
+          "to_m": 10.2,
+          "kind": "open"
+        },
+        {
+          "from_m": 10.2,
+          "to_m": 11.2,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "WW",
+      "name": "Západná stena krídla",
+      "axis": "y",
+      "outer_m": 21.04,
+      "inner_m": 21.543,
+      "from_m": 11.2,
+      "to_m": 22.035,
+      "outward": -1,
+      "segments": [
+        {
+          "from_m": 11.2,
+          "to_m": 11.55,
+          "kind": "wall"
+        },
+        {
+          "from_m": 11.55,
+          "to_m": 13.8,
+          "kind": "opening",
+          "opening_id": "Terasové posuvné presklenie 2 250",
+          "opening": {
+            "width": 2250,
+            "height": 2400,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 13.8,
+          "to_m": 19.535,
+          "kind": "wall"
+        },
+        {
+          "from_m": 19.535,
+          "to_m": 21.535,
+          "kind": "open"
+        },
+        {
+          "from_m": 21.535,
+          "to_m": 22.035,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "NN",
+      "name": "Štít krídla · portál krytej terasy",
+      "axis": "x",
+      "outer_m": 22.035,
+      "inner_m": 19.535,
+      "from_m": 21.04,
+      "to_m": 28.04,
+      "outward": 1,
+      "segments": [
+        {
+          "from_m": 21.04,
+          "to_m": 21.54,
+          "kind": "wall"
+        },
+        {
+          "from_m": 21.54,
+          "to_m": 27.54,
+          "kind": "open"
+        },
+        {
+          "from_m": 27.54,
+          "to_m": 28.04,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "NN2",
+      "name": "Krytá terasa · zasklená stena",
+      "axis": "x",
+      "outer_m": 19.535,
+      "inner_m": 19.035,
+      "from_m": 21.54,
+      "to_m": 27.54,
+      "outward": 1,
+      "segments": [
+        {
+          "from_m": 21.54,
+          "to_m": 22.04,
+          "kind": "wall"
+        },
+        {
+          "from_m": 22.04,
+          "to_m": 24.04,
+          "kind": "opening",
+          "opening_id": "Krytá terasa-glazing",
+          "opening": {
+            "width": 2000,
+            "height": 2750,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 24.04,
+          "to_m": 27.54,
+          "kind": "wall"
+        }
+      ]
+    },
+    {
+      "id": "L",
+      "name": "Lodžia · zadná stena garáže",
+      "axis": "x",
+      "outer_m": 9.247,
+      "inner_m": 8.747,
+      "from_m": 6.94,
+      "to_m": 10.64,
+      "outward": 1,
+      "segments": [
+        {
+          "from_m": 6.94,
+          "to_m": 9.086,
+          "kind": "wall"
+        },
+        {
+          "from_m": 9.086,
+          "to_m": 10.336,
+          "kind": "opening",
+          "opening_id": "LOGGIA-DOOR",
+          "opening": {
+            "width": 1250,
+            "height": 2400,
+            "sill": 0
+          }
+        },
+        {
+          "from_m": 10.336,
+          "to_m": 10.64,
+          "kind": "wall"
+        }
+      ]
+    }
+  ],
+  "heavy_items": [
+    {
+      "id": "AKU800",
+      "center_m": {
+        "x": 25.41,
+        "y": 10.123
+      },
+      "outer_diameter_m": 0.958,
+      "water_l": 800,
+      "water_weight_kN": 7.848,
+      "dry_weight_kN": null,
+      "feet_contact_area": null,
+      "source": "lib/technical-design.ts HEATING_LAYOUTS.B",
+      "status": "MODEL_LOCATION_AND_CAPACITY; CHYBA_TOTAL_WEIGHT_AND_FEET"
+    },
+    {
+      "id": "BOILER15",
+      "rect_m": {
+        "x0": 25.112,
+        "y0": 7.851,
+        "x1": 26.408,
+        "y1": 9.039
+      },
+      "body_rect_m": {
+        "x0": 25.251,
+        "y0": 8.551,
+        "x1": 25.907,
+        "y1": 9.039
+      },
+      "pellet_hopper_kg": 180,
+      "dry_weight_kN": null,
+      "operating_water_kN": null,
+      "feet_contact_area": null,
+      "source": "lib/technical-design.ts HEATING_LAYOUTS.B",
+      "status": "CHYBA_OPERATING_MASS_AND_CONTACT"
+    },
+    {
+      "id": "STOVE_B",
+      "center_m": [
+        21.853,
+        18.62
+      ],
+      "rect_m": {
+        "x0": 21.598,
+        "y0": 18.365,
+        "x1": 22.108,
+        "y1": 18.875
+      },
+      "total_weight_kN": null,
+      "flue_weight_kN": null,
+      "source": "lib/twin-living-layouts.ts FIREPLACE_STOVE_B",
+      "status": "MODEL_LOCATION; CHYBA_LOAD"
+    },
+    {
+      "id": "PELLET_BAGS",
+      "rect_m": {
+        "x0": 27.239,
+        "y0": 7.751,
+        "x1": 27.5,
+        "y1": 8.471
+      },
+      "mass_kg": 45,
+      "source": "lib/technical-design.ts HEATING_LAYOUTS.B",
+      "status": "MODEL_ALLOWANCE"
+    },
+    {
+      "id": "KITCHEN_ISLAND",
+      "rect_m": {
+        "x0": 23.381,
+        "y0": 12.88,
+        "x1": 26.021,
+        "y1": 13.8
+      },
+      "geometry_source": "lib/twin-interior.ts KITCHEN_ISLAND derived from unchanged core geometry source",
+      "total_weight_kN": null,
+      "status": "CHYBA_ACTUAL_FINISHES_STORAGE_FEET"
+    }
+  ],
+  "roof": {
+    "status": "MODEL_GEOMETRY_NOT_COMPLETED_STRUCTURAL_DESIGN",
+    "projected_area_m2": 252.965,
+    "surface_area_m2": 299.97912657099613,
+    "ridge_height_m": 5.56,
+    "eaves_height_m": 3.125,
+    "ridge_axes_m": {
+      "main_y": 7.1,
+      "wing_x": 24.54
+    },
+    "wood_ceiling_storage_attic": true,
+    "attic_live_load_kPa": null,
+    "actual_support_reactions": null,
+    "original_structural_system": "rafters 120x200 max 930; purlin 2xU240 carried by HEA160 steel frames at max 7.7m; conventional portion ridge purlin on posts to ceiling beams above bearing walls; current support mapping not finalized",
+    "original_source": "D2 statics PDF p4; D1.1.003 p1"
+  },
+  "source_hash_checks": {
+    "lib/plan-geometry.generated.json": {
+      "snapshot_sha256": "a2d7b050f6b44aa8dae18e5372e958f12432f8f245cd9431728d008d7e7fef43",
+      "current_sha256": "a2d7b050f6b44aa8dae18e5372e958f12432f8f245cd9431728d008d7e7fef43",
+      "matches": true
+    },
+    "lib/twin-active-house.ts": {
+      "snapshot_sha256": "fbd5294434cabd43cfc4c1a28eac3a7ed89c5421999896c01159b0aba100c428",
+      "current_sha256": "fbd5294434cabd43cfc4c1a28eac3a7ed89c5421999896c01159b0aba100c428",
+      "matches": true
+    },
+    "lib/twin-site.ts": {
+      "snapshot_sha256": "96485586076bd0dd5b62ea79e7ed431fb994a345fbd8d58a704bb3e7c8dbc389",
+      "current_sha256": "96485586076bd0dd5b62ea79e7ed431fb994a345fbd8d58a704bb3e7c8dbc389",
+      "matches": true
+    },
+    "lib/twin-roof.ts": {
+      "snapshot_sha256": "eb16a9b0db9c237ed6f7a97c485b42c175023ffa09b46bd2e3210ede8c7bcafc",
+      "current_sha256": "eb16a9b0db9c237ed6f7a97c485b42c175023ffa09b46bd2e3210ede8c7bcafc",
+      "matches": true
+    },
+    "lib/twin-interior.ts": {
+      "snapshot_sha256": "9ffccb422212511f208015b355af4c6cbab262f2d7b88fa370d09cb1ffe7684d",
+      "current_sha256": "9ffccb422212511f208015b355af4c6cbab262f2d7b88fa370d09cb1ffe7684d",
+      "matches": true
+    },
+    "lib/floor-plan-concept.ts": {
+      "snapshot_sha256": "2dfeec482ae85eabc86d3e9fe146b2ef8b9120c82929e551d51681688a3ba010",
+      "current_sha256": "2dfeec482ae85eabc86d3e9fe146b2ef8b9120c82929e551d51681688a3ba010",
+      "matches": true
+    },
+    "lib/plan-export.ts": {
+      "snapshot_sha256": "ac75fa88985e8a15cb8e5292e07a9640c3380ab9e2f886903f97e27ad7b240a4",
+      "current_sha256": "b06a6fbdccd066a06f492d13e9c249f965ad3398038b28b81c5e674521d4b275",
+      "matches": false
+    },
+    "lib/acoustic-walls.ts": {
+      "snapshot_sha256": "54b4e2984de3a2580333dc2447029ae41710b350103c9d6838790f5cb71a00c4",
+      "current_sha256": "7cbc24ae918b82ab70bdb758358abdda788149e282963d6144bbe4c22add0f5d",
+      "matches": false
+    },
+    "lib/twin-house-placement.ts": {
+      "snapshot_sha256": "e3986e1268b255d75f5f7fd6a4bba003f61da3cec37b2d7cc4b715ef2c638337",
+      "current_sha256": "e3986e1268b255d75f5f7fd6a4bba003f61da3cec37b2d7cc4b715ef2c638337",
+      "matches": true
+    },
+    "lib/technical-design.ts": {
+      "snapshot_sha256": "f5c30d6d19756b3224c1e6afcea1434cfd11077aa4171547c2cf55569f0cfdda",
+      "current_sha256": "f5c30d6d19756b3224c1e6afcea1434cfd11077aa4171547c2cf55569f0cfdda",
+      "matches": true
+    },
+    "lib/twin-living-layouts.ts": {
+      "snapshot_sha256": "2e6c6435a4378fe470446480c17651eddbb48c0164df7ef10a462b147e087ae7",
+      "current_sha256": "2e6c6435a4378fe470446480c17651eddbb48c0164df7ef10a462b147e087ae7",
+      "matches": true
+    },
+    "lib/h200-junction.json": {
+      "snapshot_sha256": "e10b8f5b592cc6eb0cf148c766bcb9bdd773311beb999e0256e1e5ad4ff556be",
+      "current_sha256": "e10b8f5b592cc6eb0cf148c766bcb9bdd773311beb999e0256e1e5ad4ff556be",
+      "matches": true
+    },
+    "app/koncept-2d/acoustic-wall-detail.tsx": {
+      "snapshot_sha256": "7f9e711585337895b2f4f33a7c54be982e521b8396f6f2cbdda34f65403b1350",
+      "current_sha256": "e8c052d3d7f4452b0fd383655fc4b6edbb7cf866e6e50eaa654083bd1f222f56",
+      "matches": false
+    },
+    "app/koncept-2d/documentation-plan.tsx": {
+      "snapshot_sha256": "7f47fa44dc35c9e25a9b74e75a1920b6c2c3ccd610a476ab46431ade090dc1a5",
+      "current_sha256": "7f47fa44dc35c9e25a9b74e75a1920b6c2c3ccd610a476ab46431ade090dc1a5",
+      "matches": true
+    },
+    "app/koncept-2d/export-sheet.tsx": {
+      "snapshot_sha256": "162eb903808980d62cbc5f90db20826efd59cf0c84a7c66e485860c520b66bc6",
+      "current_sha256": "162eb903808980d62cbc5f90db20826efd59cf0c84a7c66e485860c520b66bc6",
+      "matches": true
+    },
+    "app/koncept-2d/plan-svg.tsx": {
+      "snapshot_sha256": "ec6ba99acd86c261d03154e9389e785919d9aa0e4bc073128eb482b495fa02ad",
+      "current_sha256": "ec6ba99acd86c261d03154e9389e785919d9aa0e4bc073128eb482b495fa02ad",
+      "matches": true
+    },
+    "lib/deck-boards.ts": {
+      "snapshot_sha256": "07f7892a77eae33705977c2bac9efc0cdba2c96379c74c79251fd6cc53426c7c",
+      "current_sha256": "07f7892a77eae33705977c2bac9efc0cdba2c96379c74c79251fd6cc53426c7c",
+      "matches": true
+    },
+    "lib/floor-plan-garage.ts": {
+      "snapshot_sha256": "8a414a3811b11391449413f91b7786d66097f0b90f0542b3627c2b3b1fb6132f",
+      "current_sha256": "8a414a3811b11391449413f91b7786d66097f0b90f0542b3627c2b3b1fb6132f",
+      "matches": true
+    },
+    "lib/plan-documentation.ts": {
+      "snapshot_sha256": "50357360e614f2f16ee3266e772dc46be304fbd5a1f4d7356f4aa7e20323f2a7",
+      "current_sha256": "50357360e614f2f16ee3266e772dc46be304fbd5a1f4d7356f4aa7e20323f2a7",
+      "matches": true
+    },
+    "lib/twin-active-site.ts": {
+      "snapshot_sha256": "d6f19e42f6c7e8c3b5aa65b7628dbd2aa0d1c411c6c71424ec80a10a99435d71",
+      "current_sha256": "d6f19e42f6c7e8c3b5aa65b7628dbd2aa0d1c411c6c71424ec80a10a99435d71",
+      "matches": true
+    },
+    "lib/twin-children-design.ts": {
+      "snapshot_sha256": "857e48ad8aa3e358631bb701fd327d8f19ebc3151dd25156fd16891dfc97fc4b",
+      "current_sha256": "857e48ad8aa3e358631bb701fd327d8f19ebc3151dd25156fd16891dfc97fc4b",
+      "matches": true
+    },
+    "lib/twin-design-selection.ts": {
+      "snapshot_sha256": "3a585459ea19e9233f4764154c1d4d97e4e90af66f3b221ee2c7a48626614e20",
+      "current_sha256": "3a585459ea19e9233f4764154c1d4d97e4e90af66f3b221ee2c7a48626614e20",
+      "matches": true
+    },
+    "lib/twin-domain.ts": {
+      "snapshot_sha256": "5afe508640f72aa956b6653093d719720568d10e383e86c9e8b9b43b85d64a84",
+      "current_sha256": "5afe508640f72aa956b6653093d719720568d10e383e86c9e8b9b43b85d64a84",
+      "matches": true
+    },
+    "lib/twin-garage.ts": {
+      "snapshot_sha256": "a4ca4e44247065ffeab060ffd3b9edc5b12eb3eada54b964b60d3270037fc40f",
+      "current_sha256": "a4ca4e44247065ffeab060ffd3b9edc5b12eb3eada54b964b60d3270037fc40f",
+      "matches": true
+    },
+    "lib/twin-interior-baseline.ts": {
+      "snapshot_sha256": "a0df9fc9f0958fbf31008c9e105101f2e49df9b259caa5c7842bbd14c4669ebf",
+      "current_sha256": "a0df9fc9f0958fbf31008c9e105101f2e49df9b259caa5c7842bbd14c4669ebf",
+      "matches": true
+    },
+    "lib/twin-office-desk.ts": {
+      "snapshot_sha256": "cff7e6f47b0d458ac896684521837ce751989cc1944bd6192349d2739579621f",
+      "current_sha256": "cff7e6f47b0d458ac896684521837ce751989cc1944bd6192349d2739579621f",
+      "matches": true
+    },
+    "lib/twin-superb-combi.ts": {
+      "snapshot_sha256": "863e3ebbec100f359c4403df3e6d312830e54785f2c74043b21f46dd57d2900f",
+      "current_sha256": "863e3ebbec100f359c4403df3e6d312830e54785f2c74043b21f46dd57d2900f",
+      "matches": true
+    },
+    "lib/twin-viewport-contract.ts": {
+      "snapshot_sha256": "ccb46514f062afe7e991e87a88927f2f0401054b65ca98b797e162f33d58ed37",
+      "current_sha256": "ccb46514f062afe7e991e87a88927f2f0401054b65ca98b797e162f33d58ed37",
+      "matches": true
+    },
+    "lib/babylon-scene.ts": {
+      "snapshot_sha256": "2d09561c8416e76c735029c6eebf265db81e78dc3816a879fd0d41c76d9034c0",
+      "current_sha256": "2d09561c8416e76c735029c6eebf265db81e78dc3816a879fd0d41c76d9034c0",
+      "matches": true
+    },
+    "scripts/construction-documentation/source.tsx": {
+      "snapshot_sha256": "e6feb882ee676140037abe8fb1312636d1f2f2a7e79bac42dfbfbe25acd5e355",
+      "current_sha256": "e6feb882ee676140037abe8fb1312636d1f2f2a7e79bac42dfbfbe25acd5e355",
+      "matches": true
+    },
+    "scripts/construction-documentation/render.mjs": {
+      "snapshot_sha256": "80f3882e51da41c8b3b9668104601a08d55cb9f2458cd5a8d6404ca63fbf353d",
+      "current_sha256": "80f3882e51da41c8b3b9668104601a08d55cb9f2458cd5a8d6404ca63fbf353d",
+      "matches": true
+    },
+    "scripts/construction-documentation/generate.mjs": {
+      "snapshot_sha256": "05ad36e70e737e3c9d097d9dc243c5cd12d218ea408d9a676e770c7601135fff",
+      "current_sha256": "05ad36e70e737e3c9d097d9dc243c5cd12d218ea408d9a676e770c7601135fff",
+      "matches": true
+    },
+    "package.json": {
+      "snapshot_sha256": "7fba5a5233fce2e20117c3d2a612b5c37b0ec9040642736189ca89e2558fc965",
+      "current_sha256": "7fba5a5233fce2e20117c3d2a612b5c37b0ec9040642736189ca89e2558fc965",
+      "matches": true
+    },
+    "package-lock.json": {
+      "snapshot_sha256": "ed1898d285bb6361d6a3a079c1253ba7e2761b3d4785622d8d5065e87bbeafd4",
+      "current_sha256": "ed1898d285bb6361d6a3a079c1253ba7e2761b3d4785622d8d5065e87bbeafd4",
+      "matches": true
+    },
+    "scripts/construction-documentation/porch-envelope.ts": {
+      "snapshot_sha256": "1298405dd9a1349f16748c7bca1ccf27df26bef57c85de989151ae479ed2e003",
+      "current_sha256": "1298405dd9a1349f16748c7bca1ccf27df26bef57c85de989151ae479ed2e003",
+      "matches": true
+    },
+    "scripts/construction-documentation/client-brief.ts": {
+      "snapshot_sha256": "fa28f18dced49ded05e45bec3409516e81ead457c05d368be90d7c93eefcaf0f",
+      "current_sha256": "fa28f18dced49ded05e45bec3409516e81ead457c05d368be90d7c93eefcaf0f",
+      "matches": true
+    },
+    "scripts/construction-documentation/client-sheets.mjs": {
+      "snapshot_sha256": "80c28351a1c65dfb8b40b0cd16c59c0646b9e0f79f050f07487965da77ad9d63",
+      "current_sha256": "80c28351a1c65dfb8b40b0cd16c59c0646b9e0f79f050f07487965da77ad9d63",
+      "matches": true
+    },
+    "output/research/construction-site-20260914/01-concrete-strip-detail.png": {
+      "snapshot_sha256": "fd8266caef18d4c2470453eb92dc76f96b7ae98cf0146d73135ba4203bb642fe",
+      "current_sha256": "fd8266caef18d4c2470453eb92dc76f96b7ae98cf0146d73135ba4203bb642fe",
+      "matches": true
+    },
+    "output/research/construction-site-20260914/02-foundation-overview.png": {
+      "snapshot_sha256": "f885585ff69f5387ecc6917f3bdc81fef57d8f5d4b1719ff756c5fd56e5bfdba",
+      "current_sha256": "f885585ff69f5387ecc6917f3bdc81fef57d8f5d4b1719ff756c5fd56e5bfdba",
+      "matches": true
+    },
+    "scripts/construction-documentation/foundation-axon.mjs": {
+      "snapshot_sha256": "29db6180c9980911bf07698718c236e963268b8c40b35c65b65cc715a53209ef",
+      "current_sha256": "29db6180c9980911bf07698718c236e963268b8c40b35c65b65cc715a53209ef",
+      "matches": true
+    },
+    "scripts/construction-documentation/partition-loads.mjs": {
+      "snapshot_sha256": "9f1b560022c3df3bfe11c2ba71f258b83b33609f26b8462995f2a3db6fe3447d",
+      "current_sha256": "6489e7292b2301685c24b4617e26e9b59adbd1d346e630f146dd66a47a6675b3",
+      "matches": false
+    },
+    "lib/babylon-interior.ts": {
+      "snapshot_sha256": "6995cfb6fa9e97d428668196a442d2685bb44e377adea1f61a63549ccbf1a2d6",
+      "current_sha256": "6995cfb6fa9e97d428668196a442d2685bb44e377adea1f61a63549ccbf1a2d6",
+      "matches": true
+    }
+  },
+  "terraces": {
+    "wing": {
+      "x0": 21.04,
+      "x1": 28.04,
+      "y0": 19.535,
+      "y1": 22.035
+    },
+    "loggia": {
+      "x0": 6.44,
+      "x1": 10.64,
+      "y0": 9.247,
+      "y1": 11.2
+    }
+  },
+  "porch_supports_model": [
+    {
+      "id": "PORCH-SUPPORT-WEST",
+      "rect_m": {
+        "x0": 21.04,
+        "x1": 21.54,
+        "y0": 21.535,
+        "y1": 22.035
+      },
+      "status": "MODEL_SUPERSTRUCTURE_ENVELOPE_NOT_PAD_FOOTPRINT"
+    },
+    {
+      "id": "PORCH-SUPPORT-EAST",
+      "rect_m": {
+        "x0": 27.54,
+        "x1": 28.04,
+        "y0": 19.535,
+        "y1": 22.035
+      },
+      "status": "MODEL_SUPERSTRUCTURE_ENVELOPE_NOT_PAD_FOOTPRINT"
+    }
+  ],
+  "loggia_corner_support_model": {
+    "rectangles_m": [
+      {
+        "x0": 6.44,
+        "y0": 10.7,
+        "x1": 7.84,
+        "y1": 11.2
+      },
+      {
+        "x0": 6.44,
+        "y0": 10.2,
+        "x1": 6.94,
+        "y1": 10.7
+      }
+    ],
+    "union_area_m2": 0.95,
+    "geometric_centroid_m": [
+      7.021578947368422,
+      10.81842105263158
+    ],
+    "roof_reaction_point_m": null,
+    "status": "MODEL_L_SHAPED_PIER_NOT_FOUNDATION_OR_REACTION",
+    "source": "lib/twin-active-house.ts / HOUSE.porches.gardenLoggia.cornerPier"
+  },
+  "grid": {
+    "x": [
+      {
+        "id": "A",
+        "at_m": 6.44
+      },
+      {
+        "id": "B",
+        "at_m": 10.993
+      },
+      {
+        "id": "C",
+        "at_m": 15.093
+      },
+      {
+        "id": "D",
+        "at_m": 21.04
+      },
+      {
+        "id": "E",
+        "at_m": 22.711
+      },
+      {
+        "id": "F",
+        "at_m": 28.04
+      }
+    ],
+    "y": [
+      {
+        "id": "1",
+        "at_m": 3.0
+      },
+      {
+        "id": "2",
+        "at_m": 6.482
+      },
+      {
+        "id": "3",
+        "at_m": 7.721
+      },
+      {
+        "id": "4",
+        "at_m": 11.2
+      },
+      {
+        "id": "5",
+        "at_m": 19.535
+      },
+      {
+        "id": "6",
+        "at_m": 22.035
+      }
+    ]
+  }
+}

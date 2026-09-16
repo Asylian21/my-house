@@ -6,7 +6,7 @@ The generator reads the existing 25-page color/mono PDFs, matching HTML, registe
 
 For source-only hosting builds, `npm run docs:publish-snapshot` verifies the local export and writes `lib/document-library.snapshot.json`. Commit that snapshot, the generated manifest and exactly the `public/documents` assets listed in its `assets` map (the directory remains ignored for unrelated cache/QA files). `npm run docs:library` uses the full local generator when source PDFs are available. In a clean remote checkout it instead verifies the committed snapshot, source hashes and every linked asset using Node alone. Missing files or changed sources fail the build; `--force` requires the original local sources. Refresh the snapshot and stage the new asset list after regenerating documents.
 
-The current library has 75 records, including the existing seven-page A4 H200 PDF as a reference export linked to the current Markdown reports. Its `pagePreviewUrls` contains all seven SVG pages in PDF order; `previewUrl` is the first page. Poppler converts the PDF vectors directly, retaining each source page box and embedded glyph outlines. A Markdown-only update reuses the verified drawing/image assets and refreshes report content and source metadata.
+The library includes the current five-page A4 H200 R3 PDF as a reference export linked to the current Markdown reports. Its `pagePreviewUrls` contains all five SVG pages in PDF order; `previewUrl` is the first page. Poppler converts the PDF vectors directly, retaining each source page box and embedded glyph outlines. A Markdown-only update reuses the verified drawing/image assets and refreshes report content and source metadata.
 
 Each of the 50 sheet records is a separate one-page PDF, with `sheetIndex` 1–25 and `bundleId`. Both bundle records retain all 25 A1 pages. SVG previews preserve the exact source SVG plus the entire original HTML style block; JPEG thumbnails are rendered from the actual PDFs with Poppler. The UI can page through the full bundles using lightweight sheet previews.
 
@@ -14,7 +14,7 @@ Pikepdf optimizes PDF streams and object storage losslessly; pypdf additionally 
 
 ZA-03 needs a separate vector optimization: the original Chromium PDF repeats the concrete pattern for every grid face and alone exceeds 100 MB. `optimize_svg.py` preserves every original non-pattern geometry/text attribute and paints the same pattern once through the union clip of each continuous face group. `compile-svg-pdf.mjs` prints this vector SVG with the project's Playwright/Chromium. The original SVG remains the library preview. The online PDF is a derivative with unchanged geometry, dimensions and text; tiny transparent-pattern compositing/antialiasing differences mean its raster is not bit-identical. Every export compares all PDF word positions within 0.002 points and 60 dpi renders, with bounded raster differences recorded in `.build-state.json`. The optimized ZA-03 replaces only its corresponding page in each online bundle. The original source PDFs are never modified.
 
-All linked assets must be smaller than 25,000,000 bytes. A complete new generation is built separately, checked, then exposed under its own versioned directory; only afterwards is the manifest atomically replaced. Former generated files are removed by the previous cache's explicit ownership list. Timestamps for source documents come from their original file mtimes, never the time they were copied. The visible revision and searchable load values come from the source client brief and the verified R7/SA30 data.
+All linked assets must be smaller than 25,000,000 bytes. A complete new generation is built separately, checked, then exposed under its own versioned directory; only afterwards is the manifest atomically replaced. Former generated files are removed by the previous cache's explicit ownership list. Timestamps for source documents come from their original file mtimes, never the time they were copied. The visible revision and searchable load values come from the source client brief and the current R7/SM30 geometry and explicitly pending product mass.
 
 ## Runtime
 
@@ -31,10 +31,10 @@ The required Python packages are pinned in `requirements.txt`. Poppler provides 
 ## Content and evidence
 
 - `drawings`: complete sets and all individual sheets, always `coordination`.
-- `reports`: all current construction reports, active design, current H200/SA30, kitchen and office decisions.
+- `reports`: all current construction reports, active design, current H200/SM30, kitchen and office decisions.
 - `images`: four standalone foundation axonometry PNG/SVG files, color and mono.
-- `model`: source snapshot, drawing register, verified nominal partition mass calculation, and client brief.
-- `archive`: only the explicitly superseded 274 mm acoustic-wall study.
+- `model`: source snapshot, drawing register, partition geometry with product mass pending, and client brief.
+- `archive`: the explicitly superseded 274 mm wall study and SA30 two-leaf study.
 
 The source claims remain bounded: no drawing is promoted to approved construction, a verified mass calculation is not a slab-capacity check, and the reported cast extent is not a survey. The current assembly choice is H200; the active thinner-options report remains under current acoustics.
 

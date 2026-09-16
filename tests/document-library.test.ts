@@ -33,11 +33,11 @@ function library(documents: LibraryDocument[]): DocumentLibrary {
 const examples = library([
   document('foundation-color', {
     title: 'Základy domu', code: 'D1.1.ZA-03', filename: 'CBB-zaklady-color.pdf', color: 'color',
-    description: 'Priestorový pohľad.', searchText: 'R7: vlastná hmotnosť SA30, zaťaženie 456,25 kg/m.',
+    description: 'Priestorový pohľad.', searchText: 'R7: vlastná hmotnosť SM30, zaťaženie hmotnosť neurčená.',
   }),
   document('foundation-mono', {
     title: 'Základy domu', code: 'D1.1.ZA-03', filename: 'CBB-zaklady-mono.pdf', color: 'mono',
-    searchText: 'R7: vlastná hmotnosť SA30, zaťaženie 456,25 kg/m.',
+    searchText: 'R7: vlastná hmotnosť SM30, zaťaženie hmotnosť neurčená.',
   }),
   document('cornice-detail', {
     title: 'Detail rímsy', folderId: 'details', format: 'SVG', code: 'D1.1.DT-01',
@@ -85,7 +85,7 @@ describe('document library search and navigation', () => {
 
   it('combines folder, format, status and text filters instead of broadening one another', () => {
     expect(ids(searchLibraryDocuments(examples, {
-      folderId: 'drawings', format: 'PDF', status: 'coordination', query: 'SA30',
+      folderId: 'drawings', format: 'PDF', status: 'coordination', query: 'SM30',
     }))).toEqual(['foundation-color', 'foundation-mono']);
     expect(ids(searchLibraryDocuments(examples, {
       folderId: 'drawings', format: 'PDF', status: 'reference',
@@ -225,12 +225,12 @@ describe('generated document library and downloadable files', () => {
         expect(new Set(doc.pagePreviewUrls).size, doc.id).toBe(doc.pageCount);
       }
     }
-    expect(catalog.documents.find(doc => doc.id === 'report-h200-scientific-pdf')?.pagePreviewUrls).toHaveLength(7);
+    expect(catalog.documents.find(doc => doc.id === 'report-h200-scientific-pdf')?.pagePreviewUrls).toHaveLength(5);
   });
 
-  it('finds current R7 and both verified SA30 mass values inside each ZA-03 PDF', () => {
+  it('finds current R7 and SM30 product selection requirement inside each ZA-03 PDF', () => {
     const found = searchLibraryDocuments(catalog, {
-      query: 'R7 SA30 456,25 2781,30', format: 'PDF', status: 'coordination',
+      query: 'R7 SM30 hmotnosť neurčená', format: 'PDF', status: 'coordination',
     });
     const axons = found.filter(doc => doc.code === 'D1.1.ZA-03');
     expect(axons.map(doc => doc.color).sort()).toEqual(['color', 'mono']);

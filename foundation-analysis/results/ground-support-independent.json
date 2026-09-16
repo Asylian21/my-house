@@ -1,0 +1,604 @@
+{
+  "status": "CONDITIONAL_MODEL_NOT_SITE_APPROVAL",
+  "EI_kNm2": 2383.3333333333335,
+  "main_support": "continuous homogeneous elastic foundation",
+  "uniform_floor": [
+    {
+      "ks_MN_m3": 5,
+      "characteristic_pressure_kPa": 6.5,
+      "ULS_pressure_kPa": 9.075,
+      "QP_pressure_kPa": 5.1,
+      "characteristic_spring_compression_mm": 1.3,
+      "QP_spring_compression_mm": 1.02,
+      "ideal_uniform_internal_bending_kNm_m": 0.0
+    },
+    {
+      "ks_MN_m3": 10,
+      "characteristic_pressure_kPa": 6.5,
+      "ULS_pressure_kPa": 9.075,
+      "QP_pressure_kPa": 5.1,
+      "characteristic_spring_compression_mm": 0.65,
+      "QP_spring_compression_mm": 0.51,
+      "ideal_uniform_internal_bending_kNm_m": 0.0
+    },
+    {
+      "ks_MN_m3": 20,
+      "characteristic_pressure_kPa": 6.5,
+      "ULS_pressure_kPa": 9.075,
+      "QP_pressure_kPa": 5.1,
+      "characteristic_spring_compression_mm": 0.325,
+      "QP_spring_compression_mm": 0.255,
+      "ideal_uniform_internal_bending_kNm_m": 0.0
+    },
+    {
+      "ks_MN_m3": 50,
+      "characteristic_pressure_kPa": 6.5,
+      "ULS_pressure_kPa": 9.075,
+      "QP_pressure_kPa": 5.1,
+      "characteristic_spring_compression_mm": 0.13,
+      "QP_spring_compression_mm": 0.102,
+      "ideal_uniform_internal_bending_kNm_m": 0.0
+    }
+  ],
+  "benchmarks": [
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 5,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.4044093708792316,
+        "wall_w_center_m": 0.00044247989972780226
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.4044093079198767,
+        "wall_w_center_m": 0.0004424798997277186
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.4044093614641453,
+        "wall_w_center_m": 0.0004424798997278009
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 6.703947175168423e-09,
+        "wall_w_center_m": 3.1086244689504383e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 5,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.9575145570866276,
+        "wall_w_center_m": 0.0006243614816867707
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.9575144941272796,
+        "wall_w_center_m": 0.0006243614816864391
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.9575145476715482,
+        "wall_w_center_m": 0.0006243614816867683
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 9.832831548983734e-09,
+        "wall_w_center_m": 3.774758283725532e-15
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 5,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.9190389273381385,
+        "wall_w_center_m": 0.0005897058289041837
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.9190380094437405,
+        "wall_w_center_m": 0.0005897058289031962
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.919038940038104,
+        "wall_w_center_m": 0.000589705828904184
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 6.617878023362778e-09,
+        "wall_w_center_m": 4.440892098500626e-16
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 5,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 1.323109257762415,
+        "wall_w_center_m": 0.0008330351025086295
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.3231083398680263,
+        "wall_w_center_m": 0.0008330351025046816
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.32310927046239,
+        "wall_w_center_m": 0.000833035102508633
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 9.59858370563893e-09,
+        "wall_w_center_m": 4.218847493575595e-15
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 5,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 3.344301239478398,
+        "wall_w_center_m": 0.0010985162271135356
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 3.3443018125754813,
+        "wall_w_center_m": 0.0010985162271141065
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 3.3443012460100654,
+        "wall_w_center_m": 0.0010985162271135347
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.9530739248097007e-09,
+        "wall_w_center_m": 7.771561172376096e-16
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 5,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 2.2364615587155936,
+        "wall_w_center_m": 0.0015459561011731825
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 2.2364621318126927,
+        "wall_w_center_m": 0.0015459561011754719
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 2.2364615652472772,
+        "wall_w_center_m": 0.0015459561011731847
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 2.920543584750135e-09,
+        "wall_w_center_m": 1.3322676295501878e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 10,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.1615184994736147,
+        "wall_w_center_m": 0.00026285444058200895
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.1615184365142668,
+        "wall_w_center_m": 0.00026285444058192595
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.1615184900585354,
+        "wall_w_center_m": 0.00026285444058200824
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 8.105836779570552e-09,
+        "wall_w_center_m": 2.6645352591003757e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 10,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.7862556180090191,
+        "wall_w_center_m": 0.0003705729998501274
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.7862555550496712,
+        "wall_w_center_m": 0.000370572999849796
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.7862556085939397,
+        "wall_w_center_m": 0.00037057299985012517
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.1974578217888165e-08,
+        "wall_w_center_m": 5.995204332975845e-15
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 10,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.5952357693900714,
+        "wall_w_center_m": 0.00035047747077023825
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.5952348514956824,
+        "wall_w_center_m": 0.000350477470769251
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.595235782090046,
+        "wall_w_center_m": 0.00035047747077023884
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 7.961189707472727e-09,
+        "wall_w_center_m": 1.7763568394002505e-15
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 10,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 1.0944671977857587,
+        "wall_w_center_m": 0.0004948720480204643
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.0944662798913696,
+        "wall_w_center_m": 0.0004948720480165165
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.0944672104857331,
+        "wall_w_center_m": 0.0004948720480204679
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.1603796368220287e-08,
+        "wall_w_center_m": 7.327471962526033e-15
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 10,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 2.741771284137105,
+        "wall_w_center_m": 0.0006518455337079086
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 2.741771857234204,
+        "wall_w_center_m": 0.0006518455337084815
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 2.741771290668788,
+        "wall_w_center_m": 0.0006518455337079096
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 2.3822859240851813e-09,
+        "wall_w_center_m": 1.5543122344752192e-15
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 10,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 1.8131521063172573,
+        "wall_w_center_m": 0.0009156189109954722
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.813152679414357,
+        "wall_w_center_m": 0.0009156189109977618
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.8131521128489416,
+        "wall_w_center_m": 0.0009156189109954746
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 3.602391718260378e-09,
+        "wall_w_center_m": 2.6645352591003757e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 20,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 0.9575145570866276,
+        "wall_w_center_m": 0.00015609037042169267
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.9575144941272796,
+        "wall_w_center_m": 0.00015609037042160979
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.9575145476715482,
+        "wall_w_center_m": 0.00015609037042169208
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 9.832831548983734e-09,
+        "wall_w_center_m": 3.774758283725532e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 20,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.6425850495239545,
+        "wall_w_center_m": 0.00021978763792952416
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.6425849865646067,
+        "wall_w_center_m": 0.00021978763792919275
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.6425850401088753,
+        "wall_w_center_m": 0.00021978763792952189
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.465188015359331e-08,
+        "wall_w_center_m": 1.0325074129013956e-14
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 20,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.323109257762415,
+        "wall_w_center_m": 0.00020825877562715737
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.3231083398680263,
+        "wall_w_center_m": 0.0002082587756261704
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.32310927046239,
+        "wall_w_center_m": 0.00020825877562715824
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 9.59858370563893e-09,
+        "wall_w_center_m": 4.218847493575595e-15
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 20,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.9024262810426381,
+        "wall_w_center_m": 0.00029387633677632746
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.9024253631482494,
+        "wall_w_center_m": 0.00029387633677237934
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.9024262937426126,
+        "wall_w_center_m": 0.0002938763367763307
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.4073143539405919e-08,
+        "wall_w_center_m": 1.1102230246251565e-14
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 20,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 2.2364615587155936,
+        "wall_w_center_m": 0.0003864890252932956
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 2.2364621318126927,
+        "wall_w_center_m": 0.00038648902529386797
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 2.2364615652472772,
+        "wall_w_center_m": 0.00038648902529329616
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 2.920543584750135e-09,
+        "wall_w_center_m": 1.3322676295501878e-15
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 20,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 1.4590861644103352,
+        "wall_w_center_m": 0.0005414810918070355
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.4590867375074354,
+        "wall_w_center_m": 0.0005414810918093245
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.45908617094202,
+        "wall_w_center_m": 0.0005414810918070372
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 4.476558679300524e-09,
+        "wall_w_center_m": 3.1086244689504383e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 50,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 0.7372164053875486,
+        "wall_w_center_m": 7.830983182632248e-05
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.7372163424282008,
+        "wall_w_center_m": 7.830983182623956e-05
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.7372163959724694,
+        "wall_w_center_m": 7.830983182632185e-05
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.277112016140336e-08,
+        "wall_w_center_m": 7.993605777301127e-15
+      }
+    },
+    {
+      "wall": "H200",
+      "wall_gk_kN_m": 5.2115625,
+      "wall_width_m": 0.2,
+      "ks_MN_m3": 50,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.48774775112557495,
+        "wall_w_center_m": 0.00011000734456126328
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.4877476881662271,
+        "wall_w_center_m": 0.00011000734456093177
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.4877477417104957,
+        "wall_w_center_m": 0.00011000734456126092
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.9303173059981305e-08,
+        "wall_w_center_m": 2.142730437526552e-14
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 50,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.0289475254327456,
+        "wall_w_center_m": 0.00010461435438147318
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.0289466075383564,
+        "wall_w_center_m": 0.00010461435438048614
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.0289475381327198,
+        "wall_w_center_m": 0.00010461435438147398
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.2342683985977487e-08,
+        "wall_w_center_m": 7.549516567451064e-15
+      }
+    },
+    {
+      "wall": "partition",
+      "wall_gk_kN_m": 6.9375,
+      "wall_width_m": 0.14,
+      "ks_MN_m3": 50,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 0.6950383834232616,
+        "wall_w_center_m": 0.000147443581140629
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 0.6950374655288731,
+        "wall_w_center_m": 0.00014744358113668094
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 0.695038396123236,
+        "wall_w_center_m": 0.00014744358114063237
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 1.8272335422508945e-08,
+        "wall_w_center_m": 2.2870594307278225e-14
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 50,
+      "EI_factor": 1,
+      "closed_form": {
+        "M_center_kNm_m": 1.6921630131055683,
+        "wall_w_center_m": 0.00019332746387752995
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.6921635862026683,
+        "wall_w_center_m": 0.00019332746387810216
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.6921630196372528,
+        "wall_w_center_m": 0.00019332746387753036
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 3.859961683616575e-09,
+        "wall_w_center_m": 1.9984014443252818e-15
+      }
+    },
+    {
+      "wall": "garage",
+      "wall_gk_kN_m": 12.975,
+      "wall_width_m": 0.301,
+      "ks_MN_m3": 50,
+      "EI_factor": 0.25,
+      "closed_form": {
+        "M_center_kNm_m": 1.0793988284801939,
+        "wall_w_center_m": 0.00026953032951342206
+      },
+      "fourier_4096": {
+        "M_center_kNm_m": 1.0793994015772932,
+        "wall_w_center_m": 0.00026953032951571097
+      },
+      "fourier_16384": {
+        "M_center_kNm_m": 1.079398835011878,
+        "wall_w_center_m": 0.00026953032951342374
+      },
+      "relative_errors": {
+        "M_center_kNm_m": 6.0512239663523815e-09,
+        "wall_w_center_m": 6.217248937900877e-15
+      }
+    }
+  ],
+  "maximum_relative_error": 1.9303173059981305e-08,
+  "limitations": [
+    "The ks grid is a parameter sensitivity, not measured fill properties.",
+    "p/ks describes spring compression only; not final total consolidation settlement.",
+    "Zero bending holds only for an ideal infinite uniform floor, uniform load and uniform support.",
+    "No whole-building geotechnical or structural approval is made."
+  ]
+}

@@ -17,14 +17,14 @@ function CitedText({ text }: { text: string }) {
 }
 function AssemblyFigure() {
   const layers = [...OFFICE_ACOUSTIC_ASSEMBLY.layers].reverse();
-  return <figure className="h200-figure"><svg viewBox="0 0 480 136" role="img" aria-label="H200 od sprchy: omietka 15, tehla 100, omietka 15, dutina 45 a dve susediace dosky 12,5 mm. Spolu 200 mm.">
+  return <figure className="h200-figure"><svg viewBox="0 0 480 136" role="img" aria-label="H200 od sprchy: omietka 15, tehla 100, omietka 15, dutina 45 a jedna doska 12,5 mm. Spolu 187,5 mm.">
     <text x="40" y="16">SPRCHA</text><text x="440" y="16" textAnchor="end">PRACOVŇA</text>
     {layers.map((layer, index) => { const x = 40 + layers.slice(0, index).reduce((sum, item) => sum + item.thicknessMm, 0) * 2; return <g key={layer.id}>
       <rect x={x} y="34" width={layer.thicknessMm * 2} height="56" fill={layer.material === 'masonry' ? '#dfc3a9' : layer.material === 'mineral-wool' ? '#eee2ad' : layer.material === 'gypsum-board' ? '#52768a' : '#dfe4e5'} stroke="#465465" />
       <text x={x + layer.thicknessMm} y="67" textAnchor="middle" fill={layer.material === 'gypsum-board' ? '#fff' : '#263344'}>{layer.thicknessMm.toLocaleString('sk-SK')}</text>
     </g>; })}
-    <path d="M40 97V117M440 97V117M40 111H440" fill="none" stroke="#465465"/><text x="240" y="131" textAnchor="middle">200 mm · základná skladba</text>
-  </svg><figcaption>Obr. 1. Pomerný rez vybranou H200. Dve dosky na strane pracovne tvoria spoločné opláštenie. Finálne mokré povrchy sú navyše.</figcaption></figure>;
+    <path d="M40 97V117M415 97V117M40 111H415" fill="none" stroke="#465465"/><text x="240" y="131" textAnchor="middle">187,5 mm · základná skladba</text>
+  </svg><figcaption>Obr. 1. Pomerný rez vybranou H200. Na strane pracovne zostáva jedna doska Silentboard 12,5 mm. Finálne mokré povrchy sú navyše.</figcaption></figure>;
 }
 function ResearchTable({ table, title }: { table: NonNullable<Section['table']>; title: string }) {
   return (
@@ -48,7 +48,7 @@ export default function H200ResearchPage() {
         {section.equations && <div className="h200-equations" aria-label="Výpočtový postup">{section.equations.map((equation, i) => <p key={i}>{equation}</p>)}</div>}
         {section.note && <aside className="h200-note"><CitedText text={section.note}/></aside>}
       </section>)}
-      <section className="h200-section h200-references" aria-labelledby="literatura"><h2 id="literatura">Použitá literatúra</h2><p>Odkazy overené pri spracovaní 13.–14. 9. 2026. Čísla v texte odkazujú na nasledujúce zdroje.</p><ol>{report.references.map(source => <li id={`zdroj-${source.id}`} key={source.id}><strong>{source.authors}</strong> <a href={source.url}>{source.title}</a>. {source.publication}{'publisherUrl' in source && <> <a href={source.publisherUrl}>Záznam u vydavateľa</a>.</>}<p><CitedText text={source.note}/></p></li>)}</ol></section>
+      <section className="h200-section h200-references" aria-labelledby="literatura"><h2 id="literatura">Použitá literatúra</h2><p>Odkazy overené pri spracovaní 16. 9. 2026. Čísla v texte odkazujú na nasledujúce zdroje.</p><ol>{report.references.map(source => <li id={`zdroj-${source.id}`} key={source.id}><strong>{source.authors}</strong> <a href={source.url}>{source.title}</a>. {source.publication}{'publisherUrl' in source && <> <a href={source.publisherUrl}>Záznam u vydavateľa</a>.</>}<p><CitedText text={source.note}/></p></li>)}</ol></section>
       <footer className="h200-report-footer">{report.code} · Projekt DOM · Technické zdôvodnenie výberu. Výpočet, výsledok cudzieho experimentu a meranie hotovej stavby majú odlišnú dôkazovú úroveň.</footer>
     </main>
   </div>;
