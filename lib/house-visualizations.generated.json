@@ -1,0 +1,226 @@
+{
+  "design": "C/B/B",
+  "capturedAt": "2026-09-17T07:21:11.590Z",
+  "width": 2400,
+  "height": 1500,
+  "readiness": {
+    "sceneReady": true,
+    "archviz": {
+      "status": "ready",
+      "visuals": 522,
+      "replaced": 627
+    }
+  },
+  "views": [
+    {
+      "id": "garden-overview",
+      "title": "Dom zo záhrady",
+      "group": "exterior",
+      "position": [
+        -23,
+        17,
+        -29
+      ],
+      "target": [
+        2,
+        2,
+        -1
+      ],
+      "fov": 0.62,
+      "description": "Šikmý pohľad na obe krídla domu. Vidno pôdorys v tvare L, súkromný dvor, bazén a krytú terasu.",
+      "url": "/visualizations/cbb/garden-overview.jpg",
+      "thumbnailUrl": "/visualizations/cbb/garden-overview-thumb.jpg",
+      "bytes": 1425028,
+      "sha256": "c914c11e63de834ca4c39a188b4e11f6214f2efb7d96752f85e56869468ecaf8"
+    },
+    {
+      "id": "street",
+      "title": "Uličná strana · vstup a garáž",
+      "group": "exterior",
+      "position": [
+        1.8,
+        3.4,
+        22
+      ],
+      "target": [
+        1.8,
+        2.2,
+        4
+      ],
+      "fov": 0.94,
+      "description": "Čelný pohľad od ulice: vľavo garáž, uprostred vstup a napravo pracovňa. Ukazuje šírku a výšku hlavného krídla.",
+      "url": "/visualizations/cbb/street.jpg",
+      "thumbnailUrl": "/visualizations/cbb/street-thumb.jpg",
+      "bytes": 667992,
+      "sha256": "42413ed7074364488ca074e1a5a60df541e623fe03295be8bd096fc088d35667"
+    },
+    {
+      "id": "east",
+      "title": "Pravá bočná strana",
+      "group": "exterior",
+      "position": [
+        43,
+        8,
+        -2
+      ],
+      "target": [
+        7,
+        2.2,
+        -2
+      ],
+      "fov": 0.56,
+      "description": "Pohľad na vonkajšiu stranu dlhého krídla, od pracovne až po krytú terasu pri obývačke.",
+      "url": "/visualizations/cbb/east.jpg",
+      "thumbnailUrl": "/visualizations/cbb/east-thumb.jpg",
+      "bytes": 856518,
+      "sha256": "b4b8fee7427902b63bec2b753c587b0f36d1b6822ab1f35af4de295055ebebf0"
+    },
+    {
+      "id": "rear",
+      "title": "Zadná strana · presklený štít",
+      "group": "exterior",
+      "position": [
+        1.8,
+        8,
+        -39
+      ],
+      "target": [
+        1.8,
+        2.4,
+        -1
+      ],
+      "fov": 0.57,
+      "description": "Pohľad zo zadnej časti pozemku. Presklený štít a krytá terasa uzatvárajú vysoký priestor obývačky.",
+      "url": "/visualizations/cbb/rear.jpg",
+      "thumbnailUrl": "/visualizations/cbb/rear-thumb.jpg",
+      "bytes": 1073936,
+      "sha256": "21b2e0a56fdc0776986b2fde49a694773d153c4870bbd4d8212b88d11dd5d23c"
+    },
+    {
+      "id": "west",
+      "title": "Ľavá bočná strana",
+      "group": "exterior",
+      "position": [
+        -39,
+        8,
+        -1
+      ],
+      "target": [
+        0,
+        2.2,
+        -1
+      ],
+      "fov": 0.57,
+      "description": "Pohľad od ľavej hranice pozemku na štít garáže, lodžiu a vnútornú záhradnú fasádu dlhého krídla.",
+      "url": "/visualizations/cbb/west.jpg",
+      "thumbnailUrl": "/visualizations/cbb/west-thumb.jpg",
+      "bytes": 1037475,
+      "sha256": "1937b1384d1f24046eda8b57b43c95e49c81b5b34dd6c7ac3e6c4ec31574d5a6"
+    },
+    {
+      "id": "street-angle",
+      "title": "Vstupný roh zo šikma",
+      "group": "exterior",
+      "position": [
+        28,
+        12,
+        24
+      ],
+      "target": [
+        2,
+        2,
+        -1
+      ],
+      "fov": 0.72,
+      "description": "Šikmý pohľad spája uličnú a pravú fasádu. Vysvetľuje hĺbku domu a napojenie oboch strešných krídel.",
+      "url": "/visualizations/cbb/street-angle.jpg",
+      "thumbnailUrl": "/visualizations/cbb/street-angle-thumb.jpg",
+      "bytes": 1016198,
+      "sha256": "73705a8a6d6a75ad1f757665fd75cc267a6b21c7a4c5c8b39b7468c59b9ffe6c"
+    },
+    {
+      "id": "terrace-angle",
+      "title": "Terasa a záhradné krídlo",
+      "group": "exterior",
+      "position": [
+        29,
+        14,
+        -31
+      ],
+      "target": [
+        4,
+        2.3,
+        -2
+      ],
+      "fov": 0.62,
+      "description": "Šikmý pohľad od zadného rohu na krytú terasu, štít a dlhé obytné krídlo.",
+      "url": "/visualizations/cbb/terrace-angle.jpg",
+      "thumbnailUrl": "/visualizations/cbb/terrace-angle-thumb.jpg",
+      "bytes": 1043639,
+      "sha256": "16d9528148d82d3d41b94ab8304c5c9f6b242b6b28e8a7f82921b2e7b2c58966"
+    },
+    {
+      "id": "living-vault",
+      "title": "Obývačka · katedrálový strop",
+      "group": "interior",
+      "position": [
+        7.1,
+        1.65,
+        -1.5
+      ],
+      "target": [
+        9.2,
+        3.15,
+        -8.1
+      ],
+      "fov": 1.25,
+      "description": "Pohľad z dennej zóny k terase. Obe šikmé plochy stropu sa stretávajú vo vysokom hrebeni nad obývačkou; priestor pokračuje k presklenému štítu.",
+      "url": "/visualizations/cbb/living-vault.jpg",
+      "thumbnailUrl": "/visualizations/cbb/living-vault-thumb.jpg",
+      "bytes": 335292,
+      "sha256": "0bee11c1b7a126c01e41e62e6aa7b50a0a30913a93a15de0c8a383d1da9a92c2"
+    },
+    {
+      "id": "living-kitchen",
+      "title": "Obývačka smerom ku kuchyni",
+      "group": "interior",
+      "position": [
+        7.1,
+        1.65,
+        -8.1
+      ],
+      "target": [
+        9.3,
+        2.8,
+        -1.1
+      ],
+      "fov": 1.25,
+      "description": "Opačný pohľad ukazuje spoločný priestor obývačky, jedálne a kuchyne. Šikmý podhľad pokračuje aj nad kuchynskou časťou.",
+      "url": "/visualizations/cbb/living-kitchen.jpg",
+      "thumbnailUrl": "/visualizations/cbb/living-kitchen-thumb.jpg",
+      "bytes": 281909,
+      "sha256": "427cf4f7eceb13fdb8bf3d00241bf82aa7bc51d2cf2e19c795bfdef6da39815d"
+    },
+    {
+      "id": "living-gable",
+      "title": "Výška priestoru a štítové presklenie",
+      "group": "interior",
+      "position": [
+        11.4,
+        1.6,
+        -3.5
+      ],
+      "target": [
+        8.8,
+        3.5,
+        -8.7
+      ],
+      "fov": 1.2,
+      "description": "Šikmý pohľad cez obývačku zachytáva nábytok aj hornú časť presklenia. Pomáha porovnať bežnú výšku zariadenia s otvoreným katedrálovým stropom.",
+      "url": "/visualizations/cbb/living-gable.jpg",
+      "thumbnailUrl": "/visualizations/cbb/living-gable-thumb.jpg",
+      "bytes": 304982,
+      "sha256": "5acfc9b628a3950a088e8f1e034b2ec22da00e7dac68418b29a1843463fd7ebf"
+    }
+  ]
+}

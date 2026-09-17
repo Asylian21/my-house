@@ -10,19 +10,20 @@ import { designHref } from '@/lib/twin-design-selection';
 import { DOCUMENT_STATUS, documentFolderIds, formatDocumentBytes, formatDocumentDate, searchLibraryDocuments, type DocumentFolder, type DocumentLibrary as Library, type LibraryDocument } from '@/lib/document-library';
 import { DocumentMarkdown } from './document-markdown';
 import './document-library.css';
+import { HouseVisualizations, VisualizationViewer } from './house-visualizations';
 
 type BrowserState = { folder: string; query: string; format: string; status: string; sort: 'name' | 'updated' | 'code'; view: 'list' | 'grid'; file: string | null };
 export function readLibraryState(params: URLSearchParams, library: Library): BrowserState {
   const folder = params.get('folder') ?? 'all', file = params.get('file');
   const sort = params.get('sort'), format = params.get('format'), status = params.get('status');
   return { folder: library.folders.some(f => f.id === folder) ? folder : 'all', query: params.get('q') ?? '',
-    format: ['PDF', 'SVG', 'PNG', 'MD', 'JSON'].includes(format ?? '') ? format! : 'all',
+    format: ['PDF', 'SVG', 'PNG', 'JPG', 'MD', 'JSON'].includes(format ?? '') ? format! : 'all',
     status: ['coordination', 'reference', 'archive'].includes(status ?? '') ? status! : 'all',
     sort: sort === 'name' || sort === 'updated' ? sort : 'code', view: params.get('view') === 'grid' ? 'grid' : 'list',
     file: file && library.documents.some(d => d.id === file) ? file : null };
 }
 function FileIcon({ format, size = 21 }: { format: string; size?: number }) {
-  const Icon = format === 'PNG' || format === 'SVG' ? FileImage : format === 'JSON' ? FileCode2 : FileText;
+  const Icon = format === 'PNG' || format === 'JPG' || format === 'SVG' ? FileImage : format === 'JSON' ? FileCode2 : FileText;
   return <Icon size={size} strokeWidth={1.6} aria-hidden="true"/>;
 }
 function Status({ document: doc }: { document: LibraryDocument }) {
@@ -40,6 +41,9 @@ export function DocumentLibrary({ library, initialParams }: { library: Library; 
   const folder = library.folders.find(f => f.id === state.folder);
   const count = (id: string) => { const ids = documentFolderIds(library.folders, id); return library.documents.filter(d => ids.has(d.folderId)).length; };
   const results = useMemo(() => searchLibraryDocuments(library, { folderId: state.query.trim() ? 'all' : state.folder, query: state.query, format: state.format, status: state.status, sort: state.sort }), [library, state.folder, state.query, state.format, state.status, state.sort]);
+  const visualizations = library.documents.filter(doc => doc.visualizationGroup);
+  const galleryOpen = state.folder === 'visualizations' && !state.query && state.format === 'all' && state.status === 'all';
+  const galleryTeaser = state.folder === 'all' && !state.query && state.format === 'all' && state.status === 'all';
   const childFolders = state.query || state.format !== 'all' || state.status !== 'all' ? [] : library.folders.filter(f => f.parentId === (state.folder === 'all' ? null : state.folder));
   const sheetCount = new Set(library.documents.filter(d => d.sheetIndex).map(d => d.code)).size;
   const bundles = [library.bundleIds.color, library.bundleIds.mono].map(id => library.documents.find(d => d.id === id)).filter((d): d is LibraryDocument => !!d);
@@ -120,10 +124,11 @@ export function DocumentLibrary({ library, initialParams }: { library: Library; 
           <details className="dl-download-menu" ref={menu}><summary aria-label="Stiahnuť výkresovú sadu"><Download size={17}/><span>Stiahnuť sadu</span><ChevronDown size={15}/></summary><div>{bundles.map(doc => <a key={doc.id} href={doc.url} download={doc.filename} onClick={() => { if (menu.current) menu.current.open = false; }}><FileText size={21}/><span><strong>{colorName(doc)} PDF</strong><small>{doc.pageCount} listov · A1 · {formatDocumentBytes(doc.bytes)}</small></span><ArrowDownToLine size={16}/></a>)}</div></details>
         </header>
         {state.folder === 'all' && !state.query && <section className="dl-current-set" aria-label="Aktuálna výkresová sada"><div className="dl-set-icon"><FileText size={23}/></div><div><strong>Výkresová sada C / B / B <span>{sheetCount} listov A1</span></strong><p>Posledný export {formatDocumentDate(library.sourceUpdatedAt)} · vrátane základov R7 a stien SM30</p></div><span className="dl-status dl-status-coordination"><i/>Nevydané na realizáciu</span>{bundles[0] && <button onClick={e => open(bundles[0], e.currentTarget)} aria-label="Prezrieť celú výkresovú sadu">Prezrieť sadu<ArrowUpRight size={17}/></button>}</section>}
-        <div className="dl-toolbar"><label className="dl-search"><Search size={19}/><span className="dl-sr-only">Vyhľadať dokumenty</span><input ref={search} type="search" value={state.query} placeholder="Hľadať názov, kód alebo obsah…" onChange={e => update({ query: e.target.value }, true)}/>{!state.query && <kbd>⌘ K</kbd>}</label><label className="dl-select"><span className="dl-sr-only">Typ súboru</span><select value={state.format} onChange={e => update({ format: e.target.value })}><option value="all">Všetky typy</option>{['PDF', 'SVG', 'PNG', 'MD', 'JSON'].map(f => <option key={f}>{f}</option>)}</select><ChevronDown size={14}/></label><label className="dl-select dl-status-select"><span className="dl-sr-only">Stav dokumentu</span><select value={state.status} onChange={e => update({ status: e.target.value })}><option value="all">Všetky stavy</option>{Object.entries(DOCUMENT_STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><ChevronDown size={14}/></label></div>
+        <div className="dl-toolbar"><label className="dl-search"><Search size={19}/><span className="dl-sr-only">Vyhľadať dokumenty</span><input ref={search} type="search" value={state.query} placeholder="Hľadať názov, kód alebo obsah…" onChange={e => update({ query: e.target.value }, true)}/>{!state.query && <kbd>⌘ K</kbd>}</label><label className="dl-select"><span className="dl-sr-only">Typ súboru</span><select value={state.format} onChange={e => update({ format: e.target.value })}><option value="all">Všetky typy</option>{['PDF', 'SVG', 'PNG', 'JPG', 'MD', 'JSON'].map(f => <option key={f}>{f}</option>)}</select><ChevronDown size={14}/></label><label className="dl-select dl-status-select"><span className="dl-sr-only">Stav dokumentu</span><select value={state.status} onChange={e => update({ status: e.target.value })}><option value="all">Všetky stavy</option>{Object.entries(DOCUMENT_STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><ChevronDown size={14}/></label></div>
         <div className="dl-files-scroll">
+          {(galleryOpen || galleryTeaser) && <HouseVisualizations documents={visualizations} onOpen={open} onBrowse={() => chooseFolder('visualizations')} compact={galleryTeaser}/>}
           {childFolders.length > 0 && <section className="dl-folder-section" aria-label="Podpriečinky"><div className="dl-section-label">{state.folder === 'all' ? 'ZLOŽKY DOKUMENTÁCIE' : 'PODZLOŽKY'}</div><div className="dl-folder-cards">{childFolders.map(f => <button key={f.id} onClick={() => chooseFolder(f.id)}><Folder size={25} strokeWidth={1.4}/><strong>{f.title}</strong><span>{count(f.id)} súborov<ChevronRight size={14}/></span></button>)}</div></section>}
-          <div className="dl-list-heading"><div><h2>{state.query ? 'Výsledky v celej dokumentácii' : state.folder === 'all' ? 'Všetky súbory' : 'Súbory v zložke'}</h2><span role="status" aria-live="polite">{results.length} súborov</span></div><div className="dl-list-controls"><label className="dl-sort"><ChevronsUpDown size={15}/><span className="dl-sr-only">Zoradiť súbory</span><select value={state.sort} onChange={e => update({ sort: e.target.value as BrowserState['sort'] })}><option value="code">Podľa kódu</option><option value="name">Podľa názvu</option><option value="updated">Naposledy upravené</option></select></label><div className="dl-view-toggle" role="group" aria-label="Zobrazenie súborov"><button className="dl-icon" aria-label="Zoznam" aria-pressed={state.view === 'list'} onClick={() => update({ view: 'list' })}><List size={17}/></button><button className="dl-icon" aria-label="Mriežka" aria-pressed={state.view === 'grid'} onClick={() => update({ view: 'grid' })}><LayoutGrid size={16}/></button></div></div></div>
+          {!galleryOpen && <><div className="dl-list-heading"><div><h2>{state.query ? 'Výsledky v celej dokumentácii' : state.folder === 'all' ? 'Všetky súbory' : 'Súbory v zložke'}</h2><span role="status" aria-live="polite">{results.length} súborov</span></div><div className="dl-list-controls"><label className="dl-sort"><ChevronsUpDown size={15}/><span className="dl-sr-only">Zoradiť súbory</span><select value={state.sort} onChange={e => update({ sort: e.target.value as BrowserState['sort'] })}><option value="code">Podľa kódu</option><option value="name">Podľa názvu</option><option value="updated">Naposledy upravené</option></select></label><div className="dl-view-toggle" role="group" aria-label="Zobrazenie súborov"><button className="dl-icon" aria-label="Zoznam" aria-pressed={state.view === 'list'} onClick={() => update({ view: 'list' })}><List size={17}/></button><button className="dl-icon" aria-label="Mriežka" aria-pressed={state.view === 'grid'} onClick={() => update({ view: 'grid' })}><LayoutGrid size={16}/></button></div></div></div>
           {results.length ? <div className={state.view === 'grid' ? 'dl-file-grid' : 'dl-file-table'}>
             {state.view === 'list' && <div className="dl-table-head" aria-hidden="true"><span>NÁZOV SÚBORU</span><span>STAV</span><span>UPRAVENÉ</span><span>VEĽKOSŤ</span><span/></div>}
             {results.map(doc => <article key={doc.id} className={`dl-file-row${current?.id === doc.id ? ' is-selected' : ''}`}>
@@ -134,11 +139,12 @@ export function DocumentLibrary({ library, initialParams }: { library: Library; 
               <div className="dl-row-status"><Status document={doc}/></div><time dateTime={doc.updatedAt} className="dl-row-date">{formatDocumentDate(doc.updatedAt)}</time><span className="dl-row-size">{formatDocumentBytes(doc.bytes)}</span><a className="dl-icon dl-row-download" href={doc.url} download={doc.filename} aria-label={`Stiahnuť ${doc.title}${colorName(doc) ? ` · ${colorName(doc)}` : ''}`}><ArrowDownToLine size={17}/></a>
             </article>)}
           </div> : <div className="dl-empty"><Search size={34} strokeWidth={1.3}/><h3>Nenašli sa žiadne súbory</h3><p>{state.query ? `Skús kratší výraz alebo kód výkresu. Hľadáš „${state.query}“ v celej dokumentácii.` : 'Pre túto kombináciu zložky a filtrov tu zatiaľ nie je dokument.'}</p><button onClick={() => update({ query: '', format: 'all', status: 'all' })}>Vymazať vyhľadávanie a filtre</button></div>}
+          </>}
           <footer className="dl-content-footer"><span>{sheetCount} výkresových listov · farebné aj čiernobiele PDF</span><span>Hlavný návrh C / B / B</span></footer>
         </div>
       </main>
     </div>
-    {current && <DocumentViewer key={current.id} doc={current} library={library} onClose={close} onOpen={id => { const doc = library.documents.find(d => d.id === id); if (doc) open(doc); }} returnFocus={lastTrigger}/>}
+    {current?.visualizationGroup ? <VisualizationViewer doc={current} documents={visualizations} onOpen={open} onClose={close}/> : current && <DocumentViewer key={current.id} doc={current} library={library} onClose={close} onOpen={id => { const doc = library.documents.find(d => d.id === id); if (doc) open(doc); }} returnFocus={lastTrigger}/>}
   </div>;
 }
 
@@ -158,7 +164,7 @@ function DocumentViewer({ doc, library, onClose, onOpen, returnFocus }: { doc: L
   const isBundle = sheets.length > 0;
   const pages = isBundle ? sheets : (doc.pagePreviewUrls ?? []).map((previewUrl, index) => ({ ...doc, id: `${doc.id}-page-${index + 1}`, previewUrl, url: `${doc.url}#page=${index + 1}` }));
   const displayed = pages[page] ?? doc;
-  const imageUrl = displayed.previewUrl ?? (['PNG', 'SVG'].includes(displayed.format) ? displayed.url : undefined);
+  const imageUrl = displayed.previewUrl ?? (['PNG', 'JPG', 'SVG'].includes(displayed.format) ? displayed.url : undefined);
   const isText = doc.format === 'MD' || doc.format === 'JSON';
   const alternatives = library.documents.filter(d => d.id !== doc.id && ((doc.code && d.code === doc.code && d.format === doc.format) || doc.relatedIds?.includes(d.id)));
   useEffect(() => {

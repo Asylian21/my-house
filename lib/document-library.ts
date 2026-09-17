@@ -1,4 +1,4 @@
-export type DocumentFormat = 'PDF' | 'SVG' | 'PNG' | 'MD' | 'JSON';
+export type DocumentFormat = 'PDF' | 'SVG' | 'PNG' | 'JPG' | 'MD' | 'JSON';
 export type DocumentStatus = 'coordination' | 'reference' | 'archive';
 
 export interface DocumentFolder {
@@ -33,6 +33,7 @@ export interface LibraryDocument {
   searchText: string;
   relatedIds?: string[];
   webUrl?: string;
+  visualizationGroup?: 'exterior' | 'interior';
 }
 
 export interface DocumentLibrary {
