@@ -16,6 +16,7 @@ import { SCENE_CENTER_MM } from "../../lib/twin-render-frame";
 import { DECK_BOARD_LAYOUT } from "../../lib/deck-boards";
 import { EXTERIOR_LIGHTING } from "../../lib/twin-exterior-lighting";
 import { INTERIOR_LIGHTING } from "../../lib/twin-interior-lighting";
+import { ACTIVE_DESIGN } from "../../lib/twin-design-selection";
 
 // This page is served only by the local exporter, never by the public app.
 const controller = createTwinScene(
@@ -23,7 +24,7 @@ const controller = createTwinScene(
   () => {},
   () => {},
   () => {},
-  { loadArchviz: false },
+  { ...ACTIVE_DESIGN, loadArchviz: false },
 );
 controller.update({
   foundations: site.FOUNDATIONS,
@@ -37,6 +38,7 @@ const scene = EngineStore.LastCreatedScene!;
 scene.getEngine().stopRenderLoop();
 
 function capture() {
+  const doorMotion = controller.captureNativeDoorMotion();
   const hiddenCollisionMeshes: Record<string, unknown>[] = [];
   const skipped: { name: string; sourceId: string; reason: string; babylonCheckCollisions: boolean;
     cameraOccluder: boolean; walkSurface: boolean; enabled: boolean }[] = [];
@@ -141,6 +143,7 @@ function capture() {
     model: {
       house: activeHouse,
       layoutId: ACTIVE_LAYOUT_ID,
+      activeDesign: { variant: "C", ...ACTIVE_DESIGN },
       domain: {
         parcel: BREZI_6012_26_PARCEL,
         provenanceKinds: PROVENANCE_KINDS,
@@ -154,6 +157,7 @@ function capture() {
         state: "checked-out source; browser-local edits are not included",
       },
       interior: { rooms: INTERIOR_ROOMS, walls: INTERIOR_WALLS, doors: INTERIOR_DOORS },
+      doorMotion,
       pool: site.GARDEN_POOL,
       exteriorLighting: EXTERIOR_LIGHTING,
       interiorLighting: INTERIOR_LIGHTING,

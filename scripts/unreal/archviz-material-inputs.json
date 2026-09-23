@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "assets": {
+    "oak_veneer_01": {
+      "license": "CC0-1.0",
+      "page": "https://polyhaven.com/a/oak_veneer_01",
+      "authors": {
+        "Jenelle van Heerden": "All"
+      },
+      "periodCm": 183.00000429153442,
+      "maps": {
+        "albedo": {
+          "path": "output/unreal/wood-study/oak_veneer_01_diff_4k.jpg",
+          "sha256": "7e8c64811e580ef6664c20524606359c739e6fe030eff5c2c06c3482ecc8b1cf",
+          "md5": "d4c13847045d1a10475a23b0787bf384",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_diff_4k.jpg",
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.3613597193448993,
+            0.21257769420432443,
+            0.09951454248737411
+          ],
+          "meanDataR": 0.6324041586296233
+        },
+        "normal": {
+          "path": "output/unreal/wood-study/oak_veneer_01_nor_gl_4k.jpg",
+          "sha256": "e9bb26f63682773895ce3f0dfd9a43554a719c4caae65b6bcf41712ecfaf3d26",
+          "md5": "03b22c26ed6dc71c46ba5f7a19ccc80a",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_nor_gl_4k.jpg",
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.21379674886778546,
+            0.21289988631407866,
+            0.9845757088358795
+          ],
+          "meanDataR": 0.49862061715593514
+        },
+        "roughness": {
+          "path": "output/unreal/wood-study/oak_veneer_01_rough_4k.jpg",
+          "sha256": "3e7eb00705c173babfc01443de1ed1e8d40d055b97de278a6e817b65e8decb38",
+          "md5": "b63d5e096d3f8a18b2725659be233121",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/oak_veneer_01/oak_veneer_01_rough_4k.jpg",
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.2846802939111304,
+            0.2846802939111304,
+            0.2846802939111304
+          ],
+          "meanDataR": 0.5304041633418962
+        }
+      }
+    },
+    "white_plaster_02": {
+      "license": "CC0-1.0",
+      "page": "https://polyhaven.com/a/white_plaster_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "periodCm": 100.0,
+      "maps": {
+        "albedo": {
+          "path": "output/archviz/assets/white_plaster_02/white_plaster_02_diff_2k.jpg",
+          "sha256": "0ca5245ba70777d3e41ff4566c9f8d363855461891802c55cb7dc0f6f85f084e",
+          "md5": "35f9c96c16aa0d934da7884b232f6d07",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_diff_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.27560214896207413,
+            0.24985146679396078,
+            0.20202093305867325
+          ],
+          "meanDataR": 0.5556735609091962
+        },
+        "normal": {
+          "path": "output/archviz/assets/white_plaster_02/white_plaster_02_nor_gl_2k.jpg",
+          "sha256": "083579b03a8f31ec1886512e5972f3b893610bf26a2098f97910e0f46745cdc9",
+          "md5": "a9fa643c4a200686ad89598b545b2adc",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_nor_gl_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.22461837964957007,
+            0.22372868009275515,
+            0.9741374215854813
+          ],
+          "meanDataR": 0.5075984019859163
+        },
+        "roughness": {
+          "path": "output/archviz/assets/white_plaster_02/white_plaster_02_rough_2k.jpg",
+          "sha256": "a3dc1911f6e25d88fdb0031fe0cfb602eec5496084c508774c60691bed087417",
+          "md5": "47f989e9fd3e69e667244ff4b9f406f8",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/white_plaster_02/white_plaster_02_rough_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.8030567032328706,
+            0.8030567032328706,
+            0.8030567032328706
+          ],
+          "meanDataR": 0.9070996480829574
+        }
+      }
+    },
+    "concrete_pavement": {
+      "license": "CC0-1.0",
+      "page": "https://polyhaven.com/a/concrete_pavement",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "periodCm": 180.00000715255737,
+      "maps": {
+        "albedo": {
+          "path": "output/archviz/assets/concrete_pavement/concrete_pavement_diff_2k.jpg",
+          "sha256": "e5a1cecfe7765cc0b24a6ab0abf492bd21c9e7af64e97fc46ef6021d0645fbd3",
+          "md5": "f7cdc6f38538e2739d48fbb4f1507ddb",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_diff_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.21696059060985087,
+            0.1790288192577322,
+            0.13719591276579554
+          ],
+          "meanDataR": 0.49941965364942387
+        },
+        "normal": {
+          "path": "output/archviz/assets/concrete_pavement/concrete_pavement_nor_gl_2k.jpg",
+          "sha256": "72def937e418ccc9d7736c9b1f51ae22a127fa2a53a54f4d1fe4d3cf828b781c",
+          "md5": "0b6ff8180e61242be0b89e8fe1d6fda7",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_nor_gl_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.22146219631733913,
+            0.22277312543642136,
+            0.9036100652386184
+          ],
+          "meanDataR": 0.4995848627651437
+        },
+        "roughness": {
+          "path": "output/archviz/assets/concrete_pavement/concrete_pavement_rough_2k.jpg",
+          "sha256": "e97b7d190dcda5a842813502505bf3d1b2348b4cad57b1d51d1bcc694a92d137",
+          "md5": "670223ce80309b606ceea892f47aa766",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_pavement/concrete_pavement_rough_2k.jpg",
+          "width": 2048,
+          "height": 2048,
+          "meanLinearRGB": [
+            0.7150793469960579,
+            0.7150793469960579,
+            0.7150793469960579
+          ],
+          "meanDataR": 0.8622384248995314
+        }
+      }
+    },
+    "vinyl-oak": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/vinyl-oak-normal.jpg",
+          "sha256": "ed2d81cfbb350d2ef581daa6fad97f356b1a9f640b1266ce22a3fef1d34464ee",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21322862382302626,
+            0.21169071451404417,
+            0.9822073695836546
+          ],
+          "meanDataR": 0.49858923519358916
+        }
+      }
+    },
+    "tile-porcelain": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/tile-porcelain-normal.jpg",
+          "sha256": "311bf7517fca223409cdbc4fa01f19735b1b54b34a72b53d5d8a3d1f15dc8bc6",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21287893936067478,
+            0.20955345939928238,
+            0.9781328682117514
+          ],
+          "meanDataR": 0.4980430191638423
+        }
+      }
+    },
+    "tile-wall": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/tile-wall-normal.jpg",
+          "sha256": "c977a6771ca9f25ff44cb42f0827959a97db53fae32924afa8fdf4ec48a61444",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21285807165766468,
+            0.20984435105104698,
+            0.9773442060780584
+          ],
+          "meanDataR": 0.4981597563799688
+        }
+      }
+    },
+    "stone-dark": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/stone-dark-normal.jpg",
+          "sha256": "2b132bf3cc6175f40a2906871600b4f812740c196f4952f7912b7fe8d00762a0",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21223075741405523,
+            0.20863687014525575,
+            0.9822505503331171
+          ],
+          "meanDataR": 0.4980392156862745
+        }
+      }
+    },
+    "epoxy-grey": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/epoxy-grey-normal.jpg",
+          "sha256": "6e730eccf950637bd0c84b0ac20b640cc3eee051506c851ce0a11397f7c97d2b",
+          "width": 512,
+          "height": 512,
+          "meanLinearRGB": [
+            0.21223075741405523,
+            0.20863687014525575,
+            0.9822505503331171
+          ],
+          "meanDataR": 0.4980392156862745
+        }
+      }
+    },
+    "boucle-taupe": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/boucle-taupe-normal.jpg",
+          "sha256": "330091afdd0a396040098f7b81f3200eabfa3c26e97b90b79e1d371854b33379",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21686029046558072,
+            0.2164280761979926,
+            0.9599019773637845
+          ],
+          "meanDataR": 0.4983484604779411
+        }
+      }
+    },
+    "rug-wool-taupe": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/rug-wool-taupe-normal.jpg",
+          "sha256": "cc1725cd1bdc07caf776af8cef446115c5a5f9a0b225622fd4e61597c679d89a",
+          "width": 1024,
+          "height": 1024,
+          "meanLinearRGB": [
+            0.21276228043362924,
+            0.21274349974982112,
+            0.9853163177864028
+          ],
+          "meanDataR": 0.49819380816291364
+        }
+      }
+    },
+    "metal-anthracite": {
+      "license": "project-procedural",
+      "source": "tools/generate-visual-assets.py",
+      "maps": {
+        "normal": {
+          "path": "public/assets/textures/metal-anthracite-normal.jpg",
+          "sha256": "db78996dc2e382a7ebdb1ad2ba967214e39501632e70b5b451b61449289cf470",
+          "width": 512,
+          "height": 512,
+          "meanLinearRGB": [
+            0.21224830802007247,
+            0.20865424743345765,
+            0.9822933411814729
+          ],
+          "meanDataR": 0.4980581694958257
+        }
+      }
+    }
+  }
+}

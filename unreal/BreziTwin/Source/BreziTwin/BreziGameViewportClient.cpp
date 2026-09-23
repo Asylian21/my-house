@@ -42,7 +42,26 @@ public:
         }
         return SViewport::OnKeyDown(Geometry, Event);
     }
+    virtual FReply OnMouseWheel(const FGeometry& Geometry, const FPointerEvent& Event) override
+    {
+        if (ABreziPlayerController* Controller = CameraController(); Controller && Controller->HandleCameraWheel(Event))
+            return FReply::Handled();
+        return SViewport::OnMouseWheel(Geometry, Event);
+    }
+    virtual FReply OnTouchGesture(const FGeometry& Geometry, const FPointerEvent& Event) override
+    {
+        if (ABreziPlayerController* Controller = CameraController(); Controller && Controller->HandleCameraGesture(Event))
+            return FReply::Handled();
+        return SViewport::OnTouchGesture(Geometry, Event);
+    }
 private:
+    ABreziPlayerController* CameraController() const
+    {
+        UBreziGameViewportClient* Client = Owner.Get();
+        UWorld* World = Client ? Client->GetWorld() : nullptr;
+        return World && World->IsGameWorld() && Client->GetGameViewportWidget().Get() == this
+            ? Cast<ABreziPlayerController>(World->GetFirstPlayerController()) : nullptr;
+    }
     TWeakObjectPtr<UBreziGameViewportClient> Owner;
 };
 #endif

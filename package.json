@@ -30,7 +30,7 @@
     "unreal:import": "node scripts/unreal/run.mjs import",
     "unreal:package": "node scripts/unreal/run.mjs package",
     "unreal:package-verify": "node scripts/unreal/run.mjs package-verify",
-    "unreal:open": "node scripts/unreal/run.mjs open",
+    "unreal:open": "node scripts/unreal/open-current.mjs",
     "unreal:qa": "node scripts/unreal/run.mjs qa",
     "unreal:qa-ui": "node scripts/unreal/run.mjs qa-ui",
     "unreal:walking-qa": "node scripts/unreal/walking-qa.mjs",
@@ -38,14 +38,16 @@
     "unreal:traversal-fixtures": "python3 scripts/unreal/traversal/prepare-fixtures.py",
     "unreal:motion-qa": "node scripts/unreal/motion-qa.mjs",
     "unreal:flame-study": "node scripts/unreal/flame-study.mjs",
-    "unreal:test": "node --test tests/archviz-export.test.mjs tests/unreal-export.test.mjs tests/unreal-package.test.mjs tests/unreal-walking.test.mjs tests/unreal-walking-qa.test.mjs tests/unreal-traversal-qa.test.mjs tests/unreal-presentation-qa.test.mjs tests/unreal-hidden-collision.test.mjs tests/unreal-cook.test.mjs tests/unreal-caustics.test.mjs tests/unreal-ax-initializer-qa.test.mjs tests/unreal-motion-qa.test.mjs tests/unreal-view-transition-policy.test.mjs tests/unreal-launcher.test.mjs tests/unreal-startup-entry.test.mjs tests/unreal-flame-study.test.mjs scripts/unreal/tv-oak/package-gate.test.mjs scripts/unreal/furniture-oak/package-gate.test.mjs scripts/unreal/pendant-emitter/package-gate.test.mjs && python3 -B scripts/unreal/test_oak_reimport.py && python3 -I -B -m unittest discover -s scripts/unreal/pendant-emitter -p 'test_*.py'",
+    "unreal:test": "node --test tests/archviz-export.test.mjs tests/unreal-export.test.mjs tests/unreal-package.test.mjs tests/unreal-walking.test.mjs tests/unreal-navigation-policy.test.mjs tests/unreal-flight-policy.test.mjs tests/unreal-avatar-policy.test.mjs tests/unreal-touchpad-policy.test.mjs tests/unreal-archviz-room-viewpoints.test.mjs tests/unreal-world-normal-facing.test.mjs tests/unreal-door-selection-policy.test.mjs tests/unreal-gameplay-capture.test.mjs tests/unreal-walkthrough.test.mjs tests/unreal-walking-qa.test.mjs tests/unreal-traversal-qa.test.mjs tests/unreal-presentation-qa.test.mjs tests/unreal-hidden-collision.test.mjs tests/unreal-cook.test.mjs tests/unreal-caustics.test.mjs tests/unreal-ax-initializer-qa.test.mjs tests/unreal-motion-qa.test.mjs tests/unreal-view-transition-policy.test.mjs tests/unreal-launcher.test.mjs tests/unreal-startup-entry.test.mjs tests/unreal-flame-study.test.mjs scripts/unreal/tv-oak/package-gate.test.mjs scripts/unreal/furniture-oak/package-gate.test.mjs scripts/unreal/pendant-emitter/package-gate.test.mjs && python3 -B scripts/unreal/test_model_refresh_import.py && python3 -B scripts/unreal/test_oak_reimport.py && python3 -I -B -m unittest discover -s scripts/unreal/pendant-emitter -p 'test_*.py' && python3 -B tests/unreal-archviz-lighting.test.py && python3 -B scripts/unreal/test_archviz_materials.py && python3 -B scripts/unreal/test_archviz_import.py && python3 -B scripts/unreal/test_archviz_normal_refresh.py",
     "docs:generate": "node scripts/plan-documentation/generate.mjs",
     "predev": "npm run docs:generate && npm run docs:library",
     "prebuild": "npm run docs:generate && npm run docs:library",
     "postbuild": "node scripts/prepare-web-build.mjs",
     "docs:drawings": "npm run docs:generate && node scripts/construction-documentation/generate.mjs && node scripts/construction-documentation/verify.mjs && npm run docs:library",
     "docs:library": "node scripts/prepare-document-library.mjs",
-    "docs:publish-snapshot": "node scripts/document-library/generate.mjs --check && node scripts/document-library-snapshot.mjs --export"
+    "docs:publish-snapshot": "node scripts/document-library/generate.mjs --check && node scripts/document-library-snapshot.mjs --export",
+    "unreal:model": "node scripts/unreal/model-refresh.mjs",
+    "unreal:walkthrough-qa": "node scripts/unreal/walkthrough-qa.mjs --close-reopen --screenshots"
   },
   "dependencies": {
     "@babylonjs/core": "^9.21.2",

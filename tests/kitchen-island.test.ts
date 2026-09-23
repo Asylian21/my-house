@@ -172,7 +172,7 @@ describe('freestanding kitchen island in the active C/B/B design',()=>{
       y0:KITCHEN_RUN.rectMm.y0,y1:KITCHEN_RUN.rectMm.y0+KITCHEN_RUN.upperCabinets.depthMm};
     expect(cabinet.x1-cabinet.x0).toBe(990);
     expect(contains(cabinet,r)).toBe(true);
-    expect(b.minimumWorld.y).toBeCloseTo(1.6,3);
+    expect(b.minimumWorld.y).toBeCloseTo(1.52,3);
     expect(b.maximumWorld.y*1000).toBeLessThan(KITCHEN_RUN.upperCabinets.topMm);
     expect((r.x0+r.x1)/2).toBeCloseTo(KITCHEN_RUN.hobCenterXmm,1);
     expect((r.y0+r.y1)/2).toBeCloseTo((KITCHEN_DESIGN.hobRectMm.y0+KITCHEN_DESIGN.hobRectMm.y1)/2,1);
@@ -181,7 +181,7 @@ describe('freestanding kitchen island in the active C/B/B design',()=>{
     expect(contains(cabinet,canopy)).toBe(true);
     expect(hood.metadata.ventilation).toBe('recirculation-with-top-return');
     const outlet=scene.getMeshByName('KITCHEN-RUN · odsávač · horná vratná mriežka')!;
-    expect(outlet.getBoundingInfo().boundingBox.minimumWorld.y*1000).toBeCloseTo(KITCHEN_RUN.upperCabinets.topMm,1);
+    expect(outlet.getBoundingInfo().boundingBox.minimumWorld.y*1000).toBeCloseTo(KITCHEN_DESIGN.upperExtension.topMm,1);
     const extractors=scene.meshes.filter(mesh=>/KITCHEN-RUN.*odsávač/.test(mesh.name));
     expect(extractors.every(mesh=>!overlaps(bounds(mesh),KITCHEN_ISLAND.worktopRectMm))).toBe(true);
     expect(scene.meshes.some(mesh=>/KITCHEN-RUN.*komín/.test(mesh.name))).toBe(false);

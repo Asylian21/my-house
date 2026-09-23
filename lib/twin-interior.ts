@@ -254,7 +254,7 @@ const kitchenShiftMm=KITCHEN_BEARING_WALL.y1+kitchenGapMm-original.KITCHEN_RUN.r
 const kitchenBackRunRectMm={...shift(original.KITCHEN_RUN.rectMm,0,kitchenShiftMm),x1:KITCHEN_BEARING_WALL.x1-80};
 export const KITCHEN_RUN:original.KitchenRun=Object.freeze({
   ...original.KITCHEN_RUN,backRunRevisionSourceId:'C-KITCHEN-DOOR-SHIFT-2026-09-14',
-  designSourceId:'C-KITCHEN-OAK-BLACK-EAST-DW-2026-09-14',
+  designSourceId:'C-KITCHEN-OPEN-DOORWAY-2026-09-22',
   rectMm:kitchenBackRunRectMm,
   eastReturnRectMm:{...original.KITCHEN_RUN.eastReturnRectMm,y0:KITCHEN_BEARING_WALL.y1+kitchenGapMm,
     y1:original.KITCHEN_RUN.peninsulaRectMm.y1},
@@ -310,7 +310,16 @@ export const KITCHEN_DESIGN=Object.freeze({
   backModules:[23991,24501,25491,26001] as const,
   livingStorageRectMm:rect(23391,13510,26011,13770),
   eastStorageRectMm:rect(26941,11109,27541,13780),
-  hood:{bottomMm:1600,bodyHeightMm:350,depthMm:293,ductDiameterMm:150,
+  // Revised elevation: the oak bank ends at the cooking niche. The utility
+  // doorway and east sideboard retain an uninterrupted light wall above them.
+  upperExtension:{
+    revisionSourceId:'C-KITCHEN-OPEN-DOORWAY-2026-09-22',
+    rectMm:rect(kitchenBackRunRectMm.x0,kitchenBackRunRectMm.y0,kitchenBackRunRectMm.x1,kitchenBackRunRectMm.y1),
+    bottomMm:2258,topMm:2700,frontThicknessMm:22,revealMm:4,
+    moduleEdgesMm:[22791,23391,23991,24501,25491,26001],
+  },
+  hood:{bottomMm:1520,bodyHeightMm:430,canopyHeightMm:80,depthMm:293,ductDiameterMm:150,
+    returnElevationMm:2700,
     ventilation:'recirculation-with-top-return' as const},
   materials:{timber:'natural-oak',fronts:'natural-oak',stone:'black-stone-satin'} as const,
 });

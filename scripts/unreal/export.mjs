@@ -24,4 +24,5 @@ await run(blender, ["--background", "--factory-startup", "--python-exit-code", "
 await run(process.execPath, ["scripts/unreal/walking.mjs"], { UNREAL_OUTPUT: output });
 await run(process.execPath, ["scripts/unreal/exterior-lighting.mjs"], { UNREAL_OUTPUT: output });
 await run(process.execPath, ["scripts/unreal/interior-lighting.mjs"], { UNREAL_OUTPUT: output });
+await run(process.execPath, ["scripts/unreal/doors.mjs"], { UNREAL_OUTPUT: output });
 await run(process.execPath, ["scripts/unreal/validate.mjs"], { UNREAL_OUTPUT: output });

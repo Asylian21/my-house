@@ -3,6 +3,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "Misc/App.h"
 #include "BreziPawn.h"
+#include "BreziDoors.h"
 #include "BreziExteriorLighting.h"
 #include "BreziGameViewportClient.h"
 #include "Dom/JsonObject.h"
@@ -905,6 +906,8 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
     if (FinalViewSettings.IsValid()) Report->SetObjectField(TEXT("finalViewPostProcessSettings"), FinalViewSettings->Read());
     if (const auto* Exterior = GetOwner()->FindComponentByClass<UBreziExteriorLighting>())
         Report->SetObjectField(TEXT("exteriorLighting"), Exterior->Readback());
+    if (const UBreziDoors* Doors = UBreziDoors::FindForWorld(GetWorld()))
+        if (const TSharedPtr<FJsonObject> DoorState = Doors->GetDiagnostics()) Report->SetObjectField(TEXT("doors"), DoorState.ToSharedRef());
     if (GEngine && GEngine->GameViewport)
         if (TSharedPtr<SWindow> Window = GEngine->GameViewport->GetWindow()) Report->SetStringField(TEXT("gameWindowTitle"), Window->GetTitle().ToString());
     Report->SetObjectField(TEXT("frameInterval"), Distribution(FrameIntervalsMs));

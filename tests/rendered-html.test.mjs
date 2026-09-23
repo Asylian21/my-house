@@ -759,7 +759,7 @@ test("renders active C as a measured model manual while retaining the editable s
   assert.match(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-hob"/);
   assert.match(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-sink"/);
   assert.doesNotMatch(kitchenPlanSvg,/<path\b[^>]*data-item="kitchen-(?:upper|extractor)"/,
-    'The upper cabinets and canopy must not paint over the hob at the normal plan cut.');
+    'The upper row and canopy stay above the normal plan cut, leaving the hob and doorway visible.');
   assert.match(html,/data-item="Spálňa za novou priečkou"/);
   assert.match(html,/Práčka/);
   assert.match(html,/Sušička/);

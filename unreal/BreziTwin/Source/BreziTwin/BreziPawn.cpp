@@ -1,6 +1,7 @@
 #include "BreziPawn.h"
 #include "BreziPlayerController.h"
 #include "BreziCharacterMovementComponent.h"
+#include "BreziNavigationPolicy.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/StaticMeshComponent.h"
@@ -21,6 +22,10 @@
 #include "Misc/Parse.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#if WITH_DEV_AUTOMATION_TESTS
+#include "Engine/Engine.h"
+#include "Misc/AutomationTest.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "BreziWalking"
 
@@ -79,6 +84,9 @@ void ABreziPawn::LoadViewpoints()
             continue;
         }
         View.HorizontalFovDegrees = static_cast<float>(Fov);
+        // Room arrivals are authored safe standing points; overview views remain optional.
+        View.bWalking = View.Id == TEXT("interior") || View.Id.StartsWith(TEXT("room-"));
+        (*Object)->TryGetBoolField(TEXT("walking"), View.bWalking);
         SeenIds.Add(View.Id);
         Viewpoints.Add(MoveTemp(View));
     }
@@ -107,6 +115,11 @@ ABreziPawn::ABreziPawn(const FObjectInitializer& ObjectInitializer)
     Camera->PostProcessSettings.AutoExposureMinBrightness = -6.0f;
     Camera->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
     Camera->PostProcessSettings.AutoExposureMaxBrightness = 14.0f;
+    AvatarCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("AvatarPresentationCamera"));
+    AvatarCamera->SetupAttachment(GetCapsuleComponent());
+    AvatarCamera->bAutoActivate = false;
+    AvatarCamera->bUsePawnControlRotation = false;
+    AvatarCamera->bConstrainAspectRatio = false;
     bUseControllerRotationPitch = false;
     bUseControllerRotationYaw = false;
     bUseControllerRotationRoll = false;
@@ -139,6 +152,7 @@ void ABreziPawn::BeginPlay()
         WalkingWorldErrors.Add(ContractError);
         UE_LOG(LogTemp, Error, TEXT("Březí walking: %s"), *ContractError);
     }
+    InitializeAvatar();
     LoadViewpoints();
     FString RequestedView;
     if (FParse::Value(FCommandLine::Get(), TEXT("BreziView="), RequestedView))
@@ -157,13 +171,14 @@ void ABreziPawn::SetupPlayerInputComponent(UInputComponent* Input)
     Super::SetupPlayerInputComponent(Input);
     Input->BindAxis(TEXT("MoveForward"), this, &ABreziPawn::MoveForward);
     Input->BindAxis(TEXT("MoveRight"), this, &ABreziPawn::MoveRight);
+    Input->BindAxis(TEXT("MoveUp"), this, &ABreziPawn::MoveUp);
     Input->BindAxis(TEXT("LookHorizontal"), this, &ABreziPawn::LookHorizontal);
     Input->BindAxis(TEXT("LookVertical"), this, &ABreziPawn::LookVertical);
 }
 
 void ABreziPawn::ClearMovementInput()
 {
-    ForwardInput = RightInput = 0;
+    ForwardInput = RightInput = UpInput = 0;
     LookInput = FVector2D::ZeroVector;
     ConsumeMovementInputVector();
     WalkingMovement()->StopMovementImmediately();
@@ -179,9 +194,14 @@ void ABreziPawn::ExitWalking()
     SetBase(static_cast<FMovementBaseInterfaceData*>(nullptr));
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     CameraMode = EBreziCameraMode::Orbit;
+    AvatarCamera->SetActive(false);
+    Camera->SetActive(true);
+    GetMesh()->SetVisibility(false);
+    GetMesh()->SetComponentTickEnabled(false);
     Camera->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
     SetActorLocationAndRotation(Eye, Look, false, nullptr, ETeleportType::TeleportPhysics);
     OrbitRadius = FMath::Max(OrbitRadius, 200.0f);
+    OrbitZoomTarget = OrbitRadius;
     OrbitTarget = Eye + Look.Vector() * OrbitRadius;
     NavigationMessage = FText::GetEmpty();
 }
@@ -190,7 +210,13 @@ void ABreziPawn::SelectView(const FString& Id, bool bInstant)
 {
     const FBreziViewpoint* View = Viewpoints.FindByPredicate([&Id](const FBreziViewpoint& Candidate) { return Candidate.Id == Id; });
     if (!View) return;
+    if (IsFlightMode())
+    {
+        // A later animated preset starts along the actual flight look direction.
+        OrbitTarget = Camera->GetComponentLocation() + Camera->GetForwardVector() * FMath::Max(OrbitRadius, 200.0f);
+    }
     ExitWalking();
+    CameraMode = EBreziCameraMode::Orbit;
     ClearMovementInput();
     NavigationMessage = FText::GetEmpty();
     ActiveViewId = Id;
@@ -233,6 +259,7 @@ void ABreziPawn::ApplyTransitionDestination(bool bCameraCut)
         (TransitionDestination.TargetCm - TransitionDestination.EyeCm).Rotation());
     Camera->SetFieldOfView(TransitionDestination.HorizontalFovDegrees);
     OrbitRadius = FVector::Distance(TransitionDestination.EyeCm, OrbitTarget);
+    OrbitZoomTarget = OrbitRadius;
     if (bCameraCut)
     {
         if (APlayerController* PC = Cast<APlayerController>(GetController()); PC && PC->PlayerCameraManager)
@@ -410,19 +437,38 @@ void ABreziPawn::InterruptTransition()
     ReleasePresetFade();
     bTransitioning = false;
     OrbitRadius = FVector::Distance(Camera->GetComponentLocation(), OrbitTarget);
+    OrbitZoomTarget = OrbitRadius;
 }
 
 void ABreziPawn::SetNavigating(bool bEnabled)
 {
     bNavigating = bEnabled;
-    if (bEnabled) InterruptTransition();
-    else ClearMovementInput();
+    if (bEnabled)
+    {
+        ClearMovementInput();
+        InterruptTransition();
+    }
+    else
+    {
+        OrbitZoomTarget = OrbitRadius;
+        ClearMovementInput();
+    }
 }
 
 void ABreziPawn::SetReducedMotion(bool bEnabled)
 {
     bReducedMotion = bEnabled;
     if (bReducedMotion && bTransitioning) SelectView(TransitionDestination.Id, true);
+    else if (bReducedMotion && CameraMode == EBreziCameraMode::Orbit)
+    {
+        OrbitRadius = OrbitZoomTarget;
+        SetActorLocation(OrbitTarget - GetActorForwardVector() * OrbitRadius);
+    }
+}
+
+void ABreziPawn::SetLookSensitivity(float Value)
+{
+    LookSensitivity = static_cast<float>(BreziNavigation::Sensitivity(Value));
 }
 
 bool ABreziPawn::ValidateWalkingWorld()
@@ -511,6 +557,7 @@ bool ABreziPawn::EnterWalking()
     Camera->SetRelativeRotation(FRotator(Look.Pitch, 0, 0));
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     CameraMode = EBreziCameraMode::Walking;
+    AvatarFacingYaw = Look.Yaw;
     WalkingMovement()->SetMovementMode(MOVE_Walking);
     WalkingMovement()->AdoptValidatedFloor(Floor);
     ++SuccessfulEntries;
@@ -526,11 +573,78 @@ bool ABreziPawn::ToggleMovementMode()
     return EnterWalking();
 }
 
+bool ABreziPawn::SelectWalkingView(const FString& Id)
+{
+    if (!Viewpoints.ContainsByPredicate([&Id](const FBreziViewpoint& View) { return View.Id == Id; }))
+    {
+        NavigationMessage = LOCTEXT("MissingRoomArrival", "Vstup do miestnosti sa ešte nenačítal. Vyberte dostupný pohľad.");
+        return false;
+    }
+    SetNavigating(false);
+    SelectView(Id, true);
+    return EnterWalking();
+}
+
+bool ABreziPawn::StartWalkingTour()
+{
+    // The importer authors this from the current C/B/B living-room arrival.
+    // Actual floor and capsule queries still decide whether entry is permitted.
+    return SelectWalkingView(TEXT("interior"));
+}
+
+bool ABreziPawn::StartFreeFlight()
+{
+    if (IsFlightMode()) return true;
+    const FBreziViewpoint* Active = Viewpoints.FindByPredicate([this](const FBreziViewpoint& View) { return View.Id == ActiveViewId; });
+    if (!HasViewpoints())
+    {
+        NavigationMessage = LOCTEXT("FlightLoading", "Prelet čaká na načítanie pohľadov na dom.");
+        return false;
+    }
+    // Enter outside from the walking tour; keep an already selected exterior
+    // camera unchanged so choosing flight does not reframe the user's view.
+    if (IsWalkingMode() || !Active || Active->bWalking)
+    {
+        const FBreziViewpoint* Exterior = Viewpoints.FindByPredicate([](const FBreziViewpoint& View)
+            { return View.Id == TEXT("aerial") && !View.bWalking; });
+        if (!Exterior) Exterior = Viewpoints.FindByPredicate([](const FBreziViewpoint& View)
+            { return View.Id == TEXT("street") && !View.bWalking; });
+        if (!Exterior) Exterior = Viewpoints.FindByPredicate([](const FBreziViewpoint& View) { return !View.bWalking; });
+        if (!Exterior)
+        {
+            NavigationMessage = LOCTEXT("FlightNoExterior", "Vonkajší pohľad ešte nie je pripravený. Skúste prelet po načítaní domu.");
+            return false;
+        }
+        SelectView(Exterior->Id, true);
+    }
+    InterruptTransition();
+    ClearMovementInput();
+    bCLIWalkingPending = bCLIAuditPending = false;
+    const FVector Eye = Camera->GetComponentLocation();
+    const FRotator Look = Camera->GetComponentRotation();
+    FlightBounds = BreziFlight::ForEntry({Eye.X, Eye.Y, Eye.Z});
+    const BreziFlight::Position Entry = BreziFlight::Clamp({Eye.X, Eye.Y, Eye.Z}, FlightBounds);
+    WalkingMovement()->DisableMovement();
+    SetBase(static_cast<FMovementBaseInterfaceData*>(nullptr));
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CameraMode = EBreziCameraMode::Flight;
+    AvatarCamera->SetActive(false);
+    Camera->SetActive(true);
+    GetMesh()->SetVisibility(false);
+    GetMesh()->SetComponentTickEnabled(false);
+    Camera->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+    SetActorLocationAndRotation(FVector(Entry.X, Entry.Y, Entry.Z), Look, false, nullptr, ETeleportType::TeleportPhysics);
+    NavigationMessage = FText::GetEmpty();
+    UE_LOG(LogTemp, Display, TEXT("BreziFlight: started exteriorView=%s eyeCm=%s"), *ActiveViewId, *GetActorLocation().ToString());
+    return true;
+}
+
 bool ABreziPawn::PrepareTraversalAuditView(const FVector& Eye, const FVector& Forward)
 {
     FString ScenarioPath,ShapeMode,ShapeContract,ShapeScale;
     const TCHAR* CLI=FCommandLine::Get();
-    const bool bTraversal=FParse::Value(CLI,TEXT("BreziWalkTraversal="),ScenarioPath);
+    const bool bTraversal=FParse::Value(CLI,TEXT("BreziWalkTraversal="),ScenarioPath)
+        || FParse::Value(CLI,TEXT("BreziWalkthrough="),ScenarioPath);
     const bool bShape=FParse::Value(CLI,TEXT("BreziFlameShape="),ShapeMode)
         && (ShapeMode==TEXT("stills") || ShapeMode==TEXT("sequence"))
         && FParse::Value(CLI,TEXT("BreziFlameStudyContract="),ShapeContract) && !ShapeContract.IsEmpty()
@@ -545,6 +659,7 @@ bool ABreziPawn::PrepareTraversalAuditView(const FVector& Eye, const FVector& Fo
     SetActorLocationAndRotation(Eye, Forward.Rotation(), false, nullptr, ETeleportType::TeleportPhysics);
     OrbitTarget = Eye + Forward.GetSafeNormal() * 200;
     OrbitRadius = 200;
+    OrbitZoomTarget = OrbitRadius;
     return true;
 }
 
@@ -564,24 +679,49 @@ bool ABreziPawn::SetRealtimeStudyOrbit(double OffsetDegrees)
     Rotation.Yaw += OffsetDegrees;
     OrbitTarget = View->TargetCm;
     OrbitRadius = static_cast<float>(Radius);
+    OrbitZoomTarget = OrbitRadius;
     SetActorRotation(Rotation);
     SetActorLocation(OrbitTarget - Rotation.Vector() * OrbitRadius);
     Camera->SetFieldOfView(View->HorizontalFovDegrees);
     return true;
 }
 
+bool ABreziPawn::AimWalkingTraversal(const FVector& Forward)
+{
+    FString Scenario;
+    if (!FParse::Value(FCommandLine::Get(), TEXT("BreziWalkthrough="), Scenario) || Scenario.IsEmpty()
+        || !IsWalkingMode() || Forward.ContainsNaN() || Forward.SizeSquared2D() < 0.5) return false;
+    const FRotator Look = Forward.Rotation();
+    SetActorRotation(FRotator(0, Look.Yaw, 0));
+    Camera->SetRelativeRotation(FRotator(FMath::Clamp(Look.Pitch, -87.0, 87.0), 0, 0));
+    return true;
+}
+
 void ABreziPawn::Zoom(float Direction)
 {
+    if (IsWalkingMode()) { ZoomCamera(Direction); return; }
+    if (IsFlightMode())
+    {
+        const FVector Eye = Camera->GetComponentLocation(), Forward = Camera->GetForwardVector();
+        const BreziFlight::Position Next = BreziFlight::Dolly({Eye.X, Eye.Y, Eye.Z},
+            {Forward.X, Forward.Y, Forward.Z}, Direction, FlightBounds);
+        SetActorLocation(FVector(Next.X, Next.Y, Next.Z));
+        return;
+    }
     if (!HasViewpoints() || IsWalkingMode()) return;
-    InterruptTransition();
+    if (bTransitioning || PresetFade.IsActive()) InterruptTransition();
     const float PriorRadius = OrbitRadius;
-    OrbitRadius = FMath::Clamp(OrbitRadius * FMath::Pow(0.88f, Direction), 35.0f, 30000.0f);
-    SetActorLocation(OrbitTarget - GetActorForwardVector() * OrbitRadius);
+    OrbitZoomTarget = BreziNavigation::ZoomTarget(OrbitZoomTarget, Direction);
+    if (bReducedMotion)
+    {
+        OrbitRadius = OrbitZoomTarget;
+        SetActorLocation(OrbitTarget - GetActorForwardVector() * OrbitRadius);
+    }
     static const bool bTrace = FParse::Param(FCommandLine::Get(), TEXT("BreziTraceControlKeys"));
     static int32 ZoomTraceCount = 0;
     if (bTrace && ZoomTraceCount < 32)
-        UE_LOG(LogTemp, Display, TEXT("BreziZoom: sample=%d direction=%.0f radiusBeforeCm=%.5f radiusAfterCm=%.5f"),
-            ++ZoomTraceCount, Direction, PriorRadius, OrbitRadius);
+        UE_LOG(LogTemp, Display, TEXT("BreziZoom: sample=%d direction=%.0f radiusBeforeCm=%.5f radiusAfterCm=%.5f targetRadiusCm=%.5f"),
+            ++ZoomTraceCount, Direction, PriorRadius, OrbitRadius, OrbitZoomTarget);
 }
 
 void ABreziPawn::Tick(float DeltaSeconds)
@@ -609,21 +749,29 @@ void ABreziPawn::Tick(float DeltaSeconds)
         SetActorLocationAndRotation(Eye, (OrbitTarget - Eye).Rotation());
         Camera->SetFieldOfView(FMath::Lerp(TransitionStartFov, TransitionDestination.HorizontalFovDegrees, Smooth));
         OrbitRadius = FVector::Distance(Eye, OrbitTarget);
+        OrbitZoomTarget = OrbitRadius;
         bTransitioning = T < 1;
         if (!bTransitioning) TracePresetTransition(TEXT("complete"));
     }
+    if (!bTransitioning && CameraMode == EBreziCameraMode::Orbit && OrbitRadius != OrbitZoomTarget)
+    {
+        OrbitRadius = BreziNavigation::StepZoom(OrbitRadius, OrbitZoomTarget, DeltaSeconds, bReducedMotion);
+        SetActorLocation(OrbitTarget - GetActorForwardVector() * OrbitRadius);
+    }
     const APlayerController* PC = Cast<APlayerController>(GetController());
     const auto Down = [PC](const FKey& Key) { return PC && PC->IsInputKeyDown(Key); };
-    const bool bSystemChord = Down(EKeys::LeftControl) || Down(EKeys::RightControl) || Down(EKeys::LeftAlt)
-        || Down(EKeys::RightAlt) || Down(EKeys::LeftCommand) || Down(EKeys::RightCommand);
+    const bool bSystemChord = Down(EKeys::LeftControl) || Down(EKeys::RightControl)
+        || (!IsFlightMode() && (Down(EKeys::LeftAlt) || Down(EKeys::RightAlt)))
+        || Down(EKeys::LeftCommand) || Down(EKeys::RightCommand);
     if (bNavigating && HasViewpoints() && !bSystemChord)
     {
         // Pointer deltas are already per frame; only keyboard look rates use elapsed time.
-        const float KeyboardYaw = (Down(EKeys::Right) ? 1.0f : 0.0f) - (Down(EKeys::Left) ? 1.0f : 0.0f);
-        const float KeyboardPitch = (Down(EKeys::Up) ? 1.0f : 0.0f) - (Down(EKeys::Down) ? 1.0f : 0.0f);
+        const float KeyboardYaw = CameraMode != EBreziCameraMode::Orbit ? 0.0f : (Down(EKeys::Right) ? 1.0f : 0.0f) - (Down(EKeys::Left) ? 1.0f : 0.0f);
+        const float KeyboardPitch = CameraMode != EBreziCameraMode::Orbit ? 0.0f : (Down(EKeys::Up) ? 1.0f : 0.0f) - (Down(EKeys::Down) ? 1.0f : 0.0f);
         FRotator Rotation = Camera->GetComponentRotation();
-        Rotation.Yaw += LookInput.X * 0.16f + KeyboardYaw * 80.0f * FMath::Min(DeltaSeconds, 0.1f);
-        Rotation.Pitch = FMath::Clamp(Rotation.Pitch + LookInput.Y * 0.16f + KeyboardPitch * 60.0f * FMath::Min(DeltaSeconds, 0.1f), -87.0f, 87.0f);
+        Rotation.Yaw += BreziNavigation::MouseDegrees(LookInput.X, LookSensitivity) + KeyboardYaw * 80.0f * FMath::Min(DeltaSeconds, 0.1f);
+        Rotation.Pitch = FMath::Clamp(Rotation.Pitch + BreziNavigation::MouseDegrees(LookInput.Y, LookSensitivity)
+            + KeyboardPitch * 60.0f * FMath::Min(DeltaSeconds, 0.1f), -87.0, 87.0);
         Rotation.Roll = 0;
         if (IsWalkingMode())
         {
@@ -633,9 +781,21 @@ void ABreziPawn::Tick(float DeltaSeconds)
                 : Down(EKeys::LeftShift) || Down(EKeys::RightShift) ? WalkingContract.BoostSpeed : WalkingContract.NormalSpeed);
             if (WalkingMovement()->IsMovingOnGround())
             {
-                const FVector Desired = (GetActorForwardVector() * ForwardInput + GetActorRightVector() * RightInput).GetClampedToMaxSize(1);
+                const double Forward = BreziNavigation::MovementAxis(ForwardInput, Down(EKeys::Up), Down(EKeys::Down));
+                const double Right = BreziNavigation::MovementAxis(RightInput, Down(EKeys::Right), Down(EKeys::Left));
+                const FVector Desired = (GetActorForwardVector() * Forward + GetActorRightVector() * Right).GetClampedToMaxSize(1);
                 AddMovementInput(Desired, 1);
             }
+        }
+        else if (IsFlightMode())
+        {
+            SetActorRotation(Rotation);
+            const FVector Eye = GetActorLocation();
+            const BreziFlight::Position Next = BreziFlight::Advance({Eye.X, Eye.Y, Eye.Z}, FMath::DegreesToRadians(Rotation.Yaw),
+                BreziNavigation::MovementAxis(ForwardInput, Down(EKeys::Up), Down(EKeys::Down)),
+                BreziNavigation::MovementAxis(RightInput, Down(EKeys::Right), Down(EKeys::Left)), UpInput, DeltaSeconds,
+                Down(EKeys::LeftShift) || Down(EKeys::RightShift), Down(EKeys::LeftAlt) || Down(EKeys::RightAlt), FlightBounds);
+            SetActorLocation(FVector(Next.X, Next.Y, Next.Z));
         }
         else
         {
@@ -676,12 +836,14 @@ void ABreziPawn::UpdateWalkingCamera(float DeltaSeconds)
             MinMeasuredEyeHeight = FMath::Min(MinMeasuredEyeHeight, LastMeasuredEyeHeight);
             MaxMeasuredEyeHeight = FMath::Max(MaxMeasuredEyeHeight, LastMeasuredEyeHeight);
             MaxEyeHeightError = FMath::Max(MaxEyeHeightError, FMath::Abs(LastMeasuredEyeHeight - WalkingContract.EyeHeightCm));
+            UpdateAvatarCamera(DeltaSeconds);
             return;
         }
     }
     ++UnsupportedEyeSamples;
     CurrentSupportId.Empty();
     Camera->SetRelativeLocation(FVector(0, 0, LocalEyeZ));
+    UpdateAvatarCamera(DeltaSeconds);
 }
 
 TSharedRef<FJsonObject> ABreziPawn::GetWalkingDiagnostics() const
@@ -689,7 +851,9 @@ TSharedRef<FJsonObject> ABreziPawn::GetWalkingDiagnostics() const
     const auto Vec = [](const FVector& Value) -> TArray<TSharedPtr<FJsonValue>>
     { return {MakeShared<FJsonValueNumber>(Value.X), MakeShared<FJsonValueNumber>(Value.Y), MakeShared<FJsonValueNumber>(Value.Z)}; };
     TSharedRef<FJsonObject> Result = MakeShared<FJsonObject>();
-    Result->SetStringField(TEXT("cameraMode"), IsWalkingMode() ? TEXT("walking") : TEXT("orbit"));
+    Result->SetStringField(TEXT("cameraMode"), IsWalkingMode() ? TEXT("walking") : IsFlightMode() ? TEXT("flight") : TEXT("orbit"));
+    Result->SetBoolField(TEXT("navigationActive"), bNavigating);
+    Result->SetNumberField(TEXT("lookSensitivity"), LookSensitivity);
     Result->SetBoolField(TEXT("contractLoaded"), bWalkingContractLoaded);
     Result->SetBoolField(TEXT("worldContractValidated"), bWalkingWorldValidated);
     Result->SetStringField(TEXT("sceneSha256"), WalkingContract.SceneSha256);
@@ -708,6 +872,34 @@ TSharedRef<FJsonObject> ABreziPawn::GetWalkingDiagnostics() const
     Result->SetArrayField(TEXT("lastEntryFloorHitCm"), Vec(LastEntryFloor));
     Result->SetArrayField(TEXT("currentCapsuleCenterCm"), Vec(GetActorLocation()));
     Result->SetArrayField(TEXT("currentCameraEyeCm"), Vec(Camera->GetComponentLocation()));
+    TSharedRef<FJsonObject> Avatar = MakeShared<FJsonObject>();
+    Avatar->SetStringField(TEXT("id"), TEXT("michelle"));
+    Avatar->SetStringField(TEXT("status"), AvatarStatus);
+    Avatar->SetBoolField(TEXT("rigReady"), bAvatarReady);
+    Avatar->SetBoolField(TEXT("thirdPersonRequested"), bThirdPersonPreferred);
+    Avatar->SetBoolField(TEXT("visible"), GetMesh()->IsVisible());
+    Avatar->SetNumberField(TEXT("opacity"), AvatarOpacity);
+    Avatar->SetBoolField(TEXT("visibilityTarget"), bAvatarVisibilityTarget);
+    Avatar->SetNumberField(TEXT("animatedSamples"), AvatarAnimatedSamples);
+    Avatar->SetStringField(TEXT("locomotion"), TEXT("source Michelle Idle/Walk/Run native skeletal blendspace"));
+    Result->SetObjectField(TEXT("avatar"), Avatar);
+    TSharedRef<FJsonObject> Presentation = MakeShared<FJsonObject>();
+    Presentation->SetArrayField(TEXT("eyeCm"), Vec(GetPresentationCamera()->GetComponentLocation()));
+    Presentation->SetArrayField(TEXT("forward"), Vec(GetPresentationCamera()->GetForwardVector()));
+    Presentation->SetArrayField(TEXT("physicalEyeCm"), Vec(Camera->GetComponentLocation()));
+    Presentation->SetNumberField(TEXT("requestedBoomCm"), DesiredBoomCm);
+    Presentation->SetNumberField(TEXT("effectiveBoomCm"), EffectiveBoomCm);
+    Presentation->SetNumberField(TEXT("collisionLimitCm"), LastBoomLimitCm);
+    Presentation->SetNumberField(TEXT("boomSamples"), BoomSamples);
+    Presentation->SetNumberField(TEXT("occludedSamples"), BoomOccludedSamples);
+    Presentation->SetNumberField(TEXT("ignoredNavigationProxyComponents"), CameraNavigationProxies.Num());
+    Presentation->SetStringField(TEXT("cameraProxyFilter"), TEXT("hidden actor+component tagged BreziHiddenCollision, matching COLL_ object/source tags, never a walk surface; query-only ignore"));
+    Presentation->SetBoolField(TEXT("occluded"), bBoomOccluded);
+    Presentation->SetBoolField(TEXT("firstPersonFallback"), bThirdPersonPreferred && EffectiveBoomCm < 55);
+    Presentation->SetBoolField(TEXT("mouseLookEnabled"), bMouseLookEnabled);
+    Presentation->SetStringField(TEXT("obstacleId"), BoomObstacleId);
+    Presentation->SetStringField(TEXT("scope"), TEXT("Rendered lens uses a separate swept boom; physical eye and capsule retain source walking validation."));
+    Result->SetObjectField(TEXT("presentationCamera"), Presentation);
     Result->SetNumberField(TEXT("capsuleRadiusCm"), WalkingContract.CapsuleRadiusCm);
     Result->SetNumberField(TEXT("capsuleHalfHeightCm"), WalkingContract.CapsuleHalfHeightCm);
     Result->SetNumberField(TEXT("expectedEyeHeightCm"), WalkingContract.EyeHeightCm);
@@ -734,5 +926,89 @@ TSharedRef<FJsonObject> ABreziPawn::GetWalkingDiagnostics() const
     Result->SetStringField(TEXT("verification"), TEXT("World validation checks serialized collision/tags and source bounds, not every traversal. Entry uses actual line/capsule queries. Eye samples use a downward source-floor hit after CharacterMovement. Walking traversal, sliding, steps and closed-door coverage still require native movement QA; an orbit-only benchmark is not walking proof."));
     return Result;
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBreziFreeFlightTest, "Brezi.Controls.Flight.PawnTransitions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::EngineFilter)
+bool FBreziFreeFlightTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = nullptr;
+    if (GEngine)
+        for (const FWorldContext& Context : GEngine->GetWorldContexts())
+            if (Context.World()) { World = Context.World(); break; }
+    if (!TestNotNull(TEXT("Free-flight transition test has an initialized engine world"), World)) return false;
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    ABreziPawn* Pawn = World->SpawnActor<ABreziPawn>(FVector::ZeroVector, FRotator::ZeroRotator, Spawn);
+    if (!TestNotNull(TEXT("Isolated free-flight pawn spawned"), Pawn)) return false;
+    // This pawn has no controller/capture and uses isolated authored camera
+    // fixtures. It exercises native transitions without moving the live player.
+    FBreziViewpoint Street;
+    Street.Id = TEXT("street"); Street.EyeCm = FVector(-650, 1620, 180); Street.TargetCm = FVector(100, 400, 180);
+    FBreziViewpoint Interior;
+    Interior.Id = TEXT("interior"); Interior.EyeCm = FVector(1110, -440, 165); Interior.TargetCm = FVector(630, -300, 165); Interior.bWalking = true;
+    Pawn->Viewpoints = {Street, Interior};
+    Pawn->SelectView(Interior.Id, true);
+    TestTrue(TEXT("Free flight can start from an interior view"), Pawn->StartFreeFlight());
+    TestTrue(TEXT("Interior entry selects the authored exterior arrival"), Pawn->GetActorLocation().Equals(Street.EyeCm, 0.001));
+    TestTrue(TEXT("Flight disables grounded movement, capsule and avatar"), Pawn->IsFlightMode()
+        && Pawn->GetCharacterMovement()->MovementMode == MOVE_None
+        && Pawn->GetCapsuleComponent()->GetCollisionEnabled() == ECollisionEnabled::NoCollision
+        && !Pawn->GetMesh()->IsVisible() && Pawn->GetPresentationCamera() == Pawn->Camera);
+    Pawn->SetNavigating(true);
+    Pawn->MoveUp(1);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("Native flight tick raises the camera independently"), FMath::IsNearlyEqual(Pawn->GetActorLocation().Z, 192.0, 0.001));
+    Pawn->MoveUp(-1);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("Q axis lowers the native flight camera"), Pawn->GetActorLocation().Equals(Street.EyeCm, 0.001));
+    Pawn->MoveUp(0);
+    Pawn->MoveForward(1);
+    Pawn->Tick(0.05f);
+    const FVector ForwardEye = Pawn->GetActorLocation();
+    TestTrue(TEXT("W axis translates the native camera horizontally"), FMath::IsNearlyEqual(FVector::Distance(ForwardEye, Street.EyeCm), 12.0, 0.001)
+        && FMath::IsNearlyEqual(ForwardEye.Z, Street.EyeCm.Z, 0.001));
+    Pawn->MoveForward(-1);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("S axis reverses the horizontal movement"), Pawn->GetActorLocation().Equals(Street.EyeCm, 0.001));
+    Pawn->MoveForward(0);
+    Pawn->MoveRight(1);
+    Pawn->Tick(0.05f);
+    const FVector RightEye = Pawn->GetActorLocation();
+    TestTrue(TEXT("D axis strafes independently of forward movement"), FMath::IsNearlyEqual(FVector::Distance(RightEye, Street.EyeCm), 12.0, 0.001)
+        && FMath::Abs(FVector::DotProduct(RightEye - Street.EyeCm, ForwardEye - Street.EyeCm)) < 0.001);
+    Pawn->MoveRight(-1);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("A axis reverses the strafe"), Pawn->GetActorLocation().Equals(Street.EyeCm, 0.001));
+    Pawn->ClearMovementInput();
+    const FVector BeforeLook = Pawn->GetActorLocation();
+    const FRotator PriorLook = Pawn->GetActorRotation();
+    Pawn->LookHorizontal(20);
+    Pawn->LookVertical(10);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("Mouse look rotates in place without orbit coupling"), Pawn->GetActorLocation().Equals(BeforeLook, 0.001)
+        && !Pawn->GetActorRotation().Equals(PriorLook, 0.001));
+    Pawn->MoveUp(1);
+    const FVector BeforeReduce = Pawn->GetActorLocation();
+    Pawn->SetReducedMotion(true);
+    TestTrue(TEXT("Reduce Motion retains the flight position"), Pawn->IsFlightMode() && Pawn->GetActorLocation().Equals(BeforeReduce, 0.001));
+    Pawn->SetNavigating(false);
+    Pawn->Tick(0.05f);
+    TestTrue(TEXT("Pausing clears held vertical movement"), Pawn->GetActorLocation().Equals(BeforeReduce, 0.001));
+    const FVector BeforeDolly = Pawn->GetActorLocation();
+    Pawn->Zoom(1);
+    TestTrue(TEXT("Flight zoom moves along the view without returning to orbit"), Pawn->IsFlightMode()
+        && FMath::IsNearlyEqual(FVector::Distance(BeforeDolly, Pawn->GetActorLocation()), 132.0, 0.001));
+    TestEqual(TEXT("Runtime diagnostics identify flight"), Pawn->GetWalkingDiagnostics()->GetStringField(TEXT("cameraMode")), FString(TEXT("flight")));
+    Pawn->SelectView(Street.Id, true);
+    TestTrue(TEXT("Selecting a preset restores orbit"), !Pawn->IsFlightMode() && !Pawn->IsWalkingMode());
+    Pawn->SetActorLocation(FVector(24000, -26000, 12000));
+    const FVector DistantEye = Pawn->GetActorLocation();
+    TestTrue(TEXT("Exterior entry succeeds and preserves a distant current orbit pose"), Pawn->StartFreeFlight()
+        && Pawn->GetActorLocation().Equals(DistantEye, 0.001));
+    Pawn->Destroy();
+    return true;
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE

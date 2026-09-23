@@ -7,6 +7,7 @@
 #include "BreziWalkingTraversal.generated.h"
 
 class ABreziPawn;
+class UBreziPresentationQA;
 class APlayerController;
 class FJsonObject;
 class FJsonValue;
@@ -49,6 +50,60 @@ private:
     bool CheckBlockingSweep();
     ABreziPawn* Pawn() const;
     APlayerController* Controller() const;
+
+    bool LoadWalkthrough(const FString& Path);
+    void TickWalkthrough(float DeltaTime);
+    bool SampleWalkthrough(float DeltaTime);
+    bool SaveWalkthrough(const FString& Status) const;
+    void FinishWalkthrough(const FString& Status, const FString& Error = FString());
+    void NextWalkthroughStep();
+    bool DriveWalkthroughTo(const FVector& Target);
+    bool WalkthroughDoorSweep(FHitResult& Hit) const;
+    bool WalkthroughOpenPassage(FHitResult& Hit, TArray<FString>& StepSupports, double& RaisedByCm) const;
+    void OnWalkthroughScreenshot(int32 Width, int32 Height, const TArray<FColor>& Bitmap);
+
+    bool bWalkthrough = false;
+    UPROPERTY() TObjectPtr<UBreziPresentationQA> PresentationQA;
+    bool bWalkthroughStarted = false;
+    bool bWalkthroughAutomationStarted = false;
+    bool bWalkthroughScreenshots = false;
+    bool bWalkthroughCapturePending = false;
+    bool bWalkthroughCaptureSaved = false;
+    FString WalkthroughCapturePath;
+    FString WalkthroughCaptureRegion;
+    FIntPoint WalkthroughCapturePixels = FIntPoint::ZeroValue;
+    FIntPoint WalkthroughRequestedPixels = FIntPoint::ZeroValue;
+    double WalkthroughCaptureStartWall = 0;
+    FDelegateHandle WalkthroughScreenshotHandle;
+    TSet<FString> WalkthroughCapturedRegions;
+    TArray<TSharedPtr<FJsonValue>> WalkthroughScreenshots;
+    FString WalkthroughPhase = TEXT("startup");
+    TSharedPtr<FJsonObject> WalkthroughFixture;
+    TArray<TSharedPtr<FJsonObject>> WalkthroughSteps;
+    TArray<TSharedPtr<FJsonObject>> WalkthroughRegions;
+    TArray<TSharedPtr<FJsonValue>> WalkthroughEvents;
+    TSet<FString> VisitedRegions;
+    TSet<FString> OpenedDoors;
+    TSet<FString> WalkthroughSupports;
+    int32 WalkthroughStep = 0;
+    int32 WalkthroughInitialPlacements = 0;
+    int32 WalkthroughInputOpenCount = 0;
+    double WalkthroughPhaseSeconds = 0;
+    double WalkthroughStepSeconds = 0;
+    double WalkthroughSimulationSeconds = 0;
+    double WalkthroughDistanceCm = 0;
+    double WalkthroughMaxSampleTravelCm = 0;
+    FVector WalkthroughPriorCenter = FVector::ZeroVector;
+    FVector WalkthroughStartEye = FVector::ZeroVector;
+    FVector WalkthroughStartForward = FVector::ForwardVector;
+    FVector WalkthroughTarget = FVector::ZeroVector;
+    FVector WalkthroughDoorStart = FVector::ZeroVector;
+    FVector WalkthroughDoorNormal = FVector::ZeroVector;
+    double WalkthroughClosedHitDistance = 0;
+    int32 WalkthroughClosedHoldSamples = 0;
+    int32 WalkthroughDoorWaypoint = 0;
+    int32 WalkthroughDoorCycle = 0;
+    int32 WalkthroughInputCloseCount = 0;
 
     bool bEnabled = false;
     bool bFinished = false;

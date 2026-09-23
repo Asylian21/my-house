@@ -143,6 +143,7 @@ import {
   type DoorActorState,
   type DoorInteractionSnapshot,
 } from "./babylon-doors";
+import { captureNativeDoorMotion } from "./babylon-door-export";
 import { buildGarageSuperbVehicle } from "./babylon-garage-vehicle";
 import {
   INTERIOR_ROOMS,
@@ -8147,6 +8148,11 @@ export class TwinSceneController {
 
   getDoorDebugState() {
     return this.doors.debugState();
+  }
+
+  /** Local export captures real door transforms; regular web navigation never calls this. */
+  captureNativeDoorMotion() {
+    return captureNativeDoorMotion(this.scene, this.doors);
   }
 
   getGarageParkingState(): GarageParkingState {

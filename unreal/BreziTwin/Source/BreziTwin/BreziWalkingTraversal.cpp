@@ -1,6 +1,9 @@
 #include "BreziWalkingTraversal.h"
+#include "BreziPresentationQA.h"
 
 #include "BreziPawn.h"
+#include "BreziDoors.h"
+#include "BreziPlayerController.h"
 #include "BreziGameViewportClient.h"
 #include "DynamicRHI.h"
 #include "RHI.h"
@@ -20,6 +23,8 @@
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformTime.h"
 #include "InputKeyEventArgs.h"
+#include "ImageCore.h"
+#include "ImageUtils.h"
 #include "Misc/App.h"
 #include "Misc/CommandLine.h"
 #include "Misc/DateTime.h"
@@ -84,7 +89,8 @@ void UBreziWalkingTraversal::BeginPlay()
 {
     Super::BeginPlay();
     FString CasesPath;
-    if (!FParse::Value(FCommandLine::Get(), TEXT("BreziWalkTraversal="), CasesPath)) return;
+    bWalkthrough = FParse::Value(FCommandLine::Get(), TEXT("BreziWalkthrough="), CasesPath);
+    if (!bWalkthrough && !FParse::Value(FCommandLine::Get(), TEXT("BreziWalkTraversal="), CasesPath)) return;
     bEnabled = true;
     RunStartWallSeconds = FPlatformTime::Seconds();
     bPriorFixedStep = FApp::UseFixedTimeStep();
@@ -92,18 +98,31 @@ void UBreziWalkingTraversal::BeginPlay()
     bPriorFixedFrameRate = GEngine && GEngine->bUseFixedFrameRate;
     PriorFixedFrameRate = GEngine ? GEngine->FixedFrameRate : 0;
     ReportPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Diagnostics"),
-        TEXT("walking-traversal-") + FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S")) + TEXT(".json"));
+        (bWalkthrough ? TEXT("walkthrough-") : TEXT("walking-traversal-")) + FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S")) + TEXT(".json"));
     // The render benchmark has its own completion/exit state machine. Use a separate invocation.
     const TCHAR* CLI = FCommandLine::Get();
     FString Ignored;
-    if (FParse::Param(CLI, TEXT("BreziCapture4K")) || FParse::Param(CLI, TEXT("BreziCaptureUI"))
+    if (FParse::Param(CLI, TEXT("BreziCapture4K")) || FParse::Param(CLI, TEXT("BreziCaptureUI")) || FParse::Param(CLI, TEXT("BreziCaptureScene"))
         || FParse::Param(CLI, TEXT("BreziExitAfterCapture"))
         || FParse::Param(CLI, TEXT("BreziWalk")) || FParse::Param(CLI, TEXT("BreziWalkAudit"))
         || FParse::Value(CLI, TEXT("BreziBenchmarkFrames="), Ignored)
         || FParse::Param(CLI, TEXT("BreziProfileGPU")))
     {
         LoadError = TEXT("Use the traversal harness in a separate process without entry/benchmark/capture/profile flags.");
-        FinishRun(TEXT("failed-arguments"));
+        if (bWalkthrough) FinishWalkthrough(TEXT("failed-arguments"), LoadError); else FinishRun(TEXT("failed-arguments"));
+        return;
+    }
+    if (bWalkthrough)
+    {
+        if (!LoadWalkthrough(CasesPath)) { FinishWalkthrough(TEXT("failed-fixtures"), LoadError); return; }
+        bWalkthroughScreenshots = FParse::Param(CLI, TEXT("BreziWalkthroughScreenshots"));
+        if (bWalkthroughScreenshots)
+        {
+            WalkthroughScreenshotHandle = UGameViewportClient::OnScreenshotCaptured().AddUObject(this, &UBreziWalkingTraversal::OnWalkthroughScreenshot);
+            if (IConsoleVariable* DelegateEnabled = IConsoleManager::Get().FindConsoleVariable(TEXT("r.ScreenshotDelegate"))) DelegateEnabled->Set(1, ECVF_SetByCode);
+        }
+        SetComponentTickEnabled(true);
+        if (!SaveWalkthrough(TEXT("running"))) FinishWalkthrough(TEXT("failed-report-write"), TEXT("Could not create walkthrough report."));
         return;
     }
     if (!LoadCases(CasesPath)) { FinishRun(TEXT("failed-fixtures")); return; }
@@ -218,6 +237,7 @@ bool UBreziWalkingTraversal::BeginCase()
 void UBreziWalkingTraversal::Key(const FKey& Code, bool bDown)
 {
     if (!Controller()) return;
+    if (bWalkthrough && PressedKeys.Contains(Code) == bDown && Controller()->IsInputKeyDown(Code) == bDown) return;
     const FInputDeviceId Device = IPlatformInputDeviceMapper::Get().GetDefaultInputDevice();
     FViewport* Viewport = GEngine && GEngine->GameViewport ? GEngine->GameViewport->Viewport : nullptr;
     Controller()->InputKey(FInputKeyEventArgs(Viewport, Device, Code, bDown ? IE_Pressed : IE_Released,
@@ -319,7 +339,7 @@ void UBreziWalkingTraversal::Sample(float DeltaTime)
     Observation->SetBoolField(TEXT("wInputDown"), PC->IsInputKeyDown(EKeys::W));
     Observation->SetBoolField(TEXT("unexpectedOverlap"), bOverlap);
     Observation->SetNumberField(TEXT("colliderPlaneClearanceCm"), FVector::DotProduct(Center - BlockerPoint, BlockerNormal));
-    const UCameraComponent* Camera = Character->FindComponentByClass<UCameraComponent>();
+    const UCameraComponent* Camera = Character->GetPhysicalCamera();
     FHitResult Floor;
     const bool bFloorHit = GetWorld()->LineTraceSingleByChannel(Floor, Center,
         Center - FVector(0, 0, Contract.CapsuleHalfHeightCm + Contract.MaxStepCm + 10), ECC_Pawn, Params);
@@ -343,6 +363,7 @@ void UBreziWalkingTraversal::TickComponent(float DeltaTime, ELevelTick TickType,
 {
     Super::TickComponent(DeltaTime, TickType, TickFunction);
     if (!bEnabled || bFinished) return;
+    if (bWalkthrough) { TickWalkthrough(DeltaTime); return; }
     if (FPlatformTime::Seconds() - RunStartWallSeconds > 180)
     { LoadError = TEXT("Traversal exceeded the 180 second wall-time limit."); FinishRun(TEXT("failed-timeout")); return; }
     if (!CurrentResult.IsValid())
@@ -542,8 +563,526 @@ void UBreziWalkingTraversal::FinishRun(const FString& Status)
         FPlatformMisc::RequestExitWithStatus(false, bSaved && Status == TEXT("passed-bounded-cases") ? 0 : 1);
 }
 
+bool UBreziWalkingTraversal::LoadWalkthrough(const FString& Path)
+{
+    if (!Contract.Load(LoadError)) return false;
+    FString Text;
+    if (!FFileHelper::LoadFileToString(Text, *Path)
+        || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), WalkthroughFixture) || !WalkthroughFixture.IsValid())
+    { LoadError = TEXT("Walkthrough JSON could not be loaded."); return false; }
+    double Version = 0;
+    FString Coordinates;
+    const TArray<TSharedPtr<FJsonValue>>* Steps = nullptr;
+    const TArray<TSharedPtr<FJsonValue>>* Regions = nullptr;
+    const TArray<TSharedPtr<FJsonValue>>* Supports = nullptr;
+    if (!WalkthroughFixture->TryGetNumberField(TEXT("schemaVersion"), Version) || Version != 1
+        || !WalkthroughFixture->TryGetStringField(TEXT("coordinateSystem"), Coordinates) || Coordinates != TEXT("unreal-centimeters")
+        || !WalkthroughFixture->TryGetStringField(TEXT("sceneSha256"), SceneSha256) || SceneSha256 != Contract.SceneSha256
+        || !ReadVector(WalkthroughFixture, TEXT("startEyeCm"), WalkthroughStartEye)
+        || !ReadVector(WalkthroughFixture, TEXT("startForward"), WalkthroughStartForward)
+        || FMath::Abs(WalkthroughStartForward.SizeSquared2D() - 1) > 0.001 || FMath::Abs(WalkthroughStartForward.Z) > 0.001
+        || !WalkthroughFixture->TryGetArrayField(TEXT("steps"), Steps) || Steps->IsEmpty() || Steps->Num() > 800
+        || !WalkthroughFixture->TryGetArrayField(TEXT("requiredRegions"), Regions) || Regions->IsEmpty() || Regions->Num() > 40
+        || !WalkthroughFixture->TryGetArrayField(TEXT("allowedSupportObjectIds"), Supports) || Supports->IsEmpty())
+    { LoadError = TEXT("Walkthrough schema, scene, start, steps or coverage differs from the source contract."); return false; }
+    TSet<FString> Ids;
+    for (const auto& Value : *Regions)
+    {
+        const auto Region = Value->AsObject(); FString Id;
+        if (!Region.IsValid() || !Region->TryGetStringField(TEXT("id"), Id) || Id.IsEmpty() || Ids.Contains(Id)
+            || (!Region->HasTypedField<EJson::Array>(TEXT("rectsCm")) && !Region->HasTypedField<EJson::Array>(TEXT("polygonCm"))))
+        { LoadError = TEXT("Malformed or duplicated coverage region."); return false; }
+        Ids.Add(Id); WalkthroughRegions.Add(Region);
+    }
+    for (const auto& Value : *Steps)
+    {
+        const auto Step = Value->AsObject(); FString Id, Kind, Region; FVector Target;
+        if (!Step.IsValid() || !Step->TryGetStringField(TEXT("id"), Id) || Id.IsEmpty()
+            || !Step->TryGetStringField(TEXT("kind"), Kind) || (Kind != TEXT("move") && Kind != TEXT("visit") && Kind != TEXT("door"))
+            || !Step->TryGetStringField(TEXT("regionId"), Region) || !Ids.Contains(Region)
+            || !ReadVector(Step, TEXT("targetCm"), Target))
+        { LoadError = TEXT("Malformed walkthrough step."); return false; }
+        if (Kind == TEXT("door"))
+        {
+            FString DoorId; FVector Approach;
+            const TArray<TSharedPtr<FJsonValue>>* Blockers = nullptr;
+            if (!Step->TryGetStringField(TEXT("doorId"), DoorId) || DoorId.IsEmpty()
+                || !ReadVector(Step, TEXT("approachCm"), Approach)
+                || !Step->TryGetArrayField(TEXT("closedObjectIds"), Blockers) || Blockers->IsEmpty())
+            { LoadError = TEXT("Door step lacks its source blocker and approach."); return false; }
+            for (const auto& Blocker : *Blockers)
+            {
+                const FString ObjectId = Blocker->AsString();
+                if (!Contract.Records.ContainsByPredicate([&](const FBreziWalkingRecord& Record) { return Record.ObjectId == ObjectId && Record.bClosed; }))
+                { LoadError = TEXT("Door step blocker is absent from the source collision contract: ") + ObjectId; return false; }
+            }
+            if (!ReadVector(Step, TEXT("interactionPointCm"), Approach)) { LoadError = TEXT("Missing source interaction point."); return false; }
+            for (const TCHAR* Field : {TEXT("retreatPathCm"), TEXT("returnPathCm")})
+            {
+                const TArray<TSharedPtr<FJsonValue>>* Route = nullptr;
+                if (!Step->TryGetArrayField(Field, Route) || Route->IsEmpty() || Route->Num() > 40)
+                { LoadError = TEXT("Missing or excessive physical interaction route."); return false; }
+                for (const auto& Point : *Route)
+                {
+                    const auto& Components = Point->AsArray();
+                    if (Components.Num() != 3 || Components.ContainsByPredicate([](const auto& C) { double N; return !C->TryGetNumber(N) || !FMath::IsFinite(N); }))
+                    { LoadError = TEXT("Invalid interaction waypoint."); return false; }
+                }
+            }
+        }
+        WalkthroughSteps.Add(Step);
+    }
+    for (const auto& Value : *Supports)
+    {
+        const FString Id = Value->AsString();
+        if (!Contract.Records.ContainsByPredicate([&](const FBreziWalkingRecord& Record) { return Record.ObjectId == Id && Record.bFloor; }))
+        { LoadError = TEXT("Walkthrough support is not a source floor: ") + Id; return false; }
+        WalkthroughSupports.Add(Id);
+    }
+    return true;
+}
+
+namespace
+{
+bool RegionContains(const TSharedPtr<FJsonObject>& Region, const FVector& Point)
+{
+    const TArray<TSharedPtr<FJsonValue>>* Rects = nullptr;
+    if (Region->TryGetArrayField(TEXT("rectsCm"), Rects))
+        for (const auto& Value : *Rects)
+        {
+            const auto& R = Value->AsArray();
+            if (R.Num() == 4 && Point.X >= R[0]->AsNumber() && Point.Y >= R[1]->AsNumber()
+                && Point.X <= R[2]->AsNumber() && Point.Y <= R[3]->AsNumber()) return true;
+        }
+    const TArray<TSharedPtr<FJsonValue>>* Polygon = nullptr;
+    if (!Region->TryGetArrayField(TEXT("polygonCm"), Polygon) || Polygon->Num() < 3) return false;
+    bool Inside = false;
+    for (int32 I = 0, J = Polygon->Num() - 1; I < Polygon->Num(); J = I++)
+    {
+        const auto& A = (*Polygon)[I]->AsArray(); const auto& B = (*Polygon)[J]->AsArray();
+        if (A.Num() != 2 || B.Num() != 2) return false;
+        const double AX = A[0]->AsNumber(), AY = A[1]->AsNumber(), BX = B[0]->AsNumber(), BY = B[1]->AsNumber();
+        if ((AY > Point.Y) != (BY > Point.Y) && Point.X < (BX - AX) * (Point.Y - AY) / (BY - AY) + AX) Inside = !Inside;
+    }
+    return Inside;
+}
+}
+
+bool UBreziWalkingTraversal::SampleWalkthrough(float DeltaTime)
+{
+    const FVector Center = Pawn()->GetActorLocation();
+    const UCharacterMovementComponent* Movement = Pawn()->GetCharacterMovement();
+    const FString Support = FBreziWalkingContract::ObjectId(Movement->CurrentFloor.HitResult.GetComponent());
+    const bool Grounded = Pawn()->IsWalkingMode() && Movement->IsMovingOnGround();
+    const double Travel = FVector::Distance(Center, WalkthroughPriorCenter);
+    WalkthroughDistanceCm += Travel; WalkthroughMaxSampleTravelCm = FMath::Max(WalkthroughMaxSampleTravelCm, Travel);
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(BreziWalkthroughSample), true, Pawn());
+    const bool Overlap = GetWorld()->OverlapBlockingTestByChannel(Center, FQuat::Identity, ECC_Pawn,
+        FCollisionShape::MakeCapsule(Contract.CapsuleRadiusCm - 0.05, Contract.CapsuleHalfHeightCm - 0.05), Params);
+    FHitResult Floor;
+    const UCameraComponent* Camera = Pawn()->GetPhysicalCamera();
+    const bool FloorHit = GetWorld()->LineTraceSingleByChannel(Floor, Center,
+        Center - FVector(0, 0, Contract.CapsuleHalfHeightCm + Contract.MaxStepCm + 10), ECC_Pawn, Params);
+    const bool EyeMeasured = Camera && FloorHit && FBreziWalkingContract::IsFloor(Floor.GetComponent());
+    const double EyeError = EyeMeasured ? FMath::Abs(Camera->GetComponentLocation().Z - Floor.ImpactPoint.Z - Contract.EyeHeightCm) : 1000;
+    TSharedRef<FJsonObject> Sample = MakeShared<FJsonObject>();
+    Sample->SetNumberField(TEXT("step"), WalkthroughStep); Sample->SetStringField(TEXT("phase"), WalkthroughPhase);
+    Sample->SetNumberField(TEXT("deltaSeconds"), DeltaTime); Sample->SetNumberField(TEXT("simulationSeconds"), WalkthroughSimulationSeconds);
+    Sample->SetArrayField(TEXT("capsuleCenterCm"), VectorJson(Center)); Sample->SetNumberField(TEXT("travelCm"), Travel);
+    Sample->SetArrayField(TEXT("velocityCmPerSecond"), VectorJson(Pawn()->GetVelocity()));
+    Sample->SetStringField(TEXT("supportObjectId"), Support); Sample->SetBoolField(TEXT("grounded"), Grounded);
+    Sample->SetBoolField(TEXT("unexpectedOverlap"), Overlap); Sample->SetNumberField(TEXT("eyeErrorCm"), EyeError);
+    Sample->SetBoolField(TEXT("wInputDown"), Controller()->IsInputKeyDown(EKeys::W));
+    Sample->SetBoolField(TEXT("precisionInputDown"), Controller()->IsInputKeyDown(EKeys::Q));
+    TArray<TSharedPtr<FJsonValue>> Regions;
+    for (const auto& Region : WalkthroughRegions) if (RegionContains(Region, Center))
+    { const FString Id = Region->GetStringField(TEXT("id")); Regions.Add(MakeShared<FJsonValueString>(Id)); VisitedRegions.Add(Id); }
+    Sample->SetArrayField(TEXT("regions"), Regions); PathSamples.Add(MakeShared<FJsonValueObject>(Sample));
+    WalkthroughPriorCenter = Center;
+    if (!Grounded || !WalkthroughSupports.Contains(Support) || Overlap || !EyeMeasured || EyeError > 0.5
+        || Travel > Contract.BoostSpeed * DeltaTime + Contract.MaxStepCm + 2 || PathSamples.Num() > 120000)
+    {
+        FinishWalkthrough(TEXT("failed-sample"), FString::Printf(TEXT("step=%d phase=%s grounded=%d support=%s overlap=%d eyeError=%.3f travel=%.3f"),
+            WalkthroughStep, *WalkthroughPhase, Grounded, *Support, Overlap, EyeError, Travel)); return false;
+    }
+    return true;
+}
+
+bool UBreziWalkingTraversal::DriveWalkthroughTo(const FVector& Target)
+{
+    const FVector Delta = Target - Pawn()->GetActorLocation();
+    if (Delta.Size2D() <= 5)
+    { Key(EKeys::W, false); Key(EKeys::Q, false); return Pawn()->GetVelocity().Size2D() < 1; }
+    if (!Pawn()->AimWalkingTraversal(FVector(Delta.X, Delta.Y, 0)))
+    { FinishWalkthrough(TEXT("failed-aim"), TEXT("Guarded walking direction could not be applied.")); return false; }
+    Key(EKeys::Q, Delta.Size2D() < 80); Key(EKeys::W, true); return false;
+}
+
+bool UBreziWalkingTraversal::WalkthroughDoorSweep(FHitResult& Hit) const
+{
+    const FVector Center = Pawn()->GetActorLocation();
+    FVector Destination = WalkthroughTarget; Destination.Z = Center.Z;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(BreziWalkthroughDoor), true, Pawn());
+    return GetWorld()->SweepSingleByChannel(Hit, Center, Destination, FQuat::Identity, ECC_Pawn,
+        FCollisionShape::MakeCapsule(Contract.CapsuleRadiusCm, Contract.CapsuleHalfHeightCm), Params) && Hit.bBlockingHit;
+}
+
+bool UBreziWalkingTraversal::WalkthroughOpenPassage(FHitResult& Hit, TArray<FString>& StepSupports, double& RaisedByCm) const
+{
+    const FVector Center = Pawn()->GetActorLocation(); FVector Destination = WalkthroughTarget; Destination.Z = Center.Z;
+    const auto Movement = Pawn()->GetCharacterMovement();
+    const double FloorZ = Center.Z - Contract.CapsuleHalfHeightCm - Movement->CurrentFloor.GetDistanceToFloor();
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(BreziWalkthroughOpenPassage), true, Pawn());
+    const auto Shape = FCollisionShape::MakeCapsule(Contract.CapsuleRadiusCm, Contract.CapsuleHalfHeightCm);
+    RaisedByCm = 0;
+    for (int32 I = 0; I < 12; ++I)
+    {
+        if (!GetWorld()->SweepSingleByChannel(Hit, Center, Destination, FQuat::Identity, ECC_Pawn, Shape, Params) || !Hit.bBlockingHit)
+        {
+            // A horizontal capsule can hit a legal floor riser. Check head/body clearance at
+            // the source step height as well; the subsequent real CMC crossing remains required.
+            const FVector Lift(0, 0, RaisedByCm);
+            return RaisedByCm <= 0 || !GetWorld()->SweepSingleByChannel(Hit, Center + Lift, Destination + Lift,
+                FQuat::Identity, ECC_Pawn, Shape, Params) || !Hit.bBlockingHit;
+        }
+        const FString Id = FBreziWalkingContract::ObjectId(Hit.GetComponent());
+        const auto Record = Contract.Records.FindByPredicate([&](const auto& R) { return R.ObjectId == Id && R.bFloor; });
+        if (Hit.bStartPenetrating || !Record || !FBreziWalkingContract::IsFloor(Hit.GetComponent())
+            || !WalkthroughSupports.Contains(Id)
+            || Contract.Records.ContainsByPredicate([&](const auto& R) { return R.ObjectId == Id && R.bClosed; })) return false;
+        const double Top = Record->BoundsCm.Max.Z + Record->SupportOffsetCm;
+        if (Top < FloorZ - Contract.MaxDropCm || Top > FloorZ + Contract.MaxStepCm) return false;
+        RaisedByCm = FMath::Max(RaisedByCm, FMath::Max(0.0, Top - FloorZ));
+        StepSupports.AddUnique(Id); Params.AddIgnoredComponent(Hit.GetComponent());
+    }
+    return false;
+}
+
+void UBreziWalkingTraversal::NextWalkthroughStep()
+{
+    Key(EKeys::W, false); Key(EKeys::Q, false);
+    ++WalkthroughStep; WalkthroughStepSeconds = 0; WalkthroughPhaseSeconds = 0; WalkthroughPhase = TEXT("step"); WalkthroughDoorCycle = 0;
+    if (!SaveWalkthrough(TEXT("running"))) FinishWalkthrough(TEXT("failed-report-write"));
+}
+
+void UBreziWalkingTraversal::TickWalkthrough(float DeltaTime)
+{
+    if (FPlatformTime::Seconds() - RunStartWallSeconds > 1500 || WalkthroughSimulationSeconds > 900)
+    { FinishWalkthrough(TEXT("failed-timeout"), TEXT("Bounded walkthrough time limit exceeded.")); return; }
+    ABreziPlayerController* PC = Cast<ABreziPlayerController>(Controller());
+    if (!Pawn() || !PC || !PC->GetDoorSystem())
+    { if (FPlatformTime::Seconds() - RunStartWallSeconds > 20) FinishWalkthrough(TEXT("failed-startup"), TEXT("Player or door system unavailable.")); return; }
+    if (!bWalkthroughStarted)
+    {
+        if (!PC->GetDoorSystem()->GetDiagnostics()->GetBoolField(TEXT("ready")))
+        { FinishWalkthrough(TEXT("failed-door-initialization")); return; }
+        if (!bWalkthroughAutomationStarted)
+        {
+            if (!PC->BeginWalkthroughAutomation()) { FinishWalkthrough(TEXT("failed-automation-startup")); return; }
+            bWalkthroughAutomationStarted = true;
+        }
+        if (!Pawn()->PrepareTraversalAuditView(WalkthroughStartEye, WalkthroughStartForward))
+        { if (FPlatformTime::Seconds() - RunStartWallSeconds > 20) FinishWalkthrough(TEXT("failed-viewpoint-startup")); return; }
+        ++WalkthroughInitialPlacements; bWalkthroughStarted = true;
+        AddTickPrerequisiteActor(Pawn()); AddTickPrerequisiteComponent(Pawn()->GetCharacterMovement());
+        for (const auto& Step : WalkthroughSteps) if (Step->GetStringField(TEXT("kind")) == TEXT("door"))
+            PC->GetDoorSystem()->SetOpen(Step->GetStringField(TEXT("doorId")), false);
+        WalkthroughPhase = TEXT("warmup"); WalkthroughPhaseSeconds = 0;
+    }
+    WalkthroughPhaseSeconds += DeltaTime; WalkthroughSimulationSeconds += DeltaTime;
+    if (WalkthroughPhase == TEXT("warmup"))
+    {
+        if (WalkthroughPhaseSeconds >= 1.5)
+        { Key(EKeys::M, true); Key(EKeys::M, false); WalkthroughPhase = TEXT("enter"); WalkthroughPhaseSeconds = 0; }
+        return;
+    }
+    if (WalkthroughPhase == TEXT("enter"))
+    {
+        if (WalkthroughPhaseSeconds < 0.3) return;
+        if (!Pawn()->IsWalkingMode()) { FinishWalkthrough(TEXT("failed-entry"), TEXT("M did not enter source walking.")); return; }
+        if (!Pawn()->IsNavigating()) { Key(EKeys::F2, true); Key(EKeys::F2, false); }
+        WalkthroughPhase = TEXT("navigate"); WalkthroughPhaseSeconds = 0; return;
+    }
+    if (WalkthroughPhase == TEXT("navigate"))
+    {
+        if (WalkthroughPhaseSeconds < 0.2) return;
+        if (!Pawn()->IsNavigating() || !PC->IsNavigationInputActive() || !PC->IsWalkthroughAutomationActive()) { FinishWalkthrough(TEXT("failed-navigation")); return; }
+        if (FParse::Param(FCommandLine::Get(), TEXT("BreziPresentationQA")))
+        {
+            PresentationQA = NewObject<UBreziPresentationQA>(this);
+            if (!PresentationQA->Begin(PC)) { FinishWalkthrough(TEXT("failed-presentation"), PresentationQA->GetFailure()); return; }
+            WalkthroughPhase = TEXT("presentation-startup"); WalkthroughPhaseSeconds = 0; return;
+        }
+        WalkthroughPriorCenter = Pawn()->GetActorLocation(); WalkthroughPhase = TEXT("step"); WalkthroughPhaseSeconds = 0;
+    }
+    if (WalkthroughPhase == TEXT("presentation-startup"))
+    {
+        if (!PresentationQA->TickStartup(DeltaTime)) return;
+        if (PresentationQA->HasFailed()) { FinishWalkthrough(TEXT("failed-presentation"), PresentationQA->GetFailure()); return; }
+        WalkthroughPriorCenter = Pawn()->GetActorLocation(); WalkthroughPhase = TEXT("step");
+        WalkthroughPhaseSeconds = 0; WalkthroughStepSeconds = 0;
+    }
+    if (PresentationQA && !PresentationQA->Sample())
+    { FinishWalkthrough(TEXT("failed-presentation"), PresentationQA->GetFailure()); return; }
+    WalkthroughStepSeconds += DeltaTime;
+    if (!SampleWalkthrough(DeltaTime)) return;
+    if (WalkthroughStep >= WalkthroughSteps.Num())
+    {
+        TSet<FString> ExpectedDoors;
+        for (const auto& Step : WalkthroughSteps) if (Step->GetStringField(TEXT("kind")) == TEXT("door")) ExpectedDoors.Add(Step->GetStringField(TEXT("doorId")));
+        if (VisitedRegions.Num() != WalkthroughRegions.Num() || OpenedDoors.Num() != ExpectedDoors.Num() || WalkthroughInitialPlacements != 1)
+            FinishWalkthrough(TEXT("failed-coverage"));
+        else if (PresentationQA && !PresentationQA->Finish()) FinishWalkthrough(TEXT("failed-presentation"), PresentationQA->GetFailure());
+        else FinishWalkthrough(TEXT("passed-continuous-walkthrough"));
+        return;
+    }
+    if (WalkthroughStepSeconds > 35) { FinishWalkthrough(TEXT("failed-stalled-step"), FString::FromInt(WalkthroughStep)); return; }
+    const auto Step = WalkthroughSteps[WalkthroughStep]; const FString Kind = Step->GetStringField(TEXT("kind"));
+    ReadVector(Step, TEXT("targetCm"), WalkthroughTarget);
+    if (Kind == TEXT("visit"))
+    {
+        const FString Id = Step->GetStringField(TEXT("regionId"));
+        const auto Region = WalkthroughRegions.FindByPredicate([&](const auto& Candidate) { return Candidate->GetStringField(TEXT("id")) == Id; });
+        if (!Region || !RegionContains(*Region, Pawn()->GetActorLocation()) || FVector::Dist2D(Pawn()->GetActorLocation(), WalkthroughTarget) > 8)
+        { FinishWalkthrough(TEXT("failed-room-visit"), Id); return; }
+        if (WalkthroughPhase == TEXT("step"))
+        {
+            TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("region-visited"));
+            Event->SetStringField(TEXT("regionId"), Id); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+            Event->SetArrayField(TEXT("capsuleCenterCm"), VectorJson(Pawn()->GetActorLocation())); WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event));
+            if (!bWalkthroughScreenshots || WalkthroughCapturedRegions.Contains(Id)) { NextWalkthroughStep(); return; }
+            Key(EKeys::W, false); Key(EKeys::Q, false);
+            WalkthroughPhase = TEXT("visit-capture-settle"); WalkthroughPhaseSeconds = 0; return;
+        }
+        if (WalkthroughPhase == TEXT("visit-capture-settle"))
+        {
+            if (WalkthroughPhaseSeconds < 0.3 || Pawn()->GetVelocity().Size2D() >= 1) return;
+            if (!GEngine || !GEngine->GameViewport || !GEngine->GameViewport->Viewport)
+            { FinishWalkthrough(TEXT("failed-capture-viewport"), Id); return; }
+            WalkthroughRequestedPixels = GEngine->GameViewport->Viewport->GetSizeXY();
+            if (WalkthroughRequestedPixels.X <= 0 || WalkthroughRequestedPixels.Y <= 0)
+            { FinishWalkthrough(TEXT("failed-capture-viewport-size"), Id); return; }
+            WalkthroughCaptureRegion = Id;
+            WalkthroughCapturePath = FPaths::Combine(FPaths::GetPath(ReportPath), TEXT("region-") + FPaths::MakeValidFileName(Id) + TEXT(".png"));
+            bWalkthroughCapturePending = true; bWalkthroughCaptureSaved = false; WalkthroughCapturePixels = FIntPoint::ZeroValue;
+            WalkthroughCaptureStartWall = FPlatformTime::Seconds();
+            FScreenshotRequest::RequestScreenshot(WalkthroughCapturePath, false, false, false, FIntRect(), true);
+            WalkthroughPhase = TEXT("visit-capture-pending"); WalkthroughPhaseSeconds = 0; return;
+        }
+        if (WalkthroughPhase == TEXT("visit-capture-pending"))
+        {
+            if (bWalkthroughCapturePending)
+            { if (FPlatformTime::Seconds() - WalkthroughCaptureStartWall > 10) FinishWalkthrough(TEXT("failed-capture-timeout"), Id); return; }
+            if (!bWalkthroughCaptureSaved || WalkthroughCapturePixels != WalkthroughRequestedPixels)
+            { FinishWalkthrough(TEXT("failed-capture-save-or-size"), Id); return; }
+            WalkthroughCapturedRegions.Add(Id); NextWalkthroughStep(); return;
+        }
+        FinishWalkthrough(TEXT("failed-visit-phase"), WalkthroughPhase); return;
+    }
+    if (Kind == TEXT("move"))
+    { if (DriveWalkthroughTo(WalkthroughTarget)) NextWalkthroughStep(); return; }
+    const FString DoorId = Step->GetStringField(TEXT("doorId"));
+    if (WalkthroughPhase == TEXT("step"))
+    {
+        FHitResult Hit; const FString HitId = WalkthroughDoorSweep(Hit) ? FBreziWalkingContract::ObjectId(Hit.GetComponent()) : FString();
+        const bool Expected = Step->GetArrayField(TEXT("closedObjectIds")).ContainsByPredicate([&](const auto& V) { return V->AsString() == HitId; });
+        if (!Expected || Hit.bStartPenetrating || Hit.Distance < 1)
+        { FinishWalkthrough(TEXT("failed-closed-door-sweep"), DoorId + TEXT(" hit=") + HitId); return; }
+        WalkthroughDoorStart = Pawn()->GetActorLocation(); WalkthroughDoorNormal = (WalkthroughTarget - WalkthroughDoorStart).GetSafeNormal2D();
+        WalkthroughClosedHitDistance = Hit.Distance; WalkthroughClosedHoldSamples = 0;
+        Pawn()->AimWalkingTraversal(WalkthroughDoorNormal); Key(EKeys::Q, false); Key(EKeys::W, true);
+        WalkthroughPhase = TEXT("door-closed-hold"); WalkthroughPhaseSeconds = 0;
+        TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("closed-door-sweep"));
+        Event->SetStringField(TEXT("doorId"), DoorId); Event->SetStringField(TEXT("hitObjectId"), HitId);
+        Event->SetNumberField(TEXT("hitDistanceCm"), Hit.Distance); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+        Event->SetObjectField(TEXT("doors"), PC->GetDoorSystem()->GetDiagnostics()); WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event));
+    }
+    else if (WalkthroughPhase == TEXT("door-closed-hold"))
+    {
+        Key(EKeys::W, true);
+        if (Controller()->IsInputKeyDown(EKeys::W)) ++WalkthroughClosedHoldSamples;
+        if (WalkthroughPhaseSeconds < 1.5) return;
+        Key(EKeys::W, false);
+        const double Progress = FVector::DotProduct(Pawn()->GetActorLocation() - WalkthroughDoorStart, WalkthroughDoorNormal);
+        if (WalkthroughClosedHoldSamples < 3 || Pawn()->GetVelocity().Size2D() > 1 || Progress > WalkthroughClosedHitDistance + 0.5
+            || Progress < FMath::Max(0.0, WalkthroughClosedHitDistance - 3))
+        { FinishWalkthrough(TEXT("failed-closed-door-block"), DoorId); return; }
+        TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("closed-door-blocked-input"));
+        Event->SetStringField(TEXT("doorId"), DoorId); Event->SetNumberField(TEXT("progressCm"), Progress);
+        Event->SetNumberField(TEXT("wHeldSamples"), WalkthroughClosedHoldSamples); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+        WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event)); WalkthroughPhase = TEXT("door-retreat"); WalkthroughPhaseSeconds = 0; WalkthroughDoorWaypoint = 0;
+    }
+    else if (WalkthroughPhase == TEXT("door-retreat"))
+    {
+        const auto& Route = Step->GetArrayField(TEXT("retreatPathCm"));
+        const auto& P = Route[WalkthroughDoorWaypoint]->AsArray();
+        if (!DriveWalkthroughTo(FVector(P[0]->AsNumber(), P[1]->AsNumber(), P[2]->AsNumber()))) return;
+        if (++WalkthroughDoorWaypoint < Route.Num()) return;
+        FVector Interaction; ReadVector(Step, TEXT("interactionPointCm"), Interaction);
+        Pawn()->AimWalkingTraversal((Interaction - Pawn()->GetActorLocation()).GetSafeNormal2D());
+        WalkthroughPhase = TEXT("door-aim"); WalkthroughPhaseSeconds = 0;
+    }
+    else if (WalkthroughPhase == TEXT("door-aim"))
+    {
+        if (WalkthroughPhaseSeconds < 0.2) return;
+        if (PC->GetDoorSystem()->GetDiagnostics()->GetStringField(TEXT("selectedDoorId")) != DoorId)
+        { FinishWalkthrough(TEXT("failed-door-selection"), DoorId); return; }
+        Key(EKeys::E, true); Key(EKeys::E, false); ++WalkthroughInputOpenCount;
+        WalkthroughPhase = TEXT("door-opening"); WalkthroughPhaseSeconds = 0;
+    }
+    else if (WalkthroughPhase == TEXT("door-opening"))
+    {
+        if (WalkthroughPhaseSeconds < 2) return;
+        const auto Doors = PC->GetDoorSystem()->GetDiagnostics();
+        const auto Found = Doors->GetArrayField(TEXT("doors")).FindByPredicate([&](const auto& Value) { return Value->AsObject()->GetStringField(TEXT("id")) == DoorId; });
+        if (!Found || (*Found)->AsObject()->GetStringField(TEXT("phase")) != TEXT("OPEN")
+            || (*Found)->AsObject()->GetNumberField(TEXT("progress")) != 1 || (*Found)->AsObject()->GetBoolField(TEXT("blocked")))
+        {
+            if (WalkthroughPhaseSeconds < 4) return;
+            FinishWalkthrough(TEXT("failed-E-door-open-state"), DoorId); return;
+        }
+        bool ExerciseCloseReopen = false;
+        WalkthroughFixture->TryGetBoolField(TEXT("exerciseCloseReopen"), ExerciseCloseReopen);
+        if (ExerciseCloseReopen && WalkthroughDoorCycle == 0)
+        {
+            TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("E-first-open-state"));
+            Event->SetStringField(TEXT("doorId"), DoorId); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+            Event->SetObjectField(TEXT("doors"), Doors); WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event));
+            WalkthroughDoorCycle = 1; WalkthroughPhase = TEXT("door-close-aim"); WalkthroughPhaseSeconds = 0;
+        }
+        else { WalkthroughPhase = TEXT("door-return"); WalkthroughPhaseSeconds = 0; WalkthroughDoorWaypoint = 0; }
+    }
+    else if (WalkthroughPhase == TEXT("door-close-aim"))
+    {
+        if (WalkthroughPhaseSeconds < 0.2) return;
+        if (PC->GetDoorSystem()->GetDiagnostics()->GetStringField(TEXT("selectedDoorId")) != DoorId)
+        { FinishWalkthrough(TEXT("failed-close-door-selection"), DoorId); return; }
+        Key(EKeys::E, true); Key(EKeys::E, false); ++WalkthroughInputCloseCount;
+        WalkthroughPhase = TEXT("door-closing"); WalkthroughPhaseSeconds = 0;
+    }
+    else if (WalkthroughPhase == TEXT("door-closing"))
+    {
+        if (WalkthroughPhaseSeconds < 2) return;
+        const auto Doors = PC->GetDoorSystem()->GetDiagnostics();
+        const auto Found = Doors->GetArrayField(TEXT("doors")).FindByPredicate([&](const auto& Value) { return Value->AsObject()->GetStringField(TEXT("id")) == DoorId; });
+        if (!Found || (*Found)->AsObject()->GetStringField(TEXT("phase")) != TEXT("CLOSED")
+            || (*Found)->AsObject()->GetNumberField(TEXT("progress")) != 0 || (*Found)->AsObject()->GetNumberField(TEXT("targetProgress")) != 0
+            || (*Found)->AsObject()->GetBoolField(TEXT("blocked")))
+        {
+            if (WalkthroughPhaseSeconds < 4) return;
+            FinishWalkthrough(TEXT("failed-E-door-closed-state"), DoorId); return;
+        }
+        WalkthroughPhase = TEXT("door-reclosed-approach"); WalkthroughPhaseSeconds = 0;
+        WalkthroughDoorWaypoint = Step->GetArrayField(TEXT("retreatPathCm")).Num() - 2;
+    }
+    else if (WalkthroughPhase == TEXT("door-reclosed-approach"))
+    {
+        // Reverse the path that was planned against the closed leaf, then probe it again.
+        const auto& Route = Step->GetArrayField(TEXT("retreatPathCm"));
+        const auto& P = Route[WalkthroughDoorWaypoint]->AsArray();
+        if (!DriveWalkthroughTo(FVector(P[0]->AsNumber(), P[1]->AsNumber(), P[2]->AsNumber()))) return;
+        if (--WalkthroughDoorWaypoint >= 0) return;
+        FHitResult Hit; const FString HitId = WalkthroughDoorSweep(Hit) ? FBreziWalkingContract::ObjectId(Hit.GetComponent()) : FString();
+        const bool Expected = Step->GetArrayField(TEXT("closedObjectIds")).ContainsByPredicate([&](const auto& V) { return V->AsString() == HitId; });
+        if (!Expected || Hit.bStartPenetrating || Hit.Distance < 1)
+        { FinishWalkthrough(TEXT("failed-reclosed-door-collision"), DoorId + TEXT(" hit=") + HitId); return; }
+        TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("E-closed-source-sweep"));
+        Event->SetStringField(TEXT("doorId"), DoorId); Event->SetStringField(TEXT("hitObjectId"), HitId);
+        Event->SetNumberField(TEXT("hitDistanceCm"), Hit.Distance); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+        Event->SetObjectField(TEXT("doors"), PC->GetDoorSystem()->GetDiagnostics()); WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event));
+        WalkthroughDoorCycle = 2; WalkthroughDoorWaypoint = 0;
+        WalkthroughPhase = TEXT("door-retreat"); WalkthroughPhaseSeconds = 0;
+    }
+    else if (WalkthroughPhase == TEXT("door-return"))
+    {
+        const auto& Route = Step->GetArrayField(TEXT("returnPathCm"));
+        const auto& P = Route[WalkthroughDoorWaypoint]->AsArray();
+        if (!DriveWalkthroughTo(FVector(P[0]->AsNumber(), P[1]->AsNumber(), P[2]->AsNumber()))) return;
+        if (++WalkthroughDoorWaypoint < Route.Num()) return;
+        FHitResult Hit; TArray<FString> StepSupports; double RaisedByCm = 0;
+        if (!WalkthroughOpenPassage(Hit, StepSupports, RaisedByCm))
+        { FinishWalkthrough(TEXT("failed-open-capsule-passage"), DoorId + TEXT(" hit=") + FBreziWalkingContract::ObjectId(Hit.GetComponent())); return; }
+        OpenedDoors.Add(DoorId);
+        TSharedRef<FJsonObject> Event = MakeShared<FJsonObject>(); Event->SetStringField(TEXT("kind"), TEXT("E-open-passage-clear"));
+        Event->SetStringField(TEXT("doorId"), DoorId); Event->SetNumberField(TEXT("step"), WalkthroughStep);
+        TArray<TSharedPtr<FJsonValue>> Supports;
+        for (const auto& Id : StepSupports) Supports.Add(MakeShared<FJsonValueString>(Id));
+        Event->SetArrayField(TEXT("acceptedStepSupportObjectIds"), Supports); Event->SetNumberField(TEXT("preflightRaisedByCm"), RaisedByCm);
+        Event->SetObjectField(TEXT("doors"), PC->GetDoorSystem()->GetDiagnostics()); WalkthroughEvents.Add(MakeShared<FJsonValueObject>(Event));
+        NextWalkthroughStep();
+    }
+}
+
+bool UBreziWalkingTraversal::SaveWalkthrough(const FString& Status) const
+{
+    TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
+    Root->SetNumberField(TEXT("schemaVersion"), 1); Root->SetStringField(TEXT("status"), Status);
+    Root->SetStringField(TEXT("recordedAtUtc"), FDateTime::UtcNow().ToIso8601()); Root->SetStringField(TEXT("sceneSha256"), SceneSha256);
+    Root->SetStringField(TEXT("error"), LoadError); Root->SetNumberField(TEXT("completedSteps"), WalkthroughStep);
+    Root->SetNumberField(TEXT("initialPlacements"), WalkthroughInitialPlacements); Root->SetNumberField(TEXT("inputOpenCount"), WalkthroughInputOpenCount);
+    Root->SetNumberField(TEXT("inputCloseCount"), WalkthroughInputCloseCount);
+    Root->SetBoolField(TEXT("screenshotsRequested"), bWalkthroughScreenshots); Root->SetArrayField(TEXT("screenshots"), WalkthroughScreenshots);
+    Root->SetBoolField(TEXT("screenshotPending"), bWalkthroughCapturePending);
+    if (bWalkthroughCapturePending) Root->SetStringField(TEXT("pendingScreenshotPath"), WalkthroughCapturePath);
+    Root->SetStringField(TEXT("automatedInputMode"), TEXT("background-engine-bindings-without-os-capture"));
+    Root->SetBoolField(TEXT("automationStarted"), bWalkthroughAutomationStarted); Root->SetBoolField(TEXT("foregroundCaptureVerified"), false);
+    Root->SetNumberField(TEXT("wallSeconds"), FPlatformTime::Seconds() - RunStartWallSeconds);
+    Root->SetNumberField(TEXT("simulationSeconds"), WalkthroughSimulationSeconds); Root->SetNumberField(TEXT("distanceCm"), WalkthroughDistanceCm);
+    Root->SetNumberField(TEXT("maximumSampleTravelCm"), WalkthroughMaxSampleTravelCm);
+    Root->SetStringField(TEXT("phase"), WalkthroughPhase); Root->SetArrayField(TEXT("path"), PathSamples); Root->SetArrayField(TEXT("events"), WalkthroughEvents);
+    TArray<TSharedPtr<FJsonValue>> Rooms, Doors;
+    for (const FString& Id : VisitedRegions) Rooms.Add(MakeShared<FJsonValueString>(Id));
+    for (const FString& Id : OpenedDoors) Doors.Add(MakeShared<FJsonValueString>(Id));
+    Root->SetArrayField(TEXT("visitedRegions"), Rooms); Root->SetArrayField(TEXT("openedDoors"), Doors);
+    if (PresentationQA) Root->SetObjectField(TEXT("presentationQA"), PresentationQA->GetDiagnostics());
+    if (WalkthroughFixture.IsValid()) Root->SetObjectField(TEXT("fixture"), WalkthroughFixture);
+    if (Pawn()) Root->SetObjectField(TEXT("walking"), Pawn()->GetWalkingDiagnostics());
+    if (const auto PC = Cast<ABreziPlayerController>(Controller()); PC && PC->GetDoorSystem()) Root->SetObjectField(TEXT("doors"), PC->GetDoorSystem()->GetDiagnostics());
+    Root->SetStringField(TEXT("inputMethod"), TEXT("Explicit background QA lifecycle with engine M/F2/W/Q/E bindings, guarded yaw-only aiming and real CharacterMovement ticks. No OS mouse capture, Slate focus changes or foreground-behavior claim. One initial disabled-capsule placement. Closed doors are reset only before walking; all openings use E. No position writes after initial entry."));
+    Root->SetStringField(TEXT("scope"), TEXT("Required source rooms, terraces, approaches and architectural doors along one continuous recorded capsule path. Physical support, eye and overlap samples and closed-input/open-passage door observations. No native macOS keyboard, visual quality, frame-rate or unrestricted exploration certification."));
+    FString Text; FJsonSerializer::Serialize(Root, TJsonWriterFactory<>::Create(&Text));
+    IFileManager::Get().MakeDirectory(*FPaths::GetPath(ReportPath), true);
+    const FString Temporary = ReportPath + TEXT(".tmp");
+    return FFileHelper::SaveStringToFile(Text, *Temporary, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM)
+        && IFileManager::Get().Move(*ReportPath, *Temporary, true, false, false, true);
+}
+
+void UBreziWalkingTraversal::FinishWalkthrough(const FString& Status, const FString& Error)
+{
+    if (bFinished) return;
+    ReleaseKeys(); LoadError = Error; bFinished = true; SetComponentTickEnabled(false);
+    UGameViewportClient::OnScreenshotCaptured().Remove(WalkthroughScreenshotHandle);
+    if (const auto PC = Cast<ABreziPlayerController>(Controller()); PC && bWalkthroughAutomationStarted) PC->EndWalkthroughAutomation();
+    const bool Saved = SaveWalkthrough(Status);
+    UE_LOG(LogTemp, Display, TEXT("BreziWalkthrough status=%s saved=%d step=%d path=%s error=%s"), *Status, Saved, WalkthroughStep, *ReportPath, *Error);
+    if (FParse::Param(FCommandLine::Get(), TEXT("BreziTraversalExit")))
+        FPlatformMisc::RequestExitWithStatus(false, Saved && Status == TEXT("passed-continuous-walkthrough") ? 0 : 1);
+}
+
+void UBreziWalkingTraversal::OnWalkthroughScreenshot(int32 Width, int32 Height, const TArray<FColor>& Bitmap)
+{
+    if (!bWalkthroughCapturePending || bFinished || Width <= 0 || Height <= 0 || static_cast<int64>(Width) * Height != Bitmap.Num()) return;
+    WalkthroughCapturePixels = FIntPoint(Width, Height);
+    bWalkthroughCaptureSaved = FImageUtils::SaveImageByExtension(*WalkthroughCapturePath, FImageView(Bitmap.GetData(), Width, Height))
+        && IFileManager::Get().FileSize(*WalkthroughCapturePath) > 0;
+    TSharedRef<FJsonObject> Capture = MakeShared<FJsonObject>();
+    Capture->SetStringField(TEXT("regionId"), WalkthroughCaptureRegion); Capture->SetStringField(TEXT("path"), WalkthroughCapturePath);
+    Capture->SetBoolField(TEXT("saved"), bWalkthroughCaptureSaved); Capture->SetNumberField(TEXT("step"), WalkthroughStep);
+    Capture->SetStringField(TEXT("recordedAtUtc"), FDateTime::UtcNow().ToIso8601());
+    Capture->SetArrayField(TEXT("pixels"), {MakeShared<FJsonValueNumber>(Width), MakeShared<FJsonValueNumber>(Height)});
+    Capture->SetArrayField(TEXT("requestedPixels"), {MakeShared<FJsonValueNumber>(WalkthroughRequestedPixels.X), MakeShared<FJsonValueNumber>(WalkthroughRequestedPixels.Y)});
+    Capture->SetArrayField(TEXT("capsuleCenterCm"), VectorJson(Pawn()->GetActorLocation()));
+    if (const auto Camera = Pawn()->GetPresentationCamera())
+    { Capture->SetArrayField(TEXT("cameraEyeCm"), VectorJson(Camera->GetComponentLocation())); Capture->SetArrayField(TEXT("cameraForward"), VectorJson(Camera->GetForwardVector())); }
+    Capture->SetStringField(TEXT("kind"), TEXT("current-scene-render-target-preserving-view-history"));
+    WalkthroughScreenshots.Add(MakeShared<FJsonValueObject>(Capture)); bWalkthroughCapturePending = false;
+}
+
 void UBreziWalkingTraversal::EndPlay(const EEndPlayReason::Type Reason)
 {
-    if (bEnabled && !bFinished) FinishRun(TEXT("interrupted"));
+    if (bEnabled && !bFinished)
+    {
+        if (bWalkthrough) FinishWalkthrough(TEXT("interrupted")); else FinishRun(TEXT("interrupted"));
+    }
     Super::EndPlay(Reason);
 }

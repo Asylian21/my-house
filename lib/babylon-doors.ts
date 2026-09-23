@@ -776,4 +776,20 @@ export class BabylonDoorController {
       }))
       .sort((left, right) => left.id.localeCompare(right.id));
   }
+
+  /** Local architectural exporter only; sample real registered motion without
+   * advancing the interactive controller or invoking actor/camera traversal. */
+  captureNativeExport<T>(capture: (door: AnimatedDoorRegistration) => T): T[] {
+    this.assertInventory();
+    if ([...this.doors.values()].some((door) => door.progress !== 0 || door.animationDurationMs > 0)) {
+      throw new Error("Native door capture requires the initial closed scene");
+    }
+    return [...this.doors.values()]
+      .filter((door) => door.kind !== "TRAVERSAL")
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((door) => {
+        try { return capture(door); }
+        finally { door.apply(0, 0); }
+      });
+  }
 }

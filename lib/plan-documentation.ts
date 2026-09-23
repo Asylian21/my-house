@@ -187,7 +187,8 @@ export const PLAN_ITEMS_ALL:PlanItem[]=[...grouped.values()].map(item=>{
     item.note='Integrovaná umývačka 600 mm v krajnom východnom module ostrovčeka smerom k malému oknu EAST-04. Od drezovej skrinky ju oddeľuje zásuvkový modul 600 mm. Dvierka sa otvárajú do pracovnej uličky, pri plnom otvorení zostáva po protiľahlú dosku 560 mm na obsluhu; bočný priechod 900 mm je voľný.';
   }
   if(item.id==='kitchen-sink')item.note='Podvesený nerezový drez 600 × 400 × 200 mm v skrinke 800 mm. Pod drezom je triedený odpad; umývačka je na konci ostrovčeka smerom k malému oknu, za jednou zásuvkovou skrinkou. Napravo zostáva 1 330 mm súvislej prípravnej plochy. Prívod vody, odpad a elektrinu viesť koordinovanou podlahovou trasou.';
-  if(item.id==='kitchen-extractor')item.note='Odsávač 880 mm je ukrytý v strednom module 990 mm, spodná hrana 1 600 mm, teda 700 mm nad indukciou. Návrh používa recirkuláciu s filtrami a vratnou mriežkou nad skrinkami; odvádzanie vlhkosti rieši vetranie miestnosti. Voľný objem katedrálového stropu zostáva bez komína.';
+  if(item.id==='kitchen-upper')item.note='Dubová nadstavba široká 3 210 mm vo výške 2 258–2 700 mm končí zarovno s varnou nikou pred dverami. Päť čiel hrubých 22 mm má skutočné 4 mm škáry. Nad dverami do technickej miestnosti a nízkou bočnou linkou zostáva voľná svetlá stena; bez premostenia a vysokej skrine pri okne.';
+  if(item.id==='kitchen-extractor')item.note='Odsávač 880 mm v strednom module 990 mm má viditeľnú 80 mm kazetu s grafitovým čelom, oceľovým rámom a lamelovými filtrami. Spodná hrana je 1 520 mm, nominálne 620 mm nad pracovnou doskou. Recirkulačná trasa Ø150 mm prechádza nadstavbou k vratnej mriežke vo výške 2 700 mm. Odvádzanie vlhkosti rieši vetranie miestnosti; presnú montážnu vzdialenosť potvrdí vybraný spotrebič.';
   if(item.id==='kitchen-island'){
     item.nominal=KITCHEN_ISLAND.worktopRectMm;
     const top=item.nominal;

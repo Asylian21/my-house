@@ -1,0 +1,21 @@
+{
+  "source": "https://polyhaven.com/a/oak_veneer_01",
+  "license": "CC0-1.0",
+  "authors": {
+    "Jenelle van Heerden": "All"
+  },
+  "repeatMeters": 1.83,
+  "processing": "Existing 4096 px source maps resized to 2048 px with macOS sips; no recoloring.",
+  "maps": {
+    "albedo": {
+      "file": "living-natural-oak-albedo.jpg",
+      "sha256": "198c8daa009520cd435986904ff04fda2f5f07327a2f6e29599c61d00b23e77f",
+      "sourceSha256": "7e8c64811e580ef6664c20524606359c739e6fe030eff5c2c06c3482ecc8b1cf"
+    },
+    "normal": {
+      "file": "living-natural-oak-normal.jpg",
+      "sha256": "87f61bf2d317fe5086422af6fbea5401ab8614a3f0dd5b08599fef65aafc83f5",
+      "sourceSha256": "e9bb26f63682773895ce3f0dfd9a43554a719c4caae65b6bcf41712ecfaf3d26"
+    }
+  }
+}

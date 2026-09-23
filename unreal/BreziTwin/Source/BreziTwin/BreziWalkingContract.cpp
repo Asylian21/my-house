@@ -1,4 +1,5 @@
 #include "BreziWalkingContract.h"
+#include "BreziDoors.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Dom/JsonObject.h"
@@ -263,10 +264,13 @@ bool FBreziWalkingContract::ValidateWorld(UWorld* World, TArray<FString>& Errors
             bool bTags = true;
             for (const FName& Tag : Record.RequiredTags) bTags &= HasTag(Component, Tag);
             if (!bTags) continue;
-            // Catch incorrect support offsets and moved/opened captured blockers. Bounds are integration
-            // evidence, never substitute collision geometry or a complete test of every door transform.
+            // Static geometry must still match its source position. A validated interactive door
+            // retains that exact closed pose while its query collision follows the animated leaf.
+            // Compare its immutable closed binding so re-entering walking does not require closing
+            // every door in the house. Unregistered/moved components still fail the ordinary check.
             const FBox Expected = Record.BoundsCm.ShiftBy(FVector(0, 0, Record.bFloor ? Record.SupportOffsetCm : 0));
-            const FBox Actual = Component->CalcBounds(Component->GetComponentTransform()).GetBox();
+            FBox Actual = Component->CalcBounds(Component->GetComponentTransform()).GetBox();
+            if (const UBreziDoors* Doors = UBreziDoors::FindForWorld(World)) Doors->GetClosedBounds(Component, Actual);
             if (!Actual.Min.Equals(Expected.Min, 0.02) || !Actual.Max.Equals(Expected.Max, 0.02)) continue;
             ++Matching;
         }

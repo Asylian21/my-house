@@ -6,6 +6,17 @@ ani schválenosť zdrojových revízií. Aktívny variant sa číta z `twin-inte
 fasádne úpravy z `twin-active-house.ts`, parcela a technické prvky z `twin-site.ts`,
 doménový katastrálny záznam a provenance z `twin-domain.ts`.
 
+## Aktuálna prechádzka C / B / B
+
+`npm run unreal:open` otvorí vizuálne overený balík
+`output/unreal/archviz-game-20260922` podľa `output/unreal/model-refresh-current.json`.
+Obsahuje aktuálnu kuchyňu a okná, animovanú postavu, chôdzu všetkými miestnosťami,
+otváranie dverí, kompaktný herný panel a menu s miestnosťami, atmosférou a nastaveniami ovládania,
+zoom, vnútorné svetlá a detaily materiálov.
+[Nové herné rozhranie a jeho overenie](../../docs/unreal-game-ui.md),
+[archviz základ a prehliadka domu](../../docs/unreal-archviz-game.md).
+Predchádzajúce exporty a samostatná štúdia bazénovej kaustiky zostávajú zachované.
+
 ## Kontinuálny režim caustics
 
 Projekt teraz explicitne zapína schválený provider `transport-continuous`.
@@ -16,8 +27,10 @@ nový cook a cooked binding pred podpisom. Staré príkazy `unreal:editor-build`
 a `unreal:package` v tomto režime skončia pred natívnym spustením, pretože ich
 monolitická cesta ešte neprepája celý overený postup. `unreal:open`, `unreal:qa`
 a `unreal:qa-ui` prijímajú explicitné `BREZI_PACKAGE_REPORT` spolu s
-`BREZI_PACKAGE_REPORT_SHA256`; bez nich zostáva pôvodný
-`output/unreal/package-report.json`. [Presné príkazy pre overenú delivery app](caustics/README.md)
+`BREZI_PACKAGE_REPORT_SHA256`. Príkaz `unreal:open` bez explicitného výberu
+uprednostní aktuálnu prechádzku uvedenú vyššie; historické `unreal:qa`
+a `unreal:qa-ui` naďalej používajú `output/unreal/package-report.json`.
+[Presné príkazy pre overenú delivery app](caustics/README.md)
 zahŕňajú read-only `package-check` a voliteľné profily `tsr67`/`tsr50` len pre otvorenie.
 
 ## Opakovateľný export a pôvodný postup bez kontinuálneho provideru

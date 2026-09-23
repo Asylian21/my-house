@@ -1,7 +1,8 @@
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
+import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { Texture } from '@babylonjs/core/Materials/Textures/texture';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
-import { Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder.pure';
 import { CreateCylinder } from '@babylonjs/core/Meshes/Builders/cylinderBuilder.pure';
 import { CreateTube } from '@babylonjs/core/Meshes/Builders/tubeBuilder.pure';
@@ -34,8 +35,15 @@ export function buildKitchenDesign(context:InteriorBuildContext, materials:Inter
     }
     return m;
   }
-  const oak=material('prírodný dub','#e5d8c7',.72,'living-natural-oak-albedo');
-  (oak.albedoTexture as Texture).wAng=Math.PI/2;
+  const oak=material('prírodný dub','#e5d8c7',.64,'kitchen/living-natural-oak-albedo');
+  // Same CC0 scanned veneer family as the native ArchViz detail layer, scaled
+  // to its measured 1.83 m repeat. Vertical grain follows the real cabinet UVs.
+  const oakTexture=oak.albedoTexture as Texture;
+  oakTexture.uScale=oakTexture.vScale=1/1.83;
+  const oakNormal=new Texture('/assets/textures/kitchen/living-natural-oak-normal.jpg',scene,false,false);
+  oakNormal.gammaSpace=false;oakNormal.uScale=oakNormal.vScale=1/1.83;
+  oakNormal.level=.18;oakNormal.anisotropicFilteringLevel=context.anisotropy;
+  oak.bumpTexture=oakNormal;oak.metallicF0Factor=.55;oak.enableSpecularAntiAliasing=true;
   const stone=material('čierny kameň · saténový povrch','#777875',.42,'stone-dark-albedo');
   stone.environmentIntensity=.5;
   const shadow=material('zapustené profily','#36332d',.64);
@@ -45,8 +53,18 @@ export function buildKitchenDesign(context:InteriorBuildContext, materials:Inter
   const emitter=material('pracovné svetlo','#fff2d8',.65);
   function rawBox(name:string,r:RectMm,bottom:number,height:number){
     const w=(r.x1-r.x0)/1000,depth=(r.y1-r.y0)/1000,h=height/1000;
-    const faceUV=[w,w,depth,depth,w,w].map((a,i)=>new Vector4(0,0,a,i<4?h:depth));
-    const mesh=CreateBox(`KITCHEN-RUN · ${name}`,{width:w,depth,height:h,faceUV},scene);
+    const mesh=CreateBox(`KITCHEN-RUN · ${name}`,{width:w,depth,height:h},scene);
+    // CreateBox rotates the side-face UV bases. Project in world metres so all
+    // upright panels have vertical grain, continuous across drawers/upper rows.
+    const positions=mesh.getVerticesData(VertexBuffer.PositionKind)!;
+    const normals=mesh.getVerticesData(VertexBuffer.NormalKind)!,uv:number[]=[];
+    for(let i=0;i<positions.length;i+=3){
+      const x=(r.x0+r.x1)/2000+positions[i],y=(r.y0+r.y1)/2000-positions[i+2];
+      const elevation=(bottom+height/2)/1000+positions[i+1];
+      if(Math.abs(normals[i+1])>.5)uv.push(x,y);
+      else uv.push(Math.abs(normals[i])>.5?y:x,elevation);
+    }
+    mesh.setVerticesData(VertexBuffer.UVKind,uv);
     mesh.position.set(xM((r.x0+r.x1)/2),(bottom+height/2)/1000,zM((r.y0+r.y1)/2));
     return mesh;
   }
@@ -104,16 +122,47 @@ export function buildKitchenDesign(context:InteriorBuildContext, materials:Inter
   finish(rawBox('horné skrinky · matná nika 2026',rect(back.x0,run.y0,run.x1,run.y0+k.upperCabinets.depthMm),1600,650),oak,
     {shadow:true,pickable:true,cameraOccluder:true});
   for(const x of d.backModules.slice(1,-1))box('horné skrinky · modulová škára 2026',rect(x-2,run.y0+k.upperCabinets.depthMm-1,x+2,run.y0+k.upperCabinets.depthMm+2),1603,644,shadow);
+  // Full-depth overhead units end flush with the cooking niche, keeping the
+  // utility doorway and the wall over the east sideboard visually open.
+  // Individual 22 mm fronts leave real 4 mm recessed joints, not painted lines.
+  const upper=d.upperExtension,ur=upper.rectMm,frontY=ur.y1;
+  const upperPart=(name:string,r:RectMm,bottom:number,height:number,m:PBRMaterial)=>{
+    const mesh=box(`horné skrinky · ${name}`,r,bottom,height,m);
+    mesh.metadata={...mesh.metadata,revisionSourceId:upper.revisionSourceId,
+      kitchenPart:'upper-extension'};
+    return mesh;
+  };
+  upperPart('nadstavba · zapustený korpus',rect(ur.x0,ur.y0,ur.x1,frontY-upper.frontThicknessMm-3),upper.bottomMm,upper.topMm-upper.bottomMm,oak);
+  upperPart('nadstavba · tmavé pozadie škár',rect(ur.x0+2,frontY-26,ur.x1-2,frontY-24),upper.bottomMm+2,upper.topMm-upper.bottomMm-4,shadow);
+  for(let i=0;i<upper.moduleEdgesMm.length-1;i++){
+    const x0=upper.moduleEdgesMm[i]+upper.revealMm/2,x1=upper.moduleEdgesMm[i+1]-upper.revealMm/2;
+    upperPart(`nadstavba · dubové čelo ${i+1}`,rect(x0,frontY-upper.frontThicknessMm,x1,frontY),upper.bottomMm,upper.topMm-upper.bottomMm,oak);
+  }
   // The 880 mm canopy sits inside the 990 mm centre module. Recirculation
-  // returns at the cabinet top, not into a sealed cupboard or the cathedral.
+  // travels through a reserved duct chase to the NEW 2700 mm cabinet top.
   const hoodY=(d.hobRectMm.y0+d.hobRectMm.y1)/2,hoodHalfDepth=d.hood.depthMm/2;
-  box('odsávač · integrovaná spodná kazeta',rect(k.extractorCenterXmm-440,hoodY-hoodHalfDepth,k.extractorCenterXmm+440,hoodY+hoodHalfDepth),1600,18,metal);
-  box('odsávač · filtre',rect(k.extractorCenterXmm-390,hoodY-hoodHalfDepth+20,k.extractorCenterXmm+390,hoodY+hoodHalfDepth-23),1598,2,shadow);
-  box('odsávač · horná vratná mriežka',rect(k.extractorCenterXmm-300,run.y0+60,k.extractorCenterXmm+300,run.y0+270),2250,3,shadow);
+  const canopy=rect(k.extractorCenterXmm-440,hoodY-hoodHalfDepth,k.extractorCenterXmm+440,hoodY+hoodHalfDepth);
+  const filter=rect(canopy.x0+24,canopy.y0+20,canopy.x1-24,canopy.y1-32),hoodBottom=d.hood.bottomMm;
+  perforated('odsávač · integrovaná spodná kazeta',canopy,filter,hoodBottom,d.hood.canopyHeightMm,metal);
+  box('odsávač · grafitové čelo 2026',rect(canopy.x0+2,canopy.y1+.5,canopy.x1-2,canopy.y1+3),hoodBottom+7,65,glass);
+  // Filters sit above a genuinely open underside, with recessed dark plenum
+  // behind the slats; the original solid cabinet cannot cover their visible face.
+  box('odsávač · filtre',filter,hoodBottom+30,3,shadow);
+  for(let i=0;i<12;i++){
+    const y=filter.y0+8+i*(filter.y1-filter.y0-16)/11;
+    box(`odsávač · lamela filtra ${i+1}`,rect(filter.x0+4,y,filter.x1-4,y+5),hoodBottom+5,3,metal);
+  }
+  box('odsávač · stredová priečka filtrov',rect(k.extractorCenterXmm-5,filter.y0,k.extractorCenterXmm+5,filter.y1),hoodBottom+4,4,metal);
+  for(let i=0;i<3;i++)box(`odsávač · ovládanie ${i+1}`,rect(canopy.x1-108+i*26,canopy.y1+3.5,canopy.x1-96+i*26,canopy.y1+4.5),hoodBottom+35,3,metal);
+  const vent=rect(k.extractorCenterXmm-300,run.y0+60,k.extractorCenterXmm+300,run.y0+270);
+  box('odsávač · horná vratná mriežka',vent,d.hood.returnElevationMm,3,shadow);
+  for(let i=0;i<9;i++)box(`odsávač · lamela vratnej mriežky ${i+1}`,rect(vent.x0+6,vent.y0+8+i*23,vent.x1-6,vent.y0+14+i*23),d.hood.returnElevationMm+3,2,metal);
   // Store the hidden appliance envelope for fit/coordination, not plan clutter.
-  const hoodEnvelope=rawBox('odsávač · servisná obálka',rect(k.extractorCenterXmm-440,hoodY-hoodHalfDepth,k.extractorCenterXmm+440,hoodY+hoodHalfDepth),1600,350);
+  const hoodEnvelope=rawBox('odsávač · servisná obálka',canopy,hoodBottom,d.hood.bodyHeightMm);
   hoodEnvelope.isVisible=false;hoodEnvelope.isPickable=false;
-  hoodEnvelope.metadata={coordinationOnly:true,ductDiameterMm:150,ventilation:d.hood.ventilation};
+  hoodEnvelope.metadata={coordinationOnly:true,ductDiameterMm:150,ventilation:d.hood.ventilation,returnElevationMm:d.hood.returnElevationMm};
+  const duct=rawBox('odsávač · rezervovaná zvislá vzduchová trasa',rect(k.extractorCenterXmm-75,run.y0+90,k.extractorCenterXmm+75,run.y0+240),hoodBottom+d.hood.bodyHeightMm,d.hood.returnElevationMm-hoodBottom-d.hood.bodyHeightMm);
+  duct.isVisible=false;duct.isPickable=false;duct.metadata={coordinationOnly:true,ductDiameterMm:150};
   box('varná doska · indukcia 800',d.hobRectMm,900,5,glass);
   for(const dx of [-230,230])for(const dy of [-110,110]){
     const cx=k.hobCenterXmm+dx,cy=(d.hobRectMm.y0+d.hobRectMm.y1)/2+dy;
