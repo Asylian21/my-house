@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "assets": {
+    "rough_linen": {
+      "page": "https://polyhaven.com/a/rough_linen",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "authors": {
+        "colormass": "Photography",
+        "Rico Cilliers": "Processing"
+      },
+      "physicalSizeCm": [
+        27.070813926766288,
+        27.129998803138733
+      ],
+      "providerDimensionsMm": [
+        270.7081392676629,
+        271.29998803138733
+      ],
+      "scaleEvidence": "Poly Haven API dimensions are millimetres,converted once to UE centimetres.",
+      "maps": {
+        "albedo": {
+          "path": "output/unreal/photoreal-assets/rough_linen/rough_linen_diff_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rough_linen/rough_linen_diff_4k.jpg",
+          "md5": "8baff705eca1ecca5eefce25563b4b78",
+          "size": 13064750,
+          "sha256": "dca61aacd6cf3194681070cede3c16a3b61a32cb3eef5bf4c52db698b2286d3d",
+          "width": 4096,
+          "height": 4105,
+          "meanDataR": 0.5692139719046797,
+          "meanLinearRGB": [
+            0.2841041892028266,
+            0.4079235801317013,
+            0.6137323688305651
+          ]
+        },
+        "normal": {
+          "path": "output/unreal/photoreal-assets/rough_linen/rough_linen_nor_gl_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rough_linen/rough_linen_nor_gl_4k.jpg",
+          "md5": "b5e671bbe0c658edc84c25f973a3577d",
+          "size": 13435511,
+          "sha256": "1a591b2acd7e61f3511e483a731c5f18847cce36ec501d669b853b30c203d422",
+          "width": 4096,
+          "height": 4105,
+          "meanDataR": 0.49992708692363663,
+          "meanLinearRGB": [
+            0.2143775648564698,
+            0.21483052443788536,
+            0.9742235598790728
+          ]
+        },
+        "roughness": {
+          "path": "output/unreal/photoreal-assets/rough_linen/rough_linen_rough_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rough_linen/rough_linen_rough_4k.jpg",
+          "md5": "a24abb488923d12f67a34d4e32101efa",
+          "size": 18101601,
+          "sha256": "f94c35b6ddf1560783d3cd450810ebe4452a49028d562ce140b3e253b2bbf0b3",
+          "width": 4096,
+          "height": 4105,
+          "meanDataR": 0.718314032461129,
+          "meanLinearRGB": [
+            0.4777477074187441,
+            0.4777477074187441,
+            0.4777477074187441
+          ]
+        },
+        "ao": {
+          "path": "output/unreal/photoreal-assets/rough_linen/rough_linen_ao_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/rough_linen/rough_linen_ao_4k.jpg",
+          "md5": "ded39f232e15c6490b63a413f3776f0d",
+          "size": 12325760,
+          "sha256": "4254ccb4c4e97b990a4ba3555c1c1ed4dd9432f347ed93a74da030c48d9799bd",
+          "width": 4096,
+          "height": 4105,
+          "meanDataR": 0.7725882735906864,
+          "meanLinearRGB": [
+            0.5627642611275697,
+            0.5627642611275697,
+            0.5627642611275697
+          ]
+        }
+      }
+    }
+  },
+  "solidPaletteSources": {
+    "public/assets/textures/living-boucle-ecru-albedo.jpg": {
+      "sha256": "b62ea6969ab726b9cf86ddf119ea312f15d04425245d9a5a089dc0ef27017408",
+      "meanLinearRGB": [
+        0.685251352739242,
+        0.5798640878365762,
+        0.444824913733982
+      ]
+    },
+    "public/assets/textures/boucle-taupe-albedo.jpg": {
+      "sha256": "3e44df64378075b07b7308cda9b6cde1c31faa95f95a8a673fbfdd35cb3cf4f9",
+      "meanLinearRGB": [
+        0.19744011742867834,
+        0.15656663958021422,
+        0.11882381375006916
+      ]
+    }
+  }
+}

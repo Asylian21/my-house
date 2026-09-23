@@ -47,6 +47,8 @@
     "docs:library": "node scripts/prepare-document-library.mjs",
     "docs:publish-snapshot": "node scripts/document-library/generate.mjs --check && node scripts/document-library-snapshot.mjs --export",
     "unreal:model": "node scripts/unreal/model-refresh.mjs",
+    "unreal:photoreal:test": "python3 -B scripts/unreal/test_photoreal_exterior.py && python3 -B scripts/unreal/test_photoreal_interior.py && python3 -B scripts/unreal/test_photoreal_water.py && python3 -B scripts/unreal/test_photoreal_geometry.py && python3 -B scripts/unreal/test_photoreal_import.py && python3 -B scripts/unreal/test_glass_double_reflection.py",
+    "unreal:lawn:test": "python3 -B scripts/unreal/test_lawn_materials.py && python3 -B scripts/unreal/test_lawn_geometry.py && python3 -B scripts/unreal/test_photoreal_deck_shadow.py",
     "unreal:walkthrough-qa": "node scripts/unreal/walkthrough-qa.mjs --close-reopen --screenshots"
   },
   "dependencies": {

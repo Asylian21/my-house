@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "assets": {
+    "hinoki_planks": {
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "page": "https://polyhaven.com/a/hinoki_planks",
+      "authors": {
+        "Charlotte Baglioni": "All"
+      },
+      "periodCm": 189.0,
+      "maps": {
+        "albedo": {
+          "path": "output/unreal/facade-wood-study/hinoki_planks/Diffuse-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_diff_4k.jpg",
+          "md5": "185a461f281e54ebbeaf95c6d17f9286",
+          "sha256": "5aa56a1aa470a99b8e9c100f5ec06a3e888089105fa230cdf871ba72fb1c0420",
+          "bytes": 8284068,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.3198636998693465,
+            0.1853562887405922,
+            0.08617809588541314
+          ],
+          "meanDataR": 0.598876953125
+        },
+        "normal": {
+          "path": "output/unreal/facade-wood-study/hinoki_planks/nor_gl-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_nor_gl_4k.jpg",
+          "md5": "1cf5cd943d1bdc3c35c8b405f196862f",
+          "sha256": "c51a062512a3f5ab73cdc7f1950d81d5ef9fddf3d42f613bccd92c31377d2293",
+          "bytes": 10596354,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.21425487690642306,
+            0.21283874846829726,
+            0.9797765728799637
+          ],
+          "meanDataR": 0.5002248726639094
+        },
+        "roughness": {
+          "path": "output/unreal/facade-wood-study/hinoki_planks/Rough-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_rough_4k.jpg",
+          "md5": "34c8d08d865bbc784a76eec14f212c82",
+          "sha256": "2c5a2cc300f09fcba04980090953b53203366d6f8d1a2b7e5bda759dfb77fea4",
+          "bytes": 2802151,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.8179584965745407,
+            0.8179584965745407,
+            0.8179584965745407
+          ],
+          "meanDataR": 0.9152517281326593
+        },
+        "ao": {
+          "path": "output/unreal/facade-wood-study/hinoki_planks/ao-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/hinoki_planks/hinoki_planks_ao_4k.jpg",
+          "md5": "abe20f10bb5a0ddc45174bb6ef3329e9",
+          "sha256": "e665b7b8381552d24bd879579ced8f5f1eabf416f80fe0eddcb0fa7afd66d684",
+          "bytes": 9562276,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.896848321258455,
+            0.896848321258455,
+            0.896848321258455
+          ],
+          "meanDataR": 0.9490675383923101
+        }
+      }
+    },
+    "wood_planks": {
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "page": "https://polyhaven.com/a/wood_planks",
+      "authors": {
+        "Amal Kumar": "All"
+      },
+      "periodCm": 150.0,
+      "maps": {
+        "albedo": {
+          "path": "output/unreal/deck-material-study/wood_planks/diff-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_planks/wood_planks_diff_4k.jpg",
+          "md5": "091858dbf6e1964b9c079b173c048b58",
+          "sha256": "fe10e7c311899ce8024b5f5f782b67fc41560143c4341e314536cd2833d877cd",
+          "bytes": 9032189,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.19208248370817155,
+            0.09978309267266085,
+            0.041537962379837964
+          ],
+          "meanDataR": 0.47322196212469364
+        },
+        "normal": {
+          "path": "output/unreal/deck-material-study/wood_planks/nor_gl-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_planks/wood_planks_nor_gl_4k.jpg",
+          "md5": "d628eddb8486b8bc192bdbe14e505ef1",
+          "sha256": "6ce429e9bee8f1aabadf141dc34f9a89d1af9f688d2ea07431760e6a4e54ae73",
+          "bytes": 12680748,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.21363631584908732,
+            0.2145004258661059,
+            0.965333393621097
+          ],
+          "meanDataR": 0.4990832160500919
+        },
+        "roughness": {
+          "path": "output/unreal/deck-material-study/wood_planks/rough-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_planks/wood_planks_rough_4k.jpg",
+          "md5": "47e487c427ba18802676827db7946feb",
+          "sha256": "aa39b2acc6ebb7f216ee3b802e131528e630d3a7eb9736b462f40f88da236804",
+          "bytes": 4169187,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.7135427811420003,
+            0.7135427811420003,
+            0.7135427811420003
+          ],
+          "meanDataR": 0.861445707433364
+        },
+        "ao": {
+          "path": "output/unreal/deck-material-study/wood_planks/ao-4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_planks/wood_planks_ao_4k.jpg",
+          "md5": "c6df7d888f2989ba0998e4022663a1ae",
+          "sha256": "094d3e17d6e7c0b4394ea88d190273f06ef676400ae13d95f39c1530c4048ee2",
+          "bytes": 5941782,
+          "width": 4096,
+          "height": 4096,
+          "meanLinearRGB": [
+            0.9344319190917199,
+            0.9344319190917199,
+            0.9344319190917199
+          ],
+          "meanDataR": 0.9612608068129596
+        }
+      }
+    }
+  }
+}

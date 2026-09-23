@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "provider": {
+    "name": "ambientCG Grass004",
+    "page": "https://ambientcg.com/view?id=Grass004",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://docs.ambientcg.com/license/",
+    "creator": "ambientCG / Lennart Demes",
+    "technique": "Procedural",
+    "scanClaim": false,
+    "approximateTileMetres": [
+      1.4,
+      1.4
+    ]
+  },
+  "maps": {
+    "albedo": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_Color.jpg",
+      "bytes": 28149083,
+      "sha256": "2494e4ea560c093d07b45835c5f9fb36c53de9ac8aff7bfc763da79702ff19fc",
+      "dimensions": [
+        4096,
+        4096
+      ],
+      "srgb": true,
+      "meanLinearRGB": [
+        0.1311724143606213,
+        0.16513610406019738,
+        0.03599740397129942
+      ]
+    },
+    "normal": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_NormalGL.jpg",
+      "bytes": 41508249,
+      "sha256": "55e0aa5a47b21d438e3e13e4a65ff40afa37607b29da9866a4eb6bf61075c51c",
+      "dimensions": [
+        4096,
+        4096
+      ],
+      "srgb": false
+    },
+    "roughness": {
+      "path": "output/unreal/lawn-ground-study/Grass004-4K/Grass004_4K-JPG_Roughness.jpg",
+      "bytes": 12315232,
+      "sha256": "9a06ae858f3a710b4df866415bd3e34bff3d5122f3f2a65b23e087bbde9c9332",
+      "dimensions": [
+        4096,
+        4096
+      ],
+      "srgb": false
+    }
+  },
+  "recipe": {
+    "ground": {
+      "tileCm": 90,
+      "paletteLinear": [
+        0.0675,
+        0.1125,
+        0.0252
+      ],
+      "normalStrength": 0.14,
+      "roughnessOffset": 0.84,
+      "roughnessScale": 0.13,
+      "specular": 0.22,
+      "sampling": "three-phase translation-only barycentric with continuous explicit derivatives",
+      "macroScalesCm": [
+        180,
+        550
+      ],
+      "mowingAmplitude": 0.02,
+      "mowingStripeWidthCm": 95,
+      "displacement": false,
+      "albedoContrast": 0.3,
+      "scalePolicy": "artist-scaled fine mown thatch; source approximate tile140cm retained in provider metadata"
+    },
+    "blade": {
+      "shading": "opaque TwoSidedFoliage",
+      "uv": "native UV0.y root0 to tip1",
+      "rootLinear": [
+        0.025,
+        0.05,
+        0.008
+      ],
+      "tipLinear": [
+        0.06724,
+        0.11398,
+        0.02296
+      ],
+      "specular": 0.28,
+      "roughnessRange": [
+        0.795,
+        0.895
+      ],
+      "transmissionColorScale": 0.22,
+      "opacity": 0.5,
+      "macroScalesCm": [
+        180,
+        550
+      ],
+      "mowingAmplitude": 0.02,
+      "maskedCards": false,
+      "windWPO": false,
+      "uvVariation": "native UV1.xy independent deterministic brightness/hue seeds0..1, constant across each blade and retained across LODs",
+      "perBladeBrightnessRange": [
+        0.88,
+        1.12
+      ],
+      "perBladeHueTintEndpoints": [
+        [
+          0.94,
+          1.03,
+          0.96
+        ],
+        [
+          1.07,
+          0.97,
+          1.02
+        ]
+      ],
+      "perPatchBrightnessRange": [
+        0.96,
+        1.04
+      ]
+    }
+  },
+  "sourceUrls": [
+    "https://ambientcg.com/view?id=Grass004",
+    "https://docs.ambientcg.com/license/"
+  ],
+  "sourceCheckedAt": "2026-09-23",
+  "comparison": "Grass004 selected for continuous maintained turf; local leafy_grass and sparse_grass rejected because leaves and bare soil conflict with mown lawn."
+}

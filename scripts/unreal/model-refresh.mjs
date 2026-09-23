@@ -92,7 +92,7 @@ async function binaryUUID(path) {
   if (matches.length !== 1 || matches[0][2] !== 'arm64') throw Error('Expected one native arm64 linked executable: ' + path);
   return matches[0][1];
 }
-async function verifyImport({ baselineOnly = false } = {}) {
+async function verifyImport({ baselineOnly = false, excludeRural = false } = {}) {
   const imported = await read(resolve(output, 'model-refresh-import-report.json'));
   const host = await read(resolve(output, 'model-import-process.json'));
   await pinnedFiles({ [resolve(output, 'model-refresh-import-report.json')]: host.reportSha256,
@@ -102,6 +102,8 @@ async function verifyImport({ baselineOnly = false } = {}) {
     || Date.parse(imported.generatedAt) < Date.parse(process.startedAt)
     || Date.parse(imported.generatedAt) > Date.parse(process.endedAt)) throw Error('Current model has no successful native import process');
   let final = imported;
+  let photoreal = null;
+  let rural = null;
   const profile = await read(resolve(output, 'profile.json'));
   const enhancementInputs = {};
   if (profile.archvizGame && !baselineOnly) {
@@ -118,6 +120,38 @@ async function verifyImport({ baselineOnly = false } = {}) {
       ...Object.values({ inputs: enhanced.inputFiles, pipeline: enhanced.pipelineFiles, receipts: enhanced.receiptPins })
         .map(pins => Object.fromEntries(Object.entries(pins ?? {}).map(([path, hash]) => [resolve(root, path), hash]))));
     final = enhanced;
+  }
+  const archviz = final === imported ? null : final;
+  if (!baselineOnly && await access(resolve(output, 'photoreal-import-report.json')).then(() => true, () => false)) {
+    const file = resolve(output, 'photoreal-import-report.json');
+    photoreal = await read(file);
+    const host = await read(resolve(output, 'photoreal-import-process.json'));
+    const native = await read(host.processFile);
+    if (photoreal.status !== 'photoreal-import-validated' || native.code !== 0
+      || photoreal.baselineReportSha256 !== sha(await readFile(resolve(output, 'archviz-import-report.json')))
+      || Date.parse(photoreal.generatedAt) < Date.parse(native.startedAt)
+      || Date.parse(photoreal.generatedAt) > Date.parse(native.endedAt))
+      throw Error('Photoreal enhancement has no successful matching native process');
+    Object.assign(enhancementInputs, { [file]: host.reportSha256, [host.processFile]: host.processFileSha256 },
+      ...[photoreal.inputFiles, photoreal.pipelineFiles].map(pins => Object.fromEntries(
+        Object.entries(pins).map(([path, hash]) => [resolve(root, path), hash]))));
+    final = photoreal;
+  }
+  if (!baselineOnly && !excludeRural && await access(resolve(output, 'rural-import-report.json')).then(() => true, () => false)) {
+    const file = resolve(output, 'rural-import-report.json');
+    rural = await read(file);
+    const host = await read(resolve(output, 'rural-import-process.json'));
+    const native = await read(host.processFile);
+    if (!photoreal || rural.status !== 'rural-import-validated' || native.code !== 0
+      || !Number.isFinite(Date.parse(rural.generatedAt))
+      || rural.baselineReportSha256 !== sha(await readFile(resolve(output, 'photoreal-import-report.json')))
+      || Date.parse(rural.generatedAt) < Date.parse(native.startedAt)
+      || Date.parse(rural.generatedAt) > Date.parse(native.endedAt))
+      throw Error('Rural context has no successful matching native process');
+    Object.assign(enhancementInputs, { [file]: host.reportSha256, [host.processFile]: host.processFileSha256 },
+      ...[rural.inputFiles, rural.pipelineFiles].map(pins => Object.fromEntries(
+        Object.entries(pins).map(([path, hash]) => [resolve(root, path), hash]))));
+    final = rural;
   }
   const inputs = {
     ...enhancementInputs,
@@ -145,9 +179,18 @@ async function verifyImport({ baselineOnly = false } = {}) {
   await pinnedFiles(inputs);
   verifyModelRefresh(scene);
   const expectedViews = await modelViewpoints(scene);
+  if (rural) {
+    const rotation = rural.sun?.rotation;
+    if (!Array.isArray(rotation) || rotation.length !== 3 || !rotation.every(Number.isFinite)
+      || Math.abs(rotation[0] + 48) > .001 || Math.abs(rural.sun.sourceAngleDegrees - .75) > .00001)
+      throw Error('Rural summer-lighting contract differs');
+    expectedViews.sun.dayRotationDegrees = rotation;
+    if (rural.stagedViewpointsSha256 !== sha(await readFile(resolve(project, 'Content/Data/viewpoints.json'))))
+      throw Error('Rural runtime sun data changed');
+  }
   if (JSON.stringify(await read(resolve(project, 'Content/Data/viewpoints.json'))) !== JSON.stringify(expectedViews))
     throw Error('Staged viewpoints differ from the current source-derived safe arrival');
-  return { imported: final === imported ? imported : { ...imported, archviz: final }, inputs };
+  return { imported: { ...imported, ...(archviz ? { archviz } : {}), ...(photoreal ? { photoreal } : {}), ...(rural ? { rural } : {}) }, inputs };
 }
 async function bindImportProcess(logName) {
   const reportFile = resolve(output, 'model-refresh-import-report.json');
@@ -193,6 +236,15 @@ if (action === 'prepare') {
     const ini = (await readFile(file, 'utf8')).replace('[BreziFloorCaustics]\nMode=transport-continuous', '').replace('r.Brezi.FloorCaustics=1\n', '');
     await writeFile(file, ini);
   }
+  const doubleGlass = process.env.BREZI_DOUBLE_GLASS === '1';
+  if (doubleGlass) {
+    const file = resolve(project, 'Config/DefaultEngine.ini');
+    const ini = await readFile(file, 'utf8');
+    if (!ini.includes('[/Script/Engine.RendererSettings]') || /^r\.AllowGlobalClipPlane=/m.test(ini))
+      throw Error('Inspect global clip-plane configuration before preparing double glass');
+    await writeFile(file, ini.replace('[/Script/Engine.RendererSettings]',
+      '[/Script/Engine.RendererSettings]\nr.AllowGlobalClipPlane=True'));
+  }
   // The interactive profile starts within the measured 1080p GPU budget.
   // Existing deliberate user settings still take precedence when opening the app directly.
   const settings = resolve(project, 'Config/DefaultGameUserSettings.ini');
@@ -205,6 +257,7 @@ if (action === 'prepare') {
     status: 'current-model-project-prepared', project, engine, geometry,
     scope: 'Current C/B/B geometry, source materials and navigation. Historical caustics and look-dev packages remain separate.',
     archvizGame: process.env.BREZI_ARCHVIZ_GAME === '1',
+    doubleGlass,
     nativeBuildVerified: false,
   });
   if (process.env.BREZI_ARCHVIZ_GAME === '1') {
@@ -325,6 +378,45 @@ if (action === 'prepare') {
   await save(resolve(output, 'archviz-import-process.json'), {
     processFile, processFileSha256: sha(await readFile(processFile)), reportSha256: sha(await readFile(reportFile)),
   });
+} else if (action === 'photoreal') {
+  await requireIdleApp();
+  await checkProfile();
+  const profile = await read(resolve(output, 'profile.json'));
+  await run(resolve(engine, 'Engine/Binaries/Mac/UnrealEditor-Cmd'), [descriptor, '-run=pythonscript',
+    '-script=' + resolve(root, 'scripts/unreal/photoreal-import.py'), '-unattended', '-nosplash', '-nullrhi'],
+  'photoreal-import.log', { BREZI_GEOMETRY: geometry, BREZI_PHOTOREAL_OUTPUT: output,
+    BREZI_PHOTOREAL_DOUBLE_GLASS: profile.doubleGlass ? '1' : '0' });
+  const reportFile = resolve(output, 'photoreal-import-report.json');
+  const processFile = resolve(output, 'photoreal-import.log.json');
+  const report = await read(reportFile), native = await read(processFile);
+  const generated = Date.parse(report.generatedAt), started = Date.parse(report.startedAt);
+  if (report.status !== 'photoreal-import-validated' || !Number.isFinite(generated) || !Number.isFinite(started)
+    || started < Date.parse(native.startedAt) || generated < started || generated > Date.parse(native.endedAt)
+    || report.baselineReportSha256 !== sha(await readFile(resolve(output, 'archviz-import-report.json'))))
+    throw Error('Photoreal native enhancement failed or returned a stale report');
+  await save(resolve(output, 'photoreal-import-process.json'), {
+    processFile, processFileSha256: sha(await readFile(processFile)), reportSha256: sha(await readFile(reportFile)),
+  });
+} else if (action === 'rural') {
+  await requireIdleApp();
+  await checkProfile();
+  await verifyImport({ excludeRural: true });
+  await run(resolve(engine, 'Engine/Binaries/Mac/UnrealEditor-Cmd'), [descriptor, '-run=pythonscript',
+    '-script=' + resolve(root, 'scripts/unreal/rural-import.py'), '-unattended', '-nosplash', '-nullrhi'],
+  'rural-import.log', { BREZI_GEOMETRY: geometry, BREZI_RURAL_OUTPUT: output });
+  const reportFile = resolve(output, 'rural-import-report.json');
+  const processFile = resolve(output, 'rural-import.log.json');
+  const report = await read(reportFile), native = await read(processFile);
+  if (report.status !== 'rural-import-validated'
+    || !Number.isFinite(Date.parse(report.startedAt)) || !Number.isFinite(Date.parse(report.generatedAt))
+    || report.baselineReportSha256 !== sha(await readFile(resolve(output, 'photoreal-import-report.json')))
+    || Date.parse(report.startedAt) < Date.parse(native.startedAt)
+    || Date.parse(report.generatedAt) < Date.parse(report.startedAt)
+    || Date.parse(report.generatedAt) > Date.parse(native.endedAt))
+    throw Error('Rural native enhancement failed or returned a stale report');
+  await save(resolve(output, 'rural-import-process.json'), {
+    processFile, processFileSha256: sha(await readFile(processFile)), reportSha256: sha(await readFile(reportFile)),
+  });
 } else if (action === 'materials') {
   await requireIdleApp();
   await checkProfile();
@@ -363,7 +455,9 @@ if (action === 'prepare') {
     'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
     'scripts/unreal/archviz-room-viewpoints.mjs', 'scripts/unreal/walkthrough-contract.mjs'];
   const receiptFiles = ['model-refresh-import-report.json', 'model-import-process.json', 'model-game-build.json', 'profile.json',
-    ...(imported.archviz ? ['archviz-import-report.json', 'archviz-import-process.json'] : [])];
+    ...(imported.archviz ? ['archviz-import-report.json', 'archviz-import-process.json'] : []),
+    ...(imported.photoreal ? ['photoreal-import-report.json', 'photoreal-import-process.json'] : []),
+    ...(imported.rural ? ['rural-import-report.json', 'rural-import-process.json'] : [])];
   const inputs = { ...authoring, ...importInputs, ...gameInputs,
     ...Object.fromEntries(await Promise.all([...helpers.map(path => resolve(root, path)), ...receiptFiles.map(path => resolve(output, path))]
       .map(async path => [path, sha(await readFile(path))]))),
@@ -397,6 +491,10 @@ if (action === 'prepare') {
     archviz: imported.archviz ? { importReportSha256: sha(await readFile(resolve(output, 'archviz-import-report.json'))),
       lightingStatus: imported.archviz.archvizLighting.status, materialStatus: imported.archviz.archvizMaterials.status,
       avatar: imported.archviz.avatar.assets, avatarReadback: imported.archviz.avatarReadback } : null,
+    photoreal: imported.photoreal ? { importReportSha256: sha(await readFile(resolve(output, 'photoreal-import-report.json'))),
+      status: imported.photoreal.status, nativeRenderedVerified: false } : null,
+    rural: imported.rural ? { importReportSha256: sha(await readFile(resolve(output, 'rural-import-report.json'))),
+      status: imported.rural.status, nativeRenderedVerified: false } : null,
     inputs, buildProductsBeforePackaging, finalizedBuildProducts, linkedUUID,
     bundle, startupEntry, cook, retainedArchive, stagingEnvironment, runtimeVisualVerified: false,
     scope: 'Updated architectural model and source materials. Historical custom pool caustics are not part of this package.',
@@ -409,4 +507,4 @@ if (action === 'prepare') {
   if (!report.viewpoints.includes(view)) throw Error('Unknown model viewpoint: ' + view);
   await run('/usr/bin/open', ['-n', report.appPath, '--args', '-windowed', '-ResX=1920', '-ResY=1080', '-BreziOutput=retina',
     ...(requestedView || !report.gameplay ? ['-BreziView=' + view] : ['-BreziGameplay']), '-BreziRenderProfile=performance'], 'open.log');
-} else throw Error('Use prepare | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | normal-refresh | materials | viewpoints | package | open [view]');
+} else throw Error('Use prepare | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | photoreal | rural | normal-refresh | materials | viewpoints | package | open [view]');

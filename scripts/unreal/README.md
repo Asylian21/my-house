@@ -9,12 +9,18 @@ doménový katastrálny záznam a provenance z `twin-domain.ts`.
 ## Aktuálna prechádzka C / B / B
 
 `npm run unreal:open` otvorí vizuálne overený balík
-`output/unreal/archviz-game-20260922` podľa `output/unreal/model-refresh-current.json`.
+`output/unreal/rural-context-20260923-r4` podľa `output/unreal/model-refresh-current.json`.
 Obsahuje aktuálnu kuchyňu a okná, animovanú postavu, chôdzu všetkými miestnosťami,
 otváranie dverí, kompaktný herný panel a menu s miestnosťami, atmosférou a nastaveniami ovládania,
 zoom, vnútorné svetlá a detaily materiálov.
 [Nové herné rozhranie a jeho overenie](../../docs/unreal-game-ui.md),
 [archviz základ a prehliadka domu](../../docs/unreal-archviz-game.md).
+[Materiály, modelové detaily a natívne 4K zábery](../../docs/unreal-photoreal.md)
+opisujú materiálový základ, dvojitý odraz skla a hranice jeho optickej aproximácie.
+[Trávnik dvora a jeho 4K overenie](../../docs/unreal-lawn.md) pridáva hustý priestorový
+porast a lokálnu opravu tieňov drevených terás.
+[Cesta a krajina parcely 6012/26](../../docs/unreal-rural-context.md) opisuje
+samostatný krok `rural` s dlažbou, surovou krajnicou a vetrolamom podľa fotografií.
 Predchádzajúce exporty a samostatná štúdia bazénovej kaustiky zostávajú zachované.
 
 ## Kontinuálny režim caustics

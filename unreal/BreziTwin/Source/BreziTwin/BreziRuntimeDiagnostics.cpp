@@ -4,11 +4,13 @@
 #include "Misc/App.h"
 #include "BreziPawn.h"
 #include "BreziDoors.h"
+#include "BreziDoubleGlassActor.h"
 #include "BreziExteriorLighting.h"
 #include "BreziGameViewportClient.h"
 #include "Dom/JsonObject.h"
 #include "DynamicRHI.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/PlayerController.h"
 #include "GPUProfiler.h"
@@ -750,6 +752,10 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
     const ABreziPawn* Pawn = PC ? Cast<ABreziPawn>(PC->GetPawn()) : nullptr;
     Report->SetStringField(TEXT("activeView"), Pawn ? Pawn->GetActiveViewId() : TEXT("unavailable"));
     if (Pawn) Report->SetObjectField(TEXT("walking"), Pawn->GetWalkingDiagnostics());
+    TArray<TSharedPtr<FJsonValue>> DoubleGlass;
+    for (TActorIterator<ABreziDoubleGlassActor> It(GetWorld()); It; ++It)
+        DoubleGlass.Add(MakeShared<FJsonValueObject>(It->Diagnostics()));
+    Report->SetArrayField(TEXT("doubleGlass"), DoubleGlass);
     Report->SetStringField(TEXT("lighting"), FParse::Param(FCommandLine::Get(), TEXT("BreziNight")) ? TEXT("night-study") : TEXT("imported-daylight"));
     Report->SetNumberField(TEXT("warmupFrames"), WarmupFrames);
     Report->SetNumberField(TEXT("requestedBenchmarkFrames"), BenchmarkFrames);
