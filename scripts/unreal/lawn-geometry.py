@@ -17,6 +17,7 @@ from pathlib import Path
 import random
 import struct
 import subprocess
+from performance_scene_policy import DETAIL_FLAGS, LAWN_CULL_CM, apply_detail, detail_policy, verify_detail
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = 'scripts/unreal/lawn-geometry.py'
@@ -370,7 +371,7 @@ def placements(scene, faces, boundary, exclusions, prototypes, spacing=SPACING_M
                       'extraClearanceMm': 1., 'maxWindDisplacementMm': 0., 'sourceTriangleCount': len(faces),
                       'rootElevationUnrealCm': -6.5, 'wpoAllowed': False},
             'allInstancesTriangleBudgetByLod': [count*t for t in LOD_TRIANGLES],
-            'cullDistancesCm': [2500, 4000], 'lodScreenSizes': SCREENS}
+            'cullDistancesCm': list(LAWN_CULL_CM), 'lodScreenSizes': SCREENS}
 
 
 def coverage_study(placement, prototypes, baseline):
@@ -457,7 +458,7 @@ def build(geometry, output):
     files = {artifact_key(p): sha(p) for p in [geometry/'scene.json', geometry/'dom-mm.obj',
              output/'lawn-prototypes.glb', output/'placement.json', output/'prototypes.json', output/'generator-source.py', output/'coverage-study.json']}
     files.update(study['baselineInputs'])
-    pipeline = {str(p.relative_to(ROOT)): sha(p) for p in [Path(__file__).resolve(), ROOT/'scripts/unreal/vegetation.py',
+    pipeline = {str(p.relative_to(ROOT)): sha(p) for p in [Path(__file__).resolve(), ROOT/'scripts/unreal/vegetation.py', ROOT/'scripts/unreal/performance_scene_policy.py',
                 ROOT/'unreal/BreziTwin/Source/BreziTwin/BreziVegetationPatch.cpp', ROOT/'unreal/BreziTwin/Source/BreziTwin/BreziVegetationPatch.h']}
     detail_screens = []
     for p in prototypes:
@@ -714,11 +715,8 @@ def apply_geometry(output, geometry, bladeMaterialPath):
         c.set_editor_property('can_ever_affect_navigation', False)
         c.set_editor_property('generate_overlap_events', False)
         c.set_component_tick_enabled(False)
-        c.set_cull_distances(*plan['cullDistancesCm'])
         c.set_editor_property('component_tags', [u.Name(TAG)])
-        c.set_editor_property('cast_shadow', True)
-        c.set_editor_property('visible_in_ray_tracing', True)
-        c.set_editor_property('affect_distance_field_lighting', False)
+        apply_detail(c, detail_policy([TAG], group['id']))
         indices = list(c.add_instances([make_transform(u, row) for row in group['instances']], True, False, False))
         require(indices == list(range(len(group['instances']))), 'Lawn HISM insertion order differs')
         actor.synchronize_instance_bounds()
@@ -756,7 +754,7 @@ def verify_geometry(output, geometry, report):
                 and not c.get_editor_property('can_ever_affect_navigation') and not c.get_editor_property('generate_overlap_events'), 'Lawn collision/navigation changed')
         require(c.is_visible() and not c.get_editor_property('hidden_in_game') and not actor.is_actor_tick_enabled()
                 and not c.is_component_tick_enabled(), 'Lawn render/tick state differs')
-        require(c.get_editor_property('instance_start_cull_distance') == 2500 and c.get_editor_property('instance_end_cull_distance') == 4000, 'Lawn cull distances differ')
+        verify_detail(c, detail_policy([TAG], group['id']))
         identity = native_transform(u.Transform())
         require(native_transform(actor.get_actor_transform()) == identity and native_transform(c.get_world_transform()) == identity, 'Lawn world transform differs')
         require(c.get_instance_count() == len(group['instances']), 'Native lawn instance count differs')
@@ -784,7 +782,7 @@ def verify_geometry(output, geometry, report):
     report.update(savedReloaded=True, nativeImportVerified=True, instanceCount=count, hismComponents=4,
                   maximumPositionErrorCm=max_position, maximumScaleError=max_scale, maximumRotationError=max_rotation,
                   maximumBoundsErrorCm=max_bounds, sourceUnchanged=True, collision='NoCollision', lodTriangles=LOD_TRIANGLES,
-                  lodScreenSizes=SCREENS, cullDistancesCm=[2500, 4000], internalHismTreeBytesRead=False)
+                  lodScreenSizes=SCREENS, cullDistancesCm=list(LAWN_CULL_CM), renderFlags=DETAIL_FLAGS, internalHismTreeBytesRead=False)
     return report
 
 

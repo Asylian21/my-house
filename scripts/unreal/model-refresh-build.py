@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[2]
 CLANG = Path('/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++')
 XCODE = Path('/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild')
+STRIP = CLANG.parent / 'strip'
+GAME_CONFIGURATIONS = ('Development', 'Shipping')
 
 
 def need(condition, message):
@@ -54,6 +56,36 @@ def within(path, parent):
     return Path(path).resolve().is_relative_to(parent)
 
 
+def game_configuration(output):
+    profile = json.loads(regular(output / 'profile.json').read_text())
+    configuration = profile.get('gameConfiguration', 'Development')
+    need(configuration in GAME_CONFIGURATIONS,
+         'gameConfiguration must be Development or Shipping; the installed Mac engine has no Test Game configuration')
+    return configuration
+
+
+def target_receipt_path(project, configuration):
+    need(configuration in GAME_CONFIGURATIONS, 'Unsupported Game configuration')
+    # UBT TargetReceipt.GetDefaultPath keeps configuration decoration even when
+    # the isolated Mac Game target deliberately uses a stable executable name.
+    name = 'BreziTwin' if configuration == 'Development' else 'BreziTwin-Mac-' + configuration
+    return project / 'Binaries/Mac' / (name + '.target')
+
+
+def check_installed_configuration(engine, configuration):
+    if not (engine / 'Engine/Build/InstalledBuild.txt').is_file():
+        return
+    settings = regular(engine / 'Engine/Config/BaseEngine.ini').read_text()
+    entries = re.findall(r'^\+InstalledPlatformConfigurations=(.+)$', settings, re.MULTILINE)
+    available = [entry for entry in entries if all(token in entry for token in
+                 ('PlatformName="Mac"', 'PlatformType="Game"', 'Architecture="arm64"',
+                  'Configuration="' + configuration + '"'))]
+    need(available, 'Installed engine does not advertise Mac arm64 Game ' + configuration)
+    receipts = [re.search(r'RequiredFile="([^"]+)"', entry) for entry in available]
+    need(all(match and (engine / match.group(1)).is_file() for match in receipts),
+         'Installed engine Game configuration receipt is missing: ' + configuration)
+
+
 def source_pins(project):
     files = [regular(project / 'BreziTwin.uproject')]
     counter = project / 'Build/Mac/BreziTwin.PackageVersionCounter'
@@ -65,12 +97,14 @@ def source_pins(project):
     return {str(path): sha(path) for path in files}
 
 
-def target_build_product_hashes(project, target):
+def target_build_product_hashes(project, target, configuration='Development'):
     """Pin the finalized Xcode executable and every native target build product.
 
     UAT stages the executable inside the .app, after Xcode strip/sign processing;
     the raw link output is a different file and cannot stand in for that payload.
     """
+    need(target.get('TargetName') == 'BreziTwin' and target.get('Platform') == 'Mac'
+         and target.get('Configuration') == configuration, 'Generated target receipt identity differs')
     products = target.get('BuildProducts')
     need(isinstance(products, list) and products, 'Target receipt has no native build products')
     result, executables = {}, []
@@ -97,6 +131,8 @@ def target_build_product_hashes(project, target):
 def prepare_plan(output, engine, graph):
     project = output / 'Project/BreziTwin'
     need(within(output, ROOT / 'output/unreal') and output != ROOT / 'output/unreal', 'Use an isolated output/unreal directory')
+    configuration = game_configuration(output)
+    check_installed_configuration(engine, configuration)
     regular(project / 'BreziTwin.uproject')
     descriptor = json.loads((project / 'BreziTwin.uproject').read_text())
     need(not any(p.get('Name') == 'BreziCausticsProbe' and p.get('Enabled') for p in descriptor.get('Plugins', [])),
@@ -112,8 +148,8 @@ def prepare_plan(output, engine, graph):
     ubt = engine / 'Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll'
     version_script = engine / 'Engine/Build/BatchFiles/Mac/UpdateVersionAfterBuild.sh'
     cwd = engine / 'Engine/Source'
-    inputs = {str(regular(graph)), str(regular(Path(__file__).resolve()))}
-    phases = {'compile': [], 'copy': [], 'link': [], 'xcode': [], 'version': [], 'metadata': []}
+    inputs = {str(regular(graph)), str(regular(Path(__file__).resolve())), str(regular(output / 'profile.json'))}
+    phases = {'compile': [], 'copy': [], 'link': [], 'xcode': [], 'version': [], 'strip': [], 'metadata': []}
     producers = {}
     for action in actions:
         need(Path(action['WorkingDirectory']).resolve() == cwd, 'Unexpected action working directory')
@@ -156,12 +192,36 @@ def prepare_plan(output, engine, graph):
                 for value in values:
                     need(within(value, project / 'Intermediate'), 'Native metadata belongs to another project')
                     inputs.add(str(regular(Path(value))))
+            metadata_path = Path(next(v[7:] for v in args if v.startswith('-Input=')))
+            metadata = json.loads(metadata_path.read_text())
             if phase == 'metadata':
-                metadata_path = Path(next(v[7:] for v in args if v.startswith('-Input=')))
-                metadata = json.loads(metadata_path.read_text())
                 need(metadata['ProjectFile'] == str(project / 'BreziTwin.uproject')
-                     and metadata['ReceiptFile'] == str(project / 'Binaries/Mac/BreziTwin.target'), 'Metadata target differs')
+                     and metadata['ReceiptFile'] == str(target_receipt_path(project, configuration)), 'Metadata target differs')
+                target = metadata.get('Receipt', {})
+                need(target.get('TargetName') == 'BreziTwin' and target.get('Platform') == 'Mac'
+                     and target.get('Configuration') == configuration,
+                     'Metadata configuration differs from the selected Game profile')
+            else:
+                need(metadata.get('ProjectFile') == str(project / 'BreziTwin.uproject')
+                     and metadata.get('Platform') == 'Mac' and metadata.get('TargetName') == 'BreziTwin'
+                     and metadata.get('Configuration') == configuration
+                     and metadata.get('StubOutputPath') == str(project / 'Binaries/Mac/BreziTwin'),
+                     'Xcode postbuild configuration or stable Game executable differs')
             inputs.add(str(regular(ubt)))
+        elif command == Path('/bin/sh') and len(args) == 2 and args[0] == '-c' and action['Type'] == 'CreateAppBundle':
+            # UE5.8 AppleToolChain adds this for Shipping. -createstripflagfile
+            # gives the action a real output/dependency so it survives graph export.
+            # -S removes debug symbols; do not replace it with global-symbol strip
+            # flags because the package gate verifies _BreziMain and original _main.
+            strip_args = shlex.split(args[1])
+            raw = project / 'Binaries/Mac/BreziTwin'
+            marker = project / 'Intermediate/Build/Mac/arm64/BreziTwin' / configuration / 'BreziTwin.stripped'
+            need(configuration == 'Shipping'
+                 and strip_args == [str(STRIP), str(raw), '-S', '&&', 'touch', str(marker)]
+                 and outputs == [str(marker)] and action.get('DeleteItems', []) in ([], outputs),
+                 'Unreviewed Shipping strip action; export with -createstripflagfile and standard -S only')
+            inputs.add(str(regular(STRIP)))
+            phase = 'strip'
         elif command == Path('/bin/sh') and len(args) == 2 and args[0] == '-c' and action['Type'] == 'BuildProject':
             copy_args = shlex.split(args[1])
             need(len(copy_args) == 4 and copy_args[:2] == ['cp', '-f'], 'Unreviewed runtime dependency copy')
@@ -184,12 +244,14 @@ def prepare_plan(output, engine, graph):
         phases[phase].append(action)
     need(phases['compile'] and all(len(phases[p]) == 1 for p in ('link', 'xcode', 'version', 'metadata')),
          'Expected all project compiles and exactly one link/Xcode/version/metadata action')
+    need(len(phases['strip']) == (1 if configuration == 'Shipping' else 0),
+         'Shipping requires exactly one standard strip action; export with -createstripflagfile')
     # Every compiled project source must participate in the final link closure.
     ids = {a['Id'] for a in actions}
     for action in actions:
         need(set(action.get('PrerequisiteActions', [])).issubset(ids), 'Graph has missing dependencies')
     order, completed = [], set()
-    for group in ('compile', 'copy', 'link', 'xcode', 'version', 'metadata'):
+    for group in ('compile', 'copy', 'link', 'xcode', 'version', 'strip', 'metadata'):
         pending = list(phases[group])
         while pending:
             ready = next((a for a in pending if set(a.get('PrerequisiteActions', [])).issubset(completed)), None)
@@ -205,7 +267,7 @@ def prepare_plan(output, engine, graph):
     inputs.add(str(regular(workspace / 'contents.xcworkspacedata')))
     pins = source_pins(project)
     pins.update({p: sha(p) for p in sorted(inputs)})
-    return project, cwd, dotnet, workspace, order, pins
+    return project, cwd, dotnet, workspace, order, pins, configuration
 
 
 def run_phase(argv, cwd, env, log_path, timeout):
@@ -230,6 +292,21 @@ def run_phase(argv, cwd, env, log_path, timeout):
     return row
 
 
+def xcode_arguments(workspace, run, configuration):
+    need(configuration in GAME_CONFIGURATIONS, 'Unsupported Xcode Game configuration')
+    # UE's Xcode generator creates all configurations from Development rules,
+    # whereas the actual Shipping UBT target uses its own undecorated name.
+    # Fixed build settings align the standard copy/sign phase with that receipt;
+    # never rewrite the generated project or rename/copy an unverified executable.
+    # Keep these settings aligned with model-refresh.mjs UAT packaging options.
+    stable_names = ['UE_UBT_BINARY_SUBPATH=BreziTwin', 'UE_MAC_EXECUTABLE_NAME=BreziTwin',
+                    'PRODUCT_NAME=BreziTwin', 'EXECUTABLE_NAME=BreziTwin'] if configuration == 'Shipping' else []
+    return [str(XCODE), 'build', '-workspace', str(workspace), '-scheme', 'BreziTwin',
+            '-configuration', configuration, '-destination', 'generic/platform=macOS',
+            'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION=YES', 'UE_XCODE_BUILD_MODE=PostBuildSync',
+            *stable_names, '-hideShellScriptEnvironment', '-derivedDataPath', str(run / 'derived-data')]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=Path(os.environ.get('BREZI_MODEL_OUTPUT', ROOT / 'output/unreal/model-refresh-20260922')))
@@ -240,9 +317,9 @@ def main():
     args = parser.parse_args()
     output, engine = args.output.resolve(), args.engine.resolve()
     graph = (args.graph or output / 'game-actions.json').resolve()
-    project, cwd, dotnet, workspace, order, pins = prepare_plan(output, engine, graph)
+    project, cwd, dotnet, workspace, order, pins, configuration = prepare_plan(output, engine, graph)
     if args.check:
-        print(json.dumps({'status': 'model-game-graph-preflight-validated', 'actions': len(order),
+        print(json.dumps({'status': 'model-game-graph-preflight-validated', 'gameConfiguration': configuration, 'actions': len(order),
                           'compiles': sum(group == 'compile' for group, _ in order), 'pinnedFiles': len(pins), 'nativeExecuted': False}))
         return 0
     need(args.phase_timeout > 0, 'Invalid phase timeout')
@@ -250,8 +327,9 @@ def main():
     (run / 'tmp').mkdir(parents=True)
     report_path = output / 'model-game-build.json'
     report = {'schemaVersion': 1, 'status': 'model-game-build-running', 'startedAt': utc(), 'project': str(project),
+              'gameConfiguration': configuration,
               'engine': str(engine), 'graph': str(graph), 'graphSha256': sha(graph), 'sourcePins': pins, 'phases': [],
-              'scope': 'Every exported Game compile/link action; external equivalent Xcode finalization; generated version and metadata. No native runtime or rendered quality acceptance.',
+              'scope': 'Every exported Game compile/link action; external equivalent Xcode finalization; generated version and metadata; standard debug-symbol strip for Shipping. No native runtime or rendered quality acceptance.',
               'replacedAction': 'ApplePostBuildSync only', 'runDirectory': str(run)}
     save(report_path, report); save(run / 'inputs-before.json', pins)
     env = os.environ.copy()
@@ -263,10 +341,7 @@ def main():
         for index, (group, action) in enumerate(order):
             argv = [action['CommandPath'], *shlex.split(action['CommandArguments'])]
             if group == 'xcode':
-                argv = [str(XCODE), 'build', '-workspace', str(workspace), '-scheme', 'BreziTwin',
-                        '-configuration', 'Development', '-destination', 'generic/platform=macOS',
-                        'CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION=YES', 'UE_XCODE_BUILD_MODE=PostBuildSync',
-                        '-hideShellScriptEnvironment', '-derivedDataPath', str(run / 'derived-data')]
+                argv = xcode_arguments(workspace, run, configuration)
             print(f'[{index + 1}/{len(order)}] {group}: {action.get("StatusDescription", action["Id"])}', flush=True)
             phase = run_phase(argv, cwd, env, run / f'{index:02d}-{group}.log', args.phase_timeout)
             phase.update(actionId=action['Id'], phase=group)
@@ -277,8 +352,16 @@ def main():
             if group == 'xcode':
                 need('** BUILD SUCCEEDED **' in log, 'External Xcode success footer missing')
             for path in action['ProducedItems']:
-                need(Path(path).is_file() and Path(path).stat().st_size > 0, 'Native action output missing: ' + path)
+                # The validated Shipping touch marker is an intentional empty file.
+                need(Path(path).is_file() and (group == 'strip' or Path(path).stat().st_size > 0),
+                     'Native action output missing: ' + path)
             phase['outputHashes'] = {p: sha(p) for p in action['ProducedItems']}
+            if group == 'strip':
+                raw = regular(project / 'Binaries/Mac/BreziTwin')
+                need(raw.stat().st_size > 0, 'Shipping strip removed the linked executable')
+                # strip also mutates the raw executable in place; its marker alone
+                # is insufficient evidence of the action's actual build product.
+                phase['inPlaceOutputHashes'] = {str(raw): sha(raw)}
             save(report_path, report)
         current = source_pins(project)
         expected_sources = {p: h for p, h in pins.items() if p in current or any(within(p, project / n) for n in ('Source', 'Config', 'Build')) or p == str(project / 'BreziTwin.uproject')}
@@ -287,11 +370,9 @@ def main():
         save(run / 'inputs-after.json', after)
         need(after == pins, 'Pinned source/graph/response inputs changed during build')
         raw = project / 'Binaries/Mac/BreziTwin'
-        receipt = project / 'Binaries/Mac/BreziTwin.target'
+        receipt = target_receipt_path(project, configuration)
         target = json.loads(receipt.read_text())
-        need(target.get('TargetName') == 'BreziTwin' and target.get('Platform') == 'Mac'
-             and target.get('Configuration') == 'Development', 'Generated target receipt identity differs')
-        products = target_build_product_hashes(project, target)
+        products = target_build_product_hashes(project, target, configuration)
         app_executable = project / 'Binaries/Mac/BreziTwin.app/Contents/MacOS/BreziTwin'
         report.update(status='model-game-build-validated', endedAt=utc(), rawExecutable=str(raw),
                       rawExecutableSha256=sha(raw), targetReceipt=str(receipt), targetReceiptSha256=sha(receipt),

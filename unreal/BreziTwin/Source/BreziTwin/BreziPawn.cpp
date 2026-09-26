@@ -697,6 +697,52 @@ bool ABreziPawn::AimWalkingTraversal(const FVector& Forward)
     return true;
 }
 
+bool ABreziPawn::PrepareRealtimeStudyWalk(const TArray<FVector>& Points, const FString& SceneSha256)
+{
+    if (!FParse::Param(FCommandLine::Get(), TEXT("BreziRealtimeWalk")) || Points.Num() < 3 || Points.Num() > 32
+        || !bWalkingContractLoaded || SceneSha256 != WalkingContract.SceneSha256) return false;
+    const FBreziViewpoint* View = Viewpoints.FindByPredicate(
+        [](const FBreziViewpoint& V) { return V.Id == TEXT("interior"); });
+    if (!View || FVector::Dist2D(View->EyeCm, Points[0]) > 0.1) return false;
+    for (const FVector& Point : Points) if (Point.ContainsNaN() || FMath::Abs(Point.Z) > 0.01) return false;
+    // The single source arrival and floor/capsule entry happen before warmup.
+    if (!StartWalkingTour()) return false;
+    if (IsThirdPersonCamera()) TogglePersonCamera();
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(BreziRealtimeWalkRoute), false, this);
+    const FCollisionShape Shape = FCollisionShape::MakeCapsule(WalkingContract.CapsuleRadiusCm, WalkingContract.CapsuleHalfHeightCm);
+    const double Z = GetActorLocation().Z;
+    for (int32 Index = 0; Index < Points.Num(); ++Index)
+    {
+        const FVector Center(Points[Index].X, Points[Index].Y, Z);
+        FFindFloorResult Floor;
+        if (!WalkingMovement()->ProbeSupport(Center, WalkingContract.MaxStepCm + WalkingContract.ProbeHeadroomCm, Floor)) return false;
+        if (Index > 0)
+        {
+            FHitResult Hit;
+            const FVector Previous(Points[Index-1].X, Points[Index-1].Y, Z);
+            if (GetWorld()->SweepSingleByChannel(Hit, Previous, Center, FQuat::Identity, ECC_Pawn, Shape, Params)) return false;
+        }
+    }
+    StopRealtimeStudyWalk();
+    return true;
+}
+
+bool ABreziPawn::SetRealtimeStudyWalkTarget(const FVector& Target)
+{
+    if (!FParse::Param(FCommandLine::Get(), TEXT("BreziRealtimeWalk")) || !IsWalkingMode()
+        || bTransitioning || bNavigating || Target.ContainsNaN()) return false;
+    RealtimeStudyWalkTarget = Target;
+    bRealtimeStudyWalking = true;
+    return true;
+}
+
+void ABreziPawn::StopRealtimeStudyWalk()
+{
+    bRealtimeStudyWalking = false;
+    ClearMovementInput();
+    if (IsWalkingMode()) WalkingMovement()->StopMovementImmediately();
+}
+
 void ABreziPawn::Zoom(float Direction)
 {
     if (IsWalkingMode()) { ZoomCamera(Direction); return; }
@@ -763,7 +809,20 @@ void ABreziPawn::Tick(float DeltaSeconds)
     const bool bSystemChord = Down(EKeys::LeftControl) || Down(EKeys::RightControl)
         || (!IsFlightMode() && (Down(EKeys::LeftAlt) || Down(EKeys::RightAlt)))
         || Down(EKeys::LeftCommand) || Down(EKeys::RightCommand);
-    if (bNavigating && HasViewpoints() && !bSystemChord)
+    if (bRealtimeStudyWalking && IsWalkingMode())
+    {
+        // Actual CMC input and collision; no camera/character translation,
+        // synthetic delta, fixed timestep or time dilation in this study.
+        const FVector Delta = FVector(RealtimeStudyWalkTarget.X, RealtimeStudyWalkTarget.Y, GetActorLocation().Z) - GetActorLocation();
+        const double Distance = Delta.Size2D();
+        const FVector Direction = Delta.GetSafeNormal2D();
+        const FRotator Wanted(0, Direction.Rotation().Yaw, 0);
+        SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Wanted, DeltaSeconds, 120.0f));
+        Camera->SetRelativeRotation(FRotator(-8.0f, 0, 0));
+        WalkingMovement()->SetWalkingSpeed(FMath::Min(WalkingContract.NormalSpeed, FMath::Max(5.0, Distance * 3.0)));
+        if (WalkingMovement()->IsMovingOnGround() && Distance > 1.0) AddMovementInput(Direction, 1.0f);
+    }
+    else if (bNavigating && HasViewpoints() && !bSystemChord)
     {
         // Pointer deltas are already per frame; only keyboard look rates use elapsed time.
         const float KeyboardYaw = CameraMode != EBreziCameraMode::Orbit ? 0.0f : (Down(EKeys::Right) ? 1.0f : 0.0f) - (Down(EKeys::Left) ? 1.0f : 0.0f);

@@ -17,6 +17,7 @@ OWNER = 'scripts/unreal/glass-double-reflection.py'
 PREFIX = '/Game/Brezi/Photoreal/DoubleGlass'
 CPP = 'unreal/BreziTwin/Source/BreziTwin/BreziDoubleGlassActor.cpp'
 HEADER = 'unreal/BreziTwin/Source/BreziTwin/BreziDoubleGlassActor.h'
+POLICY = 'unreal/BreziTwin/Source/BreziTwin/BreziDoubleGlassCapturePolicy.h'
 EXPECTED_DESIGN = {'variant':'C','heatingLayout':'B','livingLayout':'B'}
 IOR = 1.52
 TINT = [.986,.994,.990]
@@ -165,12 +166,13 @@ def apply_glass(scene,geometry,baseline_material_report):
     material=build_material(u)
     report={'schemaVersion':1,'status':'authored-reload-pending','generatedAt':datetime.now(timezone.utc).isoformat(),
         'sourceManifestSha256':sha(Path(geometry)/'scene.json'),'namespace':PREFIX,
-        'pipelineFiles':{p:sha(ROOT/p) for p in [OWNER,CPP,HEADER]},
+        'pipelineFiles':{p:sha(ROOT/p) for p in [OWNER,CPP,HEADER,POLICY]},
         'recipe':{'ior':IOR,'singlePathTint':TINT,'rearWeight':'F*(1-F)^2*tint^(2/NoV)',
             'projection':'camera mirrored at actual rear source face; project camera-ray/rear-plane intersection',
             'primaryReflection':'original ThinTranslucent and Lumen unchanged','sourceThicknessMm':24,
-            'captureWidth':1024,'captureWidthMaximum':2048,'captureWarmupFrames':16,
-            'runtimeDisable':'r.Brezi.DoubleGlass 0','sceneChangeDetection':'transform/visibility/material identity/light color/intensity; explicit SceneRevision for procedural shader parameters'},
+            'captureWidth':512,'captureWidthMaximum':512,'captureWarmupFrames':2,
+            'captureUsesLumen':False,'captureBudgetPerFrame':1,'cameraSettleSeconds':.25,
+            'runtimeDisable':'r.Brezi.DoubleGlass 0','sceneChangeDetection':'event-driven world revision for doors, lighting and quality; explicit SceneRevision for additional procedural shader changes'},
         'material':{'asset':material.get_path_name(),'graph':interior.snapshot(u,material)},
         'bindings':[],'geometryWitness':witness,'primaryMaterialGraphs':{},
         'glassSourceAudit':interior.glass_source_audit(scene,geometry,selected),
@@ -178,7 +180,7 @@ def apply_glass(scene,geometry,baseline_material_report):
         'savedReloaded':False,'nativeRenderedVerified':False,
         'limitations':['Rear image uses a planar mirror at the24mm source rear face, not Snell-correct ray transport through individual IGU panes.',
             'Only the first rear-interface return is added; higher internal bounces are omitted.',
-            'Static presentation is the acceptance scope; capture warmup, memory and moving-camera latency require separate native measurement.',
+            'Rear overlay is hidden while the camera or scene changes, then settles with at most one capture per frame after 250 ms; primary glass is unchanged.',
             'Supplemental additive layers are hidden in all reflection captures to avoid feedback; original primary glazing remains visible.',
             'The source24mm shell is an optical envelope, not a measured glass/gas/low-e assembly specification.']}
     for b in selected:
@@ -192,7 +194,7 @@ def apply_glass(scene,geometry,baseline_material_report):
         a.set_actor_label('Brezi rear reflection '+b['id'])
         a.set_editor_property('tags',[u.Name('BreziDoubleGlassOwned')])
         a.set_editor_property('source_component',c);a.set_editor_property('overlay_material',material)
-        a.set_editor_property('capture_width',1024);a.set_editor_property('warmup_captures',16)
+        a.set_editor_property('capture_width',512);a.set_editor_property('warmup_captures',2)
         a.set_editor_property('maximum_distance_cm',20000.)
         overlay=a.get_editor_property('overlay')
         require(overlay.get_editor_property('static_mesh') is None
@@ -219,7 +221,7 @@ def verify_glass(scene,geometry,report):
         a=actors.get(b['actor']);c=parts[b['id']]
         require(a and a.get_editor_property('source_component')==c and a.get_editor_property('overlay_material')==material,'Saved rear actor linkage differs')
         require({str(x) for x in a.get_editor_property('tags')}=={'BreziDoubleGlassOwned'},'Rear actor must not claim raw source identity')
-        require(a.get_editor_property('capture_width')==1024 and a.get_editor_property('warmup_captures')==16,'Saved capture budget differs')
+        require(a.get_editor_property('capture_width')==512 and a.get_editor_property('warmup_captures')==2,'Saved capture budget differs')
         require(a.get_editor_property('overlay').get_collision_enabled()==u.CollisionEnabled.NO_COLLISION,'Rear overlay has collision')
         require(c.get_material(0).get_path_name()==b['primaryAsset'] and c.get_editor_property('static_mesh').get_path_name()==b['sourceMesh']
             and c.get_editor_property('static_mesh').get_material(0).get_path_name()==b['sourceMeshMaterial'],'Original source binding changed')

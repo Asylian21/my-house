@@ -108,6 +108,7 @@ def main():
               'baselineReportSha256':sha(baseline_file), 'activeDesign':scene['activeDesign'],
               'inputFiles':inputs, 'nativeRenderedVerified':False, 'sourceGeometryPreserved':True}
     report['pipelineFiles'] = {relative(p):sha(p) for p in sorted((ROOT/'scripts/unreal').glob('photoreal-*')) if p.is_file()}
+    report['pipelineFiles'][relative(ROOT/'scripts/unreal/performance_scene_policy.py')] = sha(ROOT/'scripts/unreal/performance_scene_policy.py')
     try:
         exterior = module('photoreal_exterior','photoreal-exterior.py')
         interior = module('photoreal_interior','photoreal-interior.py')

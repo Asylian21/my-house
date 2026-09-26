@@ -1,9 +1,8 @@
 #include "BreziDoubleGlassActor.h"
+#include "BreziDoubleGlassCapturePolicy.h"
 
 #include "Camera/PlayerCameraManager.h"
-#include "Components/LightComponentBase.h"
 #include "Components/SceneCaptureComponent2D.h"
-#include "Components/SkyLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -19,48 +18,14 @@ namespace
 {
 TAutoConsoleVariable<int32> CVarDoubleGlass(TEXT("r.Brezi.DoubleGlass"), 1,
     TEXT("Enable optional rear-interface capture/overlay actors. 0 gives the exact original primary-glass view."), ECVF_Default);
-// One bounded scan per world/second, shared by the 19 optional actors.
-uint32 SceneSignature(UWorld* World)
+struct FWorldCaptureState
 {
-    static TWeakObjectPtr<UWorld> CachedWorld;
-    static float LastTime = -100;
-    static uint32 Cached = 0;
-    const float Now = World->GetTimeSeconds();
-    if (CachedWorld == World && Now >= LastTime && Now - LastTime < 1.f) return Cached;
-    CachedWorld = World;
-    LastTime = Now;
-    uint32 Hash = 0;
-    for (TActorIterator<AActor> It(World); It; ++It)
-    {
-        if (It->IsA<ABreziDoubleGlassActor>()) continue;
-        TInlineComponentArray<USceneComponent*> Parts;
-        It->GetComponents(Parts);
-        for (const USceneComponent* Part : Parts)
-        {
-            const UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Part);
-            const ULightComponentBase* Light = Cast<ULightComponentBase>(Part);
-            if (!Mesh && !Light) continue;
-            Hash = HashCombine(Hash, GetTypeHash(Part->GetUniqueID()));
-            Hash = HashCombine(Hash, GetTypeHash(Part->GetComponentLocation()));
-            Hash = HashCombine(Hash, GetTypeHash(Part->GetComponentQuat()));
-            Hash = HashCombine(Hash, GetTypeHash(Part->GetComponentScale()));
-            Hash = HashCombine(Hash, Part->IsVisible() ? 1u : 0u);
-            if (Mesh)
-            {
-                Hash = HashCombine(Hash, GetTypeHash(Mesh->GetStaticMesh()));
-                for (int32 Slot = 0; Slot < Mesh->GetNumMaterials(); ++Slot)
-                    Hash = HashCombine(Hash, GetTypeHash(Mesh->GetMaterial(Slot)));
-            }
-            if (Light)
-            {
-                Hash = HashCombine(Hash, GetTypeHash(Light->Intensity));
-                Hash = HashCombine(Hash, GetTypeHash(Light->LightColor));
-            }
-        }
-    }
-    Cached = Hash;
-    return Hash;
-}
+    uint64 Revision = 0;
+    TArray<TWeakObjectPtr<ABreziDoubleGlassActor>> Actors;
+    BreziDoubleGlass::FrameBudget Budget;
+};
+TMap<TWeakObjectPtr<UWorld>, FWorldCaptureState> WorldStates;
+uint64 GlobalLastCaptureFrame = MAX_uint64;
 
 FLinearColor V(const FVector& Value) { return FLinearColor(Value.X, Value.Y, Value.Z, 0); }
 }
@@ -82,7 +47,7 @@ ABreziDoubleGlassActor::ABreziDoubleGlassActor()
     ReflectionCapture->SetupAttachment(RootComponent);
     ReflectionCapture->bCaptureEveryFrame = false;
     ReflectionCapture->bCaptureOnMovement = false;
-    ReflectionCapture->bAlwaysPersistRenderingState = true;
+    ReflectionCapture->bAlwaysPersistRenderingState = false;
     ReflectionCapture->bEnableClipPlane = true;
     ReflectionCapture->CaptureSource = ESceneCaptureSource::SCS_SceneColorHDRNoAlpha;
     ReflectionCapture->ShowFlags.SetEyeAdaptation(false);
@@ -91,9 +56,9 @@ ABreziDoubleGlassActor::ABreziDoubleGlassActor()
     ReflectionCapture->ShowFlags.SetLensFlares(false);
     ReflectionCapture->ShowFlags.SetPostProcessing(false);
     ReflectionCapture->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
-    ReflectionCapture->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
+    ReflectionCapture->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
     ReflectionCapture->PostProcessSettings.bOverride_ReflectionMethod = true;
-    ReflectionCapture->PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+    ReflectionCapture->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
     ReflectionCapture->PostProcessBlendWeight = 1;
 }
 
@@ -132,27 +97,63 @@ void ABreziDoubleGlassActor::BeginPlay()
     ReflectionCapture->HiddenComponents.Add(SourceComponent);
     for (TActorIterator<ABreziDoubleGlassActor> It(GetWorld()); It; ++It)
         ReflectionCapture->HiddenActors.Add(*It);
+    // Older cooked maps serialized the previous component defaults. Enforce the
+    // bounded runtime policy after loading rather than requiring reimport.
+    ReflectionCapture->bCaptureEveryFrame = false;
+    ReflectionCapture->bCaptureOnMovement = false;
+    ReflectionCapture->bAlwaysPersistRenderingState = false;
+    ReflectionCapture->ShowFlags.SetLumenGlobalIllumination(false);
+    ReflectionCapture->ShowFlags.SetLumenReflections(false);
+    ReflectionCapture->ShowFlags.SetTemporalAA(false);
+    ReflectionCapture->PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
+    ReflectionCapture->PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+    ReflectionCapture->PostProcessSettings.bOverride_ReflectionMethod = true;
+    ReflectionCapture->PostProcessSettings.ReflectionMethod = EReflectionMethod::None;
+    WorldStates.FindOrAdd(GetWorld()).Actors.AddUnique(this);
     bConfigured = true;
     LastSkip = TEXT("awaiting-camera");
 }
 
 void ABreziDoubleGlassActor::ReleaseCapture()
 {
+    bCaptureEligible = false;
+    bCaptured = false;
+    PendingCaptures = 0;
+    if (Material) Material->SetScalarParameterValue(TEXT("Ready"), 0);
     if (!Target) return;
-    Material->SetScalarParameterValue(TEXT("Ready"), 0);
     Material->ClearParameterValues();
     ReflectionCapture->TextureTarget = nullptr;
     ReflectionCapture->bAlwaysPersistRenderingState = false;
-    ReflectionCapture->GetViewState(0); // Releases the idle view's Lumen/history allocations.
+    ReflectionCapture->GetViewState(0); // Release any history inherited from an older cooked map.
     Target->ReleaseResource();
     Target = nullptr;
-    bCaptured = false;
-    PendingCaptures = 0;
+}
+
+void ABreziDoubleGlassActor::InvalidateScene(UWorld* World)
+{
+    check(IsInGameThread());
+    if (FWorldCaptureState* State = WorldStates.Find(World)) ++State->Revision;
+}
+
+bool ABreziDoubleGlassActor::AcquireCaptureBudget()
+{
+    if (GlobalLastCaptureFrame == GFrameCounter) return false;
+    FWorldCaptureState& State = WorldStates.FindOrAdd(GetWorld());
+    const int32 Index = State.Actors.IndexOfByPredicate([this](const auto& Actor) { return Actor.Get() == this; });
+    if (Index == INDEX_NONE) return false;
+    const bool Acquired = State.Budget.TryAcquire(GFrameCounter, Index, State.Actors.Num(), [&State](size_t Candidate)
+    {
+        const ABreziDoubleGlassActor* Actor = State.Actors[Candidate].Get();
+        return Actor && Actor->bCaptureEligible && Actor->PendingCaptures > 0 && Actor->LastSceneRevision == State.Revision;
+    });
+    if (Acquired) GlobalLastCaptureFrame = GFrameCounter;
+    return Acquired;
 }
 
 void ABreziDoubleGlassActor::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    bCaptureEligible = false;
     if (!bConfigured || !IsValid(SourceComponent)) return;
     if (CVarDoubleGlass.GetValueOnGameThread() == 0)
     {
@@ -179,7 +180,7 @@ void ABreziDoubleGlassActor::Tick(float DeltaSeconds)
     const FVector Up = ViewRotation.GetUnitAxis(EAxis::Z);
     const FTransform Transform = SourceComponent->GetComponentTransform();
     // Sliding HS leaves move independently of their owning imported actor.
-    Overlay->SetWorldTransform(Transform);
+    if (!Transform.Equals(Overlay->GetComponentTransform(), .001)) Overlay->SetWorldTransform(Transform);
     const FVector Center = Transform.TransformPosition(LocalCenter);
     const FVector AxisNormal = Transform.TransformVectorNoScale(LocalNormal).GetSafeNormal();
     const float SideDistance = FVector::DotProduct(Eye - Center, AxisNormal);
@@ -194,19 +195,51 @@ void ABreziDoubleGlassActor::Tick(float DeltaSeconds)
         && ToCenter.Size() - Radius < MaximumDistanceCm && Z + Radius > 5.f
         && FMath::Abs(FVector::DotProduct(ToCenter, Right)) <= FMath::Max(Z, 0.f) * TanHalf + Radius * FMath::Sqrt(1 + TanHalf * TanHalf)
         && FMath::Abs(FVector::DotProduct(ToCenter, Up)) <= FMath::Max(Z, 0.f) * TanHalf / Aspect + Radius * FMath::Sqrt(1 + FMath::Square(TanHalf / Aspect));
-    Overlay->SetVisibility(bVisible);
     if (!bVisible)
     {
+        Overlay->SetVisibility(false);
         LastSkip = TEXT("outside-conservative-frustum-distance-or-inside-pane");
         bWasVisible = false;
         if (GetWorld()->GetTimeSeconds() - LastVisibleTime > 5.f) ReleaseCapture();
         return;
     }
-    LastVisibleTime = GetWorld()->GetTimeSeconds();
-    LastSkip = TEXT("visible");
-    const int32 RTWidth = FMath::Clamp(CaptureWidth, 256, 2048);
+    const double Now = GetWorld()->GetTimeSeconds();
+    LastVisibleTime = Now;
+    const int32 RTWidth = FMath::Clamp(CaptureWidth, 256, BreziDoubleGlass::MaximumCaptureWidth);
     const int32 RTHeight = FMath::Max(128, FMath::RoundToInt(RTWidth / Aspect));
     if (Target && (Target->SizeX != RTWidth || Target->SizeY != RTHeight)) ReleaseCapture();
+    const uint64 Revision = WorldStates.FindOrAdd(GetWorld()).Revision;
+    const bool bChanged = !bWasVisible || !Eye.Equals(LastEye, BreziDoubleGlass::CameraDistanceToleranceCm)
+        || !Rotation.Equals(LastRotation, BreziDoubleGlass::CameraAngleToleranceDegrees)
+        || !FMath::IsNearlyEqual(Fov, LastFov, .01f) || !FMath::IsNearlyEqual(Aspect, LastAspect, .00001f)
+        || Revision != LastSceneRevision || LastRevision != SceneRevision || !Transform.Equals(LastSourceTransform, .001);
+    if (bChanged)
+    {
+        PendingCaptures = FMath::Clamp(WarmupCaptures, 1, BreziDoubleGlass::MaximumWarmupCaptures);
+        LastChangeTime = Now;
+        bCaptured = false;
+        Material->SetScalarParameterValue(TEXT("Ready"), 0);
+        // Anchoring to the last significant change also catches accumulated slow drift.
+        LastEye = Eye; LastRotation = Rotation; LastFov = Fov; LastAspect = Aspect;
+        LastSceneRevision = Revision; LastRevision = SceneRevision;
+        LastSourceTransform = Transform;
+    }
+    bWasVisible = true;
+    if (!BreziDoubleGlass::IsSettled(Now, LastChangeTime))
+    {
+        Overlay->SetVisibility(false);
+        LastSkip = TEXT("awaiting-stable-camera-and-scene");
+        return;
+    }
+    // A deferred capture becomes visible on a following game frame. Moving
+    // cameras use the unchanged primary glass, not a stale projected rear image.
+    const bool bImageAvailable = bCaptured && LastCaptureFrame < GFrameCounter;
+    Overlay->SetVisibility(bImageAvailable);
+    Material->SetScalarParameterValue(TEXT("Ready"), bImageAvailable ? 1 : 0);
+    LastSkip = PendingCaptures > 0 ? TEXT("awaiting-global-capture-budget") : TEXT("settled");
+    if (PendingCaptures <= 0) return;
+    bCaptureEligible = true;
+    if (!AcquireCaptureBudget()) return;
     if (!Target)
     {
         Target = NewObject<UTextureRenderTarget2D>(this);
@@ -214,19 +247,9 @@ void ABreziDoubleGlassActor::Tick(float DeltaSeconds)
         Target->InitCustomFormat(RTWidth, RTHeight, PF_FloatRGBA, true);
         Target->UpdateResourceImmediate(true);
         ReflectionCapture->TextureTarget = Target;
-        ReflectionCapture->bAlwaysPersistRenderingState = true;
         Material->SetTextureParameterValue(TEXT("RearImage"), Target);
-        Material->SetScalarParameterValue(TEXT("Ready"), 0);
         UE_LOG(LogTemp, Display, TEXT("BREZI_DOUBLE_GLASS allocate %s %dx%d bytes=%lld"), *GetName(), RTWidth, RTHeight, int64(RTWidth)*RTHeight*8);
     }
-    const uint32 Signature = SceneSignature(GetWorld());
-    const bool bChanged = !bWasVisible || !Eye.Equals(LastEye, .005) || !Rotation.Equals(LastRotation, .001)
-        || !FMath::IsNearlyEqual(Fov, LastFov, .001f) || !FMath::IsNearlyEqual(Aspect, LastAspect, .00001f)
-        || Signature != LastSceneSignature || LastRevision != SceneRevision || !Transform.Equals(LastSourceTransform, .001);
-    if (bChanged) PendingCaptures = FMath::Clamp(WarmupCaptures, 1, 64);
-    if (bCaptured) Material->SetScalarParameterValue(TEXT("Ready"), 1);
-    bWasVisible = true;
-    if (PendingCaptures <= 0) return;
     const FVector RearPlane = Center - Normal * HalfThickness;
     LastPlane = RearPlane;
     LastNormal = Normal;
@@ -253,9 +276,8 @@ void ABreziDoubleGlassActor::Tick(float DeltaSeconds)
     ++CapturesIssued;
     --PendingCaptures;
     bCaptured = true;
-    LastEye = Eye; LastRotation = Rotation; LastFov = Fov; LastAspect = Aspect;
-    LastSceneSignature = Signature; LastRevision = SceneRevision;
-    LastSourceTransform = Transform;
+    LastCaptureFrame = GFrameCounter;
+    LastSkip = TEXT("capture-deferred");
     if (PendingCaptures == 0)
         UE_LOG(LogTemp, Display, TEXT("BREZI_DOUBLE_GLASS settled %s captures=%d side=%s halfThicknessCm=%.4f"), *GetName(), CapturesIssued, SideDistance >= 0 ? TEXT("positive") : TEXT("negative"), HalfThickness);
 }
@@ -271,7 +293,15 @@ TSharedRef<FJsonObject> ABreziDoubleGlassActor::Diagnostics() const
     Result->SetStringField(TEXT("sourceId"), SourceId);
     Result->SetBoolField(TEXT("configured"), bConfigured);
     Result->SetBoolField(TEXT("enabled"), CVarDoubleGlass.GetValueOnGameThread() != 0);
-    Result->SetBoolField(TEXT("ready"), bCaptured && bWasVisible && CapturesIssued > 1);
+    Result->SetBoolField(TEXT("ready"), bCaptured && bWasVisible && PendingCaptures == 0 && LastCaptureFrame < GFrameCounter);
+    Result->SetNumberField(TEXT("captureBudgetPerFrame"), 1);
+    Result->SetNumberField(TEXT("warmupCaptureBudget"), FMath::Clamp(WarmupCaptures, 1, BreziDoubleGlass::MaximumWarmupCaptures));
+    Result->SetNumberField(TEXT("cameraSettleSeconds"), BreziDoubleGlass::QuietSeconds);
+    Result->SetBoolField(TEXT("captureUsesLumen"), ReflectionCapture &&
+        (ReflectionCapture->PostProcessSettings.DynamicGlobalIlluminationMethod == EDynamicGlobalIlluminationMethod::Lumen
+        || ReflectionCapture->PostProcessSettings.ReflectionMethod == EReflectionMethod::Lumen));
+    Result->SetBoolField(TEXT("capturePersistsHistory"), ReflectionCapture && ReflectionCapture->bAlwaysPersistRenderingState);
+    Result->SetStringField(TEXT("sceneInvalidation"), TEXT("event-revision"));
     Result->SetBoolField(TEXT("overlayVisible"), Overlay && Overlay->IsVisible());
     Result->SetStringField(TEXT("state"), LastSkip);
     Result->SetNumberField(TEXT("captureCount"), CapturesIssued);
@@ -307,5 +337,10 @@ void ABreziDoubleGlassActor::EndPlay(const EEndPlayReason::Type Reason)
 {
     UE_LOG(LogTemp, Display, TEXT("BREZI_DOUBLE_GLASS end %s captures=%d"), *GetName(), CapturesIssued);
     ReleaseCapture();
+    if (FWorldCaptureState* State = WorldStates.Find(GetWorld()))
+    {
+        State->Actors.RemoveAll([this](const auto& Actor) { return !Actor.IsValid() || Actor.Get() == this; });
+        if (State->Actors.IsEmpty()) WorldStates.Remove(GetWorld());
+    }
     Super::EndPlay(Reason);
 }

@@ -25,6 +25,7 @@ public:
     UBreziExteriorLighting();
     bool Initialize();
     void SetNightAlpha(double Alpha);
+    void RefreshShadowPolicy();
     double GetNightAlpha() const { return NightAlpha; }
     TSharedRef<FJsonObject> Readback() const;
     void Shutdown();

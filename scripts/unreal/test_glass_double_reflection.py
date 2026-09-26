@@ -3,6 +3,9 @@ import copy
 import importlib.util
 import json
 import math
+import shutil
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,6 +14,54 @@ m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
 
 
 class DoubleGlassTest(unittest.TestCase):
+    def test_capture_scheduler_is_fair_bounded_and_waits_for_quiet(self):
+        compiler = shutil.which('c++')
+        self.assertIsNotNone(compiler, 'A C++ compiler is required to validate the native capture policy')
+        source = r'''
+#include "BreziDoubleGlassCapturePolicy.h"
+#include <array>
+#include <cassert>
+int main() {
+    using namespace BreziDoubleGlass;
+    static_assert(MaximumCaptureWidth == 512);
+    static_assert(MaximumWarmupCaptures == 2);
+    assert(!IsSettled(10.24, 10.0));
+    assert(IsSettled(10.25, 10.0));
+    assert(!IsSettled(9.0, 10.0)); // World time reset cannot bypass debounce.
+    // Continuous motion / door changes never settle, even over many frames.
+    for (int i=0;i<600;++i) assert(!IsSettled(i/60.0, i/60.0));
+    FrameBudget budget;
+    std::array<int, 19> remaining; remaining.fill(2);
+    for (unsigned frame=0;frame<38;++frame) {
+        int issued=0, winner=-1;
+        for (std::size_t actor=0;actor<remaining.size();++actor)
+            if (budget.TryAcquire(frame, actor, remaining.size(), [&](auto i){return remaining[i]>0;})) {
+                --remaining[actor]; ++issued; winner=actor;
+            }
+        assert(issued==1);
+        assert(winner==int(frame%19)); // Tick order must not starve any pane.
+    }
+    for (auto count:remaining) assert(count==0);
+    assert(!budget.TryAcquire(38, 0, 19, [](auto){return false;}));
+    // Invisible panes do not hold the queue; reset-size / destroyed slots safe.
+    FrameBudget sparse;
+    for (unsigned frame=0;frame<10;++frame) {
+        int issued=0, winner=-1;
+        for (std::size_t actor=0;actor<19;++actor)
+            if (sparse.TryAcquire(frame,actor,19,[](auto i){return i==3||i==17;})) { ++issued; winner=actor; }
+        assert(issued==1); assert(winner==(frame%2 ? 17 : 3));
+    }
+    assert(!sparse.TryAcquire(10,0,0,[](auto){return true;}));
+    assert(sparse.TryAcquire(10,0,1,[](auto){return true;}));
+}
+'''
+        with tempfile.TemporaryDirectory(prefix='brezi-glass-policy-') as directory:
+            cpp = Path(directory)/'policy.cpp'; executable = Path(directory)/'policy'
+            cpp.write_text(source)
+            subprocess.run([compiler, '-std=c++17', '-Wall', '-Wextra', '-Werror',
+                '-I', str(m.ROOT/'unreal/BreziTwin/Source/BreziTwin'), str(cpp), '-o', str(executable)], check=True, capture_output=True)
+            subprocess.run([str(executable)], check=True, capture_output=True)
+
     def fixture(self):
         base=m.ROOT/'output/unreal/photoreal-20260923-r2'
         if not base.is_dir():self.skipTest('Canonical local fixture absent')

@@ -6,6 +6,8 @@ Model zahŕňa kuchynský ostrovček 2 640 × 920 mm s drezom a umývačkou vo v
 
 Nový profil `model-refresh` vytvára samostatný projekt a balík. Staré experimentálne materiálové recepty obsahujú ID a hashe staršej geometrie; nový import ich nepriraďuje novým objektom. Vytvára materiály zo súčasných farieb, drsnosti, metalickosti, priehľadnosti a lokálnych albedo textúr. Historické balíky, upravený engine a ich dôkazy zostávajú zachované. Tento profil nezahŕňa historický experimentálny provider kaustík bazéna ani jeho fotografické materiálové recepty.
 
+Nadväzujúcu revíziu z 23.–24. 9. 2026, izolovanú migráciu R2b, Shipping balík a aktuálne výkonové merania opisuje [Plynulosť BreziTwin](unreal-performance.md). Nižšie uvedené dátované overenia naďalej opisujú pôvodný model-refresh balík.
+
 ## Obnovenie modelu
 
 Pri novej revízii nastavte nový adresár `BREZI_MODEL_OUTPUT`; import zámerne vyžaduje prázdny projekt a neprepisuje starú scénu.

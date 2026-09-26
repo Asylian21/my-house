@@ -25,6 +25,9 @@ def module(name,path):
     spec=importlib.util.spec_from_file_location(name,path);result=importlib.util.module_from_spec(spec);spec.loader.exec_module(result);return result
 
 
+PERFORMANCE=module('lawn_performance_policy',ROOT/'scripts/unreal/performance_scene_policy.py')
+
+
 def vec(value,axes=('x','y','z')):return [float(getattr(value,k)) for k in axes]
 def transform(value):return {'p':vec(value.translation),'q':vec(value.rotation,('x','y','z','w')),'s':vec(value.scale3d)}
 
@@ -108,6 +111,7 @@ def old_snapshot(u,actors):
             'actorTags':list(map(str,a.get_editor_property('tags'))),'componentTags':list(map(str,c.get_editor_property('component_tags'))),
             'instances':read_instances(c),'castShadow':bool(c.get_editor_property('cast_shadow')),
             'visibleInRayTracing':bool(c.get_editor_property('visible_in_ray_tracing')),
+            'enableDensityScaling':PERFORMANCE.read_detail_flag(c,'enable_density_scaling'),
             'affectDistanceFieldLighting':bool(c.get_editor_property('affect_distance_field_lighting'))})
     return result
 
@@ -162,8 +166,8 @@ def spawn(u,d,instance_values,label=None,actor_tags=None,component_tags=None,fla
     c.set_visibility(False);c.set_hidden_in_game(False);c.set_static_mesh(a.load_asset(d['mesh']))
     c.set_collision_profile_name('NoCollision');c.set_collision_enabled(u.CollisionEnabled.NO_COLLISION)
     c.set_editor_property('can_ever_affect_navigation',False);c.set_component_tick_enabled(False);c.set_cull_distances(600,1200)
-    flags=flags or {'castShadow':True,'visibleInRayTracing':True,'affectDistanceFieldLighting':True}
-    for key,name in [('castShadow','cast_shadow'),('visibleInRayTracing','visible_in_ray_tracing'),('affectDistanceFieldLighting','affect_distance_field_lighting')]:c.set_editor_property(name,flags[key])
+    flags=flags or {'castShadow':False,'visibleInRayTracing':False,'affectDistanceFieldLighting':False,'enableDensityScaling':True}
+    for key,name in [('castShadow','cast_shadow'),('visibleInRayTracing','visible_in_ray_tracing'),('affectDistanceFieldLighting','affect_distance_field_lighting'),('enableDensityScaling','enable_density_scaling')]:PERFORMANCE.set_detail_flag(c,name,flags[key])
     indices=list(c.add_instances([make_transform(u,r) for r in instance_values],True,False,False))
     require(indices==list(range(len(instance_values))),'Grass insertion ordering differs');actor.synchronize_instance_bounds()
     c.set_visibility(d['state']=='active');return actor
@@ -182,8 +186,7 @@ def verify_group(u,item,expected,visible):
     bounds={'min':[getattr(origin,k)-getattr(extent,k) for k in ('x','y','z')],'max':[getattr(origin,k)+getattr(extent,k) for k in ('x','y','z')]}
     be=max(abs(bounds[k][i]-expected['componentBoundsUnrealCm'][k][i]) for k in ('min','max') for i in range(3))
     require(be<=.05,'Serialized HISM component bounds differ')
-    require(c.get_editor_property('cast_shadow') and c.get_editor_property('visible_in_ray_tracing')
-            and c.get_editor_property('affect_distance_field_lighting'),'Grass lighting participation differs')
+    PERFORMANCE.verify_detail(c,PERFORMANCE.detail_policy([TAG],d['groupId']))
     require(d['orderedInstanceIdsSha256']==digest([r['id'] for r in expected['instances']]),'Grass source instance order differs')
     return {'actor':a.get_path_name(),'groupId':expected['id'],'prototypeId':expected['prototypeId'],'instances':len(actual),
             'nativeOrderedTransformsSha256':digest(actual),'maximumTransformErrors':errors,'nativeComponentBoundsUnrealCm':bounds,
@@ -231,7 +234,7 @@ def prepare_contract(scene,geometry_dir):
     ids=[r['id'] for g in groups.values() for r in g['instances']]
     require(len(ids)==len(set(ids))==plan['instanceCount'],'Duplicate/missing grass source instance IDs')
     pins=dict(contract['pipelineFiles'])
-    for p in (Path(__file__),Path(__file__).with_name('native_assets.py')):pins[str(p.relative_to(ROOT))]=sha(p)
+    for p in (Path(__file__),Path(__file__).with_name('native_assets.py'),ROOT/'scripts/unreal/performance_scene_policy.py'):pins[str(p.relative_to(ROOT))]=sha(p)
     # Pin the actual existing native actor implementation too; no C++ changes.
     for name in ('BreziVegetationPatch.h','BreziVegetationPatch.cpp', 'BreziRendererSettingsAudit.h','BreziRendererSettingsAudit.cpp'):
         p=ROOT/'unreal/BreziTwin/Source/BreziTwin'/name;pins[str(p.relative_to(ROOT))]=sha(p)

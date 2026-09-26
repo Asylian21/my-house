@@ -25,4 +25,12 @@ public:
     // Explicitly update the serialized HISM tree and world bounds in a NullRHI commandlet.
     UFUNCTION(BlueprintCallable, Category = "Březí|Editor")
     void SynchronizeInstanceBounds();
+
+    // HISM's serialized density flag is not exposed to Python in UE 5.8.
+    // Restrict authoring changes to this actor's collisionless root instances.
+    UFUNCTION(BlueprintCallable, Category = "Březí|Rendering")
+    bool SetDetailDensityScaling(bool bEnabled);
+
+    UFUNCTION(BlueprintPure, Category = "Březí|Rendering")
+    bool GetDetailDensityScaling() const;
 };

@@ -22,15 +22,17 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
     TSharedRef<FJsonObject> Diagnostics() const;
+    /** Call on the game thread when scene lighting, doors or material parameters change. */
+    static void InvalidateScene(UWorld* World);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass")
     TObjectPtr<UStaticMeshComponent> SourceComponent;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass")
     TObjectPtr<UMaterialInterface> OverlayMaterial;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass", meta=(ClampMin="256", ClampMax="2048"))
-    int32 CaptureWidth = 1024;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass", meta=(ClampMin="1", ClampMax="64"))
-    int32 WarmupCaptures = 16;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass", meta=(ClampMin="256", ClampMax="512"))
+    int32 CaptureWidth = 512;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass", meta=(ClampMin="1", ClampMax="2"))
+    int32 WarmupCaptures = 2;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Double Glass")
     float MaximumDistanceCm = 20000.0f;
     /** Increment for material-parameter or procedural-scene changes without transforms. */
@@ -49,9 +51,12 @@ private:
     bool bConfigured = false;
     bool bCaptured = false;
     bool bWasVisible = false;
+    bool bCaptureEligible = false;
     int32 PendingCaptures = 0;
-    uint32 LastSceneSignature = 0;
+    uint64 LastSceneRevision = MAX_uint64;
+    uint64 LastCaptureFrame = MAX_uint64;
     int32 LastRevision = INDEX_NONE;
+    double LastChangeTime = 0;
     float LastVisibleTime = 0;
     FVector LastEye = FVector::ZeroVector;
     FRotator LastRotation = FRotator::ZeroRotator;
@@ -67,4 +72,5 @@ private:
     FVector LocalNormal = FVector::ZeroVector;
     float LocalHalfThickness = 0;
     void ReleaseCapture();
+    bool AcquireCaptureBudget();
 };

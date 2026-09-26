@@ -15,6 +15,7 @@ import shutil
 import struct
 import sys
 from datetime import datetime, timezone
+from performance_scene_policy import apply_detail, detail_policy, verify_detail
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = 'scripts/unreal/rural-import.py'
@@ -358,6 +359,8 @@ def import_geometry(u, plan, path, materials, helper):
         c=actor.get_component_by_class(u.HierarchicalInstancedStaticMeshComponent); require(c,'Missing rural HISM component')
         c.set_static_mesh(meshes[group['meshId']]); new_component_policy(u,c); c.set_cull_distances(group['cullStartCm'],group['cullEndCm'])
         c.set_editor_property('cast_shadow',bool(group.get('castShadow',True))); c.set_editor_property('visible_in_ray_tracing',True)
+        policy=detail_policy([TAG],group['id'])
+        if policy: apply_detail(c,policy)
         indices=list(c.add_instances([instance_transform(u,row) for row in group['instances']],True,False,False))
         require(indices==list(range(len(group['instances']))),'Rural HISM insertion differs'); actor.synchronize_instance_bounds()
         result['groups'][group['id']]={'actor':actor.get_path_name(),'mesh':meshes[group['meshId']].get_path_name(),'instances':len(indices)}
@@ -414,7 +417,9 @@ def verify_geometry(u,plan,report,materials,helper):
     for group in plan['groups']:
         entry=report['groups'][group['id']]; c=actors[entry['actor']].get_component_by_class(u.HierarchicalInstancedStaticMeshComponent)
         require(c.get_editor_property('static_mesh').get_path_name()==entry['mesh'] and c.get_instance_count()==len(group['instances']),'Rural HISM mesh/count differs')
-        require(c.get_editor_property('instance_start_cull_distance')==group['cullStartCm'] and c.get_editor_property('instance_end_cull_distance')==group['cullEndCm'],'Rural HISM culling differs')
+        policy=detail_policy([TAG],group['id'])
+        if policy: verify_detail(c,policy)
+        else: require(c.get_editor_property('instance_start_cull_distance')==group['cullStartCm'] and c.get_editor_property('instance_end_cull_distance')==group['cullEndCm'],'Rural HISM culling differs')
         for i,row in enumerate(group['instances']):
             actual=transform(instance_value(c,i)); wanted=transform(instance_transform(u,row))
             require(max(abs(a-b) for key in ['translation','scale3d'] for a,b in zip(actual[key],wanted[key]))<.003,'Rural HISM position/scale differs')
@@ -457,6 +462,7 @@ def main():
             'nativeRenderedVerified':False,'visualQualityVerified':False,'frameTimeVerified':False,
             'pipelineFiles':{relative(p):sha(p) for p in sorted((ROOT/'scripts/unreal').glob('rural-*')) if p.is_file()}}
     report['pipelineFiles'][relative(ROOT/'scripts/unreal/lawn-geometry.py')]=sha(ROOT/'scripts/unreal/lawn-geometry.py')
+    report['pipelineFiles'][relative(ROOT/'scripts/unreal/performance_scene_policy.py')]=sha(ROOT/'scripts/unreal/performance_scene_policy.py')
     try:
         initial=witness(u); materials=material_module.build_materials(road_yaw_degrees=plan.get('roadYawDegrees',0))
         materials={key:u.EditorAssetLibrary.load_asset(value) if isinstance(value,str) else value for key,value in materials.items()}

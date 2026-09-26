@@ -2,6 +2,8 @@
 
 Initial Unreal Engine 5.8 C++ application scaffold. Geometry and camera coordinates are generated from the shared digital twin; this project does not maintain a second architectural model.
 
+The current render profiles, verified Shipping package, native performance measurements and remaining acceptance gates are documented in [BreziTwin performance](../../docs/unreal-performance.md). Historical verification entries below retain their original scope.
+
 ## Inputs
 
 - `/Game/Brezi/Maps/Brezi`: generated scene, imported by the root project pipeline.

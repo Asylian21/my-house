@@ -1,4 +1,6 @@
 #include "BreziExteriorLighting.h"
+#include "BreziDoubleGlassActor.h"
+#include "HAL/IConsoleManager.h"
 #include "Components/SceneComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -162,6 +164,7 @@ bool UBreziExteriorLighting::Initialize()
             return Fail(TEXT("light-registration-readback: ") + F.Id);
     }
     bReady = true;
+    RefreshShadowPolicy();
     UE_LOG(LogTemp, Display, TEXT("BreziExteriorLighting initialized fixtures=%d contractSha1=%s nightAlpha=0"), Lights.Num(), *ContractSha1);
     return true;
 }
@@ -182,7 +185,26 @@ void UBreziExteriorLighting::SetNightAlpha(double Alpha)
         if (Light->Intensity != Intensity || Light->IsVisible() != (Intensity > 0))
         { Fail(TEXT("runtime-intensity-readback")); return; }
     }
+    if (!FMath::IsNearlyEqual(NightAlpha, Alpha, 0.000001)) ABreziDoubleGlassActor::InvalidateScene(GetWorld());
     NightAlpha = Alpha;
+    RefreshShadowPolicy();
+}
+
+void UBreziExteriorLighting::RefreshShadowPolicy()
+{
+    if (!bReady) return;
+    const IConsoleVariable* Policy = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Brezi.LocalLightShadows"));
+    // All five source-contract fixtures explicitly author shadows. Daytime
+    // lights are already invisible; restore their authored shadow state at night.
+    const bool bCastShadows = (!Policy || Policy->GetInt() != 0) && NightAlpha > 0;
+    bool bChanged = false;
+    for (USpotLightComponent* Light : Lights)
+        if (IsValid(Light) && bool(Light->CastShadows) != bCastShadows)
+        {
+            Light->SetCastShadows(bCastShadows);
+            bChanged = true;
+        }
+    if (bChanged) ABreziDoubleGlassActor::InvalidateScene(GetWorld());
 }
 
 TSharedRef<FJsonObject> UBreziExteriorLighting::Readback() const
@@ -236,6 +258,7 @@ void UBreziExteriorLighting::Shutdown()
     const bool HadCarrier = IsValid(Carrier);
     const bool DestroyRequested = HadCarrier && Carrier->Destroy();
     Carrier = nullptr; Lights.Empty();
+    if (HadCarrier) ABreziDoubleGlassActor::InvalidateScene(GetWorld());
     if (HadCarrier) UE_LOG(LogTemp, Display, TEXT("BreziExteriorLighting shutdown ownedLightsUnregistered=1 carrierDestroyAccepted=%d renderThreadDrainedObserved=0"), DestroyRequested);
 }
 

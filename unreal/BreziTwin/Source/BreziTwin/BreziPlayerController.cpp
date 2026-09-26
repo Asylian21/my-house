@@ -10,6 +10,7 @@
 #include "BreziExteriorLighting.h"
 #include "BreziGameViewportClient.h"
 #include "BreziDoors.h"
+#include "BreziDoubleGlassActor.h"
 #include "BreziTouchpadPolicy.h"
 #include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "Brushes/SlateRoundedBoxBrush.h"
@@ -404,6 +405,9 @@ void ABreziPlayerController::EndPlay(const EEndPlayReason::Type Reason)
     ViewControls.Empty();
     PanelControls.Empty();
     RenderQualityControls.Empty();
+    RenderQualityView.Reset();
+    RenderQualityRoomLights.Empty();
+    RenderQualityRoomLightShadows.Empty();
     FocusBeforeNavigation.Reset();
     Super::EndPlay(Reason);
 }
@@ -435,6 +439,7 @@ void ABreziPlayerController::Tick(float DeltaSeconds)
     TryCompleteInitialTour();
     if (Doors && IsNavigationInputActive() && TwinPawn()->IsWalkingMode()) Doors->Tick(DeltaSeconds, this);
     UpdateTimeOfDayTransition(DeltaSeconds);
+    RefreshRenderQualityScenePolicy();
     UpdateAccessibleSubtrees();
 }
 
@@ -1186,6 +1191,7 @@ void ABreziPlayerController::UpdateTimeOfDayTransition(float DeltaSeconds)
         TimeOfDayStartSunIntensity, bNight ? 0.15f : DaySunIntensity, Alpha)));
     if (Sky.IsValid()) Sky->GetLightComponent()->SetIntensity(static_cast<float>(BreziLightingTransition::Intensity(
         TimeOfDayStartSkyIntensity, bNight ? DaySkyIntensity * 0.035f : DaySkyIntensity, Alpha)));
+    ABreziDoubleGlassActor::InvalidateScene(GetWorld());
     // Real-time sky capture and Lumen retain history; this is not a convergence fence.
 }
 
@@ -1206,6 +1212,7 @@ void ABreziPlayerController::FinishTimeOfDayTransition(bool bResetExposure)
         if (bResetExposure && !Sky->GetLightComponent()->IsRealTimeCaptureEnabled()) Sky->GetLightComponent()->RecaptureSky();
     }
     ExteriorLighting->SetNightAlpha(Sun.IsValid() && bNight ? 1.0 : 0.0);
+    ABreziDoubleGlassActor::InvalidateScene(GetWorld());
     RestoreLightingTransitionExposure(CompletedElapsed, bResetExposure);
     // Only instant/reduced-motion/interrupted lifecycle paths reset exposure/history.
     if (bResetExposure && PlayerCameraManager) PlayerCameraManager->SetGameCameraCutThisFrame();

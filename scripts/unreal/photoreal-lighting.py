@@ -4,15 +4,12 @@ UE filmic ACES remains the display transform. These are authored quality choices
 not a photometric certification. Runtime Metal captures are a separate gate.
 """
 
+from performance_scene_policy import LUMEN_DEFAULTS
+
 VALUES = {
-    'lumen_scene_lighting_quality': 3.0,
-    'lumen_scene_detail': 2.0,
-    'lumen_scene_view_distance': 30000.0,
-    'lumen_final_gather_quality': 4.0,
-    'lumen_reflection_quality': 4.0,
+    **LUMEN_DEFAULTS,
     'lumen_front_layer_translucency_reflections': True,
     'lumen_max_roughness_to_trace_reflections': .6,
-    'lumen_max_trace_distance': 30000.0,
     'bloom_intensity': 0.0,
     'lens_flare_intensity': 0.0,
     'film_grain_intensity': 0.0,

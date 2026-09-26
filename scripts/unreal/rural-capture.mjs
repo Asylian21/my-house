@@ -67,9 +67,13 @@ assert.equal(runtime.walking.worldContractValidated,true); assert.deepEqual(runt
 if (runtime.doubleGlass?.length) {
   assert.equal(runtime.doubleGlass.length,19);
   assert(runtime.doubleGlass.every(p=>p.configured && p.ior===1.52));
-  if (rearReflection === 'disabled') assert(runtime.doubleGlass.every(p=>!p.enabled && !p.overlayVisible));
+  assert(runtime.doubleGlass.every(p=>p.captureBudgetPerFrame===1 && p.warmupCaptureBudget>=1 && p.warmupCaptureBudget<=2
+    && p.cameraSettleSeconds>=0.25 && p.captureUsesLumen===false && p.sceneInvalidation==='event-revision'),
+    'Rear-interface capture must use the bounded event-driven policy');
+  assert(runtime.doubleGlass.every(p=>p.renderTargetWidth<=512));
+  if (rearReflection === 'disabled') assert(runtime.doubleGlass.every(p=>!p.enabled && !p.overlayVisible && p.renderTargetBytes===0));
   else if (shot.startsWith('glass-')) {
-    assert(runtime.doubleGlass.some(p=>p.enabled && p.ready && p.pendingCaptures===0 && p.captureCount>=16),
+    assert(runtime.doubleGlass.some(p=>p.enabled && p.ready && p.pendingCaptures===0 && p.captureCount>=p.warmupCaptureBudget),
       'Close glass image has no settled rear-interface capture');
   }
 } else assert(!shot.startsWith('glass-'),'Double-glass QA requires the new native capture actor');

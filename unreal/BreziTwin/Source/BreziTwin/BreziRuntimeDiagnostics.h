@@ -27,6 +27,8 @@ private:
     void OnScreenshotProcessed();
     void Finish(const FString& Status);
     void WriteReport(const FString& Status);
+    bool LoadRealtimeWalkRoute();
+    bool UpdateRealtimeWalk(class ABreziPawn* Pawn, double Now);
 
     bool bEnabled = false;
     bool bCapture4K = false;
@@ -38,6 +40,20 @@ private:
     bool bFinished = false;
     bool bProfileGPU = false;
     bool bRealtimeOrbit = false;
+    bool bRealtimeWalk = false;
+    bool bRealtimeWalkPrepared = false;
+    FString RealtimeWalkRoutePath;
+    FString RealtimeWalkSceneSha256;
+    TArray<FVector> RealtimeWalkPoints;
+    TArray<TSharedPtr<FJsonObject>> RealtimeWalkSamples;
+    int32 RealtimeWalkTargetIndex = 1;
+    int32 RealtimeWalkDirection = 1;
+    int32 RealtimeWalkReachedWaypoints = 0;
+    int32 RealtimeWalkRoundTrips = 0;
+    double RealtimeWalkLastProgressSeconds = 0.0;
+    double RealtimeWalkBestDistanceCm = TNumericLimits<double>::Max();
+    double RealtimeWalkLastSampleSeconds = -1.0;
+    FString RealtimeWalkFailure;
     bool bRealtimeStarted = false;
     double RealtimeBenchmarkSeconds = 60.0;
     double RealtimeStartSeconds = 0.0;

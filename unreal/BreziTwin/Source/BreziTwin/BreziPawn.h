@@ -70,6 +70,9 @@ public:
     bool PrepareTraversalAuditView(const FVector& Eye, const FVector& Forward);
     bool AimWalkingTraversal(const FVector& Forward);
     bool SetRealtimeStudyOrbit(double OffsetDegrees);
+    bool PrepareRealtimeStudyWalk(const TArray<FVector>& Points, const FString& SceneSha256);
+    bool SetRealtimeStudyWalkTarget(const FVector& Target);
+    void StopRealtimeStudyWalk();
     // Called after the CharacterMovement tick has committed its movement update.
     void UpdateWalkingCamera(float DeltaSeconds);
 
@@ -126,6 +129,8 @@ private:
     float OrbitRadius = 1000;
     float OrbitZoomTarget = 1000;
     float ForwardInput = 0;
+    bool bRealtimeStudyWalking = false;
+    FVector RealtimeStudyWalkTarget = FVector::ZeroVector;
     float RightInput = 0;
     float UpInput = 0;
     BreziFlight::Bounds FlightBounds;

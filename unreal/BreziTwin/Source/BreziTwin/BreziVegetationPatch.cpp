@@ -28,6 +28,25 @@ void ABreziVegetationPatch::SynchronizeInstanceBounds()
 #endif
 }
 
+bool ABreziVegetationPatch::SetDetailDensityScaling(bool bEnabled)
+{
+    if (!Instances || Instances->GetOwner() != this || GetRootComponent() != Instances
+        || Instances->GetCollisionEnabled() != ECollisionEnabled::NoCollision)
+        return false;
+
+    Instances->Modify();
+    Instances->bEnableDensityScaling = bEnabled;
+    Instances->UpdateDensityScaling();
+    Instances->MarkRenderStateDirty();
+    MarkPackageDirty();
+    return Instances->bEnableDensityScaling == bEnabled;
+}
+
+bool ABreziVegetationPatch::GetDetailDensityScaling() const
+{
+    return Instances && Instances->bEnableDensityScaling;
+}
+
 TArray<int32> ABreziVegetationPatch::ConfigureDetailLods(UStaticMesh* Mesh)
 {
     TArray<int32> Counts;

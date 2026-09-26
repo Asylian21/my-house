@@ -22,6 +22,8 @@ class UBreziMotionQA;
 class UBreziFlameStudy;
 class UBreziExteriorLighting;
 class UBreziDoors;
+class ISceneViewExtension;
+class URectLightComponent;
 
 UCLASS()
 class ABreziPlayerController : public APlayerController
@@ -108,6 +110,7 @@ private:
     void UseSystemMotionPreference();
     void ApplyDisplayPreferences(FBreziDisplayPreferences Preferences);
     void InitializeRenderQuality();
+    void RefreshRenderQualityScenePolicy();
     bool CanChangeRenderQuality() const;
     bool IsRenderQualitySelected(BreziRenderQuality::Profile Profile) const;
     void SelectRenderQuality(BreziRenderQuality::Profile Profile);
@@ -171,6 +174,10 @@ private:
     bool bRenderQualityApplyFailed = false;
     bool bRenderQualitySaveFailed = false;
     int32 RenderQualityTraceEvents = 0;
+    TSharedPtr<ISceneViewExtension, ESPMode::ThreadSafe> RenderQualityView;
+    TArray<TWeakObjectPtr<URectLightComponent>> RenderQualityRoomLights;
+    TArray<bool> RenderQualityRoomLightShadows;
+    int32 RenderQualityLastLocalShadows = -1;
     TWeakObjectPtr<ADirectionalLight> Sun;
     TWeakObjectPtr<ASkyLight> Sky;
     FRotator DaySunRotation = FRotator::ZeroRotator;

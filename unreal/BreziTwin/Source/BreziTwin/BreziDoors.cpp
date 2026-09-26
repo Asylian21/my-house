@@ -1,4 +1,5 @@
 #include "BreziDoors.h"
+#include "BreziDoubleGlassActor.h"
 #include "BreziPawn.h"
 #include "BreziDoorSelectionPolicy.h"
 #include "Components/CapsuleComponent.h"
@@ -259,6 +260,7 @@ void UBreziDoors::Tick(float DeltaSeconds, APlayerController* Controller)
     Player = Controller;
     const double Step = FMath::Clamp(double(DeltaSeconds), 0., MaxFrameSeconds);
     Clock += Step;
+    bool bSceneChanged = false;
     for (auto& Door : Doors)
     {
         if (Door.Duration <= 0) continue;
@@ -268,10 +270,12 @@ void UBreziDoors::Tick(float DeltaSeconds, APlayerController* Controller)
         const double Depression = Handle(T);
         if (WouldHitPlayer(Door, Progress, Depression)) { Door.BlockedUntil = Clock + BlockedMessageSeconds; continue; }
         Door.Elapsed = Elapsed; Door.Progress = Progress;
+        bSceneChanged = true;
         for (const auto& Member : Door.Members)
             if (Member.Component.IsValid()) Member.Component->SetWorldTransform(PoseAt(Member, Progress, Depression), false, nullptr, ETeleportType::TeleportPhysics);
         if (Elapsed >= Door.Duration) { Door.Duration = 0; Door.Progress = Door.TargetProgress; }
     }
+    if (bSceneChanged) ABreziDoubleGlassActor::InvalidateScene(DoorWorld.Get());
     UpdateTarget(Controller);
 }
 
@@ -395,6 +399,7 @@ void UBreziDoors::Shutdown()
     if (bReady) for (const auto& Door : Doors) for (const auto& Member : Door.Members)
         if (Member.Component.IsValid() && !Member.Component->IsBeingDestroyed())
             Member.Component->SetWorldTransform(Member.RestTransform, false, nullptr, ETeleportType::TeleportPhysics);
+    if (bReady) ABreziDoubleGlassActor::InvalidateScene(DoorWorld.Get());
     bReady = false; Selected = INDEX_NONE; Clock = 0;
     Doors.Empty(); Samples.Empty(); Player.Reset(); DoorWorld.Reset();
 }

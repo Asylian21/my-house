@@ -3,7 +3,7 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, cp, access, readdir, rename } from 'node:fs/promises';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sealStartupEntry } from './startup-entry-package.mjs';
 import { verifyPackage, verifyPackagedPayload } from './package-verify.mjs';
@@ -13,6 +13,7 @@ import { buildModelRefreshViewpoints } from './model-refresh-viewpoints.mjs';
 import { verifyModelRefresh } from './model-refresh-contract.mjs';
 import { buildArchvizRoomViewpoints } from './archviz-room-viewpoints.mjs';
 import { buildWalkthroughContract } from './walkthrough-contract.mjs';
+import { inheritScene, verifyInheritedScene, baselineInstrumentation } from './performance-source.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const output = resolve(root, process.env.BREZI_MODEL_OUTPUT ?? 'output/unreal/model-refresh-20260922');
@@ -52,7 +53,7 @@ async function run(command, args, logName, env = {}) {
     const child = spawn(command, args, { cwd: root, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
     for (const stream of [child.stdout, child.stderr]) stream.on('data', chunk => { log += chunk; process.stdout.write(chunk); });
     child.once('error', reject);
-    child.once('close', (code, signal) => accept({ code, signal }));
+    child.once('close', (code, signal) => accept({ code, signal, pid:child.pid }));
   });
   await writeFile(resolve(output, logName), log);
   await save(resolve(output, logName + '.json'), { command, args, startedAt, endedAt: new Date().toISOString(), ...result });
@@ -70,9 +71,15 @@ async function checkProfile() {
   if (data.Plugins.some(plugin => plugin.Name === 'BreziCausticsProbe' && plugin.Enabled)
     || /Mode=transport-continuous/.test(ini)) throw Error('Current model review must use its separate source-material profile');
 }
+async function gameConfiguration() {
+  const value = (await read(resolve(output, 'profile.json'))).gameConfiguration ?? 'Development';
+  if (!['Development', 'Shipping'].includes(value)) throw Error('Unsupported installed Mac Game configuration: ' + value);
+  return value;
+}
 async function verifyGameBuild() {
   const game = await read(resolve(output, 'model-game-build.json'));
   const reused = game.status === 'model-game-build-reused-validated';
+  if ((game.gameConfiguration ?? 'Development') !== await gameConfiguration()) throw Error('Native build configuration differs from profile');
   if ((!reused && (game.status !== 'model-game-build-validated' || !game.allActionsExecuted))
     || (reused && (game.allActionsExecuted !== false || game.compilationActionsExecuted !== 0
       || game.reuse?.method !== 'byte-identical-verified-copy' || game.reuse?.sourceAuthoringIdentical !== true))
@@ -81,6 +88,9 @@ async function verifyGameBuild() {
     || game.buildProductHashes[game.appExecutable] !== game.appExecutableSha256)
     throw Error('Current project has no completed native Game build with finalized executable');
   await pinnedFiles(game.sourcePins);
+  const target = await read(game.targetReceipt);
+  if (target.TargetName !== 'BreziTwin' || target.Platform !== 'Mac' || target.Configuration !== await gameConfiguration())
+    throw Error('Compiled target receipt identity/configuration differs');
   const inputs = { [game.rawExecutable]: game.rawExecutableSha256, [game.targetReceipt]: game.targetReceiptSha256,
     ...game.buildProductHashes };
   await pinnedFiles(inputs);
@@ -93,6 +103,8 @@ async function binaryUUID(path) {
   return matches[0][1];
 }
 async function verifyImport({ baselineOnly = false, excludeRural = false } = {}) {
+  if (await access(resolve(output, 'performance-source.json')).then(() => true, () => false))
+    return verifyInheritedScene({root, output, project});
   const imported = await read(resolve(output, 'model-refresh-import-report.json'));
   const host = await read(resolve(output, 'model-import-process.json'));
   await pinnedFiles({ [resolve(output, 'model-refresh-import-report.json')]: host.reportSha256,
@@ -233,10 +245,17 @@ if (action === 'prepare') {
   await save(descriptor, data);
   for (const name of ['DefaultGame.ini', 'DefaultEngine.ini']) {
     const file = resolve(project, 'Config', name);
-    const ini = (await readFile(file, 'utf8')).replace('[BreziFloorCaustics]\nMode=transport-continuous', '').replace('r.Brezi.FloorCaustics=1\n', '');
+    const ini = (await readFile(file, 'utf8')).replace('[BreziFloorCaustics]\nMode=transport-continuous', '').replace('r.Brezi.FloorCaustics=1\n', '')
+      .replace('r.RayTracing.Culling=0', 'r.RayTracing.Culling=3');
     await writeFile(file, ini);
   }
   const doubleGlass = process.env.BREZI_DOUBLE_GLASS === '1';
+  const configuration = process.env.BREZI_GAME_CONFIGURATION ?? 'Development';
+  if (!['Development', 'Shipping'].includes(configuration)) throw Error('Use Development or Shipping with this installed engine');
+  if (configuration !== 'Development') {
+    const file = resolve(project, 'Config/DefaultGame.ini');
+    await writeFile(file, (await readFile(file, 'utf8')).replace('BuildConfiguration=PPBC_Development', 'BuildConfiguration=PPBC_' + configuration));
+  }
   if (doubleGlass) {
     const file = resolve(project, 'Config/DefaultEngine.ini');
     const ini = await readFile(file, 'utf8');
@@ -245,7 +264,7 @@ if (action === 'prepare') {
     await writeFile(file, ini.replace('[/Script/Engine.RendererSettings]',
       '[/Script/Engine.RendererSettings]\nr.AllowGlobalClipPlane=True'));
   }
-  // The interactive profile starts within the measured 1080p GPU budget.
+  // Start conservatively; native QA determines the actual GPU budget.
   // Existing deliberate user settings still take precedence when opening the app directly.
   const settings = resolve(project, 'Config/DefaultGameUserSettings.ini');
   await writeFile(settings, (await readFile(settings, 'utf8'))
@@ -257,6 +276,7 @@ if (action === 'prepare') {
     status: 'current-model-project-prepared', project, engine, geometry,
     scope: 'Current C/B/B geometry, source materials and navigation. Historical caustics and look-dev packages remain separate.',
     archvizGame: process.env.BREZI_ARCHVIZ_GAME === '1',
+    gameConfiguration: configuration,
     doubleGlass,
     nativeBuildVerified: false,
   });
@@ -264,6 +284,44 @@ if (action === 'prepare') {
     const file = resolve(project, 'Config/DefaultGame.ini');
     await writeFile(file, (await readFile(file, 'utf8')).replace('+MapsToCook=', '+DirectoriesToAlwaysCook=(Path="/Game/Brezi/Avatar")\n+MapsToCook='));
   }
+} else if (action === 'inherit') {
+  if (!requestedView) throw Error('Specify a verified donor output');
+  await checkProfile();
+  await inheritScene({root, output, project, donor:requestedView});
+} else if (action === 'baseline-instrument') {
+  if (!requestedView || await gameConfiguration() !== 'Development') throw Error('Instrument the baseline in a fresh Development profile');
+  await checkProfile();
+  await baselineInstrumentation({root,output,project,donor:requestedView});
+} else if (action === 'performance-scene') {
+  await requireIdleApp();
+  await verifyInheritedScene({root, output, project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/performance-optimize.py'),'-unattended','-nop4','-nosplash'],
+    'performance-scene.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor});
+  await save(resolve(output,'performance-scene-process.json'), {
+    processFile:resolve(output,'performance-scene.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'performance-scene.log.json'))),
+    logFile:resolve(output,'performance-scene.log'),logSha256:sha(await readFile(resolve(output,'performance-scene.log'))),
+    reportSha256:sha(await readFile(resolve(output,'performance-scene-report.json'))),
+  });
+  await verifyInheritedScene({root, output, project});
+} else if (action === 'nanite-study') {
+  await requireIdleApp();
+  await verifyInheritedScene({root,output,project});
+  const donor=(await read(resolve(output,'performance-source.json'))).donor;
+  const host={};
+  for(const stage of ['apply','verify']){
+    const logName='nanite-study-'+stage+'.log';
+    await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+      '-script='+resolve(root,'scripts/unreal/nanite-study.py'),'-unattended','-nop4','-nosplash'],logName,
+      {BREZI_MODEL_OUTPUT:output,BREZI_PERFORMANCE_SOURCE:donor,BREZI_NANITE_STUDY_STAGE:stage});
+    host[stage]={processFile:resolve(output,logName+'.json'),processFileSha256:sha(await readFile(resolve(output,logName+'.json'))),
+      logFile:resolve(output,logName),logSha256:sha(await readFile(resolve(output,logName)))};
+  }
+  host.reportSha256=sha(await readFile(resolve(output,'nanite-study-report.json')));
+  await save(resolve(output,'nanite-study-process.json'),host);
+  await verifyInheritedScene({root,output,project});
 } else if (action === 'export') {
   await run(process.execPath, ['scripts/unreal/export.mjs'], 'export.log', { UNREAL_OUTPUT: geometry });
 } else if (action === 'editor-build') {
@@ -283,6 +341,7 @@ if (action === 'prepare') {
     || original.phases.some(phase => phase.exitCode !== 0) || original.project !== originProject
     || packaged.status !== 'current-model-packaged' || packaged.project !== originProject
     || original.engine !== engine || packaged.engine !== engine
+    || (original.gameConfiguration ?? 'Development') !== await gameConfiguration()
     || packaged.inputs[gamePath] !== sha(await readFile(gamePath)))
     throw Error('Build donor must have its original complete native build and a matching successful package');
   await verifyPackagedPayload(packaged.appPath, packaged.bundle);
@@ -304,7 +363,7 @@ if (action === 'prepare') {
   if (await binaryUUID(original.rawExecutable) !== packaged.linkedUUID
     || await binaryUUID(original.appExecutable) !== packaged.linkedUUID)
     throw Error('Donor finalized executable differs from its verified native link');
-  for (const target of ['BreziTwin.target', 'BreziTwinEditor.target']) {
+  for (const target of [basename(original.targetReceipt), 'BreziTwinEditor.target']) {
     const file = resolve(originProject, 'Binaries/Mac', target), bytes = await readFile(file, 'utf8');
     if (bytes.includes(originProject)) throw Error('Native receipt contains a non-relocatable donor project path');
   }
@@ -321,6 +380,7 @@ if (action === 'prepare') {
   const appExecutable = moved(original.appExecutable);
   await save(resolve(output, 'model-game-build.json'), {
     schemaVersion: 1, status: 'model-game-build-reused-validated', generatedAt: new Date().toISOString(), project, engine,
+    gameConfiguration: await gameConfiguration(),
     sourcePins: nativeSourcePins, rawExecutable: moved(original.rawExecutable), rawExecutableSha256: original.rawExecutableSha256,
     targetReceipt: moved(original.targetReceipt), targetReceiptSha256: original.targetReceiptSha256,
     buildProductHashes: products, appExecutable, appExecutableSha256: products[appExecutable],
@@ -336,6 +396,7 @@ if (action === 'prepare') {
   console.log('Verified native Editor/Game build reuse; no compilation actions executed.');
 } else if (action === 'game-build') {
   await checkProfile();
+  const configuration = await gameConfiguration();
   let reusable = false;
   try { await verifyGameBuild(); reusable = true; } catch { /* Changed or absent inputs require a real build. */ }
   if (reusable) {
@@ -346,10 +407,11 @@ if (action === 'prepare') {
   // graph. A fresh isolated project has no Xcode workspace until this step.
   await run(resolve(engine, 'Engine/Build/BatchFiles/Mac/GenerateProjectFiles.sh'), [
     '-project=' + descriptor, '-game', '-platforms=Mac', '-DeployOnly', '-NoIntellisense', '-NoDotNet',
-    '-IgnoreJunk', '-development', '-IncludeTempTargets', '-projectfileformat=XCode', '-automated', '-singletarget=BreziTwin',
+    '-IgnoreJunk', ...(configuration === 'Development' ? ['-development'] : []), '-IncludeTempTargets', '-projectfileformat=XCode', '-automated', '-singletarget=BreziTwin',
   ], 'game-project-files.log');
-  await run(resolve(engine, 'Engine/Build/BatchFiles/Mac/Build.sh'), ['BreziTwin', 'Mac', 'Development', descriptor,
-    '-WaitMutex', '-NoUBA', '-WriteOutdatedActions=' + resolve(output, 'game-actions.json')], 'game-graph.log');
+  await run(resolve(engine, 'Engine/Build/BatchFiles/Mac/Build.sh'), ['BreziTwin', 'Mac', configuration, descriptor,
+    '-WaitMutex', '-NoUBA', ...(configuration === 'Shipping' ? ['-createstripflagfile'] : []),
+    '-WriteOutdatedActions=' + resolve(output, 'game-actions.json')], 'game-graph.log');
   await run('python3', ['-B', 'scripts/unreal/model-refresh-build.py', '--output', output, '--engine', engine], 'game-build.log');
 } else if (action === 'import') {
   await requireIdleApp();
@@ -452,6 +514,7 @@ if (action === 'prepare') {
   for (const path of signingOutputs) delete gameInputs[path];
   const authoring = await authoringHashes();
   const helpers = ['scripts/unreal/model-refresh.mjs', 'scripts/unreal/model-refresh-viewpoints.mjs', 'scripts/unreal/model-refresh-contract.mjs',
+    'scripts/unreal/performance-source.mjs', 'scripts/unreal/nanite-study.mjs',
     'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
     'scripts/unreal/archviz-room-viewpoints.mjs', 'scripts/unreal/walkthrough-contract.mjs'];
   const receiptFiles = ['model-refresh-import-report.json', 'model-import-process.json', 'model-game-build.json', 'profile.json',
@@ -466,10 +529,17 @@ if (action === 'prepare') {
   // UE's Zen oplog reader blocks parallel workers on HTTP responses. Let socket
   // continuations complete on their event threads so staging cannot starve them.
   const stagingEnvironment = { DOTNET_SYSTEM_NET_SOCKETS_INLINE_COMPLETIONS: '1' };
+  const configuration = await gameConfiguration();
+  // Match the fixed Shipping names used by model-refresh-build.py. UE's Xcode
+  // generator uses Development rules for every generated configuration, while
+  // the real Shipping UBT receipt correctly names the undecorated executable.
+  const xcodeOptions = '-derivedDataPath "' + resolve(output, 'xcode-data') + '"'
+    + (configuration === 'Shipping'
+      ? ' UE_UBT_BINARY_SUBPATH=BreziTwin UE_MAC_EXECUTABLE_NAME=BreziTwin PRODUCT_NAME=BreziTwin EXECUTABLE_NAME=BreziTwin' : '');
   const log = await run(resolve(engine, 'Engine/Build/BatchFiles/RunUAT.sh'), ['BuildCookRun', '-project=' + descriptor,
-    '-noP4', '-platform=Mac', '-clientconfig=Development', '-skipbuild', '-cook', '-stage', '-pak', '-package', '-archive',
+    '-noP4', '-platform=Mac', '-clientconfig=' + configuration, '-skipbuild', '-cook', '-stage', '-pak', '-package', '-archive',
     '-archivedirectory=' + resolve(output, 'package'), '-unattended', '-utf8output',
-    '-xcodebuildoptions=-derivedDataPath "' + resolve(output, 'xcode-data') + '"'], 'package.log', stagingEnvironment);
+    '-xcodebuildoptions=' + xcodeOptions], 'package.log', stagingEnvironment);
   const cook = inspectCookLog(log);
   if (cook.status !== 'cook-log-validated') throw Error('Cook validation failed: ' + JSON.stringify(cook));
   await pinnedFiles(inputs);
@@ -483,6 +553,7 @@ if (action === 'prepare') {
   const bundle = await verifyPackage(app, engine);
   await save(resolve(output, 'model-package.json'), {
     status: 'current-model-packaged', generatedAt: new Date().toISOString(), appPath: app, engine, project,
+    gameConfiguration: await gameConfiguration(),
     activeDesign: (await read(resolve(geometry, 'scene.json'))).activeDesign,
     viewpoints: (await read(resolve(project, 'Content/Data/viewpoints.json'))).views.map(item => item.id),
     sourceManifestSha256: imported.sourceManifestSha256, sourceGlbSha256: imported.sourceGlbSha256,
@@ -497,14 +568,16 @@ if (action === 'prepare') {
       status: imported.rural.status, nativeRenderedVerified: false } : null,
     inputs, buildProductsBeforePackaging, finalizedBuildProducts, linkedUUID,
     bundle, startupEntry, cook, retainedArchive, stagingEnvironment, runtimeVisualVerified: false,
+    ...(imported.experimentalStudy?{experimentalStudy:imported.experimentalStudy}:{}),
     scope: 'Updated architectural model and source materials. Historical custom pool caustics are not part of this package.',
   });
 } else if (action === 'open') {
   await requireIdleApp();
   const report = await read(resolve(output, 'model-package.json'));
   if (report.status !== 'current-model-packaged') throw Error('No validated current model package');
+  if (report.experimentalStudy) throw Error('Unaccepted Nanite study requires explicit study QA; normal app launch is disabled');
   await verifyPackagedPayload(report.appPath, report.bundle);
   if (!report.viewpoints.includes(view)) throw Error('Unknown model viewpoint: ' + view);
   await run('/usr/bin/open', ['-n', report.appPath, '--args', '-windowed', '-ResX=1920', '-ResY=1080', '-BreziOutput=retina',
-    ...(requestedView || !report.gameplay ? ['-BreziView=' + view] : ['-BreziGameplay']), '-BreziRenderProfile=performance'], 'open.log');
-} else throw Error('Use prepare | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | photoreal | rural | normal-refresh | materials | viewpoints | package | open [view]');
+    ...(requestedView || !report.gameplay ? ['-BreziView=' + view] : ['-BreziGameplay'])], 'open.log');
+} else throw Error('Use prepare | inherit <donor-output> | baseline-instrument <donor-output> | performance-scene | nanite-study | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | photoreal | rural | normal-refresh | materials | viewpoints | package | open [view]');

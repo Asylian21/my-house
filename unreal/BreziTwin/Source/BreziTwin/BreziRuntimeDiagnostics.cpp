@@ -12,12 +12,15 @@
 #include "Engine/Engine.h"
 #include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/SkyLight.h"
+#include "Components/SkyLightComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GPUProfiler.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "HAL/FileManager.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/PlatformProcess.h"
 #include "HighResScreenshot.h"
 #include "ImageCore.h"
 #include "ImageUtils.h"
@@ -36,6 +39,7 @@
 #include "SceneView.h"
 #include "SceneManagement.h"
 #include "SceneViewExtension.h"
+#include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "UnrealClient.h"
 #include "Widgets/SWindow.h"
@@ -119,6 +123,10 @@ public:
             Snapshot->SetNumberField(TEXT("reflectionMethod"), static_cast<int32>(PP.ReflectionMethod.GetValue()));
             Snapshot->SetNumberField(TEXT("lumenFinalGatherQuality"), PP.LumenFinalGatherQuality);
             Snapshot->SetNumberField(TEXT("lumenReflectionQuality"), PP.LumenReflectionQuality);
+            Snapshot->SetNumberField(TEXT("lumenSceneLightingQuality"), PP.LumenSceneLightingQuality);
+            Snapshot->SetNumberField(TEXT("lumenSceneDetail"), PP.LumenSceneDetail);
+            Snapshot->SetNumberField(TEXT("lumenSceneViewDistance"), PP.LumenSceneViewDistance);
+            Snapshot->SetNumberField(TEXT("lumenMaxTraceDistance"), PP.LumenMaxTraceDistance);
             Snapshot->SetNumberField(TEXT("lumenRayLightingModeOverride"), static_cast<int32>(PP.LumenRayLightingMode));
             Snapshot->SetBoolField(TEXT("lumenFrontLayerTranslucencyReflections"), PP.LumenFrontLayerTranslucencyReflections);
             Snapshot->SetBoolField(TEXT("showFlagLumenReflections"), Family.EngineShowFlags.LumenReflections);
@@ -390,8 +398,26 @@ void UBreziRuntimeDiagnostics::BeginPlay()
     bExitAfterCapture = FParse::Param(FCommandLine::Get(), TEXT("BreziExitAfterCapture"));
     bProfileGPU = FParse::Param(FCommandLine::Get(), TEXT("BreziProfileGPU"));
     bRealtimeOrbit = FParse::Param(FCommandLine::Get(), TEXT("BreziRealtimeOrbit"));
-    bEnabled = FParse::Value(FCommandLine::Get(), TEXT("BreziBenchmarkFrames="), BenchmarkFrames) || bCapture4K || bCaptureScene || bCaptureUI || bProfileGPU || bRealtimeOrbit || FParse::Param(FCommandLine::Get(), TEXT("BreziWalk")) || FParse::Param(FCommandLine::Get(), TEXT("BreziWalkAudit"));
+    bRealtimeWalk = FParse::Param(FCommandLine::Get(), TEXT("BreziRealtimeWalk"));
+    bEnabled = FParse::Value(FCommandLine::Get(), TEXT("BreziBenchmarkFrames="), BenchmarkFrames) || bCapture4K || bCaptureScene || bCaptureUI || bProfileGPU || bRealtimeOrbit || bRealtimeWalk || FParse::Param(FCommandLine::Get(), TEXT("BreziWalk")) || FParse::Param(FCommandLine::Get(), TEXT("BreziWalkAudit"));
     if (!bEnabled) return;
+    // Shipping deliberately does not execute arbitrary ExecCmds. These explicit
+    // diagnostic switches have command-line priority and never run in ordinary
+    // launches; stronger console/code assignments keep their existing authority.
+    const auto SetDiagnosticCVar = [](const TCHAR* Name, int32 Value)
+    {
+        if (IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name))
+            if (!(Variable->GetFlags() & (ECVF_ReadOnly | ECVF_Unregistered))
+                && (Variable->GetFlags() & ECVF_SetByMask) <= ECVF_SetByCommandline)
+                Variable->Set(Value, ECVF_SetByCommandline);
+    };
+    if (FParse::Param(FCommandLine::Get(), TEXT("BreziBenchmarkUncapped")))
+    {
+        SetDiagnosticCVar(TEXT("r.VSync"), 0);
+        SetDiagnosticCVar(TEXT("t.MaxFPS"), 0);
+    }
+    if (FParse::Param(FCommandLine::Get(), TEXT("BreziSoftwareLumen")))
+        SetDiagnosticCVar(TEXT("r.Lumen.HardwareRayTracing"), 0);
     FinalViewSettings = FSceneViewExtensions::NewExtension<FBreziFinalViewSettings>(GetWorld());
     FParse::Value(FCommandLine::Get(), TEXT("BreziWarmupFrames="), WarmupFrames);
     WarmupFrames = FMath::Clamp(WarmupFrames, 240, 36000);
@@ -404,19 +430,21 @@ void UBreziRuntimeDiagnostics::BeginPlay()
     OutputStem = Directory / FString::Printf(TEXT("%s-%s-%s"), *FPaths::MakeValidFileName(RequestedView.IsEmpty() ? TEXT("default") : RequestedView), *TimeOfDay, *FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S")));
     ScreenshotPath = OutputStem + (bCaptureUI ? TEXT("-ui.png") : bCaptureScene ? TEXT("-scene.png") : TEXT("-4k.png"));
     GPUProfileArtifactPath = OutputStem + TEXT("-gpu-profile.log");
-    if (bRealtimeOrbit)
+    if (bRealtimeOrbit || bRealtimeWalk)
     {
         FParse::Value(FCommandLine::Get(), TEXT("BreziBenchmarkSeconds="), RealtimeBenchmarkSeconds);
         // This mode observes ordinary wall-time frames. Historical frame-stepped
         // screenshots/traversal and GPU profiling keep their separate contracts.
-        if (!bCaptureScene || bCapture4K || bCaptureUI || bProfileGPU
+        if (!bCaptureScene || bCapture4K || bCaptureUI || bProfileGPU || (bRealtimeOrbit && bRealtimeWalk)
             || !FMath::IsFinite(RealtimeBenchmarkSeconds) || RealtimeBenchmarkSeconds < 10 || RealtimeBenchmarkSeconds > 120
             || FParse::Param(FCommandLine::Get(), TEXT("BreziMotionQA"))
             || FParse::Param(FCommandLine::Get(), TEXT("BreziCausticsMotionQA"))
-            || FString(FCommandLine::Get()).Contains(TEXT("BreziWalkTraversal="), ESearchCase::IgnoreCase))
+            || FString(FCommandLine::Get()).Contains(TEXT("BreziWalkTraversal="), ESearchCase::IgnoreCase)
+            || FString(FCommandLine::Get()).Contains(TEXT("BreziWalkthrough="), ESearchCase::IgnoreCase)
+            || (bRealtimeWalk && (RequestedView != TEXT("interior") || !LoadRealtimeWalkRoute())))
         {
             UE_LOG(LogTemp, Error, TEXT("BreziRealtimeOrbit: incompatible capture, profiler, traversal or duration arguments."));
-            Finish(TEXT("realtime-orbit-invalid-arguments"));
+            Finish(TEXT("realtime-invalid-arguments"));
             return;
         }
         BenchmarkFrames = 36000; // Safety ceiling, not a fixed simulation rate or requested duration.
@@ -462,6 +490,16 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
         return;
     }
     ++Ticks;
+    if (bRealtimeWalk && !bRealtimeWalkPrepared)
+    {
+        if (!Pawn->PrepareRealtimeStudyWalk(RealtimeWalkPoints, RealtimeWalkSceneSha256))
+        {
+            RealtimeWalkFailure = TEXT("source-route-floor-or-capsule-preflight-rejected");
+            Finish(TEXT("realtime-walk-entry-rejected"));
+            return;
+        }
+        bRealtimeWalkPrepared = true;
+    }
     if (bProfileGPU && !bGPUProfileAttempted && Ticks >= WarmupFrames / 2) RequestGPUProfile();
     const bool bProfileWasPending = bGPUProfilePending;
     PollGPUProfile(Now);
@@ -479,7 +517,7 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
     // Normally the one-frame profile is long finished before frame 240. If the
     // RHI is delayed, keep its work out of benchmark samples and report the extension.
     if (bGPUProfilePending) { ++GPUProfileExtraWarmupFrames; return; }
-    if (bRealtimeOrbit)
+    if (bRealtimeOrbit || bRealtimeWalk)
     {
         if (bRealtimeStarted && Pawn->GetActiveViewId() != RealtimeSourceViewId)
         {
@@ -498,7 +536,7 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
         }
         if (!bRealtimeStarted)
         {
-            if (!Pawn->SetRealtimeStudyOrbit(0.0))
+            if (bRealtimeOrbit ? !Pawn->SetRealtimeStudyOrbit(0.0) : !Pawn->SetRealtimeStudyWalkTarget(RealtimeWalkPoints[1]))
             {
                 UE_LOG(LogTemp, Error, TEXT("BreziRealtimeOrbit: source orbit could not start."));
                 Finish(TEXT("realtime-orbit-camera-rejected"));
@@ -507,13 +545,14 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
             bRealtimeStarted = true;
             RealtimeStartSeconds = Now;
             RealtimeSourceViewId = Pawn->GetActiveViewId();
+            RealtimeWalkLastProgressSeconds = Now;
             // FrameMs still spans the last warmup tick. Start the source camera
             // now, and accept only intervals wholly inside the real-time window.
             return;
         }
         RealtimeElapsedSeconds = Now - RealtimeStartSeconds;
         const double OffsetDegrees = 8.0 * FMath::Sin(2.0 * PI * RealtimeElapsedSeconds / 12.0);
-        if (!Pawn->SetRealtimeStudyOrbit(OffsetDegrees))
+        if (bRealtimeOrbit && !Pawn->SetRealtimeStudyOrbit(OffsetDegrees))
         {
             UE_LOG(LogTemp, Error, TEXT("BreziRealtimeOrbit: source orbit unavailable or user/mode/transition interference."));
             Finish(TEXT("realtime-orbit-camera-rejected"));
@@ -531,6 +570,16 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
         RealtimeMinimumYaw = FMath::Min(RealtimeMinimumYaw, Yaw);
         RealtimeMaximumYaw = FMath::Max(RealtimeMaximumYaw, Yaw);
         ++RealtimeCameraSamples;
+        if (bRealtimeWalk && !UpdateRealtimeWalk(Pawn, Now))
+        {
+            Finish(TEXT("realtime-walk-route-failed"));
+            return;
+        }
+        if (RealtimeElapsedSeconds > 180.0 && FrameIntervalsMs.Num() < 240)
+        {
+            Finish(TEXT("realtime-insufficient-frames-watchdog"));
+            return;
+        }
     }
     FViewport* Viewport = GEngine->GameViewport->Viewport;
     FinalViewport = Viewport->GetSizeXY();
@@ -581,10 +630,95 @@ void UBreziRuntimeDiagnostics::TickComponent(float DeltaTime, ELevelTick TickTyp
     AddCycles(GameThreadMs, GGameThreadTime);
     AddCycles(RenderThreadMs, GRenderThreadTime);
     if (GDynamicRHI) AddCycles(GPUFrameMs, RHIGetGPUFrameCycles());
-    if (bRealtimeOrbit ? RealtimeElapsedSeconds < RealtimeBenchmarkSeconds && FrameIntervalsMs.Num() < BenchmarkFrames
+    if ((bRealtimeOrbit || bRealtimeWalk) ? (RealtimeElapsedSeconds < RealtimeBenchmarkSeconds || FrameIntervalsMs.Num() < 240) && FrameIntervalsMs.Num() < BenchmarkFrames
         : FrameIntervalsMs.Num() < BenchmarkFrames) return;
+    if (bRealtimeWalk) Pawn->StopRealtimeStudyWalk();
     if (bCapture4K || bCaptureScene || bCaptureUI) RequestCapture();
     else Finish(TEXT("benchmark-complete"));
+}
+
+bool UBreziRuntimeDiagnostics::LoadRealtimeWalkRoute()
+{
+    FString Text;
+    TSharedPtr<FJsonObject> Route;
+    if (!FParse::Value(FCommandLine::Get(), TEXT("BreziRealtimeWalkRoute="), RealtimeWalkRoutePath)
+        || !FFileHelper::LoadFileToString(Text, *RealtimeWalkRoutePath)
+        || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Route) || !Route.IsValid()) return false;
+    double Version = 0;
+    FString Region;
+    const TArray<TSharedPtr<FJsonValue>>* Points = nullptr;
+    if (!Route->TryGetNumberField(TEXT("schemaVersion"), Version) || Version != 1
+        || !Route->TryGetStringField(TEXT("sceneSha256"), RealtimeWalkSceneSha256) || RealtimeWalkSceneSha256.Len() != 64
+        || !Route->TryGetStringField(TEXT("regionId"), Region) || Region != TEXT("ROOM-1-03")
+        || !Route->TryGetArrayField(TEXT("pointsCm"), Points) || Points->Num() < 3 || Points->Num() > 32) return false;
+    for (const TSharedPtr<FJsonValue>& Point : *Points)
+    {
+        const TArray<TSharedPtr<FJsonValue>>* XYZ = nullptr;
+        if (!Point.IsValid() || !Point->TryGetArray(XYZ) || XYZ->Num() != 3) return false;
+        double Values[3];
+        for (int32 Axis = 0; Axis < 3; ++Axis)
+            if (!(*XYZ)[Axis]->TryGetNumber(Values[Axis]) || !FMath::IsFinite(Values[Axis])) return false;
+        if (FMath::Abs(Values[2]) > 0.01) return false;
+        RealtimeWalkPoints.Emplace(Values[0], Values[1], Values[2]);
+    }
+    double Distance = 0;
+    for (int32 Index = 1; Index < RealtimeWalkPoints.Num(); ++Index)
+    {
+        const double Segment = FVector::Dist2D(RealtimeWalkPoints[Index-1], RealtimeWalkPoints[Index]);
+        if (Segment < 10 || Segment > 1500) return false;
+        Distance += Segment;
+    }
+    return Distance >= 300 && Distance <= 2000;
+}
+
+bool UBreziRuntimeDiagnostics::UpdateRealtimeWalk(ABreziPawn* Pawn, double Now)
+{
+    if (!Pawn->IsWalkingMode())
+    {
+        RealtimeWalkFailure = TEXT("walking-mode-interrupted");
+        return false;
+    }
+    const FVector Position = Pawn->GetActorLocation();
+    const double Distance = FVector::Dist2D(Position, RealtimeWalkPoints[RealtimeWalkTargetIndex]);
+    if (Distance < RealtimeWalkBestDistanceCm - 1.0)
+    {
+        RealtimeWalkBestDistanceCm = Distance;
+        RealtimeWalkLastProgressSeconds = Now;
+    }
+    // Stay inside the source planner's 3 cm corner clearance.
+    if (Distance <= 2.0)
+    {
+        ++RealtimeWalkReachedWaypoints;
+        if (RealtimeWalkTargetIndex == RealtimeWalkPoints.Num()-1) RealtimeWalkDirection = -1;
+        else if (RealtimeWalkTargetIndex == 0) { RealtimeWalkDirection = 1; ++RealtimeWalkRoundTrips; }
+        RealtimeWalkTargetIndex += RealtimeWalkDirection;
+        RealtimeWalkBestDistanceCm = TNumericLimits<double>::Max();
+        RealtimeWalkLastProgressSeconds = Now;
+    }
+    if (Now - RealtimeWalkLastProgressSeconds > 5.0)
+    {
+        RealtimeWalkFailure = TEXT("no-waypoint-progress-for-five-wall-seconds");
+        return false;
+    }
+    if (!Pawn->SetRealtimeStudyWalkTarget(RealtimeWalkPoints[RealtimeWalkTargetIndex]))
+    {
+        RealtimeWalkFailure = TEXT("scripted-input-rejected");
+        return false;
+    }
+    if (RealtimeElapsedSeconds - RealtimeWalkLastSampleSeconds >= 0.1)
+    {
+        RealtimeWalkLastSampleSeconds = RealtimeElapsedSeconds;
+        TSharedPtr<FJsonObject> Sample = MakeShared<FJsonObject>();
+        Sample->SetNumberField(TEXT("wallSeconds"), RealtimeElapsedSeconds);
+        Sample->SetNumberField(TEXT("xCm"), Position.X);
+        Sample->SetNumberField(TEXT("yCm"), Position.Y);
+        Sample->SetNumberField(TEXT("capsuleCenterZCm"), Position.Z);
+        Sample->SetNumberField(TEXT("targetIndex"), RealtimeWalkTargetIndex);
+        Sample->SetNumberField(TEXT("reachedWaypoints"), RealtimeWalkReachedWaypoints);
+        Sample->SetNumberField(TEXT("pathDistanceCm"), RealtimeCameraTravelCm);
+        RealtimeWalkSamples.Add(Sample);
+    }
+    return true;
 }
 
 void UBreziRuntimeDiagnostics::RequestGPUProfile()
@@ -720,6 +854,9 @@ void UBreziRuntimeDiagnostics::OnScreenshotProcessed()
 
 void UBreziRuntimeDiagnostics::Finish(const FString& Status)
 {
+    if (bRealtimeWalk)
+        if (const APlayerController* PC = Cast<APlayerController>(GetOwner()))
+            if (ABreziPawn* Pawn = Cast<ABreziPawn>(PC->GetPawn())) Pawn->StopRealtimeStudyWalk();
     bFinished = true;
     bCapturePending = false;
     UGameViewportClient::OnScreenshotCaptured().Remove(ScreenshotCapturedHandle);
@@ -733,13 +870,27 @@ void UBreziRuntimeDiagnostics::Finish(const FString& Status)
 void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
 {
     check(IsInGameThread());
-    const bool bMeasurementComplete = bRealtimeOrbit
+    const bool bTimingComplete = (bRealtimeOrbit || bRealtimeWalk)
         ? FrameIntervalsMs.Num() >= 240 && RealtimeElapsedSeconds >= RealtimeBenchmarkSeconds
         : FrameIntervalsMs.Num() >= BenchmarkFrames;
+    const bool bMeasurementComplete = bTimingComplete && (!bRealtimeWalk
+        || (RealtimeWalkFailure.IsEmpty() && RealtimeWalkRoundTrips >= 1 && RealtimeWalkReachedWaypoints >= 4));
     TSharedRef<FJsonObject> Report = MakeShared<FJsonObject>();
     Report->SetStringField(TEXT("status"), Status);
     Report->SetStringField(TEXT("recordedAtUtc"), FDateTime::UtcNow().ToIso8601());
     Report->SetStringField(TEXT("engineVersion"), FEngineVersion::Current().ToString());
+    Report->SetNumberField(TEXT("processId"), FPlatformProcess::GetCurrentProcessId());
+    Report->SetStringField(TEXT("buildConfiguration"),
+#if UE_BUILD_SHIPPING
+        TEXT("Shipping")
+#elif UE_BUILD_TEST
+        TEXT("Test")
+#elif UE_BUILD_DEBUG
+        TEXT("Debug")
+#else
+        TEXT("Development")
+#endif
+    );
     Report->SetStringField(TEXT("cpu"), FPlatformMisc::GetCPUBrand());
     Report->SetStringField(TEXT("gpu"), GRHIAdapterName);
     Report->SetStringField(TEXT("rhi"), GDynamicRHI ? GDynamicRHI->GetName() : TEXT("unavailable"));
@@ -780,6 +931,31 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         Motion->SetBoolField(TEXT("engineClockModifiedByStudy"), false);
         Motion->SetStringField(TEXT("scope"), TEXT("Ordinary wall-time frames while the source orbit camera sweeps +/-8 degrees over 12 seconds. Fixed-step/fixed-rate/benchmark and dilated clocks are rejected each measured tick. No keyboard, walking, collision or compositor presentation-event claim. One regular screenshot after timing."));
         Report->SetObjectField(TEXT("realtimeOrbit"), Motion);
+    }
+    if (bRealtimeWalk)
+    {
+        TSharedRef<FJsonObject> Motion = MakeShared<FJsonObject>();
+        Motion->SetStringField(TEXT("mode"), TEXT("native-cmc-source-route-wall-time"));
+        Motion->SetStringField(TEXT("sourceViewId"), RealtimeSourceViewId);
+        Motion->SetStringField(TEXT("routePath"), RealtimeWalkRoutePath);
+        Motion->SetStringField(TEXT("sceneSha256"), RealtimeWalkSceneSha256);
+        Motion->SetBoolField(TEXT("nativeRoutePreflightPassed"), bRealtimeWalkPrepared);
+        Motion->SetNumberField(TEXT("requestedSeconds"), RealtimeBenchmarkSeconds);
+        Motion->SetNumberField(TEXT("elapsedWallSeconds"), RealtimeElapsedSeconds);
+        Motion->SetNumberField(TEXT("cameraSamples"), RealtimeCameraSamples);
+        Motion->SetNumberField(TEXT("movingCameraSamples"), RealtimeMovingSamples);
+        Motion->SetNumberField(TEXT("pathDistanceCm"), RealtimeCameraTravelCm);
+        Motion->SetNumberField(TEXT("reachedWaypoints"), RealtimeWalkReachedWaypoints);
+        Motion->SetNumberField(TEXT("roundTrips"), RealtimeWalkRoundTrips);
+        Motion->SetStringField(TEXT("failure"), RealtimeWalkFailure);
+        Motion->SetBoolField(TEXT("measurementCompleted"), bMeasurementComplete);
+        Motion->SetBoolField(TEXT("engineClockModifiedByStudy"), false);
+        Motion->SetBoolField(TEXT("teleportsDuringMeasurement"), false);
+        TArray<TSharedPtr<FJsonValue>> Samples;
+        for (const auto& Sample : RealtimeWalkSamples) Samples.Add(MakeShared<FJsonValueObject>(Sample));
+        Motion->SetArrayField(TEXT("samples"), Samples);
+        Motion->SetStringField(TEXT("scope"), TEXT("Living/kitchen source aisle, repeated in both directions using ordinary CharacterMovement input and collisions. One validated source arrival before warmup; no teleports or changed simulation clocks during timing. Floor and swept capsule preflight, 5s waypoint-stall detection, >=240 measured frames, >=1 roundtrip. This is not whole-house or OS keyboard acceptance."));
+        Report->SetObjectField(TEXT("realtimeWalk"), Motion);
     }
     int32 Over30HzBudget = 0, Over50Ms = 0, Over100Ms = 0;
     for (double Interval : FrameIntervalsMs)
@@ -853,6 +1029,15 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
     Report->SetStringField(TEXT("resolutionInterpretation"), TEXT("Game viewport and scene RT pixels describe 3D rendering. The fitted window, Slate/UI presentation and actual UI screenshot can be smaller. A 4K scene capture does not prove a 4K physical display or OS backbuffer."));
     TSharedRef<FJsonObject> Settings = MakeShared<FJsonObject>();
     for (const TCHAR* Name : {
+        TEXT("sg.GlobalIlluminationQuality"), TEXT("sg.ShadowQuality"), TEXT("sg.ReflectionQuality"),
+        TEXT("sg.FoliageQuality"), TEXT("sg.PostProcessQuality"), TEXT("sg.EffectsQuality"),
+        TEXT("foliage.DensityScale"), TEXT("r.Brezi.LocalLightShadows"), TEXT("r.Brezi.DoubleGlass"),
+        TEXT("r.Brezi.Lumen.FinalGatherQuality"), TEXT("r.Brezi.Lumen.ReflectionQuality"),
+        TEXT("r.Brezi.Lumen.SceneLightingQuality"), TEXT("r.Brezi.Lumen.SceneDetail"),
+        TEXT("r.Brezi.Lumen.SceneViewDistance"), TEXT("r.Brezi.Lumen.MaxTraceDistance"),
+        TEXT("r.RayTracing.Culling"), TEXT("r.AllowGlobalClipPlane"), TEXT("r.CustomDepth"),
+        TEXT("r.Water.SingleLayer.RefractionDownsampleFactor"), TEXT("r.Shadow.Virtual.Stats.Visible"),
+        TEXT("r.TranslucencyLightingVolume"), TEXT("r.TranslucencyLightingVolume.Dim"), TEXT("r.TranslucencyLightingVolume.Blur"),
         TEXT("r.EyeAdaptation.CachedLightingPreExposure"),
         TEXT("r.ScreenPercentage"),
         TEXT("r.SecondaryScreenPercentage.GameViewport"),
@@ -894,13 +1079,13 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         TEXT("r.Lumen.TranslucencyReflections.FrontLayer.Enable"),
         TEXT("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject"),
         TEXT("r.Lumen.TranslucencyReflections.FrontLayer.Allow"),
-        TEXT("r.TranslucencyLightingVolume.Dim"),
         TEXT("r.Nanite"),
         TEXT("r.Nanite.ProjectEnabled"),
         TEXT("r.SkinCache.CompileShaders"),
         TEXT("r.SkinCache.Mode"),
         TEXT("r.Shadow.Virtual.Enable"),
         TEXT("r.VSync"),
+        TEXT("t.MaxFPS"),
         TEXT("Slate.AllowBackgroundBlurWidgets"),
         TEXT("Slate.ForceBackgroundBlurLowQualityOverride")
     })
@@ -908,6 +1093,15 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         if (const IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name)) Settings->SetNumberField(Name, Variable->GetFloat());
     }
     Report->SetObjectField(TEXT("renderSettings"), Settings);
+    TArray<TSharedPtr<FJsonValue>> SkyCaptures;
+    for (TActorIterator<ASkyLight> It(GetWorld()); It; ++It)
+    {
+        TSharedRef<FJsonObject> Sky = MakeShared<FJsonObject>();
+        Sky->SetStringField(TEXT("actor"), It->GetPathName());
+        Sky->SetBoolField(TEXT("realTimeCaptureEnabled"), It->GetLightComponent()->IsRealTimeCaptureEnabled());
+        SkyCaptures.Add(MakeShared<FJsonValueObject>(Sky));
+    }
+    Report->SetArrayField(TEXT("skyLightCaptureState"), SkyCaptures);
     Report->SetStringField(TEXT("renderSettingsMethod"), TEXT("Console variables read once on the game thread while writing this report. These are requested settings; inactive-method TAA/SMAA/TSR values may still be present. Actual composed and render-thread AA methods are reported separately; shader permutation and pass execution require GPU evidence."));
     if (FinalViewSettings.IsValid()) Report->SetObjectField(TEXT("finalViewPostProcessSettings"), FinalViewSettings->Read());
     if (const auto* Exterior = GetOwner()->FindComponentByClass<UBreziExteriorLighting>())
