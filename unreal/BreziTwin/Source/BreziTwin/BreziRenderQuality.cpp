@@ -116,6 +116,8 @@ TAutoConsoleVariable<float> SceneDistance(TEXT("r.Brezi.Lumen.SceneViewDistance"
     TEXT("Main-view Lumen scene distance in cm; negative preserves authored postprocess settings."));
 TAutoConsoleVariable<float> TraceDistance(TEXT("r.Brezi.Lumen.MaxTraceDistance"), -1,
     TEXT("Main-view Lumen trace distance in cm; negative preserves authored postprocess settings."));
+TAutoConsoleVariable<int32> OutputLines(TEXT("r.Brezi.OutputLines"), 0,
+    TEXT("Largest main-view temporal upscaler output, as the height of a 16:9 frame with equal pixels. The engine's secondary spatial upscale fills larger viewports; zero keeps the full viewport."));
 
 bool HardwareLumenSupported()
 {
@@ -138,6 +140,10 @@ template<typename Visitor> void VisitSettings(Profile Value, Visitor&& Visit)
     // writes DensityScale). Never change their priority flags by hand.
     Visit(TEXT("r.ScreenPercentage"), float(S.ScreenPercentage));
     Visit(TEXT("r.TSR.History.ScreenPercentage"), float(S.HistoryPercentage));
+    Visit(TEXT("r.ScreenPercentage.MaxResolution"), float(S.RenderLines));
+    Visit(TEXT("r.Brezi.OutputLines"), float(S.OutputLines));
+    Visit(TEXT("r.Lumen.Reflections.DownsampleFactor"), float(S.ReflectionDownsample));
+    Visit(TEXT("r.Shadow.Virtual.ResolutionLodBiasLocal"), S.LocalShadowLodBias);
     Visit(TEXT("r.Brezi.Lumen.FinalGatherQuality"), S.FinalGather);
     Visit(TEXT("r.Brezi.Lumen.ReflectionQuality"), S.ReflectionQuality);
     Visit(TEXT("r.Brezi.Lumen.SceneLightingQuality"), S.SceneLighting);
@@ -160,10 +166,15 @@ class FRenderQualityView final : public FWorldSceneViewExtension
 {
 public:
     FRenderQualityView(const FAutoRegister& AutoRegister, UWorld* World) : FWorldSceneViewExtension(AutoRegister, World) {}
-    virtual void SetupView(FSceneViewFamily&, FSceneView& View) override
+    virtual void SetupView(FSceneViewFamily& Family, FSceneView& View) override
     {
         check(IsInGameThread());
         if (View.bIsSceneCapture || View.bIsReflectionCapture) return;
+        // UE5.8 GameViewportClient::Draw has already applied r.SecondaryScreenPercentage
+        // and builds the primary screen-percentage driver only after this callback.
+        if (Family.SupportsScreenPercentage())
+            Family.SecondaryViewFraction = FMath::Min(Family.SecondaryViewFraction, static_cast<float>(OutputFraction(
+                OutputLines.GetValueOnGameThread(), View.UnscaledViewRect.Width(), View.UnscaledViewRect.Height())));
         // UE5.8 LocalPlayer invokes this after EndFinalPostprocessSettings. The
         // effective main-view budget therefore wins over imported unbound volumes
         // without modifying saved map assets, exposure, materials or geometry.

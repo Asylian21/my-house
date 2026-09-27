@@ -1,4 +1,5 @@
 #include "../unreal/BreziTwin/Source/BreziTwin/BreziRenderQualityPolicy.h"
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -12,7 +13,7 @@ void Check(bool Value, const char* Message)
 int main()
 {
     static_assert(NativeProfileSchemaVersion == 1);
-    static_assert(RecipeRevision == 3);
+    static_assert(RecipeRevision == 4);
     static_assert(static_cast<int>(Profile::Native) == 0 && static_cast<int>(Profile::Balanced) == 1
         && static_cast<int>(Profile::Performance) == 2 && static_cast<int>(Profile::Cinematic) == 3);
     constexpr unsigned User = 0x09000000, Project = 0x04000000, Console = 0x10000000;
@@ -28,13 +29,35 @@ int main()
         Check(Pair.GlobalIllumination >= 2 && Pair.Reflections >= 2, "interactive profiles retain Lumen");
         const bool Cinematic = P == Profile::Cinematic;
         const int Budget = Cinematic ? 2 : 1;
-        Check(Pair.FinalGather <= Budget && Pair.ReflectionQuality <= Budget && Pair.SceneLighting <= Budget, "profile bounds expensive imported volume quality");
+        Check(Pair.FinalGather <= 1, "no profile doubles Lumen probe tracing resolution");
+        Check(Pair.ReflectionQuality <= Budget && Pair.SceneLighting <= Budget, "profile bounds expensive imported volume quality");
+        Check(Pair.ReflectionDownsample == (Cinematic ? 1 : 2), "full-resolution Lumen reflections are reserved for cinematic");
+        Check(Pair.LocalShadowLodBias == 1, "local virtual shadow pages use the halved-resolution budget");
+        // The 1080p frames that validated the percentage recipe stay uncapped.
+        Check(Pair.RenderLines >= Pair.ScreenPercentage * 1080 / 100, "render cap is inactive in a 1080p viewport");
+        Check(OutputFraction(Pair.OutputLines, 1920, 1080) == 1, "temporal output is full in a 1080p viewport");
+        Check(Pair.RenderLines > 0 && (Pair.OutputLines == 0 || Pair.OutputLines >= Pair.RenderLines), "render budget never exceeds output budget");
         const int Distance = Cinematic ? 20000 : 15000;
         Check(Pair.SceneDistanceCm <= Distance && Pair.TraceDistanceCm <= Distance, "profile bounds Lumen scene range");
         Check(Pair.DetailLighting == Cinematic, "detail lighting is explicitly restored only in cinematic");
         Check(Pair.FoliageDensity > 0 && Pair.FoliageDensity <= 1, "density is a valid fraction");
         Check(!UseHardwareRayTracing(P, false), "unsupported RHI always falls back to software Lumen");
     }
+    Check(Values(Profile::Performance).RenderLines < Values(Profile::Balanced).RenderLines
+        && Values(Profile::Balanced).RenderLines < Values(Profile::Native).RenderLines
+        && Values(Profile::Native).RenderLines <= Values(Profile::Cinematic).RenderLines, "render budgets follow profile order");
+    Check(Values(Profile::Performance).OutputLines == 1440 && Values(Profile::Balanced).OutputLines == 0
+        && Values(Profile::Native).OutputLines == 0 && Values(Profile::Cinematic).OutputLines == 0, "only performance caps temporal output");
+    Check(std::abs(OutputFraction(1440, 3840, 2160) - 2. / 3) < 1e-9, "4K performance output is 2560x1440");
+    Check(std::abs(OutputFraction(1440, 3456, 1944) - 1440. / 1944) < 1e-9, "16:9 Retina output keeps the 1440-line pixel budget");
+    Check(std::abs(OutputFraction(1440, 3456, 2160) * OutputFraction(1440, 3456, 2160) * 3456 * 2160 - LinePixels(1440)) < 1,
+        "non-16:9 output keeps the pixel budget");
+    Check(OutputFraction(0, 3840, 2160) == 1 && OutputFraction(1440, 2560, 1440) == 1 && OutputFraction(1440, 1920, 1200) == 1,
+        "unbounded and smaller viewports keep full output");
+    Check(OutputFraction(1440, 100000, 100000) == MinimumOutputFraction, "output never drops below TSR's supported fraction");
+    Check(OutputFraction(1440, 0, 2160) == 1 && OutputFraction(1440, -1, 2160) == 1
+        && OutputFraction(1440, std::numeric_limits<int>::max(), std::numeric_limits<int>::max()) == MinimumOutputFraction,
+        "degenerate viewports never produce an invalid fraction");
     Check(Match(100, 200) == Profile::Cinematic, "doubled-history pair identifies cinematic without changing native");
     Check(Match(67, 200) == Profile::Unknown, "mixed pair is not selected");
     Check(Match(std::numeric_limits<double>::quiet_NaN(), 100) == Profile::Unknown, "NaN is not selected");

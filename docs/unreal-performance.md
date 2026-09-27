@@ -1,5 +1,65 @@
 # Unreal — plynulosť BreziTwin
 
+## Recept 4 — pixelový rozpočet (27. 9. 2026)
+
+Používateľ hlásil slabý výkon vo všetkých režimoch na MacBooku Pro M5 Pro.
+Príčinou bolo, že profily škálovali vnútorné pixely iba percentom. Okno na celú
+Retina obrazovku (3360 × 1890, 6,35 MP) tak Natívny detail aj Fotoreal
+vykresľovali v plnom rozlíšení a Fotoreal navyše zdvojnásobil rozlíšenie
+trasovania sond Lumenu (Final Gather 2). Balík realism r5 začínal vo Fotoreale.
+
+Recept 4 v [BreziRenderQualityPolicy.h](../unreal/BreziTwin/Source/BreziTwin/BreziRenderQualityPolicy.h)
+pridáva rozpočet pixelov. Riadky znamenajú výšku 16:9 obrazu s rovnakým počtom
+pixelov; v okne 1920 × 1080 sa žiadny strop neuplatní a pôvodné 1080p správanie ostáva.
+
+| Nastavenie | Fotoreal | Natívny detail | Vyvážené | Plynulosť |
+| --- | ---: | ---: | ---: | ---: |
+| Primárne / TSR história | 100 / 200 % | 100 / 100 % | 67 / 100 % | 50 / 100 % |
+| Strop vnútorného renderu (`r.ScreenPercentage.MaxResolution`) | 1080 | 1080 | 900 | 720 |
+| Strop výstupu TSR (`r.Brezi.OutputLines`) | — | — | — | 1440 |
+| Lumen Final Gather | 1 (predtým 2) | 1 | 0,75 | 0,5 |
+| `r.Lumen.Reflections.DownsampleFactor` | 1 | 2 (predtým 1) | 2 | 2 |
+| `r.Shadow.Virtual.ResolutionLodBiasLocal` | 1 (predtým 0) | 1 (predtým 0) | 1 (predtým 0) | 1 |
+
+Strop výstupu TSR znižuje `SecondaryViewFraction` v `SetupView`, teda ešte pred
+zostavením ovládača rozlíšenia v UE 5.8; zvyšok okna doplní priestorové zväčšenie
+enginu. Runtime report zapisuje `secondaryViewFraction` a rozmer výstupu TSR.
+Pri Vyváženom stropy výstupu 1620 a 1440 ušetrili najviac 1 ms GPU a čas snímky
+nezmenili, preto má plný výstup. Odmietnuté boli aj úpravy oblakov, TLV, async
+compute, `sg.AntiAliasingQuality` a polomeru RT cullingu.
+
+Priemerný čas snímky, Development balík, okno 3360 × 1890 (kuchyňa / ulica, deň):
+
+| Profil | R3 | R4 | FPS po R4 |
+| --- | ---: | ---: | ---: |
+| Fotoreal | 136,5 / 72,8 ms | 46,6 / 30,5 ms | 21 / 33 |
+| Natívny detail | 108,6 / 51,9 ms | 37,4 / 26,1 ms | 27 / 38 |
+| Vyvážené | 37,6 / 27,6 ms | 23,9 / 19,3 ms | 42 / 52 |
+| Plynulosť | 16,4 / 16,3 ms | 11,9 / 14,3 ms | 84 / 70 |
+
+Shipping balík `03d61c94…` prešiel `performance-qa` pri 4K (ulica, kuchyňa
+cez deň aj v noci), pri 1080p a v 60-sekundovej chôdzi interiérom pri 4K. Dve
+po sebe idúce série chôdze dali priemer Plynulosť 12,1–12,9 ms, Vyvážené
+22,0–22,2 ms, Natívny 36,1–37,2 ms a Fotoreal 42,6–43,3 ms. QA overuje aj nové
+rozpočty a skutočný podiel výstupu TSR.
+
+Vizuálne porovnanie statických snímok R3/R4 v mierke 1:1 a 2× (drevo, batéria,
+odrazy rúry, drážky strechy, tráva, plot) nenašlo stratu detailu; drážky
+strechy sú v R4 nepatrne tenšie. Hrubšie stránky lokálnych tieňov sú cez deň aj
+v noci vizuálne zhodné a odstraňujú brzdu snímok (ulica v noci 30,9 → 26,7 ms
+pri rovnakom GPU čase). Statické snímky po 480 snímkach ukazujú ustálený TSR;
+ostrosť v pohybe zostáva pri obmedzených profiloch nižšia než pri R3.
+
+Balík je povýšený v `output/unreal/model-refresh-current.json`, predchádzajúci
+realism r5 ostáva v `previousSelection`. Obsah je bajtovo zdedený z r5.
+Dôkazy: [záznam prijatia](../output/unreal/performance-validation-20260927-r1/performance-r4-review.json),
+[merania](../output/unreal/performance-validation-20260927-r1/measurements.json)
+a porovnávacie výrezy v `output/unreal/performance-study-20260927/review/`.
+Nástroj [performance-study.mjs](../scripts/unreal/performance-study.mjs) je
+prieskumný (Development, A/B varianty); akceptáciu vlastní `performance-qa.mjs`.
+
+## Revízia z 23.–24. septembra 2026
+
 Pracovná revízia z 23.–24. septembra 2026 rieši cenu Lumenu, doplnkových odrazov
 skla a drobnej vegetácie. Hlavný návrh **C/B/B**, geometria domu, osadenie
 s uličným aj pravým odstupom 3 000 mm a historické výstupy zostávajú záväzné.

@@ -118,7 +118,15 @@ for(const profile of profiles)for(const mode of outputs)for(const scene of scene
     }
     if(software)assert.equal(r.renderSettings['r.Lumen.HardwareRayTracing'],0);
     if(!baseline){
-      const expected={native:[3,3,3,3,3,3,1,1],balanced:[2,2,2,2,2,2,.65,.75],performance:[2,1,2,1,1,1,.35,.5],cinematic:[3,3,3,3,3,3,1,2]}[profile];
+      const expected={native:[3,3,3,3,3,3,1,1],balanced:[2,2,2,2,2,2,.65,.75],performance:[2,1,2,1,1,1,.35,.5],cinematic:[3,3,3,3,3,3,1,1]}[profile];
+      const budget={native:[1080,0,2],balanced:[900,0,2],performance:[720,1440,2],cinematic:[1080,0,1]}[profile];
+      for(const [i,name] of ['r.ScreenPercentage.MaxResolution','r.Brezi.OutputLines','r.Lumen.Reflections.DownsampleFactor'].entries())
+        assert.equal(r.renderSettings[name],budget[i],`Render budget ${name} differs`);
+      assert.equal(r.renderSettings['r.Shadow.Virtual.ResolutionLodBiasLocal'],1);
+      const view=r.finalViewPostProcessSettings,output=Math.min(1,budget[1]?Math.sqrt(budget[1]**2*16/9/(view.unscaledViewWidth*view.unscaledViewHeight)):1);
+      assert(Math.abs(view.secondaryViewFraction-output)<1e-4,'Temporal output fraction differs');
+      // UE5.8 multiplies the integer rect by the float fraction in single precision.
+      assert.equal(view.temporalOutputHeight,Math.ceil(Math.fround(view.unscaledViewHeight*view.secondaryViewFraction)));
       for(const [i,name] of ['GlobalIllumination','Shadow','Reflection','Foliage','PostProcess','Effects'].entries())
         assert.equal(r.renderSettings[`sg.${name}Quality`],expected[i]);
       assert(Math.abs(r.renderSettings['foliage.DensityScale']-expected[6])<1e-5);

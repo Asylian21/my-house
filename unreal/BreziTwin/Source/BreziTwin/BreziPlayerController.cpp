@@ -1292,7 +1292,7 @@ TSharedRef<SWidget> ABreziPlayerController::BuildRenderQualityChoices()
             : Value == Profile::Native ? LOCTEXT("QualityNative", "Natívny detail")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalanced", "Vyvážené") : LOCTEXT("QualityPerformance", "Plynulosť");
         const FText Detail = Value == Profile::Cinematic ? LOCTEXT("QualityCinematicDetail", "Najvyššia kvalita svetla a detailov; pomalšie vykresľovanie")
-            : Value == Profile::Native ? LOCTEXT("QualityNativeDetail", "Plné rozlíšenie a detaily")
+            : Value == Profile::Native ? LOCTEXT("QualityNativeDetail", "Plné detaily; veľké okno dopočíta z 1080p")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalancedDetail", "Rovnováha detailov a plynulosti")
             : LOCTEXT("QualityPerformanceDetail", "Uprednostniť rýchlu odozvu");
         TSharedPtr<SCheckBox> Choice;

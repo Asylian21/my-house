@@ -112,6 +112,10 @@ public:
             Snapshot->SetNumberField(TEXT("observedMainViews"), ++Samples);
             Snapshot->SetNumberField(TEXT("unscaledViewWidth"), View->UnscaledViewRect.Width());
             Snapshot->SetNumberField(TEXT("unscaledViewHeight"), View->UnscaledViewRect.Height());
+            Snapshot->SetNumberField(TEXT("secondaryViewFraction"), Family.SecondaryViewFraction);
+            // UE5.8 FViewInfo::GetSecondaryViewRectSize without overscan.
+            Snapshot->SetNumberField(TEXT("temporalOutputWidth"), FMath::CeilToInt(View->UnscaledViewRect.Width() * Family.SecondaryViewFraction));
+            Snapshot->SetNumberField(TEXT("temporalOutputHeight"), FMath::CeilToInt(View->UnscaledViewRect.Height() * Family.SecondaryViewFraction));
             Snapshot->SetNumberField(TEXT("viewFamilyFrameNumber"), Family.FrameNumber);
             Snapshot->SetNumberField(TEXT("antiAliasingMethod"), static_cast<int32>(View->AntiAliasingMethod));
             Snapshot->SetStringField(TEXT("antiAliasingMethodName"), AntiAliasingMethodName(View->AntiAliasingMethod));
@@ -1040,7 +1044,7 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         TEXT("r.Water.SingleLayer.RefractionDownsampleFactor"), TEXT("r.Shadow.Virtual.Stats.Visible"),
         TEXT("r.TranslucencyLightingVolume"), TEXT("r.TranslucencyLightingVolume.Dim"), TEXT("r.TranslucencyLightingVolume.Blur"),
         TEXT("r.EyeAdaptation.CachedLightingPreExposure"),
-        TEXT("r.ScreenPercentage"),
+        TEXT("r.ScreenPercentage"), TEXT("r.ScreenPercentage.MaxResolution"), TEXT("r.Brezi.OutputLines"),
         TEXT("r.SecondaryScreenPercentage.GameViewport"),
         TEXT("r.DynamicRes.OperationMode"),
         TEXT("r.AntiAliasingMethod"),
@@ -1085,6 +1089,7 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         TEXT("r.SkinCache.CompileShaders"),
         TEXT("r.SkinCache.Mode"),
         TEXT("r.Shadow.Virtual.Enable"),
+        TEXT("r.Shadow.Virtual.ResolutionLodBiasLocal"),
         TEXT("r.VSync"),
         TEXT("t.MaxFPS"),
         TEXT("Slate.AllowBackgroundBlurWidgets"),

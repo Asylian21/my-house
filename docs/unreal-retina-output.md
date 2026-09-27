@@ -2,6 +2,8 @@
 
 Používateľ 9. 9. 2026 uprednostnil plynulý pohyb aspoň pri 30 FPS a dovolil znížiť výstup pod 4K. Pevných 3840 × 2160 preto už nie je podmienkou bežného zobrazenia. Zdrojová geometria, materiály, svetlá a rozmery modelu sa nemenia.
 
+Od [receptu 4](unreal-performance.md#recept-4--pixelový-rozpočet-27-9-2026) (27. 9. 2026) veľké Retina okno už nezvyšuje počet vnútorne vykresľovaných pixelov nad rozpočet profilu. Výstup zostáva v rozlíšení okna; TSR, pri Plynulosti aj priestorové zväčšenie, ho dopočíta.
+
 Po skúške [nového vonkajšieho osvetlenia](unreal-exterior-lighting.md) zostáva bežnou verziou nižšie overený balík `a445eb50…`. Svetelný kandidát `a77f76aa…` sa zostavil a spustil, ale jeho merania stratili aktiváciu okna a nepotvrdzujú výkon. [Opätovné bežné otvorenie overenej verzie](../output/unreal/exterior-lighting-study/retained-delivery-open-review.json) obnovilo Retina 3200 × 1800 a profil Plynulosť; samo osebe nejde o nové meranie FPS.
 
 Aktuálny balík `a445eb50…` zo zdrojov `73dcd03c…` splnil cieľ v **dvoch minútových orbit testoch pri bazéne**, cez deň a v noci, pri **3200 × 1800**, TSR **50 %** a histórii **100 %**. Po 600 zahrievacích snímkach nasledovalo 60 sekúnd pohybu podľa bežného wall-clock času. Všetkých **6420 intervalov** bolo v popredí a v aktívnom okne; žiadny neprekročil 33,33 ms.

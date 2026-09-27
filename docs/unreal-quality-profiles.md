@@ -1,5 +1,7 @@
 # Profily kvality natívnej aplikácie
 
+Od 27. 9. 2026 platí [recept 4](unreal-performance.md#recept-4--pixelový-rozpočet-27-9-2026): štyri profily **Fotoreal, Natívny detail, Vyvážené, Plynulosť** majú navyše strop vnútorného renderu 1080/1080/900/720 riadkov a Plynulosť aj strop výstupu TSR 1440 riadkov. V okne 1920 × 1080 sa stropy neuplatnia. Karta Natívny detail preto uvádza „Plné detaily; veľké okno dopočíta z 1080p“. Tabuľka a podmienky nižšie opisujú pôvodnú trojicu profilov.
+
 Aktuálna [Retina revízia](unreal-retina-output.md) `abde8be8…` dosiahla v štyroch minútových denných orbit testoch **40,7–62,2 FPS** pri 3200 × 1800 a Plynulosti 50/100. Nastavenie profilu aj veľkosť okna boli uložené a obnovené pri bežnom štarte. Nižšie zostávajú historické dôkazy pôvodných profilov a pevných 4K balíkov.
 
 Stav k 9. 9. 2026: **ovládanie a ukladanie profilov vo v2 sú natívne overené** v dokončenom balíku `3c71cc63…`. Čerstvé spustenie použilo Vyvážené 67/100; všetky tri voľby cez AX aj klávesnicu sa uložili s `saved=1` a relaunch obnovil Plynulosť 50/100. Dočasný pomenovaný profil nezmenil uloženú preferenciu; až vedomé kliknutie na už vybrané Vyvážené ju prepísalo. **Overené sú aj viditeľný raw QA lock, zachovanie preferencie v diagnostike a samostatné 4K výstupy pri 100/200 aj 50/100.** Priebežný stav a odkazy na balíky sú v [quality-ui-current.json](../output/unreal/quality-ui-current.json).
