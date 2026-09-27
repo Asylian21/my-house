@@ -14,6 +14,7 @@ import { verifyModelRefresh } from './model-refresh-contract.mjs';
 import { buildArchvizRoomViewpoints } from './archviz-room-viewpoints.mjs';
 import { buildWalkthroughContract } from './walkthrough-contract.mjs';
 import { inheritScene, verifyInheritedScene, baselineInstrumentation } from './performance-source.mjs';
+import { authoredRenderCapability, modelRenderProfileArgs } from './realism-source.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const output = resolve(root, process.env.BREZI_MODEL_OUTPUT ?? 'output/unreal/model-refresh-20260922');
@@ -250,6 +251,14 @@ if (action === 'prepare') {
     await writeFile(file, ini);
   }
   const doubleGlass = process.env.BREZI_DOUBLE_GLASS === '1';
+  const defaultRenderProfile = process.env.BREZI_DEFAULT_RENDER_PROFILE ?? 'performance';
+  if (!['performance', 'balanced', 'native', 'cinematic'].includes(defaultRenderProfile))
+    throw Error('Use performance, balanced, native or cinematic as the explicit default render profile');
+  if (defaultRenderProfile === 'cinematic') {
+    const policy = await readFile(resolve(project, 'Source/BreziTwin/BreziRenderQualityPolicy.h'), 'utf8');
+    if (!/RecipeRevision\s*=\s*[3-9]\d*\s*;/.test(policy) || !/enum class Profile[^;]*\bCinematic\b/.test(policy))
+      throw Error('The prepared native source does not implement Cinematic');
+  }
   const configuration = process.env.BREZI_GAME_CONFIGURATION ?? 'Development';
   if (!['Development', 'Shipping'].includes(configuration)) throw Error('Use Development or Shipping with this installed engine');
   if (configuration !== 'Development') {
@@ -270,7 +279,7 @@ if (action === 'prepare') {
   await writeFile(settings, (await readFile(settings, 'utf8'))
     .replace(/^(ResolutionSizeX|LastUserConfirmedResolutionSizeX)=\d+$/gm, '$1=1920')
     .replace(/^(ResolutionSizeY|LastUserConfirmedResolutionSizeY)=\d+$/gm, '$1=1080')
-    + '\n[Brezi.RenderQuality]\nProfileV1=performance\n');
+    + '\n[Brezi.RenderQuality]\nProfileV1=' + defaultRenderProfile + '\n');
   await mkdir(resolve(project, 'Content/Data'), { recursive: true });
   await save(resolve(output, 'profile.json'), {
     status: 'current-model-project-prepared', project, engine, geometry,
@@ -278,6 +287,7 @@ if (action === 'prepare') {
     archvizGame: process.env.BREZI_ARCHVIZ_GAME === '1',
     gameConfiguration: configuration,
     doubleGlass,
+    defaultRenderProfile,
     nativeBuildVerified: false,
   });
   if (process.env.BREZI_ARCHVIZ_GAME === '1') {
@@ -306,6 +316,21 @@ if (action === 'prepare') {
     reportSha256:sha(await readFile(resolve(output,'performance-scene-report.json'))),
   });
   await verifyInheritedScene({root, output, project});
+} else if (action === 'realism') {
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root, output, project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-import.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor});
+  await save(resolve(output,'realism-import-process.json'), {
+    processFile:resolve(output,'realism-import.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-import.log.json'))),
+    logFile:resolve(output,'realism-import.log'),logSha256:sha(await readFile(resolve(output,'realism-import.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-import-report.json'))),
+  });
+  await verifyInheritedScene({root, output, project});
 } else if (action === 'nanite-study') {
   await requireIdleApp();
   await verifyInheritedScene({root,output,project});
@@ -321,6 +346,104 @@ if (action === 'prepare') {
   }
   host.reportSha256=sha(await readFile(resolve(output,'nanite-study-report.json')));
   await save(resolve(output,'nanite-study-process.json'),host);
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'realism-fixtures') {
+  if (!requestedView) throw Error('Specify the validated fixture geometry output');
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root,output,project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-fixtures-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-fixtures.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor,
+      BREZI_FIXTURES_OUTPUT:resolve(root,requestedView)});
+  await save(resolve(output,'realism-fixtures-process.json'), {
+    processFile:resolve(output,'realism-fixtures.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-fixtures.log.json'))),
+    logFile:resolve(output,'realism-fixtures.log'),logSha256:sha(await readFile(resolve(output,'realism-fixtures.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-fixtures-report.json'))),
+  });
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'realism-room-details') {
+  if (!requestedView) throw Error('Specify the validated room-detail geometry output');
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root,output,project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-room-details-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-room-details.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor,
+      BREZI_ROOM_DETAILS_OUTPUT:resolve(root,requestedView)});
+  await save(resolve(output,'realism-room-details-process.json'), {
+    processFile:resolve(output,'realism-room-details.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-room-details.log.json'))),
+    logFile:resolve(output,'realism-room-details.log'),logSha256:sha(await readFile(resolve(output,'realism-room-details.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-room-details-report.json'))),
+  });
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'realism-furniture') {
+  if (!requestedView) throw Error('Specify the validated upholstery geometry output');
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root,output,project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-furniture-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-furniture.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor,
+      BREZI_FURNITURE_OUTPUT:resolve(root,requestedView)});
+  await save(resolve(output,'realism-furniture-process.json'), {
+    processFile:resolve(output,'realism-furniture.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-furniture.log.json'))),
+    logFile:resolve(output,'realism-furniture.log'),logSha256:sha(await readFile(resolve(output,'realism-furniture.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-furniture-report.json'))),
+  });
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'realism-stove') {
+  if (!requestedView) throw Error('Specify the validated stove geometry output');
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root,output,project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-stove-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-stove.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor,
+      BREZI_STOVE_OUTPUT:resolve(root,requestedView)});
+  await save(resolve(output,'realism-stove-process.json'), {
+    processFile:resolve(output,'realism-stove.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-stove.log.json'))),
+    logFile:resolve(output,'realism-stove.log'),logSha256:sha(await readFile(resolve(output,'realism-stove.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-stove-report.json'))),
+  });
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'realism-stove-calibration') {
+  await requireIdleApp();
+  await checkProfile();
+  await verifyInheritedScene({root,output,project});
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/realism-stove-calibration-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'realism-stove-calibration.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor});
+  await save(resolve(output,'realism-stove-calibration-process.json'), {
+    processFile:resolve(output,'realism-stove-calibration.log.json'),
+    processFileSha256:sha(await readFile(resolve(output,'realism-stove-calibration.log.json'))),
+    logFile:resolve(output,'realism-stove-calibration.log'),logSha256:sha(await readFile(resolve(output,'realism-stove-calibration.log'))),
+    reportSha256:sha(await readFile(resolve(output,'realism-stove-calibration-report.json'))),
+  });
+  await verifyInheritedScene({root,output,project});
+} else if (action === 'exterior') {
+  await requireIdleApp();
+  await verifyInheritedScene({root,output,project});
+  if(!process.env.BREZI_EXTERIOR_CONTEXT||!process.env.BREZI_EXTERIOR_ASSETS)
+    throw Error('Specify prepared BREZI_EXTERIOR_CONTEXT and BREZI_EXTERIOR_ASSETS manifests');
+  await run(resolve(engine,'Engine/Binaries/Mac/UnrealEditor-Cmd'),[descriptor,'-run=pythonscript',
+    '-script='+resolve(root,'scripts/unreal/exterior-import.py'),'-unattended','-nop4','-nosplash','-nullrhi'],
+    'exterior-import.log',{BREZI_MODEL_OUTPUT:output,
+      BREZI_PERFORMANCE_SOURCE:(await read(resolve(output,'performance-source.json'))).donor});
+  await save(resolve(output,'exterior-import-process.json'),{
+    processFile:resolve(output,'exterior-import.log.json'),processFileSha256:sha(await readFile(resolve(output,'exterior-import.log.json'))),
+    logFile:resolve(output,'exterior-import.log'),logSha256:sha(await readFile(resolve(output,'exterior-import.log'))),
+    reportSha256:sha(await readFile(resolve(output,'exterior-import-report.json'))),
+  });
   await verifyInheritedScene({root,output,project});
 } else if (action === 'export') {
   await run(process.execPath, ['scripts/unreal/export.mjs'], 'export.log', { UNREAL_OUTPUT: geometry });
@@ -514,8 +637,8 @@ if (action === 'prepare') {
   for (const path of signingOutputs) delete gameInputs[path];
   const authoring = await authoringHashes();
   const helpers = ['scripts/unreal/model-refresh.mjs', 'scripts/unreal/model-refresh-viewpoints.mjs', 'scripts/unreal/model-refresh-contract.mjs',
-    'scripts/unreal/performance-source.mjs', 'scripts/unreal/nanite-study.mjs',
-    'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
+    'scripts/unreal/performance-source.mjs', 'scripts/unreal/nanite-study.mjs', 'scripts/unreal/realism-source.mjs', 'scripts/unreal/realism-fixtures-source.mjs', 'scripts/unreal/realism-room-details-source.mjs', 'scripts/unreal/realism-furniture-source.mjs', 'scripts/unreal/realism-stove-source.mjs', 'scripts/unreal/realism-stove-calibration-source.mjs',
+    'scripts/unreal/exterior-source.mjs', 'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
     'scripts/unreal/archviz-room-viewpoints.mjs', 'scripts/unreal/walkthrough-contract.mjs'];
   const receiptFiles = ['model-refresh-import-report.json', 'model-import-process.json', 'model-game-build.json', 'profile.json',
     ...(imported.archviz ? ['archviz-import-report.json', 'archviz-import-process.json'] : []),
@@ -549,11 +672,46 @@ if (action === 'prepare') {
   if (await binaryUUID(resolve(app, 'Contents/MacOS/BreziTwin')) !== linkedUUID
     || await binaryUUID(game.appExecutable) !== linkedUUID) throw Error('Packaged executable differs from the native linked build');
   const finalizedBuildProducts = Object.fromEntries(await Promise.all(signingOutputs.map(async path => [path, sha(await readFile(path))])));
-  const startupEntry = await sealStartupEntry({ app, source: resolve(project, 'Source/BreziTwin/BreziStartupEntry.cpp'), output: resolve(output, 'startup-seal') });
+  let exteriorDataCredits = null;
+  const additionalResources = [];
+  if (imported.exterior?.orthophoto) {
+    const ortho=imported.exterior.orthophoto, license=ortho.license;
+    const credit=[license.displayCredit, license.url, '',
+      'Úpravy vo vizualizácii: georeferencované mapovanie na DMR, prelínanie s materiálom terénu a zachovanie masky chýbajúcich údajov.',
+      ...(imported.exterior.seasonalFields?['Vybrané celé polia majú samostatnú autorskú úpravu farieb na zelenú vegetačnú sezónu; pôvodné ortofoto ostáva zachované.',
+        imported.exterior.seasonalFields.attribution,
+        'Manifest sezónnej úpravy: '+imported.exterior.seasonalFields.manifest,
+        'SHA256: '+imported.exterior.seasonalFields.manifestSha256]:[]),
+      ...(imported.exterior.fieldMacro?['Blízke lúky a polia využívajú obmedzené jasové detaily odvodené z ortofota; farby a povrch zostávajú zeleným PBR materiálom.',
+        'Nejde o nameranú odrazivosť ani úplné odstránenie pôvodného osvetlenia.',
+        'Manifest detailu polí: '+imported.exterior.fieldMacro.manifest,
+        'SHA256: '+imported.exterior.fieldMacro.manifestSha256]:[]),
+      'Ortofoto obsahuje fotografované tiene a sezónnu vegetáciu. Nie je to materiál bez zaznamenaného osvetlenia ani potvrdenie stavu lokality v roku 2026.',
+      '', 'Podmienky datasetu: '+license.datasetPolicy, 'Podmienky zdrojovej služby: '+license.servicePolicy,
+      '', 'Rastliny a detailné povrchy: Poly Haven a ambientCG, CC0.',
+      'https://polyhaven.com/license', 'https://docs.ambientcg.com/license/',
+      ...(imported.exterior.regionalVegetation?.instances>0?['', 'Fotografie listov regionálnych korún: CGBookcase / Dorian Zgraggen, CC0.',
+        'https://www.cgbookcase.com/textures', 'Vetvenie a tvary korún sú autorská regionálna interpretácia; nejde o botanické zameranie jednotlivých stromov.']:[]),
+      '', 'Pôdorysy okolitých stavieb a parcely: ČÚZK, lokálny výrez služby. Výšky a strechy okolitých stavieb sú ilustračné odhady.',
+      'Terén: ČÚZK DMR 5G (ALS 2009–2013). Plochy bez dát sú výslovne ilustračná náhrada.',
+      'Zdrojový manifest: '+ortho.manifest, 'SHA256: '+ortho.manifestSha256, ''].join('\n');
+    await writeFile(resolve(output,'EXTERIOR-SOURCES.txt'),credit);
+    // Add the credit through the existing sealing transaction, after it checks
+    // UAT's untouched signature and before the final outer signing pass.
+    const creditPath=resolve(output,'EXTERIOR-SOURCES.json');
+    const creditBytes=Buffer.from(JSON.stringify({schemaVersion:1,sourceCurrencyYear:ortho.sourceCurrencyYear,text:credit,license,manifest:ortho.manifest,manifestSha256:ortho.manifestSha256},null,2)+'\n');
+    await writeFile(creditPath,creditBytes);
+    exteriorDataCredits={path:'Contents/Resources/ExteriorDataCredits.json',sha256:sha(creditBytes),sourceCurrencyYear:ortho.sourceCurrencyYear};
+    additionalResources.push({relativePath:exteriorDataCredits.path,source:creditPath,sha256:exteriorDataCredits.sha256});
+  }
+  const startupEntry = await sealStartupEntry({ app, source: resolve(project, 'Source/BreziTwin/BreziStartupEntry.cpp'), output: resolve(output, 'startup-seal'), additionalResources });
   const bundle = await verifyPackage(app, engine);
+  const renderPolicyPath = resolve(project, 'Source/BreziTwin/BreziRenderQualityPolicy.h');
+  const renderProfileInterface = authoredRenderCapability(await readFile(renderPolicyPath), renderPolicyPath, game.sourcePins);
   await save(resolve(output, 'model-package.json'), {
     status: 'current-model-packaged', generatedAt: new Date().toISOString(), appPath: app, engine, project,
     gameConfiguration: await gameConfiguration(),
+    renderProfileInterface,
     activeDesign: (await read(resolve(geometry, 'scene.json'))).activeDesign,
     viewpoints: (await read(resolve(project, 'Content/Data/viewpoints.json'))).views.map(item => item.id),
     sourceManifestSha256: imported.sourceManifestSha256, sourceGlbSha256: imported.sourceGlbSha256,
@@ -569,6 +727,14 @@ if (action === 'prepare') {
     inputs, buildProductsBeforePackaging, finalizedBuildProducts, linkedUUID,
     bundle, startupEntry, cook, retainedArchive, stagingEnvironment, runtimeVisualVerified: false,
     ...(imported.experimentalStudy?{experimentalStudy:imported.experimentalStudy}:{}),
+    ...(imported.realism?{realism:imported.realism}:{}),
+    ...(imported.fixtures?{fixtures:imported.fixtures}:{}),
+    ...(imported.roomDetails?{roomDetails:imported.roomDetails}:{}),
+    ...(imported.furniture?{furniture:imported.furniture}:{}),
+    ...(imported.stove?{stove:imported.stove}:{}),
+    ...(imported.stoveCalibration?{stoveCalibration:imported.stoveCalibration}:{}),
+    ...(imported.exterior?{exterior:imported.exterior}:{}),
+    ...(exteriorDataCredits?{exteriorDataCredits}:{}),
     scope: 'Updated architectural model and source materials. Historical custom pool caustics are not part of this package.',
   });
 } else if (action === 'open') {
@@ -578,6 +744,8 @@ if (action === 'prepare') {
   if (report.experimentalStudy) throw Error('Unaccepted Nanite study requires explicit study QA; normal app launch is disabled');
   await verifyPackagedPayload(report.appPath, report.bundle);
   if (!report.viewpoints.includes(view)) throw Error('Unknown model viewpoint: ' + view);
+  const renderArgs = modelRenderProfileArgs(process.env.BREZI_RENDER_PROFILE, report.renderProfileInterface, report.inputs);
   await run('/usr/bin/open', ['-n', report.appPath, '--args', '-windowed', '-ResX=1920', '-ResY=1080', '-BreziOutput=retina',
+    ...renderArgs,
     ...(requestedView || !report.gameplay ? ['-BreziView=' + view] : ['-BreziGameplay'])], 'open.log');
-} else throw Error('Use prepare | inherit <donor-output> | baseline-instrument <donor-output> | performance-scene | nanite-study | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | photoreal | rural | normal-refresh | materials | viewpoints | package | open [view]');
+} else throw Error('Use prepare | inherit <donor-output> | baseline-instrument <donor-output> | performance-scene | realism | realism-fixtures <geometry-output> | realism-room-details <geometry-output> | realism-furniture <geometry-output> | realism-stove <geometry-output> | realism-stove-calibration | exterior | nanite-study | export | editor-build | reuse-build <donor-output> | game-build | import | archviz | photoreal | rural | normal-refresh | materials | viewpoints | package | open [view]');

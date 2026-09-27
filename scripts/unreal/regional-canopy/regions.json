@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "evidence": "VISUALLY_DIGITISED_CANOPY_GROUPS_FROM_2024_ORTHOPHOTO_NOT_SURVEYED_TREES",
+  "sourceLayer": "detail2km",
+  "annotationImageSize": [1600, 1600],
+  "coordinateMeaning": "Pixel-edge coordinates on a 1600-square overview of the pinned 4096-square image; converted through the manifest affine mapping, not GPS estimates.",
+  "precision": "Group boundaries are conservative visual interpretations. Individual roots, species, crown dimensions and heights are illustrative; not a tree inventory or planting proposal.",
+  "regions": [
+    {"id":"village_nearest_grove","form":"woodland","budget":90,"polygon":[[940,895],[943,872],[963,847],[978,849],[1007,901],[986,916],[962,913]],"note":"Visible continuous crowns immediately northwest of the village edge, east of the development site."},
+    {"id":"village_nearest_south_grove","form":"woodland","budget":25,"polygon":[[909,925],[922,901],[938,905],[950,922],[936,938]],"note":"Compact crown pocket beside the first village street; road stays outside polygon."},
+    {"id":"western_woodland_core","form":"woodland","budget":220,"polygon":[[140,744],[163,703],[199,660],[231,673],[291,689],[383,730],[363,765],[304,819],[267,797],[216,783]],"note":"Existing broad wooded block west of the site, kept inside visible canopy boundary."},
+    {"id":"western_woodland_east_belt","form":"woodland","budget":190,"polygon":[[372,736],[431,752],[521,777],[605,799],[686,820],[675,850],[600,830],[512,807],[428,785],[353,766]],"note":"Dense extension of the western wood along the long field edge."},
+    {"id":"northwest_field_shelterbelt","form":"belt","budget":135,"polygon":[[221,638],[242,604],[307,548],[382,489],[459,425],[518,369],[536,363],[534,382],[473,438],[391,505],[317,563],[255,622],[232,650]],"note":"Visible irregular tree belt following the field boundary northwest of the house."},
+    {"id":"northeast_field_shelterbelt","form":"belt","budget":150,"polygon":[[1031,442],[1050,417],[1091,366],[1142,307],[1200,231],[1251,167],[1270,149],[1280,155],[1263,184],[1210,249],[1157,318],[1101,383],[1051,451]],"note":"Visible tree corridor along the opposite edge of the large northern field; excludes adjacent road junction."},
+    {"id":"west_southern_road_belt","form":"belt","budget":95,"polygon":[[349,852],[423,895],[494,939],[554,986],[570,1010],[555,1020],[529,990],[477,955],[411,915],[339,869]],"note":"Tree strip between the field and the southwest diagonal road, road excluded."},
+    {"id":"southwest_meandering_canopy","form":"belt","budget":95,"polygon":[[561,1053],[590,1053],[647,1080],[715,1115],[749,1143],[742,1158],[700,1137],[638,1104],[589,1084],[560,1073]],"note":"Visible irregular crowns beside the southern access landscape, outside built structures."},
+    {"id":"village_north_edge_orchard","form":"orchard","budget":45,"polygon":[[1150,674],[1167,669],[1200,641],[1214,646],[1213,670],[1189,706],[1172,731],[1156,724],[1147,705]],"note":"Existing garden and orchard crowns along the northwest village edge; building clearance applied independently."},
+    {"id":"village_middle_garden_crowns","form":"orchard","budget":40,"polygon":[[1057,835],[1090,848],[1122,882],[1142,896],[1127,915],[1102,891],[1074,870],[1050,853]],"note":"Selected garden canopy strip behind the first street; roofs, road gaps and lawns rejected by source-pixel and footprint tests."},
+    {"id":"village_south_garden_crowns","form":"orchard","budget":50,"polygon":[[970,969],[997,957],[1032,985],[1057,1010],[1076,1034],[1053,1050],[1024,1023],[1001,1000]],"note":"Interior garden crown corridor, subject to full crown building exclusion and dark-green source pixels."},
+    {"id":"village_east_garden_crowns","form":"orchard","budget":45,"polygon":[[1215,803],[1244,825],[1275,857],[1288,882],[1268,897],[1249,871],[1228,850],[1206,829]],"note":"Existing crown pockets inside the village gardens; no new trees on bare streets or building footprints."},
+    {"id":"near_village_lower_scrub","form":"hedge","budget":65,"polygon":[[874,915],[882,907],[900,910],[916,919],[919,928],[905,933],[888,929]],"note":"Low existing scrub line west of the nearest grove, deliberately lower than mature woodland crowns."},
+    {"id":"western_woodland_margin_scrub","form":"hedge","budget":90,"polygon":[[369,772],[420,787],[482,806],[540,823],[595,839],[666,859],[665,867],[594,850],[533,832],[477,817],[418,798],[367,783]],"note":"Low irregular wooded margin along the south edge of the long western canopy belt."},
+    {"id":"village_north_orchard_edge_scrub","form":"hedge","budget":45,"polygon":[[1139,706],[1153,718],[1160,735],[1143,755],[1128,766],[1121,756],[1131,741],[1138,721]],"note":"Visible low edge vegetation around the northwestern garden strip."}
+  ]
+}

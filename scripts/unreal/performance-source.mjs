@@ -5,6 +5,13 @@ import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {verifyPackagedPayload} from './package-verify.mjs';
 import {verifyNaniteStudy} from './nanite-study.mjs';
+import {verifyRealismScene} from './realism-source.mjs';
+import {verifyFixtureScene} from './realism-fixtures-source.mjs';
+import {verifyRoomDetailScene} from './realism-room-details-source.mjs';
+import {verifyFurnitureScene} from './realism-furniture-source.mjs';
+import {verifyStoveScene} from './realism-stove-source.mjs';
+import {verifyStoveCalibrationScene} from './realism-stove-calibration-source.mjs';
+import {verifyExteriorScene} from './exterior-source.mjs';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const read=async p=>JSON.parse(await readFile(p));
 const save=(p,v)=>writeFile(p,JSON.stringify(v,null,2)+'\n');
@@ -22,7 +29,7 @@ export async function inheritScene({root,output,project,donor}){
   assert(!donor.startsWith(output+'/')&&!output.startsWith(donor+'/'),'Independent source/destination required');
   assert.equal(await realpath(output),output);assert.equal(await realpath(donor),donor);
   for(const name of ['model-package.json','model-refresh-import-report.json','model-import-process.json','performance-scene-report.json',
-    'nanite-study-report.json','nanite-study-state.json'])
+    'nanite-study-report.json','nanite-study-state.json','realism-import-report.json','realism-fixtures-report.json','realism-room-details-report.json','realism-furniture-report.json','realism-stove-report.json','realism-stove-calibration-report.json','exterior-import-report.json'])
     await access(resolve(output,name)).then(()=>{throw Error('Refuse to overwrite historical output: '+name);},e=>{if(e.code!=='ENOENT')throw e;});
   for(const directory of [resolve(project,'Content'),resolve(output,'geometry')]){
     const files=await inventory(directory).catch(e=>{if(e.code==='ENOENT')return {};throw e;});
@@ -119,10 +126,54 @@ export async function verifyInheritedScene({root,output,project}){
     content=migration.afterAssetHashes;await pins(migration.pipelineFiles);
   }
   let studyInputs={},experimentalStudy=null;
+  let realismInputs={},realism=null;
+  let fixtureInputs={},fixtures=null;
+  let roomInputs={},roomDetails=null;
+  let furnitureInputs={},furniture=null;
+  let stoveInputs={},stove=null;
+  let stoveCalibrationInputs={},stoveCalibration=null;
+  let exteriorInputs={},exterior=null;
+  if(await access(resolve(output,'realism-import-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration,'Realism authoring must start from the exact inherited donor');
+    assert(!await access(resolve(output,'nanite-study-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;}),
+      'Realism and unaccepted Nanite study must remain separate');
+    const refined=await verifyRealismScene({root,output,project,source});
+    content=refined.content;realismInputs=refined.inputs;realism=refined.realism;
+  }
   if(await access(resolve(output,'nanite-study-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
     assert(!migration,'Experimental Nanite study must remain separate from production map-only migration');
     const study=await verifyNaniteStudy({root,output,project,source});
     content=study.content;studyInputs=study.inputs;experimentalStudy=study.experimentalStudy;
+  }
+  if(await access(resolve(output,'realism-fixtures-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy,'Fixture authoring must start from a separately inherited scene');
+    const refined=await verifyFixtureScene({root,output,project,source});
+    content=refined.content;fixtureInputs=refined.inputs;fixtures=refined.fixtures;
+  }
+  if(await access(resolve(output,'realism-room-details-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy&&!fixtures,'Room detail authoring requires a separately inherited scene');
+    const refined=await verifyRoomDetailScene({root,output,project,source});
+    content=refined.content;roomInputs=refined.inputs;roomDetails=refined.roomDetails;
+  }
+  if(await access(resolve(output,'realism-furniture-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy&&!fixtures&&!roomDetails,'Furniture authoring requires a separately inherited scene');
+    const refined=await verifyFurnitureScene({root,output,project,source});
+    content=refined.content;furnitureInputs=refined.inputs;furniture=refined.furniture;
+  }
+  if(await access(resolve(output,'realism-stove-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy&&!fixtures&&!roomDetails&&!furniture,'Stove authoring requires a separately inherited scene');
+    const refined=await verifyStoveScene({root,output,project,source});
+    content=refined.content;stoveInputs=refined.inputs;stove=refined.stove;
+  }
+  if(await access(resolve(output,'realism-stove-calibration-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy&&!fixtures&&!roomDetails&&!furniture&&!stove,'Stove authoring requires a separately inherited scene');
+    const refined=await verifyStoveCalibrationScene({root,output,project,source});
+    content=refined.content;stoveCalibrationInputs=refined.inputs;stoveCalibration=refined.stoveCalibration;
+  }
+  if(await access(resolve(output,'exterior-import-report.json')).then(()=>true,e=>{if(e.code==='ENOENT')return false;throw e;})){
+    assert(!migration&&!realism&&!experimentalStudy&&!fixtures&&!roomDetails&&!furniture&&!stove&&!stoveCalibration,'Exterior authoring requires a separately inherited scene');
+    const refined=await verifyExteriorScene({root,output,project,source});
+    content=refined.content;exteriorInputs=refined.inputs;exterior=refined.exterior;
   }
   assert.deepEqual(await inventory(resolve(project,'Content')),content,'Inherited content inventory changed');
   const base=await read(resolve(output,'model-refresh-import-report.json'));
@@ -134,6 +185,6 @@ export async function verifyInheritedScene({root,output,project}){
     ...Object.fromEntries(base.materials.textures.map(t=>[resolve(root,t.source),t.sha256]))};
   await pins(canonicalPins);
   assert.equal(sha(await readFile(resolve(output,'geometry/scene.json'))),base.sourceManifestSha256);
-  return {imported:{...base,archviz,photoreal,rural,...(experimentalStudy?{experimentalStudy}:{})},inputs:{...content,...source.geometry,...source.receiptPins,...copiedReceipts,...canonicalPins,
-    [file]:sha(await readFile(file)),...instrumentationPins,...migrationPins,...(migration?migration.pipelineFiles:{}),...studyInputs}};
+  return {imported:{...base,archviz,photoreal,rural,...(experimentalStudy?{experimentalStudy}:{}),...(realism?{realism}:{}),...(fixtures?{fixtures}:{}),...(roomDetails?{roomDetails}:{}),...(furniture?{furniture}:{}),...(stove?{stove}:{}),...(stoveCalibration?{stoveCalibration}:{}),...(exterior?{exterior}:{})},inputs:{...content,...source.geometry,...source.receiptPins,...copiedReceipts,...canonicalPins,
+    [file]:sha(await readFile(file)),...instrumentationPins,...migrationPins,...(migration?migration.pipelineFiles:{}),...studyInputs,...realismInputs,...fixtureInputs,...roomInputs,...furnitureInputs,...stoveInputs,...stoveCalibrationInputs,...exteriorInputs}};
 }

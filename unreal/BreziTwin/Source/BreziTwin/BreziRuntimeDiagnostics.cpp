@@ -6,6 +6,7 @@
 #include "BreziDoors.h"
 #include "BreziDoubleGlassActor.h"
 #include "BreziExteriorLighting.h"
+#include "BreziVegetationPatch.h"
 #include "BreziGameViewportClient.h"
 #include "Dom/JsonObject.h"
 #include "DynamicRHI.h"
@@ -1031,7 +1032,7 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
     for (const TCHAR* Name : {
         TEXT("sg.GlobalIlluminationQuality"), TEXT("sg.ShadowQuality"), TEXT("sg.ReflectionQuality"),
         TEXT("sg.FoliageQuality"), TEXT("sg.PostProcessQuality"), TEXT("sg.EffectsQuality"),
-        TEXT("foliage.DensityScale"), TEXT("r.Brezi.LocalLightShadows"), TEXT("r.Brezi.DoubleGlass"),
+        TEXT("foliage.DensityScale"), TEXT("r.Brezi.LocalLightShadows"), TEXT("r.Brezi.DoubleGlass"), TEXT("r.Brezi.DetailLighting"),
         TEXT("r.Brezi.Lumen.FinalGatherQuality"), TEXT("r.Brezi.Lumen.ReflectionQuality"),
         TEXT("r.Brezi.Lumen.SceneLightingQuality"), TEXT("r.Brezi.Lumen.SceneDetail"),
         TEXT("r.Brezi.Lumen.SceneViewDistance"), TEXT("r.Brezi.Lumen.MaxTraceDistance"),
@@ -1093,6 +1094,11 @@ void UBreziRuntimeDiagnostics::WriteReport(const FString& Status)
         if (const IConsoleVariable* Variable = IConsoleManager::Get().FindConsoleVariable(Name)) Settings->SetNumberField(Name, Variable->GetFloat());
     }
     Report->SetObjectField(TEXT("renderSettings"), Settings);
+    TArray<TSharedPtr<FJsonValue>> DetailLightingState;
+    for (TActorIterator<ABreziVegetationPatch> It(GetWorld()); It; ++It)
+        if (It->IsQualityDetailPatch())
+            DetailLightingState.Add(MakeShared<FJsonValueObject>(It->GetQualityDetailLightingDiagnostics()));
+    Report->SetArrayField(TEXT("detailLightingState"), DetailLightingState);
     TArray<TSharedPtr<FJsonValue>> SkyCaptures;
     for (TActorIterator<ASkyLight> It(GetWorld()); It; ++It)
     {

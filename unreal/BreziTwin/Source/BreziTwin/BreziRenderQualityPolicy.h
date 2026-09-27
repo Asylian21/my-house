@@ -6,8 +6,9 @@
 namespace BreziRenderQuality
 {
 inline constexpr int NativeProfileSchemaVersion = 1;
-inline constexpr int RecipeRevision = 2;
-enum class Profile { Unknown = -1, Native, Balanced, Performance };
+inline constexpr int RecipeRevision = 3;
+// Append new choices: existing persisted/diagnostic numeric values stay stable.
+enum class Profile { Unknown = -1, Native, Balanced, Performance, Cinematic };
 enum class Origin { FreshDefault, Saved, NamedCommandLine, Diagnostic, RawCommandLine, InvalidCommandLine, External, UserSelection, NamedDiagnostic };
 struct Settings
 {
@@ -15,16 +16,17 @@ struct Settings
     int GlobalIllumination, Shadows, Reflections, Foliage, PostProcess, Effects;
     float FinalGather, ReflectionQuality, SceneLighting, SceneDetail, SceneDistanceCm, TraceDistanceCm;
     float FoliageDensity;
-    bool PreferHardwareRayTracing, DoubleGlass, LocalLightShadows;
+    bool PreferHardwareRayTracing, DoubleGlass, LocalLightShadows, DetailLighting;
 };
-constexpr bool IsValid(Profile Value) { return Value >= Profile::Native && Value <= Profile::Performance; }
+constexpr bool IsValid(Profile Value) { return Value >= Profile::Native && Value <= Profile::Cinematic; }
 constexpr Settings Values(Profile Value)
 {
     // Quality budgets, not measured frame-rate promises. GI and reflections stay at
     // High or above: dropping those scalability groups below 2 disables Lumen.
-    return Value == Profile::Native ? Settings{100, 100, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 15000, 15000, 1, true, true, true}
-        : Value == Profile::Balanced ? Settings{67, 100, 2, 2, 2, 2, 2, 2, .75f, .75f, 1, 1, 10000, 10000, .65f, true, false, true}
-        : Value == Profile::Performance ? Settings{50, 100, 2, 1, 2, 1, 1, 1, .5f, .5f, .5f, .5f, 6000, 6000, .35f, false, false, false}
+    return Value == Profile::Native ? Settings{100, 100, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 15000, 15000, 1, true, true, true, false}
+        : Value == Profile::Balanced ? Settings{67, 100, 2, 2, 2, 2, 2, 2, .75f, .75f, 1, 1, 10000, 10000, .65f, true, false, true, false}
+        : Value == Profile::Performance ? Settings{50, 100, 2, 1, 2, 1, 1, 1, .5f, .5f, .5f, .5f, 6000, 6000, .35f, false, false, false, false}
+        : Value == Profile::Cinematic ? Settings{100, 200, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 20000, 20000, 1, true, true, true, true}
         : Settings{};
 }
 constexpr bool UseHardwareRayTracing(Profile Value, bool RuntimeSupported)
@@ -33,7 +35,7 @@ constexpr bool UseHardwareRayTracing(Profile Value, bool RuntimeSupported)
 }
 constexpr Profile Match(double Screen, double History)
 {
-    for (Profile Value : {Profile::Native, Profile::Balanced, Profile::Performance})
+    for (Profile Value : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
     {
         const Settings Pair = Values(Value);
         if (Screen == Pair.ScreenPercentage && History == Pair.HistoryPercentage) return Value;

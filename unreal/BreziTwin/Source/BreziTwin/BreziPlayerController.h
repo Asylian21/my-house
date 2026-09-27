@@ -178,6 +178,7 @@ private:
     TArray<TWeakObjectPtr<URectLightComponent>> RenderQualityRoomLights;
     TArray<bool> RenderQualityRoomLightShadows;
     int32 RenderQualityLastLocalShadows = -1;
+    int32 RenderQualityLastDetailLighting = -1;
     TWeakObjectPtr<ADirectionalLight> Sun;
     TWeakObjectPtr<ASkyLight> Sky;
     FRotator DaySunRotation = FRotator::ZeroRotator;

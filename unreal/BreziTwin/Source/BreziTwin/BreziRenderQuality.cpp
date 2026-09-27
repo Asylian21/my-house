@@ -2,6 +2,7 @@
 #include "BreziGameViewportClient.h"
 #include "BreziDoubleGlassActor.h"
 #include "BreziExteriorLighting.h"
+#include "BreziVegetationPatch.h"
 #include "Components/RectLightComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/RectLight.h"
@@ -101,6 +102,8 @@ bool FBreziRenderQualityPersistenceTest::RunTest(const FString&)
 
 TAutoConsoleVariable<int32> LocalLightShadows(TEXT("r.Brezi.LocalLightShadows"), 1,
     TEXT("Allow authored interior/exterior local-light shadows. Profiles preserve the sun's shadows."));
+TAutoConsoleVariable<int32> DetailLighting(TEXT("r.Brezi.DetailLighting"), 0,
+    TEXT("Restore shadow and ray-tracing participation for explicitly owned collisionless vegetation detail. Zero restores authored flags."));
 TAutoConsoleVariable<float> FinalGather(TEXT("r.Brezi.Lumen.FinalGatherQuality"), -1,
     TEXT("Main-view Lumen final gather budget; negative preserves authored postprocess settings."));
 TAutoConsoleVariable<float> Reflections(TEXT("r.Brezi.Lumen.ReflectionQuality"), -1,
@@ -143,6 +146,7 @@ template<typename Visitor> void VisitSettings(Profile Value, Visitor&& Visit)
     Visit(TEXT("r.Brezi.Lumen.MaxTraceDistance"), S.TraceDistanceCm);
     Visit(TEXT("r.Brezi.DoubleGlass"), float(S.DoubleGlass));
     Visit(TEXT("r.Brezi.LocalLightShadows"), float(S.LocalLightShadows));
+    Visit(TEXT("r.Brezi.DetailLighting"), float(S.DetailLighting));
     Visit(TEXT("foliage.DensityScale"), S.FoliageDensity);
 }
 
@@ -182,11 +186,11 @@ IConsoleVariable* HistoryVariable() { return IConsoleManager::Get().FindConsoleV
 const TCHAR* ProfileName(Profile Value)
 {
     return Value == Profile::Native ? TEXT("native") : Value == Profile::Balanced ? TEXT("balanced")
-        : Value == Profile::Performance ? TEXT("performance") : TEXT("unknown");
+        : Value == Profile::Performance ? TEXT("performance") : Value == Profile::Cinematic ? TEXT("cinematic") : TEXT("unknown");
 }
 Profile ParseProfile(const FString& Value)
 {
-    for (Profile Item : {Profile::Native, Profile::Balanced, Profile::Performance})
+    for (Profile Item : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
         if (Value == ProfileName(Item)) return Item;
     return Profile::Unknown;
 }
@@ -357,6 +361,13 @@ FText ABreziPlayerController::RenderQualityStatus() const
 
 void ABreziPlayerController::RefreshRenderQualityScenePolicy()
 {
+    const int32 EnableDetail = DetailLighting.GetValueOnGameThread() != 0;
+    if (EnableDetail != RenderQualityLastDetailLighting)
+    {
+        RenderQualityLastDetailLighting = EnableDetail;
+        for (TActorIterator<ABreziVegetationPatch> It(GetWorld()); It; ++It)
+            It->SetQualityDetailLighting(EnableDetail != 0);
+    }
     const int32 AllowShadows = LocalLightShadows.GetValueOnGameThread() != 0;
     if (AllowShadows == RenderQualityLastLocalShadows) return;
     RenderQualityLastLocalShadows = AllowShadows;

@@ -1286,15 +1286,17 @@ TSharedRef<SWidget> ABreziPlayerController::BuildRenderQualityChoices()
         .Font(Font("Bold", 10, 80)).ColorAndOpacity(Ink)];
     TSharedRef<SHorizontalBox> Cards = SNew(SHorizontalBox);
     Choices->AddSlot().AutoHeight()[Cards];
-    for (Profile Value : {Profile::Native, Profile::Balanced, Profile::Performance})
+    for (Profile Value : {Profile::Cinematic, Profile::Native, Profile::Balanced, Profile::Performance})
     {
-        const FText Label = Value == Profile::Native ? LOCTEXT("QualityNative", "Maximálny detail")
+        const FText Label = Value == Profile::Cinematic ? LOCTEXT("QualityCinematic", "Fotoreal")
+            : Value == Profile::Native ? LOCTEXT("QualityNative", "Natívny detail")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalanced", "Vyvážené") : LOCTEXT("QualityPerformance", "Plynulosť");
-        const FText Detail = Value == Profile::Native ? LOCTEXT("QualityNativeDetail", "Najjemnejšie detaily")
+        const FText Detail = Value == Profile::Cinematic ? LOCTEXT("QualityCinematicDetail", "Najvyššia kvalita svetla a detailov; pomalšie vykresľovanie")
+            : Value == Profile::Native ? LOCTEXT("QualityNativeDetail", "Plné rozlíšenie a detaily")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalancedDetail", "Rovnováha detailov a plynulosti")
             : LOCTEXT("QualityPerformanceDetail", "Uprednostniť rýchlu odozvu");
         TSharedPtr<SCheckBox> Choice;
-        Cards->AddSlot().FillWidth(1).Padding(Value == Profile::Native ? 0 : 8, 0, 0, 0)
+        Cards->AddSlot().FillWidth(1).Padding(Value == Profile::Cinematic ? 0 : 8, 0, 0, 0)
         [SAssignNew(Choice, BreziUI::SGameCheckBox).Style(&QuietToggleStyle()).Padding(FMargin(14, 12)).Visibility_Lambda(Visible)
             .IsEnabled_Lambda([this] { return CanChangeRenderQuality(); })
             .AccessibleParams(AccessibleControl(TAttribute<FText>::CreateLambda([this, Value, Label, Detail]

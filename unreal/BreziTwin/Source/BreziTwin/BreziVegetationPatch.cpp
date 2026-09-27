@@ -1,6 +1,7 @@
 #include "BreziVegetationPatch.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Dom/JsonObject.h"
 #if WITH_EDITOR
 #include "StaticMeshCompiler.h"
 #endif
@@ -45,6 +46,51 @@ bool ABreziVegetationPatch::SetDetailDensityScaling(bool bEnabled)
 bool ABreziVegetationPatch::GetDetailDensityScaling() const
 {
     return Instances && Instances->bEnableDensityScaling;
+}
+
+bool ABreziVegetationPatch::IsQualityDetailPatch() const
+{
+    // The imported density marker selects rural plants_* groups, not larger
+    // windbreak shrubs reusing the same mesh. Actor labels are editor-only.
+    return Instances && GetRootComponent() == Instances && Instances->GetOwner() == this
+        && Instances->GetCollisionEnabled() == ECollisionEnabled::NoCollision
+        && Instances->GetStaticMesh() && Instances->GetInstanceCount() > 0
+        && Instances->bEnableDensityScaling
+        && (ActorHasTag(TEXT("BreziPhotorealLawn")) || ActorHasTag(TEXT("BreziLawnDetail"))
+            || ActorHasTag(TEXT("BreziRural20260923")));
+}
+
+void ABreziVegetationPatch::SetQualityDetailLighting(bool bEnabled)
+{
+    if (!IsQualityDetailPatch()) return;
+    if (!bQualityDetailCaptured)
+    {
+        bQualityDetailAuthoredShadow = Instances->CastShadow;
+        bQualityDetailAuthoredRayTracing = Instances->bVisibleInRayTracing;
+        bQualityDetailAuthoredDistanceField = Instances->bAffectDistanceFieldLighting;
+        bQualityDetailCaptured = true;
+    }
+    bQualityDetailEnabled = bEnabled;
+    Instances->SetCastShadow(bEnabled || bQualityDetailAuthoredShadow);
+    Instances->SetVisibleInRayTracing(bEnabled || bQualityDetailAuthoredRayTracing);
+    Instances->SetAffectDistanceFieldLighting(bEnabled || bQualityDetailAuthoredDistanceField);
+}
+
+TSharedRef<FJsonObject> ABreziVegetationPatch::GetQualityDetailLightingDiagnostics() const
+{
+    TSharedRef<FJsonObject> Result = MakeShared<FJsonObject>();
+    Result->SetStringField(TEXT("actor"), GetPathName());
+    Result->SetBoolField(TEXT("managedDetail"), IsQualityDetailPatch());
+    Result->SetBoolField(TEXT("authoredFlagsCaptured"), bQualityDetailCaptured);
+    Result->SetBoolField(TEXT("qualityEnabled"), bQualityDetailEnabled);
+    Result->SetBoolField(TEXT("authoredCastShadow"), bQualityDetailAuthoredShadow);
+    Result->SetBoolField(TEXT("authoredVisibleInRayTracing"), bQualityDetailAuthoredRayTracing);
+    Result->SetBoolField(TEXT("authoredAffectDistanceFieldLighting"), bQualityDetailAuthoredDistanceField);
+    Result->SetBoolField(TEXT("castShadow"), Instances && Instances->CastShadow);
+    Result->SetBoolField(TEXT("visibleInRayTracing"), Instances && Instances->bVisibleInRayTracing);
+    Result->SetBoolField(TEXT("affectDistanceFieldLighting"), Instances && Instances->bAffectDistanceFieldLighting);
+    Result->SetNumberField(TEXT("instanceCount"), Instances ? Instances->GetInstanceCount() : 0);
+    return Result;
 }
 
 TArray<int32> ABreziVegetationPatch::ConfigureDetailLods(UStaticMesh* Mesh)

@@ -6,6 +6,7 @@
 
 class UHierarchicalInstancedStaticMeshComponent;
 class UStaticMesh;
+class FJsonObject;
 
 // Serialized source-derived planting instances; meshes and transforms are supplied by import.
 UCLASS()
@@ -33,4 +34,17 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Březí|Rendering")
     bool GetDetailDensityScaling() const;
+
+    // Only explicit small-detail patches participate. Preserve their serialized
+    // flags so leaving the highest-quality profile restores the original scene.
+    bool IsQualityDetailPatch() const;
+    void SetQualityDetailLighting(bool bEnabled);
+    TSharedRef<FJsonObject> GetQualityDetailLightingDiagnostics() const;
+
+private:
+    bool bQualityDetailCaptured = false;
+    bool bQualityDetailEnabled = false;
+    bool bQualityDetailAuthoredShadow = false;
+    bool bQualityDetailAuthoredRayTracing = false;
+    bool bQualityDetailAuthoredDistanceField = false;
 };

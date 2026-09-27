@@ -27,6 +27,8 @@ const profiles=select('BREZI_QA_PROFILES',['performance','balanced','native']);
 const outputs=select('BREZI_QA_OUTPUTS',['retina','4k']);
 const motions=select('BREZI_QA_MOTIONS',['static','orbit']);
 const seconds=Number(process.env.BREZI_QA_SECONDS??60);
+const warmupFrames=Number(process.env.BREZI_QA_WARMUP_FRAMES??240);
+assert(Number.isInteger(warmupFrames)&&warmupFrames>=240&&warmupFrames<=3600,'Warmup must be 240–3600 frames');
 const software=process.env.BREZI_QA_SOFTWARE==='1';
 const trace=process.env.BREZI_QA_TRACE==='1';
 const statOverlays=process.env.BREZI_QA_STATS!=='0'&&!shipping;
@@ -38,12 +40,17 @@ for(const profile of profiles)for(const mode of outputs)for(const scene of scene
   const id=`${scene}-${mode}-${profile}-${motion}${software?'-software':''}-${randomUUID()}`;
   const evidence=resolve(session,id);await mkdir(evidence);
   const sandbox=resolve(homedir(),'Library/Containers/local.brezi.twin/Data/Library/Application Support/BreziTwin/QA',id);await mkdir(sandbox,{recursive:true});
-  const [view,time]=scene.split('-');
+  // Viewpoint IDs may contain hyphens (room-1-03); only the final suffix is time.
+  const sceneMatch=/^(.+)-(day|night)$/.exec(scene);
+  assert(sceneMatch,'Scene must be a packaged viewpoint followed by -day or -night');
+  const [,view,time]=sceneMatch;
+  assert(receipt.viewpoints.includes(view),'Unknown packaged viewpoint: '+view);
   if(motion==='walk'){
     assert.equal(view,'interior','Real-time route starts at the validated interior arrival');
     await prepareRealtimeWalk(resolve(source,'geometry'),resolve(sandbox,'walk-route.json'));
   }
-  const pair={native:[100,baseline?200:100],balanced:[67,100],performance:[50,100]}[profile];
+  assert(!baseline||profile!=='cinematic','Historical baselines do not implement the cinematic recipe');
+  const pair={native:[100,baseline?200:100],balanced:[67,100],performance:[50,100],cinematic:[100,200]}[profile];
   assert(pair,'Unknown profile');assert(['static','orbit','walk'].includes(motion));
   // Explicit old cvars avoid the historical diagnostic profile lock. New builds
   // exercise their named recipe, rather than silently replacing it with commands.
@@ -52,7 +59,7 @@ for(const profile of profiles)for(const mode of outputs)for(const scene of scene
   if(motion==='static'&&statOverlays)cmds.push('stat unit','stat gpu','stat scenerendering');
   const args=['-windowed','-ResX=1920','-ResY=1080',`-UserDir=${sandbox}/`,`-abslog=${sandbox}/runtime.log`,
     `-BreziOutput=${mode}`,`-BreziView=${view}`,`-BreziRenderProfile=${profile}`,'-BreziCaptureScene','-BreziExitAfterCapture',
-    '-BreziWarmupFrames=240','-BreziBenchmarkFrames=300','-BreziWalkAudit',`-ExecCmds=${cmds.join(',')}`,
+    `-BreziWarmupFrames=${warmupFrames}`,'-BreziBenchmarkFrames=300','-BreziWalkAudit',`-ExecCmds=${cmds.join(',')}`,
     ...(!baseline?['-BreziBenchmarkUncapped',...(software?['-BreziSoftwareLumen']:[])]:[]),
     ...(time==='night'?['-BreziNight']:[]),
     ...(motion==='orbit'?['-BreziRealtimeOrbit',`-BreziBenchmarkSeconds=${seconds}`]:[]),
@@ -111,20 +118,32 @@ for(const profile of profiles)for(const mode of outputs)for(const scene of scene
     }
     if(software)assert.equal(r.renderSettings['r.Lumen.HardwareRayTracing'],0);
     if(!baseline){
-      const expected={native:[3,3,3,3,3,3,1,1],balanced:[2,2,2,2,2,2,.65,.75],performance:[2,1,2,1,1,1,.35,.5]}[profile];
+      const expected={native:[3,3,3,3,3,3,1,1],balanced:[2,2,2,2,2,2,.65,.75],performance:[2,1,2,1,1,1,.35,.5],cinematic:[3,3,3,3,3,3,1,2]}[profile];
       for(const [i,name] of ['GlobalIllumination','Shadow','Reflection','Foliage','PostProcess','Effects'].entries())
         assert.equal(r.renderSettings[`sg.${name}Quality`],expected[i]);
       assert(Math.abs(r.renderSettings['foliage.DensityScale']-expected[6])<1e-5);
       assert(Math.abs(r.finalViewPostProcessSettings.lumenFinalGatherQuality-expected[7])<1e-5);
-      const pp={native:[1,1,1,15000,15000],balanced:[.75,1,1,10000,10000],performance:[.5,.5,.5,6000,6000]}[profile];
+      const pp={native:[1,1,1,15000,15000],balanced:[.75,1,1,10000,10000],performance:[.5,.5,.5,6000,6000],cinematic:[2,2,2,20000,20000]}[profile];
       for(const [i,name] of ['lumenReflectionQuality','lumenSceneLightingQuality','lumenSceneDetail','lumenSceneViewDistance','lumenMaxTraceDistance'].entries())
         assert(Math.abs(r.finalViewPostProcessSettings[name]-pp[i])<1e-5,`Effective ${name} differs`);
       assert.equal(r.renderSettings['r.Brezi.LocalLightShadows'],profile==='performance'?0:1);
+      if(profile==='cinematic'||'r.Brezi.DetailLighting' in r.renderSettings){
+        const enabled=profile==='cinematic';
+        assert.equal(r.renderSettings['r.Brezi.DetailLighting'],enabled?1:0);
+        assert(Array.isArray(r.detailLightingState)&&r.detailLightingState.length>0,'Missing actual vegetation lighting readback');
+        for(const detail of r.detailLightingState){
+          assert(detail.managedDetail&&detail.authoredFlagsCaptured&&detail.instanceCount>0);
+          assert.equal(detail.qualityEnabled,enabled);
+          for(const [actual,authored] of [['castShadow','authoredCastShadow'],['visibleInRayTracing','authoredVisibleInRayTracing'],['affectDistanceFieldLighting','authoredAffectDistanceFieldLighting']])
+            assert.equal(detail[actual],enabled||detail[authored],`Detail lighting restoration differs: ${detail.actor} ${actual}`);
+        }
+        row.detailLightingState=r.detailLightingState;
+      }
       assert.equal(r.renderSettings['r.VSync'],0);assert.equal(r.renderSettings['t.MaxFPS'],0);
       if(profile==='performance')assert.equal(r.renderSettings['r.Lumen.HardwareRayTracing'],0);
       assert.equal(r.doubleGlass.length,19);
       assert(r.doubleGlass.every(p=>p.configured&&p.ior===1.52));
-      assert(r.doubleGlass.every(p=>profile==='native'?p.enabled:(!p.enabled&&!p.overlayVisible)));
+      assert(r.doubleGlass.every(p=>['native','cinematic'].includes(profile)?p.enabled:(!p.enabled&&!p.overlayVisible)));
       assert(r.doubleGlass.every(p=>p.captureBudgetPerFrame===1&&p.warmupCaptureBudget<=2&&p.captureUsesLumen===false));
     }
     if(shipping){

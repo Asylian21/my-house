@@ -1,0 +1,37 @@
+{
+  "schemaVersion":1,
+  "annotationImageSize":[1600,1600],
+  "interpretation":"Conservative interior agricultural regions visually selected in the pinned 2024 imagery. These are visual season masks, not cadastral field boundaries or current crop declarations.",
+  "regions":[
+    {"id":"detail_north_arable","sourceLayer":"detail2km","polygon":[[823,36],[1295,34],[1212,152],[1116,285],[1030,411],[948,390],[964,324],[864,290],[708,249]]},
+    {"id":"detail_east_arable_interior","sourceLayer":"detail2km","polygon":[[1046,504],[1118,517],[1060,603],[953,722],[921,692],[985,614]]},
+    {"id":"detail_northeast_arable","sourceLayer":"detail2km","polygon":[[1104,352],[1198,247],[1275,316],[1208,433],[1110,411]]},
+    {"id":"detail_southwest_arable","sourceLayer":"detail2km","polygon":[[196,842],[499,1014],[410,1041],[317,1080],[270,1069],[159,980]]},
+    {"id":"detail_southern_arable","sourceLayer":"detail2km","polygon":[[295,1135],[390,1100],[503,1088],[679,1172],[801,1232],[696,1403],[546,1575],[468,1531],[401,1448],[342,1346]]},
+    {"id":"detail_northwest_field","sourceLayer":"detail2km","polygon":[[121,215],[288,286],[483,375],[307,537],[209,613],[51,454]]},
+    {"id":"far_northwest_field_a","sourceLayer":"far16km","polygon":[[621,666],[662,683],[641,718],[604,704]]},
+    {"id":"far_northwest_field_b","sourceLayer":"far16km","polygon":[[645,685],[677,698],[662,725],[634,714]]},
+    {"id":"far_north_field_a","sourceLayer":"far16km","polygon":[[810,590],[838,590],[845,627],[820,625]]},
+    {"id":"far_north_field_b","sourceLayer":"far16km","polygon":[[842,650],[898,646],[905,682],[850,689]]},
+    {"id":"far_east_field_a","sourceLayer":"far16km","polygon":[[1036,645],[1118,646],[1119,691],[1036,691]]},
+    {"id":"far_east_field_b","sourceLayer":"far16km","polygon":[[1041,572],[1118,577],[1119,596],[1043,591]]},
+    {"id":"far_east_field_c","sourceLayer":"far16km","polygon":[[1034,609],[1118,609],[1118,633],[1036,633]]},
+    {"id":"far_northeast_field_a","sourceLayer":"far16km","polygon":[[1043,407],[1118,410],[1121,463],[1094,466],[1046,444]]},
+    {"id":"far_northeast_field_b","sourceLayer":"far16km","polygon":[[984,273],[997,245],[1027,242],[1031,269]]},
+    {"id":"far_northeast_field_c","sourceLayer":"far16km","polygon":[[1010,296],[1107,291],[1113,311],[1011,317]]},
+    {"id":"far_northeast_field_d","sourceLayer":"far16km","polygon":[[920,385],[960,381],[971,410],[972,455],[936,454],[938,417]]},
+    {"id":"far_east_south_field_a","sourceLayer":"far16km","polygon":[[1059,904],[1127,904],[1130,942],[1076,941],[1058,926]]},
+    {"id":"far_east_south_field_b","sourceLayer":"far16km","polygon":[[996,980],[1040,990],[1030,1023],[983,1009]]},
+    {"id":"far_south_field_a","sourceLayer":"far16km","polygon":[[833,1040],[868,1047],[849,1083],[822,1078]]},
+    {"id":"far_south_field_b","sourceLayer":"far16km","polygon":[[881,1075],[934,1094],[914,1141],[860,1113]]},
+    {"id":"far_north_central_field_a","sourceLayer":"far16km","polygon":[[703,436],[743,427],[756,475],[723,481]]},
+    {"id":"far_north_central_field_b","sourceLayer":"far16km","polygon":[[672,391],[702,386],[714,433],[690,437]]},
+    {"id":"far_north_central_field_c","sourceLayer":"far16km","polygon":[[834,447],[869,441],[891,485],[863,493]]}
+  ],
+  "exclusions":[
+    {"id":"village_brezi_conservative_envelope","sourceLayer":"far16km","polygon":[[687,835],[724,834],[772,854],[810,899],[815,947],[780,1005],[736,979],[678,929],[673,878]],"bufferCm":2000,"meaning":"Whole village envelope, includes generous garden/road margin; source photo structures excluded from seasonal recolour."},
+    {"id":"village_north_conservative_envelope","sourceLayer":"far16km","polygon":[[954,478],[999,478],[1042,519],[1046,575],[1018,615],[982,608],[950,555]],"bufferCm":2000,"meaning":"Whole northern settlement envelope; avoid buildings and streets even where individual WFS footprints are outside the local 1km snapshot."},
+    {"id":"palava_woodland_and_rock","sourceLayer":"far16km","polygon":[[1230,260],[1600,260],[1600,1160],[1250,1160],[1190,850],[1193,700],[1210,500]],"bufferCm":2000,"meaning":"Conservative broad exclusion of the Pálava wooded/rocky ridge and settlements; never recolour rock into vegetation."},
+    {"id":"reservoir_north","sourceLayer":"far16km","polygon":[[520,0],[1600,0],[1600,190],[1110,190],[930,177],[820,120],[690,140],[615,214],[549,226]],"bufferCm":2000,"meaning":"Reservoir, islands and shoreline excluded."}
+  ]
+}

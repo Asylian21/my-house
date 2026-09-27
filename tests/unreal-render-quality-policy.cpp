@@ -12,23 +12,30 @@ void Check(bool Value, const char* Message)
 int main()
 {
     static_assert(NativeProfileSchemaVersion == 1);
-    static_assert(RecipeRevision == 2);
+    static_assert(RecipeRevision == 3);
+    static_assert(static_cast<int>(Profile::Native) == 0 && static_cast<int>(Profile::Balanced) == 1
+        && static_cast<int>(Profile::Performance) == 2 && static_cast<int>(Profile::Cinematic) == 3);
     constexpr unsigned User = 0x09000000, Project = 0x04000000, Console = 0x10000000;
     Check(Values(Profile::Native).ScreenPercentage == 100 && Values(Profile::Native).HistoryPercentage == 100, "native pair avoids doubled history");
     Check(Values(Profile::Balanced).ScreenPercentage == 67 && Values(Profile::Balanced).HistoryPercentage == 100, "balanced pair");
     Check(Values(Profile::Performance).ScreenPercentage == 50 && Values(Profile::Performance).HistoryPercentage == 100, "performance pair");
-    for (Profile P : {Profile::Native, Profile::Balanced, Profile::Performance})
+    Check(Values(Profile::Cinematic).ScreenPercentage == 100 && Values(Profile::Cinematic).HistoryPercentage == 200, "cinematic retains native sampling and doubled temporal history");
+    for (Profile P : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
     {
         auto Pair = Values(P);
         Check(Match(Pair.ScreenPercentage, Pair.HistoryPercentage) == P, "actual pair classified");
         Check(Match(Pair.ScreenPercentage + .01, Pair.HistoryPercentage) == Profile::Unknown, "partial percentage is not selected");
         Check(Pair.GlobalIllumination >= 2 && Pair.Reflections >= 2, "interactive profiles retain Lumen");
-        Check(Pair.FinalGather <= 1 && Pair.ReflectionQuality <= 1 && Pair.SceneLighting <= 1, "profile bounds expensive imported volume quality");
-        Check(Pair.SceneDistanceCm <= 15000 && Pair.TraceDistanceCm <= 15000, "profile bounds Lumen scene range");
+        const bool Cinematic = P == Profile::Cinematic;
+        const int Budget = Cinematic ? 2 : 1;
+        Check(Pair.FinalGather <= Budget && Pair.ReflectionQuality <= Budget && Pair.SceneLighting <= Budget, "profile bounds expensive imported volume quality");
+        const int Distance = Cinematic ? 20000 : 15000;
+        Check(Pair.SceneDistanceCm <= Distance && Pair.TraceDistanceCm <= Distance, "profile bounds Lumen scene range");
+        Check(Pair.DetailLighting == Cinematic, "detail lighting is explicitly restored only in cinematic");
         Check(Pair.FoliageDensity > 0 && Pair.FoliageDensity <= 1, "density is a valid fraction");
         Check(!UseHardwareRayTracing(P, false), "unsupported RHI always falls back to software Lumen");
     }
-    Check(Match(100, 200) == Profile::Unknown, "historic doubled-history study is not the new native profile");
+    Check(Match(100, 200) == Profile::Cinematic, "doubled-history pair identifies cinematic without changing native");
     Check(Match(67, 200) == Profile::Unknown, "mixed pair is not selected");
     Check(Match(std::numeric_limits<double>::quiet_NaN(), 100) == Profile::Unknown, "NaN is not selected");
     Check(CanApply(false, true, Project, Project, User, 4, 0, 100), "project defaults allow explicit user settings");
@@ -50,7 +57,7 @@ int main()
         && Values(Profile::Native).DoubleGlass, "supplemental captures reserved for presentation");
     Check(!Values(Profile::Performance).LocalLightShadows && Values(Profile::Balanced).LocalLightShadows,
         "performance disables local-light shadows without removing sun shadows");
-    for (Profile Saved : {Profile::Native, Profile::Balanced, Profile::Performance})
+    for (Profile Saved : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
     {
         auto Restore = Startup(false, false, false, Profile::Unknown, Saved, true);
         Check(Restore.Apply && Restore.Requested == Saved && Restore.Source == Origin::Saved, "valid explicit saved choice restored");
