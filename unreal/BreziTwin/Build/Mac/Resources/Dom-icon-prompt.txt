@@ -1,0 +1,4 @@
+Current Dom icon comes directly from the accepted C/B/B Unreal model and native Metal scene render.
+The earlier generated house interpretation was rejected and preserved outside canonical resources.
+Use Dom-icon-source.json for exact scene, camera, native capture, approved square crop and native conversion provenance.
+No AI model reinterpretation or geometry/material changes are part of this icon.

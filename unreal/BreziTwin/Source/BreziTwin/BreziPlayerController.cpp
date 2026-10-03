@@ -1284,19 +1284,34 @@ TSharedRef<SWidget> ABreziPlayerController::BuildRenderQualityChoices()
     Choices->AddSlot().AutoHeight().Padding(0, 0, 0, 10)
     [SNew(STextBlock).Visibility_Lambda(Visible).Text(LOCTEXT("QualityTitle", "KVALITA OBRAZU"))
         .Font(Font("Bold", 10, 80)).ColorAndOpacity(Ink)];
-    TSharedRef<SHorizontalBox> Cards = SNew(SHorizontalBox);
+    TSharedRef<SWrapBox> Cards = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(8, 8));
     Choices->AddSlot().AutoHeight()[Cards];
-    for (Profile Value : {Profile::Cinematic, Profile::Native, Profile::Balanced, Profile::Performance})
+    const TWeakPtr<SWrapBox> WeakCards = Cards;
+    const auto QualityCardWidth = [this, WeakCards]
     {
-        const FText Label = Value == Profile::Cinematic ? LOCTEXT("QualityCinematic", "Fotoreal")
+        // The scroll box consumes part of the dock width. Use the actual card
+        // container after layout so two columns fit even with its scrollbar.
+        const TSharedPtr<SWrapBox> CardContainer = WeakCards.Pin();
+        const float AllottedWidth = CardContainer.IsValid()
+            ? CardContainer->GetCachedGeometry().GetLocalSize().X : 0.0f;
+        const float Width = FMath::Max(220.0f,
+            AllottedWidth > 0.0f ? AllottedWidth : GetViewDockWidth() - 64.0f);
+        return Width < 520.0f ? Width : (Width - 9.0f) / 2.0f;
+    };
+    for (Profile Value : {Profile::RealtimeFull, Profile::Cinematic, Profile::Native, Profile::Balanced, Profile::Performance})
+    {
+        const FText Label = Value == Profile::RealtimeFull ? LOCTEXT("QualityFull", "Plný model")
+            : Value == Profile::Cinematic ? LOCTEXT("QualityCinematic", "Fotoreal")
             : Value == Profile::Native ? LOCTEXT("QualityNative", "Natívny detail")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalanced", "Vyvážené") : LOCTEXT("QualityPerformance", "Plynulosť");
-        const FText Detail = Value == Profile::Cinematic ? LOCTEXT("QualityCinematicDetail", "Najvyššia kvalita svetla a detailov; pomalšie vykresľovanie")
+        const FText Detail = Value == Profile::RealtimeFull ? LOCTEXT("QualityFullDetail", "Celá scéna a vegetácia; vyvážená kvalita obrazu")
+            : Value == Profile::Cinematic ? LOCTEXT("QualityCinematicDetail", "Najvyššia kvalita svetla a detailov; pomalšie vykresľovanie")
             : Value == Profile::Native ? LOCTEXT("QualityNativeDetail", "Plné detaily; veľké okno dopočíta z 1080p")
             : Value == Profile::Balanced ? LOCTEXT("QualityBalancedDetail", "Rovnováha detailov a plynulosti")
             : LOCTEXT("QualityPerformanceDetail", "Uprednostniť rýchlu odozvu");
         TSharedPtr<SCheckBox> Choice;
-        Cards->AddSlot().FillWidth(1).Padding(Value == Profile::Cinematic ? 0 : 8, 0, 0, 0)
+        Cards->AddSlot()
+        [SNew(SBox).WidthOverride_Lambda(QualityCardWidth)
         [SAssignNew(Choice, BreziUI::SGameCheckBox).Style(&QuietToggleStyle()).Padding(FMargin(14, 12)).Visibility_Lambda(Visible)
             .IsEnabled_Lambda([this] { return CanChangeRenderQuality(); })
             .AccessibleParams(AccessibleControl(TAttribute<FText>::CreateLambda([this, Value, Label, Detail]
@@ -1314,7 +1329,7 @@ TSharedRef<SWidget> ABreziPlayerController::BuildRenderQualityChoices()
                 [SNew(STextBlock).Text(Label).Font(Font("Medium", 12)).AutoWrapText(true).ColorAndOpacity(Ink)]
                 + SVerticalBox::Slot().AutoHeight().Padding(0, 6, 0, 0)
                 [SNew(STextBlock).Text(Detail).Font(Font("Regular", 10)).AutoWrapText(true)
-                    .ColorAndOpacity_Lambda([this] { return FSlateColor(bIncreaseContrast ? Ink : Quiet); })]]];
+                    .ColorAndOpacity_Lambda([this] { return FSlateColor(bIncreaseContrast ? Ink : Quiet); })]]]];
         RenderQualityControls.Add(Choice);
     }
     Choices->AddSlot().AutoHeight().Padding(0, 10, 0, 4)
@@ -1429,10 +1444,11 @@ TSharedRef<SWidget> ABreziPlayerController::BuildControlsMenu()
     TSharedRef<SWidget> Panel = SNew(SBox)
         .WidthOverride_Lambda([this] { return GetViewDockWidth(); })
         .HeightOverride_Lambda([this] { const float H = Interface.IsValid() ? Interface->GetCachedGeometry().GetLocalSize().Y : 0;
-            return H > 0 ? FMath::Clamp(H - (H < 440 ? 32.0f : 56.0f), 200.0f, 650.0f) : 500.0f; })
+            return H > 0 ? FMath::Clamp(H - (H < 360 ? 8.0f : H < 440 ? 32.0f : 56.0f), 200.0f, 650.0f) : 500.0f; })
         .Visibility_Lambda(Visible)
         [SNew(SBorder).BorderImage_Lambda([this] { return &BreziUI::PanelBrush(bIncreaseContrast); })
-            .Padding_Lambda([this] { return FMargin(Interface.IsValid() && Interface->GetCachedGeometry().GetLocalSize().Y < 440 ? 12 : 20); })
+            .Padding_Lambda([this] { const float H = Interface.IsValid() ? Interface->GetCachedGeometry().GetLocalSize().Y : 540;
+                return FMargin(H < 360 ? 4 : H < 440 ? 12 : 20); })
             [SNew(SVerticalBox)
                 + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 6)
                 [SNew(SHorizontalBox)
@@ -1459,9 +1475,9 @@ TSharedRef<SWidget> ABreziPlayerController::BuildControlsMenu()
                         [SAssignNew(AtmosphereAXContainer, SBox).Visibility_Lambda([this] { return MenuSection == 1 ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed; })[Settings]]
                         + SVerticalBox::Slot().AutoHeight()
                         [SAssignNew(InputAXContainer, SBox).Visibility_Lambda([this] { return MenuSection == 2 ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed; })[Inputs]]
+                        + SVerticalBox::Slot().AutoHeight().Padding(0, 14, 0, 0)[BuildFlightControl(true)]
                     ]]
                 + SVerticalBox::Slot().AutoHeight().Padding(0, 10, 0, 10)[Hairline()]
-                + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 8)[BuildFlightControl(true)]
                 + SVerticalBox::Slot().AutoHeight()
                 [SAssignNew(FeedbackAXContainer, SBox)
                     .Visibility_Lambda([this] { return bControlsOpen && TwinPawn() && !TwinPawn()->GetNavigationMessage().IsEmpty() ? EVisibility::SelfHitTestInvisible : EVisibility::Collapsed; })

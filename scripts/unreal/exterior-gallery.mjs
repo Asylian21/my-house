@@ -13,11 +13,14 @@ const sceneNames = [
   ['street', 'Ulica', 'Dom a jeho uličný priestor'],
   ['terrace', 'Terasa', 'Terasa, bazén a záhrada pri dome'],
   ['garden', 'Záhrada', 'Detail priestorovej výsadby a záhonov'],
+  ['lawn-detail', 'Trávnik zblízka', 'Skutočné ohnuté listy koseného trávnika'],
+  ['lawn-edge', 'Hrana trávnika', 'Nadväznosť krátkeho porastu na pôvodné povrchy'],
   ['neighborhood', 'Susedstvo', 'Nadväznosť na okolité pozemky'],
   ['vineyard', 'Vinohrad', 'Riadky výsadby za pozemkom'],
   ['parcel', 'Parcely', 'Hranice a okraje pozemkov'],
   ['siteaerial', 'Nadhľad', 'Dom v širšom okolí'],
   ['canopy-close', 'Koruny zblízka', 'Detail listov, vetiev a kontaktu so zemou'],
+  ['canopy-floor', 'Pod stromami', 'Koreňové nábehy, opadané listy a prirodzený podrast'],
   ['canopy-lod', 'Koruny v diaľke', 'Rovnaká skupina stromov z väčšej vzdialenosti'],
   ['canopy-grove', 'Háj pri obci', 'Existujúca skupina korún v širšom okolí'],
 ];
@@ -69,7 +72,7 @@ function normalizeReview(receipt, path) {
     findings: Array.isArray(receipt.visualFindings) ? receipt.visualFindings.filter(v => typeof v === 'string') : [] };
 }
 for (const entry of (await readdir(output, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
-  if (!entry.isFile() || !/^exterior-r[0-9]+-(?:rejected-)?review\.json$/.test(entry.name)) continue;
+  if (!entry.isFile() || !/^exterior-r[0-9]+[a-z]?-(?:rejected-)?review(?:-r[0-9]+)?\.json$/.test(entry.name)) continue;
   try {
     reviews.push(normalizeReview(JSON.parse(await readFile(resolve(output, entry.name), 'utf8')), resolve(output, entry.name)));
   } catch (error) {
@@ -155,10 +158,10 @@ const html = `<!doctype html>
 <noscript>Pre prepínanie záberov a posuvník pred / po je potrebný JavaScript. Pôvodné snímky a merania zostávajú v priečinku <a href="qa/">qa/</a>.</noscript>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Pohľad na exteriér"></nav>
 <section id="viewer" role="tabpanel" aria-label="Natívny záber">
-<div class="toolbar"><div><div class="view-title" id="view-title">Natívne zábery</div><div class="view-detail" id="view-detail">Záznamy sa pripravujú.</div></div><div class="selectors"><label class="select-label">Profil a rozlíšenie<select id="quality" aria-label="Profil a skutočné rozlíšenie záberu"></select></label><label class="select-label">Záznam<select id="revision" aria-label="Séria a čas záberu"></select></label><div class="modes" aria-label="Spôsob zobrazenia"><button type="button" id="mode-compare" aria-pressed="true">Pred / po</button><button type="button" id="mode-after" aria-pressed="false">Nový záber</button><button type="button" id="mode-before" aria-pressed="false">Pôvodný</button></div></div></div>
+<div class="toolbar"><div><div class="view-title" id="view-title">Natívne zábery</div><div class="view-detail" id="view-detail">Záznamy sa pripravujú.</div></div><div class="selectors"><label class="select-label">Profil a rozlíšenie<select id="quality" aria-label="Profil a skutočné rozlíšenie záberu"></select></label><label class="select-label">Záznam<select id="revision" aria-label="Séria, zdroj a čas vybraného záberu"></select></label><label class="select-label">Porovnať s<select id="reference" aria-label="Referenčný záber s rovnakým pohľadom, profilom, rozlíšením a kamerou" aria-describedby="pair-note"></select></label><div class="modes" aria-label="Spôsob zobrazenia"><button type="button" id="mode-compare" aria-pressed="true">Pred / po</button><button type="button" id="mode-after" aria-pressed="false">Vybraný záber</button><button type="button" id="mode-before" aria-pressed="false">Pôvodný</button></div></div></div>
 <div class="review-notice" id="review-notice" role="status" hidden></div>
 <div class="stage" id="stage" aria-busy="false"><img id="after" alt="" decoding="async" draggable="false"><img id="before" class="before" alt="" decoding="async" draggable="false"><div id="divider" class="divider"><div class="handle" aria-hidden="true">‹›</div></div><span id="left-badge" class="badge left"></span><span id="right-badge" class="badge right"></span><span id="image-caption" class="image-caption">Natívny záber · Metal · bez retuše</span><div class="empty" id="empty" hidden><strong>Záber ešte nie je dostupný.</strong><span>Galéria zobrazuje iba existujúce snímky s overeným pôvodom. Po ďalších behoch ju treba znovu vygenerovať.</span></div></div>
-<label class="slider" id="slider-wrap"><span>Pred</span><input id="split" type="range" min="0" max="100" value="50" aria-label="Hranica porovnania pôvodného a nového záberu"><span>Po</span></label>
+<label class="slider" id="slider-wrap"><span id="slider-before-label">Pred</span><input id="split" type="range" min="0" max="100" value="50" aria-label="Hranica porovnania referenčného a vybraného záberu"><span id="slider-after-label">Po</span></label>
 <p class="pair-note" id="pair-note" aria-live="polite"></p><div class="metrics"><article class="metric-card" id="before-metric"></article><article class="metric-card" id="after-metric"></article></div>
 </section><nav class="thumbnails" id="thumbnails" aria-label="Prehľad dostupných pohľadov"></nav>
 <footer><div><p>Snímky sú pôvodné PNG z natívnej aplikácie na Metal. Galéria ich neupravuje ani neretušuje. Statický obraz nepotvrdzuje plynulosť pohybu ani vizuálne prijatie výsledku. FPS je 1 000 / priemerný čas snímky; rozlíšenie je prečítané priamo z PNG.</p><p id="orthophoto-attribution" style="margin-top:10px"><a href="https://ags.cuzk.gov.cz/arcgis1/rest/services/ORTOFOTO/MapServer" target="_blank" rel="noopener">Zdrojové ortofoto ČR od R5: ČÚZK, 2024</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. Zdroj: ČÚZK – on-line, jednorazový export. Úpravy pre vizualizáciu: výrez, prevzorkovanie a mapovanie na DMR. Zábery R1–R4 tento podklad nepoužívajú. <a href="https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-prostorovych-dat-CUZK.aspx" target="_blank" rel="noopener">Podmienky údajov</a> · <a href="https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-sitovych-sluzeb-CUZK.aspx" target="_blank" rel="noopener">Podmienky služby</a>.</p><p id="vegetation-attribution" style="margin-top:10px">Fotografie listov pre regionálnu vegetáciu R6: <a href="https://www.cgbookcase.com/textures" target="_blank" rel="noopener">CGBookcase / Dorian Zgraggen</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 1.0</a>. Vegetácia v novších verziách je vizualizačná interpretácia zelenej sezóny.</p></div><div class="legend" id="capture-count"></div></footer>
@@ -179,22 +182,23 @@ const key=r=>[r.profile,r.software?'sw':'hw',...r.pixels].join('|');
 const qualityLabel=r=>(profiles[r.profile]||r.profile)+(r.software?' · softvérový Lumen':'')+' · '+pixels(r);
 const rejected=r=>r?.review?.status==='rejected';
 const accepted=r=>r?.review?.status==='accepted';
-const revisionName=r=>((r.series.match(/(?:^|-)r([0-9]+)(?:-|$)/i)||r.source.match(/-r([0-9]+)$/i))?.[1]?'R'+(r.series.match(/(?:^|-)r([0-9]+)(?:-|$)/i)||r.source.match(/-r([0-9]+)$/i))[1]:'');
+const revisionName=r=>{const match=r.series.match(/(?:^|-)r([0-9]+[a-z]?)(?:-|$)/i)||r.source.match(/-r([0-9]+[a-z]?)$/i);return match?'R'+match[1]:''};
 const recordLabel=r=>r.phase==='before-exterior'?'Pôvodný stav':[revisionName(r),rejected(r)?'zamietnutý pokus':accepted(r)?'vizuálne posúdené':phaseLabels[r.phase].toLocaleLowerCase('sk-SK')].filter(Boolean).join(' · ');
 const priority=r=>rejected(r)?0:r.phase==='before-exterior'?1:accepted(r)?5:r.frame?4:2;
 const rank=(a,b)=>priority(b)-priority(a)||b.endedAt.localeCompare(a.endedAt)||(phaseRank[b.phase]-phaseRank[a.phase])||b.id.localeCompare(a.id);
 const date=value=>value?new Date(value).toLocaleString('sk-SK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'bez času';
+const optionLabel=r=>[recordLabel(r),r.source||r.series,date(r.endedAt)].filter(Boolean).join(' · ');
 const near=(a,b,t)=>a&&b&&a.every((v,i)=>Math.abs(v-b[i])<=t);
 const sameCamera=(a,b)=>near(a.camera.eyeCm,b.camera.eyeCm,.01)&&near(a.camera.forward,b.camera.forward,1e-7);
 const sceneOrder=s=>{const i=DATA.sceneNames.findIndex(r=>r[0]===sceneBase(s));return i<0?99:i};
 const availableScenes=[...new Set(DATA.captures.map(r=>r.scene))].sort((a,b)=>sceneOrder(a)-sceneOrder(b)||a.localeCompare(b));
 const navScenes=[...DATA.sceneNames.map(([name])=>availableScenes.find(s=>sceneBase(s)===name)||name+'-day'),...availableScenes.filter(s=>!DATA.sceneNames.some(([name])=>name===sceneBase(s))||s.endsWith('-night'))];
-let scene=availableScenes[0]||'street-day',quality='',revision='',mode='compare',current=null;
+let scene=availableScenes[0]||'street-day',quality='',revision='',reference='',mode='compare',current=null;
 function el(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e}
 function link(text,href){const a=el('a',text);a.href=href;a.target='_blank';a.rel='noopener';return a}
 function metric(id,row,label){const card=$(id);card.replaceChildren();const head=el('div',undefined,'metric-head');head.append(el('strong',label),el('span',row?.source||'Záber chýba','version'));card.append(head);if(!row){card.append(el('div','Bez porovnateľného záberu','measurement unavailable'),el('div','Pre rovnaký pohľad, profil a rozlíšenie zatiaľ nie je dostupný zodpovedajúci záznam.','metric-detail'));return}const measure=el('div',undefined,'measurement');if(row.frame){measure.append(document.createTextNode(number(1000/row.frame.meanMs)+' FPS '),el('small','/ '+number(row.frame.meanMs,2)+' ms'));card.append(measure);card.append(el('div',pixels(row)+' · '+number(row.frame.sampleCount,0)+' snímok'+(row.frame.p95Ms!==null?' · P95 '+number(row.frame.p95Ms,2)+' ms':''),'metric-detail'))}else card.append(el('div','Výkon bez platného merania','measurement unavailable'),el('div',pixels(row),'metric-detail'));const links=el('div',undefined,'links');links.append(link('Pôvodný PNG ↗',row.image),link('Meranie JSON ↗',row.runtime));card.append(links)}
 function options(select,items,selected){select.replaceChildren();for(const [value,label] of items)select.add(new Option(label,value));select.value=items.some(([v])=>v===selected)?selected:items[0]?.[0]||'';select.disabled=items.length<2;return select.value}
-function selectScene(next){scene=next;revision='';refresh()}
+function selectScene(next){scene=next;revision='';reference='';refresh()}
 function reviewNotice(row){
  const notice=$('review-notice');notice.replaceChildren();notice.hidden=!row;notice.classList.toggle('rejected',rejected(row));notice.classList.toggle('accepted',accepted(row));if(!row)return;
  const title=row.review?recordLabel(row):row.phase==='before-exterior'?'Pôvodný porovnávací stav':recordLabel(row)+' · vizuálne prijatie nepotvrdené';
@@ -210,24 +214,31 @@ function reviewNotice(row){
 function refresh(){
  const rows=DATA.captures.filter(r=>r.scene===scene).sort(rank),byQuality=[...new Map(rows.map(r=>[key(r),r])).entries()];
  quality=options($('quality'),byQuality.map(([k,r])=>[k,qualityLabel(r)]),quality);
- const matching=rows.filter(r=>key(r)===quality);revision=options($('revision'),matching.map(r=>[r.id,recordLabel(r)+' · '+date(r.endedAt)]),revision);
- const selected=matching.find(r=>r.id===revision),after=selected&&selected.phase!=='before-exterior'?selected:null;
- const before=selected?.phase==='before-exterior'?selected:matching.filter(r=>r.phase==='before-exterior'&&after&&sameCamera(r,after)).sort(rank)[0]||null;
- current={before,after,selected,paired:Boolean(before&&after)};
+ const matching=rows.filter(r=>key(r)===quality);revision=options($('revision'),matching.map(r=>[r.id,optionLabel(r)]),revision);
+ const selected=matching.find(r=>r.id===revision);
+ const references=matching.filter(r=>selected&&r.id!==selected.id&&sameCamera(r,selected));
+ reference=options($('reference'),[['','Automaticky · pôvodný stav'],...references.map(r=>[r.id,optionLabel(r)])],reference);
+ const manual=references.find(r=>r.id===reference)||null;
+ const after=selected&&(manual||selected.phase!=='before-exterior')?selected:null;
+ const before=manual||(selected?.phase==='before-exterior'?selected:references.filter(r=>r.phase==='before-exterior').sort(rank)[0]||null);
+ current={before,after,selected,manual:Boolean(manual),paired:Boolean(before&&after)};
  $('view-title').textContent=sceneLabel(scene);$('view-detail').textContent=preset(scene)?.[2]||'Pôvodný natívny záznam';
  [...$('tabs').children].forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.scene===scene));b.tabIndex=b.dataset.scene===scene?0:-1});[...$('thumbnails').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scene===scene)));
- metric('before-metric',before,'PRED · pôvodný stav');metric('after-metric',after,after?recordLabel(after):'Nový záber');reviewNotice(selected);
+ const referenceLabel=before?.phase==='before-exterior'?'Pôvodný stav':'Referencia';
+ metric('before-metric',before,manual?'Referencia · '+recordLabel(before):'PRED · pôvodný stav');metric('after-metric',after,after?'Vybraný · '+recordLabel(after):'Vybraný záber');reviewNotice(selected);
+ $('mode-compare').textContent=manual?'Porovnanie':'Pred / po';$('mode-before').textContent=referenceLabel;
+ $('slider-before-label').textContent=manual?'Referencia':'Pred';$('slider-after-label').textContent=manual?'Vybraný':'Po';
  $('mode-compare').disabled=!current.paired;$('mode-after').disabled=!after;$('mode-before').disabled=!before;
- $('pair-note').textContent=current.paired?'Posuňte deliacu čiaru. Zhodný profil, rozlíšenie, poloha a smer kamery.':after?'Nový záber. Zodpovedajúci pôvodný záznam s rovnakým profilom, rozlíšením a polohou kamery nie je dostupný.':before?'Pôvodný záber. Zodpovedajúce porovnanie po úprave zatiaľ nie je dostupné.':'Pre tento pohľad ešte nebol uložený overený natívny záber.';
+ $('pair-note').textContent=current.paired?(manual?'Referencia: '+optionLabel(before)+'. Vybraný: '+optionLabel(after)+'. ':'')+'Posuňte deliacu čiaru. Zhodný pohľad, profil, rozlíšenie, poloha a smer kamery.':after?'Vybraný záber. Automatický pôvodný záznam s rovnakým profilom, rozlíšením a kamerou nie je dostupný. Referenciu môžete vybrať v „Porovnať s“.':before?'Pôvodný záber. Porovnateľnú referenciu môžete vybrať v „Porovnať s“.':'Pre tento pohľad ešte nebol uložený overený natívny záber.';
  render();receipts();
 }
 function render(){
- const {before,after,selected,paired}=current,effective=paired?mode:after?'after':'before';
+ const {before,after,selected,paired,manual}=current,effective=paired?mode:after?'after':'before';
  const showCompare=paired&&effective==='compare',image=effective==='before'?before:after;
  $('stage').classList.toggle('compare',showCompare);$('stage').style.aspectRatio=selected?selected.pixels[0]+'/'+selected.pixels[1]:'16/9';
  $('empty').hidden=Boolean(selected);$('image-caption').hidden=!selected;$('divider').hidden=!showCompare;$('slider-wrap').hidden=!showCompare;
  $('before').hidden=!showCompare;$('after').hidden=!selected;$('left-badge').hidden=!selected;$('right-badge').hidden=!showCompare;
- if(selected){$('stage').classList.add('loading');$('stage').setAttribute('aria-busy','true');const complete=()=>{if($('after').complete&&(!showCompare||$('before').complete)){$('stage').classList.remove('loading');$('stage').setAttribute('aria-busy','false')}};$('after').onload=complete;$('before').onload=complete;$('after').src=(showCompare?after:image||selected).image;$('after').alt=sceneLabel(scene)+' — '+recordLabel(showCompare?after:image||selected);if(showCompare){$('before').src=before.image;$('before').alt=sceneLabel(scene)+' — pôvodný stav'}$('left-badge').textContent=showCompare?'Pred · pôvodný stav':recordLabel(image||selected);$('right-badge').textContent=after?recordLabel(after):'';complete()}
+ if(selected){$('stage').classList.add('loading');$('stage').setAttribute('aria-busy','true');const complete=()=>{if($('after').complete&&(!showCompare||$('before').complete)){$('stage').classList.remove('loading');$('stage').setAttribute('aria-busy','false')}};$('after').onload=complete;$('before').onload=complete;$('after').src=(showCompare?after:image||selected).image;$('after').alt=sceneLabel(scene)+' — '+optionLabel(showCompare?after:image||selected);if(showCompare){$('before').src=before.image;$('before').alt=sceneLabel(scene)+' — referencia: '+optionLabel(before)}$('left-badge').textContent=showCompare?(manual?'Referencia · '+recordLabel(before):'Pred · pôvodný stav'):recordLabel(image||selected);$('right-badge').textContent=after?(manual?'Vybraný · ':'')+recordLabel(after):'';complete()}
  for(const name of ['compare','after','before'])$('mode-'+name).setAttribute('aria-pressed',String(effective===name));
 }
 function receipts(){
@@ -238,7 +249,7 @@ function receipts(){
   const p=el('p');p.append(link('Súhrn pôvodnej série',row.summary),document.createTextNode(' · '+row.id));parent.append(p,el('code','PNG SHA256 '+row.sha256));
   if(row.review){const review=el('p');review.append(link((rejected(row)?'Vizuálne zamietnutie':'Vizuálne hodnotenie')+' · '+date(row.review.evaluatedAt),row.review.path));parent.append(review)}
  }
- parent.append(el('p','Galéria vygenerovaná '+date(DATA.generatedAt)+'. „Natívny pokus“ a „Záverečný beh“ pomenúvajú série; nepotvrdzujú vizuálne prijatie. Zamietnutý pokus sa nepriraďuje ako pôvodný stav.'));
+ parent.append(el('p','Galéria vygenerovaná '+date(DATA.generatedAt)+'. „Natívny pokus“ a „Záverečný beh“ pomenúvajú série; nepotvrdzujú vizuálne prijatie. Automatické porovnanie používa pôvodný stav. V „Porovnať s“ možno zvoliť inú overenú referenciu s rovnakým pohľadom, profilom, rozlíšením a kamerou; jej hodnotenie sa tým nemení.'));
  const sources=el('p');sources.append(document.createTextNode('Podklady: '),link('ČÚZK · katastrálne parcely','https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp'),document.createTextNode(' · '),link('ČÚZK · DMR 5G','https://ags.cuzk.gov.cz/arcgis2/rest/services/dmr5g/ImageServer'),document.createTextNode(' · '),link('Podmienky ČÚZK','https://cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-prostorovych-dat-CUZK.aspx'),document.createTextNode(' · '),link('Poly Haven · licencia CC0','https://polyhaven.com/license'));parent.append(sources);
  parent.append(el('p','© ČÚZK · parcely a DMR 5G · CC BY 4.0. Hranice, vzorkovaný výškový model a ilustračné osadenie rastlín majú odlišnú presnosť; galéria nepotvrdzuje geodetické zameranie ani botanický súpis miesta.'));
  for(const warning of DATA.reviewWarnings)parent.append(el('p',warning,'review-warning'));
@@ -246,7 +257,7 @@ function receipts(){
 }
 for(const s of navScenes){const button=el('button',sceneLabel(s),'tab');button.type='button';button.dataset.scene=s;button.id='tab-'+s;button.setAttribute('role','tab');button.setAttribute('aria-controls','viewer');button.disabled=!availableScenes.includes(s);button.onclick=()=>selectScene(s);$('tabs').append(button);if(!button.disabled){const row=DATA.captures.filter(r=>r.scene===s).sort(rank)[0],thumb=el('button',undefined,'thumbnail');thumb.type='button';thumb.dataset.scene=s;thumb.setAttribute('aria-label','Zobraziť '+sceneLabel(s));const img=new Image;img.src=row.image;img.alt='';img.loading='lazy';thumb.append(img,el('span',sceneLabel(s)),el('small',recordLabel(row)));thumb.onclick=()=>selectScene(s);$('thumbnails').append(thumb)}}
 $('tabs').onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...$('tabs').children].filter(b=>!b.disabled),index=tabs.indexOf(document.activeElement);if(index<0)return;e.preventDefault();const n=e.key==='Home'?0:e.key==='End'?tabs.length-1:(index+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[n].focus();tabs[n].click()};
-$('quality').onchange=()=>{quality=$('quality').value;revision='';refresh()};$('revision').onchange=()=>{revision=$('revision').value;refresh()};
+$('quality').onchange=()=>{quality=$('quality').value;revision='';reference='';refresh()};$('revision').onchange=()=>{revision=$('revision').value;refresh()};$('reference').onchange=()=>{reference=$('reference').value;refresh()};
 for(const name of ['compare','after','before'])$('mode-'+name).onclick=()=>{mode=name;render()};
 function split(value){$('split').value=Math.max(0,Math.min(100,value));$('stage').style.setProperty('--split',$('split').value+'%')}
 $('split').oninput=()=>split(Number($('split').value));

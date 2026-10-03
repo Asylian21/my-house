@@ -23,6 +23,16 @@ OWNER = 'scripts/unreal/exterior-import.py'
 MAP = '/Game/Brezi/Maps/Brezi'
 MAP_FILE = 'Brezi/Maps/Brezi.umap'
 VIEWS_FILE = 'Data/viewpoints.json'
+TAPERED_LAWN_GENERATOR = 'scripts/unreal/exterior-lawn-tapered-integration.py'
+PHOTO_LAWN_GENERATOR = 'scripts/unreal/exterior-lawn-photo-integration.py'
+NATURAL_LAWN_GENERATORS = ('scripts/unreal/exterior-lawn-natural.py',
+    'scripts/unreal/exterior-lawn-natural-managed.py', 'scripts/unreal/exterior-lawn-coverage.py',
+    'scripts/unreal/exterior-lawn-fine.py', 'scripts/unreal/exterior-lawn-upright.py', TAPERED_LAWN_GENERATOR, PHOTO_LAWN_GENERATOR)
+COVERED_LAWN_GENERATORS = ('scripts/unreal/exterior-lawn-coverage.py',
+    'scripts/unreal/exterior-lawn-fine.py', 'scripts/unreal/exterior-lawn-upright.py', TAPERED_LAWN_GENERATOR)
+BOUNDARY_LAWN_GENERATORS = ('scripts/unreal/exterior-lawn-fine.py',
+    'scripts/unreal/exterior-lawn-upright.py', TAPERED_LAWN_GENERATOR)
+ORGANIC_GARDEN_GENERATOR = 'scripts/unreal/exterior-garden-organic-bushy.py'
 
 
 def module(name, filename):
@@ -74,6 +84,25 @@ def restore(output):
     print(json.dumps({'status':'failed-exterior-restored','history':str(history)}))
 
 
+def plant_lod_screens(row):
+    if 'lodScreenSizes' in row:
+        natural = row['id'].startswith('lawn_natural_') and row['materialKeys']==['lawn_natural_blade']
+        photo_ids = {'lawn_photo_'+str(f)+'_'+str(v) for f in range(2) for v in range(8)} | {
+            'lawn_photo_edge_'+str(f)+'_'+str(v) for f in range(2) for v in range(2)}
+        photo = row['id'] in photo_ids and row['materialKeys']==['lawn_photographic_blade']
+        require((natural or photo) and row['role']=='grass'
+                and row.get('placementPolicy')=='explicit-only'
+                and row['lodScreenSizes']==[1.,.025,.007], 'Unreviewed plant LOD override')
+        return [1.,.025,.007]
+    return [1.,.32,.10] if row['role']=='tree' else [1.,.15,.04]
+
+
+def lawn_native_filename(owner):
+    if owner == PHOTO_LAWN_GENERATOR:
+        return 'exterior-lawn-photo-native.py'
+    return 'exterior-lawn-tapered-native.py' if owner == TAPERED_LAWN_GENERATOR else 'exterior-lawn-native.py'
+
+
 def validate_plants(manifest):
     require(manifest['meshes'], 'No plant meshes')
     ids = set()
@@ -82,6 +111,7 @@ def validate_plants(manifest):
         ids.add(row['id'])
         require(sha(row['glbPath']) == row['glbSha256'], 'Plant GLB differs')
         require(len(row['lods']) == 3 and row['materialKeys'] and row['heightCm'] > 0, 'Missing plant LOD/material/height')
+        plant_lod_screens(row)
         for lod in row['lods']:
             require(lod['triangles'] > 0 and all(math.isfinite(v) for xyz in lod['expectedBoundsCm'].values() for v in xyz), 'Invalid plant bounds')
 
@@ -205,7 +235,7 @@ def import_plants(u, manifest, materials, pipeline):
             for lod in row['lods'][1:]:
                 require(subsystem.set_lod_from_static_mesh(mesh,lod['level'],imported[lod['nodeName']],0,True)==lod['level'],'Plant LOD attach failed')
             mesh.modify(True)
-            require(subsystem.set_lod_screen_sizes(mesh,[1.,.32,.10] if row['role']=='tree' else [1.,.15,.04]),'Plant LOD screens failed')
+            require(subsystem.set_lod_screen_sizes(mesh,plant_lod_screens(row)),'Plant LOD screens failed')
             require(u.EditorAssetLibrary.save_loaded_asset(mesh,False),'Plant mesh save failed'); result[row['id']] = mesh
     return result
 
@@ -215,7 +245,7 @@ def verify_plants(u, manifest, paths, materials):
     subsystem=mesh_helper.static_mesh_subsystem(u); rows=[]
     for row in manifest['meshes']:
         mesh=u.EditorAssetLibrary.load_asset(paths[row['id']]); require(mesh,'Saved plant mesh missing')
-        screens=list(subsystem.get_lod_screen_sizes(mesh)); target=[1.,.32,.10] if row['role']=='tree' else [1.,.15,.04]
+        screens=list(subsystem.get_lod_screen_sizes(mesh)); target=plant_lod_screens(row)
         require(len(screens)==3 and all(abs(a-b)<1e-5 for a,b in zip(screens,target)),'Saved plant LOD settings differ')
         for lod in row['lods']:
             description=mesh.get_static_mesh_description(lod['level'])
@@ -239,7 +269,7 @@ def plant_groups(manifest, old_plan, context):
     groups = {}
     def put(role, position, height, yaw, width=1., cull=22000, radius_limit=None, candidates=None, explicit_scale=None):
         options = candidates or variants[role]; require(options, 'Missing vegetation role: '+role)
-        if role=='shrub' and variants['vine'] and rng.random()<.75: options=variants['vine']
+        if candidates is None and role=='shrub' and variants['vine'] and rng.random()<.75: options=variants['vine']
         green=[r for r in options if r['id'].startswith('grass_bermuda')]
         if green and rng.random()<.88: options=green
         if role=='nettle': options=[r for r in options if 'tall' in r['id']] or options
@@ -290,7 +320,11 @@ def plant_groups(manifest, old_plan, context):
                 a=rng.uniform(0,math.tau);p=[row['positionCm'][0]+math.cos(a)*radius*.5,row['positionCm'][1]+math.sin(a)*radius*.5,row['positionCm'][2]]
                 put('groundcover',p,rng.uniform(9,18),rng.uniform(0,360),1.,13000,radius*.45)
     for row in context.get('gardenPlacements',[]):
-        put(row['role'],row['positionCm'],row['heightCm'],row['yawDeg'],1.,12000,row['radiusCm'])
+        options = [m for m in manifest['meshes'] if m['id']==row['meshId']] if row.get('meshId') else None
+        if row.get('meshId'):
+            require(len(options)==1 and options[0]['role']==row['role'],'Garden detail mesh/role differs')
+            require(len(row['scale'])==3 and max(row['scale'])-min(row['scale'])<1e-7,'Garden detail requires uniform scale')
+        put(row['role'],row['positionCm'],row['heightCm'],row['yawDeg'],1.,row.get('cullEndCm',12000),row['radiusCm'],options,row.get('scale'))
     for row in context.get('meadowBasePlacements',[]):
         options=[m for m in variants['grass'] if m['id'].startswith('grass_bermuda')]
         require(options,'Meadow base requires green Bermuda prototypes')
@@ -442,6 +476,11 @@ def build_scene(u, context, plants, materials, meshes, output):
         c.set_cull_distances(int(g['cullEndCm']*.8),g['cullEndCm']); c.set_editor_property('cast_shadow',g.get('castShadow',True))
         c.set_editor_property('visible_in_ray_tracing',True)
         c.set_editor_property('affect_distance_field_lighting',g.get('role') in ('tree','shrub','vine'))
+        if g['id'].startswith('EX_transition_'):
+            require(g['meshId'] in ('grass_medium_02_a','grass_medium_02_b','grass_medium_02_c')
+                    and g.get('qualityDetail') is False and g.get('castShadow') is False and g['cullEndCm']==4000,
+                    'Unreviewed compact transition group policy')
+            require(a.set_detail_density_scaling(False),'Cannot preserve compact transition density')
         if g.get('qualityDetail'):
             a.set_editor_property('tags',[u.Name(TAG),u.Name('BreziLawnDetail')])
             # Existing runtime quality control restores cinematic shadows and
@@ -479,6 +518,193 @@ def readback(u, record):
     return {'meshCount':len(record['meshes']),'groupCount':len(record['groups']),'instanceCount':count,'allNewVisualsNoCollision':True}
 
 
+def verify_transition_scene(u, validation, source_context, geometry, materials, plant_paths, native_topology, include_groups=True):
+    """Read saved bindings and every additive instance against source transforms."""
+    actors={a.get_path_name():a for a in u.get_editor_subsystem(u.EditorActorSubsystem).get_all_level_actors()}
+    source_meshes={m['id']:m for m in source_context['meshes']}
+    original_native={m['sourceMeshId']:m for m in native_topology['rows']}
+    bindings=[]; position_error=scale_error=rotation_error=0.; instances=0
+    for binding in validation['materialBindings']:
+        identity=binding['sourceMeshId']; source_mesh=source_meshes[identity]
+        actor=actors[geometry['actors'][identity]]; component=actor.static_mesh_component
+        mesh=component.get_editor_property('static_mesh'); material=materials[binding['proposedSharedMaterialKey']]
+        require(mesh.get_path_name()==geometry['meshes'][identity], 'Saved transition source mesh binding differs')
+        require(component.get_num_materials()==1 and component.get_material(0)==material,
+                'Saved transition shared material binding differs')
+        actor_transform=base.transform(actor.get_actor_transform())
+        require(actor_transform==[[0.,0.,0.],[0.,0.,0.,1.],[1.,1.,1.]],
+                'Saved transition ground transform differs')
+        description=mesh.get_static_mesh_description(0)
+        triangles=len(source_mesh['indices'])//3
+        original=original_native[identity]
+        require(original['sourceGeometrySha256']==binding['sourceGeometrySha256']
+                and original['sourceTriangles']==original['descriptionTriangles']==triangles,
+                'Original native transition source topology differs: '+identity)
+        render_triangles=mesh.get_num_triangles(0)
+        require(description and description.get_triangle_count()==triangles
+                and description.get_vertex_count()==original['descriptionVertices']==len(source_mesh['verticesCm'])
+                and render_triangles==original['renderTriangles'],
+                'Saved transition source/render topology differs: '+identity)
+        actual=mesh_bounds(mesh)
+        expected={key:[fn(p[axis] for p in source_mesh['verticesCm']) for axis in range(3)]
+                  for key,fn in [('min',min),('max',max)]}
+        bounds_error=max(abs(actual[key][axis]-expected[key][axis]) for key in expected for axis in range(3))
+        require(bounds_error<.05,
+                'Saved transition source ground bounds differ')
+        require(component.get_collision_enabled()==u.CollisionEnabled.NO_COLLISION
+                and not component.get_editor_property('can_ever_affect_navigation'), 'Transition ground collision introduced')
+        bindings.append({'sourceMeshId':identity,'actor':actor.get_path_name(),'mesh':mesh.get_path_name(),
+                         'material':material.get_path_name(),'triangles':triangles,
+                         'renderTriangles':render_triangles,'descriptionVertices':description.get_vertex_count(),
+                         'sourceGeometrySha256':binding['sourceGeometrySha256'],'actualBoundsCm':actual,
+                         'expectedBoundsCm':expected,'maximumBoundsErrorCm':bounds_error,
+                         'actorTransform':actor_transform,'collision':'NoCollision','canEverAffectNavigation':False})
+    group_ids=[]
+    for group in (validation['groups'] if include_groups else []):
+        saved=geometry['groups'][group['id']]; actor=actors[saved['actor']]
+        component=actor.get_component_by_class(u.HierarchicalInstancedStaticMeshComponent)
+        require(saved['instances']==component.get_instance_count()==len(group['instances'])
+                and saved['mesh']==plant_paths[group['meshId']], 'Saved transition instance prototype/count differs')
+        require(not component.get_editor_property('cast_shadow') and not actor.get_detail_density_scaling(),
+                'Saved transition low-margin quality flags differ')
+        require(component.get_editor_property('instance_start_cull_distance')==group['cullStartCm']
+                and component.get_editor_property('instance_end_cull_distance')==group['cullEndCm'],
+                'Saved transition cull policy differs')
+        for index,row in enumerate(group['instances']):
+            expected=base.transform(rural.instance_transform(u,row)); actual=base.instance_value(component,index)
+            position_error=max(position_error,max(abs(a-b) for a,b in zip(actual[0],expected[0])))
+            scale_error=max(scale_error,max(abs(a-b) for a,b in zip(actual[2],expected[2])))
+            rotation_error=max(rotation_error,min(max(abs(a-b) for a,b in zip(actual[1],expected[1])),
+                                                  max(abs(a+b) for a,b in zip(actual[1],expected[1]))))
+            instances+=1
+        group_ids.append(group['id'])
+    # HISM instance matrices store float32 values. These explicit native
+    # readback bounds are smaller than the source study's 1mm crown guard.
+    require(position_error<=.002 and scale_error<=1e-6 and rotation_error<=2e-6,
+            'Saved transition source transforms exceed float32 readback bounds')
+    require(len(bindings)==65 and (len(group_ids)==158 and instances==7000 if include_groups else not group_ids and instances==0),
+            'Saved transition inventory differs')
+    return {'status':'verified-saved-neighborhood-transition' if include_groups else 'verified-saved-neighborhood-ground-bindings',
+            'materialBindings':bindings,'groupIds':group_ids,
+            'instances':instances,'maximumPositionErrorCm':position_error,'maximumScaleError':scale_error,
+            'maximumQuaternionErrorSignEquivalent':rotation_error,'allNewVisualsNoCollision':True,
+            'sourceGroundBoundsTopologyAndOriginVerified':True,'sourceTransformsComparedAfterReload':True,
+            'nativeVisualAccepted':False,'performanceAccepted':False}
+
+
+def verify_continuous_meadow_scene(u, plan, validation, source_context, geometry, materials,
+                                  meadow_groups, plant_paths, native_topology, transition_validation):
+    """Read actual saved soil topology, retained heights and ordered restorations."""
+    actors={a.get_path_name():a for a in u.get_editor_subsystem(u.EditorActorSubsystem).get_all_level_actors()}
+    ground=verify_transition_scene(u,transition_validation,source_context,geometry,materials,plant_paths,
+                                  native_topology,include_groups=False)
+    omitted=plan['soilOverlayProposal']['omitMeshIds']
+    require(len(omitted)==4 and all(k not in geometry['actors'] and k not in geometry['meshes'] for k in omitted),
+            'Saved unbuilt soil overlays remain')
+    replacement_proofs={r['sourceMeshId']:r for r in plan['soilOverlayProposal']['triangles'] if r.get('replacementMeshSha256')}
+    source_subsets={m['id']:m for m in validation['neighborhoodMeshes'] if m['id'] in replacement_proofs}
+    require(len(source_subsets)==4,'Saved cultivated subset source inventory differs')
+    subsets=[]
+    for identity,source_mesh in source_subsets.items():
+        actor=actors[geometry['actors'][identity]];component=actor.static_mesh_component
+        mesh=component.get_editor_property('static_mesh');material=materials['context_soil_exposure']
+        require(mesh.get_path_name()==geometry['meshes'][identity] and component.get_num_materials()==1
+                and component.get_material(0)==material,'Saved cultivated soil mesh/material differs')
+        require(base.transform(actor.get_actor_transform())==[[0.,0.,0.],[0.,0.,0.,1.],[1.,1.,1.]],
+                'Saved cultivated soil origin differs')
+        proof=rural.mesh_proof(u,mesh,source_mesh,0)
+        description=mesh.get_static_mesh_description(0)
+        require(0<description.get_vertex_count()<=len(source_mesh['verticesCm'])
+                and proof['maximumSourcePositionFloat32ErrorCm']<=.002
+                and digest(source_mesh)==replacement_proofs[identity]['replacementMeshSha256'],
+                'Saved cultivated source representation differs')
+        require(component.get_collision_enabled()==u.CollisionEnabled.NO_COLLISION
+                and not component.get_editor_property('can_ever_affect_navigation'),'Cultivated soil collision introduced')
+        subsets.append({'sourceMeshId':identity,'actor':actor.get_path_name(),'mesh':mesh.get_path_name(),
+            'material':material.get_path_name(),'triangles':proof['triangles'],
+            'sourceGeometrySha256':replacement_proofs[identity]['replacementMeshSha256'],
+            'descriptionVertices':description.get_vertex_count(),'sourceVertices':len(source_mesh['verticesCm']),
+            'referencedSourceVertices':len(set(source_mesh['indices'])),
+            'maximumPositionErrorCm':proof['maximumSourcePositionFloat32ErrorCm'],
+            'maximumUVError':proof['maximumSourceUVFloat32Error'],
+            'triangleConnectivityWindingVerified':proof['topologyUVAndCmScaleVerified'],
+            'nativeFloat32RepresentationExact':proof['nativeFloat32RepresentationExact'],
+            'collision':'NoCollision','canEverAffectNavigation':False})
+    cultivated_unchanged=[]
+    neighborhood_meshes={m['id']:m for m in validation['neighborhoodMeshes']}
+    for identity in plan['soilOverlayProposal']['unchangedCultivatedMeshIds']:
+        source_mesh=neighborhood_meshes[identity];actor=actors[geometry['actors'][identity]]
+        component=actor.static_mesh_component;mesh=component.get_editor_property('static_mesh')
+        material=materials['context_soil_exposure']
+        require(mesh.get_path_name()==geometry['meshes'][identity] and component.get_num_materials()==1
+                and component.get_material(0)==material and base.transform(actor.get_actor_transform())==[[0.,0.,0.],[0.,0.,0.,1.],[1.,1.,1.]],
+                'Saved unchanged cultivated soil binding/origin differs')
+        proof=rural.mesh_proof(u,mesh,source_mesh,0)
+        require(component.get_collision_enabled()==u.CollisionEnabled.NO_COLLISION
+                and not component.get_editor_property('can_ever_affect_navigation'),
+                'Unchanged cultivated soil collision introduced')
+        cultivated_unchanged.append({'sourceMeshId':identity,'actor':actor.get_path_name(),'mesh':mesh.get_path_name(),
+            'material':material.get_path_name(),'triangles':proof['triangles'],'sourceGeometrySha256':digest(source_mesh),
+            'descriptionVertices':mesh.get_static_mesh_description(0).get_vertex_count(),
+            'maximumPositionErrorCm':proof['maximumSourcePositionFloat32ErrorCm'],
+            'triangleConnectivityWindingVerified':proof['topologyUVAndCmScaleVerified'],
+            'nativeFloat32RepresentationExact':proof['nativeFloat32RepresentationExact']})
+    cultivated_triangles=sum(row['triangles'] for row in [*subsets,*cultivated_unchanged])
+    require(len(cultivated_unchanged)==7 and cultivated_triangles==2801,
+            'Saved all eleven cultivated soil pieces differ')
+    retirement=plan['futureVisualRetirement']
+    retired_ids=[*retirement['transitionGroupIds'],*retirement['pilotGroupIds']]
+    require(len(retired_ids)==len(set(retired_ids))==259 and all(k not in geometry['groups'] for k in retired_ids),
+            'Retired meadow pilot/transition groups remain')
+    position_error=scale_error=rotation_error=0.;compared=restored_instances=0
+    original_prototypes={g['meshId']:(g['nativeMesh'],g['nativeMaterial']) for g in validation['restoredGroups']}
+    require(set(original_prototypes)=={'LawnTuft0','LawnTuft1','LawnTuft2','LawnTuft3'},
+            'Continuous original native prototype lookup incomplete')
+    for group in [*meadow_groups,*validation['restoredGroups']]:
+        saved=geometry['groups'][group['id']];actor=actors[saved['actor']]
+        component=actor.get_component_by_class(u.HierarchicalInstancedStaticMeshComponent)
+        require(component.get_instance_count()==saved['instances']==len(group['instances']),
+                'Saved continuous meadow source membership differs')
+        expected_mesh,expected_material=original_prototypes[group['meshId']]
+        require(saved['mesh']==component.get_editor_property('static_mesh').get_path_name()==expected_mesh
+                and component.get_num_materials()==1 and component.get_material(0).get_path_name()==expected_material,
+                'Saved continuous original prototype/material differs')
+        if group['id'].startswith('EX_meadow_restored_'):
+            require(saved['mesh']==group['nativeMesh'] and component.get_material(0).get_path_name()==group['nativeMaterial'],
+                    'Saved restoration original prototype/material differs')
+            restored_instances+=component.get_instance_count()
+        require(actor.actor_has_tag('BreziLawnDetail') and actor.get_detail_density_scaling()
+                and not component.get_editor_property('cast_shadow')
+                and not component.get_editor_property('visible_in_ray_tracing')
+                and component.get_editor_property('instance_start_cull_distance')==7200
+                and component.get_editor_property('instance_end_cull_distance')==9000,
+                'Saved continuous meadow authored quality/cull policy differs')
+        for index,row in enumerate(group['instances']):
+            expected=base.transform(rural.instance_transform(u,row));actual=base.instance_value(component,index)
+            position_error=max(position_error,max(abs(a-b) for a,b in zip(actual[0],expected[0])))
+            scale_error=max(scale_error,max(abs(a-b) for a,b in zip(actual[2],expected[2])))
+            rotation_error=max(rotation_error,min(max(abs(a-b) for a,b in zip(actual[1],expected[1])),
+                                                  max(abs(a+b) for a,b in zip(actual[1],expected[1]))))
+            compared+=1
+    require(position_error<=.002 and scale_error<=1e-6 and rotation_error<=2e-6,
+            'Saved continuous source transforms exceed float32 readback bounds')
+    require(restored_instances==39834 and len(geometry['groups'])==1980
+            and sum(g['instances'] for g in geometry['groups'].values())==632026
+            and len(geometry['meshes'])==547 and len(geometry['actors'])==544,
+            'Saved continuous full inventory differs')
+    return {'status':'verified-saved-continuous-meadow-layout','restoredGroups':164,'restoredInstances':restored_instances,
+        'heightOnlyOverrides':validation['audit']['retainedHeightOnlyOverrides'],
+        'soilTrianglesOmitted':103392,'cultivatedRetained':cultivated_triangles,'bindings':len(ground['materialBindings']),
+        'groupIds':[g['id'] for g in validation['restoredGroups']],
+        'retiredGroupIds':retired_ids,'retiredGroupsAbsent':True,'materialBindings':ground['materialBindings'],
+        'soilSubsets':subsets,'cultivatedUnchanged':cultivated_unchanged,'orderedNativeTransformsVerifiedAfterReload':True,
+        'sourceGroundBoundsTopologyAndOriginVerified':ground['sourceGroundBoundsTopologyAndOriginVerified'],
+        'sourceTransformsComparedAfterReload':True,'comparedNativeMeadowInstances':compared,
+        'maximumPositionErrorCm':position_error,'maximumScaleError':scale_error,
+        'maximumQuaternionErrorSignEquivalent':rotation_error,'allNewVisualsNoCollision':True,
+        'nativeAppearanceAccepted':False,'fullPhotorealismAccepted':False,'performanceAccepted':False}
+
+
 def main():
     import unreal as u
     source, output = base.checked_paths(ROOT/os.environ['BREZI_PERFORMANCE_SOURCE'],ROOT/os.environ['BREZI_MODEL_OUTPUT'])
@@ -490,9 +716,83 @@ def main():
     context_path = Path(os.environ['BREZI_EXTERIOR_CONTEXT']).resolve()
     asset_dir = Path(os.environ['BREZI_EXTERIOR_ASSETS']).resolve()
     context = read(context_path); manifest = read(asset_dir/'geometry-manifest.json'); material_manifest = read(asset_dir/'material-manifest.json')
+    photo_material_path = Path(os.environ['BREZI_EXTERIOR_LAWN_PHOTO_MATERIAL']).resolve() if os.environ.get('BREZI_EXTERIOR_LAWN_PHOTO_MATERIAL') else None
+    infill_path = Path(os.environ['BREZI_EXTERIOR_MEADOW_INFILL']).resolve() if os.environ.get('BREZI_EXTERIOR_MEADOW_INFILL') else None
+    infill = read(infill_path) if infill_path else None
+    continuous_path=Path(os.environ['BREZI_EXTERIOR_CONTINUOUS_MEADOW']).resolve() if os.environ.get('BREZI_EXTERIOR_CONTINUOUS_MEADOW') else None
+    continuous=read(continuous_path) if continuous_path else None
+    continuous_module=None;continuous_validation=None
+    canopy_path=Path(os.environ['BREZI_EXTERIOR_CANOPY']).resolve() if os.environ.get('BREZI_EXTERIOR_CANOPY') else None
+    canopy=read(canopy_path) if canopy_path else None
+    fullness = canopy and canopy.get('owner') == 'scripts/unreal/exterior-canopy-fullness-study.py'
+    fullness_module=None; preserved_plant_manifest=manifest
+    if fullness:
+        fullness_module=module('exterior_canopy_fullness_native','exterior-canopy-fullness-native.py')
+        preserved_plant_manifest=fullness_module.validated_libraries(manifest)['original126']
+    infill_module = None; infill_validation = None; photo_plant_manifest = preserved_plant_manifest
+    photo_module = None; original_plant_manifest = preserved_plant_manifest
+    if infill:
+        require(photo_material_path is not None, 'Low meadow pilot requires the frozen photographic library')
+        infill_module = module('exterior_meadow_infill_native', 'exterior-meadow-infill-native.py')
+        libraries = infill_module.validated_libraries(preserved_plant_manifest)
+        photo_plant_manifest = libraries['original120']
+        original_plant_manifest = libraries['original100']
+    if photo_material_path:
+        photo_module = module('exterior_lawn_photo_native', 'exterior-lawn-photo-native.py')
+        original_plant_manifest = photo_module.validated_base_library(photo_plant_manifest)
+        require(manifest['photoMaterialManifest']=={'path':str(photo_material_path),'sha256':sha(photo_material_path)},
+                'Photo lawn library/material sidecar differs')
     require(context['owner'] in ('scripts/unreal/exterior-context.py','scripts/unreal/exterior-meadow.py','scripts/unreal/exterior-meadow-blades.py','scripts/unreal/exterior-regional-vegetation.py'),'Unreviewed exterior context generator')
     require(context['generatorSha256']==sha(ROOT/context['owner']),'Context generator drift')
     require(context['sourceSceneSha256']==sha(output/'geometry/scene.json') and context['sourceObjSha256']==sha(output/'geometry/dom-mm.obj'),'Context architectural source differs')
+    source_context=copy.deepcopy(context)
+    if infill:
+        extension_pin = infill['infillGeometryManifest']
+        require(sha(extension_pin['path']) == extension_pin['sha256'], 'Low meadow geometry extension drift')
+        infill_validation = infill_module.validated_infill(infill, read(extension_pin['path']), preserved_plant_manifest,
+            context['sourceSceneSha256'], context['sourceObjSha256'], source_context)
+    transition_path=Path(os.environ['BREZI_EXTERIOR_NEIGHBORHOOD_TRANSITION']).resolve() if os.environ.get('BREZI_EXTERIOR_NEIGHBORHOOD_TRANSITION') else None
+    transition=read(transition_path) if transition_path else None
+    transition_validation=None
+    native_topology=None; native_topology_path=None
+    if transition:
+        transition_module=module('exterior_neighborhood_transition_native','exterior-neighborhood-transition-native.py')
+        transition_validation=transition_module.validated_transition(transition,source_context,preserved_plant_manifest,
+            context['sourceSceneSha256'],context['sourceObjSha256'])
+        native_topology_path=ROOT/'output/unreal/exterior-validation-20260930-r1/r12-native-ground-topology-baseline.json'
+        require(sha(native_topology_path)=='be3733f6e20cca1080e352d85f66bc5cd063b39632326885330582d0ba1a641a',
+                'Original native ground topology observation differs')
+        native_topology=read(native_topology_path)
+        require(native_topology['status']=='VERIFIED_ACTUAL_ORIGINAL_AND_PROPOSED_NATIVE_GROUND_TOPOLOGY_IDENTICAL'
+                and native_topology['all65ActualNativeTopologyVertexCountsAndBoundsUnchanged']
+                and native_topology['allSourceDescriptionTriangleCountsExact']
+                and native_topology['oldSceneAndCloneAndFailedProposalContentHashesUnchangedAfterReadOnlyProbes']
+                and native_topology['sourceNativeBaseline']=={'path':str(ROOT/'output/unreal/exterior-20261001-r11/exterior-import-report.json'),
+                    'sha256':'6608bfdada21b9de8540dfead615a668a60cd1a2ff6cceab6c8c0eded0cd5e21'}
+                and len(native_topology['rows'])==len({r['sourceMeshId']for r in native_topology['rows']})==65,
+                'Original native transition topology proof is incomplete')
+    ecology_path=Path(os.environ['BREZI_EXTERIOR_ECOLOGY']).resolve() if os.environ.get('BREZI_EXTERIOR_ECOLOGY') else None
+    ecology=read(ecology_path) if ecology_path else None
+    canopy_module=None; canopy_validation=None; ecology_validation=None; ecology_groups=[]
+    if canopy or ecology:canopy_module=module('exterior_canopy_native','exterior-canopy-native.py')
+    for plan in (canopy,ecology):
+        if plan:
+            pin=plan['geometryManifest'];require(sha(pin['path'])==pin['sha256'],'Grove geometry manifest drift')
+            require(plan['sourceContext']=={'path':str(context_path),'sha256':sha(context_path)},'Grove source context differs')
+    if canopy:
+        replacement_module=fullness_module if fullness else canopy_module
+        canopy_validation=replacement_module.validated_replacements(canopy,read(canopy['geometryManifest']['path']),
+            source_context,manifest,context['sourceSceneSha256'],context['sourceObjSha256'])
+        replacements={r['id']:r for r in canopy_validation['placements']}
+        require(len(replacements)==78,'Grove tree replacement inventory differs')
+        original_rows=context['regionalVegetationPlacements']
+        context['regionalVegetationPlacements']=[replacements.get(r['id'],r) for r in original_rows]
+        require(all(a==b for a,b in zip(original_rows,context['regionalVegetationPlacements']) if a['id'] not in replacements),
+                'Non-grove regional vegetation changed')
+    if ecology:
+        ecology_validation=canopy_module.validated_ecology(ecology,read(ecology['geometryManifest']['path']),
+            source_context,preserved_plant_manifest,context['sourceSceneSha256'],context['sourceObjSha256'])
+        ecology_groups=ecology_validation['groups']
     snapshot=context_path.parent/'inputs/cuzk-parcels.gml'
     require(sha(snapshot)==context['sourceEvidence']['sha256'],'Official parcel snapshot differs')
     terrain_path=Path(os.environ['BREZI_EXTERIOR_TERRAIN']).resolve() if os.environ.get('BREZI_EXTERIOR_TERRAIN') else None
@@ -503,6 +803,14 @@ def main():
     seasonal=read(seasonal_path) if seasonal_path else None
     field_macro_path=Path(os.environ['BREZI_EXTERIOR_FIELD_MACRO']).resolve() if os.environ.get('BREZI_EXTERIOR_FIELD_MACRO') else None
     field_macro=read(field_macro_path) if field_macro_path else None
+    projection_path=Path(os.environ['BREZI_EXTERIOR_ORTHO_PROJECTION']).resolve() if os.environ.get('BREZI_EXTERIOR_ORTHO_PROJECTION') else None
+    projection=read(projection_path) if projection_path else None
+    if projection:
+        require(ortho and projection['schemaVersion']==1 and projection['owner']=='scripts/unreal/exterior-ortho-projection-mask.py','Unreviewed aerial projection mask')
+        require(projection['generatorSha256']==sha(ROOT/projection['owner']),'Aerial projection generator drift')
+        require(projection['sourceSceneSha256']==context['sourceSceneSha256'] and projection['sourceObjSha256']==context['sourceObjSha256'],'Aerial projection architectural frame differs')
+        require(projection['activeDesign']==context['activeDesign'],'Aerial projection selection differs')
+        require(projection['inputFiles'].get(str(context_path))==sha(context_path),'Aerial projection context differs')
     if field_macro:
         require(field_macro['owner'] in ('scripts/unreal/exterior-field-macro.py','scripts/unreal/exterior-field-macro-r3.py') and field_macro['schemaVersion']==1,'Unreviewed field macro generator')
         require(field_macro['inputFiles'].get(str(ROOT/field_macro['owner']))==sha(ROOT/field_macro['owner']),'Field macro generator drift')
@@ -535,6 +843,64 @@ def main():
         context['meshes'].extend(buildings['meshes']);context.setdefault('groups',[]).extend(buildings.get('groups',[]))
         require(len({m['id'] for m in context['meshes']})==len(context['meshes']),'Duplicate village/context mesh')
     if field_macro:require(buildings_path and field_macro['inputFiles'].get(str(buildings_path))==sha(buildings_path),'Field macro buildings differ')
+    substrate_path=Path(os.environ['BREZI_EXTERIOR_GROVE_SUBSTRATE']).resolve() if os.environ.get('BREZI_EXTERIOR_GROVE_SUBSTRATE') else None
+    substrate=read(substrate_path) if substrate_path else None
+    substrate_validation=None;substrate_module=None
+    if substrate:
+        substrate_module=module('exterior_grove_substrate_native','exterior-grove-substrate-native.py')
+        substrate_validation=substrate_module.validated_substrate(substrate,source_context,
+            context['sourceSceneSha256'],context['sourceObjSha256'])
+        recipe_pin=substrate['materialManifest']
+        require(sha(recipe_pin['path'])==recipe_pin['sha256'],'Grove substrate material source drift')
+        substrate_recipes=read(recipe_pin['path'])
+        require(set(substrate_recipes)=={'canopy_floor_litter'} and
+                material_manifest.get('canopy_floor_litter')==substrate_recipes['canopy_floor_litter'],
+                'Grove substrate merged photographic recipe differs')
+        context['meshes'].extend(substrate_validation['meshes'])
+        require(len({m['id'] for m in context['meshes']})==len(context['meshes']),'Duplicate grove substrate/context mesh')
+    neighborhood_path=Path(os.environ['BREZI_EXTERIOR_NEIGHBORHOOD']).resolve() if os.environ.get('BREZI_EXTERIOR_NEIGHBORHOOD') else None
+    neighborhood=read(neighborhood_path) if neighborhood_path else None
+    if transition:
+        require(neighborhood_path and transition['sourceNeighborhood']=={'path':str(neighborhood_path),'sha256':sha(neighborhood_path)},
+                'Transition requires the exact original neighborhood/removal plan')
+        by_id={m['id']:m for m in context['meshes']}
+        for binding in transition_validation['materialBindings']:
+            mesh=by_id[binding['sourceMeshId']]
+            require(mesh['material']==binding['expectedMaterialKey'] and digest(mesh)==binding['sourceGeometrySha256'],
+                    'Transition original source geometry/material differs')
+            mesh['material']=binding['proposedSharedMaterialKey']
+    if neighborhood:
+        require(neighborhood['owner']=='scripts/unreal/exterior-neighborhood.py' and neighborhood['generatorSha256']==sha(ROOT/neighborhood['owner']),'Neighborhood generator drift')
+        require(neighborhood['sourceSceneSha256']==context['sourceSceneSha256'] and neighborhood['sourceObjSha256']==context['sourceObjSha256'],'Neighborhood architectural frame differs')
+        require(neighborhood['activeDesign']==context['activeDesign'],'Neighborhood selection differs')
+        require(neighborhood['inputFiles'].get(str(context_path))==sha(context_path),'Neighborhood context differs')
+        if continuous:
+            require(transition and infill,'Continuous meadow requires exact historical transition/pilot source plans')
+            continuous_module=module('exterior_meadow_continuous_native','exterior-meadow-continuous-native.py')
+            continuous_validation=continuous_module.validated_layout(continuous,source_context,neighborhood,transition,
+                context['sourceSceneSha256'],context['sourceObjSha256'])
+            require(continuous_validation['plan']=={'path':str(continuous_path),'sha256':sha(continuous_path)},
+                    'Continuous source plan path differs')
+            context['meshes'].extend(continuous_validation['neighborhoodMeshes'])
+            for name,rows in continuous_validation['retainedContextArrays'].items():context[name]=rows
+        else:context['meshes'].extend(neighborhood['meshes'])
+        context.setdefault('groups',[]).extend(neighborhood.get('groups',[]))
+        require(len({m['id'] for m in context['meshes']})==len(context['meshes']),'Duplicate neighborhood/context mesh')
+        # The generator intersects recorded plant footprints against the ground
+        # patches offline. Applying its pinned indices avoids both plant/soil
+        # intersections and a GIS dependency inside the native editor.
+        for name,indices in ({} if continuous else neighborhood.get('groundDetailRemovedPlacementIndices',{})).items():
+            require(name in ('meadowBladePlacements','meadowUnderstoryPlacements','groundCoverPlacements'),'Unreviewed ground vegetation removal')
+            rows=context.get(name,[])
+            require(len(rows)==neighborhood['groundDetailPlacementSourceCounts'][name],'Ground vegetation source count differs')
+            require(len(indices)==len(set(indices)) and all(isinstance(i,int) and 0<=i<len(rows) for i in indices),'Invalid ground vegetation indices')
+            excluded=set(indices);context[name]=[r for i,r in enumerate(rows) if i not in excluded]
+    require(not continuous or continuous_validation is not None,'Continuous meadow requires its exact original neighborhood')
+    # Survey graphics remain in the pinned source plan. The default photographic
+    # presentation shows the physical land; opt in to dashed parcel overlays.
+    survey_overlay=os.environ.get('BREZI_EXTERIOR_SURVEY_OVERLAY','0')=='1'
+    survey_meshes=[m['id'] for m in context['meshes'] if m['material']=='context_parcel_line']
+    if not survey_overlay:context['meshes']=[m for m in context['meshes'] if m['id'] not in survey_meshes]
     validate_plants(manifest)
     scene = read(output/'geometry/scene.json')
     require(scene['activeDesign']=={'variant':'C','heatingLayout':'B','livingLayout':'B'},'C/B/B required')
@@ -545,9 +911,18 @@ def main():
     context['gardenPlacements']=garden_placements(output/'geometry/dom-mm.obj')
     garden_path=Path(os.environ['BREZI_EXTERIOR_GARDEN']).resolve() if os.environ.get('BREZI_EXTERIOR_GARDEN') else None
     garden=read(garden_path) if garden_path else None
+    organic_garden_validation=None
     if garden:
         require(garden['sourceSceneSha256']==sha(output/'geometry/scene.json') and garden['sourceObjSha256']==sha(output/'geometry/dom-mm.obj'),'Garden source differs')
         context['ornamentalPlacements']=garden['ornamentalPlacements']
+        if garden.get('gardenDetailPlacements') is not None:
+            require(garden['owner'] in ('scripts/unreal/exterior-garden-drifts.py','scripts/unreal/exterior-garden-masters.py','scripts/unreal/exterior-garden-flower-masters.py',ORGANIC_GARDEN_GENERATOR) and garden['generatorSha256']==sha(ROOT/garden['owner']),'Garden detail generator drift')
+            require(garden['activeDesign']==context['activeDesign'],'Garden detail design differs')
+            if garden['owner']==ORGANIC_GARDEN_GENERATOR:
+                organic_helper=module('exterior_garden_organic_native','exterior-garden-organic-native.py')
+                organic_garden_validation=organic_helper.validated_garden(garden,original_plant_manifest,
+                    context['sourceSceneSha256'],context['sourceObjSha256'])
+            context['gardenPlacements']=garden['gardenDetailPlacements']
     context['views'].append({'id':'exterior-garden','label':'Záhrada · priestorová podsadba','eyeCm':[-1060.,-830.,145.],'targetCm':[-900.,-430.,35.],'horizontalFovDegrees':62.,'source':OWNER})
     diagnostic_path=Path(os.environ['BREZI_EXTERIOR_DIAGNOSTIC_VIEWS']).resolve() if os.environ.get('BREZI_EXTERIOR_DIAGNOSTIC_VIEWS') else None
     diagnostic=read(diagnostic_path) if diagnostic_path else None
@@ -563,6 +938,37 @@ def main():
             require(all(len(view[k])==3 and all(math.isfinite(v) for v in view[k]) for k in ('eyeCm','targetCm')),'Invalid diagnostic camera coordinates')
             require(sha(ROOT/view['source'])==diagnostic['generatorSha256'],'Diagnostic camera generator drift')
         context['views'].extend(diagnostic['views'])
+    ecology_views_path=Path(os.environ['BREZI_EXTERIOR_ECOLOGY_VIEWS']).resolve() if os.environ.get('BREZI_EXTERIOR_ECOLOGY_VIEWS') else None
+    ecology_views=read(ecology_views_path) if ecology_views_path else None
+    if ecology_views:
+        require(ecology and canopy and diagnostic and terrain_path and buildings_path,'Grove floor camera requires the exact source scene and both grove plans')
+        require(ecology_views['owner'] in ('scripts/unreal/exterior-canopy-ecology-views.py','scripts/unreal/exterior-canopy-growth-views.py')
+                and ecology_views['generatorSha256']==sha(ROOT/ecology_views['owner'])
+                and ecology_views['status']=='PASS_STATIC_ECOLOGY_CAMERA_GEOMETRY_NATIVE_PENDING','Grove floor camera generator drift')
+        require(ecology_views['activeDesign']==scene['activeDesign'] and ecology_views['housePlacement']==scene['house']['placement']
+                and ecology_views['sourceSceneSha256']==context['sourceSceneSha256']
+                and ecology_views['sourceObjSha256']==context['sourceObjSha256'],'Grove floor camera frame differs')
+        for key,path in [('sourceContext',context_path),('sourceTerrain',terrain_path),('sourceBuildings',buildings_path),
+                         ('sourceEcology',ecology_path),('sourceCanopy',canopy_path),('priorDiagnosticViews',diagnostic_path)]:
+            if key=='sourceCanopy' and fullness:
+                # The original camera is reused at unchanged tree roots. Its
+                # receipt continues to identify the original growth plan.
+                path=Path(canopy['sourceOriginalGrowthPlan']['path']).resolve()
+            if key=='sourceEcology' and ecology['owner']=='scripts/unreal/exterior-canopy-ecology-unflared.py' and ecology_views['owner']=='scripts/unreal/exterior-canopy-ecology-views.py':
+                # The same camera remains valid after omitting decorative
+                # collars; the strict helper proves every other row unchanged.
+                path=Path(ecology['sourceEcology']['path']).resolve()
+            require(ecology_views[key]=={'path':str(path),'sha256':sha(path)}
+                    and ecology_views['inputFiles'].get(str(path))==sha(path),'Grove floor camera source drift: '+key)
+        require(ecology_views['policy']['appendOnly'] is True and ecology_views['policy']['existingViewsChanged'] is False
+                and ecology_views['policy']['existingTreeTransformsPreserved'] is True
+                and ecology_views['policy']['nativeExecution'] is False,'Grove floor camera policy differs')
+        require(len(ecology_views['views'])==1 and ecology_views['views'][0]['id']=='exterior-canopy-floor','Unreviewed grove floor camera')
+        view=ecology_views['views'][0]
+        require(view['source']==ecology_views['owner'] and 25<=view['horizontalFovDegrees']<=90
+                and all(len(view[k])==3 and all(math.isfinite(v) for v in view[k]) for k in ('eyeCm','targetCm')),
+                'Invalid grove floor camera')
+        context['views'].extend(ecology_views['views'])
     old_plan = read(output/'geometry/rural-context-geometry.json'); old_report = read(output/'rural-import-report.json')
     yard_path=Path(os.environ['BREZI_EXTERIOR_YARD']).resolve() if os.environ.get('BREZI_EXTERIOR_YARD') else None
     yard=read(yard_path) if yard_path else None
@@ -572,14 +978,109 @@ def main():
         require(yard['activeDesign']==scene['activeDesign'] and yard['audit']['status']=='PASS','Yard source audit failed')
         require(yard['audit']['minimumGroundBoundaryClearanceCm']>=14 and yard['audit']['minimumProtectedClearanceCm']>=18,'Yard crown exclusions failed')
         context['yardBladePlacements']=yard['yardBladePlacements']
+    natural_lawn_path=Path(os.environ['BREZI_EXTERIOR_LAWN']).resolve() if os.environ.get('BREZI_EXTERIOR_LAWN') else None
+    natural_lawn=read(natural_lawn_path) if natural_lawn_path else None
+    lawn_module=None; lawn_groups=[]; lawn_views=None; lawn_rural=None; lawn_rural_path=None; photo_validation=None
+    if natural_lawn:
+        require(natural_lawn['owner'] in NATURAL_LAWN_GENERATORS
+                and natural_lawn['generatorSha256']==sha(ROOT/natural_lawn['owner']), 'Natural lawn generator drift')
+        natural_manifest_path=Path(natural_lawn['geometryManifest']['path']).resolve()
+        require(sha(natural_manifest_path)==natural_lawn['geometryManifest']['sha256'], 'Natural lawn geometry manifest drift')
+        natural_manifest=read(natural_manifest_path)
+        master={row['id']:row for row in manifest['meshes']}
+        require(all(master.get(row['id'])==row for row in natural_manifest['meshes']), 'Natural lawn differs from imported master')
+        lawn_module=module('exterior_lawn_native', lawn_native_filename(natural_lawn['owner']))
+        if natural_lawn['owner']==PHOTO_LAWN_GENERATOR:
+            require(photo_material_path is not None, 'Photographic lawn requires its validated material sidecar')
+            photo_validation=lawn_module.validate_photo(natural_lawn,natural_manifest,photo_plant_manifest,
+                context['sourceSceneSha256'],context['sourceObjSha256'])
+            lawn_groups=photo_validation['groups']
+        else:
+            require(photo_material_path is None, 'Photographic material requires the matching lawn plan')
+            lawn_groups=lawn_module.validated_groups(natural_lawn,natural_manifest,context['sourceSceneSha256'],context['sourceObjSha256'])
+        lawn_rural=read(source/'rural-import-report.json')
+        rural_plan_pins=[p for p in lawn_rural['inputFiles'] if p.endswith('/geometry/rural-context-geometry.json')]
+        require(len(rural_plan_pins)==1, 'Ambiguous inherited managed lawn plan')
+        lawn_rural_path=(ROOT/rural_plan_pins[0]).resolve()
+        require(sha(lawn_rural_path)==lawn_rural['inputFiles'][rural_plan_pins[0]], 'Inherited managed lawn plan drift')
+        lawn_views_path=Path(os.environ['BREZI_EXTERIOR_LAWN_VIEWS']).resolve() if os.environ.get('BREZI_EXTERIOR_LAWN_VIEWS') else None
+        lawn_views=read(lawn_views_path) if lawn_views_path else None
+        if lawn_views:
+            require(lawn_views['owner'] in ('scripts/unreal/preview-lawn-natural.py', *NATURAL_LAWN_GENERATORS[1:])
+                    and lawn_views['generatorSha256']==sha(ROOT/lawn_views['owner']), 'Natural lawn camera generator drift')
+            expected_view_status=('PASS_PRIVATE_MANAGED_LAWN_XY_ONLY_NOT_NATIVE_ACCEPTED'
+                                  if lawn_views['owner'] in COVERED_LAWN_GENERATORS or lawn_views['owner']==PHOTO_LAWN_GENERATOR
+                                  else 'PASS_PRIVATE_LAWN_XY_ONLY_NOT_NATIVE_ACCEPTED')
+            require(lawn_views['status']==expected_view_status
+                    and lawn_views['activeDesign']==scene['activeDesign']
+                    and lawn_views['sourceSceneSha256']==context['sourceSceneSha256']
+                    and lawn_views['sourceObjSha256']==context['sourceObjSha256'], 'Natural lawn camera frame differs')
+            require(lawn_views['plan']=={'path':str(natural_lawn_path),'sha256':sha(natural_lawn_path)}, 'Natural lawn camera plan drift')
+            if lawn_views['owner'] in NATURAL_LAWN_GENERATORS[1:]:
+                require(lawn_views['managedLawnPlan']==natural_lawn['managedLawnPlan'], 'Managed lawn camera mask drift')
+            require(sorted(v['id'] for v in lawn_views['views'])==['exterior-lawn-detail','exterior-lawn-edge'], 'Unreviewed natural lawn cameras')
+            for view in lawn_views['views']:
+                require(view['source']=='scripts/unreal/preview-lawn-natural.py' and 25<=view['horizontalFovDegrees']<=90
+                        and all(len(view[k])==3 and all(math.isfinite(v) for v in view[k]) for k in ('eyeCm','targetCm')), 'Invalid lawn camera')
+            context['views'].extend(lawn_views['views'])
     checkpoint = output/'exterior-checkpoint'; checkpoint.mkdir()
     for name in (MAP_FILE,VIEWS_FILE): shutil.copy2(content/name,checkpoint/Path(name).name)
     dependencies = ('exterior-import.py','exterior-context.py','exterior-materials.py','rural-import.py','lawn-geometry.py','realism-import.py','realism-room-details-import.py','realism-fixtures-import.py','performance-optimize.py','performance_scene_policy.py')
     pipeline = {str(ROOT/'scripts/unreal'/name):sha(ROOT/'scripts/unreal'/name) for name in dependencies}
+    if organic_garden_validation:
+        garden_helper=ROOT/'scripts/unreal/exterior-garden-organic-native.py'
+        pipeline[str(garden_helper)]=sha(garden_helper)
+    if natural_lawn:
+        lawn_helper=ROOT/'scripts/unreal'/lawn_native_filename(natural_lawn['owner'])
+        pipeline[str(lawn_helper)]=sha(lawn_helper)
+        if photo_validation:
+            for name in ('exterior-lawn-tapered-native.py','exterior-lawn-photo-source.mjs'):
+                path=ROOT/'scripts/unreal'/name;pipeline[str(path)]=sha(path)
+    if canopy or ecology:pipeline[str(ROOT/'scripts/unreal/exterior-canopy-native.py')]=sha(ROOT/'scripts/unreal/exterior-canopy-native.py')
+    if fullness:
+        for name in ('exterior-canopy-fullness-native.py','exterior-canopy-fullness-integration.py'):
+            path=ROOT/'scripts/unreal'/name;pipeline[str(path)]=sha(path)
+    if substrate:pipeline[str(ROOT/'scripts/unreal/exterior-grove-substrate-native.py')]=sha(ROOT/'scripts/unreal/exterior-grove-substrate-native.py')
+    if transition:pipeline[str(ROOT/'scripts/unreal/exterior-neighborhood-transition-native.py')]=sha(ROOT/'scripts/unreal/exterior-neighborhood-transition-native.py')
+    if infill:
+        for name in ('exterior-meadow-infill-native.py', 'exterior-meadow-infill-integration.py', 'exterior-meadow-infill-source.mjs'):
+            path=ROOT/'scripts/unreal'/name;pipeline[str(path)]=sha(path)
+    if continuous:
+        for name in ('exterior-meadow-continuous-study.py','exterior-meadow-continuous-native.py','exterior-meadow-continuous-source.mjs'):
+            path=ROOT/'scripts/unreal'/name;pipeline[str(path)]=sha(path)
     inputs = {str(p):sha(p) for p in [context_path,asset_dir/'geometry-manifest.json',asset_dir/'material-manifest.json',asset_dir/'asset-manifest.json']}
     inputs.update(manifest.get('inputFiles',{}))
     inputs.update(read(asset_dir/'asset-manifest.json').get('inputFiles',{}))
     inputs.update(context.get('inputFiles',{}))
+    if infill:
+        inputs[str(infill_path)] = sha(infill_path)
+        inputs.update(infill_validation['inputPins'])
+        for pin in (infill['infillGeometryManifest'], preserved_plant_manifest['validatedOriginal120Subset'], preserved_plant_manifest['validatedOriginal100Subset']):
+            inputs[pin['path']] = pin['sha256']
+    if continuous:
+        inputs[str(continuous_path)]=sha(continuous_path);inputs.update(continuous_validation['inputPins'])
+    if fullness:
+        inputs.update(canopy_validation['inputPins'])
+        subset=manifest['validatedOriginal126Subset'];inputs[subset['path']]=subset['sha256']
+    if substrate:
+        inputs[str(substrate_path)]=sha(substrate_path);inputs.update(substrate['inputFiles'])
+    for path,plan in ((canopy_path,canopy),(ecology_path,ecology)):
+        if plan:
+            inputs[str(path)]=sha(path);inputs.update(plan['inputFiles'])
+            inputs[plan['geometryManifest']['path']]=plan['geometryManifest']['sha256']
+            directory=Path(plan['geometryManifest']['path']).parent
+            material_source=directory/'material-manifest.json';inputs[str(material_source)]=sha(material_source)
+    if canopy:
+        proof=canopy_validation['audit']['morphologyProof']
+        require(sha(proof['path'])==proof['sha256'],'Grove morphology proof drift')
+        inputs[proof['path']]=proof['sha256']
+    if ecology:
+        ecology_bundle_path=Path(ecology['geometryManifest']['path']).parent/'canopy-ecology-manifest.json'
+        inputs[str(ecology_bundle_path)]=sha(ecology_bundle_path)
+        ecology_bundle=read(ecology_bundle_path)
+        for key in ('plan','geometryManifest','materialManifest','geometryProof','glb'):
+            pin=ecology_bundle[key];require(sha(pin['path'])==pin['sha256'],'Grove ecology source proof drift: '+key)
+            inputs[pin['path']]=pin['sha256']
     for p in (snapshot,context_path.parent/'inputs/source-receipt.json'): inputs[str(p)]=sha(p)
     build_receipt=context_path.parent/'build-environment.json'
     if build_receipt.exists():
@@ -597,15 +1098,49 @@ def main():
     if field_macro:
         inputs[str(field_macro_path)]=sha(field_macro_path);inputs.update(field_macro['inputFiles'])
         inputs[field_macro['texture']['path']]=field_macro['texture']['sha256']
+    if projection:
+        inputs[str(projection_path)]=sha(projection_path);inputs.update(projection['inputFiles'])
+        inputs[projection['texture']['path']]=projection['texture']['sha256']
     if garden:
         inputs[str(garden_path)]=sha(garden_path);inputs.update(garden['inputFiles'])
+    if neighborhood:
+        inputs[str(neighborhood_path)]=sha(neighborhood_path);inputs.update(neighborhood['inputFiles'])
+    if transition:
+        inputs[str(transition_path)]=sha(transition_path)
+        inputs.update(transition_validation['audit']['inputFiles'])
+        inputs[str(native_topology_path)]=sha(native_topology_path)
+        inputs.update(native_topology['inputFiles'])
+        inputs[native_topology['sourceNativeBaseline']['path']]=native_topology['sourceNativeBaseline']['sha256']
     if buildings:
         inputs[str(buildings_path)]=sha(buildings_path);inputs.update(buildings['inputFiles'])
     if yard:
         inputs[str(yard_path)]=sha(yard_path);inputs.update(yard['inputFiles'])
+    if natural_lawn:
+        inputs[str(natural_lawn_path)]=sha(natural_lawn_path);inputs.update(natural_lawn['inputFiles'])
+        inputs[str(natural_manifest_path)]=sha(natural_manifest_path)
+        if natural_lawn['owner'] in COVERED_LAWN_GENERATORS:
+            coverage_pin=natural_lawn['coverageReceipt']
+            require(sha(coverage_pin['path'])==coverage_pin['sha256'],'Physical lawn coverage receipt drift')
+            inputs[coverage_pin['path']]=coverage_pin['sha256']
+            coverage_bundle=natural_manifest_path.parent/'lawn-natural-manifest.json'
+            inputs[str(coverage_bundle)]=sha(coverage_bundle)
+            if natural_lawn['owner'] in BOUNDARY_LAWN_GENERATORS:
+                boundary_pin=natural_lawn['boundaryCoverageReceipt']
+                require(sha(boundary_pin['path'])==boundary_pin['sha256'],'Boundary lawn coverage receipt drift')
+                inputs[boundary_pin['path']]=boundary_pin['sha256']
+        inputs[str(source/'photoreal-import-report.json')]=sha(source/'photoreal-import-report.json')
+        inputs[str(source/'rural-import-report.json')]=sha(source/'rural-import-report.json')
+        inputs[str(lawn_rural_path)]=sha(lawn_rural_path)
+        if lawn_views:
+            inputs[str(lawn_views_path)]=sha(lawn_views_path)
+            inputs[str(ROOT/lawn_views['owner'])]=lawn_views['generatorSha256']
+            for view in lawn_views['views']:inputs[str(ROOT/view['source'])]=sha(ROOT/view['source'])
     if diagnostic:
         inputs[str(diagnostic_path)]=sha(diagnostic_path);inputs.update(diagnostic['inputFiles'])
         for view in diagnostic['views']:inputs[str(ROOT/view['source'])]=diagnostic['generatorSha256']
+    if ecology_views:
+        inputs[str(ecology_views_path)]=sha(ecology_views_path);inputs.update(ecology_views['inputFiles'])
+        inputs[str(ROOT/ecology_views['owner'])]=ecology_views['generatorSha256']
     native_prototypes=None
     if context.get('meadowBladePlacements') or context.get('meadowUnderstoryPlacements') or context.get('yardBladePlacements'):
         lawn_report=read(source/'photoreal-import-report.json')['lawn']['geometry']
@@ -622,6 +1157,26 @@ def main():
               'nativeProcessId':os.getpid(),'beforeAssetHashes':before,'pipelineFiles':pipeline,'inputFiles':inputs,'activeDesign':scene['activeDesign'],
               'setbacksMm':{'street':3000,'east':3000},'nativeRenderedVerified':False,
               'plantGeometryManifest':str(asset_dir/'geometry-manifest.json')}
+    if infill:
+        report['meadowInfill'] = {'plan': str(infill_path), 'planSha256': sha(infill_path),
+            'geometryManifest': infill['infillGeometryManifest'], 'audit': infill_validation['audit'],
+            'groupIds': [g['id'] for g in infill_validation['groups']],
+            'scope': 'Additive low meadow in two bounded authored pilot sectors; original populations and surfaces retained',
+            'nativeAppearanceAccepted': False, 'performanceAccepted': False}
+        if continuous:
+            report['meadowInfill'].update(groupsRetiredByContinuousMeadow=True,appliedGroups=0,appliedInstances=0,
+                historicalSourceGroupIds=report['meadowInfill']['groupIds'],groupIds=[],
+                scope='Historical pilot source validated; none of its groups or instances are placed in this continuous-layout candidate.')
+    if continuous:
+        report['continuousMeadow']={'plan':str(continuous_path),'planSha256':sha(continuous_path),
+            'audit':continuous_validation['audit'],'restoredGroupIds':[g['id'] for g in continuous_validation['restoredGroups']],
+            'retirementHistoricalSourcePlans':continuous_validation['retirementHistoricalSourcePlans'],
+            'nativeRenderedVerified':False,'nativeAppearanceAccepted':False,'fullPhotorealismAccepted':False,'performanceAccepted':False}
+    if substrate:
+        report['groveSubstrate']={'plan':str(substrate_path),'planSha256':sha(substrate_path),
+            'regionId':'village_nearest_grove','audit':substrate['audit'],'validation':substrate_validation['audit'],
+            'sourceGroundUnchanged':True,'hiddenOriginalActors':0,
+            'meshIds':[m['id'] for m in substrate_validation['meshes']]}
     if terrain:
         report['terrain']={key:terrain[key] for key in ('sourceEvidence','heightPolicy','noDataFallback','peakSample','limits','summary')}
         report['terrain']['plan']=str(terrain_path)
@@ -639,20 +1194,59 @@ def main():
         'summary':field_macro['summary'],'limitations':field_macro['limitations']}
     report['gardenPlanting']={'sourceBedIds':['DOM_01965','DOM_01966'],'instances':len(context['gardenPlacements']),'fullCanopyWithinOriginalMulch':True,
                              'ornamentalReplacements':len(context.get('ornamentalPlacements',[])),'originalPlantAssetsPreserved':True}
+    if organic_garden_validation:
+        report['gardenPlanting'].update(plan=str(garden_path),planSha256=sha(garden_path),validation=organic_garden_validation)
     report['meadowBasePlanting']={'instances':len(context.get('meadowBasePlacements',[])),'cullEndCm':9000}
     if yard:report['yardPlanting']={'plan':str(yard_path),'audit':yard['audit'],'interpretation':yard['interpretation']}
+    if natural_lawn:report['naturalLawn']={'plan':str(natural_lawn_path),'planSha256':sha(natural_lawn_path),
+        'audit':natural_lawn['audit'],'replacementPolicy':natural_lawn['replacementPolicy'],
+        'viewIds':[v['id'] for v in lawn_views['views']] if lawn_views else [],'nativeRenderedVerified':False}
+    if photo_validation:report['naturalLawn']['photographicValidation']=photo_validation['audit']
+    if natural_lawn and natural_lawn['owner'] in COVERED_LAWN_GENERATORS:
+        report['naturalLawn']['coverageReceipt']=natural_lawn['coverageReceipt']
+        if natural_lawn['owner'] in BOUNDARY_LAWN_GENERATORS:
+            report['naturalLawn']['boundaryCoverageReceipt']=natural_lawn['boundaryCoverageReceipt']
+    if canopy:report['canopyReplacement']={'plan':str(canopy_path),'planSha256':sha(canopy_path),
+        'audit':canopy['audit'],'validation':canopy_validation['audit'],'regionId':canopy['regionId'],
+        'trees':78,'deletedTrees':0,'hiddenOriginalActors':0,'nonGroveRegionalRowsPreserved':True,'nativeRenderedVerified':False}
+    if ecology:report['canopyEcology']={'plan':str(ecology_path),'planSha256':sha(ecology_path),
+        'audit':ecology['audit'],'validation':ecology_validation['audit'],'regionId':ecology['regionId'],
+        'hiddenOriginalActors':0,'sourceGroundUnchanged':True,'nativeRenderedVerified':False}
     if diagnostic:report['diagnosticViews']={'manifest':str(diagnostic_path),'viewIds':[v['id'] for v in diagnostic['views']],
         'policy':diagnostic['policy'],'nativeRenderedVerified':False}
+    if ecology_views:report['ecologyViews']={'manifest':str(ecology_views_path),'manifestSha256':sha(ecology_views_path),
+        'viewIds':[v['id'] for v in ecology_views['views']],'cameraAudits':ecology_views['cameraAudits'],
+        'policy':ecology_views['policy'],'nativeRenderedVerified':False}
     if buildings:
         report['village']={k:buildings[k] for k in ('sourceEvidence','limits','summary','heightPolicy') if k in buildings}
         report['village']['plan']=str(buildings_path)
+    if neighborhood:report['neighborhoodDetails']={'plan':str(neighborhood_path),'summary':neighborhood['summary'],'limits':neighborhood['limits']}
+    if continuous:
+        report['neighborhoodDetails']['historicalSourceSummary']=report['neighborhoodDetails'].pop('summary')
+        report['neighborhoodDetails']['appliedMeshCount']=continuous_validation['audit']['neighborhoodMeshes']
+        report['neighborhoodDetails']['appliedSourceTriangles']=continuous_validation['audit']['neighborhoodTriangles']
+    if transition:report['neighborhoodTransition']={'plan':str(transition_path),'planSha256':sha(transition_path),
+        'validation':transition_validation['audit'],'sourceMaterialBindings':transition_validation['materialBindings'],
+        'nativeTopologyBaseline':{'path':str(native_topology_path),'sha256':sha(native_topology_path)},
+        'nativeRenderedVerified':False,'nativeVisualAccepted':False,'performanceAccepted':False}
+    if continuous:report['neighborhoodTransition'].update(groupsRetiredByContinuousMeadow=True,appliedGroups=0,appliedInstances=0)
+    report['surveyPresentation']={'overlayEnabled':survey_overlay,'sourceParcelGeometryUnchanged':True,'surveyMeshCount':len(survey_meshes)}
     write(output/'exterior-import-report.json',report)
     try:
         actors = u.get_editor_subsystem(u.EditorActorSubsystem); levels = u.get_editor_subsystem(u.LevelEditorSubsystem)
         require(levels.load_level(MAP),'Cannot load exterior map'); original = helper.witness(base,u,actors)
         matmod = module('exterior_materials','exterior-materials.py')
         materials, report['materials'] = matmod.build_materials(material_manifest,prefix=PREFIX,ortho_manifest=ortho_path,
-                                                               seasonal_fields_manifest=seasonal_path,field_macro_manifest=field_macro_path)
+                                                               seasonal_fields_manifest=seasonal_path,field_macro_manifest=field_macro_path,
+                                                               projection_manifest=projection_path,transition=transition_path,lawn_photo=photo_material_path)
+        # Prepared recipes can add verified native interpretation evidence.
+        # Keep that closure in the import/package inputs as well as the
+        # material receipt, rejecting any contradictory identity.
+        for field in ('inputFiles','pipelineFiles'):
+            for path,value in report['materials'][field].items():
+                require(path not in report[field] or report[field][path]==value,
+                        'Conflicting exterior material dependency: '+path)
+                report[field][path]=value
         pipeline_assets = pipelines(u)
         glb = output/'exterior-context.glb'; rural.write_glb(glb,context)
         inputs[str(glb)] = sha(glb)
@@ -661,6 +1255,15 @@ def main():
         plant_paths={k:v.get_path_name() for k,v in plant_meshes.items()}
         verify_plants(u,manifest,plant_paths,materials)
         hidden = hide_original(u,actors,original,old_plan,old_report,terrain=bool(terrain),garden=context.get('ornamentalPlacements'))
+        if natural_lawn:
+            lawn_hidden=lawn_module.hide_original_lawn(u,actors,read(source/'photoreal-import-report.json'),lawn_rural,read(lawn_rural_path))
+            hidden.extend(lawn_hidden)
+            report['naturalLawn']['hiddenOriginalGroups']=lawn_hidden
+            for row in lawn_hidden:
+                for key in ('report','plan'):
+                    pin=row['sourceRuralTrim'][key]
+                    require(sha(pin['path'])==pin['sha256'], 'Inherited managed lawn witness drift')
+                    inputs[pin['path']]=pin['sha256']
         material_changes=rebind_garden_soil(u,actors,old_report,materials,yard['greenSourceMeshIds'] if yard else ())
         expected = copy.deepcopy(original)
         for row in hidden:
@@ -673,11 +1276,21 @@ def main():
             c['materials'][row['slot']]=row['after']
         meadow_meshes,meadow_groups,report['nativeMeadow']=native_meadow(u,context,source,native_prototypes)
         regional=regional_groups(manifest,context)
-        groups = [*plant_groups(manifest,old_plan,context),*meadow_groups,*regional]
+        groups = [*plant_groups(manifest,old_plan,context),*meadow_groups,*regional,*lawn_groups,*ecology_groups,
+                  *(transition_validation['groups'] if transition_validation and not continuous else []),
+                  *(infill_validation['groups'] if infill_validation and not continuous else []),
+                  *(continuous_validation['restoredGroups'] if continuous else [])]
+        require(len({g['id'] for g in groups})==len(groups),'Duplicate exterior plant group')
         report['regionalVegetation']={'instances':sum(len(g['instances']) for g in regional),'groups':len(regional),
             'placementPolicy':'explicit audited mesh identity and uniform all-LOD crown scale',
             'source':context.get('regionalVegetationPolicy',{})}
         report['geometry'] = build_scene(u,context,groups,materials,{**context_meshes,**plant_meshes,**meadow_meshes},output)
+        if canopy:
+            canopy_ids={r['meshId'] for r in canopy_validation['placements']}
+            canopy_groups=[g for g in regional if g['meshId'] in canopy_ids]
+            require(sum(len(g['instances']) for g in canopy_groups)==78,'Native grove tree group count differs')
+            report['canopyReplacement']['groupIds']=[g['id'] for g in canopy_groups]
+        if ecology:report['canopyEcology']['groupIds']=[g['id'] for g in ecology_groups]
         authored = helper.witness(base,u,actors); added = sorted(authored.keys()-original.keys())
         require(all(authored[p]==expected[p] for p in expected),'Exterior altered protected architectural witness')
         views_before = read(content/VIEWS_FILE); views_after = copy.deepcopy(views_before)
@@ -688,6 +1301,41 @@ def main():
         require(authored==reloaded,'Saved exterior witness differs'); require(all(reloaded[p]==expected[p] for p in expected),'Saved protected witness differs')
         report['savedGeometryReadback'] = readback(u,report['geometry'])
         report['savedPlantReadback'] = verify_plants(u,manifest,plant_paths,materials)
+        if infill and not continuous:
+            saved_groups = report['geometry']['groups']
+            infill_groups = infill_validation['groups']
+            require(all(g['id'] in saved_groups and saved_groups[g['id']]['instances'] == len(g['instances'])
+                        for g in infill_groups), 'Saved low meadow group membership/count differs')
+            report['meadowInfill']['savedGroups'] = len(infill_groups)
+            report['meadowInfill']['savedInstances'] = sum(saved_groups[g['id']]['instances'] for g in infill_groups)
+        if transition and not continuous:
+            report['neighborhoodTransition']['savedReadback']=verify_transition_scene(u,transition_validation,source_context,
+                report['geometry'],materials,plant_paths,native_topology)
+        if continuous:
+            report['continuousMeadow']['savedReadback']=verify_continuous_meadow_scene(u,continuous,continuous_validation,
+                source_context,report['geometry'],materials,meadow_groups,plant_paths,native_topology,transition_validation)
+        if substrate:
+            saved_actors={a.get_path_name():a for a in actors.get_all_level_actors()}
+            for mesh_id in report['groveSubstrate']['meshIds']:
+                actor=saved_actors[report['geometry']['actors'][mesh_id]]
+                component=actor.static_mesh_component
+                require(component.get_editor_property('static_mesh').get_path_name()==report['geometry']['meshes'][mesh_id],
+                        'Saved grove substrate mesh binding differs')
+                require(actor.get_actor_location()==u.Vector(0,0,0) and not component.get_editor_property('cast_shadow'),
+                        'Saved grove substrate origin/shadow policy differs')
+            report['groveSubstrate']['savedReadback']={'status':'verified-saved-grove-substrate',
+                'meshes':len(report['groveSubstrate']['meshIds']),'allNewVisualsNoCollision':True,
+                'nativeMeshBindingsVerifiedAfterReload':True}
+        for key,expected_groups in [('canopyReplacement',canopy_groups if canopy else []),('canopyEcology',ecology_groups)]:
+            if key not in report:continue
+            for group in expected_groups:
+                actual=report['geometry']['groups'][group['id']]
+                require(actual['instances']==len(group['instances']) and actual['mesh']==plant_paths[group['meshId']],
+                        'Saved grove mesh/group membership differs')
+            report[key]['savedReadback']={'status':'verified-saved-grove-groups','groups':len(expected_groups),
+                'instances':sum(len(g['instances']) for g in expected_groups),'allNewVisualsNoCollision':True,
+                'orderedNativeTransformsVerifiedAfterReload':True}
+        if natural_lawn:report['naturalLawn']['savedReadback']=lawn_module.verify_hidden_lawn(u,actors,lawn_hidden)
         report['materialReadback'] = matmod.verify_materials(report['materials'])
         after = inventory(content); validate_changes(before,after,content)
         require(inventory(source/'Project/BreziTwin/Content')==donor_before,'Historical donor changed')

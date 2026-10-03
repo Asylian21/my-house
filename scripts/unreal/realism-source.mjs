@@ -15,18 +15,20 @@ export function authoredRenderCapability(policyBytes,sourcePolicyPath,sourcePins
   const revision=Number(bytes.toString().match(/RecipeRevision\s*=\s*(\d+)\s*;/)?.[1]);
   assert(Number.isInteger(revision)&&revision>=2,'Unrecognized native render recipe');
   const cinematic=revision>=3&&/enum class Profile[^;]*\bCinematic\b/.test(bytes.toString());
-  return {schemaVersion:1,recipeRevision:revision,profiles:['native','balanced','performance',...(cinematic?['cinematic']:[])],
+  const full=revision>=5&&/enum class Profile[^;]*\bRealtimeFull\b/.test(bytes.toString());
+  return {schemaVersion:1,recipeRevision:revision,profiles:['native','balanced','performance',...(cinematic?['cinematic']:[]),...(full?['full']:[])],
     sourcePolicyPath,sourcePolicySha256};
 }
 
 export function modelRenderProfileArgs(value,capability,inputs) {
   if(value===undefined)return [];
   const name={tsr67:'balanced',tsr50:'performance'}[value]??value;
-  assert(['native','balanced','performance','cinematic'].includes(name),'Unknown BREZI_RENDER_PROFILE');
+  assert(['native','balanced','performance','cinematic','full'].includes(name),'Unknown BREZI_RENDER_PROFILE');
   assert(capability?.schemaVersion===1&&capability.profiles.includes(name),'Package does not advertise this native render profile');
   assert(isHash(capability.sourcePolicySha256)&&inputs[capability.sourcePolicyPath]===capability.sourcePolicySha256,
     'Render profile capability is not bound to package source provenance');
   if(name==='cinematic')assert(capability.recipeRevision>=3,'Cinematic profile requires render recipe 3');
+  if(name==='full')assert(capability.recipeRevision>=5,'Full profile requires render recipe 5');
   return ['-BreziRenderProfile='+name];
 }
 

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "sourceCurrencyYear": 2024,
+  "text": "ČÚZK, 2024 · Ortofoto ČR · CC BY 4.0; výrez a mapovanie na DMR pre vizualizáciu. Zdroj: ČÚZK – on-line, jednorazový export; nejde o živú mapovú službu.\nhttps://creativecommons.org/licenses/by/4.0/\n\nÚpravy vo vizualizácii: georeferencované mapovanie na DMR, prelínanie s materiálom terénu a zachovanie masky chýbajúcich údajov.\nBlízke lúky a polia využívajú obmedzené jasové detaily odvodené z ortofota; farby a povrch zostávajú zeleným PBR materiálom.\nNejde o nameranú odrazivosť ani úplné odstránenie pôvodného osvetlenia.\nManifest detailu polí: /Users/davidzita/www/dom/output/unreal/exterior-field-macro-20260927-r3/field-macro-manifest.json\nSHA256: 1ab58f08e35abc5a9aa3e5864a8cf4f3ff0dc095b297c886116b3bec1429c4e9\nOrtofoto obsahuje fotografované tiene a sezónnu vegetáciu. Nie je to materiál bez zaznamenaného osvetlenia ani potvrdenie stavu lokality v roku 2026.\n\nPodmienky datasetu: https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-prostorovych-dat-CUZK.aspx\nPodmienky zdrojovej služby: https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-sitovych-sluzeb-CUZK.aspx\n\nRastliny a detailné povrchy: Poly Haven a ambientCG, CC0.\nhttps://polyhaven.com/license\nhttps://docs.ambientcg.com/license/\n\nFotografie listov regionálnych korún: CGBookcase / Dorian Zgraggen, CC0.\nhttps://www.cgbookcase.com/textures\nVetvenie a tvary korún sú autorská regionálna interpretácia; nejde o botanické zameranie jednotlivých stromov.\n\nPôdorysy okolitých stavieb a parcely: ČÚZK, lokálny výrez služby. Výšky a strechy okolitých stavieb sú ilustračné odhady.\nTerén: ČÚZK DMR 5G (ALS 2009–2013). Plochy bez dát sú výslovne ilustračná náhrada.\nZdrojový manifest: /Users/davidzita/www/dom/output/unreal/exterior-ortho-20260927-r2/orthophoto-manifest.json\nSHA256: b7165bfdd6bb16055250d8a9d50e91ecd642f77e74a65dccb227e85302918413\n",
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "ČÚZK, 2024",
+    "serviceCredit": "ČÚZK – on-line",
+    "displayCredit": "ČÚZK, 2024 · Ortofoto ČR · CC BY 4.0; výrez a mapovanie na DMR pre vizualizáciu. Zdroj: ČÚZK – on-line, jednorazový export; nejde o živú mapovú službu.",
+    "modifications": "Provider service resampling/export to EPSG5514 4096×4096; local PNG pixels saved byte-exact. World file and affine calibration added. Future DMR mapping/blending is a separately recorded derivative.",
+    "datasetPolicy": "https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-prostorovych-dat-CUZK.aspx",
+    "servicePolicy": "https://www.cuzk.gov.cz/Predpisy/Podminky-poskytovani-prostor-dat-a-sitovych-sluzeb/Podminky-poskytovani-sitovych-sluzeb-CUZK.aspx",
+    "providerTermsPdf": "https://geoportal.cuzk.gov.cz/Dokumenty/Podminky.pdf",
+    "usage": "Reuse, adaptation and commercial use with attribution/license/change notice; retain provenance and do not imply provider endorsement."
+  },
+  "manifest": "/Users/davidzita/www/dom/output/unreal/exterior-ortho-20260927-r2/orthophoto-manifest.json",
+  "manifestSha256": "b7165bfdd6bb16055250d8a9d50e91ecd642f77e74a65dccb227e85302918413"
+}

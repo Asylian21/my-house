@@ -8,11 +8,11 @@
 namespace BreziRenderQuality
 {
 inline constexpr int NativeProfileSchemaVersion = 1;
-inline constexpr int RecipeRevision = 4;
+inline constexpr int RecipeRevision = 5;
 // UE5.8 FSceneViewScreenPercentageConfig::kMinTSRResolutionFraction.
 inline constexpr double MinimumOutputFraction = .25;
 // Append new choices: existing persisted/diagnostic numeric values stay stable.
-enum class Profile { Unknown = -1, Native, Balanced, Performance, Cinematic };
+enum class Profile { Unknown = -1, Native, Balanced, Performance, Cinematic, RealtimeFull };
 enum class Origin { FreshDefault, Saved, NamedCommandLine, Diagnostic, RawCommandLine, InvalidCommandLine, External, UserSelection, NamedDiagnostic };
 struct Settings
 {
@@ -26,7 +26,7 @@ struct Settings
     float FoliageDensity, LocalShadowLodBias;
     bool PreferHardwareRayTracing, DoubleGlass, LocalLightShadows, DetailLighting;
 };
-constexpr bool IsValid(Profile Value) { return Value >= Profile::Native && Value <= Profile::Cinematic; }
+constexpr bool IsValid(Profile Value) { return Value >= Profile::Native && Value <= Profile::RealtimeFull; }
 constexpr Settings Values(Profile Value)
 {
     // Quality budgets, not measured frame-rate promises. GI and reflections stay at
@@ -36,6 +36,13 @@ constexpr Settings Values(Profile Value)
         : Value == Profile::Balanced ? Settings{67, 100, 900, 0, 2, 2, 2, 2, 2, 2, 2, .75f, .75f, 1, 1, 10000, 10000, .65f, 1, true, false, true, false}
         : Value == Profile::Performance ? Settings{50, 100, 720, 1440, 2, 1, 2, 1, 1, 1, 2, .5f, .5f, .5f, .5f, 6000, 6000, .35f, 1, false, false, false, false}
         : Value == Profile::Cinematic ? Settings{100, 200, 1080, 0, 3, 3, 3, 3, 3, 3, 1, 1, 2, 2, 2, 20000, 20000, 1, 1, true, true, true, true}
+        // Keep the complete scene, every vegetation instance, glass and local
+        // lights. Use balanced raster/Lumen budgets, sharper shadow edges and
+        // authored detail flags
+        // instead of forcing every small grass/meadow instance into shadows,
+        // RT and distance fields. Full describes scene completeness, not equal
+        // sampling or shading quality to Cinematic.
+        : Value == Profile::RealtimeFull ? Settings{67, 100, 900, 0, 2, 3, 2, 3, 2, 2, 2, 1, .75f, 1, 1, 15000, 15000, 1, 1, true, true, true, false}
         : Settings{};
 }
 inline double LinePixels(int Lines) { return double(Lines) * Lines * 16 / 9; }
@@ -52,6 +59,8 @@ constexpr bool UseHardwareRayTracing(Profile Value, bool RuntimeSupported)
 }
 constexpr Profile Match(double Screen, double History)
 {
+    // Legacy percentage-only classification. RealtimeFull shares Balanced's pair;
+    // the UI compares every recipe setting before selecting a profile.
     for (Profile Value : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
     {
         const Settings Pair = Values(Value);

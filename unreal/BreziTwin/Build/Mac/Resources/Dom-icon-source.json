@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "status": "actual-accepted-cbb-native-model-icon-selected",
+  "selectedAt": "2026-10-03T07:43:45.633667+00:00",
+  "sourceKind": "actual-Unreal-Metal-native-current-scene-capture",
+  "aiGenerated": false,
+  "activeDesign": "C/B/B",
+  "streetAndRightSetbackMm": 3000,
+  "acceptedScene": {
+    "selectionPath": "/Users/davidzita/www/dom/output/unreal/exterior-final-current.json",
+    "selectionSha256": "38a4e84b1ae66782e6b0a4cdfdbf3b75645091fdbff531255ff5b51277a6905b",
+    "project": "/Users/davidzita/www/dom/output/unreal/exterior-20261002-r46a-burkea-clay-two-camera-candidate-r32/Project/BreziTwin/BreziTwin.uproject",
+    "mapSha256": "2a5a6573c092bd4185ef583d35a44deaa0b5ecd00cb560d872444de4ed2e87ca",
+    "sourcePreservationPath": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/source-preservation.json",
+    "sourcePreservationSha256": "53fca80ed1a4add8af9927c24295ff3ec71a6b6aa6b2aa880d7b2d1a3d527f43",
+    "originalSourceFilesVerified": 4275,
+    "geometryAndMaterialsUnchanged": true
+  },
+  "nativeCapture": {
+    "path": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/capture.png",
+    "sha256": "19e08075e380dfc2c6023e0ee300e02a1ae4aa4630f8cc74c3eb7ea2359ce831",
+    "pixels": [
+      3840,
+      2160
+    ],
+    "receiptPath": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/receipt.json",
+    "receiptSha256": "9ba7cfff7ccdc26e93223ab1aa39b8e1f9e63e64d570d8e1a8a78a517d2c2751",
+    "runtimePath": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/runtime.json",
+    "runtimeSha256": "bb08a00cb09a39d96f0e816244f1f9abc3f0016acfc43afb8e3010df0e8d102e",
+    "processId": 97819,
+    "processExitCode": 0,
+    "buildConfiguration": "Development",
+    "rhi": "Metal",
+    "shaderPlatform": "METAL_SM6",
+    "renderProfile": "cinematic",
+    "lighting": "imported-daylight",
+    "screenshotKind": "current-scene-render-target-preserving-view-history",
+    "authoredEyeCm": [
+      3200,
+      -3000,
+      2500
+    ],
+    "actualEyeCm": [
+      3200,
+      -3000,
+      2500
+    ],
+    "targetCm": [
+      223.5,
+      -153,
+      306
+    ],
+    "horizontalFovDegrees": 76
+  },
+  "selectedCrop": {
+    "path": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/icon-square-close.png",
+    "sha256": "f793e4fc7d521646af672fd5ffb3a249a93ab2ba885a9d07651bf49d1bcda555",
+    "pixels": [
+      1360,
+      1360
+    ],
+    "sourceRect": {
+      "x": 1080,
+      "y": 560,
+      "width": 1360,
+      "height": 1360
+    },
+    "command": [
+      "/usr/bin/sips",
+      "--cropToHeightWidth",
+      "1360",
+      "1360",
+      "--cropOffset",
+      "560",
+      "1080",
+      "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/capture.png",
+      "--out",
+      "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/fullscene-safe-square/icon-square-close.png"
+    ],
+    "originalCapturedPixelsPreservedInCrop": true
+  },
+  "nativeFormats": {
+    "canonicalRaster": "/Users/davidzita/www/dom/unreal/BreziTwin/Build/Mac/Resources/Dom.png",
+    "rasterPixels": [
+      1024,
+      1024
+    ],
+    "rasterSha256": "69795efc691a8571d654e3cb239fd2a256496d590deee5393683072b5b7d8918",
+    "canonicalIcns": "/Users/davidzita/www/dom/unreal/BreziTwin/Build/Mac/Resources/Dom.icns",
+    "icnsSha256": "dde0bf7c9d059f669cc8ad8716bb355828bbfb6f34eebc48ee9de3c1a4d8f0e0",
+    "sizesPx": [
+      16,
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024
+    ],
+    "tools": [
+      "/usr/bin/sips",
+      "/usr/bin/iconutil"
+    ],
+    "catalogPngs": {
+      "icon_16x16.png": "0c7ac85602b95e6073ff3150c00d79dfa5dc0b4511201ab67f4ea5b6304af65a",
+      "icon_16x16@2x.png": "9eed5f048dd605d5e441250f8ef88da2a45896ce53dd08f62800f529ec6afe67",
+      "icon_32x32.png": "9eed5f048dd605d5e441250f8ef88da2a45896ce53dd08f62800f529ec6afe67",
+      "icon_32x32@2x.png": "fbc4ae4b04d2c20cfcbce96cbab58da8019e4cb7131f9a5013d6dcd2b0bcd104",
+      "icon_128x128.png": "1fccd64352c184b3b4bbd79e2c3491ce7e4e89566eca337d416b40ae4f5dae84",
+      "icon_128x128@2x.png": "471dfd9e70e3df8f08b19ff8ae980d298d9758debfa03540ce66e288dcdc89ec",
+      "icon_256x256.png": "471dfd9e70e3df8f08b19ff8ae980d298d9758debfa03540ce66e288dcdc89ec",
+      "icon_256x256@2x.png": "f26a005dca4c40b708b434c801396237faf14f9541f03fcb85b7a16dedcedab0",
+      "icon_512x512.png": "f26a005dca4c40b708b434c801396237faf14f9541f03fcb85b7a16dedcedab0",
+      "icon_512x512@2x.png": "69795efc691a8571d654e3cb239fd2a256496d590deee5393683072b5b7d8918"
+    }
+  },
+  "imageTransformations": "Only the approved native square crop and standard native icon resizing/format conversion; no synthesis, recoloring, background replacement, geometric reinterpretation or model edits.",
+  "visualSelection": "Parent visually selected complete real L-house, authentic grey gable roofs, timber/glazing and inner terrace/pool; whole model safely inside crop.",
+  "previousGeneratedIconPreservedAt": "/Users/davidzita/www/dom/output/unreal/dom-app-20261003-r1/icon-real-house-r1/previous-generated-icon-resources"
+}

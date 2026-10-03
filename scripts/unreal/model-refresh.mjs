@@ -3,6 +3,7 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir, cp, access, readdir, rename } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sealStartupEntry } from './startup-entry-package.mjs';
@@ -252,8 +253,13 @@ if (action === 'prepare') {
   }
   const doubleGlass = process.env.BREZI_DOUBLE_GLASS === '1';
   const defaultRenderProfile = process.env.BREZI_DEFAULT_RENDER_PROFILE ?? 'performance';
-  if (!['performance', 'balanced', 'native', 'cinematic'].includes(defaultRenderProfile))
-    throw Error('Use performance, balanced, native or cinematic as the explicit default render profile');
+  if (!['performance', 'balanced', 'native', 'cinematic', 'full'].includes(defaultRenderProfile))
+    throw Error('Use performance, balanced, native, cinematic or full as the explicit default render profile');
+  if (defaultRenderProfile === 'full') {
+    const policy = await readFile(resolve(project, 'Source/BreziTwin/BreziRenderQualityPolicy.h'), 'utf8');
+    if (!/RecipeRevision\s*=\s*(?:[5-9]|\d{2,})\s*;/.test(policy) || !/enum class Profile[^;]*\bRealtimeFull\b/.test(policy))
+      throw Error('The prepared native source does not implement Full');
+  }
   if (defaultRenderProfile === 'cinematic') {
     const policy = await readFile(resolve(project, 'Source/BreziTwin/BreziRenderQualityPolicy.h'), 'utf8');
     if (!/RecipeRevision\s*=\s*[3-9]\d*\s*;/.test(policy) || !/enum class Profile[^;]*\bCinematic\b/.test(policy))
@@ -494,7 +500,7 @@ if (action === 'prepare') {
   try { await access(destinationBinaries); throw Error('Build reuse requires empty destination Binaries'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const nativeFiles = await hashes(resolve(originProject, 'Binaries'));
-  await cp(resolve(originProject, 'Binaries'), destinationBinaries, { recursive: true });
+  await cp(resolve(originProject, 'Binaries'), destinationBinaries, { recursive: true, mode: constants.COPYFILE_FICLONE });
   await pinnedFiles(Object.fromEntries(Object.entries(nativeFiles).map(([path, hash]) => [moved(path), hash])));
   const products = Object.fromEntries(Object.entries(sourceProducts).filter(([path]) => path !== original.targetReceipt)
     .map(([path, hash]) => [moved(path), hash]));
@@ -638,7 +644,7 @@ if (action === 'prepare') {
   const authoring = await authoringHashes();
   const helpers = ['scripts/unreal/model-refresh.mjs', 'scripts/unreal/model-refresh-viewpoints.mjs', 'scripts/unreal/model-refresh-contract.mjs',
     'scripts/unreal/performance-source.mjs', 'scripts/unreal/nanite-study.mjs', 'scripts/unreal/realism-source.mjs', 'scripts/unreal/realism-fixtures-source.mjs', 'scripts/unreal/realism-room-details-source.mjs', 'scripts/unreal/realism-furniture-source.mjs', 'scripts/unreal/realism-stove-source.mjs', 'scripts/unreal/realism-stove-calibration-source.mjs',
-    'scripts/unreal/exterior-source.mjs', 'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
+    'scripts/unreal/exterior-source.mjs', 'scripts/unreal/exterior-transition-source.mjs', 'scripts/unreal/package-verify.mjs', 'scripts/unreal/startup-entry-package.mjs',
     'scripts/unreal/archviz-room-viewpoints.mjs', 'scripts/unreal/walkthrough-contract.mjs'];
   const receiptFiles = ['model-refresh-import-report.json', 'model-import-process.json', 'model-game-build.json', 'profile.json',
     ...(imported.archviz ? ['archviz-import-report.json', 'archviz-import-process.json'] : []),

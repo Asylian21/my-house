@@ -13,18 +13,20 @@ void Check(bool Value, const char* Message)
 int main()
 {
     static_assert(NativeProfileSchemaVersion == 1);
-    static_assert(RecipeRevision == 4);
+    static_assert(RecipeRevision == 5);
     static_assert(static_cast<int>(Profile::Native) == 0 && static_cast<int>(Profile::Balanced) == 1
-        && static_cast<int>(Profile::Performance) == 2 && static_cast<int>(Profile::Cinematic) == 3);
+        && static_cast<int>(Profile::Performance) == 2 && static_cast<int>(Profile::Cinematic) == 3
+        && static_cast<int>(Profile::RealtimeFull) == 4);
     constexpr unsigned User = 0x09000000, Project = 0x04000000, Console = 0x10000000;
     Check(Values(Profile::Native).ScreenPercentage == 100 && Values(Profile::Native).HistoryPercentage == 100, "native pair avoids doubled history");
     Check(Values(Profile::Balanced).ScreenPercentage == 67 && Values(Profile::Balanced).HistoryPercentage == 100, "balanced pair");
     Check(Values(Profile::Performance).ScreenPercentage == 50 && Values(Profile::Performance).HistoryPercentage == 100, "performance pair");
     Check(Values(Profile::Cinematic).ScreenPercentage == 100 && Values(Profile::Cinematic).HistoryPercentage == 200, "cinematic retains native sampling and doubled temporal history");
-    for (Profile P : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
+    for (Profile P : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic, Profile::RealtimeFull})
     {
         auto Pair = Values(P);
-        Check(Match(Pair.ScreenPercentage, Pair.HistoryPercentage) == P, "actual pair classified");
+        Check(Match(Pair.ScreenPercentage, Pair.HistoryPercentage) == (P == Profile::RealtimeFull ? Profile::Balanced : P),
+            "legacy percentage classification preserves existing profiles; Full selection needs the whole recipe");
         Check(Match(Pair.ScreenPercentage + .01, Pair.HistoryPercentage) == Profile::Unknown, "partial percentage is not selected");
         Check(Pair.GlobalIllumination >= 2 && Pair.Reflections >= 2, "interactive profiles retain Lumen");
         const bool Cinematic = P == Profile::Cinematic;
@@ -43,6 +45,29 @@ int main()
         Check(Pair.FoliageDensity > 0 && Pair.FoliageDensity <= 1, "density is a valid fraction");
         Check(!UseHardwareRayTracing(P, false), "unsupported RHI always falls back to software Lumen");
     }
+    const Settings Full = Values(Profile::RealtimeFull), Cinematic = Values(Profile::Cinematic);
+    Check(IsValid(Profile::RealtimeFull) && !IsValid(Profile::Unknown) && !IsValid(static_cast<Profile>(5)),
+        "appended Full is valid without accepting unknown persisted numbers");
+    Check(Full.ScreenPercentage == 67 && Full.RenderLines == 900 && Full.OutputLines == 0 && Full.FoliageDensity == 1,
+        "Full balances internal pixels while preserving full output and every vegetation instance");
+    Check(Full.GlobalIllumination == 2 && Full.Shadows == 3 && Full.Reflections == 2
+        && Full.Foliage == Cinematic.Foliage && Full.Foliage == 3 && Full.PostProcess == 2 && Full.Effects == 2,
+        "Full uses the measured balanced shading groups with sharper shadows and full foliage quality");
+    Check(Full.Shadows == Cinematic.Shadows && Full.Shadows > Values(Profile::Balanced).Shadows,
+        "Full preserves the shadow quality that removed the pool eave and sill comb artifact");
+    Check(Full.FinalGather == 1 && Full.ReflectionQuality == .75f && Full.SceneLighting == 1 && Full.SceneDetail == 1
+        && Full.SceneDistanceCm == 15000 && Full.TraceDistanceCm == 15000
+        && Full.ReflectionDownsample == 2 && Full.LocalShadowLodBias == 1,
+        "Full preserves the measured Lumen/reflection/shadow budgets");
+    Check(Full.DoubleGlass && Full.LocalLightShadows && Full.PreferHardwareRayTracing
+        && Full.DoubleGlass == Cinematic.DoubleGlass && Full.LocalLightShadows == Cinematic.LocalLightShadows
+        && Full.PreferHardwareRayTracing == Cinematic.PreferHardwareRayTracing,
+        "Full preserves glass reflections, local-light shadows and hardware-Lumen preference");
+    Check(Full.HistoryPercentage == 100 && !Full.DetailLighting && Cinematic.HistoryPercentage == 200 && Cinematic.DetailLighting,
+        "Full avoids doubled temporal history and uses authored vegetation lighting participation");
+    Check(Full.FoliageDensity != Values(Profile::Balanced).FoliageDensity
+        && Full.DoubleGlass != Values(Profile::Balanced).DoubleGlass && Full.Foliage != Values(Profile::Balanced).Foliage,
+        "Full and Balanced share percentages but whole-recipe UI selection remains distinct");
     Check(Values(Profile::Performance).RenderLines < Values(Profile::Balanced).RenderLines
         && Values(Profile::Balanced).RenderLines < Values(Profile::Native).RenderLines
         && Values(Profile::Native).RenderLines <= Values(Profile::Cinematic).RenderLines, "render budgets follow profile order");
@@ -80,7 +105,7 @@ int main()
         && Values(Profile::Native).DoubleGlass, "supplemental captures reserved for presentation");
     Check(!Values(Profile::Performance).LocalLightShadows && Values(Profile::Balanced).LocalLightShadows,
         "performance disables local-light shadows without removing sun shadows");
-    for (Profile Saved : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
+    for (Profile Saved : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic, Profile::RealtimeFull})
     {
         auto Restore = Startup(false, false, false, Profile::Unknown, Saved, true);
         Check(Restore.Apply && Restore.Requested == Saved && Restore.Source == Origin::Saved, "valid explicit saved choice restored");
@@ -108,6 +133,13 @@ int main()
     auto External = Startup(false, false, false, Profile::Unknown, Profile::Performance, false);
     Check(!External.Apply && External.Locked && External.Source == Origin::External, "unsupported current pipeline remains unchanged");
     Check(Persist(true, true, false) && !Persist(true, false, false), "only successful deliberate selection persists");
+    auto FullDiagnostic = Startup(true, false, true, Profile::RealtimeFull, Profile::Cinematic, true);
+    Check(FullDiagnostic.Apply && FullDiagnostic.Locked && FullDiagnostic.Requested == Profile::RealtimeFull
+        && FullDiagnostic.Source == Origin::NamedDiagnostic && !Persist(true, true, FullDiagnostic.Locked),
+        "named Full diagnostic applies without saving over the cinematic user preference");
+    auto FullLaunch = Startup(false, false, true, Profile::RealtimeFull, Profile::Cinematic, true);
+    Check(FullLaunch.Apply && !FullLaunch.Locked && FullLaunch.Requested == Profile::RealtimeFull
+        && FullLaunch.Source == Origin::NamedCommandLine, "named Full remains editable in ordinary viewer launches");
     // Reopen sequence: named Native never replaces stored Performance; a later successful UI Balanced does.
     Profile Saved = Profile::Performance;
     auto Temporary = Startup(false, false, true, Profile::Native, Saved, true);

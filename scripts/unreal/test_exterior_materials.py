@@ -33,8 +33,21 @@ class Material(Node):
 
 
 class Texture(Material):
+    def __init__(self,path):
+        super().__init__(path);color=Node();color.props['encoding_override']='ENC_NONE'
+        self.props['source_color_settings']=color
     def blueprint_get_size_x(self): return getattr(self,'dimensions',(2048,2048))[0]
     def blueprint_get_size_y(self): return getattr(self,'dimensions',(2048,2048))[1]
+
+
+class MaterialFunction(Material):
+    pass
+
+
+class MaterialFunctionCall(Node):
+    def set_material_function(self, function):
+        self.props['material_function'] = function
+        return isinstance(function, MaterialFunction)
 
 
 class Library:
@@ -42,6 +55,12 @@ class Library:
         node = cls(); node.material = material; material.nodes.append(node); return node
 
     def connect_material_expressions(self, source, channel, target, pin):
+        # Native UE 5.8 outputs: UV has only unnamed float2; vertex RGB and
+        # component mask output are unnamed too, not synthetic 'RGB'/'R'.
+        name = source.__class__.__name__
+        if name in ('MaterialExpressionTextureCoordinate', 'MaterialExpressionComponentMask') and channel: return False
+        if name == 'MaterialExpressionVertexColor' and channel not in ('', 'R', 'G', 'B', 'A'): return False
+        if target.__class__.__name__ == 'MaterialExpressionComponentMask' and pin: return False
         if target.__class__.__name__ == 'MaterialExpressionTextureSample':
             # UE 5.8 MaterialEditingLibrary.cpp uses GetShortenPinName from
             # MaterialGraphNode.cpp, not TextureSample::GetInputName verbatim.
@@ -54,11 +73,15 @@ class Library:
         target.inputs[pin] = (source, channel); return True
 
     def connect_material_property(self, node, channel, prop):
+        if isinstance(node, MaterialFunctionCall) and not channel: channel='Result'
         node.material.roots[prop] = (node, channel); return True
 
     def get_material_expressions(self, m): return m.nodes
-    def get_inputs_for_material_expression(self, m, node): return [v[0] for v in node.inputs.values()]
-    def get_material_expression_input_names(self, node): return list(node.inputs)
+    def get_inputs_for_material_expression(self, m, node):
+        return [node.inputs.get('' if pin == 'None' else pin, (None,''))[0] for pin in self.get_material_expression_input_names(node)]
+    def get_material_expression_input_names(self, node):
+        if node.__class__.__name__ == 'MaterialExpressionComponentMask': return ['None']
+        return ['Alpha Threshold','Random'] if isinstance(node, MaterialFunctionCall) and 'material_function' in node.props else list(node.inputs)
     def get_input_node_output_name_for_material_expression(self, node, other): return next(v[1] for v in node.inputs.values() if v[0] is other)
     def get_material_property_input_node(self, m, prop): return m.roots.get(prop, (None, ''))[0]
     def get_material_property_input_node_output_name(self, m, prop): return m.roots[prop][1]
@@ -86,8 +109,11 @@ class Assets:
 
 def fake_unreal():
     u = types.SimpleNamespace(MaterialEditingLibrary=Library(), EditorAssetLibrary=Assets())
-    for name in ('Constant', 'Constant3Vector', 'Custom', 'TextureSample', 'TextureCoordinate', 'WorldPosition', 'PerInstanceRandom', 'VertexNormalWS'):
+    for name in ('Constant', 'Constant3Vector', 'Custom', 'TextureSample', 'TextureCoordinate', 'WorldPosition', 'CameraPositionWS', 'PerInstanceRandom', 'VertexNormalWS', 'VertexColor', 'Multiply', 'ComponentMask'):
         setattr(u, 'MaterialExpression'+name, type('MaterialExpression'+name, (Node,), {}))
+    u.MaterialExpressionMaterialFunctionCall = type('MaterialExpressionMaterialFunctionCall', (MaterialFunctionCall,), {})
+    u.engine_function = MaterialFunction(M.DITHER_FUNCTION)
+    u.load_object = lambda outer, path: u.engine_function if path == M.DITHER_FUNCTION else u.EditorAssetLibrary.load_asset(path)
     u.CustomInput = u.AssetImportTask = Node
     u.Material, u.MaterialFactoryNew, u.Texture2D = Material, object, Texture
     u.AssetToolsHelpers = types.SimpleNamespace(get_asset_tools=lambda: u.EditorAssetLibrary)
@@ -105,6 +131,7 @@ def fake_unreal():
     u.TextureMipGenSettings = enum(TMGS_FROM_TEXTURE_GROUP='FROM_GROUP', TMGS_NO_MIPMAPS='NO_MIPMAPS')
     u.TexturePowerOfTwoSetting = enum(NONE='NONE',STRETCH_TO_POWER_OF_TWO='STRETCH')
     u.TextureMipValueMode = enum(TMVM_DERIVATIVE='DERIVATIVE', TMVM_MIP_LEVEL='MIP_LEVEL')
+    u.TextureSourceEncoding = enum(TSE_NONE='ENC_NONE',TSE_S_RGB='ENC_SRGB')
     return u
 
 
@@ -122,11 +149,413 @@ ORTHO = M.ROOT/'output/unreal/exterior-ortho-20260926-r1/orthophoto-manifest.jso
 ORTHO_EARLIER = M.ROOT/'output/unreal/exterior-ortho-20260927-r2/orthophoto-manifest.json'
 SEASONAL = M.ROOT/'output/unreal/exterior-seasonal-fields-20260927-r2/seasonal-fields-manifest.json'
 FIELD_MACRO = M.ROOT/'output/unreal/exterior-field-macro-20260927-r3/field-macro-manifest.json'
+PROJECTION = M.ROOT/'output/unreal/exterior-ortho-projection-20260930-r2/ortho-projection-manifest.json'
 ASSETS_R7 = M.ROOT/'output/unreal/exterior-assets-20260927-r7/material-manifest.json'
 ASSETS_R5 = M.ROOT/'output/unreal/exterior-assets-20260926-r5/material-manifest.json'
+ASSETS_R3 = M.ROOT/'output/unreal/exterior-assets-20260930-r3/material-manifest.json'
+ASSETS_GREENERY_R5 = M.ROOT/'output/unreal/exterior-assets-greenery-20260930-r5/material-manifest.json'
+CONTEXT_SRGB_BY_SHA = {
+    '5b2aa6ce68bf82c1ae3b3433eeefc2a4ec6aae441740b6fbc42db16a2e2597b0':
+        ('context_arable', 'context_garden_soil', 'context_soil_exposure'),
+    '7b235e32340475f582baea7f5deb1b452f118c5ae61a68dca4001b0f7fbf97d3': ('ph_nettle_plant',),
+    '78a6bc3b6465277379cc7db062316ca34fd9f6334b112b0c279a1033d68c77e7': ('ph_tree_small_02_trunk',),
+    'fc386b9d205ba38fc7cda66a2499680e6443a7b3fc91496a3d5890e4f98f71a4': ('ph_shrub_04',),
+    '2bd96cd167ea4a79a68a98b5de3b33be426c1d272024cde39bca9e8b98a4a33d': ('ph_periwinkle_plant',),
+}
 
 
 class ExteriorMaterialsTests(unittest.TestCase):
+    def test_soil_exposure_uses_native_temporal_uv_coverage_and_saved_settings(self):
+        u=fake_unreal();materials,report=M.build_materials(unreal_module=u)
+        material=materials['context_soil_exposure'];recipe=report['materials']['context_soil_exposure']['recipe']
+        nodes={n.props['desc'].removeprefix(M.TAG):n for n in material.nodes}
+        self.assertTrue(recipe['featherUV']);self.assertNotIn('groundCover',recipe)
+        self.assertEqual(recipe['sourceUrl'],'https://polyhaven.com/a/farm_soil')
+        self.assertEqual(recipe['tint'],[.65,.53,.40]);self.assertEqual(recipe['albedoScale'],.30)
+        self.assertEqual(material.props['blend_mode'],'MASKED')
+        self.assertEqual(material.props['shading_model'],'DEFAULT_LIT')
+        self.assertFalse(material.props['two_sided']);self.assertFalse(material.props['tangent_space_normal'])
+        self.assertEqual(material.props['opacity_mask_clip_value'],.333)
+        uv=nodes['soil-exposure-coverage-uv0'];mask=nodes['soil-exposure-coverage-u'];dither=nodes['soil-exposure-native-temporal-dither']
+        self.assertEqual([uv.props[k] for k in ('coordinate_index','u_tiling','v_tiling')],[0,1.,1.])
+        self.assertEqual(dither.props['material_function'].get_path_name(),M.DITHER_FUNCTION)
+        self.assertEqual([mask.props[k] for k in ('r','g','b','a')],[True,False,False,False])
+        self.assertEqual(mask.inputs,{'':(uv,'')})
+        broken=nodes['soil-exposure-spatial-camera-coverage']
+        self.assertEqual(dither.inputs,{'Alpha Threshold':(broken,'')})
+        self.assertEqual(broken.props['code'],M.SOIL_EXPOSURE_COVERAGE)
+        self.assertEqual(broken.inputs['EdgeCoverage'],(mask,''))
+        self.assertIs(broken.inputs['Position'][0],nodes['world-position'])
+        self.assertEqual(broken.inputs['Camera'][0].get_class().get_name(),'MaterialExpressionCameraPositionWS')
+        self.assertEqual([getattr(broken.inputs['FadeRange'][0].props['constant'],k) for k in ('r','g')],[4000.,10000.])
+        self.assertEqual(material.roots['OPACITY_MASK'],(dither,'Result'))
+        self.assertEqual(material.roots['NORMAL'],(nodes['world-ground-normal'],''))
+        self.assertIs(nodes['metric-ground-uv'].inputs['Position'][0],nodes['world-position'])
+        function=report['engineMaterialFunctions'][0]
+        self.assertEqual(function['asset'],M.DITHER_FUNCTION)
+        self.assertEqual(report['inputFiles'][function['source']],M.sha(function['source']))
+        self.assertEqual(next(n for n in report['materials']['context_soil_exposure']['graph']['nodes']
+                              if n['class']=='MaterialExpressionMaterialFunctionCall')['values']['material_function'],M.DITHER_FUNCTION)
+        saved_nodes={n['role'].removeprefix(M.TAG):n for n in report['materials']['context_soil_exposure']['graph']['nodes']}
+        self.assertEqual(saved_nodes['soil-exposure-coverage-u']['inputs'],
+                         [['None',M.TAG+'soil-exposure-coverage-uv0','']])
+        self.assertEqual(saved_nodes['soil-exposure-native-temporal-dither']['inputs'],
+                         [['Alpha Threshold',M.TAG+'soil-exposure-spatial-camera-coverage',''],['Random',None,None]])
+        self.assertEqual(report['materials']['context_soil_exposure']['graph']['roots']['OPACITY_MASK'],
+                         [M.TAG+'soil-exposure-native-temporal-dither','Result'])
+        M.verify_materials(report,u)
+        material.props['opacity_mask_clip_value']=.8
+        with self.assertRaisesRegex(RuntimeError,'graph differs'):M.verify_materials(report,u)
+
+    def test_soil_spatial_coverage_has_irregular_interior_and_camera_fade(self):
+        values=[]
+        for x in range(-500,501,17):
+            position=(float(x),x*.67,0.)
+            camera=position
+            value=M.soil_exposure_coverage(position,camera,1.)
+            values.append(value)
+            self.assertGreaterEqual(value,.06);self.assertLessEqual(value,.94)
+            self.assertEqual(M.soil_exposure_coverage(position,camera,0.),0.)
+            self.assertAlmostEqual(M.soil_exposure_coverage(position,(position[0],position[1],4000.),1.),value)
+            self.assertAlmostEqual(M.soil_exposure_coverage(position,(position[0],position[1],7000.),1.),value*.5)
+            self.assertEqual(M.soil_exposure_coverage(position,(position[0],position[1],10000.),1.),0.)
+            self.assertLess(abs(M.soil_exposure_coverage((position[0]+.001,position[1],0.),camera,1.)-value),.001)
+        self.assertGreater(max(values)-min(values),.4)
+
+    def test_camera_ground_blend_uses_pixel_distance_exact_coverage_and_site_exclusion(self):
+        ortho=M.prepare_orthophoto(ORTHO_EARLIER);layers=ortho['layers'];coverage={'far16km':1.,'detail2km':1.}
+        def weights(position,camera,uv=(.5,.5),permission=(1.,1.,0.,1.),source_coverage=coverage):
+            return M.ground_orthophoto_weights(position,camera,layers,source_coverage,uv,permission)
+        for x in (0.,40000.):
+            position=(x,0.,0.)
+            for distance,amount in ((0.,0.),(5000.,0.),(10000.,.5),(15000.,1.),(50000.,1.)):
+                result=weights(position,(x,0.,distance))
+                self.assertAlmostEqual(result['detail']+result['far'],amount)
+                self.assertAlmostEqual(result['fallback'],1-amount)
+            self.assertEqual(weights(position,(x,0.,50000.),permission=(0.,1.,0.,1.))['fallback'],1.)
+            self.assertEqual(weights(position,(x,0.,50000.),permission=(1.,.989,0.,1.))['fallback'],1.)
+            self.assertEqual(weights(position,(x,0.,50000.),permission=(.5,1.,0.,1.))['fallback'],.5)
+            self.assertEqual(weights(position,(x,0.,50000.),uv=(-.00001,.5))['fallback'],1.)
+            self.assertEqual(weights(position,(x,0.,50000.),source_coverage={'far16km':.98,'detail2km':.98})['fallback'],1.)
+        self.assertEqual(weights((1e7,1e7,0),(1e7,1e7,50000))['fallback'],1.)
+
+    def test_camera_ground_aerial_graph_is_scoped_world_affine_and_pbr_preserving(self):
+        u=fake_unreal();materials,report=M.build_materials(ASSETS_R3,unreal_module=u,ortho_manifest=ORTHO_EARLIER,
+                                                        field_macro_manifest=FIELD_MACRO,projection_manifest=PROJECTION)
+        self.assertEqual(M.verify_materials(report,u),{'status':'verified-saved-exterior-materials','materials':34,'textures':70})
+        self.assertEqual({k for k,v in report['materials'].items() if 'groundOrthophoto' in v['recipe']},M.PROJECTION_KEYS)
+        self.assertEqual(report['orthoProjection']['manifestSha256'],M.sha(PROJECTION))
+        self.assertIn(str(M.ROOT/'scripts/unreal/exterior-ortho-projection-mask.py'),report['pipelineFiles'])
+        for key in M.PROJECTION_KEYS:
+            material=materials[key];nodes={n.props['desc'].removeprefix(M.TAG):n for n in material.nodes}
+            recipe=report['materials'][key]['recipe'];ortho=recipe['groundOrthophoto'];projection=recipe['projectionMask']
+            self.assertEqual(ortho['cameraDistanceBlendCm'],[5000.,15000.]);self.assertNotIn('seasonalFields',ortho)
+            distance=nodes['ground-ortho-camera-distance'];weight=nodes['ground-ortho-protected-field-weight']
+            self.assertEqual(distance.props['code'],M.ORTHO_CAMERA)
+            self.assertIs(distance.inputs['Position'][0],nodes['world-position'])
+            self.assertEqual(distance.inputs['Camera'][0].get_class().get_name(),'MaterialExpressionCameraPositionWS')
+            self.assertEqual(weight.inputs['ProjectionUV'],(nodes['ground-ortho-projection-world-uv'],''))
+            self.assertEqual(weight.inputs['Permission'],(nodes['ortho_projection-permission'],'R'))
+            self.assertEqual(weight.inputs['Coverage'],(nodes['ortho_projection-coverage-mip0'],'G'))
+            self.assertEqual(nodes['ortho_projection-permission'].props['mip_value_mode'],'DEFAULT')
+            self.assertEqual(nodes['ortho_projection-coverage-mip0'].props['mip_value_mode'],'MIP_LEVEL')
+            self.assertEqual(nodes['ortho_projection-coverage-mip0'].inputs['Level'][0].props['r'],0.)
+            for axis,row in zip(('RowU','RowV'),projection['worldCmToUvRows']):
+                value=nodes['ground-projection-'+axis].props['constant']
+                self.assertEqual([value.r,value.g,value.b],row)
+            self.assertEqual(weight.props['code'],M.GROUND_ORTHO_WEIGHT)
+            fallback='field-macro-basecolor' if key in M.FIELD_MACRO_KEYS else 'natural-ground-color'
+            self.assertIs(nodes['licensed-ortho-basecolor'].inputs['Fallback'][0],nodes[fallback])
+            self.assertIs(nodes['licensed-ortho-basecolor'].inputs['DistanceBlend'][0],weight)
+            self.assertEqual(material.roots['NORMAL'],(nodes['world-ground-normal'],''))
+            self.assertEqual(material.roots['ROUGHNESS'],(nodes['ground-roughness'],''))
+            for layer in ortho['layers']:
+                label='ortho-'+layer['id'];mapping=nodes[label+'-affine-uv'];sample=nodes['albedo-'+label]
+                coverage=nodes['albedo-'+label+'-coverage-mip0']
+                self.assertIs(mapping.inputs['Position'][0],nodes['world-position'])
+                self.assertEqual(nodes[label+'-coverage-and-extent'].inputs['Coverage'],(coverage,'A'))
+                self.assertEqual(coverage.props['mip_value_mode'],'MIP_LEVEL')
+                self.assertEqual(coverage.inputs['Level'][0].props['r'],0.)
+                self.assertFalse(coverage.props['automatic_view_mip_bias'])
+                self.assertIs(coverage.props['texture'],sample.props['texture'])
+                self.assertIs(nodes[label+'-coverage-and-extent'].inputs['UV'][0],sample.inputs['UVs'][0])
+            self.assertLessEqual(len(report['materials'][key]['graph']['nodes']),110)
+        baseline=M.prepare_manifest(ASSETS_R3)['materials']
+        for key in ('context_garden_soil','context_soil_exposure','context_mulch'):
+            self.assertEqual(report['materials'][key]['recipe'],baseline[key])
+        value=nodes['ground-ortho-distance-blend-cm'].props['constant'];value.r=1.
+        with self.assertRaisesRegex(RuntimeError,'graph differs'):M.verify_materials(report,u)
+        raw=plant_fixture(kind='bark');raw['test_plant']['groundOrthophoto']={}
+        with self.assertRaisesRegex(RuntimeError,'validated optional manifest'):M.prepare_manifest(raw)
+
+    def test_ground_rgb_projection_requires_its_own_validated_mask_not_scalar_macro(self):
+        u=fake_unreal();materials,report=M.build_materials(ASSETS_R3,unreal_module=u,ortho_manifest=ORTHO_EARLIER,
+                                                        field_macro_manifest=FIELD_MACRO)
+        self.assertNotIn('groundOrthophoto',report)
+        for key in M.FIELD_MACRO_KEYS:
+            self.assertEqual(materials[key].roots['BASE_COLOR'][0].props['desc'],M.TAG+'field-macro-basecolor')
+        self.assertNotIn('fieldMacro',report['materials']['context_track']['recipe'])
+        u=fake_unreal()
+        with self.assertRaisesRegex(RuntimeError,'requires licensed orthophoto'):
+            M.build_materials(ASSETS_R3,unreal_module=u,projection_manifest=PROJECTION)
+        self.assertEqual(u.EditorAssetLibrary.imports,[])
+
+    def test_soil_feather_scope_and_function_fail_before_native_writes(self):
+        raw=plant_fixture(kind='bark');raw['test_plant']['featherUV']=True
+        with self.assertRaisesRegex(RuntimeError,'feathered ground'):M.prepare_manifest(raw)
+        u=fake_unreal();u.engine_function=None
+        with self.assertRaisesRegex(RuntimeError,'native temporal soil'):M.build_materials(unreal_module=u)
+        self.assertEqual(u.EditorAssetLibrary.imports,[]);self.assertEqual(u.EditorAssetLibrary.saved,[])
+        self.assertEqual(M.context_recipes()['context_arable']['albedoScale'],.35)
+        self.assertEqual(M.context_recipes()['context_garden_soil']['albedoScale'],.65)
+
+    def test_authored_garden_foliage_is_opaque_vertex_tinted_and_bounded(self):
+        raw=json.loads(ASSETS_R7.read_text())
+        raw.update({key:{'kind':'authored-foliage','maps':{},'twoSided':True,
+                  'linearColor':[.052,.094,.031],'roughness':.78,'specular':.12,'subsurfaceScale':.045}
+             for key in M.AUTHORED_FOLIAGE_KEYS})
+        photo=plant_fixture(kind='bark')['test_plant'];photo['twoSided']=True;raw['garden_blade_photo']=photo
+        u=fake_unreal();materials,report=M.build_materials(raw,unreal_module=u)
+        for key in M.AUTHORED_FOLIAGE_KEYS:
+            material=materials[key];nodes={n.props['desc'].removeprefix(M.TAG):n for n in material.nodes}
+            self.assertEqual(material.props['blend_mode'],'OPAQUE');self.assertEqual(material.props['shading_model'],'FOLIAGE')
+            self.assertTrue(material.props['two_sided']);self.assertTrue(material.props['tangent_space_normal'])
+            self.assertNotIn('OPACITY_MASK',material.roots)
+            self.assertEqual(nodes['authored-plant-color'].inputs['A'],(nodes['authored-plant-vertex-color'],''))
+            self.assertEqual(nodes['authored-plant-color'].inputs['B'],(nodes['authored-plant-linear-color'],''))
+            saved_color=next(n for n in report['materials'][key]['graph']['nodes'] if n['role']==M.TAG+'authored-plant-color')
+            self.assertEqual(saved_color['inputs'][0],['A',M.TAG+'authored-plant-vertex-color',''])
+            self.assertEqual(material.roots['BASE_COLOR'],(nodes['authored-plant-color'],''))
+            self.assertEqual(material.roots['SUBSURFACE_COLOR'],(nodes['authored-plant-transmission'],''))
+            self.assertEqual(nodes['authored-plant-transmission-scale'].props['r'],.045)
+            self.assertFalse(any(n.get_class().get_name()=='MaterialExpressionTextureSample' for n in material.nodes))
+        self.assertEqual(materials['garden_blade_photo'].props['blend_mode'],'OPAQUE')
+        self.assertTrue(materials['garden_blade_photo'].props['two_sided'])
+        self.assertFalse(materials['context_garden_soil'].props['two_sided'])
+        self.assertEqual(len(report['materials']),37)
+        M.verify_materials(report,u)
+        materials['garden_blade_photo'].props['two_sided']=False
+        with self.assertRaisesRegex(RuntimeError,'graph differs'):M.verify_materials(report,u)
+        for key in ('garden_blade_green', 'garden_petal_rose', 'lawn_natural_blade', 'canopy_understory_stem'):
+            for bad in ({'subsurfaceScale':.5},{'linearColor':[2.,0.,0.]},{'twoSided':False},{'maps':{'albedo':{}}}):
+                candidate=copy.deepcopy(raw);candidate[key].update(bad)
+                with self.assertRaises(RuntimeError):M.prepare_manifest(candidate)
+        candidate={'foreign_plant':raw['garden_blade_green']}
+        with self.assertRaisesRegex(RuntimeError,'authored foliage'):M.prepare_manifest(candidate)
+
+    def test_grove_ecology_reuses_photo_maps_and_adds_only_bounded_stems(self):
+        base=M.ROOT/'output/unreal/exterior-assets-greenery-20260930-r2/material-manifest.json'
+        ecology=M.ROOT/'output/unreal/exterior-canopy-ecology-20260930-r3/material-manifest.json'
+        raw=json.loads(base.read_text());extra=json.loads(ecology.read_text())
+        for key,recipe in extra.items():
+            if key in raw:self.assertEqual(raw[key],recipe)
+        raw.update(extra)
+        prepared=M.prepare_manifest(raw)['materials']
+        self.assertEqual(len(prepared),39)
+        for key,source in [('canopy_litter_oak','regional_oak_leaf'),('canopy_litter_green','regional_green_leaf')]:
+            self.assertEqual(prepared[key]['maps'],prepared[source]['maps'])
+            self.assertEqual(prepared[key]['license'],'CC0-1.0')
+            self.assertEqual(prepared[key]['normalConvention'],prepared[source]['normalConvention'])
+            self.assertLessEqual(prepared[key]['subsurfaceScale'],.025)
+            self.assertNotIn('windCm',prepared[key])
+        stem=prepared['canopy_understory_stem']
+        self.assertEqual(stem['maps'],{})
+        self.assertEqual(stem['linearColor'],[.046,.074,.022])
+        self.assertTrue(stem['twoSided'])
+        self.assertEqual(stem['subsurfaceScale'],.06)
+        overflow=copy.deepcopy(raw);overflow['foreign_extra_bark']=copy.deepcopy(raw['ph_tree_small_02_branches'])
+        with self.assertRaisesRegex(RuntimeError,'material budget'):M.prepare_manifest(overflow)
+
+    def test_grove_litter_keeps_registered_photo_maps_and_full_interior_coverage(self):
+        raw=json.loads((M.ROOT/'output/unreal/exterior-assets-greenery-20260930-r3/material-manifest.json').read_text())
+        addition=json.loads((M.ROOT/'output/unreal/exterior-grove-substrate-20260930-r3/material-manifest.json').read_text())
+        raw.update(addition);u=fake_unreal();materials,report=M.build_materials(raw,unreal_module=u,
+            ortho_manifest=ORTHO_EARLIER,field_macro_manifest=FIELD_MACRO,projection_manifest=PROJECTION)
+        self.assertEqual(len(report['materials']),40);self.assertEqual(len(report['textures']),73)
+        floor=materials['canopy_floor_litter'];recipe=report['materials']['canopy_floor_litter']['recipe']
+        self.assertEqual(recipe['maps'],addition['canopy_floor_litter']['maps'])
+        self.assertEqual(recipe['tileCm'],150);self.assertFalse(recipe['stochasticGround'])
+        self.assertEqual(recipe['distanceFadeCm'],[12000,18000]);self.assertFalse(floor.props['tangent_space_normal'])
+        self.assertEqual(floor.props['blend_mode'],'MASKED')
+        nodes={n.props['desc'].removeprefix(M.TAG):n for n in floor.nodes}
+        coverage=nodes['soil-exposure-spatial-camera-coverage']
+        self.assertEqual(coverage.props['code'],M.GROVE_LITTER_COVERAGE)
+        self.assertNotIn('broken',coverage.props['code']);self.assertNotIn('density',coverage.props['code'])
+        self.assertFalse(any('-phase-' in name or name.endswith('-weights')for name in nodes))
+        self.assertTrue(any('-registered' in name for name in nodes))
+        M.verify_materials(report,u)
+        floor_record=next(v for v in report['textures'].values() if v['sourceSha256']==M.FLOOR_ALBEDO_SHA and v['role']=='albedo')
+        self.assertEqual(floor_record['sourceEncodingOverride'],'sRGB')
+        self.assertEqual(floor_record['sourceEncodingReadback'],'TSE_S_RGB')
+        self.assertIn('_srcsrgb',floor_record['asset'])
+        self.assertEqual(report['inputFiles'][str(M.FLOOR_ENCODING_PROOF)],M.FLOOR_ENCODING_PROOF_SHA)
+        proven_albedos = set(CONTEXT_SRGB_BY_SHA) | {M.FLOOR_ALBEDO_SHA}
+        corrected = [v for v in report['textures'].values()
+                     if v['role']=='albedo' and v['sourceSha256'] in proven_albedos]
+        self.assertEqual(len(corrected),6)
+        self.assertEqual({v['sourceSha256'] for v in corrected},proven_albedos)
+        self.assertTrue(all(v['sourceEncodingOverride']=='sRGB' and v['sourceEncodingReadback']=='TSE_S_RGB'
+            for v in corrected))
+        untouched = [v for v in report['textures'].values() if v not in corrected]
+        self.assertEqual(len(untouched),67)
+        self.assertTrue(all(v['sourceEncodingOverride']=='None' and v['sourceEncodingReadback']=='TSE_NONE'
+            for v in untouched))
+        for change in ({'tileCm':300.},{'distanceFadeCm':[4000.,10000.]},
+                       {'stochasticGround':True},{'sourceUrl':'https://polyhaven.com/a/forest_leaves_02'}):
+            broken=copy.deepcopy(raw);broken['canopy_floor_litter'].update(change)
+            with self.assertRaises(RuntimeError):M.prepare_manifest(broken)
+        foreign=copy.deepcopy(raw);foreign['extra_bark']=copy.deepcopy(raw['ph_tree_small_02_branches'])
+        with self.assertRaisesRegex(RuntimeError,'material budget'):M.prepare_manifest(foreign)
+
+    def test_floor_source_encoding_saved_native_enum_tamper_is_rejected(self):
+        raw=json.loads((M.ROOT/'output/unreal/exterior-grove-substrate-20260930-r3/material-manifest.json').read_text())
+        u=fake_unreal();_,report=M.build_materials(raw,unreal_module=u)
+        entry=next(v for v in report['textures'].values() if v['sourceSha256']==M.FLOOR_ALBEDO_SHA)
+        tex=u.EditorAssetLibrary.load_asset(entry['asset']);tex.props['source_color_settings'].props['encoding_override']='ENC_NONE'
+        with self.assertRaisesRegex(RuntimeError,'source encoding interpretation'):M.verify_materials(report,u)
+
+    def test_floor_source_encoding_same_pixels_different_interpretation_cannot_alias(self):
+        raw=json.loads((M.ROOT/'output/unreal/exterior-grove-substrate-20260930-r3/material-manifest.json').read_text())
+        recipe=M.prepare_manifest(raw)['materials']['canopy_floor_litter'];u=fake_unreal();writer=M.Writer(u,M.PREFIX)
+        corrected=writer.texture('albedo',recipe);original=copy.deepcopy(recipe)
+        original.pop('sourceEncodingOverride');original.pop('sourceEncodingProof')
+        unchanged=writer.texture('albedo',original)
+        self.assertIsNot(corrected,unchanged);self.assertEqual(len(writer.texture_report),2)
+        self.assertEqual(corrected.props['source_color_settings'].props['encoding_override'],'ENC_SRGB')
+        self.assertEqual(unchanged.props['source_color_settings'].props['encoding_override'],'ENC_NONE')
+        self.assertEqual(corrected.metadata['source_sha256'],unchanged.metadata['source_sha256'])
+
+    def test_floor_source_encoding_foreign_recipe_or_source_override_rejected(self):
+        raw=json.loads((M.ROOT/'output/unreal/exterior-grove-substrate-20260930-r3/material-manifest.json').read_text())
+        floor=raw['canopy_floor_litter'];bad=copy.deepcopy(raw)
+        bad['canopy_floor_litter']['sourceEncodingOverride']='None'
+        with self.assertRaisesRegex(RuntimeError,'source encoding recipe'):M.prepare_manifest(bad)
+        foreign=plant_fixture();foreign['sourceEncodingOverride']='sRGB'
+        foreign['sourceEncodingProof']={'path':str(M.FLOOR_ENCODING_PROOF),'sha256':M.FLOOR_ENCODING_PROOF_SHA}
+        with self.assertRaisesRegex(RuntimeError,'source encoding recipe'):M.prepare_manifest({'foreign_leaf':foreign})
+        fake=copy.deepcopy(floor);fake['maps']['albedo']=copy.deepcopy(M._ground_source('sparse_grass')['maps']['albedo'])
+        fake['sourceEncodingOverride']='sRGB'
+        with self.assertRaisesRegex(RuntimeError,'Unproven'):M.texture_source_encoding('albedo',fake)
+
+    def test_floor_source_encoding_native_proof_drift_rejected(self):
+        with patch.object(M,'FLOOR_ENCODING_PROOF_SHA','0'*64):
+            with self.assertRaisesRegex(RuntimeError,'native proof drift'):M.floor_encoding_inputs()
+
+    def test_floor_source_encoding_receipt_forgery_rejected(self):
+        raw=json.loads((M.ROOT/'output/unreal/exterior-grove-substrate-20260930-r3/material-manifest.json').read_text())
+        u=fake_unreal();_,report=M.build_materials(raw,unreal_module=u)
+        entry=next(v for v in report['textures'].values() if v['sourceSha256']==M.FLOOR_ALBEDO_SHA)
+        entry['sourceEncodingReadback']='TSE_NONE'
+        with self.assertRaisesRegex(RuntimeError,'source encoding interpretation'):M.verify_materials(report,u)
+
+    def test_context_source_encoding_current_40_materials_73_textures_has_exact_six_rgb_overrides(self):
+        self.assertEqual(set(M.CONTEXT_ENCODING_SOURCES),set(CONTEXT_SRGB_BY_SHA))
+        u=fake_unreal();_,report=M.build_materials(ASSETS_GREENERY_R5,unreal_module=u,
+            ortho_manifest=ORTHO_EARLIER,field_macro_manifest=FIELD_MACRO,projection_manifest=PROJECTION)
+        self.assertEqual(len(report['materials']),40);self.assertEqual(len(report['textures']),73)
+        actual_recipes={key for key,row in report['materials'].items()
+                        if row['recipe'].get('sourceEncodingOverride')=='sRGB'}
+        expected_recipes={key for keys in CONTEXT_SRGB_BY_SHA.values() for key in keys}|{'canopy_floor_litter'}
+        self.assertEqual(actual_recipes,expected_recipes)
+        corrected=[row for row in report['textures'].values()if row['sourceEncodingOverride']=='sRGB']
+        self.assertEqual({row['sourceSha256'] for row in corrected},set(CONTEXT_SRGB_BY_SHA)|{M.FLOOR_ALBEDO_SHA})
+        self.assertEqual(len(corrected),6)
+        for row in report['textures'].values():
+            tex=u.EditorAssetLibrary.load_asset(row['asset'])
+            encoded=row in corrected
+            self.assertEqual(row['sourceEncodingReadback'],'TSE_S_RGB' if encoded else 'TSE_NONE')
+            self.assertEqual(tex.props['source_color_settings'].props['encoding_override'],'ENC_SRGB' if encoded else 'ENC_NONE')
+            self.assertEqual('_srcsrgb' in row['asset'],encoded)
+            if encoded:self.assertEqual(row['role'],'albedo')
+        self.assertEqual(report['inputFiles'][str(M.CONTEXT_ENCODING_PROOF)],M.CONTEXT_ENCODING_PROOF_SHA)
+        M.verify_materials(report,u)
+
+    def test_context_source_encoding_each_saved_enum_and_receipt_tamper_is_rejected(self):
+        u=fake_unreal();_,report=M.build_materials(ASSETS_GREENERY_R5,unreal_module=u)
+        for source_sha in CONTEXT_SRGB_BY_SHA:
+            entry=next(row for row in report['textures'].values()if row['sourceSha256']==source_sha and row['role']=='albedo')
+            tex=u.EditorAssetLibrary.load_asset(entry['asset'])
+            with self.subTest(source=source_sha,mutation='saved-native-enum'):
+                tex.props['source_color_settings'].props['encoding_override']='ENC_NONE'
+                with self.assertRaisesRegex(RuntimeError,'source encoding interpretation'):M.verify_materials(report,u)
+                tex.props['source_color_settings'].props['encoding_override']='ENC_SRGB'
+            with self.subTest(source=source_sha,mutation='forged-readback'):
+                entry['sourceEncodingReadback']='TSE_NONE'
+                with self.assertRaisesRegex(RuntimeError,'source encoding interpretation'):M.verify_materials(report,u)
+                entry['sourceEncodingReadback']='TSE_S_RGB'
+            with self.subTest(source=source_sha,mutation='forged-role'):
+                entry['role']='normal'
+                with self.assertRaisesRegex(RuntimeError,'source encoding scope'):M.verify_materials(report,u)
+                entry['role']='albedo'
+        M.verify_materials(report,u)
+
+    def test_context_source_encoding_exact_recipe_scope_proof_hash_and_data_roles(self):
+        recipes=M.prepare_manifest(ASSETS_GREENERY_R5)['materials']
+        for source_sha,keys in CONTEXT_SRGB_BY_SHA.items():
+            recipe=recipes[keys[0]]
+            self.assertEqual(recipe['maps']['albedo']['sha256'],source_sha)
+            for mutation in ('foreign-key','foreign-provider','wrong-kind','forged-proof'):
+                with self.subTest(source=source_sha,mutation=mutation):
+                    bad=copy.deepcopy(recipe);key=keys[0]
+                    if mutation=='foreign-key':key='foreign_measured_albedo'
+                    elif mutation=='foreign-provider':bad['sourceUrl']='https://polyhaven.com/a/foreign_texture'
+                    elif mutation=='wrong-kind':bad['kind']='bark' if recipe['kind']!='bark' else 'ground'
+                    else:bad['sourceEncodingProof']['sha256']='0'*64
+                    if key in M.CONTEXT_KEYS:
+                        with patch.object(M,'context_recipes',return_value={key:bad}):
+                            with self.assertRaisesRegex(RuntimeError,'source encoding'):M.prepare_manifest()
+                    else:
+                        with self.assertRaisesRegex(RuntimeError,'source encoding'):M.prepare_manifest({key:bad})
+            u=fake_unreal();writer=M.Writer(u,M.PREFIX)
+            for role in set(recipe['maps'])-{'albedo'}:
+                with self.subTest(source=source_sha,role=role):
+                    self.assertEqual(M.texture_source_encoding(role,recipe),'None')
+                    tex=writer.texture(role,recipe)
+                    self.assertEqual(tex.props['source_color_settings'].props['encoding_override'],'ENC_NONE')
+                    self.assertFalse(tex.props['srgb'])
+        with patch.object(M,'CONTEXT_ENCODING_PROOF_SHA','0'*64):
+            u=fake_unreal()
+            with self.assertRaisesRegex(RuntimeError,'native proof drift'):M.build_materials(ASSETS_GREENERY_R5,unreal_module=u)
+            self.assertEqual(u.EditorAssetLibrary.values,{})
+
+    def test_context_source_encoding_causal_proof_and_unchanged_alpha_are_required(self):
+        original=json.loads(M.CONTEXT_ENCODING_PROOF.read_text())
+        for mutation in ('wrong-control','bad-corrected-rgb','missing-stable-region','changed-alpha','changed-filter','converted-source'):
+            with self.subTest(mutation=mutation),tempfile.TemporaryDirectory()as directory:
+                directory=Path(directory)
+                proof=copy.deepcopy(original);row=proof['textures']['nettle']
+                if mutation=='wrong-control':proof['gpuLinearControl']['actual'][0]=.5
+                elif mutation=='bad-corrected-rgb':row['sourceOnlyStableComparison']['explicitSourceSRGBMaxAbsLinearRgbError']=.02
+                elif mutation=='missing-stable-region':row['sourceOnlyStableComparison']['count']=11
+                elif mutation=='changed-alpha':row['allSamplesAlphaComparison']['originalVsExplicitMaxAbsAlphaDifference']=.001
+                elif mutation=='changed-filter':row['duplicate']['after']['properties']['filter']='DIFFERENT_FILTER'
+                else:proof['providerPixelsConvertedOrEdited']=True
+                path=directory/'native-report.json';path.write_text(json.dumps(proof))
+                for name in ('prepared.json','native-process.json'):
+                    (directory/name).write_bytes((M.CONTEXT_ENCODING_PROOF.parent/name).read_bytes())
+                expected_error={'wrong-control':'native measurement','bad-corrected-rgb':'causal RGB/unchanged alpha',
+                    'missing-stable-region':'causal RGB/unchanged alpha','changed-alpha':'causal RGB/unchanged alpha',
+                    'changed-filter':'changed more than','converted-source':'native measurement'}[mutation]
+                with patch.object(M,'CONTEXT_ENCODING_PROOF',path),patch.object(M,'CONTEXT_ENCODING_PROOF_SHA',M.sha(path)):
+                    with self.assertRaisesRegex(RuntimeError,expected_error):M.context_encoding_inputs()
+
+    def test_context_source_encoding_shared_farm_pixels_dedup_only_with_same_interpretation(self):
+        recipes=M.prepare_manifest(ASSETS_GREENERY_R5)['materials'];u=fake_unreal();writer=M.Writer(u,M.PREFIX)
+        farm=[writer.texture('albedo',recipes[key])for key in ('context_arable','context_garden_soil','context_soil_exposure')]
+        self.assertIs(farm[0],farm[1]);self.assertIs(farm[0],farm[2])
+        bare=copy.deepcopy(recipes['context_arable']);bare.pop('sourceEncodingOverride');bare.pop('sourceEncodingProof')
+        shared_pixels=writer.texture('albedo',bare)
+        self.assertIsNot(shared_pixels,farm[0])
+        self.assertEqual(shared_pixels.metadata['source_sha256'],farm[0].metadata['source_sha256'])
+        self.assertEqual(shared_pixels.props['source_color_settings'].props['encoding_override'],'ENC_NONE')
+        self.assertEqual(farm[0].props['source_color_settings'].props['encoding_override'],'ENC_SRGB')
+        cover=recipes['context_arable']['groundCover']
+        self.assertEqual(M.texture_source_encoding('albedo',cover),'None')
+        cover_texture=writer.texture('albedo',cover)
+        self.assertIsNot(cover_texture,farm[0]);self.assertIsNot(cover_texture,shared_pixels)
+        self.assertEqual(cover_texture.props['source_color_settings'].props['encoding_override'],'ENC_NONE')
+        self.assertEqual(len(writer.texture_report),3)
+
     def test_texture_sample_connection_uses_native_shortened_mode_specific_pins(self):
         u=fake_unreal();lib=u.MaterialEditingLibrary;source=u.MaterialExpressionConstant()
         for mode,accepted in (('DEFAULT',()),('MIP_LEVEL',('Level',)),('MIP_BIAS',('Bias',)),
@@ -197,7 +626,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
 
     def test_foliage_mask_and_color_spaces_survive_reload_contract(self):
         u = fake_unreal(); materials, report = M.build_materials(plant_fixture(), unreal_module=u)
-        self.assertEqual(M.verify_materials(report, u)['materials'], 16)
+        self.assertEqual(M.verify_materials(report, u)['materials'], len(M.CONTEXT_KEYS)+1)
         foliage = materials['test_plant']
         self.assertEqual(foliage.props['blend_mode'], 'MASKED')
         self.assertEqual(foliage.props['shading_model'], 'FOLIAGE')
@@ -223,7 +652,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
         self.assertNotIn('OPACITY_MASK', materials['test_plant'].roots)
         self.assertEqual(original.props['sentinel'], 'original')
         self.assertNotIn(original, u.EditorAssetLibrary.saved)
-        self.assertEqual(M.verify_materials(report, u)['materials'], 16)
+        self.assertEqual(M.verify_materials(report, u)['materials'], len(M.CONTEXT_KEYS)+1)
         with self.assertRaisesRegex(RuntimeError, 'overwrite'): M.build_materials(plant_fixture(kind='bark'), unreal_module=u)
 
     def test_saved_graph_and_texture_tampering_are_detected(self):
@@ -272,10 +701,13 @@ class ExteriorMaterialsTests(unittest.TestCase):
         for node in samples:
             self.assertEqual(node.props['mip_value_mode'],'DERIVATIVE')
             self.assertEqual(set(node.inputs), {'UVs','DDX(UVs)','DDY(UVs)'})
-        self.assertEqual(report['materials']['context_track']['recipe']['albedoScale'], .42)
+        self.assertEqual(report['materials']['context_track']['recipe']['albedoScale'], .28)
         self.assertTrue(any('Grass004' in p for p in report['inputFiles']))
         self.assertTrue(any('wood_chips_diff_4k' in p for p in report['inputFiles']))
-        self.assertEqual(report['materials']['context_mulch']['recipe']['tileCm'],200)
+        mulch=report['materials']['context_mulch']['recipe']
+        self.assertEqual(mulch['tileCm'],200);self.assertEqual(mulch['albedoScale'],.62)
+        self.assertEqual(mulch['tint'],[.94,.98,1.])
+        self.assertEqual(mulch['maps'],M._ground_source('wood_chips')['maps'])
         for key in ('context_meadow','context_fallow','context_crop','context_arable'):
             recipe=report['materials'][key]['recipe']
             self.assertLessEqual(recipe['macroStrength'],.05)
@@ -339,6 +771,8 @@ class ExteriorMaterialsTests(unittest.TestCase):
         self.assertEqual(nodes['model-uv'].props['u_tiling'],1)
         self.assertEqual(nodes['provider-albedo-value'].props['r'],.8)
         self.assertEqual(nodes['leaf-transmission-scale'].props['r'],.08)
+        self.assertEqual(nodes['artist-leaf-brightness'].props['r'],.60)
+        self.assertEqual(raw['ph_periwinkle_plant']['leafCalibration']['brightness'],.78)
         self.assertIn(raw['ph_periwinkle_plant']['leafCalibration']['sourceMaterialManifest']['path'],report['inputFiles'])
         M.verify_materials(report,u)
         raw['ph_periwinkle_plant']['albedoScale']=.5
@@ -404,7 +838,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'Unreviewed orthophoto distance blend'):
             M.orthophoto_weights((27000,0),ortho['layers'],coverage,(0,36000))
 
-    def test_earlier_ortho_saved_range_drives_colour_normal_and_pbr_and_detects_drift(self):
+    def test_terrain_rgb_matches_ground_camera_blend_and_preserves_radial_pbr_response(self):
         u=fake_unreal();materials,report=M.build_materials(ASSETS_R5,unreal_module=u,ortho_manifest=ORTHO_EARLIER)
         self.assertEqual(report['orthophoto']['distanceBlendCm'],[18000,36000])
         terrain=materials['context_distant_terrain'];nodes={n.props['desc'].removeprefix(M.TAG):n for n in terrain.nodes}
@@ -412,7 +846,21 @@ class ExteriorMaterialsTests(unittest.TestCase):
         self.assertEqual((value.r,value.g,value.b),(18000,36000,0))
         self.assertEqual(radial.props['code'],M.ORTHO_RADIAL)
         self.assertIs(radial.inputs['BlendRange'][0],nodes['ortho-distance-blend-cm'])
-        self.assertIs(nodes['licensed-ortho-basecolor'].inputs['DistanceBlend'][0],radial)
+        camera_blend=nodes['terrain-ortho-camera-distance']
+        self.assertEqual(camera_blend.props['code'],M.ORTHO_CAMERA)
+        self.assertIs(camera_blend.inputs['Position'][0],nodes['world-position'])
+        self.assertEqual(camera_blend.inputs['Camera'][0].get_class().get_name(),'MaterialExpressionCameraPositionWS')
+        camera_range=nodes['terrain-ortho-camera-blend-cm'].props['constant']
+        self.assertEqual([camera_range.r,camera_range.g,camera_range.b],[5000.,15000.,0.])
+        self.assertIs(nodes['licensed-ortho-basecolor'].inputs['DistanceBlend'][0],camera_blend)
+        self.assertNotIn(radial,[v[0]for v in camera_blend.inputs.values()])
+        policy=report['materials']['context_distant_terrain']['recipe']['terrainOrthophotoCameraBlend']
+        self.assertEqual(policy['cameraDistanceBlendCm'],list(M.GROUND_ORTHO_BLEND_CM))
+        self.assertEqual(policy['sourceManifestRadialBlendCm'],[18000,36000])
+        self.assertEqual(report['terrainOrthophotoCameraBlend'],{'materialKeys':['context_distant_terrain'],**policy})
+        self.assertTrue(policy['providerPixelsAndAffineUnchanged']);self.assertFalse(policy['actorBindingsChanged'])
+        self.assertEqual(report['inputFiles'][str(ORTHO_EARLIER)],M.sha(ORTHO_EARLIER))
+        self.assertLessEqual(len(report['materials']['context_distant_terrain']['graph']['nodes']),80)
         self.assertIs(nodes['near-terrain-pbr-weight'].inputs['DistanceBlend'][0],radial)
         self.assertIs(nodes['near-terrain-normal-strength'].inputs['Near'][0],nodes['near-terrain-pbr-weight'])
         self.assertIs(nodes['ortho-terrain-slope-normal'].inputs['VertexNormal'][0],nodes['surveyed-vertex-normal'])
@@ -424,7 +872,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
         u=fake_unreal();mats,report=M.build_materials(ASSETS_R5,unreal_module=u,ortho_manifest=ORTHO_EARLIER,seasonal_fields_manifest=SEASONAL)
         self.assertEqual(M.verify_materials(report,u)['textures'],62)
         arable=copy.deepcopy(report['materials']['context_arable']['recipe']);baseline=M.prepare_manifest()['materials']['context_arable']
-        self.assertEqual(arable.pop('coverRange'),[.52,.60]);self.assertEqual(baseline.pop('coverRange'),[.07,.13])
+        self.assertEqual(arable.pop('coverRange'),[.52,.60]);self.assertEqual(baseline.pop('coverRange'),[.04,.10])
         self.assertIn('R7 opt-in seasonal',arable.pop('artDirection'));baseline.pop('artDirection')
         self.assertEqual(arable,baseline)
         self.assertEqual(report['seasonalFields']['nearArableStage']['material'],'context_arable')
@@ -437,7 +885,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
             self.assertEqual(mask.inputs['Level'][0].props['r'],0)
             self.assertEqual(mask.props['sampler_type'],'LINEAR_GRAYSCALE')
             self.assertIs(mask.inputs['UVs'][0],photo.inputs['UVs'][0])
-            self.assertEqual(nodes[label+'-coverage-and-extent'].inputs['Coverage'],(photo,'A'))
+            self.assertEqual(nodes[label+'-coverage-and-extent'].inputs['Coverage'],(nodes['albedo-'+label+'-coverage-mip0'],'A'))
             self.assertEqual(nodes[label+'-seasonal-field-color'].inputs,{'Source':(photo,'RGB'),'Mask':(mask,'R')})
             self.assertEqual(nodes[label+'-seasonal-field-color'].props['code'],M.SEASONAL_FIELD_COLOR)
             tex=mask.props['texture'];self.assertFalse(tex.props['srgb'])
@@ -484,19 +932,22 @@ class ExteriorMaterialsTests(unittest.TestCase):
     def test_full_r7_budget_scoped_field_macro_channels_and_resident_rgba_readback(self):
         u=fake_unreal();mats,report=M.build_materials(ASSETS_R7,unreal_module=u,ortho_manifest=ORTHO_EARLIER,
                                                    seasonal_fields_manifest=SEASONAL,field_macro_manifest=FIELD_MACRO)
-        self.assertEqual(M.verify_materials(report,u),{'status':'verified-saved-exterior-materials','materials':29,'textures':71})
-        self.assertLessEqual(max(len(v['graph']['nodes']) for v in report['materials'].values()),80)
+        self.assertEqual(M.verify_materials(report,u),{'status':'verified-saved-exterior-materials','materials':30,'textures':71})
+        self.assertLessEqual(max(len(v['graph']['nodes']) for v in report['materials'].values()),110)
         self.assertEqual({k for k,v in report['materials'].items() if 'fieldMacro' in v['recipe']},M.FIELD_MACRO_KEYS)
         self.assertEqual(report['fieldMacro']['factorRange'],[.75,1.10])
         for key in M.FIELD_MACRO_KEYS:
             mat=mats[key];nodes={n.props['desc'].removeprefix(M.TAG):n for n in mat.nodes}
             color=nodes['field-macro-basecolor'];factor=nodes['field_macro-factor'];domain=nodes['field_macro-containment']
             self.assertEqual(mat.roots['BASE_COLOR'],(color,''))
+            self.assertNotIn('licensed-ortho-basecolor',nodes)
             self.assertIs(color.inputs['Source'][0],nodes['natural-ground-color'])
             self.assertEqual(color.inputs['FactorChannel'],(factor,'R'))
-            self.assertEqual(color.inputs['Domain'],(domain,'G'))
-            self.assertEqual(color.inputs['Coverage'],(domain,'B'))
-            self.assertEqual(color.inputs['Weight'],(domain,'A'))
+            for name,channel in [('Domain','G'),('Coverage','B'),('Weight','A')]:
+                masked=nodes['field-macro-'+name.lower()+'-channel']
+                self.assertEqual(color.inputs[name],(masked,''))
+                self.assertEqual(masked.inputs[''],(domain,'RGBA'))
+                self.assertEqual([masked.props[p] for p in ('r','g','b','a')],[False,channel=='G',channel=='B',channel=='A'])
             self.assertEqual(color.props['code'],M.FIELD_MACRO_COLOR)
             self.assertEqual(domain.props['mip_value_mode'],'MIP_LEVEL');self.assertEqual(domain.inputs['Level'][0].props['r'],0.)
             self.assertEqual(factor.props['mip_value_mode'],'DEFAULT')
@@ -543,7 +994,7 @@ class ExteriorMaterialsTests(unittest.TestCase):
 
     def test_r5_native_contract_budget_clamp_coverage_and_small_affine_tamper(self):
         u=fake_unreal();materials,report=M.build_materials(ASSETS_R5,unreal_module=u,ortho_manifest=ORTHO)
-        self.assertEqual(M.verify_materials(report,u),{'status':'verified-saved-exterior-materials','materials':27,'textures':60})
+        self.assertEqual(M.verify_materials(report,u),{'status':'verified-saved-exterior-materials','materials':28,'textures':60})
         self.assertLessEqual(max(len(v['graph']['nodes']) for v in report['materials'].values()),80)
         self.assertEqual(report['inputFiles'][str(ORTHO)],M.sha(ORTHO))
         source=json.loads(ORTHO.read_text())
@@ -556,7 +1007,11 @@ class ExteriorMaterialsTests(unittest.TestCase):
         self.assertNotIn('OPACITY_MASK',terrain.roots)
         for label in ('far16km','detail2km'):
             sample=nodes['albedo-ortho-'+label];gate=nodes['ortho-'+label+'-coverage-and-extent']
-            self.assertEqual(gate.inputs['Coverage'],(sample,'A'))
+            coverage=nodes['albedo-ortho-'+label+'-coverage-mip0']
+            self.assertEqual(gate.inputs['Coverage'],(coverage,'A'))
+            self.assertEqual(coverage.props['mip_value_mode'],'MIP_LEVEL')
+            self.assertEqual(coverage.inputs['Level'][0].props['r'],0.)
+            self.assertIs(coverage.props['texture'],sample.props['texture'])
             self.assertIs(gate.inputs['UV'][0],sample.inputs['UVs'][0])
             self.assertIn('all(UV<=1.0)',gate.props['code'])
             tex=sample.props['texture'];self.assertEqual(tex.props['address_x'],'CLAMP')

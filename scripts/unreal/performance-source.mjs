@@ -1,5 +1,6 @@
 // Inherit a verified authored scene without reimporting or rewriting its history.
 import {readFile,writeFile,mkdir,readdir,cp,access,realpath,rm} from 'node:fs/promises';
+import {constants} from 'node:fs';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -48,8 +49,8 @@ export async function inheritScene({root,output,project,donor}){
   const content=await inventory(resolve(donorProject,'Content')),geometry=await inventory(resolve(donor,'geometry'));
   // Every current native asset must occur in the original package authoring inventory.
   for(const [p,h] of Object.entries(content))assert.equal(sourcePins[p],h,'Unsealed donor asset: '+p);
-  await cp(resolve(donorProject,'Content'),resolve(project,'Content'),{recursive:true});
-  await cp(resolve(donor,'geometry'),resolve(output,'geometry'),{recursive:true});
+  await cp(resolve(donorProject,'Content'),resolve(project,'Content'),{recursive:true,mode:constants.COPYFILE_FICLONE});
+  await cp(resolve(donor,'geometry'),resolve(output,'geometry'),{recursive:true,mode:constants.COPYFILE_FICLONE});
   const sourceReceipts=['model-refresh-import-report.json','model-import-process.json','archviz-import-report.json','archviz-import-process.json',
     'photoreal-import-report.json','photoreal-import-process.json','rural-import-report.json','rural-import-process.json'];
   const receiptPins={[receiptFile]:sha(await readFile(receiptFile))};

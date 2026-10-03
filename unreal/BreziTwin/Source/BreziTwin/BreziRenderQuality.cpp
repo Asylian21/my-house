@@ -82,6 +82,9 @@ bool FBreziRenderQualityPersistenceTest::RunTest(const FString&)
     Write(TEXT("[Brezi.RenderQuality]\nProfileV1=native\n"));
     TestTrue(TEXT("Explicit Native restores"), Verify(TEXT("native")));
     TestFalse(TEXT("Failed flush never reports success even with matching disk"), Verify(TEXT("native"), false));
+    Write(TEXT("[Brezi.RenderQuality]\nProfileV1=full\n"));
+    TestTrue(TEXT("Appended Full profile restores from the existing schema"), Verify(TEXT("full")));
+    TestFalse(TEXT("Full disk preference cannot pretend to restore Cinematic"), Verify(TEXT("cinematic")));
     Write(TEXT("[Brezi.RenderQuality]\n!ProfileV1=ClearArray\n"));
     TestFalse(TEXT("Delta removal command is not an omitted default"), Verify(TEXT("performance")));
     Write(TEXT(""));
@@ -197,11 +200,12 @@ IConsoleVariable* HistoryVariable() { return IConsoleManager::Get().FindConsoleV
 const TCHAR* ProfileName(Profile Value)
 {
     return Value == Profile::Native ? TEXT("native") : Value == Profile::Balanced ? TEXT("balanced")
-        : Value == Profile::Performance ? TEXT("performance") : Value == Profile::Cinematic ? TEXT("cinematic") : TEXT("unknown");
+        : Value == Profile::Performance ? TEXT("performance") : Value == Profile::Cinematic ? TEXT("cinematic")
+        : Value == Profile::RealtimeFull ? TEXT("full") : TEXT("unknown");
 }
 Profile ParseProfile(const FString& Value)
 {
-    for (Profile Item : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic})
+    for (Profile Item : {Profile::Native, Profile::Balanced, Profile::Performance, Profile::Cinematic, Profile::RealtimeFull})
         if (Value == ProfileName(Item)) return Item;
     return Profile::Unknown;
 }
